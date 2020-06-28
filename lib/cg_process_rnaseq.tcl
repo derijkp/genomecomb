@@ -110,7 +110,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 	set order name
 	
 	# which samples are there
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	set samples {}
 	foreach file [dirglob $destdir */fastq] {
 		lappend samples [file dir $file]
@@ -124,7 +124,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 		catch {file mkdir $dir}
 		puts $dir
 		cd $dir
-		job_logdir $dir/log_jobs
+		set_job_logdir $dir/log_jobs
 		# do alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fastq.bz2 fastq/*.slx.gz]
 		if {![llength $files]} continue
@@ -153,7 +153,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 		htseqcount_job map-sntophat-$sample.bam $gff $order $stranded $mode
 		lappend todo $dir/count-sntophat-$sample.tsv 
 	}
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
 	make_count_table_job $destdir $experiment $todo

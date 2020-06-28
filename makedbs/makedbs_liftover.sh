@@ -20,7 +20,7 @@ putslog "Installing in $dest/liftover"
 file mkdir ${dest}/liftover
 cd ${dest}/liftover
 
-job_logdir log_jobs
+set_job_logdir log_jobs
 
 # get chain files
 foreach {base src} {hg18ToHg19 hg18 hg18ToHg38 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 hg19} {

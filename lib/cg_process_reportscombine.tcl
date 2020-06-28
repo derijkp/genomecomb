@@ -550,7 +550,7 @@ proc process_reportscombine_job {args} {
 	set destdir [file_absolute $destdir]
 	set reportstodo [list $reportsdir {*}$args]
 	if {![info exists job_logdir]} {
-		job_logdir $destdir/log_jobs
+		set_job_logdir $destdir/log_jobs
 	}
 	if {![info exists experimentname]} {
 		set experimentname [file tail $destdir]

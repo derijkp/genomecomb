@@ -26,7 +26,7 @@ proc multi_merge_job {varsfile files args} {
 	if {$len <= $maxfiles} {
 		# merge in one go
 		set target $varsfile
-		job multi_merge-[file tail $varsfile] -force $force -deps $files -targets {
+		job multi_merge-[file_part $varsfile end-1 end] -force $force -deps $files -targets {
 			$target
 		} -vars {
 			split limitreg
@@ -58,7 +58,7 @@ proc multi_merge_job {varsfile files args} {
 		if {$len <= $maxfiles} {
 			# final merge (we have less than maxfiles files to merge left)
 			set target $varsfile
-			job multi_merge-[file tail $varsfile] -optional $optional -force $force -deps $todo -targets {
+			job multi_merge-[file_part $varsfile end-1 end] -optional $optional -force $force -deps $todo -targets {
 				$target
 			} -vars {
 				split delete workdir limitreg
@@ -79,7 +79,7 @@ proc multi_merge_job {varsfile files args} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {
+			job multi_merge-[file_part $varsfile end-1 end] -optional $optional -force $force -deps $deps -targets {
 				$target
 			} -vars {
 				split delete limitreg
@@ -459,6 +459,7 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 }
 
 proc pmulticompar_job {args} {
+	upvar job_logdir job_logdir
 	set cmdline [list cg pmulticompar {*}$args]
 	set regonly 0
 	set split 1
@@ -497,8 +498,7 @@ proc pmulticompar_job {args} {
 	} compar_file 1
 	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
-	upvar job_logdir job_logdir
-	job_logfile [file dir $compar_file]/pmulticompar-[file tail $compar_file] [file dir $compar_file] $cmdline \
+	job_logfile [file dir $compar_file]/pmulticompar-[file_part $compar_file end] [file dir $compar_file] $cmdline \
 		{*}[versions dbdir zst os]
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
@@ -587,7 +587,6 @@ proc pmulticompar_job {args} {
 	# todo: check for concurrency
 	set workdir [gzroot $compar_file].index/multicompar
 	file mkdir $workdir
-	job_logdir $workdir/log_jobs
 	set real_compar_file [jobglob $compar_file]
 	if {$real_compar_file ne ""} {
 		set allfiles [list $real_compar_file {*}$files]
@@ -600,7 +599,7 @@ proc pmulticompar_job {args} {
 		lappend deps "([gzroot $file].analysisinfo)"
 	}
 	set target [gzroot $compar_file].analysisinfo
-	job multicompar_analysisinfo-[file tail $compar_file] -deps $deps -optional 1 \
+	job multicompar_analysisinfo-[file_part $compar_file end] -deps $deps -optional 1 \
 	-targets {$target} -code {
 		set deps [list_remove $deps {}]
 		if {[llength $deps]} {

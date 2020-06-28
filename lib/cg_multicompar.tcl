@@ -91,7 +91,9 @@ proc cg_multicompar {args} {
 	# should take into account existing instead of deleting and starting all over -> not now
 	if {[file exists $workdir]} {file delete -force $workdir}
 	file mkdir $workdir
-	job_logdir $workdir/log_jobs
+	if {![info exists job_logdir]} {
+		set_job_logdir [file dir $compar_file]/log_jobs
+	}
 	set multi_merge_num 0
 	if {[file exists $compar_file]} {
 		file rename -force -- $compar_file $compar_file.old

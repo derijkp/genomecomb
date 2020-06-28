@@ -177,7 +177,7 @@ proc process_multicompar_job {args} {
 		set methfiles $tempmethfiles
 	}
 	# set up job
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	set keeppwd [pwd]
 	# change to workdir
 	set keeppwd [pwd]

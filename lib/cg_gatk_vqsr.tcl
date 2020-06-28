@@ -27,7 +27,9 @@ proc gatk_vqsr_job args {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set rawvcf [file_absolute $rawvcf]
 	set resultvcf [file_absolute $resultvcf]
-	job_logdir [file dir $resultvcf]/log_jobs
+	if {![info exists job_logdir]} {
+		set_job_logdir [file dir $resultvcf]/log_jobs
+	}
 	job_logfile [file dir $resultvcf]/gatk_vqsr_[file tail $resultvcf] [file dir $resultvcf] $cmdline \
 		{*}[versions gatk]
 	#
@@ -64,7 +66,7 @@ proc gatk_vqsr_job args {
 	}
 	# Variant (Quality Score) Recalibration
 	# build indel model
-	job gatkvqsr-[file tail $resultvcf].indel.recal -skip $resultvcf -deps {
+	job gatkvqsr-[file_part $resultvcf end].indel.recal -skip $resultvcf -deps {
 		$rawvcf $gatkrefseq
 	} -targets {
 		$resultvcf.indel.recal $resultvcf.indel.recal.idx $resultvcf.indel.tranches
@@ -88,7 +90,7 @@ proc gatk_vqsr_job args {
 	}
 	# gatk_IndexFeatureFile_job $resultvcf.indel.recal
 	# apply indel model
-	job gatkvqsr-[file tail $resultvcf].indelscalibrated -skip $resultvcf -deps {
+	job gatkvqsr-[file_part $resultvcf end].indelscalibrated -skip $resultvcf -deps {
 		$rawvcf $gatkrefseq $resultvcf.indel.recal $resultvcf.indel.recal.idx $resultvcf.indel.tranches
 	} -targets {
 		$rawvcf.indelscalibrated
@@ -108,7 +110,7 @@ proc gatk_vqsr_job args {
 	}
 	#
 	# build snp model
-	job gatkvqsr-[file tail $resultvcf].snp.recal -skip $resultvcf -deps {
+	job gatkvqsr-[file_part $resultvcf end].snp.recal -skip $resultvcf -deps {
 		$rawvcf $gatkrefseq
 	} -targets {
 		$resultvcf.snp.recal $resultvcf.snp.recal.idx $resultvcf.snp.tranches
@@ -131,7 +133,7 @@ proc gatk_vqsr_job args {
 	}
 	# gatk_IndexFeatureFile_job $resultvcf.snp.recal
 	# apply snp model
-	job gatkvqsr-[file tail $resultvcf] -skip $resultvcf -deps {
+	job gatkvqsr-[file_part $resultvcf end] -skip $resultvcf -deps {
 		$rawvcf.indelscalibrated $gatkrefseq $resultvcf.snp.recal $resultvcf.snp.recal.idx $resultvcf.snp.tranches
 	} -targets {
 		$resultvcf

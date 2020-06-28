@@ -232,7 +232,7 @@ proc jobtest {args} {
 proc jobtestnojobs {args} {
 	set args [job_args $args]
 	foreach destdir $args break
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	job nodeps1 -optional 1 -deps {abcd} -targets {abcde} -code {
 	}
 	job nodeps2 -optional 1 -deps {abcde} -targets {abcdef} -code {
@@ -244,7 +244,7 @@ proc jobtestlong {args} {
 	foreach destdir $args break
 	file mkdir $destdir
 	cd $destdir
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	job long -deps {} -targets {long.txt} -code {
 		for {set i 0} {$i < 4} {incr i} {
 			after 1000
@@ -1394,20 +1394,20 @@ test job "-cores 2 $testname" {
 2
 }
 
-test job "job_cleanup_add" {
+test job "job_cleanup_add $testname" {
 	test_job_init
 	job test -targets tmp/dep.txt -code {
 		file_write tmp/dep.txt test
 	}
 	job_cleanup_add tmp/dep.txt
-	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+	job test2 -deps {tmp/dep.txt} -targets tmp/target.txt -code {
 		file_write tmp/target.txt [file_read $dep]_ok
 	}
 	job_wait ; gridwait
 	glob tmp/*.txt
 } {tmp/target.txt}
 
-test job "job_cleanup_ifempty_add" {
+test job "job_cleanup_ifempty_add $testname" {
 	test_job_init
 	job test -targets {tmp/dep.txt tmp/tmp.dir tmp/tmp2.dir} -code {
 		file_write tmp/dep.txt test
@@ -1416,7 +1416,7 @@ test job "job_cleanup_ifempty_add" {
 		file mkdir tmp/tmp2.dir
 	}
 	job_cleanup_ifempty_add tmp/tmp.dir tmp/tmp2.dir
-	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+	job test2 -deps {tmp/dep.txt} -targets tmp/target.txt -code {
 		file_write tmp/target.txt [file_read $dep]_ok
 	}
 	job_wait ; gridwait

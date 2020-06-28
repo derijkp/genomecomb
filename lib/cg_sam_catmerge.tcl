@@ -59,14 +59,14 @@ proc sam_catmerge_job {args} {
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
-		set name sam_catmerge-[file tail $resultfile]
+		set name sam_catmerge-[file_part $resultfile end-1 end]
 	}
 	set resultfile [file_absolute $resultfile]
 	set outputformat [ext2format $resultfile bam {bam cram sam}]
 	set outputformat [gzroot $outputformat]
 	if {$outputformat eq "sam"} {set index 0}
 	if {![info exists job_logdir]} {
-		job_logdir $resultfile.log_jobs
+		set_job_logdir [file dir $resultfile]/log_jobs
 	}
 	# run
 

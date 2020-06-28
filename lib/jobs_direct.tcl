@@ -1,8 +1,8 @@
-proc job_process_direct_init {} {
+proc job_process_init_direct {} {
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
-	interp alias {} job_wait {} job_process_direct_wait
+	interp alias {} job_wait {} job_wait_direct
 }
 
 # not actually used for direct jobs
@@ -233,11 +233,12 @@ proc job_logfile_direct_close {} {
 	file rename $cgjob(logfile).submitting $result
 	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $cgjob(status) eq "ok")} {
 		job_cleanlogs $result
+		# only keep result logfile if -d option was given explicitely
 		if {!$cgjob(hasargs)} {file delete $result}
 	}
 }
 
-proc job_process_direct_wait {} {
+proc job_wait_direct {} {
 	global cgjob
 	job_logfile_direct_close
 	foreach file $cgjob(cleanupfiles) {

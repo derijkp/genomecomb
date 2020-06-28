@@ -1,13 +1,13 @@
-proc job_process_status_init {} {
+proc job_process_init_status {} {
 	global curjobnum jobsrunning graph curgraphid graphid totalduration
 	# we will use par (parallel) code with some specifics for status
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_parstatus
 	interp alias {} job_running {} job_running_status
-	interp alias {} job_wait {} job_process_status_wait
-	interp alias {} job_process_par_submit {} job_process_status_submit
-	interp alias {} job_process_par_checkjobid {} job_process_status_checkjobid
+	interp alias {} job_wait {} job_wait_status
+	interp alias {} job_process_submit_par {} job_process_submit_status
+	# interp alias {} job_process_par_checkjobid {} job_process_checkjobid_status
 	set jobsrunning {}
 	set totalduration {0 0}
 	set graph {}
@@ -269,7 +269,7 @@ proc job_process_parstatus {} {
 	cd $jobroot
 }
 
-proc job_process_status_wait {} {
+proc job_wait_status {} {
 	global cgjob jobsrunning graph totalduration
 	job_logfile_par_close
 	if {[file exists $cgjob(logfile).running]} {

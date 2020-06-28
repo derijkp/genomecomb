@@ -37,7 +37,7 @@ proc bam2reg_job {args} {
 		if {$compress} {append target .zst}
 	}
 	if {![info exists job_logdir]} {
-		job_logdir $target.log_jobs
+		set_job_logdir [file dir $target]/log_jobs
 	}
 	bam_index_job {*}$skips $bamfile
 	set bamindexfile [index_file $bamfile]

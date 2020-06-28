@@ -1,12 +1,12 @@
-proc job_process_sge_init {} {
+proc job_process_init_sge {} {
 	# we will use par (parallel) code with some specifics for sge
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	set ::cgjob(endjobids) {}
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_par
 	interp alias {} job_running {} job_running_sge
-	interp alias {} job_wait {} job_process_sge_wait
-	interp alias {} job_process_par_submit {} job_process_sge_submit
+	interp alias {} job_wait {} job_wait_sge
+	interp alias {} job_process_submit_par {} job_process_submit_sge
 }
 
 proc job_running_sge {jobid} {
@@ -29,7 +29,7 @@ proc job_status_sge {job {jobloginfo {}}} {
 	}
 }
 
-proc job_process_sge_submit {job runfile args} {
+proc job_process_submit_sge {job runfile args} {
 	global cgjob
 	set options {}
 	set soft {}
@@ -139,14 +139,14 @@ proc sge_safename {name {prefix {}}} {
 if 0 {
 # debug proc
 	set curjobnum 1
-	proc job_process_sge_submit {job runfile args} {
+	proc job_process_submit_sge {job runfile args} {
 		global curjobnum
 		return [incr curjobnum]
 	}
-	interp alias {} job_process_par_submit {} job_process_sge_submit
+	interp alias {} job_process_submit_par {} job_process_submit_sge
 }
 
-proc job_process_sge_wait {} {
+proc job_wait_sge {} {
 	global cgjob cgjob_id
 	set priority [get cgjob(priority) 0]
 	job_logfile_par_close

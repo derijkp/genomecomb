@@ -39,7 +39,7 @@ file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
 
-job_logdir log_jobs
+set_job_logdir log_jobs
 
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {

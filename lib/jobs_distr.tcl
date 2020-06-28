@@ -1,4 +1,4 @@
-proc job_process_distr_init {} {
+proc job_process_init_distr {} {
 	global cgjob cgjob_distr cgjob_distr_running cgjob_pid cgjob_exit
 	unset -nocomplain cgjob_distr
 	unset -nocomplain cgjob_distr_running
@@ -10,8 +10,8 @@ proc job_process_distr_init {} {
 	set ::job_method_info [list pid [pid]]
 	interp alias {} job_process {} job_process_par
 	interp alias {} job_running {} job_running_distr
-	interp alias {} job_wait {} job_process_distr_wait
-	interp alias {} job_process_par_submit {} job_process_distr_submit
+	interp alias {} job_wait {} job_wait_distr
+	interp alias {} job_process_submit_par {} job_process_submit_distr
 }
 
 proc job_running_distr {jobnum} {
@@ -102,7 +102,7 @@ proc job_process_distr_jobmanager {} {
 	}
 }
 
-proc job_process_distr_submit {job runfile args} {
+proc job_process_submit_distr {job runfile args} {
 #set jobnum [incr cgjob_distr(num)]
 #return $jobnum
 	global cgjob_distr cgjob_distr_queue
@@ -165,7 +165,7 @@ proc job_process_distr_submit {job runfile args} {
 	return $jobnum
 }
 
-proc job_process_distr_wait {} {
+proc job_wait_distr {} {
 	global cgjob cgjob_exit cgjob_running
 	update
 	job_logfile_par_close

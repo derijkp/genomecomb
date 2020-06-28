@@ -101,7 +101,7 @@ proc basecaller_albacore_job {args} {
 		lappend opts --config $config
 	}
 	if {![info exists job_logdir]} {
-		job_logdir $resultdir/log_jobs
+		set_job_logdir $resultdir/log_jobs
 	}
 	set name [file tail $resultdir]
 	if {$name eq "fastq"} {
@@ -140,7 +140,7 @@ proc basecaller_albacore_job {args} {
 					lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
 				}
 				
-				job albacore-[file tail $sourcedir]-$name -cores $threads \
+				job albacore-[file_part $sourcedir end]-$name -cores $threads \
 				-deps {$sourcedir/$dir} \
 				-targets $targets \
 				-vars {sourcedir from to todo opts threads barcoding resultdir name} \
@@ -206,7 +206,7 @@ proc basecaller_albacore_job {args} {
 				}
 				lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
 			}
-			job albacore-[file tail $sourcedir]-$from-$to -cores $threads \
+			job albacore-[file_part $sourcedir end]-$from-$to -cores $threads \
 			-deps $sourcedir \
 			-targets $targets \
 			-vars {name sourcedir resultdir barcoding from to todo opts threads} \

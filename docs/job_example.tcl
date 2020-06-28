@@ -38,7 +38,7 @@ proc main args {
 	# This is a directory where output, job scripts etc. will be stored
 	# The combination of log dir and jobname (see further) must be unique
 	# You can us different log dirs in one run (change the log dir during the program)
-	job_logdir log_jobs
+	set_job_logdir log_jobs
 	for {set i 0} {$i < $num} {incr i} {
 		# run a job
 		job initfile-$i -targets {numbers-$i.txt} -vars max -skip {sumtotal.txt message.txt} -code {

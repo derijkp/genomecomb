@@ -349,7 +349,9 @@ proc cg_annotate_job {args} {
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
 		{*}[versions dbdir zstd os]
 	# logdir
-	job_logdir $tempbasefile.log_jobs
+	if {![info exists job_logdir]} {
+		set_job_logdir [file dir $resultfile]/log_jobs
+	}
 	# if nothing to add, copy orifile
 	if {![llength $dbfilestodo]} {
 		job annotate_copyori -deps {$orifile} -targets {$resultfile} -code {

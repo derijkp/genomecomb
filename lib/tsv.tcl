@@ -237,7 +237,7 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 	if {$usefile eq ""} {
 		set usefile [indexdir_file $orifile vars.tsv]
 	}
-	job annot-createusefile-[file tail $usefile] -deps {
+	job annot-createusefile-[file_part $usefile end-2 end] -deps {
 		$orifile
 	} -targets {
 		$usefile

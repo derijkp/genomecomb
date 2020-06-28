@@ -50,7 +50,7 @@ proc process_sample_cgi_job {workdir split} {
 	set sample [file tail $workdir]
 	set keepdir [pwd]
 	cd $workdir
-	job_logdir $workdir/log_jobs
+	set_job_logdir $workdir/log_jobs
 	set chromosomes {}
 	set files [jobglob $workdir/ori/ASM/REF/coverage*.tsv]
 	if {[llength $files]} {
@@ -725,7 +725,7 @@ proc process_sample_job {args} {
 	# ------------------------------
 #	set keeppwd [pwd]
 #	cd $sampledir
-	job_logdir $sampledir/log_jobs
+	set_job_logdir $sampledir/log_jobs
 	set refseq [glob $dbdir/genome_*.ifas]
 	set resultbamprefix {}
 	if {$amplicons ne ""} {append resultbamprefix c}
@@ -756,7 +756,7 @@ proc process_sample_job {args} {
 				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
 				set target2 $base-R2.fastq.gz
-				job bam2fastq-[file tail $file] -deps {$file} -cores $threads \
+				job bam2fastq-[file_part $file end] -deps {$file} -cores $threads \
 				-targets {$target $target2} -vars {threads} -code {
 					cg bam2fastq -threads $threads $dep $target.temp.gz $target2.temp.gz
 					file rename -force -- $target.temp.gz $target
@@ -868,7 +868,7 @@ proc process_sample_job {args} {
 			}
 			if {$cleanup} {
 				# clean up no longer needed intermediate files
-				cleanup_job cleanupclipped-[file tail $target] $cleanupfiles $cleanupdeps
+				cleanup_job cleanupclipped-[file_part $target end] $cleanupfiles $cleanupdeps
 			}
 		}
 		set cleanupdeps {}

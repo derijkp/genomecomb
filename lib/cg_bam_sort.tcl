@@ -41,7 +41,7 @@ proc bam_sort_job {args} {
 		}
 	} {sourcefile resultfile}
 	set analysisinfo [gzroot $resultfile].analysisinfo
-	job bamsort-[file tail $resultfile] -deps {
+	job bamsort-[file_part $resultfile end] -deps {
 		$sourcefile
 	} -targets {
 		$resultfile $analysisinfo

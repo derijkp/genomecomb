@@ -23,10 +23,10 @@ proc job_distribute {{type {}}} {
 	} else {
 		set target $type
 	}
-	if {[info commands job_process_${target}_init] eq ""} {auto_load job_process_${target}_init}
+	if {[info commands job_process_init_${target}] eq ""} {auto_load job_process_init_${target}}
 #	interp alias {} job_process {} job_process_$target
-#	interp alias {} job_wait {} job_process_${target}_wait
-	job_process_${target}_init
+#	interp alias {} job_wait {} job_wait_${target}
+	job_process_init_${target}
 }
 
 proc job_force_get {{def {}}} {
@@ -142,7 +142,7 @@ proc job_args {jobargs} {
 				set logfile [lindex $jobargs $pos]
 				incr pos
 				job_logfile $logfile
-				job_logdir [file_absolute [file dir $logfile]/log_jobs]
+				set_job_logdir [file_absolute [file dir $logfile]/log_jobs]
 			}
 			-- {
 				lappend newargs --
@@ -339,7 +339,7 @@ proc jobtargetexists {args} {
 		set time 0
 		set files [job_finddep $pattern ids time timefile $checkcompressed]
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
-#			job_log targetexists-[file tail $target] "one of targets older than dep $timefile (renaming to .old): $targets"
+#			job_log targetexists-[file_part $target end] "one of targets older than dep $timefile (renaming to .old): $targets"
 #			foreach target $targets {
 #				file rename -force -- $target $target.old
 #			}
@@ -767,6 +767,18 @@ proc job_logdir {{logdir {}}} {
 	}
 	set job_logdir [file_absolute $logdir]
 	file mkdir $job_logdir
+	set ::cgjob(default_job_logdir) 0
+}
+
+proc set_job_logdir {{logdir {}}} {
+	upvar job_logdir job_logdir
+	if {[info exists job_logdir] && [get ::cgjob(default_job_logdir) 1] == 0} return
+	if {$logdir eq ""} {
+		set logdir [file join [pwd] log_jobs]
+	}
+	set job_logdir [file_absolute $logdir]
+	file mkdir $job_logdir
+	set ::cgjob(default_job_logdir) 0
 }
 
 proc job_logname {job_logdir name} {
@@ -834,7 +846,7 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	global cgjob
 	upvar job_logdir job_logdir
 	# allways set logdir next to logfile
-	job_logdir [file dir $logfile]/log_jobs
+	set_job_logdir [file dir $logfile]/log_jobs
 	if {$dir eq ""} {set dir [file dir $logfile]}
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time
@@ -1315,9 +1327,10 @@ proc job_init {args} {
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
+	set cgjob(default_job_logdir) 1
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
-	interp alias {} job_wait {} job_process_direct_wait
+	interp alias {} job_wait {} job_wait_direct
 	set ::job_getinfo 0
 	job_args $args
 }

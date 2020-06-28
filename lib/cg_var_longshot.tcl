@@ -150,7 +150,7 @@ proc var_longshot_job {args} {
 	set dep $bamtail
 	set bamtailindex $bamtail.[indexext $bamtail]
 	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
-	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets $longshottargets -vars {
+	job longshot-[file_part $varfile end-1 end] {*}$skips -mem 8G -deps $deps -targets $longshottargets -vars {
 		vcffile region refseq root varfile split tech opts region hap_bam hap_base maxcov mincoverage index
 	} -code {
 		if {$tech eq "ont"} {
@@ -249,7 +249,7 @@ proc var_longshot_job {args} {
 		}
 	}
 	# make sreg
-	job longshot-sreg-[file tail $varfile] {*}$skips -deps {
+	job longshot-sreg-[file_part $varfile end-1 end] {*}$skips -deps {
 		$bamfile
 	} -targets {
 		$sregfile

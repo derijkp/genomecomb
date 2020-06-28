@@ -68,3 +68,12 @@ proc copywithindex {file target args} {
 		}
 	}	
 }
+
+proc file_part {file {start {}} {end {}}} {
+	if {$start eq ""} {
+		set start end ; set end end
+	} elseif {$end eq ""} {
+		set end $start
+	}
+	file join {*}[lrange [file split $file] $start $end]
+}

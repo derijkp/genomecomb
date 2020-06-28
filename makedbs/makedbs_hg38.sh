@@ -80,7 +80,7 @@ cd ${dest}/${build}
 file mkdir extra
 
 logverbose 2
-job_logdir log_jobs
+set_job_logdir log_jobs
 job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 
 # download

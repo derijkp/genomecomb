@@ -220,7 +220,7 @@ proc process_project_job {args} {
 	if {[llength $poss]} {
 		error "- is not allowed in sample names. The following sample name(s) have a -: [list_sub $samples $poss]"
 	}
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	set todo(var) {}
 	set todo(sv) {}
 	set todo(meth) {}
@@ -270,7 +270,7 @@ proc process_project_job {args} {
 			}
 		}
 	}
-	job_logdir $destdir/log_jobs
+	set_job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]
 	set todo(sv) [list_remdup $todo(sv)]
 	set todo(meth) [list_remdup $todo(meth)]

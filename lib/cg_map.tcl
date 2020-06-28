@@ -105,7 +105,7 @@ proc map_job {args} {
 	set resultdir [file dir $result]
 	file mkdir $resultdir
 	if {![info exists job_logdir]} {
-		job_logdir [file dir $result]/log_jobs
+		set_job_logdir [file dir $result]/log_jobs
 	}
 	job_logfile $resultdir/map_${method}_[file tail $result] $resultdir $cmdline \
 		{*}[versions minimap2]
@@ -124,7 +124,7 @@ proc map_job {args} {
 	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
-		job map_${method}-[file tail $result] {*}$skips \
+		job map_${method}-[file_part $result end] {*}$skips \
 			-mem [map_mem $method $mem $threads] -cores $threads \
 		-deps [list {*}$fastqfiles $refseq] -targets {
 			$result $analysisinfo

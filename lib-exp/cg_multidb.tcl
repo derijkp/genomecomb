@@ -243,7 +243,9 @@ proc multidb_job {args} {
 	#
 	# merge variants
 	# todo: check for concurrency
-	job_logdir $workdir/log_jobs
+	if {![info exists job_logdir]} {
+		set_job_logdir $workdir/log_jobs
+	}
 	set multi_merge_num 0
 	set files $datafiles
 	# compar_file and targetsfile will only add variants (not data), 

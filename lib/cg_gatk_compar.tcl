@@ -88,7 +88,9 @@ proc gatk_compar_job args {
 	set resultvcf [file_absolute $resultvcf]
 	set resulttsv [file root [gzroot $resultvcf]].tsv.zst
 	set name [file root [file tail [gzroot $resultvcf]]]
-	job_logdir [file dir $resultvcf]/log_jobs
+	if {![info exists job_logdir]} {
+		set_job_logdir [file dir $resultvcf]/log_jobs
+	}
 	job_logfile [file dir $resultvcf]/gatk_compar_$name [file dir $resultvcf] $cmdline \
 		{*}[versions gatk]
 	set dbdir [dbdir $dbdir]
@@ -135,7 +137,7 @@ proc gatk_compar_job args {
 		set deps [list $gatkrefseq]
 		foreach file $args {
 			if {[file extension $file] eq ".gz"} {
-				job tabix-[file tail $file] -deps $file -targets $file.tbi -code {
+				job tabix-[file_part $file end] -deps $file -targets $file.tbi -code {
 					exec tabix -p vcf $dep
 				}
 			}

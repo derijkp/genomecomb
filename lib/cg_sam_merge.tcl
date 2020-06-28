@@ -36,14 +36,14 @@ proc sam_merge_job {args} {
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
-		set name sam_merge-[file tail $outputfile]
+		set name sam_merge-[file_part $outputfile end-1 end]
 	}
 	set outputfile [file_absolute $outputfile]
 	if {![jobtargetexists -checkdepexists 1 $outputfile $samfiles]} {
 		set workdir [gzroot $outputfile].index/merge
 		file delete -force $workdir
 		file mkdir $workdir
-		job_logdir $workdir/log_jobs
+		set_job_logdir [file dir $outputfile]/log_jobs
 		set maxfiles [maxopenfiles]
 		if {$maxfiles < 2} {set maxfiles 2}
 		set len [llength $samfiles]

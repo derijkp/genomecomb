@@ -2,7 +2,7 @@ proc refseq_ngmlr_job {refseq preset} {
 	upvar job_logdir job_logdir
 	if {![jobtargetexists [list $refseq-ht-13-2.2.ngm $refseq-enc.2.ngm] [list $refseq]]} {
 		set tail [file tail $refseq]
-		job ngmlr_2refseq-[file tail $refseq] -deps {$refseq} -targets {
+		job ngmlr_2refseq-[file_part $refseq end] -deps {$refseq} -targets {
 			$refseq-ht-13-2.2.ngm $refseq-enc.2.ngm
 		} -vars {preset} -code {
 			set temp [tempfile]

@@ -57,8 +57,8 @@ job_logfile logfile ?basedir? ?cmdline? ?key value? ...
 You can only have one logfile for a run, which is set by the first call to job_logfile.
 Calling job_logfile a second time will not change this. (The -logfile option in job_init
 will override a subsequent call to job_logfile)
-job_logfile also sets the variable job_logdir (if it does not exist yet) to
-[file dir $logdir]/log_jobs
+set_job_logfile also sets the variable job_logdir to [file dir $logdir]/log_jobs
+(or to any directory given as an argument)
 
 == job_logdir ==
 The job log directory is a directory where per job output, job scripts,
@@ -76,10 +76,10 @@ are by default retained for error checking/solving.
 The current job log directory is given by the (content of the) variable
 job_logdir. The job command will give an error if job_logdir is not defined.
 You can change the variable directly or you can set it using the
-job_logdir command (which will also expand it to the full path and create
+set_job_logdir command (which will also expand it to the full path and create
 the directory), e.g.
 {{{
-job_logdir log_jobs
+set_job_logdir log_jobs
 }}}
 job_init will set log_jobs to a default value (log_jobs in the directory of the logfile).
 
