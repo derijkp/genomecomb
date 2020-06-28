@@ -98,18 +98,28 @@ proc compress_template {file destfile method cmd {index 1} {keep 1}} {
 	}
 }
 
-proc wgzopen {file {compressionlevel -1} {threads {}}} {
+proc wgzopen {file {compressionlevel -1} {threads {}} {pipe {}}} {
 	set root [file root [gzroot $file]]
 	if {$root eq "-"} {
 		if {![gziscompressed $file]} {
-			return stdout
+			if {$pipe eq ""} {
+				return stdout
+			} else {
+				return [open [list {*}$pipe >@ stdout" w]
+			}
 		} else {
-			return [open "[compresspipe $file $compressionlevel $threads] >@ stdout" w]
+			return [open [list {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
 		}
 	} elseif {![gziscompressed $file]} {
-		return [open $file w]
+		if {$pipe eq ""} {
+			return [open $file w]
+		} else {
+			return [open [list {*}$pipe > $file] w]
+		}
+	} elseif {$pipe eq ""} {
+		return [open [list {*}[compresspipe $file $compressionlevel $threads] > $file] w]
 	} else {
-		return [open "[compresspipe $file $compressionlevel $threads] > $file" w]
+		return [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] > $file] w]
 	}
 }
 
