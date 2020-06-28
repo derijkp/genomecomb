@@ -1,21 +1,36 @@
-proc tsv_paste_job {outputfile files args} {
+proc tsv_paste_job {args} {
+	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg paste {*}$args]"
 	set forcepaste 0
 	set endcommand {}
 	set optional 0
-	foreach {k v} $args {
-		switch $k {
-			-forcepaste {set forcepaste $v}
-			-endcommand {set endcommand $v}
-			-optional {set optional $v}
-			default {error "Unkown option $k"}
-		} 
+	cg_options paste args {
+		-o - -outputfile {
+			set outputfile $value
+		}
+		-m - -maxopenfiles {
+			maxopenfiles $value
+		}
+		-forcepaste {
+			set forcepaste $value
+		}
+		-endcommand {
+			set endcommand $value
+		}
+		-optional {
+			set optional $value
+		}
+	} {} 0
+	if {![info exists outputfile]} {
+		# puts [list ../bin/tsv_paste {*}$args]
+		exec tsv_paste {*}$args >@ stdout 2>@ stderr
+		return
 	}
+	set files $args
 	# putsvars outputfile files forcepaste endcommand
 	set outputfile [file_absolute $outputfile]
-	set workdir [gzroot $outputfile].index/paste
-	file delete -force $workdir
-	file mkdir $workdir
-	job_logdir $workdir/log_jobs
+	set outputdir [file dir $outputfile]
+	job_logfile $outputdir/paste_[file tail $outputfile] $outputdir $cmdline
 	set maxfiles [maxopenfiles]
 	set len [llength $files]
 	if {$len <= $maxfiles} {
@@ -28,9 +43,14 @@ proc tsv_paste_job {outputfile files args} {
 			file rename -force -- $temp $target
 			if {$compress ne ""} {cg_zindex $target}
 			if {$endcommand ne ""} {eval $endcommand}
+			
 		}
 		return
 	}
+	set workdir [gzroot $outputfile].index/paste
+	job_cleanup_ifempty_add [gzroot $outputfile].index
+	file delete -force $workdir
+	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}
 	set todo $files
 	set delete 0
@@ -52,6 +72,7 @@ proc tsv_paste_job {outputfile files args} {
 				if {$compress ne ""} {cg_zindex $target}
 				if {$delete} {file delete {*}$deps}
 				if {$endcommand ne ""} {eval $endcommand}
+				file delete -force $workdir
 			}
 			break
 		}
@@ -86,19 +107,7 @@ proc tsv_paste_job {outputfile files args} {
 
 proc cg_paste {args} {
 	set args [job_init {*}$args]
-	cg_options paste args {
-		-o - -outputfile {
-			set outputfile $value
-		}
-		-m - -maxopenfiles {
-			maxopenfiles $value
-		}
-	} {} 1
-	if {[info exists outputfile]} {
-		tsv_paste_job $outputfile $args
-	} else {
-		# puts [list ../bin/tsv_paste {*}$args]
-		exec tsv_paste {*}$args >@ stdout 2>@ stderr
-	}
+	tsv_paste_job {*}$args
+	job_wait
 }
 

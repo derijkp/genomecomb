@@ -793,7 +793,7 @@ proc pmulticompar_job {args} {
 	# putsvars pastefiles
 	set endcommand [list file delete {*}$pastefiles]
 	set endcommand {}
-	tsv_paste_job $compar_file $pastefiles -forcepaste 1 -endcommand $endcommand
+	tsv_paste_job -o $compar_file -forcepaste 1 -endcommand $endcommand {*}$pastefiles
 }
 
 proc cg_pmulticompar {args} {
