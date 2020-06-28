@@ -237,6 +237,9 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 	if {$usefile eq ""} {
 		set usefile [indexdir_file $orifile vars.tsv]
 	}
+	if {$usefile eq $orifile} {
+		error "internal error: Trying to create smaller varfile as cache, but target is same as original"
+	}
 	job annot-createusefile-[file_part $usefile end-2 end] -deps {
 		$orifile
 	} -targets {
@@ -254,9 +257,7 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 			tsv_varsfile $orifile $usefile
 			puts "Using varfile $usefile"
 		} else {
-			if {[file dir $target] eq "$orifile.index"} {
-				mklink $orifile $target
-			}
+			mklink $orifile $target
 		}
 	}
 	return $usefile
