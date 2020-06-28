@@ -130,7 +130,7 @@ proc var_sam_job {args} {
 	}
 	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
-		${pre}varall-$root.vcf
+		${pre}varall-$root.vcf.zst
 	} -skip {
 		${pre}varall-$root.tsv 
 	} -vars {
@@ -138,7 +138,7 @@ proc var_sam_job {args} {
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
+		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp.zst
 		if {$emptyreg && [file exists $cache]} {
 			copywithindex $cache $target $cache.tbi.temp $target.tbi
 		} else {
@@ -147,21 +147,21 @@ proc var_sam_job {args} {
 				lappend opts -l $bedfile
 			}
 			if {[catch {version samtools 1}]} {
-				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - | cg zst -c 1 > $target.temp.zst 2>@ stderr
 			} else {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
+				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - | cg zst -c 1 > $target.temp.zst 2>@ stderr
 			}
-			file rename -force -- $target.temp $target
+			file rename -force -- $target.temp.zst $target
 			if {$emptyreg && ![file exists $cache]} {
 				file copy -force $target $cache
 			}
 		}
 	}
 	job ${pre}varall-sam2tsv-$root {*}$skips -deps {
-		${pre}varall-$root.vcf
+		${pre}varall-$root.vcf.zst
 	} -targets {
 		${pre}varall-$root.tsv.zst
 	} -vars {
@@ -202,7 +202,7 @@ proc var_sam_job {args} {
 	if {$cleanup} {
 		set cleanupfiles [list \
 			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
-			${pre}varall-$root.vcf \
+			${pre}varall-$root.vcf.zst \
 			${pre}varall-$root.vcf.idx \
 		]
 		set cleanupdeps [list ${pre}var-$root.tsv ${pre}varall-$root.tsv]
