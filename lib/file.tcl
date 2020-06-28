@@ -63,7 +63,7 @@ proc copywithindex {file target args} {
 	foreach {file2 target2} $args {
 		if {[file exists $file2]} {
 			file copy -force $file2 $target2
-		} elseif {[file extension $target2] eq ".tbi"} {
+		} elseif {[file extension $target2] eq ".tbi" && [file extension [file root $target2]] eq ".gz"} {
 			exec tabix -p vcf [file root $target2]
 		}
 	}	
