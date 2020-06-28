@@ -335,8 +335,6 @@ test tsv_cat {-m 1 -n file} {
 1	test	15	25	reg1.tsv
 1		45	55	reg2.tsv}
 
-set ::env(PATH) $keeppath
-
 test check_sort {sort error 1 in vars} {
 	exec cg checksort data/vars_sorterror1.sft
 } {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")
@@ -710,7 +708,7 @@ test tsv_paste {7 files > maxopenfiles -o} {
 	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
 	bsort [glob tmp/*]
-} {tmp/expected.tsv tmp/result.tsv tmp/result.tsv.index tmp/sample1.tsv tmp/sample2.tsv tmp/sample3.tsv tmp/sample4.tsv tmp/sample5.tsv tmp/sample6.tsv tmp/vars1.tsv}
+} {tmp/expected.tsv tmp/result.tsv tmp/sample1.tsv tmp/sample2.tsv tmp/sample3.tsv tmp/sample4.tsv tmp/sample5.tsv tmp/sample6.tsv tmp/vars1.tsv}
 
 test tsv_paste {8 files > maxopenfiles -o} {
 	test_cleantmp

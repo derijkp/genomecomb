@@ -95,7 +95,7 @@ test process_sv {manta} {
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *.tbi -x *.submitting -x *.xml \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *dupmetrics -x colinfo -x *.lz4i -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf \
 		tmp/sv_chr21part expected/sv_chr21part]
 	join [list_remove $result {}] \n
