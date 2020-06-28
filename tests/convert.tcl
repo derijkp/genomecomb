@@ -1202,7 +1202,7 @@ test gtf2tsv {-separate 1} {
 		# -- sft converted from gtf, original comments follow --
 		# ----
 		chromosome	begin	end	type	transcript	gene	strand	source	comments	gene_id	transcript_id	exon_number
-		chr3	999	2000	transcript	transcript1	gene1	-	source2		gene1	transcript1
+		chr3	999	2000	transcript	transcript1	gene1	-	source2		gene1	transcript1	
 		chr3	999	2000	exon	transcript1	gene1	-	source2		gene1	transcript1	0
 		chr4	999	4000	transcript	transcript2-1	gene2	+	source2		gene2	transcript2-1	
 		chr4	999	1500	exon	transcript2-1	gene2	+	source2		gene2	transcript2-1	0
@@ -1213,7 +1213,6 @@ test gtf2tsv {-separate 1} {
 		chr4	4499	5000	exon	transcript2-2	gene2	+	source2		gene2	transcript2-2	2
 	}]]\n
 	cg gtf2tsv -separate 1 tmp/test.gtf tmp/test.tsv
-	cg checktsv tmp/test.tsv
 	exec diff tmp/test.tsv tmp/expected.tsv
 } {}
 

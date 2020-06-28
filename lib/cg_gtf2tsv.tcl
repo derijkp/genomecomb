@@ -21,7 +21,6 @@ proc cg_gtf2tsv {args} {
 		}
 	} {filename outfile} 0 2
 	set f [gzopen $filename]
-	set o [wgzopen $outfile w]
 
 	set comment {# -- sft converted from gtf, original comments follow --}
 	while {![eof $f]} {
@@ -167,25 +166,30 @@ proc cg_gtf2tsv {args} {
 					lset attrlist $attra($key) $value
 				}
 			}
-			puts $fa [join $attrlist \t]
+			puts $fa $attrlist
 			if {[gets $f line] == -1} break
 		}
 	}
 	catch {close $fb} ; catch {close $fa}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 
 	putsprogress "Assembling file"
+	set o [wgzopen $outfile]
 	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
 	set fb [open $tempbase]
 	set fa [open $tempattr]
+	set len [llength $attrlist]
 	while {![eof $fa]} {
 		set linea [gets $fb]
 		if {![string length $linea]} break
 		set lineb [gets $fa]
-		puts $o $linea\t$lineb
+		if {[llength $lineb] < $len} {
+			lappend lineb {*}[list_fill [expr {$len-[llength $lineb]}] {}]
+		}
+		puts $o $linea\t[join $lineb \t]
 	}
 	catch {close $fb} ; catch {close $fa}
 	file delete $tempbase ; file delete $tempattr
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {gzclose $f}}
 }
