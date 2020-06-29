@@ -137,7 +137,7 @@ proc gatk_compar_job args {
 		set deps [list $gatkrefseq]
 		foreach file $args {
 			if {[file extension $file] eq ".gz"} {
-				job tabix-[file_part $file end] -deps $file -targets $file.tbi -code {
+				job tabix-[job_relfile2name $file] -deps $file -targets $file.tbi -code {
 					exec tabix -p vcf $dep
 				}
 			}

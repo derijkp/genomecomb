@@ -41,7 +41,7 @@ proc fastq_split_job {args} {
 		for {set part 1} {$part <= $parts} {incr part} {
 			lappend files $outdir/p${part}_$outfile.temp
 		}
-		job fastq_split-[file_part $infile end] -deps {
+		job fastq_split-[job_relfile2name $infile] -deps {
 			$infile
 		} -targets $files -vars {
 			infile outdir outfile parts
@@ -59,7 +59,7 @@ proc fastq_split_job {args} {
 		set result {}
 		foreach file $files {
 			set target [file root $file]
-			job fastq_split_compres-[file_part $file end] -cores $threads -deps {
+			job fastq_split_compres-[job_relfile2name $file] -cores $threads -deps {
 				$file
 			} -targets {
 				$target
@@ -73,7 +73,7 @@ proc fastq_split_job {args} {
 		set result {}
 		foreach file $files {
 			set target [file root $file]
-			job fastq_split_rename-[file_part $file end] -deps {$file} -targets {[file root $file]} -code {
+			job fastq_split_rename-[job_relfile2name $file] -deps {$file} -targets {[file root $file]} -code {
 				file rename -- $dep $target
 			}
 			lappend result $target

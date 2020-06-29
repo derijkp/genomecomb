@@ -9,11 +9,11 @@ proc gatk_refseq_job refseq {
 	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
 		mklink $refseq $nrefseq
 	}
-	job gatkrefseq_faidx-[file_part $nrefseq end] -deps {$nrefseq} -targets {$nrefseq.fai} -code {
+	job gatkrefseq_faidx-[job_relfile2name $nrefseq] -deps {$nrefseq} -targets {$nrefseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
-	job gatkrefseq-[file_part $nrefseq end] -deps {$nrefseq} -targets {$dict} -vars {nrefseq} -code {
+	job gatkrefseq-[job_relfile2name $nrefseq] -deps {$nrefseq} -targets {$dict} -vars {nrefseq} -code {
 		file delete $target.temp
 		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
 		file rename -force -- $target.temp $target

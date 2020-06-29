@@ -12,7 +12,7 @@ proc refseq_bwa_job {refseq} {
 		lappend fatargets $bwarefseqfa.$ext
 	}
 	if {[jobtargetexists $fatargets $refseq]} {return $bwarefseqfa}
-	job bwa2refseq-[file_part $refseq end] -deps {$refseq} -targets $targets -code {
+	job bwa2refseq-[job_relfile2name $refseq] -deps {$refseq} -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
@@ -32,7 +32,7 @@ proc refseq_bwa_job {refseq} {
 		file delete $target.temp
 	}
 	# with .fa as extension
-	job bwa2refseq_fa-[file_part $refseq end] -deps $targets -targets $fatargets -vars {
+	job bwa2refseq_fa-[job_relfile2name $refseq] -deps $targets -targets $fatargets -vars {
 		bwarefseq bwarefseqfa refseq fatargets
 	} -code {
 		foreach file $deps nfile $fatargets {

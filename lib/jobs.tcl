@@ -339,7 +339,7 @@ proc jobtargetexists {args} {
 		set time 0
 		set files [job_finddep $pattern ids time timefile $checkcompressed]
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
-#			job_log targetexists-[file_part $target end] "one of targets older than dep $timefile (renaming to .old): $targets"
+#			job_log targetexists-[job_relfile2name $target] "one of targets older than dep $timefile (renaming to .old): $targets"
 #			foreach target $targets {
 #				file rename -force -- $target $target.old
 #			}
@@ -1369,6 +1369,21 @@ proc job_cleanup_add {args} {
 	foreach file $args {
 		lappend cgjob(cleanupfiles) [file_absolute $file]
 	}
+}
+
+proc job_relfile2name {file} {
+	upvar job_logdir job_logdir
+	if {[info exists job_logdir]} {
+		set ffile [file_absolute $file]
+		set dir [file dir $job_logdir]
+		set dirlength [string length $dir]
+		incr dirlength -1
+		if {[string range $ffile 0 $dirlength] eq $dir} {
+			set file [string range $ffile [expr {$dirlength + 2}] end]
+			if {$file eq ""} {set file [file tail $ffile]}
+		}
+	}
+	return [string_change $file {/ __ : _ \" _ \' _}]
 }
 
 job_init

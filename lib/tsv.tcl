@@ -240,7 +240,7 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 	if {$usefile eq $orifile} {
 		error "internal error: Trying to create smaller varfile as cache, but target is same as original"
 	}
-	job annot-createusefile-[file_part $usefile end-2 end] -deps {
+	job annot-createusefile-[job_relfile2name $usefile] -deps {
 		$orifile
 	} -targets {
 		$usefile

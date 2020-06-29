@@ -26,7 +26,7 @@ proc multi_merge_job {varsfile files args} {
 	if {$len <= $maxfiles} {
 		# merge in one go
 		set target $varsfile
-		job multi_merge-[file_part $varsfile end-1 end] -force $force -deps $files -targets {
+		job multi_merge-[job_relfile2name $varsfile] -force $force -deps $files -targets {
 			$target
 		} -vars {
 			split limitreg
@@ -58,7 +58,7 @@ proc multi_merge_job {varsfile files args} {
 		if {$len <= $maxfiles} {
 			# final merge (we have less than maxfiles files to merge left)
 			set target $varsfile
-			job multi_merge-[file_part $varsfile end-1 end] -optional $optional -force $force -deps $todo -targets {
+			job multi_merge-[job_relfile2name $varsfile] -optional $optional -force $force -deps $todo -targets {
 				$target
 			} -vars {
 				split delete workdir limitreg
@@ -79,7 +79,7 @@ proc multi_merge_job {varsfile files args} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job multi_merge-[file_part $varsfile end-1 end] -optional $optional -force $force -deps $deps -targets {
+			job multi_merge-[job_relfile2name $varsfile] -optional $optional -force $force -deps $deps -targets {
 				$target
 			} -vars {
 				split delete limitreg
@@ -498,7 +498,7 @@ proc pmulticompar_job {args} {
 	} compar_file 1
 	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
-	job_logfile [file dir $compar_file]/pmulticompar-[file_part $compar_file end] [file dir $compar_file] $cmdline \
+	job_logfile [file dir $compar_file]/pmulticompar-[job_relfile2name $compar_file] [file dir $compar_file] $cmdline \
 		{*}[versions dbdir zst os]
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
@@ -599,7 +599,7 @@ proc pmulticompar_job {args} {
 		lappend deps "([gzroot $file].analysisinfo)"
 	}
 	set target [gzroot $compar_file].analysisinfo
-	job multicompar_analysisinfo-[file_part $compar_file end] -deps $deps -optional 1 \
+	job multicompar_analysisinfo-[job_relfile2name $compar_file] -deps $deps -optional 1 \
 	-targets {$target} -code {
 		set deps [list_remove $deps {}]
 		if {[llength $deps]} {

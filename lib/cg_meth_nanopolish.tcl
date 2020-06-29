@@ -110,7 +110,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set bamcache $cachedir/[file tail $bamfile]
 		set bamcacheindex [index_file $bamcache]
 		putslog "meth_nanopolish using cached bam: $bamcache"
-		job meth_nanopolish_makecache-[file_part $bamfile end] {*}$skips -skip {$smethfile} -skip {$resultfile} -deps {
+		job meth_nanopolish_makecache-[job_relfile2name $bamfile] {*}$skips -skip {$smethfile} -skip {$resultfile} -deps {
 			$bamfile
 		} -targets {
 			$bamcache
@@ -143,7 +143,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set target $resultfile.temp/$root.smeth.tsv.zst
 		lappend seqmethfiles $target
 		set deps [list {*}$usefastqfiles {*}$fast5files $refseq $bamcache ($bamfileindex)]
-		job seqmeth_nanopolish-[file_part $target end] {*}$skips -cores $threads -deps $deps -targets {
+		job seqmeth_nanopolish-[job_relfile2name $target] {*}$skips -cores $threads -deps $deps -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
 			fastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex
@@ -306,7 +306,7 @@ proc meth_nanopolish_job {args} {
 		set smethfile [file dir $resultfile]/smeth-$tail
 	}
 	set deps [list {*}$fastqfiles $fast5dir]
-	job seqmeth_nanopolish_index-[file_part $bamfile end] {*}$skips -cores $threads -deps $deps -targets {
+	job seqmeth_nanopolish_index-[job_relfile2name $bamfile] {*}$skips -cores $threads -deps $deps -targets {
 		$fastqfile $fastqfile.index $fastqfile.index.fai $fastqfile.index.gzi $fastqfile.index.readdb
 	} -skip {$smethfile} -skip {$resultfile} -vars {
 		fastqfiles fastqfile fast5dir
@@ -321,7 +321,7 @@ proc meth_nanopolish_job {args} {
 	foreach region $regions {
 		set target $resultfile.temp/$region.smeth.tsv.zst
 		lappend seqmethfiles $target
-		job seqmeth_nanopolish-[file_part $target end] {*}$skips -cores $threads -mem 4G -deps {
+		job seqmeth_nanopolish-[job_relfile2name $target] {*}$skips -cores $threads -mem 4G -deps {
 			$fastqfile $fast5dir $refseq $bamfile ($bamfileindex)
 		} -targets {
 			$target

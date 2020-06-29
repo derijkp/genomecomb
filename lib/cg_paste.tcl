@@ -35,7 +35,7 @@ proc tsv_paste_job {args} {
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		set target $outputfile
-		job paste-[file_part $outputfile end] -optional $optional -force $forcepaste -deps $files -targets {$target} -vars {endcommand} -code {
+		job paste-[job_relfile2name $outputfile] -optional $optional -force $forcepaste -deps $files -targets {$target} -vars {endcommand} -code {
 			set compress [compresspipe $target]
 			# puts [list ../bin/tsv_paste {*}$deps]
 			set temp [filetemp_ext $target]
@@ -58,7 +58,7 @@ proc tsv_paste_job {args} {
 	while 1 {
 		if {$len <= $maxfiles} {
 			set target $outputfile
-			job paste-[file_part $outputfile end] -optional $optional -force $forcepaste \
+			job paste-[job_relfile2name $outputfile] -optional $optional -force $forcepaste \
 			-deps $todo -targets {
 				$target
 			} -vars {
@@ -84,7 +84,7 @@ proc tsv_paste_job {args} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job paste-[file_part $target end] -optional $optional -deps $deps -force $forcepaste -targets {$target} -vars {delete} -code {
+			job paste-[job_relfile2name $target] -optional $optional -deps $deps -force $forcepaste -targets {$target} -vars {delete} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				if {[llength $deps] > 1} {
 					exec tsv_paste {*}$deps {*}[compresspipe $target 1] > $target.temp 2>@ stderr
