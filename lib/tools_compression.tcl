@@ -509,8 +509,12 @@ proc zst_job {file args} {
 	} -code {
 		defcompressionlevel $defcompressionlevel
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
-		cg_zst -keep 0 {*}$args $dep
+		zst -keep 0 {*}$args $dep
 	}
+}
+
+proc zst {args} {
+	cg_compress_job -method zst {*}$args
 }
 
 proc zstindex_job {args} {
@@ -523,7 +527,7 @@ proc zstindex_job {args} {
 	} {file} 1
 	job zstindex-$file {*}$skips -checkcompressed 0 -deps {$file} -targets {$file.zsti} -code {
 		if {![file exists $dep]} {error "error indexing: file $dep does not exist"}
-		cg_zstindex $dep
+		zstindex $dep
 	}
 }
 

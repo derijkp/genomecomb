@@ -60,7 +60,7 @@ proc annotvar_clusters_job {args} {
 		if {[file size $dep]} {
 			exec {*}[gzcat $dep] $dep | cg clusterregions {*}[compresspipe .zst] > $target.temp.zst
 			file rename -force -- $target.temp.zst $target
-			cg_zstindex $target
+			zstindex $target
 		} else {
 			file_write $target ""
 			file_write $target.zsti ""
@@ -94,7 +94,7 @@ proc sreg_gatk_job {job varallfile resultfile {skips {}}} {
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
 		if {[file extension $target] eq ".zst"} {
-			cg_zst -keep 0 -i 1 -o $target $temp2
+			zst -keep 0 -i 1 -o $target $temp2
 		} else {
 			file rename $temp2 $target
 		}

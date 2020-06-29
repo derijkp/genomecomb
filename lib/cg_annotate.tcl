@@ -516,7 +516,7 @@ proc cg_annotate_job {args} {
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force -- $temp $resultfile
-			if {$compress ne ""} {cg_zstindex $resultfile}
+			if {$compress ne ""} {zstindex $resultfile}
 		} else {
 			set f [gzopen $orifile]
 			set header [tsv_open $f]
@@ -533,7 +533,7 @@ proc cg_annotate_job {args} {
 				exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			}
 			file rename -force -- $temp $resultfile
-			if {$compress ne ""} {cg_zstindex $resultfile}
+			if {$compress ne ""} {zstindex $resultfile}
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}
 		file delete $usefile

@@ -413,7 +413,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 			}
 		}
 	}
-	cg_zst -c 9 $newbinfile
+	zst -c 9 $newbinfile
 }
 
 proc cg_bcol_get {args} {

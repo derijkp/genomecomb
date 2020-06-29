@@ -124,7 +124,7 @@ proc process_sample_cgi_job {workdir split} {
 			    -targets {$finaltarget $finaltarget.bin.zst $finaltarget.bin.zst.zsti} -code {
 				cg cat -c f {*}$tomerge > $finaltarget.temp
 				exec cat {*}$tomergebins > $finaltarget.bin.temp
-				cg_zst -keep 0 -i 1 -o $finaltarget.bin.zst $finaltarget.bin.temp
+				zst -keep 0 -i 1 -o $finaltarget.bin.zst $finaltarget.bin.temp
 				file delete $finaltarget.bin.temp
 				file rename $finaltarget.temp $finaltarget
 				file delete {*}$deps
@@ -281,7 +281,7 @@ proc process_sample_cgi_job {workdir split} {
 	# multiarch
 	job reg_cluster-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_cluster-$sample.tsv.zst} -code {
 		cg clusterregions < $dep > $target.temp
-		cg_zst $target.temp
+		zst $target.temp
 		file rename -force -- $target.temp.zst $target
 	}
 	job reg_ns-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_ns-$sample.tsv} -code {
@@ -338,14 +338,14 @@ proc process_sample_cgi_job {workdir split} {
 		set temp2 [filetemp $target2]
 		cg regsubtract $dep1 $dep2 > $temp1
 		cg covered $temp1 > $temp2
-		cg_zst -keep 0 -i 1 -o $target1.zst $temp1
+		zst -keep 0 -i 1 -o $target1.zst $temp1
 		file rename -force -- $temp2 $target2
 	}
 	job cg_filteredns-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_ns-$sample.tsv} \
 	-targets {filtered/filteredns-$sample.tsv.zst} -code {
 		putslog "Coverage of ns region"
 		cg regsubtract $dep1 $dep2 > $target.temp
-		cg_zst -keep 0 -i 1 -o $target $target.temp
+		zst -keep 0 -i 1 -o $target $target.temp
 	}
 	job cg_filteredns_covered-$sample -optional 1 -deps {filtered/filteredns-$sample.tsv} \
 	-targets {covered/filteredns-$sample.covered} -code {
@@ -358,7 +358,7 @@ proc process_sample_cgi_job {workdir split} {
 	-targets {filtered/filteredlowscore-$sample.tsv.zst} -code {
 		set temp [filetemp $target]
 		cg regsubtract $dep1 $dep2 > $temp
-		cg_zst -keep 0 -i 1 -o $target $temp
+		zst -keep 0 -i 1 -o $target $temp
 	}
 	job cg_filteredlowscore_covered-$sample -optional 1 -deps {filtered/filteredlowscore-$sample.tsv} \
 	-targets {covered/filteredlowscore-$sample.covered} -code {
@@ -376,7 +376,7 @@ proc process_sample_cgi_job {workdir split} {
 		putslog "Coverage of clusters region"
 		set temp [filetemp $target]
 		cg regsubtract $dep1 $dep2 > $temp
-		cg_zst -keep 0 -i 1 -o $target $temp
+		zst -keep 0 -i 1 -o $target $temp
 	}
 	job cg_filteredcluster_covered-$sample -optional 1 -deps {filtered/filteredcluster-$sample.tsv} \
 	-targets {covered/filteredcluster-$sample.covered} -code {

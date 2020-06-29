@@ -54,7 +54,7 @@ proc bam2reg_job {args} {
 			set temptarget [filetemp $target]
 			exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
 			file rename -force -- $temptarget $target
-			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+			if {[file extension $target] eq ".zst"} {zstindex $target}
 		}
 	} else {
 		if {![info exists refseq]} {
@@ -92,7 +92,7 @@ proc bam2reg_job {args} {
 			set compress [compresspipe $target]
 			cg cat -c 0 {*}$deps {*}$compress > $target.temp
 			file rename -- $target.temp $target
-			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+			if {[file extension $target] eq ".zst"} {zstindex $target}
 			foreach file $deps {
 				file delete $file [analysisinfo_file $file] [index_file $file]
 			}

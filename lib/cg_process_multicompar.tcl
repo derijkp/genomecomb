@@ -280,7 +280,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar -overlap 40 $target.temp {*}$todo
 			}
-			cg_zst $target.temp
+			zst $target.temp
 			file rename -force -- $target.temp.zst $target
 		}
 		# annotate svmulticompar
@@ -325,7 +325,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg multicompar $target.temp {*}$todo
 			}
-			cg_zst $target.temp
+			zst $target.temp
 			file rename -force -- $target.temp.zst $target
 		}
 		# annotate methmulticompar
@@ -368,7 +368,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg_zst $target.temp
+			zst $target.temp
 			file rename -force -- $target.temp.zst $target
 		}
 		job cgsv_annotate -optional 1 \
@@ -410,7 +410,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg_zst $target.temp
+			zst $target.temp
 			file rename -force -- $target.temp.zst $target
 		}
 		job cgcnv_annotate -optional 1 \

@@ -1,7 +1,3 @@
-proc index_zst {file} {
-	exec zstdindex $file
-}
-
 proc compresscmd_zst {{threads {}} {compressionlevel {}} {blocksize {}}} {
 	set threads [compressionthreads $threads]
 	set compressionlevel [compressionlevel $compressionlevel 8 1 22]
@@ -25,6 +21,10 @@ proc cg_zst args {
 	set args [job_init {*}$args]
 	cg_compress_job -method zst {*}$args
 	job_wait
+}
+
+proc zstindex {file} {
+	exec zstdindex $file
 }
 
 proc cg_zstindex {args} {
