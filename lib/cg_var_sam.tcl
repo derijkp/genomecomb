@@ -147,12 +147,12 @@ proc var_sam_job {args} {
 				lappend opts -l $bedfile
 			}
 			if {[catch {version samtools 1}]} {
-				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - | cg zst -c 1 > $target.temp.zst 2>@ stderr
+				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - {*}[compresspipe $target] > $target.temp.zst 2>@ stderr
 			} else {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - | cg zst -c 1 > $target.temp.zst 2>@ stderr
+				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - {*}[compresspipe $target] > $target.temp.zst 2>@ stderr
 			}
 			file rename -force -- $target.temp.zst $target
 			if {$emptyreg && ![file exists $cache]} {
