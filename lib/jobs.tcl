@@ -882,8 +882,20 @@ proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	upvar job_logdir job_logdir
 	# This will only set the log file the first time it is called, allowing subcommands to set it if called separately
 	# but not when called from a larger workflow
+	if {$dir ne ""} {
+		putslog "basedir: $dir"
+	}
+	if {$cmdline ne ""} {
+		putslog "cmdline: $cmdline"
+	}
 	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	job_logfile_set $logfile $dir $cmdline {*}$args
+	putslog "version_genomecomb: [version genomecomb]"
+	putslog "distribute: $cgjob(distribute)"
+	putslog "logfile: $cgjob(logfile).*"
+	if {$args ne ""} {
+		putslog "versions: $args"
+	}
 }
 
 proc timediff2duration {diff} {
@@ -1300,6 +1312,16 @@ proc job {jobname args} {
 proc job_init {args} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info cgjob_rm
 	upvar job_logdir job_logdir
+## job_init debugging code
+#if {![info exists ::cgjob_initnum]} {
+#	set ::cgjob_initnum 1
+#} else {
+#	incr ::cgjob_initnum
+#}
+#puts "----- job_init $::cgjob_initnum from proc [lindex [info level 1] 0]----"
+#if {$::cgjob_initnum > 2} {
+#	error "call job_init only once"
+#}
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_rm
@@ -1387,3 +1409,4 @@ proc job_relfile2name {file} {
 }
 
 job_init
+
