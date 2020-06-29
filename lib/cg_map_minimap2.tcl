@@ -65,6 +65,10 @@ proc cg_map_minimap2 {args} {
 		}
 		-x - -preset - -p {
 			if {$value eq "splicehq"} {set value splice:hq}
+			if {$value eq "splicesmall"} {
+				set value splice
+				lappend extraopts -B3 -O3,6
+			}
 			set preset $value
 		}
 		-readgroupdata {
