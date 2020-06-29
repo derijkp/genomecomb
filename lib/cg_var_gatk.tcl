@@ -104,6 +104,7 @@ proc sreg_gatk_job {job varallfile resultfile {skips {}}} {
 
 proc var_gatk_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg var_gatk {*}$args]"
 	set pre ""
 	set opts {}
 	set split 1
@@ -177,15 +178,6 @@ proc var_gatk_job {args} {
 	}
 	lappend deps $regionfile
 	# logfile
-	set cmdline [list cg var_gatk]
-	foreach option {
-		split deps bed pre regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatk_$bamtail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
