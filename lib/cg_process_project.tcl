@@ -155,6 +155,11 @@ proc process_project_job {args} {
 		-hap_bam {
 			set hap_bam $value
 		}
+		-extraopts {
+			foreach {k v} $value {
+				set ::cgextraopts($k) $v
+			}
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set adapterfile [adapterfile $adapterfile]

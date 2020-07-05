@@ -572,6 +572,11 @@ proc process_sample_job {args} {
 		-hap_bam {
 			set hap_bam $value
 		}
+		-extraopts {
+			foreach {k v} $value {
+				set ::cgextraopts($k) $v
+			}
+		}
 	} {} 1 2
 	if {[llength $args] == 1} {
 		foreach {sampledir} $args break

@@ -51,6 +51,7 @@ proc map_mem_minimap2 {mem threads} {
 # va-ont : Nanopore read overlap
 
 proc cg_map_minimap2 {args} {
+	if {[info exists ::cgextraopts(minimap2)]} {set extraopts $::cgextraopts(minimap2)} else {set extraopts {}}
 	set paired 1
 	set keepargs $args
 	set preset {}
@@ -83,6 +84,9 @@ proc cg_map_minimap2 {args} {
 		-mem {
 			set mem $value
 		}
+		-extraopts {
+			lappend extraopts {*}$value
+		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using minimap2
 	}
@@ -104,7 +108,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -x $preset {*}$extraopts -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				$minimap2refseq {*}$files {*}$outpipe
 		} msg]} {
@@ -127,7 +131,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -x $preset {*}$extraopts -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
 		} msg]} {
