@@ -124,7 +124,7 @@ proc map_job {args} {
 	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
-		job map_${method}-[job_relfile2name $result] {*}$skips \
+		job [job_relfile2name map_${method}- $result] {*}$skips \
 			-mem [map_mem $method $mem $threads] -cores $threads \
 		-deps [list {*}$fastqfiles $refseq] -targets {
 			$result $analysisinfo

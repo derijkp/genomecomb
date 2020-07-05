@@ -43,7 +43,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 #			cg_razip_job $file
 #		}
 	}
-	job svfind-[job_relfile2name $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
+	job [job_relfile2name svfind- $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
 		set temptarget [filetemp $target]
 		cg cat {*}[bsort $deps] > $temptarget
 		file rename -force -- $temptarget $target

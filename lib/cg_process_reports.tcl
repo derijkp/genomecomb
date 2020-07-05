@@ -66,7 +66,7 @@ proc process_reports_job {args} {
 			set dep $bamfile
 			set target $sampledir/reports/flagstat_alignments-$bamroot.flagstat
 			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
-			job reports_flagstat_alignments-[job_relfile2name $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+			job [job_relfile2name reports_flagstat_alignments- $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
 				exec samtools flagstat $dep > $target.temp
 				file rename -force -- $target.temp $target
@@ -86,7 +86,7 @@ proc process_reports_job {args} {
 			set dep $bamfile
 			set target $sampledir/reports/flagstat_reads-$bamroot.flagstat
 			set target2 $sampledir/reports/report_flagstat_reads-$bamroot.tsv
-			job reports_flagstat_reads-[job_relfile2name $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+			job [job_relfile2name reports_flagstat_reads- $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
 				if {[catch {
 					exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
@@ -112,7 +112,7 @@ proc process_reports_job {args} {
 			set dep3 $bamfile.[indexext $bamfile]
 			set target $sampledir/reports/hsmetrics-$bamroot.hsmetrics
 			set target2 $sampledir/reports/report_hsmetrics-$bamroot.tsv
-			job reports_hsmetrics-[job_relfile2name $bamfile] -optional 1 -deps {
+			job [job_relfile2name reports_hsmetrics- $bamfile] -optional 1 -deps {
 				$dep1 $dep2 $dep3
 			} -targets {
 				$target $target2
@@ -141,7 +141,7 @@ proc process_reports_job {args} {
 			set target $sampledir/reports/histodepth-$bamroot.tsv
 			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
 			set indexext [indexext $bamfile]
-			job reports_histodepth-[job_relfile2name $bamfile] -optional 1 -deps {
+			job [job_relfile2name reports_histodepth- $bamfile] -optional 1 -deps {
 				$dep1 ($dep2) $dep1.$indexext
 			} -targets {
 				$target $target2
@@ -196,7 +196,7 @@ proc process_reports_job {args} {
 			set dep2 $ampliconsfile
 			set target $sampledir/reports/$bamroot.histo
 			set indexext [indexext $bamfile]
-			job reports_histo-[job_relfile2name $bamfile] -optional 1 -deps {
+			job [job_relfile2name reports_histo- $bamfile] -optional 1 -deps {
 				$dep1 $dep2 $dep1.$indexext
 			} -targets {$target} -vars {bamroot bamfile} -code {
 				analysisinfo_write $dep $target histo_tool genomecomb histo_version [version genomecomb]

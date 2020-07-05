@@ -140,7 +140,7 @@ proc basecaller_albacore_job {args} {
 					lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
 				}
 				
-				job albacore-[job_relfile2name $sourcedir]-$name -cores $threads \
+				job [job_relfile2name albacore- $sourcedir-$name] -cores $threads \
 				-deps {$sourcedir/$dir} \
 				-targets $targets \
 				-vars {sourcedir from to todo opts threads barcoding resultdir name} \
@@ -206,7 +206,7 @@ proc basecaller_albacore_job {args} {
 				}
 				lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
 			}
-			job albacore-[job_relfile2name $sourcedir]-$from-$to -cores $threads \
+			job [job_relfile2name albacore- $sourcedir-$from-$to] -cores $threads \
 			-deps $sourcedir \
 			-targets $targets \
 			-vars {name sourcedir resultdir barcoding from to todo opts threads} \

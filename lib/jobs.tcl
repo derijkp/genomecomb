@@ -339,7 +339,7 @@ proc jobtargetexists {args} {
 		set time 0
 		set files [job_finddep $pattern ids time timefile $checkcompressed]
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
-#			job_log targetexists-[job_relfile2name $target] "one of targets older than dep $timefile (renaming to .old): $targets"
+#			job_log [job_relfile2name targetexists- $target] "one of targets older than dep $timefile (renaming to .old): $targets"
 #			foreach target $targets {
 #				file rename -force -- $target $target.old
 #			}
@@ -1393,19 +1393,29 @@ proc job_cleanup_add {args} {
 	}
 }
 
-proc job_relfile2name {file} {
+# maxsize: on linux filename size is usually limited to 255 characters.
+# limit to 251 to allow for addition of the extension (.log, ...)
+proc job_relfile2name {prefix file {maxsize 251}} {
 	upvar job_logdir job_logdir
 	if {[info exists job_logdir]} {
 		set ffile [file_absolute $file]
-		set dir [file dir $job_logdir]
-		set dirlength [string length $dir]
-		incr dirlength -1
-		if {[string range $ffile 0 $dirlength] eq $dir} {
-			set file [string range $ffile [expr {$dirlength + 2}] end]
-			if {$file eq ""} {set file [file tail $ffile]}
+		set dir $job_logdir
+		while 1 {
+			set dir [file dir $dir]
+			if {$dir eq "/"} break
+			set dirlength [string length $dir]
+			incr dirlength -1
+			if {[string range $ffile 0 $dirlength] eq $dir} {
+				set file [string range $ffile [expr {$dirlength + 2}] end]
+				if {$file eq ""} {set file [file tail $ffile]}
+				break
+			}
 		}
 	}
-	return [string_change $file {/ __ : _ \" _ \' _}]
+	set filepart [string_change $file {/ __ : _ \" _ \' _}]
+	set len [string length $filepart]
+	set start [expr {$len  - ($maxsize - [string length $prefix])}]
+	return $prefix[string range $filepart $start end]
 }
 
 job_init

@@ -1,7 +1,7 @@
 proc refseq_bowtie2_job {refseq} {
 	upvar job_logdir job_logdir
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
-	job bowtie2refseq-[job_relfile2name $refseq] -deps {$refseq} -targets {$refseq.bowtie2 $bowtie2refseq.1.bt2} \
+	job [job_relfile2name bowtie2refseq- $refseq] -deps {$refseq} -targets {$refseq.bowtie2 $bowtie2refseq.1.bt2} \
 	-vars {refseq} -code {
 		file mkdir $refseq.bowtie2.temp
 		mklink $refseq $refseq.bowtie2.temp/[file tail $refseq]

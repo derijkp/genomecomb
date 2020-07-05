@@ -59,7 +59,7 @@ proc sam_catmerge_job {args} {
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
-		set name sam_catmerge-[job_relfile2name $resultfile]
+		set name [job_relfile2name sam_catmerge- $resultfile]
 	}
 	set resultfile [file_absolute $resultfile]
 	set outputformat [ext2format $resultfile bam {bam cram sam}]

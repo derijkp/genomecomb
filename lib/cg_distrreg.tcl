@@ -23,7 +23,7 @@ proc distrreg_job {args} {
 	foreach region $regions {
 		lappend targets $resultprefix$region$resultsuffix
 	}
-	job distrreg-[job_relfile2name $file] -deps {$file} -targets $targets -vars {
+	job [job_relfile2name distrreg- $file] -deps {$file} -targets $targets -vars {
 		refseq threads file resultprefix resultsuffix regions other
 	} -code {
 		cg_distrreg -refseq $refseq -threads $threads -other $other $file $resultprefix $resultsuffix $regions

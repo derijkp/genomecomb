@@ -36,7 +36,7 @@ proc sam_merge_job {args} {
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
-		set name sam_merge-[job_relfile2name $outputfile]
+		set name [job_relfile2name sam_merge- $outputfile]
 	}
 	set outputfile [file_absolute $outputfile]
 	if {![jobtargetexists -checkdepexists 1 $outputfile $samfiles]} {

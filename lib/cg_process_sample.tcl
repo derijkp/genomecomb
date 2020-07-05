@@ -756,7 +756,7 @@ proc process_sample_job {args} {
 				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
 				set target2 $base-R2.fastq.gz
-				job bam2fastq-[job_relfile2name $file] -deps {$file} -cores $threads \
+				job [job_relfile2name bam2fastq- $file] -deps {$file} -cores $threads \
 				-targets {$target $target2} -vars {threads} -code {
 					cg bam2fastq -threads $threads $dep $target.temp.gz $target2.temp.gz
 					file rename -force -- $target.temp.gz $target
@@ -868,7 +868,7 @@ proc process_sample_job {args} {
 			}
 			if {$cleanup} {
 				# clean up no longer needed intermediate files
-				cleanup_job cleanupclipped-[job_relfile2name $target] $cleanupfiles $cleanupdeps
+				cleanup_job [job_relfile2name cleanupclipped- $target] $cleanupfiles $cleanupdeps
 			}
 		}
 		set cleanupdeps {}

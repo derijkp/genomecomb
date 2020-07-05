@@ -45,7 +45,7 @@ proc liftsample_job {args} {
 		} else {
 			set regionfile [findregionfile $file]
 		}
-		job liftvar-[job_relfile2name $file] -deps {$file $liftoverfile ($regionfile)} \
+		job [job_relfile2name liftvar- $file] -deps {$file $liftoverfile ($regionfile)} \
 		-vars {file liftoverfile regionfile split newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $dep} link]} {
@@ -69,7 +69,7 @@ proc liftsample_job {args} {
 	foreach file [jobglob $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
 		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
 		set target $destdir/$temp
-		job liftreg-[job_relfile2name $file] -deps {$file $liftoverfile} \
+		job [job_relfile2name liftreg- $file] -deps {$file $liftoverfile} \
 		-vars {file liftoverfile newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $file} link]} {
@@ -87,7 +87,7 @@ proc liftsample_job {args} {
 	foreach file [jobglob $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
 		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
 		set target $destdir/$temp
-		job liftreg-[job_relfile2name $file] -deps {$file $liftoverfile} \
+		job [job_relfile2name liftreg- $file] -deps {$file $liftoverfile} \
 		-vars {file liftoverfile newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $file} link]} {

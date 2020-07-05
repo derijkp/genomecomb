@@ -33,7 +33,7 @@ proc gatkworkaround_tsv2bed {reg refseq target} {
 proc gatkworkaround_tsv2bed_job {file refseq} {
 	upvar job_logdir job_logdir
 	set target [file root $file].bed
-	job tsv2bed-[job_relfile2name $file] -optional 1 -deps {$file $refseq} -targets {$target} -code {
+	job [job_relfile2name tsv2bed- $file] -optional 1 -deps {$file $refseq} -targets {$target} -code {
 		gatkworkaround_tsv2bed $dep $dep2 $target
 	}
 	return $target

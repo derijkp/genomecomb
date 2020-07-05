@@ -26,7 +26,7 @@ proc multi_merge_job {varsfile files args} {
 	if {$len <= $maxfiles} {
 		# merge in one go
 		set target $varsfile
-		job multi_merge-[job_relfile2name $varsfile] -force $force -deps $files -targets {
+		job [job_relfile2name multi_merge- $varsfile] -force $force -deps $files -targets {
 			$target
 		} -vars {
 			split limitreg
@@ -58,7 +58,7 @@ proc multi_merge_job {varsfile files args} {
 		if {$len <= $maxfiles} {
 			# final merge (we have less than maxfiles files to merge left)
 			set target $varsfile
-			job multi_merge-[job_relfile2name $varsfile] -optional $optional -force $force -deps $todo -targets {
+			job [job_relfile2name multi_merge- $varsfile] -optional $optional -force $force -deps $todo -targets {
 				$target
 			} -vars {
 				split delete workdir limitreg
@@ -79,7 +79,7 @@ proc multi_merge_job {varsfile files args} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job multi_merge-[job_relfile2name $varsfile] -optional $optional -force $force -deps $deps -targets {
+			job [job_relfile2name multi_merge- $target] -optional $optional -force $force -deps $deps -targets {
 				$target
 			} -vars {
 				split delete limitreg
@@ -498,7 +498,7 @@ proc pmulticompar_job {args} {
 	} compar_file 1
 	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
-	job_logfile [file dir $compar_file]/pmulticompar-[job_relfile2name $compar_file] [file dir $compar_file] $cmdline \
+	job_logfile [file dir $compar_file]/[job_relfile2name pmulticompar- $compar_file] [file dir $compar_file] $cmdline \
 		{*}[versions dbdir zst os]
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
@@ -599,7 +599,7 @@ proc pmulticompar_job {args} {
 		lappend deps "([gzroot $file].analysisinfo)"
 	}
 	set target [gzroot $compar_file].analysisinfo
-	job multicompar_analysisinfo-[job_relfile2name $compar_file] -deps $deps -optional 1 \
+	job [job_relfile2name multicompar_analysisinfo- $compar_file] -deps $deps -optional 1 \
 	-targets {$target} -code {
 		set deps [list_remove $deps {}]
 		if {[llength $deps]} {
@@ -612,11 +612,11 @@ proc pmulticompar_job {args} {
 	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
 	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
-	multi_merge_job $workdir/vars.tsv $files -limitreg $limitreg -split $split -force $force
+	set allvarsfile $workdir/vars.tsv
+	multi_merge_job $allvarsfile $files -limitreg $limitreg -split $split -force $force
 	# 
 	# add extra var lines to each sample file to get all vars in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
-	set allvarsfile $workdir/vars.tsv
 	foreach sample $samples {
 		set samplevarsfile $samplesa($sample)
 		set sampledir [file dir $samplesa($sample)]
