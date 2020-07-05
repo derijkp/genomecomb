@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		if (c == EOF) break;
 		if (count == 0) {
-			if (o != NULL) {fclose(o);}
+			if (o != NULL) {FCLOSE(o);}
 			DStringSetS(filename,output_dir,output_dir_size);
 			DStringPrintf(filename,"/p%d_",part);
 			DStringAppendS(filename,output_post,output_post_size);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 		putc_unlocked(c,o);
 		c = getc_unlocked(stdin);
 	}
-	fclose(o);
+	FCLOSE(o);
 	if (filename) {DStringDestroy(filename);}
 	exit(EXIT_SUCCESS);
 }

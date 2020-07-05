@@ -94,7 +94,7 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,
 		}
 		prevstart1 = start1; prevend1 = end1;
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	DStringDestroy(prevchromosome1); DStringDestroy(prevtype1); DStringDestroy(prevalt1);
 	if (line1) {DStringDestroy(line1);}
 	if (result1) {DStringArrayDestroy(result1);}

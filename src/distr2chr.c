@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 		DString *ds = hash_getkey(bucket);
 		DStringDestroy(ds);
 		o = hash_getvalue(bucket);
-		fclose(o);
+		FCLOSE(o);
 		bucket = hash_next(&iter);
 	}
 	if (line) {DStringDestroy(line);}

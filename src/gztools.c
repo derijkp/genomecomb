@@ -114,7 +114,7 @@ void gz_close(GZFILE *f) {
 	if (f == NULL) return;
 	type = f->type;
 	if (type == UNCOMPRESSED && f->fun != (FILE *)stdin) {
-		fclose(f->fun);
+		FCLOSE(f->fun);
 	} else if (type == LZ4) {
 		lz4_close(f->lz4);
 	} else if (type == ZSTD) {

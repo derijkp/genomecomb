@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 		}
 		todo++;
 	}
-	fclose(ftodo);
+	FCLOSE(ftodo);
 	var = &(tvars->var);
 	while (!tvars->error) {
 		pos1++;
@@ -191,37 +191,37 @@ int main(int argc, char *argv[]) {
 	}
 	todo = todolist;
 	for (i = 0 ; i < size; i++) {
-		fclose(todo->f);
+		FCLOSE(todo->f);
 		todo++;
 	}
-	fclose(fvarsnew);
-	fclose(fvarsinsert);
-	fclose(fgeno);
+	FCLOSE(fvarsnew);
+	FCLOSE(fvarsinsert);
+	FCLOSE(fgeno);
 	filename = DStringNew();
 	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".maxid");
 	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%s",varid);
-	fclose(f);
+	FCLOSE(f);
 	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".count");
 	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fvarsnewcount);
-	fclose(f);
+	FCLOSE(f);
 	#
 	DStringSet(filename,fvarsinsertfile);
 	DStringAppend(filename,".count");
 	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fvarsinsertcount);
-	fclose(f);
+	FCLOSE(f);
 	#
 	DStringSet(filename,fgenofile);
 	DStringAppend(filename,".count");
 	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fgenocount);
-	fclose(f);
+	FCLOSE(f);
 	#
 	exit(EXIT_SUCCESS);
 }

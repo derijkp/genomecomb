@@ -165,7 +165,7 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 		line_nr++;
 	}
 	for (i = 0 ; i < listindc ; i++) {
-		fclose(inds[i]);
+		FCLOSE(inds[i]);
 	}
 	for (i = 1 ; i <= listobjc ; i++) {
 		Tcl_DecrRefCount(objv[i]);

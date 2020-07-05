@@ -73,7 +73,7 @@ int gz_pclose(FILE *file) {
 	r = pclose(file);
 	if (r == -1) {
 		if (errno == ECHILD) {
-			return fclose(file);
+			FCLOSE(file);
 		} else {
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);

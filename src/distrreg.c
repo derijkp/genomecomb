@@ -108,7 +108,7 @@ void closereg(FILE *o,char *opencmd) {
 	int status;
 	if (o == NULL) {return;}
 	if (opencmd == NULL) {
-		fclose(o);
+		FCLOSE(o);
 	} else {
 		status = pclose(o);
 		if (status != 0)	{
@@ -231,7 +231,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		}
 	} while (!DStringGetTab(line1,f1,max1,result1,0,&numfields));
 	if (chromosomekeep != NULL) DStringDestroy(chromosomekeep);
-	fclose(f1);
+	FCLOSE(f1);
 	while (o != NULL) {
 		closereg(o,opencmd);
 		o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);

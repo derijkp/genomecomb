@@ -185,9 +185,9 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	}
 	if (count == -1) {count = 0;}
 	fprintf(f2,"\t0\t%" PRIu64 "\n",(count+1));
-	fclose(f1);
-	fclose(f2);
-	fclose(f3);
+	FCLOSE(f1);
+	FCLOSE(f2);
+	FCLOSE(f3);
 	if (line1) {DStringDestroy(line1);}
 	if (result1) {DStringArrayDestroy(result1);}
 	/* writing column data */
@@ -232,7 +232,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		if (colinfo[i].hashtable->datasize >= 500 || (colinfo[i].numnum >= 256)) {
 			fprintf(f1,"...\n");
 		}
-		fclose(f1);
+		FCLOSE(f1);
 		if (colinfo[i].extra != NULL) {free(colinfo[i].extra);}
 	}
 	DStringDestroy(buffer);

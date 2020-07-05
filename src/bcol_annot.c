@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stdout,"\n");
 		}
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	bcol_close(bcol);
 	DStringDestroy(prevchromosome1); DStringDestroy(prevtype1); DStringDestroy(prevalt1);
 	DStringDestroy(prevchromosome2);

@@ -1378,7 +1378,7 @@ int fileexists(const char * filename) {
 	/* try to open file to read */
 	FILE *file = fopen(filename, "r");
 	if (file) {
-		fclose(file);
+		FCLOSE(file);
 		return 1;
 	}
 	return 0;

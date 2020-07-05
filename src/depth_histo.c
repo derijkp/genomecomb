@@ -117,7 +117,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 			ontarget[depth]++;
 		}
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	if (f2 != NULL) {
 		gz_close(f2);
 	}

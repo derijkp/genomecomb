@@ -130,8 +130,8 @@ fprintf(stderr,"# %s\t%d\t%d\n", Loc_ChrString(chromosome2),start2,end2);
 		}
 	}
 	fprintf(stdout,"%s\t%d\t%d\n", curchromosome.string,curstart,curend);
-	fclose(f1);
-	if (f2 != NULL) fclose(f2);
+	FCLOSE(f1);
+	if (f2 != NULL) FCLOSE(f2);
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);
 }

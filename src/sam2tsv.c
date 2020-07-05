@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
 		fputc('\n',stdout);
 		if (DStringGetTab(line1,f1,10,result1,0,&numfields)) break;
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	if (line1) {DStringDestroy(line1);}
 	if (linekeep) {DStringDestroy(linekeep);}
 	if (result1) {DStringArrayDestroy(result1);}

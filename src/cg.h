@@ -20,3 +20,5 @@
 #define fputc_unlocked(c, stream) (fputc(c, stream))
 ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 #endif
+
+#define FCLOSE(f) ({if (fclose(f) == EOF) {perror("Error writing file: "); exit(EXIT_FAILURE);}})

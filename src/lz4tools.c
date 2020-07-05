@@ -154,8 +154,8 @@ LZ4res *lz4open(FILE* finput,FILE *findex,char *file) {
 void lz4close(LZ4res *res) {
 	free(res->buffer);
 	free(res->outbuffer);
-	fclose(res->finput);
-	if (res->findex != NULL) fclose(res->findex);
+	FCLOSE(res->finput);
+	if (res->findex != NULL) FCLOSE(res->findex);
 	free(res);
 }
 

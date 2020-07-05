@@ -1334,7 +1334,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	fclose(fh);
+	FCLOSE(fh);
 	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -typelist '%s' -showheader 0 -meta '%s' '%s'",typelist,meta,tempfile);
 	system(dsbuffer->string);
 	fprintf(fo,"# ----\n");
@@ -1499,7 +1499,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	process_print_buffer(fo,obuffer,2147483647);
-	if (fd != stdin) {fclose(fd);}
+	if (fd != stdin) {FCLOSE(fd);}
 	/* free dstrings */
 	DStringDestroy(line);
 	DStringDestroy(snptype);

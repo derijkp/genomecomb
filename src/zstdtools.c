@@ -310,8 +310,8 @@ ZSTDres *zstdopen(FILE* finput,FILE *findex) {
 void zstdclose(ZSTDres *res) {
 	free(res->buffer);
 	free(res->outbuffer);
-	fclose(res->finput);
-	if (res->findex != NULL) fclose(res->findex);
+	FCLOSE(res->finput);
+	if (res->findex != NULL) FCLOSE(res->findex);
 	free(res);
 }
 

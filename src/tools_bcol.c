@@ -575,7 +575,7 @@ void bcol_close(BCol *bcol) {
 	} else if (bcol->rz != NULL) {
 		razf_close(bcol->rz);
 	} else {
-		fclose(bcol->f);
+		FCLOSE(bcol->f);
 	}
 	DStringDestroy(bcol->def);
 	free(bcol->file);
@@ -867,7 +867,7 @@ BCol *bcol_open(char *bcolfile) {
 		result->version = 0;
 		DStringGetLine(line,f);
 		result->start = atoi(line->string);
-		fclose(f);
+		FCLOSE(f);
 	}
 	DStringDestroy(line);
 	result->file = (char *)malloc((len+9)*sizeof(char));

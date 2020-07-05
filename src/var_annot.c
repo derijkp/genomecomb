@@ -228,8 +228,8 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 			}
 		}
 	}
-	fclose(f1);
-	fclose(f2);
+	FCLOSE(f1);
+	FCLOSE(f2);
 	DStringDestroy(prevchromosome1); DStringDestroy(prevtype1); DStringDestroy(prevalt1);
 	DStringDestroy(prevchromosome2); DStringDestroy(prevtype2); DStringDestroy(prevalt2);
 	if (datapos) {free(datapos);}

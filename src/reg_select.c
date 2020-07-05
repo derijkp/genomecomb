@@ -125,7 +125,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			fprintf(stdout,"%s\n",line1->string);
 		}
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	gz_close(f2);
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}

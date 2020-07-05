@@ -69,7 +69,7 @@ NODPRINT("is new\n")
 	totsize += size;
 	fprintf(stdout,"%s\t%" PRId64 "\n", keepchromosome.string, size);
 	fprintf(stdout,"\ntotal\t%" PRId64 "\n", totsize);
-	fclose(f1);
+	FCLOSE(f1);
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);
 }

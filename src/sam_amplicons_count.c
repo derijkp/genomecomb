@@ -364,8 +364,8 @@ int main(int argc, char *argv[]) {
 		sscanf(result2->data[end2pos].string,"%d",&(amplicon[0].end2));
 		fprintf(stdout,"%s\t%d\t%d\t%s\t%d",amplicon[ampcur].chr2->string,amplicon[ampcur].start2-1,amplicon[ampcur].end2-1,amplicon[ampcur].name->string,0);
 	}
-	fclose(f1);
-	fclose(f2);
+	FCLOSE(f1);
+	FCLOSE(f2);
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}
 	if (linekeep) {DStringDestroy(linekeep);}

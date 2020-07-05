@@ -4,6 +4,8 @@
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 
+#define FCLOSE(f) ({if (fclose(f) == EOF) {perror("Error writing file: "); exit(EXIT_FAILURE);}})
+
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdint.h>

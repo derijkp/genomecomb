@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 			buffer = NULL;
 		}
 	}
-	fclose(f1);
+	FCLOSE(f1);
 	bucket = hash_first(hashtable,&iter);
 	while(bucket != NULL) {
 		DString *ds = hash_getkey(bucket);

@@ -106,8 +106,8 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 		checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,start1,argv[1]);
 		fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 	}
-	fclose(f1);
-	fclose(f2);
+	FCLOSE(f1);
+	FCLOSE(f2);
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);
 }

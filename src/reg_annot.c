@@ -200,8 +200,8 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 			}
 		}
 	}
-	fclose(f1);
-	fclose(f2);
+	FCLOSE(f1);
+	FCLOSE(f2);
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}
 	if (linekeep) {DStringDestroy(linekeep);}

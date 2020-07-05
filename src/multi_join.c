@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 		}
 		todo++;
 	}
-	fclose(f);
+	FCLOSE(f);
 	var = &(tvars->var);
 	while (!tvars->error) {
 		pos1++;

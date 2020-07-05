@@ -281,9 +281,9 @@ void annotate (char *out1, char *in, int in_chrom, int in_begin, int in_end, cha
 	printf("From input read last line %d  ..... \n",l);
 	printf("From db read last line %d  ..... \n",k);
 	free(outfile);
-	fclose(output_id);
-	fclose(input);
-	fclose(db_input);
+	FCLOSE(output_id);
+	FCLOSE(input);
+	FCLOSE(db_input);
 }
 
 void makeLine(FILE *output, int name, int score, int allel_freq, char *name_annot, char * score_annot, char * allel_annot) {
