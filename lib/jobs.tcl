@@ -938,7 +938,10 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	set failed 0
 #	set tail [file tail $job]
 	set tail .*
+#	set poss [list_find -regexp $logdata submitted|running]
+#	set logdata [lrange $logdata [lindex $poss end] end]
 	foreach line $logdata {
+		# if {![regexp {submitted|starting|finished|failed|skipped|skipping} $line]} continue
 		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
 			set currentstatus submitted
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp currentstarttime currenthost]} {
@@ -977,6 +980,7 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	if {$status eq ""} {set status $currentstatus}
 	if {$submittime eq ""} {set submittime $currentsubmittime}
 	if {$starttime eq ""} {set submittime $currentstarttime}
+	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime currentstatus
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}

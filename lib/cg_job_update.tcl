@@ -13,6 +13,7 @@ proc job_cleanlogs {logfile} {
 		close $f
 		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run cores)"
 	}
+	unset -nocomplain donea
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
@@ -23,10 +24,12 @@ proc job_cleanlogs {logfile} {
 		} else {
 			set job $jobo
 		}
-		set files [glob -nocomplain $job.*]
-		if {![llength $files]} continue
-		file delete {*}$files
+		if {[info exists donea($job)]} continue
+		foreach ext {log run out err} {
+			file delete $job.$ext
+		}
 		set dirsa([file dir $job]) 1
+		set donea($job) 1
 	}
 	foreach dir [lsort -decreasing [array names dirsa]] {
 		if {[catch {glob $dir/*}]} {
@@ -70,6 +73,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	if {[file extension $logfile] eq ".submitting"} {
 		error "cannot update logfile while still submitting: $logfile"
 	}
+	unset -nocomplain joblogcachea
 	# get data from old log files
 	set logroot [file root [file root $logfile]]
 	set oldlogfiles [bsort [glob -nocomplain $logroot.*.finished $logroot.*.running $logroot.*.error $logroot.*.submitting]]
@@ -152,6 +156,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
+putsvars sline
+puts [time {
 		if {$addseconds} {
 			foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
 			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
@@ -189,7 +195,14 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		}
 		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
 			if {[job_file_exists $job.log]} {
-				set jobloginfo [job_parse_log $job $totalduration]
+				if {[info exists joblogcachea($job)]} {
+					set jobloginfo $joblogcachea($job)
+				} else {
+					set jobloginfo [job_parse_log $job $totalduration]
+				}
+				if {$status eq "skipped"} {
+					set joblogcachea($job) $jobloginfo
+				}
 				foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
 				if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
 					set duration [timediff2duration [lmath_calc $endcode - $startcode]]
@@ -231,6 +244,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		if {$totalendcode eq "" || ($endcode ne "" && [time_comp $endcode $totalendcode] > 0)} {
 			set totalendcode $endcode ; set totalendtime $endtime
 		}
+}]
 	}
 	close $o
 	close $f
