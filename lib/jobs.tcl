@@ -1125,7 +1125,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		if {$ok} {
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
 			catch {file delete $job.pid}
-			catch {file delete $job.jobid}
+			catch {file delete $job.jid}
 			set o [open $job.err a]
 			puts $o "\nfinished [job_timestamp]"
 			close $o

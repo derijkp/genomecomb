@@ -1,10 +1,10 @@
 proc job_process_par_jobid {job} {
-	if {![job_file_exists $job.jobid]} {
+	if {![job_file_exists $job.jid]} {
 		return ""
 	}
-	set jobid [file_read $job.jobid]
+	set jobid [file_read $job.jid]
 	if {[catch {exec qstat -j $jobid}]} {
-		file delete $job.jobid
+		file delete $job.jid
 		return ""
 	} else {
 		return $jobid
@@ -256,7 +256,7 @@ proc job_process_par_onepass {} {
 		set jobnum [job_process_submit_par $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
-		file_write $job.jobid $jobnum
+		file_write $job.jid $jobnum
 		job_log $job "cgjobinfo_jobid: [list $jobid]"
 		job_logclose $job
 		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
