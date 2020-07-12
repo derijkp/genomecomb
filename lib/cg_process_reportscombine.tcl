@@ -571,7 +571,7 @@ proc process_reportscombine_job {args} {
 		set target2 $destdir/${experimentname}_hsmetrics_report.tsv
 		job reportscombine_hsmetrics-$experimentname -deps $deps -targets {$target $target2} -code {
 			file mkdir [file dir $target]
-			cg cat -c 0 {*}$deps > $target.temp
+			cg cat -m 1 -c 0 {*}$deps > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
 			file rename -force -- $target.temp2 $target
 			file delete $target.temp

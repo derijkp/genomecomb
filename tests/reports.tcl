@@ -100,15 +100,8 @@ test reports {process_reportscombine} {
 	}
 	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-ERR194147_30x_NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
 	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/ERR194147_30x_NA12878/reports tmp/samples/test/reports
-	if {[catch {exec diff -r tmp/combinereports data/expected-combinereports} msg]} {
-		if {![string match [deindent {
-			diff -r tmp/combinereports/report-combinereports.html data/expected-combinereports/report-combinereports.html
-			305c305
-			< The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.zst was used as target region for calulations in the table
-			---
-			> The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.zst was used as target region for calulations in the table
-			child process exited abnormally
-			}] $msg]} {
+	if {[catch {exec diff -r tmp/combinereports data/expected-combinereports | grep -v {The full "sequenced genome" region in}} msg]} {
+		if {![string match {child process exited abnormally} $msg]} {
 				error $msg
 		}
 	}
