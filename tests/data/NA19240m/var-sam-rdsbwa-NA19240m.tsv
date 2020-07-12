@@ -1,0 +1,149 @@
+#filetype	tsv/varfile
+#fileversion	0.99
+#split	1
+#info	tsv converted from vcf
+#refseq	genome_hg19.ifas
+#numsamples	1
+#samplename	NA19240m
+#fields	table
+#fields	field	number	type	description	source	Version
+#fields	chromosome	1	String	Chromosome/Contig	var	
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var	
+#fields	end	1	Integer	End of feature (0 based - half open)	var	
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var	
+#fields	ref	1	String	Reference sequence, can be a number for large features	var	
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var	
+#fields	name	1	String	name of feature	var	
+#fields	quality	1	Float	Quality score of feature	var	
+#fields	filter	1	String	Filter value	var	
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno	
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno	
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno	
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno	
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno	
+#fields	genotypes	H	Integer	Genotypes	geno	
+#fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format	
+#fields	coverage	1	Integer	Number of high-quality bases	format	
+#fields	SP	1	Integer	Phred-scaled strand bias P-value	format	
+#fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	info	
+#fields	IDV	1	Integer	Maximum number of reads supporting an indel	info	
+#fields	IMF	1	Float	Maximum fraction of reads supporting an indel	info	
+#fields	totalcoverage	1	Integer	Raw read depth	info	
+#fields	VDB	1	Float	Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)	info	3
+#fields	RPB	1	Float	Mann-Whitney U test of Read Position Bias (bigger is better)	info	
+#fields	MQB	1	Float	Mann-Whitney U test of Mapping Quality Bias (bigger is better)	info	
+#fields	BQB	1	Float	Mann-Whitney U test of Base Quality Bias (bigger is better)	info	
+#fields	MQSB	1	Float	Mann-Whitney U test of Mapping Quality vs Strand Bias (bigger is better)	info	
+#fields	SGB	1	Float	Segregation based metric.	info	
+#fields	MQ0F	1	Float	Fraction of MQ0 reads (smaller is better)	info	
+#fields	AF1	1	Float	Max-likelihood estimate of the first ALT allele frequency (assuming HWE)	info	
+#fields	AF2	1	Float	Max-likelihood estimate of the first and second group ALT allele frequency (assuming HWE)	info	
+#fields	AC1	1	Float	Max-likelihood estimate of the first ALT allele count (no HWE assumption)	info	
+#fields	MQ	1	Integer	Root-mean-square mapping quality of covering reads	info	
+#fields	FQ	1	Float	Phred probability of all samples being the same	info	
+#fields	PV4	4	Float	P-values for strand bias, baseQ bias, mapQ bias and tail distance bias	info	
+#fields	G3	3	Float	ML estimate of genotype frequencies	info	
+#fields	HWE	1	Float	Chi^2 based HWE test P-value based on G3	info	
+#fields	DP4	4	Integer	Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases	info	
+#contig	table
+#contig	ID	length
+#contig	chr1	249250621
+#contig	chr1_gl000191_random	106433
+#contig	chr1_gl000192_random	547496
+#contig	chr2	243199373
+#contig	chr3	198022430
+#contig	chr4	191154276
+#contig	chr4_gl000193_random	189789
+#contig	chr4_gl000194_random	191469
+#contig	chr5	180915260
+#contig	chr6	171115067
+#contig	chr7	159138663
+#contig	chr7_gl000195_random	182896
+#contig	chr8	146364022
+#contig	chr8_gl000196_random	38914
+#contig	chr8_gl000197_random	37175
+#contig	chr9	141213431
+#contig	chr9_gl000198_random	90085
+#contig	chr9_gl000199_random	169874
+#contig	chr9_gl000200_random	187035
+#contig	chr9_gl000201_random	36148
+#contig	chr10	135534747
+#contig	chr11	135006516
+#contig	chr11_gl000202_random	40103
+#contig	chr12	133851895
+#contig	chr13	115169878
+#contig	chr14	107349540
+#contig	chr15	102531392
+#contig	chr16	90354753
+#contig	chr17	81195210
+#contig	chr17_gl000203_random	37498
+#contig	chr17_gl000204_random	81310
+#contig	chr17_gl000205_random	174588
+#contig	chr17_gl000206_random	41001
+#contig	chr18	78077248
+#contig	chr18_gl000207_random	4262
+#contig	chr19	59128983
+#contig	chr19_gl000208_random	92689
+#contig	chr19_gl000209_random	159169
+#contig	chr20	63025520
+#contig	chr21	48129895
+#contig	chr21_gl000210_random	27682
+#contig	chr22	51304566
+#contig	chrM	16571
+#contig	chrUn_gl000211	166566
+#contig	chrUn_gl000212	186858
+#contig	chrUn_gl000213	164239
+#contig	chrUn_gl000214	137718
+#contig	chrUn_gl000215	172545
+#contig	chrUn_gl000216	172294
+#contig	chrUn_gl000217	172149
+#contig	chrUn_gl000218	161147
+#contig	chrUn_gl000219	179198
+#contig	chrUn_gl000220	161802
+#contig	chrUn_gl000221	155397
+#contig	chrUn_gl000222	186861
+#contig	chrUn_gl000223	180455
+#contig	chrUn_gl000224	179693
+#contig	chrUn_gl000225	211173
+#contig	chrUn_gl000226	15008
+#contig	chrUn_gl000227	128374
+#contig	chrUn_gl000228	129120
+#contig	chrUn_gl000229	19913
+#contig	chrUn_gl000230	43691
+#contig	chrUn_gl000231	27386
+#contig	chrUn_gl000232	40652
+#contig	chrUn_gl000233	45941
+#contig	chrUn_gl000234	40531
+#contig	chrUn_gl000235	34474
+#contig	chrUn_gl000236	41934
+#contig	chrUn_gl000237	45867
+#contig	chrUn_gl000238	39939
+#contig	chrUn_gl000239	33824
+#contig	chrUn_gl000240	41933
+#contig	chrUn_gl000241	42152
+#contig	chrUn_gl000242	43523
+#contig	chrUn_gl000243	43341
+#contig	chrUn_gl000244	39929
+#contig	chrUn_gl000245	36651
+#contig	chrUn_gl000246	38154
+#contig	chrUn_gl000247	36422
+#contig	chrUn_gl000248	39786
+#contig	chrUn_gl000249	38502
+#contig	chrX	155270560
+#contig	chrY	59373566
+#vcf_samtoolsVersion	1.10+htslib-1.10
+#vcf_bcftools_callVersion	1.10.2+htslib-1.10.2
+#ALT	table
+#ALT	ID	Description
+#ALT	*	Represents allele(s) other than observed.
+#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.index/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.index/map-rdsbwa-NA19240m.cram
+#vcf_fileformat	VCFv4.2
+#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Tue Jun 30 00:36:48 2020
+#FILTER	table
+#FILTER	ID	Description
+#FILTER	PASS	All filters passed
+#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
+# ----
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	AF1	AF2	AC1	MQ	FQ	PV4	DP4	cluster
+chr21	42735718	42735719	snp	G	A	49.0072	G	A	v	t	0	0;1	79,0,104	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	52.0016	1,0.296574,1,0.269117	2,2,2,2	
+chr21	42775179	42775180	snp	C	T	103.133	T	T	v	m	0	1;1	136,18,0	6	0			6	0.177551				1	-0.616816	0	1		2	60	-44.9861		0,0,5,1	

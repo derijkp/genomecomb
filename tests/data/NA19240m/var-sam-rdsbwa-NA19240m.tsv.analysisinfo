@@ -1,2 +1,0 @@
-sample	varcaller	varcaller_version	varcaller_cg_version	varcaller_region	varcaller_mincoverage	varcaller_minquality	varcaller_cg_version
-sam-rdsbwa-NA19240m	samtools	1.10 (using htslib 1.10)	0.100.1	sreg-cov5-rdsbwa-NA19240m.tsv.zst	5	30	0.100.1

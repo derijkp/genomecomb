@@ -1,0 +1,1288 @@
+#filetype	tsv/varfile
+#fileversion	0.99
+#split	1
+#info	tsv converted from vcf
+#refseq	genome_hg19.ifas
+#numsamples	1
+#samplename	NA19240m
+#fields	table
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth	A	Integer	alleles only values of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	coverage	1	Integer	Approximate read depth (reads with MQ=255 or with bad mates are filtered)	format
+#fields	genoqual	1	Integer	Genotype Quality	format
+#fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification	format
+#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
+#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
+#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
+#fields	BaseQRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities	info
+#fields	totalcoverage	1	Integer	Approximate read depth; some reads may have been filtered	info
+#fields	DS	0	Flag	Were any of the samples downsampled?	info
+#fields	Dels	1	Float	Fraction of Reads Containing Spanning Deletions	info
+#fields	ExcessHet	1	Float	Phred-scaled p-value for exact test of excess heterozygosity	info
+#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias	info
+#fields	HaplotypeScore	1	Float	Consistency of the site with at most two segregating haplotypes	info
+#fields	InbreedingCoeff	1	Float	Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation	info
+#fields	MLEAC	A	Integer	Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed	info
+#fields	MLEAF	A	Float	Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed	info
+#fields	MQ	1	Float	RMS Mapping Quality	info
+#fields	MQ0	1	Integer	Total Mapping Quality Zero Reads	info
+#fields	MQRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities	info
+#fields	NDA	1	Integer	Number of alternate alleles discovered (but not necessarily genotyped) at this site	info
+#fields	QD	1	Float	Variant Confidence/Quality by Depth	info
+#fields	RPA_ref	1	Integer	reference only value of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RPA	A	Integer	alleles only values of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RU	1	String	Tandem repeat unit (bases)	info
+#fields	ReadPosRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias	info
+#fields	SOR	1	Float	Symmetric Odds Ratio of 2x2 contingency table to detect strand bias	info
+#fields	STR	0	Flag	Variant is a short tandem repeat	info
+#contig	table
+#contig	ID	length	assembly
+#contig	chr1	249250621	hg19
+#contig	chr1_gl000191_random	106433	hg19
+#contig	chr1_gl000192_random	547496	hg19
+#contig	chr2	243199373	hg19
+#contig	chr3	198022430	hg19
+#contig	chr4	191154276	hg19
+#contig	chr4_gl000193_random	189789	hg19
+#contig	chr4_gl000194_random	191469	hg19
+#contig	chr5	180915260	hg19
+#contig	chr6	171115067	hg19
+#contig	chr7	159138663	hg19
+#contig	chr7_gl000195_random	182896	hg19
+#contig	chr8	146364022	hg19
+#contig	chr8_gl000196_random	38914	hg19
+#contig	chr8_gl000197_random	37175	hg19
+#contig	chr9	141213431	hg19
+#contig	chr9_gl000198_random	90085	hg19
+#contig	chr9_gl000199_random	169874	hg19
+#contig	chr9_gl000200_random	187035	hg19
+#contig	chr9_gl000201_random	36148	hg19
+#contig	chr10	135534747	hg19
+#contig	chr11	135006516	hg19
+#contig	chr11_gl000202_random	40103	hg19
+#contig	chr12	133851895	hg19
+#contig	chr13	115169878	hg19
+#contig	chr14	107349540	hg19
+#contig	chr15	102531392	hg19
+#contig	chr16	90354753	hg19
+#contig	chr17	81195210	hg19
+#contig	chr17_gl000203_random	37498	hg19
+#contig	chr17_gl000204_random	81310	hg19
+#contig	chr17_gl000205_random	174588	hg19
+#contig	chr17_gl000206_random	41001	hg19
+#contig	chr18	78077248	hg19
+#contig	chr18_gl000207_random	4262	hg19
+#contig	chr19	59128983	hg19
+#contig	chr19_gl000208_random	92689	hg19
+#contig	chr19_gl000209_random	159169	hg19
+#contig	chr20	63025520	hg19
+#contig	chr21	48129895	hg19
+#contig	chr21_gl000210_random	27682	hg19
+#contig	chr22	51304566	hg19
+#contig	chrM	16571	hg19
+#contig	chrUn_gl000211	166566	hg19
+#contig	chrUn_gl000212	186858	hg19
+#contig	chrUn_gl000213	164239	hg19
+#contig	chrUn_gl000214	137718	hg19
+#contig	chrUn_gl000215	172545	hg19
+#contig	chrUn_gl000216	172294	hg19
+#contig	chrUn_gl000217	172149	hg19
+#contig	chrUn_gl000218	161147	hg19
+#contig	chrUn_gl000219	179198	hg19
+#contig	chrUn_gl000220	161802	hg19
+#contig	chrUn_gl000221	155397	hg19
+#contig	chrUn_gl000222	186861	hg19
+#contig	chrUn_gl000223	180455	hg19
+#contig	chrUn_gl000224	179693	hg19
+#contig	chrUn_gl000225	211173	hg19
+#contig	chrUn_gl000226	15008	hg19
+#contig	chrUn_gl000227	128374	hg19
+#contig	chrUn_gl000228	129120	hg19
+#contig	chrUn_gl000229	19913	hg19
+#contig	chrUn_gl000230	43691	hg19
+#contig	chrUn_gl000231	27386	hg19
+#contig	chrUn_gl000232	40652	hg19
+#contig	chrUn_gl000233	45941	hg19
+#contig	chrUn_gl000234	40531	hg19
+#contig	chrUn_gl000235	34474	hg19
+#contig	chrUn_gl000236	41934	hg19
+#contig	chrUn_gl000237	45867	hg19
+#contig	chrUn_gl000238	39939	hg19
+#contig	chrUn_gl000239	33824	hg19
+#contig	chrUn_gl000240	41933	hg19
+#contig	chrUn_gl000241	42152	hg19
+#contig	chrUn_gl000242	43523	hg19
+#contig	chrUn_gl000243	43341	hg19
+#contig	chrUn_gl000244	39929	hg19
+#contig	chrUn_gl000245	36651	hg19
+#contig	chrUn_gl000246	38154	hg19
+#contig	chrUn_gl000247	36422	hg19
+#contig	chrUn_gl000248	39786	hg19
+#contig	chrUn_gl000249	38502	hg19
+#contig	chrX	155270560	hg19
+#contig	chrY	59373566	hg19
+#GATKCommandLine.UnifiedGenotyper	table
+#GATKCommandLine.UnifiedGenotyper	ID	Version	Date	Epoch	CommandLineOptions
+#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.8-1-0-gf15c1c3ef	Tue Jun 30 00:35:48 CEST 2020	1593470148068	analysis_type=UnifiedGenotyper input_file=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/map-rdsbwa-NA19240m.cram] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/varall-gatk-rdsbwa-NA19240m.tsv-chr1.bed] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null use_jdk_deflater=false use_jdk_inflater=false disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=1 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_ALL_CONFIDENT_SITES allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/varall-gatk-rdsbwa-NA19240m-chr1.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
+#vcf_fileformat	VCFv4.2
+#FILTER	table
+#FILTER	ID	Description
+#FILTER	LowQual	Low quality
+#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa
+# ----
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PL	BaseQRankSum	totalcoverage	DS	Dels	FS	HaplotypeScore	MQ	MQ0	MQRankSum	QD	ReadPosRankSum	SOR
+chr21	42735549	42735550	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735550	42735551	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735551	42735552	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735552	42735553	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735553	42735554	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735554	42735555	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735555	42735556	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735556	42735557	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735557	42735558	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735558	42735559	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735559	42735560	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735560	42735561	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735561	42735562	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735562	42735563	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735563	42735564	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735564	42735565	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735565	42735566	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735566	42735567	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735567	42735568	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735568	42735569	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735569	42735570	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735570	42735571	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735571	42735572	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735572	42735573	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735573	42735574	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735574	42735575	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735575	42735576	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735576	42735577	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735577	42735578	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735578	42735579	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735579	42735580	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735580	42735581	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735581	42735582	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735582	42735583	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735583	42735584	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735585	42735586	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735586	42735587	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735587	42735588	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735588	42735589	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735589	42735590	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735590	42735591	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735591	42735592	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735592	42735593	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735593	42735594	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735594	42735595	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735595	42735596	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735596	42735597	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735616	42735617	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735617	42735618	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735618	42735619	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735619	42735620	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735620	42735621	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735621	42735622	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735622	42735623	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735623	42735624	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735624	42735625	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735625	42735626	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735626	42735627	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735627	42735628	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735628	42735629	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735629	42735630	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735630	42735631	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735631	42735632	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735632	42735633	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735633	42735634	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735634	42735635	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735635	42735636	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735636	42735637	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735637	42735638	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735638	42735639	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735639	42735640	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735640	42735641	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735641	42735642	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735642	42735643	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735643	42735644	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735644	42735645	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735645	42735646	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735646	42735647	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735647	42735648	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735648	42735649	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735649	42735650	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735650	42735651	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735651	42735652	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735652	42735653	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735653	42735654	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735654	42735655	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735655	42735656	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735656	42735657	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735657	42735658	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735658	42735659	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735659	42735660	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735660	42735661	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735661	42735662	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735662	42735663	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735663	42735664	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735664	42735665	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735665	42735666	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735666	42735667	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735667	42735668	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735668	42735669	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735669	42735670	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735670	42735671	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735671	42735672	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735672	42735673	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735673	42735674	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735674	42735675	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735675	42735676	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735676	42735677	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735677	42735678	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735678	42735679	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735679	42735680	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735680	42735681	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735681	42735682	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735682	42735683	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735683	42735684	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735684	42735685	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735685	42735686	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735686	42735687	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735687	42735688	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735688	42735689	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735689	42735690	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735690	42735691	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735691	42735692	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735692	42735693	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735693	42735694	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735694	42735695	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735695	42735696	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735696	42735697	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735697	42735698	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735698	42735699	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735699	42735700	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735700	42735701	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735701	42735702	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735702	42735703	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735703	42735704	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735704	42735705	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735705	42735706	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735706	42735707	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735707	42735708	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735708	42735709	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735709	42735710	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735710	42735711	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735711	42735712	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735712	42735713	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735713	42735714	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735714	42735715	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42735715	42735716	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735716	42735717	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735717	42735718	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735718	42735719	snp	G	A	103.77	G	A	t	0	0;1	4	4	8	99	132,0,100	-1.006	8		0.00	0.000	0.0000	60.00	0	0.000	12.97	-0.697	0.693
+chr21	42735719	42735720	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735720	42735721	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735721	42735722	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735722	42735723	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735723	42735724	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42735724	42735725	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42735725	42735726	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735726	42735727	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735727	42735728	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42735728	42735729	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735729	42735730	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735730	42735731	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735731	42735732	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735732	42735733	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735733	42735734	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42735734	42735735	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735735	42735736	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735736	42735737	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735737	42735738	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735738	42735739	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42735739	42735740	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735740	42735741	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42735741	42735742	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735742	42735743	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735743	42735744	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735744	42735745	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735745	42735746	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735746	42735747	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735747	42735748	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735748	42735749	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735749	42735750	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735750	42735751	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735751	42735752	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735752	42735753	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735753	42735754	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735754	42735755	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735755	42735756	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735756	42735757	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42735757	42735758	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42735758	42735759	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735759	42735760	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735760	42735761	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42735761	42735762	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42735762	42735763	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735763	42735764	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735764	42735765	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735765	42735766	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735766	42735767	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735767	42735768	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735768	42735769	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735769	42735770	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735770	42735771	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735771	42735772	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735772	42735773	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735773	42735774	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735774	42735775	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735775	42735776	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735776	42735777	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735777	42735778	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735778	42735779	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735779	42735780	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735780	42735781	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735781	42735782	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735782	42735783	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735783	42735784	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735784	42735785	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735785	42735786	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735786	42735787	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735787	42735788	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42735788	42735789	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735789	42735790	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735790	42735791	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735791	42735792	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42735792	42735793	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42735793	42735794	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42735794	42735795	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735795	42735796	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735796	42735797	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735797	42735798	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42735798	42735799	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735799	42735800	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735800	42735801	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735801	42735802	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735802	42735803	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735803	42735804	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735804	42735805	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735805	42735806	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735806	42735807	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735807	42735808	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735808	42735809	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735809	42735810	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42735810	42735811	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42735811	42735812	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735812	42735813	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42735813	42735814	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748927	42748928	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748928	42748929	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748929	42748930	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748930	42748931	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748931	42748932	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748932	42748933	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748933	42748934	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748934	42748935	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748935	42748936	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748936	42748937	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748937	42748938	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748938	42748939	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748939	42748940	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748940	42748941	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748941	42748942	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748942	42748943	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748943	42748944	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748944	42748945	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748945	42748946	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748946	42748947	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748947	42748948	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748948	42748949	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748949	42748950	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748950	42748951	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748951	42748952	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748952	42748953	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748953	42748954	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748954	42748955	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748955	42748956	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748956	42748957	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748957	42748958	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748958	42748959	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748959	42748960	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748960	42748961	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748961	42748962	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748962	42748963	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748963	42748964	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748964	42748965	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748965	42748966	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748966	42748967	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748967	42748968	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42748968	42748969	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748969	42748970	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748979	42748980	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748980	42748981	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748981	42748982	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748982	42748983	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748983	42748984	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748984	42748985	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748985	42748986	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748986	42748987	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748987	42748988	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748994	42748995	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748995	42748996	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748996	42748997	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42748997	42748998	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42748998	42748999	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42748999	42749000	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749000	42749001	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749001	42749002	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42749002	42749003	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749003	42749004	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749004	42749005	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749005	42749006	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749006	42749007	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749007	42749008	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749008	42749009	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749011	42749012	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749012	42749013	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749013	42749014	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42749019	42749020	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749020	42749021	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749021	42749022	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749022	42749023	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42749023	42749024	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42749024	42749025	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42749025	42749026	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42749026	42749027	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754378	42754379	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42754379	42754380	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754400	42754401	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754401	42754402	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754402	42754403	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754403	42754404	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754404	42754405	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754405	42754406	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754406	42754407	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754407	42754408	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754408	42754409	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42754409	42754410	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754448	42754449	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754449	42754450	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42754450	42754451	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754451	42754452	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754452	42754453	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754453	42754454	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754454	42754455	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754455	42754456	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754456	42754457	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42754457	42754458	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754458	42754459	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42754459	42754460	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42754460	42754461	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42767661	42767662	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42767662	42767663	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42767663	42767664	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42767664	42767665	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42767665	42767666	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42767666	42767667	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42767667	42767668	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42767668	42767669	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42767669	42767670	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42767670	42767671	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42767671	42767672	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42767672	42767673	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770815	42770816	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770816	42770817	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770817	42770818	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770818	42770819	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770819	42770820	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770820	42770821	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770821	42770822	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770822	42770823	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770823	42770824	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770824	42770825	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770825	42770826	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770826	42770827	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770827	42770828	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770828	42770829	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770829	42770830	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770830	42770831	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770831	42770832	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770832	42770833	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770845	42770846	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770846	42770847	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770847	42770848	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770848	42770849	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770849	42770850	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770850	42770851	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770851	42770852	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770852	42770853	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770853	42770854	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770854	42770855	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770855	42770856	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770856	42770857	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770857	42770858	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770858	42770859	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770859	42770860	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770860	42770861	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770861	42770862	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770862	42770863	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770863	42770864	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770864	42770865	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770865	42770866	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770866	42770867	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770867	42770868	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770868	42770869	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770869	42770870	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770870	42770871	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770871	42770872	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770872	42770873	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770873	42770874	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770874	42770875	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770875	42770876	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770876	42770877	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770877	42770878	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770878	42770879	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770879	42770880	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770880	42770881	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770881	42770882	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770882	42770883	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770883	42770884	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770884	42770885	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770885	42770886	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770886	42770887	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770887	42770888	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770888	42770889	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770889	42770890	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770890	42770891	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770891	42770892	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770892	42770893	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770893	42770894	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770894	42770895	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770895	42770896	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770896	42770897	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770897	42770898	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770898	42770899	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770899	42770900	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770900	42770901	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770901	42770902	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770902	42770903	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770903	42770904	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770904	42770905	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770905	42770906	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770906	42770907	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770907	42770908	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770908	42770909	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770909	42770910	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770910	42770911	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770911	42770912	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42770912	42770913	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770913	42770914	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770914	42770915	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770925	42770926	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770926	42770927	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770927	42770928	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42770928	42770929	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770929	42770930	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770930	42770931	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42770931	42770932	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770932	42770933	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770933	42770934	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770934	42770935	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770935	42770936	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770936	42770937	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770937	42770938	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42770938	42770939	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770939	42770940	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770940	42770941	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770941	42770942	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770942	42770943	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42770943	42770944	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42770944	42770945	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42770945	42770946	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770946	42770947	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770947	42770948	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770948	42770949	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770949	42770950	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770950	42770951	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770951	42770952	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42770952	42770953	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42770953	42770954	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770954	42770955	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770955	42770956	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42770956	42770957	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770957	42770958	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42770958	42770959	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775155	42775156	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775156	42775157	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775157	42775158	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775158	42775159	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775159	42775160	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775160	42775161	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775161	42775162	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775162	42775163	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775163	42775164	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775164	42775165	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775165	42775166	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775166	42775167	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775167	42775168	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775168	42775169	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775169	42775170	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775170	42775171	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775171	42775172	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775172	42775173	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775173	42775174	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775174	42775175	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775175	42775176	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775176	42775177	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775177	42775178	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775178	42775179	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775179	42775180	snp	C	T	173.90	T	T	m	0	1;1	0	6	6	15	202,15,0		6		0.00	0.000	0.9999	60.00	0		28.98		2.303
+chr21	42775180	42775181	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775181	42775182	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775182	42775183	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775183	42775184	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775184	42775185	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775185	42775186	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775186	42775187	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775187	42775188	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775188	42775189	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775189	42775190	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775190	42775191	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775191	42775192	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775192	42775193	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775193	42775194	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775194	42775195	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775195	42775196	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775196	42775197	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775197	42775198	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775198	42775199	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775199	42775200	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775200	42775201	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775201	42775202	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775202	42775203	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775203	42775204	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775204	42775205	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775205	42775206	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775206	42775207	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775207	42775208	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775208	42775209	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775209	42775210	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775210	42775211	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775211	42775212	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775212	42775213	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775213	42775214	snp	A	.	43.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775214	42775215	snp	T	.	43.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775215	42775216	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775216	42775217	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775217	42775218	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775218	42775219	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775219	42775220	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775220	42775221	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775221	42775222	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775222	42775223	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775223	42775224	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775224	42775225	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775225	42775226	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775226	42775227	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775227	42775228	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775228	42775229	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775229	42775230	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775230	42775231	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775231	42775232	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775232	42775233	snp	A	.	49.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775233	42775234	snp	T	.	49.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775234	42775235	snp	T	.	49.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775235	42775236	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775236	42775237	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775237	42775238	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775238	42775239	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775239	42775240	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775240	42775241	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775241	42775242	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775242	42775243	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775243	42775244	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775244	42775245	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775245	42775246	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775246	42775247	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775247	42775248	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775248	42775249	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775249	42775250	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775250	42775251	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775251	42775252	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775252	42775253	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775253	42775254	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775254	42775255	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775255	42775256	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775256	42775257	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775257	42775258	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775258	42775259	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775259	42775260	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775260	42775261	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775261	42775262	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775262	42775263	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775263	42775264	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775264	42775265	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775265	42775266	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775266	42775267	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775267	42775268	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775268	42775269	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775269	42775270	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775270	42775271	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775271	42775272	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775272	42775273	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775273	42775274	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775274	42775275	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775275	42775276	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775276	42775277	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775277	42775278	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775278	42775279	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775279	42775280	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775280	42775281	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775281	42775282	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775282	42775283	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775283	42775284	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775284	42775285	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42775285	42775286	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775286	42775287	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775287	42775288	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775288	42775289	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42775289	42775290	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775290	42775291	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775291	42775292	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775292	42775293	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775293	42775294	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775294	42775295	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775295	42775296	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775296	42775297	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775297	42775298	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775298	42775299	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775299	42775300	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775300	42775301	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775301	42775302	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775302	42775303	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775303	42775304	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775304	42775305	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775305	42775306	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775306	42775307	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775307	42775308	snp	A	.	46.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42775308	42775309	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775309	42775310	snp	T	.	46.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42775310	42775311	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775311	42775312	snp	G	.	46.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42775312	42775313	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42775313	42775314	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775314	42775315	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42775315	42775316	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775316	42775317	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775317	42775318	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775318	42775319	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775319	42775320	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42775320	42775321	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775321	42775322	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42775322	42775323	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775323	42775324	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42775324	42775325	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775325	42775326	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775326	42775327	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775327	42775328	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775328	42775329	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775329	42775330	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775330	42775331	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42775331	42775332	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42775332	42775333	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775333	42775334	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775334	42775335	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775335	42775336	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775336	42775337	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775353	42775354	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775354	42775355	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775355	42775356	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775356	42775357	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775357	42775358	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775358	42775359	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775359	42775360	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775360	42775361	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775361	42775362	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775362	42775363	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775363	42775364	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775383	42775384	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775384	42775385	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42775529	42775530	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42775530	42775531	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42775531	42775532	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42775532	42775533	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778696	42778697	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778697	42778698	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778698	42778699	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778699	42778700	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778700	42778701	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778701	42778702	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778702	42778703	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778703	42778704	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778704	42778705	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778705	42778706	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778706	42778707	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778707	42778708	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778708	42778709	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778709	42778710	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778710	42778711	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778724	42778725	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778725	42778726	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778726	42778727	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778727	42778728	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778728	42778729	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778729	42778730	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778730	42778731	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778731	42778732	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778732	42778733	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778733	42778734	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778734	42778735	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778735	42778736	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778736	42778737	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778737	42778738	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778738	42778739	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778739	42778740	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778740	42778741	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778741	42778742	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778742	42778743	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778743	42778744	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778771	42778772	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778772	42778773	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42778773	42778774	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778774	42778775	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778775	42778776	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42778776	42778777	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42778777	42778778	snp	T	.	37.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42778778	42778779	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42778779	42778780	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42778780	42778781	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42778781	42778782	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42778782	42778783	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42778783	42778784	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42778784	42778785	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42778785	42778786	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779842	42779843	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779843	42779844	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779844	42779845	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779845	42779846	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779846	42779847	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779847	42779848	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779848	42779849	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779849	42779850	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779850	42779851	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779851	42779852	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779852	42779853	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779853	42779854	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779854	42779855	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779855	42779856	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779856	42779857	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779857	42779858	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779858	42779859	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779859	42779860	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779860	42779861	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779861	42779862	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779862	42779863	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779863	42779864	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779864	42779865	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779865	42779866	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779866	42779867	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779867	42779868	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779868	42779869	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779869	42779870	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779870	42779871	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779871	42779872	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779872	42779873	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779873	42779874	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779874	42779875	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779875	42779876	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779876	42779877	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779877	42779878	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779878	42779879	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779879	42779880	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779880	42779881	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779881	42779882	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779882	42779883	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779883	42779884	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779884	42779885	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779885	42779886	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779886	42779887	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779887	42779888	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779888	42779889	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779889	42779890	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779890	42779891	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779891	42779892	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779892	42779893	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779893	42779894	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779894	42779895	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779895	42779896	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779896	42779897	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779897	42779898	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779898	42779899	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779899	42779900	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779900	42779901	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779901	42779902	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779902	42779903	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779903	42779904	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779904	42779905	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779905	42779906	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779906	42779907	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779907	42779908	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779908	42779909	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779909	42779910	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779910	42779911	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779911	42779912	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779912	42779913	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779913	42779914	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42779914	42779915	snp	C	.	46.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42779915	42779916	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42779916	42779917	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42779917	42779918	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42779918	42779919	snp	A	.	46.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42779919	42779920	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779920	42779921	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779921	42779922	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779922	42779923	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779923	42779924	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779924	42779925	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779925	42779926	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779926	42779927	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779927	42779928	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779928	42779929	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779929	42779930	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779930	42779931	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779931	42779932	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779932	42779933	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779933	42779934	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779934	42779935	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779935	42779936	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779936	42779937	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779937	42779938	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779938	42779939	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779939	42779940	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779940	42779941	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779941	42779942	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779942	42779943	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779943	42779944	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779944	42779945	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779945	42779946	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779946	42779947	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779947	42779948	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779948	42779949	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42779949	42779950	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779950	42779951	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779951	42779952	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779952	42779953	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779953	42779954	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779954	42779955	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779960	42779961	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779961	42779962	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779962	42779963	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779963	42779964	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779964	42779965	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779965	42779966	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779966	42779967	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779967	42779968	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779968	42779969	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42779969	42779970	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42779970	42779971	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42779971	42779972	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779972	42779973	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779973	42779974	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779974	42779975	snp	C	.	46.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42779975	42779976	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779976	42779977	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779977	42779978	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779978	42779979	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779979	42779980	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779980	42779981	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779981	42779982	snp	A	.	46.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42779982	42779983	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779983	42779984	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779984	42779985	snp	G	.	46.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42779985	42779986	snp	T	.	46.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42779986	42779987	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42779987	42779988	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42779988	42779989	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779989	42779990	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779990	42779991	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779991	42779992	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779992	42779993	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779993	42779994	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42779994	42779995	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42779995	42779996	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42779996	42779997	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42779997	42779998	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42779998	42779999	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42779999	42780000	snp	A	.	52.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42780000	42780001	snp	A	.	52.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42780001	42780002	snp	G	.	52.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42780002	42780003	snp	C	.	52.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42780003	42780004	snp	C	.	52.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42780004	42780005	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780005	42780006	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780006	42780007	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42780007	42780008	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780008	42780009	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780009	42780010	snp	G	.	52.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42780010	42780011	snp	C	.	52.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42780011	42780012	snp	A	.	52.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42780012	42780013	snp	G	.	52.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42780013	42780014	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780014	42780015	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780015	42780016	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780016	42780017	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42780017	42780018	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780018	42780019	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780019	42780020	snp	C	.	49.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42780020	42780021	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780021	42780022	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42780022	42780023	snp	G	.	49.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42780023	42780024	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780024	42780025	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780025	42780026	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780026	42780027	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780027	42780028	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780028	42780029	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780029	42780030	snp	A	.	49.23	A	A	r	0	0;0			7				7					60.00	0				
+chr21	42780030	42780031	snp	T	.	49.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780031	42780032	snp	C	.	49.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42780032	42780033	snp	G	.	49.23	G	G	r	0	0;0			8				8					60.00	0				
+chr21	42780033	42780034	snp	C	.	49.23	C	C	r	0	0;0			8				8					60.00	0				
+chr21	42780034	42780035	snp	T	.	49.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42780035	42780036	snp	A	.	49.23	A	A	r	0	0;0			8				8					60.00	0				
+chr21	42780036	42780037	snp	T	.	49.23	T	T	r	0	0;0			8				8					60.00	0				
+chr21	42780037	42780038	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780038	42780039	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42780039	42780040	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42780040	42780041	snp	T	.	46.23	T	T	r	0	0;0			7				7					60.00	0				
+chr21	42780041	42780042	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42780042	42780043	snp	G	.	46.23	G	G	r	0	0;0			7				7					60.00	0				
+chr21	42780043	42780044	snp	C	.	46.23	C	C	r	0	0;0			7				7					60.00	0				
+chr21	42780044	42780045	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42780045	42780046	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780046	42780047	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780047	42780048	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42780048	42780049	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42780049	42780050	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780050	42780051	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780051	42780052	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780052	42780053	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780053	42780054	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780054	42780055	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780055	42780056	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780056	42780057	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780057	42780058	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780058	42780059	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780059	42780060	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780060	42780061	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42780061	42780062	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780062	42780063	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780063	42780064	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780064	42780065	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780065	42780066	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780066	42780067	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780067	42780068	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr21	42780068	42780069	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr21	42780069	42780070	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42780070	42780071	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780071	42780072	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780072	42780073	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780073	42780074	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780074	42780075	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780075	42780076	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42780076	42780077	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780077	42780078	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42780078	42780079	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780079	42780080	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780080	42780081	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42780081	42780082	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780082	42780083	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780083	42780084	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42780084	42780085	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780085	42780086	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780096	42780097	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780097	42780098	snp	A	.	43.23	A	A	r	0	0;0			6				6					60.00	0				
+chr21	42780098	42780099	snp	T	.	43.23	T	T	r	0	0;0			6				6					60.00	0				
+chr21	42780099	42780100	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42780100	42780101	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42780101	42780102	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr21	42780102	42780103	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780103	42780104	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780104	42780105	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42780105	42780106	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr21	42780106	42780107	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr21	42780107	42780108	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr21	42780108	42780109	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922237	41922238	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922238	41922239	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922239	41922240	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922240	41922241	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922241	41922242	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922242	41922243	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41922243	41922244	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922244	41922245	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922245	41922246	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922246	41922247	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922247	41922248	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922248	41922249	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922249	41922250	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922250	41922251	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922251	41922252	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41922264	41922265	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41922265	41922266	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41922266	41922267	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922267	41922268	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922268	41922269	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41922269	41922270	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41922270	41922271	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41922276	41922277	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41922277	41922278	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922278	41922279	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41922279	41922280	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41922280	41922281	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41922281	41922282	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922282	41922283	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41922283	41922284	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923318	41923319	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923319	41923320	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923320	41923321	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923321	41923322	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923322	41923323	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923323	41923324	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923324	41923325	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923346	41923347	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923348	41923349	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923349	41923350	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923350	41923351	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923351	41923352	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923352	41923353	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923353	41923354	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923354	41923355	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923355	41923356	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923356	41923357	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923357	41923358	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923358	41923359	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923359	41923360	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923360	41923361	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923361	41923362	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923362	41923363	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923363	41923364	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923364	41923365	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923365	41923366	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923366	41923367	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923367	41923368	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923368	41923369	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923369	41923370	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923370	41923371	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923371	41923372	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923372	41923373	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923373	41923374	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923374	41923375	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923375	41923376	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923376	41923377	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923377	41923378	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923378	41923379	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923379	41923380	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923380	41923381	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923381	41923382	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923382	41923383	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923383	41923384	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923384	41923385	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923385	41923386	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923386	41923387	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923387	41923388	snp	C	.	34.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923388	41923389	snp	G	.	37.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923389	41923390	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923390	41923391	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923391	41923392	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923392	41923393	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923393	41923394	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923394	41923395	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923395	41923396	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923396	41923397	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923397	41923398	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923398	41923399	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923399	41923400	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923400	41923401	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923401	41923402	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923402	41923403	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923403	41923404	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923404	41923405	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923405	41923406	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923406	41923407	snp	G	.	40.23	G	G	r	0	0;0			8				8					60.00	0				
+chr22	41923407	41923408	snp	C	.	40.23	C	C	r	0	0;0			8				8					60.00	0				
+chr22	41923408	41923409	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
+chr22	41923409	41923410	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
+chr22	41923410	41923411	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
+chr22	41923411	41923412	snp	G	.	40.23	G	G	r	0	0;0			8				8					60.00	0				
+chr22	41923412	41923413	snp	C	.	40.23	C	C	r	0	0;0			8				8					60.00	0				
+chr22	41923413	41923414	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923414	41923415	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923415	41923416	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923416	41923417	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923417	41923418	snp	A	.	37.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923418	41923419	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923419	41923420	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923420	41923421	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923421	41923422	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923422	41923423	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923423	41923424	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923424	41923425	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923425	41923426	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923426	41923427	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923427	41923428	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923428	41923429	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923429	41923430	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923430	41923431	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923431	41923432	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923432	41923433	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923433	41923434	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923434	41923435	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923435	41923436	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923436	41923437	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923437	41923438	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923438	41923439	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923439	41923440	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
+chr22	41923440	41923441	snp	A	.	37.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923441	41923442	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923442	41923443	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923443	41923444	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
+chr22	41923444	41923445	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
+chr22	41923445	41923446	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
+chr22	41923446	41923447	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923447	41923448	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923448	41923449	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923449	41923450	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923450	41923451	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923451	41923452	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923452	41923453	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923453	41923454	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923454	41923455	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923455	41923456	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923456	41923457	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923457	41923458	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923458	41923459	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923459	41923460	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923460	41923461	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923461	41923462	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923462	41923463	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923463	41923464	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923464	41923465	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923465	41923466	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
