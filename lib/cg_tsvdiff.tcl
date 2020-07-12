@@ -76,7 +76,7 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	set common [list_common $h1 $h2]
 	set error {}
-	if {$sort eq "1"} {data/NA19240m/map-rdsbwa-NA19240m.cram
+	if {$sort eq "1"} {
 		set sort $common
 	}
 	set temp1_pre ""
