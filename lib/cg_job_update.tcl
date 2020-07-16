@@ -156,8 +156,6 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
-putsvars sline
-puts [time {
 		if {$addseconds} {
 			foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
 			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
@@ -244,7 +242,6 @@ puts [time {
 		if {$totalendcode eq "" || ($endcode ne "" && [time_comp $endcode $totalendcode] > 0)} {
 			set totalendcode $endcode ; set totalendtime $endtime
 		}
-}]
 	}
 	close $o
 	close $f
