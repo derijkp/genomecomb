@@ -85,6 +85,7 @@ proc svgetline {f} {
 }
 
 proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {tmargin 300} {overlap 75}} {
+# putsvars sline1 sline2
 	foreach {side1 chr1 begin1 end1 type1 ref1 alt1} $sline1 break
 	foreach {side2 chr2 begin2 end2 type2 ref2 alt2} $sline2 break
 	if {$type1 in "del inv"} {
@@ -102,6 +103,9 @@ proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {tmargin 300} {
 		set diff [expr {abs($tbegin2 - $tbegin1)}]
 		if {$diff > $tmargin} {return 2147483648}
 		return [expr {abs($begin2 - $begin1) + $diff}]
+	} elseif {$type1 in "ins"} {
+		if {![isint $alt1]} {set alt1 [string length $alt1]}
+		if {![isint $alt2]} {set alt1 [string length $alt2]}
 	}
 	set enddiff [expr {abs($end2 - $end1)}]
 	if {$enddiff > $margin} {return 2147483648}
@@ -141,7 +145,7 @@ proc svmulticompar_out {line1 line2 dummy1 dummy2} {
 }
 
 proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {tmargin 300} {overlap 75}} {
-# putsvars list1 list2
+# putsvars list1 list2 dummy1 dummy2 margin lmargin tmargin overlap
 # if {[llength $list1] > 1 && [llength $list2] > 1} {error STOP}
 	set matches {}
 	set p1 0

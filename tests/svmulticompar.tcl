@@ -65,6 +65,28 @@ test svmulticompar {bnd} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test svmulticompar {ins} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	ins	{}	AGCTAGCT
+	}
+	write_tab tmp/s2.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	ins	{}	TGCTAGCTA
+		chr1	10021	10021	ins	{}	20
+		chr1	20021	20021	ins	{}	20
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
+		1	10001	10001	ins		AGCTAGCT	10001	10001	AGCTAGCT	10001	10001	TGCTAGCTA
+		1	10021	10021	ins		20				10021	10021	20
+		1	20021	20021	ins		20				20021	20021	20
+	}]\n
+	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 test svmulticompar {cnv} {
 	test_cleantmp
 	write_tab tmp/s1.tsv {
