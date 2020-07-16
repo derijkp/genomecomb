@@ -518,7 +518,6 @@ test vcf2tsv {calc DP from AD if not present} {
 	exec diff tmp/cresult.tsv tmp/expected.tsv
 } {}
 
-
 test vcf2tsv {sv with end < begin} {
 	file_write tmp/test.vcf [deindent {
 		##fileformat=VCFv4.2
@@ -602,5 +601,19 @@ test vcf2tsv {vcf2tsv error not enough fields in line} {
 } {not enough fields in line:
 chrtest	20	.	CTGA	CT	20	.	.	GT
 *} error match
+
+test vcf2tsv {genotype not specified} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chrtest	10	.	CTG	C	10	.	.	GT	./.
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chrtest	10	12	del	TG		.	10	.	?	?	v	0	?;?.												
+	}]\n
+	cg vcf2tsv tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
 
 testsummarize

@@ -110,7 +110,7 @@ proc zyg {args} {
 			return m
 		}
 	} elseif {$seq1 eq "v"} {
-		if {$a1 == "?" || $a2 == "?"} {return ?}
+		if {$a1 == "?" || $a2 == "?"} {return v}
 		if {$alt eq ""} {
 			set alt {{}}
 		} elseif {[llength $alt] <= 1} {

@@ -28,7 +28,7 @@ proc tsv2vcf_fielddata {field faVar} {
 			alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
 			alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
 			sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
-			zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+			zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced
 			phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
 			alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
 			alleledepth	A	Integer	alleles only values of: Allelic depths for the ref and alt alleles in the order listed	format

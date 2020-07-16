@@ -209,7 +209,9 @@ t (heterozygous, one of the alleles is in alt, the other is ref),
 r (reference, both alleles are ref)
 c (compound, at least one allele in alt, the other is not ref),
 o (other, at least one allele is not ref, but none are in alt)
+v (variant, but genotype was not specified),
 u (unsequenced)
+? (could not deduce)
 ; transcripts(geneset,filter,type): returns the list of transcript names
 affected by a variant for the given gene set, potentially filtered by impact
 type. 

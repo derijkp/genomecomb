@@ -393,7 +393,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 				/* print out zyg */
 				/* ------------- */
 				if (a1 < 0 || a2 < 0) {
-					zyg = '?';
+					zyg = 'v';
 				} else if (a1 > 0) {
 					if (a2 == a1) {
 						zyg = 'm';
@@ -969,7 +969,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 						}
 					}
 					if (a1 < 0 || a2 < 0) {
-						zyg = "?";
+						zyg = "v";
 					} else if (a1 == curallele) {
 						if (a2 == a1) {
 							zyg = "m";

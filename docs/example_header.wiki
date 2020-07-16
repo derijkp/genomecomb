@@ -39,7 +39,7 @@ The same fields are present for NA19239 and NA19240
 
 == Sample specific fields for gatk analysis ==
 * **sequenced-gatk-rdsbwa-testNA19240chr21il**: sequenced by Illumina/GATK? ("u" = unsequenced, "v"=variant, "r"=reference)
-* **zyg-gatk-rdsbwa-testNA19240chr21il**: zygosity according to GATK (m=homozygous, t=heterozygous,  c=compound, o=other, r=reference, u=unsequenced/unspecified)
+* **zyg-gatk-rdsbwa-testNA19240chr21il**: zygosity according to GATK (m=homozygous, t=heterozygous,  c=compound, o=other, r=reference, u=unsequenced)
 * **alleleSeq1-gatk-rdsbwa-testNA19240chr21il**: First allele called in Illumina genome by GATK.
 * **alleleSeq2-gatk-rdsbwa-testNA19240chr21il**: Second allele called in Illumina genome by GATK.
 * **quality-gatk-rdsbwa-testNA19240chr21il**: Quality score for this position as called by GATK on Illumina genome.
