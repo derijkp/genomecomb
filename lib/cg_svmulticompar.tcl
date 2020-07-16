@@ -66,7 +66,7 @@ proc svgetline {f} {
 				lset line 6 ""
 			} elseif {$type eq "ins"} {
 				lset line 6 [lindex $line [lindex $makealt 0]]
-			} elseif {$type eq "trans"} {
+			} elseif {$type in "trans bnd"} {
 				foreach {size chr2 start2} [list_sub $line $makealt] break
 				lset line 6 \[[chr_clip $chr2]:$start2\[
 			} else {
@@ -75,7 +75,7 @@ proc svgetline {f} {
 		}
 	} else {
 		lset line 1 [chr_clip $chr]
-		if {$type eq "trans"} {
+		if {$type in "trans bnd"} {
 			set temp [lindex $line 6]
 			regsub {([\[\]])chr} $temp {\1} temp
 			lset line 6 $temp
@@ -84,7 +84,7 @@ proc svgetline {f} {
 	return $line
 }
 
-proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 75}} {
+proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {tmargin 300} {overlap 75}} {
 	foreach {side1 chr1 begin1 end1 type1 ref1 alt1} $sline1 break
 	foreach {side2 chr2 begin2 end2 type2 ref2 alt2} $sline2 break
 	if {$type1 in "del inv"} {
@@ -94,13 +94,13 @@ proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 75}} {
 		if {$end1 == $begin1 || [expr {$psize/($end1-$begin1)}] < $overlap} {return 2147483648}
 		if {$end2 == $begin2 || [expr {$psize/($end2-$begin2)}] < $overlap} {return 2147483648}
 		set margin $lmargin
-	} elseif {$type1 eq "trans"
+	} elseif {$type1 in "trans bnd"
 		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt1 temp tchr1 tbegin1]
 		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt2 temp tchr2 tbegin2]
 	} {
 		if {$tchr1 ne $tchr2} {return 2147483648}
 		set diff [expr {abs($tbegin2 - $tbegin1)}]
-		if {$diff > $lmargin} {return 2147483648}
+		if {$diff > $tmargin} {return 2147483648}
 		return [expr {abs($begin2 - $begin1) + $diff}]
 	}
 	set enddiff [expr {abs($end2 - $end1)}]
@@ -140,7 +140,7 @@ proc svmulticompar_out {line1 line2 dummy1 dummy2} {
 	}
 }
 
-proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {overlap 75}} {
+proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {tmargin 300} {overlap 75}} {
 # putsvars list1 list2
 # if {[llength $list1] > 1 && [llength $list2] > 1} {error STOP}
 	set matches {}
@@ -148,7 +148,7 @@ proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 30
 	foreach sline1 $list1 {
 		set p2 0
 		foreach sline2 $list2 {
-			set diff [svmulticompar_dist $sline1 $sline2 $margin $lmargin $overlap]
+			set diff [svmulticompar_dist $sline1 $sline2 $margin $lmargin $tmargin $overlap]
 			if {$diff < 2147483640} {
 				lappend matches [list $diff $p1 $p2]
 			}
@@ -202,7 +202,7 @@ proc svmulticompar_getline {f poss {type 1}} {
 		if {[eof $f]} {return {}}
 	}
 	set cur [list_sub $line $poss]
-	if {[lindex $cur $typepos] eq "trans"} {
+	if {[lindex $cur $typepos] in "trans bnd"} {
 		set end1pos [expr {$locpos(end1)-1}]
 		set start2pos [expr {$locpos(start2)-1}]
 		set endpos [expr {[lindex $cur $end1pos]+200}]
@@ -313,13 +313,15 @@ proc svmulticompar {args} {
 	global locpos
 	set margin 30
 	set lmargin 300
+	set tmargin 300
 	set overlap 75
 	cg_options svmulticompar args {
 		-margin {set margin $value}
 		-lmargin {set lmargin $value}
+		-tmargin {set tmargin $value}
 		-overlap {set overlap $value}
 	} {svfile1 svfile2}
-	set maxmargin [max $margin $lmargin]
+	set maxmargin [max $margin $lmargin $tmargin]
 
 	set locfields {chromosome begin end type ref alt}
 	if {![file exists $svfile1]} {
@@ -417,7 +419,7 @@ proc svmulticompar {args} {
 				}
 			} else {
 				# foreach {list1 list2} [list $todo($type,1) $todo($type,2)] break
-				set plist [svmulticompar_groupdists $todo($type,1) $todo($type,2) $dummy1 $dummy2 $margin $lmargin $overlap]
+				set plist [svmulticompar_groupdists $todo($type,1) $todo($type,2) $dummy1 $dummy2 $margin $lmargin $tmargin $overlap]
 				foreach el $plist {
 					lappend list [join $el \t]
 				}
@@ -444,10 +446,12 @@ proc svmulticompar {args} {
 proc cg_svmulticompar {args} {
 	set margin 30
 	set lmargin 300
+	set tmargin 300
 	set overlap 75
 	cg_options svmulticompar args {
 		-margin {set margin $value}
 		-lmargin {set lmargin $value}
+		-tmargin {set tmargin $value}
 		-overlap {set overlap $value}
 	} {compar_file svfile} 2 ...
 	set files [list $svfile {*}$args]
@@ -464,7 +468,7 @@ proc cg_svmulticompar {args} {
 			putslog "Skipping $file: $name already present"
 		} else {
 			putslog "Adding $file"
-			svmulticompar -margin $margin -lmargin $lmargin -overlap $overlap $compar_file $file
+			svmulticompar -margin $margin -lmargin $lmargin -tmargin $tmargin -overlap $overlap $compar_file $file
 		}
 	}
 }

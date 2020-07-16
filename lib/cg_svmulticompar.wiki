@@ -24,7 +24,8 @@ More than one svfile can added in one command
 
 == Options ==
 ; -margin number: Allow begin and end to deviate the number of bases given (default 30)
-; -lmargin number: Allow begin and end to deviate the number of bases given for deletions and inversions (default 300)
+; -lmargin number: Allow begin and end to deviate the number of bases given for deletions, inversions, trans and bnd (default 300)
+; -tmargin number: Allow begin and end to deviate the number of bases given for translocations (trans) and breakends (bnd) (default 300)
 ; -minoverlap number: minimum percent overlap needed to identify deletions or inversions as the same (default 75)
 
 == Category ==

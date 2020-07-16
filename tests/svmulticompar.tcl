@@ -33,12 +33,34 @@ test svmulticompar {trans} {
 	}
 	write_tab tmp/s2.tsv {
 		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	trans	{}	[chr2:500[
 		chr1	10021	10021	trans	{}	[chr2:200[
 	}
-	write_tab tmp/expected.tsv {
+	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
-		1	10001	10001	trans	{}	[2:100[	10001	10001	[2:100[	10021	10021	[2:200[
+		1	10001	10001	trans		[2:100[	10001	10001	[2:100[	10021	10021	[2:200[
+		1	10001	10001	trans		[2:500[				10001	10001	[2:500[
+	}]\n
+	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test svmulticompar {bnd} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	bnd	{}	[chr2:100[
 	}
+	write_tab tmp/s2.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10002	10002	bnd	{}	]chr2:100]
+		chr1	10021	10021	bnd	{}	[chr2:200[
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
+		1	10001	10001	bnd		[2:100[	10001	10001	[2:100[	10021	10021	[2:200[
+		1	10002	10002	bnd		]2:100]				10002	10002	]2:100]
+	}]\n
 	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
