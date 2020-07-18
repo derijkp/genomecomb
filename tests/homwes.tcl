@@ -55,7 +55,8 @@ test homwes {field not found error} {
 	}
 	set dbdir $::smalltestdir/refseqtest/hg19
 	cg homwes -callers {} -dbdir $dbdir tmp/temp.tsv
-} {Could not find alleleSeq1 field for sample sample1 in header (checked alleleSeq1-sample1, alleleSeq1-sample1, alleleSeq1)} error
+} {Using callers: 
+Could not find alleleSeq1 field for sample sample1 in header (checked alleleSeq1-sample1, alleleSeq1-sample1, alleleSeq1)} error
 
 cd $keepdir
 

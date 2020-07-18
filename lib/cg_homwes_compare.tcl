@@ -29,8 +29,12 @@ proc cg_homwes_compare args {
 	set reffile [lindex $args 0]
 	set refname [file tail [file root $reffile]]
 	set refcovered [lindex [cg covered $reffile] end]
+	unset -nocomplain donea
 	foreach file $args {
 		set name [file tail [file root $file]]
+		if {[info exists donea($name)]} {
+			error "duplicate name $name (file $file and $donea($name))"
+		}
 		putslog "Analysing $name"
 		set numregions [lindex [cg select -g all $file] end]
 		set covered [lindex [cg covered $file] end]
@@ -48,6 +52,7 @@ proc cg_homwes_compare args {
 		set fppercent [expr {100.0*$fp/$covered}]
 		set fnpercent [expr {100.0*$fn/$refcovered}]
 		puts $o [join [list $name $snps $numregions $covered $common $sensitivity $specificity $fp $fn $fppercent $fnpercent] \t]
+		set donea($name) $file
 	}
 	if {$o ne "stdout"} {close $o}
 }

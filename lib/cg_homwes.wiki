@@ -18,26 +18,28 @@ A directory with the base name of resultfile and extension work will be
 created that contains all intermidiate data.
 
 == Arguments ==
-; **variantfile**: tab separated or vcf file containing variants from exome sequencing
-; **samples**: samples to be analysed. If it is the empty, all samples in the file be used
-; **resultfile**: file to which the resulting regions of homozygosity will be written.
+; variantfile: tab separated or vcf file containing variants from exome sequencing
+; samples: samples to be analysed. If it is the empty, all samples in the file be used
+; resultfile: file to which the resulting regions of homozygosity will be written.
 If more than one sample is analysed, it will be a multiregion file
 containing the comparison of all samples, with the individual results available in fales named
 resultfileroot-sample.tsv
 
 == Options ==
-: **-dbdir**: directory with reference databases;
-        this is needed if the annotcomparfile is not annotated (e.g. a vcf file)
-; **-callers**: default is 'gatk-rdsbwa- sam-rdsbwa-'
-; **-variantsonly**: only include positions wich are variant in the sample 
-               (so reference positions are discarded) (default 0)
-; **-snpsonly**: only use variants of type snp (default 0)
-; **-filterrepeats**: filter out variants in microsatelites or (other) simple repeats (default 1)
-; **-genoqual**: filter out variants with a genoqual <= the given value (default 40)
-; **-htz**: number of heterozygous snps allowed per window (default 1)
-; **-density**: plink --homozyg-density option (default 200)
-; **-gap**: plink --homozyg-gap option (default 4000)
-; **-window**: plink --homozyg-window-snp option (default 20)
+; -dbdir dbdir: directory with reference databases; this is needed if the annotcomparfile is not annotated (e.g. a vcf file)
+; -callers callers: callers lists the prefixes for the variant callers to be used, e.g. 'gatk-rdsbwa- sam-rdsbwa-'. 
+If empty (default) two callers will be selected from the ones present in the 
+file (in order of preference: gatkh-rdsbwa- strelka-rdsbwa- gatk-rdsbwa- sam-rdsbwa-)
+; -variantsonly 0/1: only include positions wich are variant in the sample 
+               (so reference positions are discarded) (default 1)
+; -snpsonly 0/1: only use variants of type snp (default 0)
+; -filterrepeats 0/1: filter out variants in microsatelites or (other) simple repeats (default 1)
+; -quality min: filter out variants with a quality <= the given value (default 50)
+; -genoqual min: filter out variants with a genoqual <= the given value (default 40)
+; -htz number: number of heterozygous snps allowed per window (default 1)
+; -density number: plink --homozyg-density option (default 200)
+; -gap number: plink --homozyg-gap option (default 4000)
+; -window number: plink --homozyg-window-snp option (default 20)
 
 == reference ==
 The homwes tool is described in the following paper (which you should reference when the tool was used)

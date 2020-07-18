@@ -12,8 +12,9 @@ proc findfield {fields pattern args} {
 }
 
 proc cg_homwes {args} {
-	set callers {gatk-rdsbwa- sam-rdsbwa-}
+	set callers {}
 	set filterrepeats 1
+	set quality 50
 	set genoqual 40
 	set allowedheterozygous 1
 	set homozygdensity 200
@@ -23,7 +24,7 @@ proc cg_homwes {args} {
 	set dbdir {}
 	set vcf 0
 	set pos 0
-	set variantsonly 0
+	set variantsonly 1
 	set samples {}
 	set resultfile {}
 	cg_options homwes args {
@@ -38,6 +39,9 @@ proc cg_homwes {args} {
 		}
 		-filterrepeats {
 			set filterrepeats $value
+		}
+		-quality {
+			set quality $value
 		}
 		-genoqual {
 			set genoqual $value
@@ -125,13 +129,27 @@ proc cg_homwes {args} {
 		}
 	}
 	set resultfiles {}
+	set analyses [listanalyses $header]
 	foreach sample $samples {
+
 		putslog "Sample $sample"
+		if {$callers eq ""} {
+			set temp [list_sub $analyses [list_find -regexp $analyses -$sample\$]]
+			set temp [list_regsub -- $sample\$ $temp {}]
+			set usecallers [list_common {gatkh-rdsbwa- strelka-rdsbwa- gatk-rdsbwa- sam-rdsbwa-} $temp]
+			if {[llength $usecallers] < 2} {
+				lappend usecallers {*}[list_lremove $temp $usecallers]
+			}
+			set usecallers [lrange $usecallers 0 1]
+		} else {
+			set usecallers $callers
+		}
+		puts "Using callers: $usecallers"
 		set sworkbase $workbase-$sample
 		set query {}
 		set fields {chromosome begin end type ref alt}
 		set filter {}
-		set caller1 [lindex $callers 0]
+		set caller1 [lindex $usecallers 0]
 		if {"alleleSeq1-$caller1$sample" in $header} {
 			set postfix -$caller1$sample
 		} elseif {"alleleSeq1-$sample" in $header} {
@@ -154,6 +172,12 @@ proc cg_homwes {args} {
 		} else {
 			puts "warning: field \"(g)filter$postfix\" is missing"
 		}
+		set field [findfield $header quality$postfix]
+		if {$field ne ""} {
+			lappend query "def(\$$field,10000) > $quality"
+		} else {
+			puts "warning: field \"quality$postfix\" is missing"
+		}
 		set field [findfield $header genoqual$postfix]
 		if {$field ne ""} {
 			lappend query "def(\$$field,100) > $genoqual"
@@ -168,7 +192,7 @@ proc cg_homwes {args} {
 		}
 		set dosame {}
 		set callers_used {}
-		foreach caller $callers {
+		foreach caller $usecallers {
 			if {[findfield $header alleleSeq1-$caller$sample] ne "" && [findfield $header alleleSeq2-$caller$sample] ne ""} {
 				lappend dosame $caller$sample
 				lappend callers_used $caller
@@ -190,7 +214,7 @@ proc cg_homwes {args} {
 			}
 		} else {
 			if {"sequenced$postfix" in $header} {
-				lappend query "\$sequenced$postfix ne \"u\""
+				lappend query "\$sequenced$postfix ni \"u\""
 			} elseif {"zyg$postfix" in $header} {
 				lappend query "\$zyg$postfix ni \"u\""
 			}
@@ -202,6 +226,7 @@ proc cg_homwes {args} {
 			-f $fields \
 			$usefile ${sworkbase}-filtered.tsv
 		
+
 		# export to plink
 		putslog "Export to plink"
 		cg exportplink --samples $sample ${sworkbase}-filtered.tsv $sworkbase
@@ -235,11 +260,18 @@ proc cg_homwes {args} {
 			puts $o "# analysed file: $annotcomparfile (converted to $usefile)"
 		}
 		puts $o "# samples: $samples"
-		puts $o "# callers_used: $callers_used"
-		puts $o "# callers_param: $callers"
-		puts $o "# allowedheterozygous: $allowedheterozygous"
+		puts $o "# filterrepeats: $filterrepeats"
+		puts $o "# quality: $quality"
+		puts $o "# genoqual: $genoqual"
 		puts $o "# variantsonly: $variantsonly"
 		puts $o "# snpsonly: $snpsonly"
+		puts $o "# query used for filtering variants: (chr_clip(\$chromosome) ni {X Y M MT}) && [join $query " && "]"
+		puts $o "# callers_used: $callers_used"
+		puts $o "# callers_param: $usecallers"
+		puts $o "# allowedheterozygous: $allowedheterozygous"
+		puts $o "# homozygdensity: $homozygdensity"
+		puts $o "# homozyggap: $homozyggap"
+		puts $o "# homozygwindowsnp: $homozygwindowsnp"
 		puts $o "# dbdir: $dbdir"
 		set line [gets $f]
 		if {[list {*}$line] ne "FID IID PHE CHR SNP1 SNP2 POS1 POS2 KB NSNP DENSITY PHOM PHET"} {
