@@ -48,6 +48,6 @@ proc cg_gatk_genotypevcfs args {
 		-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation \
 		--verbosity ERROR \
 		--create-output-variant-index true \
-		{*}$opts >@ stdout 2>@stderr
+		>@ stdout 2>@stderr
 	file rename -- $vcf.temp[gzext $vcf] $vcf
 }
