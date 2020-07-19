@@ -1129,7 +1129,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			set o [open $job.err a]
 			puts $o "\nfinished [job_timestamp]"
 			close $o
-			catch {file rename -force -- $job.err $job.finished}
+			catch {file rename -force -- $job.err $job.ok}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 			error $errormsg

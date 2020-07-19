@@ -37,7 +37,7 @@ direct).
 The command used to start the analysis will produce a logfile (with the
 extension .submitting) while submitting the jobs. Each job gets a line
 in the logfile, and also produces a number of small files (runscript,
-logfile, error output) in directories called log_jobs. (The first column
+joblogfile, error output) in directories called log_jobs. (The first column
 in the logfile refers to their location.) These small files are normally
 removed after a successfull analysis (but not when there were errors, as
 they may be useful for debugging). 

@@ -112,6 +112,7 @@ proc job_process_submit_sge {job runfile args} {
 	set name [sge_safename $name $prefix]
 	set dir [file dir $job]
 	catch {file delete $job.finished}
+	catch {file delete $job.ok}
 	catch {file delete $job.out}
 	catch {file delete $job.err}
 	if {[regexp , $job]} {

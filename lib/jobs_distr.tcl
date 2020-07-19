@@ -155,6 +155,7 @@ proc job_process_submit_distr {job runfile args} {
 	regsub -all {[^A-Za-z0-9_.-]} $name __ name
 	set dir [file dir $job]
 	catch {file delete $job.finished}
+	catch {file delete $job.ok}
 	if {![info exists cgjob_distr(num)]} {set cgjob_distr(num) 0}
 	set jobnum [incr cgjob_distr(num)]
 	catch {file delete $job.out}

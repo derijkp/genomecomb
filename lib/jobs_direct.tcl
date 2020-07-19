@@ -188,6 +188,7 @@ proc job_process_direct {} {
 			job_log $job "error creating $jobname: $result"
 		}
 		catch {file delete $job.finished}
+		catch {file delete $job.ok}
 		set f [open $job.err w]; close $f
 		stderr2file $job.out $job.err
 		set error [catch {job_run} result]
@@ -204,11 +205,11 @@ proc job_process_direct {} {
 		set endtime [timestamp]
 		# log results
 		# ===========
-		if {![job_file_exists $job.finished]} {
+		if {![job_file_exists $job.finished] && ![job_file_exists $job.ok]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 			job_logfile_add $job . error $targets $cores "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {
-			file delete $job.finished
+			file delete $job.ok ; file delete $job.finished
 			job_logfile_add $job . error $targets $cores $errormessage $submittime $starttime $endtime
 		} else {
 			job_log $job "-------------------- end $jobname --------------------"
