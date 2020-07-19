@@ -558,7 +558,7 @@ proc cg_tsv2vcf {args} {
 		} else {
 			# general field
 			set fieldname [get conv_formata($field) $field]
-			if {$field in {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 genotypes sequenced phased}} {
+			if {$field in {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 genotypes sequenced zyg phased}} {
 				set keyposa($field) $pos
 				# unset -nocomplain fa($field)
 				continue
