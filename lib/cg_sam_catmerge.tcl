@@ -1,6 +1,7 @@
 proc sam_catmerge_job {args} {
 	# job_logdir
 	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg var {*}$args]"
 	set threads 1
 	set force 0
 	set deletesams 0
@@ -65,9 +66,8 @@ proc sam_catmerge_job {args} {
 	set outputformat [ext2format $resultfile bam {bam cram sam}]
 	set outputformat [gzroot $outputformat]
 	if {$outputformat eq "sam"} {set index 0}
-	if {![info exists job_logdir]} {
-		set_job_logdir [file dir $resultfile]/log_jobs
-	}
+	job_logfile [file dir $resultfile]/sam_catmerge [file dir $resultfile] $cmdline \
+		{*}[versions samtools]
 	# run
 
 	if {$deletesams} {
