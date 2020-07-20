@@ -133,9 +133,9 @@ proc var_longshot_job {args} {
 	set resultlist [list $destdir/$varfile $destdir/$sregfile {} $destdir/$vcffile]
 	set longshottargets [list $destdir/$varfile $destdir/$vcffile]
 	if {$hap_bam} {
-		set hap_base $destdir/${pre}map-$root
-		lappend resultlist $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam
-		lappend longshottargets $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam
+		set outbam $destdir/${pre}map-h$root.bam
+		lappend resultlist $outbam
+		lappend longshottargets $outbam
 	}
 	if {$resultfiles} {
 		return $resultlist
@@ -147,11 +147,13 @@ proc var_longshot_job {args} {
 	## Produce longshot SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	set dep $bamtail
-	set bamtailindex $bamtail.[indexext $bamtail]
-	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
+	set dep $bamfile
+	set bamindex $bamfile.[indexext $bamfile]
+	set deps [list $bamfile $refseq $bamindex {*}$deps]
+#putsvars deps longshottargets vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index
+#error stop
 	job [job_relfile2name longshot- $varfile] {*}$skips -mem 8G -deps $deps -targets $longshottargets -vars {
-		vcffile region refseq root varfile split tech opts region hap_bam hap_base maxcov mincoverage index
+		vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index
 	} -code {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
@@ -163,11 +165,13 @@ proc var_longshot_job {args} {
 		set regions [samregions $region $refseq]
 		if {[llength $regions] > 1} {
 			set todo {}
+			set todobams {}
 			foreach region $regions {
 				set runopts $opts
 				set tempfile [tempfile].vcf
+				set tempoutbam $tempfile.bam
 				if {$hap_bam} {
-					lappend runopts --hap_bam_prefix $tempfile
+					lappend runopts --out_bam $tempoutbam
 				}
 				if {[catch {
 					catch_exec longshot {*}$runopts --region $region -F \
@@ -179,34 +183,27 @@ proc var_longshot_job {args} {
 					if {[regexp "^error: Chromosome name for region is not in BAM file" $msg]} {
 						putslog "longshot warning: Chromosome name ($region) for region is not in BAM file, writing empty"
 						longshot_empty_vcf $tempfile
-						exec samtools view -H -b $dep > $tempfile.hap1.bam
-						exec samtools view -H -b $dep > $tempfile.hap2.bam
-						exec samtools view -H -b $dep > $tempfile.unassigned.bam
+						exec samtools view -H -b $dep > $tempoutbam
 					} else {
 						error $msg
 					}
 				}
 				if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
 					longshot_empty_vcf $tempfile
-					exec samtools view -H -b $dep > $tempfile.hap1.bam
-					exec samtools view -H -b $dep > $tempfile.hap2.bam
-					exec samtools view -H -b $dep > $tempfile.unassigned.bam
+				}
+				if {$hap_bam && ![file exists $tempoutbam]} {
+					exec samtools view -H -b $dep > $tempoutbam
 				}
 				lappend todo $tempfile
+				lappend todobams $tempoutbam
 			}
 			exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
 			if {$hap_bam} {
-				foreach part {hap1 hap2 unassigned} {
-					set files {}
-					foreach file $todo {
-						lappend files $file.$part.bam
-					}
-					exec cg sam_catmerge -sort nosort $hap_base.$part.bam {*}$files
-				}
+				exec cg sam_catmerge -sort nosort -index 1 $outbam {*}$todobams
 			}
 		} else {
 			if {$hap_bam} {
-				lappend opts --hap_bam_prefix $hap_base
+				lappend opts --out_bam $outbam.temp.bam
 			}
 			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
 			set tempfile [gzroot $vcffile].temp
@@ -227,16 +224,14 @@ proc var_longshot_job {args} {
 				longshot_empty_vcf $tempfile
 			}
 			if {$hap_bam} {
-				foreach file [list $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam] {
-					if {![file exists $file]} {
-						exec samtools view -H -b $dep > $file
-					}
+				if {![file exists $outbam.temp.bam]} {
+					exec samtools view -H -b $dep > $outbam.temp.bam
 				}
 				if {$index} {
-					foreach file [glob [file root $dep]*.bam] {
-						exec samtools index $file
-					}
+					exec samtools index $outbam.temp.bam
 				}
+				catch {file rename -force -- $outbam.temp.bam $outbam}
+				catch {file rename -force -- $outbam.temp.bam.bai $outbam.bai}
 			}
 		}
 		exec gzip [gzroot $vcffile].temp

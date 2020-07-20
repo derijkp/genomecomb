@@ -958,7 +958,7 @@ proc process_sample_job {args} {
 			switch {$varcaller} {
 				gatk {set extraopts [list -dt $dt]}
 				sam {set extraopts [list -dt $dt]}
-				longshot {set extraopts [list -hap_bam $hap_bam}
+				longshot {set extraopts [list --hap_bam $hap_bam}
 				default {set extraopts {}}
 			}
 			if {![auto_load var_${varcaller}_job]} {
