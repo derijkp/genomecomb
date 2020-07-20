@@ -17,6 +17,10 @@ proc compress_zst {file {destfile {}} {index 1} {keep 1} {threads {}} {compressi
 	compress_template $file $destfile zst $cmd $index $keep
 }
 
+proc index_zst {file} {
+	exec zstdindex $file
+}
+
 proc cg_zst args {
 	set args [job_init {*}$args]
 	cg_compress_job -method zst {*}$args
