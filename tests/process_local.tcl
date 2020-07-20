@@ -29,9 +29,11 @@ test process_sample {bwa distrreg} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
 	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -threads 1 -aligners bwa -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	exec cg process_sample -threads 1 -aligners bwa -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
 	# chr21:42730799-42762826
-	cg tsvdiff -q 1 -x fastq -x *.sam -x *.bam -x *.bai -x *.cram -x *.crai -x *.analysisinfo -x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs tmp/NA19240m data/NA19240m
+	cg tsvdiff -q 1 -x fastq -x *.sam -x *.bam -x *.bai -x *.cram -x *.crai -x *.analysisinfo \
+		-x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
+		tmp/NA19240m data/NA19240m
 	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.bam | cg select -rf other > tmp/temp.tsv
 	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other > tmp/expected.tsv
 	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
@@ -46,7 +48,7 @@ test process_sample {bwa distrreg cram} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
 	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	exec cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
 	# chr21:42730799-42762826
 	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.cram | cg select -rf other > tmp/temp.tsv
 	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other > tmp/expected.tsv

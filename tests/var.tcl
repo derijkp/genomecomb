@@ -228,7 +228,8 @@ test var {var_longshot basic} {
 	cg var_longshot {*}$::dopts tmp/longshot/pacbio_reads_30x.bam tmp/longshot/genome.fa
 	cg vcf2tsv tmp/longshot/ground_truth_variants.vcf tmp/longshot/ground_truth_variants.tsv
 	cg multicompar tmp/longshot/compar.tsv tmp/longshot/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot/ground_truth_variants.tsv
-	cg tsvdiff -x *.log -x *.finished tmp/longshot expected/longshot
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+		tmp/longshot expected/longshot
 	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv
 } {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
 ?	m	2
@@ -247,8 +248,10 @@ test var {var_longshot distrreg} {
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d/pacbio_reads_30x.bam tmp/longshot_d/genome.fa
 	cg vcf2tsv tmp/longshot_d/ground_truth_variants.vcf tmp/longshot_d/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_d/compar.tsv tmp/longshot_d/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished tmp/longshot_d expected/longshot_d
-	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_d/compar.tsv
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
+		tmp/longshot_d expected/longshot_d
+	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} \
+		tmp/longshot_d/compar.tsv
 } {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
 ?	m	2
 ?	t	9
@@ -276,7 +279,8 @@ test var {var_longshot distrreg with contig1_ and empty contig and contig not in
 	#
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d2/pacbio_reads_30x.bam tmp/longshot_d2/genome.fa
 	cg multicompar tmp/longshot_d2/compar.tsv tmp/longshot_d2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d2/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished tmp/longshot_d2 expected/longshot_d2
+	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti \
+		tmp/longshot_d2 expected/longshot_d2
 	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_d2/compar.tsv
 } {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
 ?	m	2
@@ -285,7 +289,7 @@ m	m	228
 t	?	1
 t	t	475}
 
-test var {var_longshot distrreg with -hap_bam_prefix option} {
+test var {var_longshot distrreg with -hap_bam 1 option} {
 	cd $::smalltestdir
 	file delete -force tmp/longshot_hapbam
 	file mkdir tmp/longshot_hapbam
@@ -295,9 +299,17 @@ test var {var_longshot distrreg with -hap_bam_prefix option} {
 	cg var {*}$::dopts -method longshot -distrreg 1 -hap_bam 1 tmp/longshot_hapbam/pacbio_reads_30x.bam tmp/longshot_hapbam/genome.fa
 	cg vcf2tsv tmp/longshot_hapbam/ground_truth_variants.vcf tmp/longshot_hapbam/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam/compar.tsv tmp/longshot_hapbam/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished tmp/longshot_hapbam expected/longshot_hapbam
-	set temp [split [string trim [exec cg sam2tsv tmp/longshot_hapbam/map-longshot-pacbio_reads_30x.hap1.bam | cg regjoin | cg  covered]] \n]
-	if {[list_subindex $temp 0] ne "chromosome contig1 contig2 contig3 {} total"} {
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
+		tmp/longshot_hapbam expected/longshot_hapbam
+	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam/map-hlongshot-pacbio_reads_30x.bam | cg select -q {$HP == 1} | cg regjoin | cg  covered]]
+	if {$temp ne [string trim [deindent {
+		chromosome	bases
+		contig1	185941
+		contig2	179545
+		contig3	176005
+		
+		total	541491
+	}]]} {
 		error "error in haplotyped bams"
 	}
 	set expected [string trim [deindent {

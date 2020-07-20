@@ -124,7 +124,7 @@ test markdup {bam_markduplicates biobambam pipe} {
 test bam_clean {bam_clean} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
-	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
+	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
 	file_write tmp/expected.analysisinfo [string trim [deindent {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
 		genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	samtools	1.10 (using htslib 1.10)	gatk	3.8-1-0-gf15c1c3ef
@@ -149,7 +149,7 @@ child process exited abnormally} error
 test bam_clean {bam_clean to cram} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
-	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
+	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
 		-sort 1 -removeduplicates 1 -realign 1 \
 		-outputformat cram tmp/bwa.sam
 	file_write tmp/expected.analysisinfo [string trim [deindent {
