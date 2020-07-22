@@ -73,7 +73,7 @@ proc annotvar_clusters_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		if {[file size $dep]} {
-			cg annotate -stack 1 -v 2 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
+			cg annotate -stack 1 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
 		} else {
 			file_write $target ""
 		}
@@ -209,7 +209,7 @@ proc var_gatk_job {args} {
 				{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
-				-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
+				-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES
 			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
@@ -257,7 +257,7 @@ proc var_gatk_job {args} {
 				{*}$opts -R $dep2 -I $dep -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
-				-glm INDEL 2>@ stderr >@ stdout
+				-glm INDEL
 			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {

@@ -147,7 +147,8 @@ proc var_bcf_job {args} {
 				# -t SP: Phred-scaled strand bias P-value
 				# exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
 				exec bcftools mpileup -Ou --fasta-ref $refseq \
-					 -a "DP,SP" --count-orphans --max-depth 1000 --min-BQ $BQ \
+					--count-orphans --max-depth 1000 --min-BQ $BQ \
+					--annotate FORMAT/AD,FORMAT/ADF,FORMAT/ADR,FORMAT/DP,FORMAT/SP \
 					{*}$opts $dep 2>@ stderr \
 					| bcftools call \
 						--format-fields GQ,GP \

@@ -83,7 +83,7 @@ test var {var distrreg gatk result exists already} {
 test var {var_sam basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var_sam {*}$::dopts tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg var_sam {*}$::dopts tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-sam-bwa.tsv.zst data/var-sam-bwa.tsv
 	string_change [cg covered tmp/sreg-sam-bwa.tsv.zst] [list \n\n \n]
 } {chromosome	bases

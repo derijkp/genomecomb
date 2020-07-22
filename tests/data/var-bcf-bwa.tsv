@@ -25,11 +25,17 @@
 #fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format	
 #fields	coverage	1	Integer	Number of high-quality bases	format	
 #fields	SP	1	Integer	Phred-scaled strand bias P-value	format	
+#fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths (high-quality bases)	format	
+#fields	alleledepth	A	Integer	alleles only values of: Allelic depths (high-quality bases)	format	
+#fields	ADF_ref	1	Integer	reference only value of: Allelic depths on the forward strand (high-quality bases)	format	
+#fields	ADF	A	Integer	alleles only values of: Allelic depths on the forward strand (high-quality bases)	format	
+#fields	ADR_ref	1	Integer	reference only value of: Allelic depths on the reverse strand (high-quality bases)	format	
+#fields	ADR	A	Integer	alleles only values of: Allelic depths on the reverse strand (high-quality bases)	format	
 #fields	genoqual	1	Integer	Phred-scaled Genotype Quality	format	
 #fields	GP	G	Float	Phred-scaled genotype posterior probabilities	format	
 #fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	info	
-#fields	IDV	1	Integer	Maximum number of reads supporting an indel	info	
-#fields	IMF	1	Float	Maximum fraction of reads supporting an indel	info	
+#fields	IDV	1	Integer	Maximum number of raw reads supporting an indel	info	
+#fields	IMF	1	Float	Maximum fraction of raw reads supporting an indel	info	
 #fields	totalcoverage	1	Integer	Raw read depth	info	
 #fields	VDB	1	Float	Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)	info	3
 #fields	RPB	1	Float	Mann-Whitney U test of Read Position Bias (bigger is better)	info	
@@ -130,19 +136,19 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_bcftools_callVersion	1.9+htslib-1.9
+#vcf_bcftools_callVersion	1.10.2+htslib-1.10.2
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --format-fields GQ,GP -m --threads 2; Date=Mon Aug 19 18:27:35 2019
-#vcf_bcftoolsVersion	1.9+htslib-1.9
+#vcf_bcftools_callCommand	call --format-fields GQ,GP -m --threads 2; Date=Tue Jul 21 15:13:49 2020
+#vcf_bcftoolsVersion	1.10.2+htslib-1.10.2
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
 #vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
-#vcf_bcftoolsCommand	mpileup -Ou --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -a DP,SP --count-orphans --max-depth 1000 --min-BQ 0 -T /tmp/tempExtral.30648-HcAKnWCtJvLxHOdCtDtV/_Extral_temp_1.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
+#vcf_bcftoolsCommand	mpileup -Ou --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas --count-orphans --max-depth 1000 --min-BQ 0 --annotate FORMAT/AD,FORMAT/ADF,FORMAT/ADR,FORMAT/DP,FORMAT/SP -T /tmp/tempExtral.10953-dScCwKeioNMOKZHMDUjA/_Extral_temp_1.tmp.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
 # ----
-chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	genoqual	GP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	ICB	HOB	DP4	MQ	cluster
-chr21	42735718	42735719	snp	G	A	46.3581	G	A	v	t	0	0;1	79,0,104	8	0	81	81,0,107			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	1	0.5	2,2,2,2	60	
-chr21	42775179	42775180	snp	C	T	106	T	T	v	m	0	1;1	136,18,0	6	0	127	-2.14748e+09,-2.14748e+09,0			6	0.177551				1	-0.616816	0			0,0,5,1	60	
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	alleledepth_ref	alleledepth	ADF_ref	ADF	ADR_ref	ADR	genoqual	GP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	ICB	HOB	DP4	MQ	cluster
+chr21	42735718	42735719	snp	G	A	46.3581	G	A	v	t	0	0;1	79,0,104	8	0	4	4	2	2	2	2	81	81,0,107			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	1	0.5	2,2,2,2	60	
+chr21	42775179	42775180	snp	C	T	106	T	T	v	m	0	1;1	136,18,0	6	0	0	6	0	5	0	1	127	-2.14748e+09,-2.14748e+09,0			6	0.177551				1	-0.616816	0			0,0,5,1	60	
