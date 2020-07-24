@@ -783,6 +783,7 @@ proc set_job_logdir {{logdir {}}} {
 
 proc job_logname {job_logdir name} {
 	set name [string_change $name {/ __ : _ \" _ \' _}]
+	set name [shorten_filename $name]
 	return [file_absolute $job_logdir/$name]
 }
 
@@ -1420,6 +1421,23 @@ proc job_relfile2name {prefix file {maxsize 251}} {
 	set len [string length $filepart]
 	set start [expr {$len  - ($maxsize - [string length $prefix])}]
 	return $prefix[string range $filepart $start end]
+}
+
+# This is used default in proc job to limit maxsize (for when job_relfile2name was not used)
+proc shorten_filename {filename {maxsize 251}} {
+	set tail [file tail $filename]
+	set size [string length $tail]
+	if {$size <= $maxsize} {return $filename}
+	set dir [file dir $filename]
+	if {$dir eq "."} {set dir {}} else {set dir $dir/}
+	set pos [string first - $tail]
+	set pos__ [string first __ $tail]
+	if {$pos__ < $pos} {set pos [expr {$pos__ - 1}]}
+	set prefix [string range $tail 0 $pos]
+	set post [string range $tail [expr {$pos+1}] end]
+	set size [string length $post]
+	set start [expr {$size  - ($maxsize - [string length $prefix])}]
+	return $dir$prefix[string range $post $start end]
 }
 
 job_init

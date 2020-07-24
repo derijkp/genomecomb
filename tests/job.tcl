@@ -1445,6 +1445,30 @@ if {$testname eq "-d sge"} {
 	} {Cannot submit job to sge: it has a comma in the output file *job1.out, which grid engine sometimes has problems with} match error
 }
 
+test job "filename too long $testname" {
+	cd $::testdir/tmp
+	test_job_init
+	file_write data1.txt test1
+	set name [string_fill __abcdefghijklmnopqrstuvwxyz 20]__1234567890
+	job data1-$name -targets data1.txt -force 1 -code {
+		after 1000
+		set c [file_read $target]
+		file_write data1.txt $c\ntest2
+	}
+	job data2-$name -deps {data1.txt} -targets data2.txt -code {
+		set c [file_read $dep]
+		file_write $target $c\ntest3
+		
+	}
+	job_wait
+	gridwait
+	set result [file_read data2.txt]
+	cd $::testdir
+	set result
+} {test1
+test2
+test3}
+
 # end of block
 }
 
