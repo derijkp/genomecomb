@@ -163,7 +163,16 @@ proc var_longshot_job {args} {
 		}
 		analysisinfo_write $dep $varfile sample $root varcaller longshot varcaller_version [version longshot] varcaller_cg_version [version genomecomb] varcaller_region $region
 		set regions [samregions $region $refseq]
-		if {[llength $regions] > 1} {
+		set tempvcf [gzroot $vcffile].temp
+		if {$region eq "unmapped"} {
+			longshot_empty_vcf $tempvcf
+			# add unmapped reads
+			set tempoutbam [tempfile].unmapped.bam
+			exec samtools view -h -b -f 4 $dep > $tempoutbam
+			exec samtools index $tempoutbam
+			file rename -force -- $tempoutbam $outbam
+			file rename -force -- $tempoutbam.bai $outbam.bai
+		} elseif {[llength $regions] > 1} {
 			set todo {}
 			set todobams {}
 			foreach region $regions {
@@ -192,12 +201,12 @@ proc var_longshot_job {args} {
 					longshot_empty_vcf $tempfile
 				}
 				if {$hap_bam && ![file exists $tempoutbam]} {
-					exec samtools view -H -b $dep > $tempoutbam
+					exec samtools view -h -b $dep $region > $tempoutbam
 				}
 				lappend todo $tempfile
 				lappend todobams $tempoutbam
 			}
-			exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
+			exec cg vcfcat {*}$todo > $tempvcf
 			if {$hap_bam} {
 				exec cg sam_catmerge -sort nosort -index 1 $outbam {*}$todobams
 			}
@@ -206,7 +215,7 @@ proc var_longshot_job {args} {
 				lappend opts --out_bam $outbam.temp.bam
 			}
 			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
-			set tempfile [gzroot $vcffile].temp
+			set tempfile $tempvcf
 			if {[catch {
 				catch_exec longshot {*}$opts -F \
 					--bam $dep \
@@ -225,7 +234,11 @@ proc var_longshot_job {args} {
 			}
 			if {$hap_bam} {
 				if {![file exists $outbam.temp.bam]} {
-					exec samtools view -H -b $dep > $outbam.temp.bam
+					if {[llength $regions]} {
+						exec samtools view -h -b $dep [lindex $regions 0] > $outbam.temp.bam
+					} else {
+						hardklink $dep $outbam.temp.bam
+					}
 				}
 				if {$index} {
 					exec samtools index $outbam.temp.bam
@@ -234,11 +247,12 @@ proc var_longshot_job {args} {
 				catch {file rename -force -- $outbam.temp.bam.bai $outbam.bai}
 			}
 		}
-		exec gzip [gzroot $vcffile].temp
-		file rename -force -- [gzroot $vcffile].temp.gz $vcffile
-		if {[file size $vcffile] == 0} {
+		if {[file size $tempvcf] == 0} {
+			file rename -force -- $tempvcf $vcffile
 			file_write $varfile ""
 		} else {
+			exec gzip $tempvcf
+			file rename -force -- $tempvcf.gz $vcffile
 			cg vcf2tsv -split $split $vcffile $varfile
 			cg_zindex $varfile
 		}

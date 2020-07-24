@@ -138,6 +138,14 @@ proc var_job {args} {
 					-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
 			}
 		} else {
+			# if making a new bam file (currently only longshot), we need to process the unmapped reads as well
+			set pos [lsearch $var_opts -hap_bam]
+			if {$pos != -1} {
+				set hap_bam [lindex $var_opts [incr pos]]
+				if {$hap_bam} {
+					lappend regions unmapped
+				}
+			}
 			foreach region $regions {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
 					-datatype $datatype \

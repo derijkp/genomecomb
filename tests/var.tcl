@@ -409,27 +409,49 @@ m	m	146
 t	?	1
 t	t	341}}
 
-test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1_*)} {
+test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1_*) and unmapped reads} {
 	cd $::smalltestdir
 	file delete -force tmp/longshot_hapbam_multi
 	file mkdir tmp/longshot_hapbam_multi
+	# adapt genome
 	foreach file [glob ori/longshot_example_data/ground_truth_variants.*] {
 		mklink $file tmp/longshot_hapbam_multi/[file tail $file]
 	}
 	set temp [file_read ori/longshot_example_data/genome.fa]
 	set temp [string_change $temp {contig2 contig1_a contig3 contig1_b}]
+	append temp >contig4\nAAAAAAAAAA
 	file_write tmp/longshot_hapbam_multi/genome.fa $temp
 	exec samtools faidx tmp/longshot_hapbam_multi/genome.fa
+	# adapt bam
 	set temp [cg sam2tsv ori/longshot_example_data/pacbio_reads_30x.bam]
-	set temp [string_change $temp {contig2 contig1_a contig3 contig1_b}]
-	file_write tmp/temp.tsv $temp
-	cg tsv2bam tmp/temp.tsv tmp/longshot_hapbam_multi/pacbio_reads_30x.bam
+	set temp [string_change $temp [list contig2 contig1_a contig3 contig1_b \#@RG\tID:da7e8ec2 \#@SQ\tSN:contig4\tLN:10\n\#@RG\tID:da7e8ec2]]
+	append temp "\ncontig4	1	5	-	test	0	9347	254	*	-1	+	0	0	0	0	0	0	0	0	0	0	4M	9347	AAAA	*	np:i:1 qe:i:9347 qs:i:0 zm:i:0 AS:i:-35299 NM:i:1227 RG:Z:da7e8ec2"
+	append temp "\n*	-1	-1	+	unmapped1	0	3307	0	*	-1	+	0	0	0	1	0	0	0	0	0	0	*	3307	AAAA	@@@@	RG:Z:con603_dCas9_test1_v4.0.11+f1071ce_187408_hg38s rl:i:57"
+	append temp "\n*	-1	-1	+	unmapped2	0	334	0	*	-1	+	0	0	0	1	0	0	0	0	0	0	*	334	AAAC	@@@@	RG:Z:con603_dCas9_test1_v4.0.11+f1071ce_187408_hg38s rl:i:0"
+	file_write tmp/longshot_hapbam_multi/temp.tsv $temp
+	cg tsv2bam tmp/longshot_hapbam_multi/temp.tsv tmp/longshot_hapbam_multi/pacbio_reads_30x.bam
+	file delete tmp/longshot_hapbam_multi/temp.tsv
 	exec samtools index tmp/longshot_hapbam_multi/pacbio_reads_30x.bam
+	# run
 	cg var {*}$::dopts -method longshot -distrreg 1 -hap_bam 1 tmp/longshot_hapbam_multi/pacbio_reads_30x.bam tmp/longshot_hapbam_multi/genome.fa
+	# check
 	cg vcf2tsv tmp/longshot_hapbam_multi/ground_truth_variants.vcf tmp/longshot_hapbam_multi/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam_multi/compar.tsv tmp/longshot_hapbam_multi/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam_multi/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
 		tmp/longshot_hapbam_multi expected/longshot_hapbam_multi
+	# check nr of reads
+	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam_multi/map-hlongshot-pacbio_reads_30x.bam | cg select -g chromosome]]
+	if {$temp ne [string trim [deindent {
+		chromosome	count
+		contig1	727
+		contig1_a	728
+		contig1_b	729
+		contig4	1
+		*	2
+	}]]} {
+		error "reads missing in haplotyped bams"
+	}
+	# check covered region in HP
 	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam_multi/map-hlongshot-pacbio_reads_30x.bam | cg select -q {$HP == 1} | cg regjoin | cg  covered]]
 	if {$temp ne [string trim [deindent {
 		chromosome	bases
