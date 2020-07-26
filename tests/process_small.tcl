@@ -32,10 +32,14 @@ test process_small {process_project mastr_mx2} {
 		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
 	# check vs expected
+	# filter out blanco hsmetrics results (are not deterministic)
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2/reports/report_hsmetrics-mastr_mx2.tsv tmp/mastr_mx2/reports/filtered_report_hsmetrics-mastr_mx2.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2/reports/report_stats-mastr_mx2.tsv tmp/mastr_mx2/reports/filtered_report_stats-mastr_mx2.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x mastr_mx2.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
+		-x mastr_mx2_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2.tsv -x report_stats-mastr_mx2.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *log_jobs -x *.index \
 		tmp/mastr_mx2 expected/mastr_mx2]
 	lappend result [diffanalysisinfo tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo expected/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo]
@@ -93,9 +97,13 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
 		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
 	# check vs expected
+	# filter out blanco hsmetrics results (are not deterministic)
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2_cram/reports/report_hsmetrics-mastr_mx2_cram.tsv tmp/mastr_mx2_cram/reports/filtered_report_hsmetrics-mastr_mx2_cram.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2_cram/reports/report_stats-mastr_mx2_cram.tsv tmp/mastr_mx2_cram/reports/filtered_report_stats-mastr_mx2_cram.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.cram -x *.crai -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_cram.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
+		-x mastr_mx2_cram_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2_cram.tsv -x report_stats-mastr_mx2_cram.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2_cram expected/mastr_mx2_cram]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo expected/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo]

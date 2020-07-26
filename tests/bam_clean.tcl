@@ -130,21 +130,10 @@ test bam_clean {bam_clean} {
 		genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	samtools	1.10 (using htslib 1.10)	gatk	3.8-1-0-gf15c1c3ef
 	}]]\n
 	exec diff tmp/rdsbwa.bam.analysisinfo tmp/expected.analysisinfo
-	exec cg sam2tsv tmp/rdsbwa.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg sam2tsv tmp/rdsbwa.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
-} {diff tmp/result.tsv tmp/sbwa.tsv
-header
-  qname	chromosome	begin	end	duplicate
-147d146
-< SRR792091.1611898	chr21	42779842	42779942	1
-148a148
-> SRR792091.1611898	chr21	42779842	42779942	1
-155d154
-< SRR792091.1611898	chr21	42779960	42780060	1
-156a156
-> SRR792091.1611898	chr21	42779960	42780060	1
-child process exited abnormally} error
+} {}
 
 test bam_clean {bam_clean to cram} {
 	test_cleantmp
@@ -161,8 +150,8 @@ test bam_clean {bam_clean to cram} {
 	if {![file exists tmp/rdsbwa.cram.crai]} {
 		error "could not index tmp/rdsbwa.cram"
 	}
-	exec cg sam2tsv tmp/rdsbwa.cram | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg sam2tsv tmp/rdsbwa.cram | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
 } {diff tmp/result.tsv tmp/sbwa.tsv
 header
