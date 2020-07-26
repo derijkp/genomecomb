@@ -8,8 +8,11 @@ proc cg_gatk_index {args} {
 	} else {
 		set opt -I
 	}
-	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx1g] IndexFeatureFile $opt $file
-	foreach file $args {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx1g] IndexFeatureFile $opt $file
+	foreach file [list $file {*}$args] {
+		if {[string range $file end-6 end] eq ".vcf.gz"} {
+			exec tabix -p vcf $file
+		} else {
+			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx1g] IndexFeatureFile $opt $file
+		}
 	}
 }
