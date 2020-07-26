@@ -129,8 +129,14 @@ proc sge_safename {name {prefix {}}} {
 	regsub -all {[^A-Za-z0-9_.-]} $name __ name
 	if {$prefix ne ""} {
 		regsub -all {[^A-Za-z0-9_.-]} $prefix __ prefix
-		set name ${prefix}#$name
+		set plen [string length $prefix]
+		if {$plen > 99} {
+			set prefix [string range $prefix 0 47]..[string range $prefix end-48 end]#
+		} else {
+			set prefix ${prefix}#
+		}
 	}
+	set name ${prefix}$name
 	if {[string length $name] > 200} {
 		set name [string range $name 0 100]....[string range $name end-100 end]
 	}
