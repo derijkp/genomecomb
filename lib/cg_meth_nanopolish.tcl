@@ -162,7 +162,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 				file mkdir $tempdir
 			}
 			foreach file [glob -nocomplain $tempdir/*] {file delete $file}
-			exec cp -fL $fast5files $tempdir
+			exec cp -fL {*}$fast5files $tempdir
 			if {[llength $fastqfiles] == 1} {
 				set fastqfile [lindex $fastqfiles 0]
 				exec cp -fL $fastqfile $tempdir
