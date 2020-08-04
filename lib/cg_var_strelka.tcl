@@ -121,7 +121,8 @@ proc var_strelka_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.gvcf
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.zst]
+	set vcffile ${pre}var-$root.vcf
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/$vcffile.gz $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -140,7 +141,7 @@ proc var_strelka_job {args} {
 	cd $destdir
 	set resultgvcf $varallfile
 	set resultname $varallfile
-	set resultvcf [file root [gzroot $varfile]].vcf
+	set resultvcf $vcffile
 	set bamfileindex $bamfile.[indexext $bamfile]
 	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -skip {
 		$varallfile $varfile $varfile.analysisinfo
@@ -228,7 +229,6 @@ proc var_strelka_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}var-$root.vcf \
 			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
 		]
 		set cleanupdeps [list $varfile $resultgvcf.gz]

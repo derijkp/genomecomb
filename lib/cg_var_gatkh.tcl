@@ -102,7 +102,8 @@ proc var_gatkh_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.gvcf
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.zst]
+	set vcffile ${pre}var-$root.vcf
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/$vcffile.gz $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -181,17 +182,17 @@ proc var_gatkh_job {args} {
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $varallfile.gz \
-			-O ${pre}uvar-$root.temp.vcf \
+			-O ${pre}var-$root.temp.vcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
-		catch {file delete ${pre}uvar-$root.temp.vcf.idx}
-		file rename -force -- ${pre}uvar-$root.temp.vcf ${pre}uvar-$root.vcf
+		catch {file delete ${pre}var-$root.temp.vcf.idx}
+		file rename -force -- ${pre}var-$root.temp.vcf ${pre}var-$root.vcf
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
 		lappend fields *
 		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} ${pre}uvar-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+		} ${pre}var-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
 		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
@@ -201,8 +202,7 @@ proc var_gatkh_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}var-$root.vcf \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.vcf ${pre}uvar-$root.tsv.index
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
 		]
 		set cleanupdeps [list $varfile $varallfile.gz]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
