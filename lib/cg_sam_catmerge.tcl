@@ -160,7 +160,6 @@ proc sam_catmerge_job {args} {
 					exec samcat -header $header {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
 						| distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
-
 				}
 			} else {
 				if {$sort eq "coordinate"} {
