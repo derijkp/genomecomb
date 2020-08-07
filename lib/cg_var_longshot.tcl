@@ -235,7 +235,7 @@ proc var_longshot_job {args} {
 			if {$hap_bam} {
 				if {![file exists $outbam.temp.bam]} {
 					if {[llength $regions]} {
-						exec samtools view -h -b $dep [lindex $regions 0] > $outbam.temp.bam
+						catch_exec samtools view -h -b $dep [lindex $regions 0] > $outbam.temp.bam
 					} else {
 						hardklink $dep $outbam.temp.bam
 					}
