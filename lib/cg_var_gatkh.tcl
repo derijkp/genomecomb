@@ -172,9 +172,9 @@ proc var_gatkh_job {args} {
 	job ${pre}gvcf2tsv-$root {*}$skips -deps {
 		$varallfile.gz $gatkrefseq
 	} -targets {
-		${pre}uvar-$root.tsv
+		${pre}uvar-$root.tsv $vcffile
 	} -vars {
-		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq
+		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq vcffile
 	} -skip {
 		$varfile.zst
 	} -code {
@@ -182,17 +182,17 @@ proc var_gatkh_job {args} {
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $varallfile.gz \
-			-O ${pre}var-$root.temp.vcf \
+			-O ${pre}var-$root.temp.vcf.gz \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}var-$root.temp.vcf.idx}
-		file rename -force -- ${pre}var-$root.temp.vcf ${pre}var-$root.vcf
+		file rename -force -- ${pre}var-$root.temp.vcf.gz $vcffile.gz
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
 		lappend fields *
 		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} ${pre}var-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+		} $vcffile.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
 		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
