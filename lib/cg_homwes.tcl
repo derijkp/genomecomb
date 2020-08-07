@@ -172,11 +172,13 @@ proc cg_homwes {args} {
 		} else {
 			puts "warning: field \"(g)filter$postfix\" is missing"
 		}
-		set field [findfield $header quality$postfix]
-		if {$field ne ""} {
-			lappend query "def(\$$field,10000) > $quality"
-		} else {
-			puts "warning: field \"quality$postfix\" is missing"
+		if {$quality ne ""} {
+			set field [findfield $header quality$postfix]
+			if {$field ne ""} {
+				lappend query "def(\$$field,10000) > $quality"
+			} else {
+				puts "warning: field \"quality$postfix\" is missing"
+			}
 		}
 		set field [findfield $header genoqual$postfix]
 		if {$field ne ""} {
