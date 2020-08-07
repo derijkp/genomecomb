@@ -67,10 +67,15 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-varcallers {gatkh} -extra_reports_mastr gatkh \
 		tmp/mastr_mx2_gatkh $::refseqdir/hg19 >& tmp/mastr_mx2_gatkh.log
 	# check vs expected
+	# filter out blanco hsmetrics results (are not deterministic)
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2_gatkh/reports/report_hsmetrics-mastr_mx2_gatkh.tsv tmp/mastr_mx2_gatkh/reports/filtered_report_hsmetrics-mastr_mx2_gatkh.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2_gatkh/reports/report_stats-mastr_mx2_gatkh.tsv tmp/mastr_mx2_gatkh/reports/filtered_report_stats-mastr_mx2_gatkh.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_gatkh.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
+		-x *-blanco2_8485* \
+		-x mastr_mx2_gatkh_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2_gatkh.tsv -x report_stats-mastr_mx2_gatkh.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		tmp/mastr_mx2_gatkh expected/mastr_mx2_gatkh]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo expected/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/mastr_mx2_gatkh.html expected/mastr_mx2_gatkh/mastr_mx2_gatkh.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
@@ -163,6 +168,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_js1.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
+		-x *-blanco2_8485* \
 		tmp/mastr_mx2_js1 expected/mastr_mx2_js1]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo expected/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/mastr_mx2_js1.html expected/mastr_mx2_js1/mastr_mx2_js1.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]

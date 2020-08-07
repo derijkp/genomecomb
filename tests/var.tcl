@@ -251,7 +251,7 @@ test var {var_longshot distrreg} {
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d/pacbio_reads_30x.bam tmp/longshot_d/genome.fa
 	cg vcf2tsv tmp/longshot_d/ground_truth_variants.vcf tmp/longshot_d/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_d/compar.tsv tmp/longshot_d/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_d expected/longshot_d
 	list	[cg select -g chromosome tmp/longshot_d/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -286,7 +286,7 @@ test var {var_longshot distrreg with contig1_ and empty contig} {
 	#
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d2/pacbio_reads_30x.bam tmp/longshot_d2/genome.fa
 	cg multicompar tmp/longshot_d2/compar.tsv tmp/longshot_d2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d2/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_d2 expected/longshot_d2
 	list	[cg select -g chromosome tmp/longshot_d2/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -320,7 +320,7 @@ test var {var_longshot distrreg with contig1_ and empty contig and contig not in
 	#
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d3/pacbio_reads_30x.bam tmp/longshot_d3/genome.fa
 	cg multicompar tmp/longshot_d3/compar.tsv tmp/longshot_d3/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d3/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_d3 expected/longshot_d3
 	list	[cg select -g chromosome tmp/longshot_d2/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -344,7 +344,7 @@ test var {var_longshot distrreg with -hap_bam 1 option} {
 	cg var {*}$::dopts -method longshot -distrreg 1 -hap_bam 1 tmp/longshot_hapbam/pacbio_reads_30x.bam tmp/longshot_hapbam/genome.fa
 	cg vcf2tsv tmp/longshot_hapbam/ground_truth_variants.vcf tmp/longshot_hapbam/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam/compar.tsv tmp/longshot_hapbam/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_hapbam expected/longshot_hapbam
 	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam/map-hlongshot-pacbio_reads_30x.bam | cg select -q {$HP == 1} | cg regjoin | cg  covered]]
 	if {$temp ne [string trim [deindent {
@@ -392,14 +392,14 @@ test var {var_longshot distrreg with -hap_bam 1 optionm contig1_ and empty conti
 	cg var -method longshot -distrreg 1 {*}$::dopts -hap_bam 1 \
 		tmp/longshot_hapbam2/pacbio_reads_30x.bam tmp/longshot_hapbam2/genome.fa
 	cg multicompar tmp/longshot_hapbam2/compar.tsv tmp/longshot_hapbam2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam2/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_hapbam2 expected/longshot_hapbam2
 	list	[exec cg sam2tsv tmp/longshot_hapbam2/map-hlongshot-pacbio_reads_30x.bam | cg select -g chromosome] \
 		[cg select -g chromosome tmp/longshot_hapbam2/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_hapbam2/compar.tsv]
-} {{chromosome     count
-contig1_random1 727
-contig3 729} {chromosome	count
+} {{chromosome	count
+contig1_random1	727
+contig3	729} {chromosome	count
 contig1_random1	250
 contig1_random2	219
 contig3	246} {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
@@ -437,7 +437,7 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 	# check
 	cg vcf2tsv tmp/longshot_hapbam_multi/ground_truth_variants.vcf tmp/longshot_hapbam_multi/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam_multi/compar.tsv tmp/longshot_hapbam_multi/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam_multi/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti \
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
 		tmp/longshot_hapbam_multi expected/longshot_hapbam_multi
 	# check nr of reads
 	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam_multi/map-hlongshot-pacbio_reads_30x.bam | cg select -g chromosome]]

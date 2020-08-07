@@ -153,18 +153,7 @@ test bam_clean {bam_clean to cram} {
 	exec cg sam2tsv tmp/rdsbwa.cram | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
-} {diff tmp/result.tsv tmp/sbwa.tsv
-header
-  qname	chromosome	begin	end	duplicate
-147d146
-< SRR792091.1611898	chr21	42779842	42779942	1
-148a148
-> SRR792091.1611898	chr21	42779842	42779942	1
-155d154
-< SRR792091.1611898	chr21	42779960	42780060	1
-156a156
-> SRR792091.1611898	chr21	42779960	42780060	1
-child process exited abnormally} error
+} {}
 
 test bam_clean {bam_clean to cram 2} {
 	test_cleantmp

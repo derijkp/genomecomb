@@ -1562,7 +1562,7 @@ test sge_safename {shorten prefix} {
 	set name test
 	set prefix jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_xxxx_v4.0.11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560
 	sge_safename $name $prefix
-} {jvar_longshot_map-sminimap2-sample1_xxxxx_xx_xxxx_xxxx_v4.0.11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560#test}
+} {jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_..11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560#test}
 
 set ::env(PATH) $keeppath
 
