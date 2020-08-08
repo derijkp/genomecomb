@@ -51,8 +51,8 @@ if [ ! -f /hbb_exe/activate ]; then
 	fi
 	mkdir -p "$builddir"
 	echo "Build $bits bits version"
-	echo "builddir $builddir"
-	echo "srcdir $srcdir"
+	echo "builddir=$builddir"
+	echo "srcdir=$srcdir"
 	# run the script in holy build box
 	uid=$(id -u)
 	gid=$(id -g $uid)
@@ -98,6 +98,8 @@ if [ "$1" = "stage2" ] ; then
 	useradd build --uid $uid --gid $gid
 	# usermod -a -G wheel build
 	echo "build ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-build
+	# default nr of processes (for user build) is sometimes not enough
+	sudo sed -i 's/1024/10240/' /etc/security/limits.d/90-nproc.conf
 	# (re)start script for stage 3: running the actual code
 	sudo -u build bash /io/$file "stage3" ${@:2}
 	exit
@@ -113,6 +115,7 @@ function yuminstall {
 }
 
 file=$2
+
 if [ $(basename "$file") = "start_hbb.sh" ] ; then
 	# install yuminstall in .bashrc so it will be available in the new shell started here
 	mkdir -p /home/build
