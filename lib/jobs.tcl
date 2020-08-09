@@ -1108,7 +1108,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			} else {
 				set msg "target not found: $target"
 				file_add $job.log "[job_timestamp]\t$msg"
-				puts stderr "[job_timestamp]\t$msg"
+				putslog $msg
 				lappend errormsg $msg
 				set ok 0
 			}
@@ -1119,7 +1119,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			} else {
 				set ok 0
 				file_add $job.log "[job_timestamp]\tmissing ptargets"
-				puts stderr "[job_timestamp]\tmissing ptargets"
+				putslog missing ptargets
 				lappend errormsg "missing ptargets"
 			}
 		}

@@ -1380,6 +1380,9 @@ test job "job_update -r 1 $testname" {
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.finished test1.txt test2.txt test3.txt}} match
 
 test job "-cores 2 $testname" {
+
+time {
+	test_cleantmp
 	test_job_init
 	job test -targets tmp/dep.txt -code {
 		file_write tmp/dep.txt test
@@ -1389,6 +1392,8 @@ test job "-cores 2 $testname" {
 	}
 	job_wait ; gridwait
 	cg select -f cores -rc 1 [glob tmp/log.*]
+}
+
 } {cores
 1
 2
@@ -1549,7 +1554,7 @@ test job {dont give error on missing dependency if skiptarget exists} {
 
 test job {inf missing dep and target} {
 	job_init
-	logverbose 2
+	# logverbose 2
 	file delete dep.txt result.txt
 	job test -deps {dep.txt} -targets result.txt -code {
 		file_write $target test2

@@ -1,13 +1,18 @@
 package require Extral
 catch {tk appname test}
 
-set bigtestdir /data/genomecomb.testdata
-set smalltestdir /data/genomecomb.smalltestdata
+set bigtestdir $env(HOME)/genomecomb.testdata
+set smalltestdir $env(HOME)/genomecomb.smalltestdata
 if {![info exists refseqdir]} {
-	set refseqdir /data/genomecomb.smalltestdata/refseqtest
+	set refseqdir $smalltestdir/refseqtest
 }
 
 if {[info exists argv]} {
+	set pos [lsearch $argv -smalltestdir]
+	if {$pos != -1} {
+		set smalltestdir [lindex $argv [expr {$pos + 1}]]
+		set argv [lreplace $argv $pos [expr {$pos + 1}]]
+	}
 	set dopts $argv
 } else {
 	set dopts {--stack 1 --verbose 2}
@@ -44,7 +49,7 @@ if {![file exists $basetestdir/tmp]} {
 lappend auto_path $appdir/lib $appdir/lib-exp
 source $appdir/lib/file.tcl ; pwd
 package require genomecomb
-genomecombenv
+if {![info exists ::genomecombdir]} {genomecombenv}
 
 proc testdir {args} {
 	set testname [join [lrange $args 0 1] __]
@@ -147,7 +152,7 @@ proc test_genomecombdir {} {
 	file copy data/sreg-annot1.sft $samplesdir/sample1/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft $samplesdir/sample2/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft $samplesdir/sample3/sreg-sample3.tsv
-	cg multicompar -reannot -split 1 $expdir/compar/compar-test.tsv {*}[bsort [glob $samplesdir/*/var-*.tsv]]
+	cg multicompar -reannot 1 -split 1 $expdir/compar/compar-test.tsv {*}[bsort [glob $samplesdir/*/var-*.tsv]]
 	file delete $expdir/compar/compar-test.tsv.reannot
 	file delete $expdir/compar/compar-test.tsv.old
 	# exec diff $expdir/compar/compar-test.tsv data/expected-multicompar-split-reannot.sft

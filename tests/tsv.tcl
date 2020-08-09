@@ -748,6 +748,9 @@ test tsv_paste {50 files > maxopenfiles -o} {
 test tsv_paste {max files == maxopenfiles -o} {
 	test_cleantmp
 	set maxfiles [exec sh -c {ulimit -n}]
+	# if limit is too big, we get too many files to handle
+	# reduce the number (but we are no longer really testing the limit)
+	if {$maxfiles > 5000} {set maxfiles 5000}
 	# stdin, stdout and stderr are also file descriptors (and prog)
 	incr maxfiles -10
 	set files [makepastetest $maxfiles]
@@ -758,6 +761,9 @@ test tsv_paste {max files == maxopenfiles -o} {
 test tsv_paste {max files > maxopenfiles -o} {
 	test_cleantmp
 	set maxfiles [exec sh -c {ulimit -n}]
+	# if limit is too big, we get too many files to handle
+	# reduce the number (but we are no longer really testing the limit)
+	if {$maxfiles > 5000} {set maxfiles 5000}
 	incr maxfile 10
 	# stdin, stdout and stderr are also file descriptors
 	set files [makepastetest $maxfiles]
