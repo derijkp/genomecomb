@@ -197,7 +197,7 @@ proc job_process_direct {} {
 			set errormessage $result\n$::errorInfo
 			file_add $job.err $errormessage
 			if ($cgjob(skipjoberrors)) {
-				puts stderr $result
+				putslog $result
 			} else {
 				error $result $::errorInfo
 			}
@@ -223,29 +223,27 @@ proc job_process_direct {} {
 
 proc job_logfile_direct_close {} {
 	global cgjob
-	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] [time_seconds $cgjob(totalduration)] "" "" "" ""] \t]
-	close $cgjob(f_logfile)
-	if {$cgjob(status) eq "error"} {
-		set result $cgjob(logfile).error
-	} else {
-		set result $cgjob(logfile).finished
+	if {[info exists cgjob(f_logfile)]} {
+		puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] [time_seconds $cgjob(totalduration)] "" "" "" ""] \t]
+		close $cgjob(f_logfile)
+		if {$cgjob(status) eq "error"} {
+			set result $cgjob(logfile).error
+		} else {
+			set result $cgjob(logfile).finished
+		}
+		file rename $cgjob(logfile).submitting $result
 	}
-	file rename $cgjob(logfile).submitting $result
-	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $cgjob(status) eq "ok")} {
-		job_cleanlogs $result
-		# only keep result logfile if -d option was given explicitely
-		if {!$cgjob(hasargs)} {file delete $result}
+	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && [get cgjob(status) ok] eq "ok")} {
+		job_cleanup
+		if {[info exists cgjob(f_logfile)]} {
+			job_cleanlogs $result
+			# only keep result logfile if -d option was given explicitely
+			if {!$cgjob(hasargs)} {file delete $result}
+		}
 	}
 }
 
 proc job_wait_direct {} {
 	global cgjob
 	job_logfile_direct_close
-	foreach file $cgjob(cleanupfiles) {
-		catch {file delete -force $file}
-	}
-	foreach file $cgjob(cleanupifemptyfiles) {
-		catch {file delete $file}
-	}
 }

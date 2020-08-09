@@ -72,6 +72,9 @@ proc filetemp {file {write 1} {ext 0}} {
 	} else {
 		set ext ""
 	}
+	if {[file isdir $file.temp]} {
+		set file $file.temp/[file tail $file]
+	}
 	if {![file exists $file.temp$ext]} {
 		set result $file.temp$ext
 	} else {

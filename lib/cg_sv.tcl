@@ -80,34 +80,32 @@ proc sv_job {args} {
 		## Create sequencing region files
 		set keeppwd [pwd]
 		cd $destdir
-		set indexdir [gzroot $resultfile].index
-		file mkdir $indexdir
-		job_cleanup_ifempty_add $indexdir
+		set workdir [workdir $resultfile]
 		set regions [distrreg_regs $distrreg $refseq]
 		set basename [file_root [file tail $resultfile]]
 		set regfiles {}
 		foreach region $regions {
-			lappend regfiles $indexdir/$basename-$region.bed
+			lappend regfiles $workdir/$basename-$region.bed
 		}
 		if {[info exists regionfile]} {
 			job [gzroot $resultfile]-distrreg-beds {*}$skips -deps {
 				$regionfile
 			} -targets $regfiles -vars {
-				regionfile regions appdir basename indexdir
+				regionfile regions appdir basename workdir
 			} -code {
 				set header [cg select -h $regionfile]
 				set poss [tsv_basicfields $header 3]
 				set header [list_sub $header $poss]
-				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2 1 \#"
-				cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2 1 \#
+				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
+				cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
 			}
 		} else {
 			foreach region $regions {
-				distrreg_reg2bed $indexdir/$basename-$region.bed $region $refseq
+				distrreg_reg2bed $workdir/$basename-$region.bed $region $refseq
 			}
 		}
 		# Produce variant calls
-		set ibam $indexdir/[file tail $bamfile]
+		set ibam $workdir/[file tail $bamfile]
 		set indexext [indexext $bamfile]
 		mklink $bamfile $ibam
 		mklink $bamfile.$indexext $ibam.$indexext
@@ -153,7 +151,7 @@ proc sv_job {args} {
 					file delete $file
 					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
 					if {[file extension $file] eq ".zst"} {file delete $file.zsti}
-					file delete -force [gzroot $file].index
+					file delete -force [gzroot $file].temp
 					file delete [gzroot $file].analysisinfo
 				}
 			}

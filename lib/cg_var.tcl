@@ -101,31 +101,29 @@ proc var_job {args} {
 		## Create sequencing region files
 #		set keeppwd [pwd]
 #		cd $destdir
-		set indexdir [gzroot $varfile].index
-		file mkdir $indexdir
-		job_cleanup_add $indexdir
+		set workdir [workdir $varfile]
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [gzroot [file tail $varallfile]]
 		if {$supportsregionfile} {
 			set regfiles {}
 			foreach region $regions {
-				lappend regfiles $indexdir/$basename-$region.bed
+				lappend regfiles $workdir/$basename-$region.bed
 			}
 			job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
 				$regionfile
 			} -targets $regfiles -vars {
-				regionfile regions appdir basename indexdir
+				regionfile regions appdir basename workdir
 			} -code {
 				set header [cg select -h $regionfile]
 				set poss [tsv_basicfields $header 3]
 				set header [list_sub $header $poss]
-				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2 1 \#"
-				cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2 1 \#
+				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
+				cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
 			}
 		}
 		set todo {}
 		# Produce variant calls
-		set ibam $indexdir/[file tail $bamfile]
+		set ibam $workdir/[file tail $bamfile]
 		set indexext [indexext $bamfile]
 		mklink $bamfile $ibam
 		mklink $bamfile.$indexext $ibam.$indexext

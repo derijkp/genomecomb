@@ -5,8 +5,8 @@
 #
 
 proc multi_merge_job {varsfile files args} {
-	set workdir $varsfile.index/paste
-	file mkdir $varsfile.index/paste
+	set workdir [workdir $varsfile]/paste
+	file mkdir $workdir
 	upvar job_logdir job_logdir
 	set optional 0
 	set split 1
@@ -29,7 +29,7 @@ proc multi_merge_job {varsfile files args} {
 		job [job_relfile2name multi_merge- $varsfile] -force $force -deps $files -targets {
 			$target
 		} -vars {
-			split limitreg
+			split limitreg workdir
 		} -code {
 			# puts [list ../bin/multi_merge $split {*}$deps]
 			if {$limitreg ne ""} {
@@ -45,8 +45,8 @@ proc multi_merge_job {varsfile files args} {
 				}
 				set deps $templist
 			}
-			exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
-			file rename -force -- $target.temp $target
+			exec multi_merge $split {*}$deps > $workdir/target.temp 2>@ stderr
+			file rename -force -- $workdir/target.temp $target
 		}
 		return
 	}
@@ -585,7 +585,7 @@ proc pmulticompar_job {args} {
 	#
 	# merge variants
 	# todo: check for concurrency
-	set workdir [gzroot $compar_file].index/multicompar
+	set workdir [workddir $compar_file]/multicompar
 	file mkdir $workdir
 	set real_compar_file [jobglob $compar_file]
 	if {$real_compar_file ne ""} {

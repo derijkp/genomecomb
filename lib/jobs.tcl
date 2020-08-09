@@ -1398,6 +1398,16 @@ proc job_cleanup_add {args} {
 	}
 }
 
+proc job_cleanup {} {
+	global cgjob
+	foreach file $cgjob(cleanupfiles) {
+		catch {file delete -force $file}
+	}
+	foreach file $cgjob(cleanupifemptyfiles) {
+		catch {file delete $file}
+	}
+}
+
 # maxsize: on linux filename size is usually limited to 255 characters.
 # limit to 251 to allow for addition of the extension (.log, ...)
 proc job_relfile2name {prefix file {maxsize 251}} {

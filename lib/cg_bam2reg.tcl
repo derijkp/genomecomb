@@ -61,10 +61,10 @@ proc bam2reg_job {args} {
 			error "-distrreg cannot be used without giving a refseq using the -refseq option"
 		}
 		set regions [distrreg_regs $distrreg $refseq]
-		file mkdir $target.index
+		set workdir [workdir $target]
 		set todo {}
 		foreach region $regions {
-			set subtarget $target.index/sreg-cov$mincoverage-$root-$region.tsv.zst
+			set subtarget $workdir/sreg-cov$mincoverage-$root-$region.tsv.zst
 			lappend todo $subtarget
 			job cov$mincoverage-$root-$region -optional 1 {*}$skips -skip $target -deps {
 				$bamfile ($bamindexfile)

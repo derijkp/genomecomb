@@ -47,8 +47,7 @@ proc tsv_paste_job {args} {
 		}
 		return
 	}
-	set workdir [gzroot $outputfile].index/paste
-	job_cleanup_ifempty_add [gzroot $outputfile].index
+	set workdir [workdir $outputfile]/paste
 	file delete -force $workdir
 	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}

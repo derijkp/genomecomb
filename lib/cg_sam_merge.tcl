@@ -40,7 +40,7 @@ proc sam_merge_job {args} {
 	}
 	set outputfile [file_absolute $outputfile]
 	if {![jobtargetexists -checkdepexists 1 $outputfile $samfiles]} {
-		set workdir [gzroot $outputfile].index/merge
+		set workdir [workdir $outputfile]/merge
 		file delete -force $workdir
 		file mkdir $workdir
 		set_job_logdir [file dir $outputfile]/log_jobs

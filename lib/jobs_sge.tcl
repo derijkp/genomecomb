@@ -153,15 +153,32 @@ if 0 {
 	interp alias {} job_process_submit_par {} job_process_submit_sge
 }
 
-proc job_wait_sge {} {
-	global cgjob cgjob_id
-	set priority [get cgjob(priority) 0]
-	job_logfile_par_close
+proc job_logfile_sge_close {} {
+	global cgjob
 	set logfile $cgjob(logfile).running
 	set name [sge_safename [file tail $logfile]]
 	set runfile $logfile.update
 	set outfile $logfile.update.out
 	set errfile $logfile.update.err
+	job_init
+	job_update $logfile $cgjob(cleanup)
+	set statusok [file exists $cgjob(logfile).finished]
+	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $statusok)} {
+		job_cleanup
+		set result [glob $cgjob(logfile).finished $cgjob(logfile).running $cgjob(logfile).error]
+		job_cleanlogs $result
+		# only keep result logfile if -d option was given explicitely
+		if {!$cgjob(hasargs)} {file delete $result}
+	}
+	file delete -force $runfile
+	file delete -force $outfile
+	file delete -force $errfile
+}
+
+proc job_wait_sge {} {
+	global cgjob cgjob_id
+	set priority [get cgjob(priority) 0]
+	job_logfile_par_close
 	set cmd {#!/bin/sh}
 	append cmd \n
 	append cmd {#$ -S /bin/bash} \n
@@ -169,18 +186,8 @@ proc job_wait_sge {} {
 	append cmd {#$ -cwd} \n
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 	append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
-	append cmd job_init\n
-	append cmd [list job_update $logfile $cgjob(cleanup)]\n
-	append cmd [list file delete -force $runfile]\n
-	append cmd [list file delete -force $outfile]\n
-	append cmd [list file delete -force $errfile]\n
-	append cmd [list foreach file $cgjob(cleanupfiles) {
-		catch {file delete -force $file}
-	}]
-	append cmd [list	foreach file $cgjob(cleanupifemptyfiles) {
-		catch {file delete $file}
-	}]
-
+	append cmd [list array set cgjob [array get cgjob]]
+	append cmd job_logfile_sge_close\n
 	file_write $runfile $cmd
 	file attributes $runfile -permissions u+x
 	set options {}

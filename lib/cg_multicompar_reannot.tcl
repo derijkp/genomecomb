@@ -173,7 +173,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 		}
 	}
 	# start processing
-	set o [open $compar_file.temp w]
+	set tempcompar [filetemp $compar_file]
+	set o [open $tempcompar w]
 	puts $o [join $header \t]
 	set poss [tsv_basicfields $header 4]
 	set num 0
@@ -292,7 +293,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 		}
 	}
 	file rename -force -- $compar_file $compar_file.old
-	file rename -force -- $compar_file.temp $compar_file
+	file rename -force -- $tempcompar $compar_file
 	return $samples
 }
 

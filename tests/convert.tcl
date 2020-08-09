@@ -721,7 +721,7 @@ test renamesamples {basic} {
 	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
 	bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
-} {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.index tmp/test/compar/compar-test.tsv.index/multicompar tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
+} {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
 
 test tsv2bed {basic} {
 	write_tab tmp/test.tsv {

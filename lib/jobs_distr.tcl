@@ -166,6 +166,21 @@ proc job_process_submit_distr {job runfile args} {
 	return $jobnum
 }
 
+proc job_logfile_distr_close {} {
+	global cgjob
+	if {[file exists $cgjob(logfile).running]} {
+		job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold) 1
+	}
+	set statusok [file exists $cgjob(logfile).finished]
+	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $statusok)} {
+		job_cleanup
+		set result [glob $cgjob(logfile).finished $cgjob(logfile).running $cgjob(logfile).error]
+		job_cleanlogs $result
+		# only keep result logfile if -d option was given explicitely
+		if {!$cgjob(hasargs)} {file delete $result}
+	}
+}
+
 proc job_wait_distr {} {
 	global cgjob cgjob_exit cgjob_running
 	update
@@ -180,13 +195,5 @@ proc job_wait_distr {} {
 	after cancel job_process_distr_jobmanager
 	unset -nocomplain cgjob_exit
 	update
-	if {[file exists $cgjob(logfile).running]} {
-		job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold) 1
-	}
-	foreach file $cgjob(cleanupfiles) {
-		catch {file delete -force $file}
-	}
-	foreach file $cgjob(cleanupifemptyfiles) {
-		catch {file delete $file}
-	}
+	job_logfile_distr_close
 }

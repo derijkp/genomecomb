@@ -77,3 +77,13 @@ proc file_part {file {start {}} {end {}}} {
 	}
 	file join {*}[lrange [file split $file] $start $end]
 }
+
+proc workdir {file} {
+	set workdir [gzroot $file].temp
+	if {[file exists $workdir] && ![file isdir $workdir]} {
+		file delete $workdir
+	}
+	file mkdir $workdir
+	job_cleanup_add $workdir
+	return $workdir
+}

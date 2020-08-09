@@ -182,8 +182,7 @@ proc map_job {args} {
 		}
 		return $result
 	}
-	set indexdir [gzroot $result].index
-	file mkdir $indexdir
+	set workdir [workdir $result]
 	if {!$paired} {
 		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
@@ -223,7 +222,7 @@ proc map_job {args} {
 		}
 		foreach {file1 file2} $fastqfiles {
 			set name [file tail [file_root $file1]]
-			set target $indexdir/[file_root [file tail $result]]-$name.sam.zst
+			set target $workdir/[file_root [file tail $result]]-$name.sam.zst
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
