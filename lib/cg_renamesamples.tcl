@@ -72,16 +72,17 @@ proc renamesamples_file {file changes} {
 			lappend newheader $field
 		}
 		if {$changed} {
-			set o [open $newbasefile$ext.temp w]
+			set tempfile [filetemp $newbasefile$ext]
+			set o [open $tempfile w]
 			puts -nonewline $o $comment
 			puts $o [join $newheader \t]
 			fcopy $f $o
 			close $o
 			gzclose $f
-			if {$gzext ne ""} {compress $newbasefile$ext.temp $newbasefile$ext.temp$gzext 0 0}
+			if {$gzext ne ""} {compress $tempfile $tempfile$gzext 0 0}
 			file delete $file
-			file_rename $newbasefile$ext.temp$gzext $newfile
-			catch {file delete $newbasefile$ext.temp}
+			file_rename $tempfile$gzext $newfile
+			catch {file delete $tempfile}
 			puts "Adapted $newfile"
 		} else {
 			gzclose $f
