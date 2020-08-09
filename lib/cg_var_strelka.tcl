@@ -162,6 +162,7 @@ proc var_strelka_job {args} {
 				set zerosize 1
 			} else {
 				if {[file extension $bedfile] ne ".gz"} {
+					if {[file exists $bedfile.gz]} {file delete $bedfile.gz}
 					exec bgzip $bedfile
 					set bedfile $bedfile.gz
 				}
