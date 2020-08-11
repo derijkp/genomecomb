@@ -18,7 +18,8 @@ proc annotatebcol {file dbfile name annotfile} {
 	}
 	set binfile [gzfile $dbfile.bin]
 	set newh $name
-	set o [open $annotfile.temp w]
+	set tempannotfile [filetemp $annotfile]
+	set o [open $tempannotfile w]
 	puts $o $newh
 	close $o
 	if {[gziscompressed $file]} {
@@ -26,11 +27,11 @@ proc annotatebcol {file dbfile name annotfile} {
 	}
 	# puts stderr [list bcol_annot $file {*}$poss -1 -1 $dbfile -1]
 	if {[catch {
-		exec bcol_annot $file {*}$poss -1 -1 $dbfile -1 >> $annotfile.temp 2>@ stderr
+		exec bcol_annot $file {*}$poss -1 -1 $dbfile -1 >> $tempannotfile 2>@ stderr
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
-	file rename -force -- $annotfile.temp $annotfile
+	file rename -force -- $tempannotfile $annotfile
 }
 
 proc annotatebcolvar {file dbfile name annotfile} {

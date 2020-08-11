@@ -45,8 +45,8 @@ proc multi_merge_job {varsfile files args} {
 				}
 				set deps $templist
 			}
-			exec multi_merge $split {*}$deps > $workdir/target.temp 2>@ stderr
-			file rename -force -- $workdir/target.temp $target
+			exec multi_merge $split {*}$deps > $workdir/target.merge.temp 2>@ stderr
+			file rename -force -- $workdir/target.merge.temp $target
 		}
 		return
 	}
@@ -64,8 +64,8 @@ proc multi_merge_job {varsfile files args} {
 				split delete workdir limitreg
 			} -code {
 				# puts [list ../bin/multi_merge $split {*}$deps]
-				exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
-				file rename -force -- $target.temp $target
+				exec multi_merge $split {*}$deps > $target.merge.temp 2>@ stderr
+				file rename -force -- $target.merge.temp $target
 				if {$delete} {file delete {*}$deps}
 			}
 			break
@@ -100,19 +100,19 @@ proc multi_merge_job {varsfile files args} {
 						}
 						set deps $templist
 					}
-					exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
+					exec multi_merge $split {*}$deps > $target.merge.temp 2>@ stderr
 					if {$delete} {file delete {*}$deps}
 				} elseif {!$delete} {
 					# one file left, does not have to be merged
 					if {$limitreg ne ""} {
-						exec cg regselect $dep $limitreg > $target.temp
+						exec cg regselect $dep $limitreg > $target.merge.temp
 					} else {
-						mklink $dep $target.temp
+						mklink $dep $target.merge.temp
 					}
 				} else {
-					file rename -force -- $dep $target.temp
+					file rename -force -- $dep $target.merge.temp
 				}
-				file rename -force -- $target.temp $target
+				file rename -force -- $target.merge.temp $target
 			}
 		}
 		set delete 1
@@ -585,7 +585,7 @@ proc pmulticompar_job {args} {
 	#
 	# merge variants
 	# todo: check for concurrency
-	set workdir [workddir $compar_file]/multicompar
+	set workdir [workdir $compar_file]/multicompar
 	file mkdir $workdir
 	set real_compar_file [jobglob $compar_file]
 	if {$real_compar_file ne ""} {
@@ -603,8 +603,8 @@ proc pmulticompar_job {args} {
 	-targets {$target} -code {
 		set deps [list_remove $deps {}]
 		if {[llength $deps]} {
-			cg cat -c 0 -m 1 {*}$deps > $target.temp
-			file rename -- $target.temp $target
+			cg cat -c 0 -m 1 {*}$deps > $target.pmulticompar.temp
+			file rename -- $target.pmulticompar.temp $target
 		} else {
 			file_write $target ""
 		}
@@ -782,10 +782,10 @@ proc pmulticompar_job {args} {
 			}
 			set keeppos [lsearch $header name]
 			if {$keeppos == -1} {set keeppos {}}
-			file_write $target.temp $targetsfield\n
+			file_write $target.pmulticompar.temp $targetsfield\n
 			# puts stderr [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
-			exec var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
-			file rename -force -- $target.temp $target
+			exec var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.pmulticompar.temp 2>@ stderr
+			file rename -force -- $target.pmulticompar.temp $target
 		}
 	}
 	#

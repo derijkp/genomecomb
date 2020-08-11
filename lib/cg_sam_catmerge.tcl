@@ -70,13 +70,16 @@ proc sam_catmerge_job {args} {
 		{*}[versions samtools]
 	# run
 
+	set workdir [workdir $resultfile]
+	set tempresultfile $workdir/[file tail $resultfile]
+
 	if {$deletesams} {
 		set rmfiles {}
 		foreach file $samfiles {
 			lappend rmfiles $file [index_file $file] [analysisinfo_file $file]
 		}
 		set rmfiles [list_remove $rmfiles {}]
-		job_cleanup_add $resultfile.temp
+		job_cleanup_add $tempresultfile
 	} else {
 		set rmfiles {}
 	}
@@ -88,8 +91,10 @@ proc sam_catmerge_job {args} {
 	} else {
 		set basename [file_root $resultfile]
 		set regresults {}
+		set tempregresults {}
 		foreach region $regions {
 			lappend regresults [file_root $resultfile]-$region[file_ext $resultfile]
+			lappend tempregresults [file_root $tempresultfile]-$region[file_ext $resultfile]
 		}
 		set targets $regresults
 		lappend targets [gzroot [lindex $regresults 0]].analysisinfo
@@ -99,7 +104,7 @@ proc sam_catmerge_job {args} {
 	set deps $samfiles
 	job $name -optional $optional -force $force -cores $threads {*}$skips \
 	-deps $samfiles -rmtargets $rmfiles -targets $targets -vars {
-		samfiles rmfiles regresults resultfile regions mergesort sort refseq threads maxopenfiles outputformat
+		samfiles rmfiles regresults tempregresults resultfile regions mergesort sort refseq threads maxopenfiles outputformat workdir tempresultfile
 	} -code {
 		set testsam [lindex $samfiles 0]
 		if {![llength $regions]} {
@@ -131,9 +136,9 @@ proc sam_catmerge_job {args} {
 			if {![llength $regions]} {
 				if {$outcmd ne ""} {set outcmd [list | {*}$outcmd]}
 				lappend outcmd >
-				exec {*}$incmd {*}$outcmd $resultfile.temp 2>@ stderr
+				exec {*}$incmd {*}$outcmd $tempresultfile 2>@ stderr
 			} else {
-				exec {*}$incmd | distrreg [file_root $resultfile] [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
+				exec {*}$incmd | distrreg [file_root $tempresultfile] [file_ext $resultfile] 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 			}
 		} else {
 			if {[regexp @HD $header]} {
@@ -154,12 +159,12 @@ proc sam_catmerge_job {args} {
 					lappend outcmd >
 					exec samcat -header $header {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
-						{*}$outcmd $resultfile.temp
+						{*}$outcmd $tempresultfile
 				} else {
 					if {[llength $outcmd]} {lappend outcmd >}
 					exec samcat -header $header {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
-						| distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
+						| distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 				}
 			} else {
 				if {$sort eq "coordinate"} {
@@ -170,10 +175,10 @@ proc sam_catmerge_job {args} {
 				if {![llength $regions]} {
 					if {$outcmd ne ""} {set outcmd [list | {*}$outcmd]}
 					lappend outcmd >
-					set finaloutcmd [list {*}$outcmd $resultfile.temp]
+					set finaloutcmd [list {*}$outcmd $tempresultfile]
 				} else {
 					if {[llength $outcmd]} {lappend outcmd >}
-					set finaloutcmd [list | distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd]
+					set finaloutcmd [list | distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ $outcmd]
 				}
 				set maxopenfiles [maxopenfiles $maxopenfiles]
 				set len [llength $deps]
@@ -225,10 +230,10 @@ proc sam_catmerge_job {args} {
 			}
 		}
 		if {![llength $regions]} {
-			result_rename $resultfile.temp $resultfile
+			result_rename $tempresultfile $resultfile
 		} else {
-			foreach regresult $regresults {
-				result_rename $regresult.temp $regresult
+			foreach tempregresult $tempregresults regresult $regresults {
+				result_rename $tempregresult $regresult
 			}
 		}
 		foreach rmfile $rmfiles {file delete -force $rmfile}
