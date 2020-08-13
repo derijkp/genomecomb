@@ -264,6 +264,55 @@ Only in 1: tmp/d1/only1
 Only in 2: tmp/d2/only2
 child process exited abnormally} error
 
+test tsvdiff {dir with sam vs bam} {
+	test_cleantmp
+	file mkdir tmp/d1
+	file mkdir tmp/d2
+	#
+	file copy data/bwa.sam tmp/d1/same.sam
+	exec samtools view -b data/bwa.sam > tmp/d2/same.bam
+	exec samtools view -b data/bwa.sam > tmp/d1/same2.bam
+	exec samtools view -b data/bwa.sam > tmp/d2/same2.bam
+	exec gzip -c data/bwa.sam > tmp/d1/same3.sam.gz
+	exec samtools view -b data/bwa.sam > tmp/d2/same3.bam
+	exec samtools view -b data/bwa.sam > tmp/d1/same4.bam
+	exec gzip -c data/bwa.sam > tmp/d2/same4.sam.gz
+	#
+	file copy data/bwa.sam tmp/d1/diff.sam
+	exec samtools view -b data/rdsbwa.sam > tmp/d2/diff.bam
+	exec samtools view -b data/bwa.sam > tmp/d1/diff2.bam
+	exec samtools view -b data/rdsbwa.sam > tmp/d2/diff2.bam
+	exec gzip -c data/bwa.sam > tmp/d1/diff3.sam.gz
+	exec samtools view -b data/rdsbwa.sam > tmp/d2/diff3.bam
+	exec samtools view -b data/rdsbwa.sam > tmp/d1/diff4.bam
+	exec gzip -c data/bwa.sam > tmp/d2/diff4.sam.gz
+	#
+	write_tab tmp/d1/file1.tsv {
+		chromosome	begin	end
+		chr1	1	2
+		chr2	1	2
+	}
+	file_write tmp/d1/only1 ""
+	# cg zst tmp/d1/file1.tsv
+	write_tab tmp/d2/file1.tsv {
+		chromosome	begin	end	test
+		chr1	1	2	t1
+		chr2	2	3	t2
+		chr3	3	4	t3
+	}
+	file copy -force tmp/d1/file1.tsv tmp/d1/same.tsv
+	file copy -force tmp/d1/file1.tsv tmp/d2/same.tsv
+	file_write tmp/d2/only2 ""
+	cg tsvdiff -brief 1 tmp/d1 tmp/d2
+} {Files differ: tmp/d1/diff.sam tmp/d2/diff.bam
+Files differ: tmp/d1/diff2.bam tmp/d2/diff2.bam
+Files differ: tmp/d1/diff3.sam.gz tmp/d2/diff3.bam
+Files differ: tmp/d1/diff4.bam tmp/d2/diff4.sam.gz
+Files differ: tmp/d1/file1.tsv tmp/d2/file1.tsv
+Only in 1: tmp/d1/only1
+Only in 2: tmp/d2/only2
+child process exited abnormally} error
+
 test cg_extracthomopolymers {basic} {
 	file_write tmp/genome_test.ifas [deindent {
 		>chr1

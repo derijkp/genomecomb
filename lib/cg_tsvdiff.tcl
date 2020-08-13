@@ -46,22 +46,28 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
 	global errors
 	set tempdir [tempdir]
-	if {[file extension $file1] in ".bam .sam .cram"}  {
-		file mkdir $tempdir/conv
-		set temp $tempdir/conv/[file tail $file1]
+	if {[file extension [gzroot $file1]] in ".bam .sam .cram"}  {
+		set tempdir [tempfile]
+		file delete $tempdir ; file mkdir $tempdir
+		set temp $tempdir/[file tail $file1].tsv
 		cg sam2tsv $file1 $temp
-		set file1 $temp
+		set usefile1 $temp
+	} else {
+		set usefile1 $file1
 	}
-	if {[file extension $file2] in ".bam .sam .cram"}  {
-		file mkdir $tempdir/conv
-		set temp $tempdir/conv/[file tail $file2]
+	if {[file extension [gzroot $file2]] in ".bam .sam .cram"}  {
+		set tempdir [tempfile]
+		file delete $tempdir ; file mkdir $tempdir
+		set temp $tempdir/[file tail $file2].tsv
 		cg sam2tsv $file2 $temp
-		set file2 $temp
+		set usefile2 $temp
+	} else {
+		set usefile2 $file2
 	}
-	set f1 [gzopen $file1]
+	set f1 [gzopen $usefile1]
 	set header1 [tsv_open $f1 comment1]
 	catch {close $f1}
-	set f2 [gzopen $file2]
+	set f2 [gzopen $usefile2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
 	set temp1 $tempdir/[file tail $file1]
@@ -97,36 +103,36 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		set query ""
 	}
 	if {$type eq "xl"} {
-		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $usefile1 $temp1.pre
 		set error1 [xlong $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
-		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
+		cg select -f [list {*}$common {*}$h2] $usefile2 $temp2.pre
 		set error2 [xlong $temp2.pre $temp2 $splitlines {}]
 		set msg2 "error in xl conversion"
 	} elseif {$type eq "l"} {
-		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $usefile1 $temp1.pre
 		set error1 [long $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
-		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
+		cg select -f [list {*}$common {*}$h2] $usefile2 $temp2.pre
 		set error2 [long $temp2.pre $temp2 $splitlines {}]
 		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			exec cg select -rc $rcomments -s $sort -q $query -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
+			exec cg select -rc $rcomments -s $sort -q $query -f $common $usefile1 | awk {{print $0"\n----"}} >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			exec cg select -rc $rcomments -s $sort -q $query -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
+			exec cg select -rc $rcomments -s $sort -q $query -f $common $usefile2 | awk {{print $0"\n----"}} >> $temp2
 		} msg2]
 	} else {
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			cg select -rc $rcomments -s $sort -q $query -f $common $file1 >> $temp1
+			cg select -rc $rcomments -s $sort -q $query -f $common $usefile1 >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			cg select -rc $rcomments -s $sort -q $query -f $common $file2 >> $temp2
+			cg select -rc $rcomments -s $sort -q $query -f $common $usefile2 >> $temp2
 		} msg2]
 	}
 	if {$error1} {
@@ -154,10 +160,29 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
 	global errors
 	if {![catch {exec diff -q $file1 $file2}]} return
-	set f1 [gzopen $file1]
+	set tempdir [tempdir]
+	if {[file extension [gzroot $file1]] in ".bam .sam .cram"}  {
+		set tempdir [tempfile]
+		file delete $tempdir ; file mkdir $tempdir
+		set temp $tempdir/[file tail $file1].tsv
+		cg sam2tsv $file1 $temp
+		set usefile1 $temp
+	} else {
+		set usefile1 $file1
+	}
+	if {[file extension [gzroot $file2]] in ".bam .sam .cram"}  {
+		set tempdir [tempfile]
+		file delete $tempdir ; file mkdir $tempdir
+		set temp $tempdir/[file tail $file2].tsv
+		cg sam2tsv $file2 $temp
+		set usefile2 $temp
+	} else {
+		set usefile2 $file2
+	}
+	set f1 [gzopen $usefile1]
 	set header1 [tsv_open $f1 comment1]
 	catch {close $f1}
-	set f2 [gzopen $file2]
+	set f2 [gzopen $usefile2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
 	set common [list_common $header1 $header2]
@@ -178,18 +203,18 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	set temp1 [tempfile]
 	set temp2 [tempfile]
 	if {[catch {
-		cg select -q $query -rc $rcomments -f $common $file1 $temp1
+		cg select -q $query -rc $rcomments -f $common $usefile1 $temp1
 	}]} {
-		if {[catch {exec diff -q $file1 $file2} msg]} {
+		if {[catch {exec diff -q $usefile1 $usefile2} msg]} {
 			incr errors
 			puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 			return
 		}
 	}
 	if {[catch {
-		cg select -q $query -rc $rcomments -f $common $file2 $temp2
+		cg select -q $query -rc $rcomments -f $common $usefile2 $temp2
 	}]} {
-		if {[catch {exec diff -q $file1 $file2} msg]} {
+		if {[catch {exec diff -q $usefile1 $usefile2} msg]} {
 			incr errors
 			puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 			return
@@ -289,7 +314,13 @@ proc cg_tsvdiff args {
 			set file $dir/$file
 			if {[string range $dir 0 $last1] eq $dir1} {
 				set post [string range $file $len1 end]
-				set file2 [gzfile [gzroot $dir2$post]]
+				set ext [file extension [gzroot $file]]
+				if {$ext in ".sam .bam .cram"} {
+					set root [file root [gzroot $post]]
+					set file2 [gzfile $dir2$root.sam $dir2$root.bam $dir2$root.cram]
+				} else {
+					set file2 [gzfile [gzroot $dir2$post]]
+				}
 				if {[file exists $file2]} {
 					if {!$brief} {
 						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
@@ -302,7 +333,13 @@ proc cg_tsvdiff args {
 				}
 			} else {
 				set post [string range $file $len2 end]
-				set file1 [gzfile [gzroot $dir1$post]]
+				set ext [file extension [gzroot $file]]
+				if {$ext in ".sam .bam .cram"} {
+					set root [file root [gzroot $post]]
+					set file1 [gzfile $dir1$root.sam $dir1$root.bam $dir1$root.cram]
+				} else {
+					set file1 [gzfile [gzroot $dir1$post]]
+				}
 				# skip if file exists (only compare if we come across it in 1)
 				if {![file exists $file1]} {
 					incr errors
