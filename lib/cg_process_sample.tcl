@@ -471,6 +471,7 @@ proc process_sample_job {args} {
 	set dt {}
 	set targetfile {}
 	set reports basic
+	# if not set (stays empty, willl be set later depending on type of experiment)
 	set removeduplicates {}
 	set amplicons {}
 	set threads 2
@@ -735,7 +736,7 @@ proc process_sample_job {args} {
 	set resultbamprefix {}
 	if {$amplicons ne ""} {append resultbamprefix c}
 	if {$realign} {append resultbamprefix r}
-	if {$removeduplicates} {append resultbamprefix d}
+	if {$removeduplicates ni {0 {}}} {append resultbamprefix d}
 	# allways sort
 	append resultbamprefix s
 	# find fastq files in fastq dir
@@ -921,6 +922,7 @@ proc process_sample_job {args} {
 						-regionfile 5 -refseq $refseq -threads $threads \
 						 $bam]
 				}
+				# join $cleanbams \n
 				setdefcompressionlevel $compressionlevel
 				sam_catmerge_job \
 					-name merge2bam-$aligner-$sample -refseq $refseq \
