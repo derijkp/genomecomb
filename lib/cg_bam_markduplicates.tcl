@@ -146,7 +146,7 @@ proc cg_bam_markduplicates {args} {
 		}
 		# puts stderr [list samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio]
-		catch_exec samtools markdup --output-fmt $outputformat -l 500 \
+		catch_exec samtools markdup --output-fmt $outputformat -l 500 -T [scratchfile] \
 			{*}$opts $sourcefile $tempresult {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
 			file rename -force -- $tempresult $resultfile
