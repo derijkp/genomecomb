@@ -1315,6 +1315,29 @@ test gene_annot {-distrreg chr with variants outside of distrreg regions} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {*variants outside of distrreg regions*} error match
 
+test gene_annot {begin -1} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	16570	16570	ins		A
+		5	-1	-1	bnd		]CHRUN_xx:1000].
+		5	7685	7685	bnd		.[CHRY:11324332[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		1	16570	16570	ins		A			
+		5	-1	-1	bnd		]CHRUN_xx:1000].			
+		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test reg_annot {check for diff size in paste error} {
 	write_tab tmp/vars1.tsv {
 		chromosome	begin	end	type	ref	alt

@@ -24,7 +24,7 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 	int size = 0, step = 1;
 	if (*region == '\0') return(NULL);
 	*chromosome2 = DStringNew();
-	*start2 = 0 ; *end2 = INT_MAX;
+	*start2 = INT_MIN ; *end2 = INT_MAX;
 	while(1) {
 		if (region[size] == '\0' || region[size] == ' ' || region[size] == ':' || region[size] == '-') {
 			if (step == 1) {
