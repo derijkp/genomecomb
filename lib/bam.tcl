@@ -36,9 +36,12 @@ proc bam_index_job {args} {
 }
 
 proc sam_empty file {
-	if {[catch {exec samtools view --no-PG $file | head -1} test]} {
-		return 0
-	} else {
+	set f [open [list | samtools view --no-PG $file]]
+	set read [gets $f line]
+	catch {close $f}
+	if {$read == -1} {
 		return 1
+	} else {
+		return 0
 	}
 }
