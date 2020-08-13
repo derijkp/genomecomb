@@ -32,17 +32,15 @@ test process_sample {bwa distrreg} {
 	exec cg process_sample -threads 1 -aligners bwa -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
 	# chr21:42730799-42762826
-	cg tsvdiff -q 1 -x fastq -x *.sam -x *.bam -x *.bai -x *.cram -x *.crai -x *.analysisinfo \
-		-x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
+	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
+		-x projectinfo.tsv -x *.analysisinfo \
+		-x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
 		tmp/NA19240m data/NA19240m
-	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.bam | cg select -rf other > tmp/temp.tsv
-	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other > tmp/expected.tsv
-	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
-	file_write tmp/expexted_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
+	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
 		gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
-	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expexted_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
+	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
 
 test process_sample {bwa distrreg cram} {
@@ -52,14 +50,20 @@ test process_sample {bwa distrreg cram} {
 	exec cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >& tmp/NA19240m.startuplog
 	# chr21:42730799-42762826
+	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
+		-x *.cram -x *.sam \
+		-x projectinfo.tsv -x *.analysisinfo \
+		-x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
+		tmp/NA19240m data/NA19240m
+	# do cram diff separate as there may be differences in the "other" fields
 	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.cram | cg select -rf other > tmp/temp.tsv
 	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other > tmp/expected.tsv
 	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
-	file_write tmp/expexted_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
+	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
 		gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
-	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expexted_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
+	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
 
 test process_sample {bwa distrreg -removeduplicates 0 cram} {
@@ -72,6 +76,18 @@ test process_sample {bwa distrreg -removeduplicates 0 cram} {
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rsbwa-NA19240m.cram > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -s {chromosome begin end qname} > tmp/ali.sam.tsv
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -s {chromosome begin end qname} > tmp/bwa.sam.tsv
+	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
+} 0
+
+test process_sample {bwa distrreg -removeduplicates picard bam} {
+	test_cleantmp
+	file mkdir tmp/NA19240m/fastq
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
+	cg process_sample -stack 1 -aligners bwa -varcallers {} -removeduplicates picard -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	# chr21:42730799-42762826
+	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf other -s {chromosome begin end qname} > tmp/ali.sam.tsv
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
 } 0
 

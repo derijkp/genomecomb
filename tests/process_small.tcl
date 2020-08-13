@@ -16,104 +16,128 @@ set runopts {-stack 1}
 
 test process_small {process_project mastr_mx2} {
 	cd $::smalltestdir
-	file delete -force tmp/mastr_mx2
-	file mkdir tmp/mastr_mx2/samples
-	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest tmp/mastr_mx2/samples/[string range [file tail $sample] 0 end-3]/fastq
+	set basename mastr_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
+	foreach sample [glob ori/${basename}.start/samples/*] {
+		set sdest tmp/${basename}/samples/[string range [file tail $sample] 0 end-3]/fastq
 		file mkdir $sdest
 		foreach file [glob -nocomplain $sample/ori/*] {
 			file copy $file $sdest
 		}
 	}
-	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2/samplicons-wgs2.tsv
-	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
+	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
 	exec cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
+		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
-	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2/reports/report_hsmetrics-mastr_mx2.tsv tmp/mastr_mx2/reports/filtered_report_hsmetrics-mastr_mx2.tsv
-	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2/reports/report_stats-mastr_mx2.tsv tmp/mastr_mx2/reports/filtered_report_stats-mastr_mx2.tsv
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/${basename}/reports/report_stats-${basename}.tsv tmp/${basename}/reports/filtered_report_stats-${basename}.tsv
 	set result {}
-	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
-		-x colinfo -x mastr_mx2.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		-x mastr_mx2_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2.tsv -x report_stats-mastr_mx2.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
-		-x *log_jobs -x *.index \
-		tmp/mastr_mx2 expected/mastr_mx2]
-	lappend result [diffanalysisinfo tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo expected/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *-blanco2_8485* \
+		tmp/${basename} expected/${basename}]
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *-blanco2_8485* \
+		tmp/${basename} expected.2020_02_02/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
+		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
+		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project mastr_mx2_gatkh} {
 	cd $::smalltestdir
-	file delete -force tmp/mastr_mx2_gatkh
-	file mkdir tmp/mastr_mx2_gatkh/samples
+	set basename mastr_mx2_gatkh
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest tmp/mastr_mx2_gatkh/samples/[string range [file tail $sample] 0 end-3]/fastq
+		set sdest tmp/${basename}/samples/[string range [file tail $sample] 0 end-3]/fastq
 		file mkdir $sdest
 		foreach file [glob -nocomplain $sample/ori/*] {
 			file copy $file $sdest
 		}
 	}
-	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv
-	# file copy ori/mastr_mx2_gatkh/demultiplex_stats.tsv tmp/mastr_mx2_gatkh
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
+	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
 	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		-varcallers {gatkh} -extra_reports_mastr gatkh \
-		tmp/mastr_mx2_gatkh $::refseqdir/hg19 >& tmp/mastr_mx2_gatkh.log
+		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
-	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2_gatkh/reports/report_hsmetrics-mastr_mx2_gatkh.tsv tmp/mastr_mx2_gatkh/reports/filtered_report_hsmetrics-mastr_mx2_gatkh.tsv
-	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2_gatkh/reports/report_stats-mastr_mx2_gatkh.tsv tmp/mastr_mx2_gatkh/reports/filtered_report_stats-mastr_mx2_gatkh.tsv
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/${basename}/reports/report_stats-${basename}.tsv tmp/${basename}/reports/filtered_report_stats-${basename}.tsv
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2_gatkh.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
-		-x mastr_mx2_gatkh_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2_gatkh.tsv -x report_stats-mastr_mx2_gatkh.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
-		tmp/mastr_mx2_gatkh expected/mastr_mx2_gatkh]
-	lappend result [diffanalysisinfo tmp/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo expected/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/mastr_mx2_gatkh.html expected/mastr_mx2_gatkh/mastr_mx2_gatkh.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/compar/info_analysis.tsv expected/mastr_mx2_gatkh/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
+		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
+		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	cd $::smalltestdir
-	file delete -force tmp/mastr_mx2_cram
-	file mkdir tmp/mastr_mx2_cram/samples
+	set basename mastr_mx2_cram
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest tmp/mastr_mx2_cram/samples/[string range [file tail $sample] 0 end-3]/fastq
+		set sdest tmp/${basename}/samples/[string range [file tail $sample] 0 end-3]/fastq
 		file mkdir $sdest
 		foreach file [glob -nocomplain $sample/ori/*] {
 			file copy $file $sdest
 		}
 	}
-	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_cram/samplicons-wgs2.tsv
-	# file copy ori/mastr_mx2_cram/demultiplex_stats.tsv tmp/mastr_mx2_cram
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
+	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
 	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/mastr_mx2_cram/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		-varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
-		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
+		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
-	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/mastr_mx2_cram/reports/report_hsmetrics-mastr_mx2_cram.tsv tmp/mastr_mx2_cram/reports/filtered_report_hsmetrics-mastr_mx2_cram.tsv
-	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/mastr_mx2_cram/reports/report_stats-mastr_mx2_cram.tsv tmp/mastr_mx2_cram/reports/filtered_report_stats-mastr_mx2_cram.tsv
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/${basename}/reports/report_stats-${basename}.tsv tmp/${basename}/reports/filtered_report_stats-${basename}.tsv
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.cram -x *.crai -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2_cram.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
-		-x mastr_mx2_cram_hsmetrics_report.tsv -x report_hsmetrics-mastr_mx2_cram.tsv -x report_stats-mastr_mx2_cram.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/mastr_mx2_cram expected/mastr_mx2_cram]
-	lappend result [diffanalysisinfo tmp/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo expected/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/mastr_mx2_cram.html expected/mastr_mx2_cram/mastr_mx2_cram.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/compar/info_analysis.tsv expected/mastr_mx2_cram/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.index \
+		-x *.zsti -x *.lz4i -x *.tbi -x *.png -x *.cram -x *.crai -x *.bai \
+		-x *.finished -x *.submitting -x info_analysis.tsv \
+		-x projectinfo.tsv -x *.vcf.gz\
+		-x fastqc_report.html -x colinfo -x ${basename}.html -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x report_stats-${basename}.tsv \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
+	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
+		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I command -I param_dbdir \
+		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
@@ -150,164 +174,196 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 
 test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 	cd $::smalltestdir
-	file delete -force tmp/mastr_mx2_js1
-	file mkdir tmp/mastr_mx2_js1/samples
+	set basename mastr_mx2_js1
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest tmp/mastr_mx2_js1/samples/[string range [file tail $sample] 0 end-3]/fastq
+		set sdest tmp/${basename}/samples/[string range [file tail $sample] 0 end-3]/fastq
 		file mkdir $sdest
 		foreach file [glob -nocomplain $sample/ori/*] {
 			file copy $file $sdest
 		}
 	}
-	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_js1/samplicons-wgs2.tsv
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
 	cg process_project {*}$::runopts {*}$::dopts -jobsample 1 -split 1 \
-		-minfastqreads 10 -amplicons tmp/mastr_mx2_js1/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		tmp/mastr_mx2_js1 $::refseqdir/hg19 >& tmp/mastr_mx2_js1.log
+		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
+	# filter out blanco hsmetrics results (are not deterministic)
+	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
+	cg select -q {!($sample eq "crsbwa-blanco2_8485" && $source eq "hsmetrics")} tmp/${basename}/reports/report_stats-${basename}.tsv tmp/${basename}/reports/filtered_report_stats-${basename}.tsv
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2_js1.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
-		tmp/mastr_mx2_js1 expected/mastr_mx2_js1]
-	lappend result [diffanalysisinfo tmp/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo expected/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/mastr_mx2_js1.html expected/mastr_mx2_js1/mastr_mx2_js1.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/compar/info_analysis.tsv expected/mastr_mx2_js1/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
+		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
+		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_sample one_exome_yri_mx2} {
 	cd $::smalltestdir
-	file delete -force tmp/one_exome_yri_mx2
-	file mkdir tmp/one_exome_yri_mx2/samples
+	set basename one_exome_yri_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample {
 		 NA19240mx2
 	} {
-		file mkdir tmp/one_exome_yri_mx2/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_exome_yri_mx2/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		file mkdir tmp/${basename}/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 \
-		tmp/one_exome_yri_mx2/samples/NA19240mx2 >& tmp/one_exome_yri_mx2.log
-	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
+		tmp/${basename}/samples/NA19240mx2 >& tmp/${basename}.log
+	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/${basename}/samples/NA19240mx2 | less -S
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
-	lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *bam.dupmetrics \
+		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
+		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 	cd $::smalltestdir
-	file delete -force tmp/one_d_exome_yri_mx2
-	file mkdir tmp/one_d_exome_yri_mx2/samples
+	set basename one_d_exome_yri_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample {
 		 NA19240mx2
 	} {
-		file mkdir tmp/one_d_exome_yri_mx2/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_d_exome_yri_mx2/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_d_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		file mkdir tmp/${basename}/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 -distrreg 1 \
-		tmp/one_d_exome_yri_mx2/samples/NA19240mx2 >& tmp/one_d_exome_yri_mx2.log
-	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/one_d_exome_yri_mx2/samples/NA19240mx2 | less -S
+		tmp/${basename}/samples/NA19240mx2 >& tmp/${basename}.log
+	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/${basename}/samples/NA19240mx2 | less -S
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/one_d_exome_yri_mx2/samples/NA19240mx2 expected/one_d_exome_yri_mx2/samples/NA19240mx2]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/one_d_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_d_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
-	lappend result [checkdiff -y --suppress-common-lines tmp/one_d_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected/one_d_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
+		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project exomes_yri_mx2} {
 	cd $::smalltestdir
-	file delete -force tmp/exomes_yri_mx2
-	file mkdir tmp/exomes_yri_mx2/samples
+	set basename exomes_yri_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample {
 		NA19238mx2  NA19239mx2  NA19240mx2
 	} {
-		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		file mkdir tmp/${basename}/samples/$sample/fastq
+		file copy {*}[glob ori/${basename}.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
-		-dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
+		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/exomes_yri_mx2 expected/exomes_yri_mx2]
-	lappend result [diffanalysisinfo tmp/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/exomes_yri_mx2/compar/info_analysis.tsv tmp/exomes_yri_mx2/samples/*/info_analysis.tsv] {
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	cd $::smalltestdir
-	file delete -force tmp/exomesfb_yri_mx2
-	file mkdir tmp/exomesfb_yri_mx2/samples
+	set basename exomesfb_yri_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample {
 		NA19238mx2  NA19239mx2  NA19240mx2
 	} {
-		file mkdir tmp/exomesfb_yri_mx2/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomesfb_yri_mx2/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomesfb_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		file mkdir tmp/${basename}/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatk freebayes} \
-		-dbdir $::refseqdir/hg19 tmp/exomesfb_yri_mx2 >& tmp/exomesfb_yri_mx2.log
+		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/exomesfb_yri_mx2 expected/exomesfb_yri_mx2]
-	lappend result [diffanalysisinfo tmp/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/exomesfb_yri_mx2/compar/info_analysis.tsv tmp/exomesfb_yri_mx2/samples/*/info_analysis.tsv] {
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	cd $::smalltestdir
-	file delete -force tmp/exomes_gatkh_yri_mx2
-	file mkdir tmp/exomes_gatkh_yri_mx2/samples
+	set basename exomes_gatkh_yri_mx2
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples
 	foreach sample {
 		NA19238mx2  NA19239mx2  NA19240mx2
 	} {
-		file mkdir tmp/exomes_gatkh_yri_mx2/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_gatkh_yri_mx2/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_gatkh_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		file mkdir tmp/${basename}/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
-		-dbdir $::refseqdir/hg19 tmp/exomes_gatkh_yri_mx2 >& tmp/exomes_gatkh_yri_mx2.log
+		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting -x *.tbi \
-		tmp/exomes_gatkh_yri_mx2 expected/exomes_gatkh_yri_mx2]
-	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/exomes_gatkh_yri_mx2/compar/info_analysis.tsv tmp/exomes_gatkh_yri_mx2/samples/*/info_analysis.tsv] {
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *log_jobs -x *.finished -x *.submitting \
+		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
+		-x colinfo -x fastqc_report.html -x *.vcf.gz \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -332,111 +388,136 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 
 test process_small {process_sample one_genome_yri_mx2} {
 	cd $::smalltestdir
+	set basename one_genome_yri_mx2
 	set ref $::refseqdir/hg19
-	file delete -force tmp/one_genome_yri_mx2
-	file mkdir tmp/one_genome_yri_mx2/samples/NA19240cgmx2
-	mklink ori/genomes_yri_mx2.start/samples/NA19240cgmx2/ori tmp/one_genome_yri_mx2/samples/NA19240cgmx2/ori
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}/samples/NA19240cgmx2
+	mklink ori/genomes_yri_mx2.start/samples/NA19240cgmx2/ori tmp/${basename}/samples/NA19240cgmx2/ori
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
-		-dbdir $ref tmp/one_genome_yri_mx2/samples/NA19240cgmx2 >& tmp/one_genome_yri_mx2.log
+		-dbdir $ref tmp/${basename}/samples/NA19240cgmx2 >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x info_analysis.tsv -x log_jobs -x summary-NA19240cgmx2.txt -x *.finished -x info_analysis.tsv \
-		-x *.lz4i -x *.zsti -x *.analysisinfo -x *.png -x *.submitting \
-		tmp/one_genome_yri_mx2/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x summary-NA19240cgmx2.txt \
+		tmp/${basename}/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2]
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project genomes_yri_mx2} {
 	cd $::smalltestdir
-	set dest tmp/genomes_yri_mx2
-	file delete -force tmp/genomes_yri_mx2
-	file mkdir tmp/genomes_yri_mx2
+	set basename genomes_yri_mx2
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
 	foreach sample {
 		NA19238cgmx2 NA19239cgmx2 NA19240cgmx2
 		NA19240ilmx2
 	} {
-		file mkdir tmp/genomes_yri_mx2/samples/$sample
-		mklink ori/genomes_yri_mx2.start/samples/$sample/ori tmp/genomes_yri_mx2/samples/$sample/ori
+		file mkdir tmp/${basename}/samples/$sample
+		mklink ori/${basename}.start/samples/$sample/ori tmp/${basename}/samples/$sample/ori
 	}
-	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_mx2
+	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/${basename}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
-		-dbdir $::refseqdir/hg19 tmp/genomes_yri_mx2 >& tmp/genomes_yri_mx2.log
+		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.zsti -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/genomes_yri_mx2 expected/genomes_yri_mx2]
-	lappend result [diffanalysisinfo tmp/genomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/genomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x summary-*.txt \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
+		lappend result [checkdiff -I finished \
+			tmp/${basename}/samples/$cgsample/summary-$cgsample.txt expected/${basename}/samples/$cgsample/summary-$cgsample.txt]
 	}
-	# lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+	lappend result [checkdiff -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
+		 -I HistogramID -I htmlwidget -I {The full "sequenced genome" region in} \
+		tmp/${basename}/reports/report-${basename}.html expected/${basename}/reports/report-${basename}.html]
+	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb|Linux}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project mixed_yri_mx2} {
 	cd $::smalltestdir
-	set dest tmp/mixed_yri_mx2
-	file delete -force tmp/mixed_yri_mx2
-	file mkdir tmp/mixed_yri_mx2
-	cg project_addsample tmp/mixed_yri_mx2 cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
-	cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	set basename mixed_yri_mx2
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
+	cg project_addsample tmp/${basename} cgNA19240mx2 ori/${basename}/cgNA19240mx2
+	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/${basename}/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
 	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
-	  tmp/mixed_yri_mx2 >& tmp/mixed_yri_mx2.log
+	  tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.zsti -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/mixed_yri_mx2 expected/mixed_yri_mx2]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo -x summary-*.txt \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *dupmetrics \
+		tmp/${basename} expected/${basename}]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
+		lappend result [checkdiff -I finished \
+			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
 	}
-	lappend result [diffanalysisinfo tmp/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
 
 test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cd $::smalltestdir
-	set dest tmp/mixed_yri_mx2_distrreg
-	file delete -force tmp/mixed_yri_mx2_distrreg
-	file mkdir tmp/mixed_yri_mx2_distrreg
-	cg project_addsample tmp/mixed_yri_mx2_distrreg cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
-	cg project_addsample tmp/mixed_yri_mx2_distrreg gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	set basename mixed_yri_mx2_distrreg
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
+	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
 	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
-	  tmp/mixed_yri_mx2_distrreg >& tmp/mixed_yri_mx2_distrreg.log
+	  tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.zsti -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		tmp/mixed_yri_mx2_distrreg expected/mixed_yri_mx2_distrreg]
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo -x summary-*.txt \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		tmp/${basename} expected/${basename}]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
+		lappend result [checkdiff -I finished \
+			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
 	}
-	lappend result [diffanalysisinfo tmp/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo]
-	# lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}

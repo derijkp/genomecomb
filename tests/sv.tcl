@@ -26,7 +26,7 @@ test sv {sniffles2 NA12878} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2 expected/sv-sniffles2
 } {}
 
@@ -40,7 +40,7 @@ test sv {sniffles2 ngmlr NA12878} {
 	cg sv_sniffles {*}$::dopts \
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2_ngmlr expected/sv-sniffles2_ngmlr
 } {}
 
@@ -54,7 +54,7 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 	cg sv_sniffles {*}$::dopts \
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
 

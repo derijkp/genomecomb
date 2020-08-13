@@ -82,6 +82,9 @@ proc test {args} {
 	exec ln -sf $::appdir/tests/data .
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
+	set description [lindex $args 1]
+	append description " ($::testdir)"
+	lset args 1 $description
 	pkgtools::test {*}$args
 	set ::testdir $::appdir/tests
 	cd $::appdir/tests
@@ -101,8 +104,9 @@ proc checkdiff args {
 	global e
 	set err [catch {exec diff {*}$args} e]
 	if {$err && $e ne {child process exited abnormally}} {
-		set pos 0; foreach v $args {if {[string index $v 0] ne "-"} break; incr pos}
-		return "Files differ: [lrange $args $pos [expr {$pos+1}]]\n"
+		# set pos 0; foreach v $args {if {[string index $v 0] ne "-"} break; incr pos}
+		set temp [lindex [split $args |] 0]
+		return "Files differ: [lrange $temp end-1 end]"
 	} else {
 		return ""
 	}

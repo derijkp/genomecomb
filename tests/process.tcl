@@ -139,7 +139,7 @@ test process {process_project exomes_gatkh_yri_chr2122 (haplotypecaller)} {
 		-x *.analysisinfo -x *.png \
 		tmp/exomes_gatkh_yri_chr2122 expected/exomes_gatkh_yri_chr2122]
 	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo]
-	checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
+	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/exomes_gatkh_yri_chr2122/compar/info_analysis.tsv tmp/exomes_gatkh_yri_chr2122/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]

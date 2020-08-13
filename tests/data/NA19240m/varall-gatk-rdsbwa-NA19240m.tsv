@@ -19,7 +19,7 @@
 #fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
 #fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
 #fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced	geno
 #fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
 #fields	genotypes	H	Integer	Genotypes	geno
 #fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
@@ -139,12 +139,12 @@
 #contig	chrY	59373566	hg19
 #GATKCommandLine.UnifiedGenotyper	table
 #GATKCommandLine.UnifiedGenotyper	ID	Version	Date	Epoch	CommandLineOptions
-#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.8-1-0-gf15c1c3ef	Tue Jun 30 00:35:48 CEST 2020	1593470148068	analysis_type=UnifiedGenotyper input_file=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/map-rdsbwa-NA19240m.cram] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/varall-gatk-rdsbwa-NA19240m.tsv-chr1.bed] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null use_jdk_deflater=false use_jdk_inflater=false disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=1 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_ALL_CONFIDENT_SITES allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.index/varall-gatk-rdsbwa-NA19240m-chr1.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
+#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.8-1-0-gf15c1c3ef	Thu Aug 13 11:17:14 CEST 2020	1597310234370	analysis_type=UnifiedGenotyper input_file=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.temp/map-rdsbwa-NA19240m.bam] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=[/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.temp/varall-gatk-rdsbwa-NA19240m.tsv-chr1.bed] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null use_jdk_deflater=false use_jdk_inflater=false disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=1 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_ALL_CONFIDENT_SITES allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/NA19240m/var-gatk-rdsbwa-NA19240m.tsv.temp/varall-gatk-rdsbwa-NA19240m-chr1.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
 #vcf_fileformat	VCFv4.2
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	LowQual	Low quality
-#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa
+#vcf_reference	file:///home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa
 # ----
 chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PL	BaseQRankSum	totalcoverage	DS	Dels	FS	HaplotypeScore	MQ	MQ0	MQRankSum	QD	ReadPosRankSum	SOR
 chr21	42735549	42735550	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
@@ -1160,129 +1160,79 @@ chr22	41922280	41922281	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0
 chr22	41922281	41922282	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
 chr22	41922282	41922283	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
 chr22	41922283	41922284	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923318	41923319	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923319	41923320	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923320	41923321	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923321	41923322	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923322	41923323	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923323	41923324	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923324	41923325	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923346	41923347	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923348	41923349	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923349	41923350	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923350	41923351	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923351	41923352	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923352	41923353	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923353	41923354	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923354	41923355	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923355	41923356	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923356	41923357	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923357	41923358	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923358	41923359	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923359	41923360	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923360	41923361	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923361	41923362	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923362	41923363	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923363	41923364	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923364	41923365	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923365	41923366	snp	G	.	43.23	G	G	r	0	0;0			5				5					60.00	0				
-chr22	41923366	41923367	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923367	41923368	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923368	41923369	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923369	41923370	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923370	41923371	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923371	41923372	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923372	41923373	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923373	41923374	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923374	41923375	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923375	41923376	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923376	41923377	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923377	41923378	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923378	41923379	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923379	41923380	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923380	41923381	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923381	41923382	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923382	41923383	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
-chr22	41923383	41923384	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
-chr22	41923384	41923385	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
-chr22	41923385	41923386	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
-chr22	41923386	41923387	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923387	41923388	snp	C	.	34.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923388	41923389	snp	G	.	37.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923389	41923390	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923390	41923391	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923391	41923392	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923392	41923393	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923393	41923394	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923394	41923395	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923395	41923396	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923396	41923397	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923397	41923398	snp	T	.	40.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923398	41923399	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923399	41923400	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923400	41923401	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923401	41923402	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923402	41923403	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923403	41923404	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923404	41923405	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923405	41923406	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923406	41923407	snp	G	.	40.23	G	G	r	0	0;0			8				8					60.00	0				
-chr22	41923407	41923408	snp	C	.	40.23	C	C	r	0	0;0			8				8					60.00	0				
-chr22	41923408	41923409	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
-chr22	41923409	41923410	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
-chr22	41923410	41923411	snp	T	.	40.23	T	T	r	0	0;0			8				8					60.00	0				
-chr22	41923411	41923412	snp	G	.	40.23	G	G	r	0	0;0			8				8					60.00	0				
-chr22	41923412	41923413	snp	C	.	40.23	C	C	r	0	0;0			8				8					60.00	0				
-chr22	41923413	41923414	snp	C	.	40.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923414	41923415	snp	A	.	40.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923415	41923416	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923416	41923417	snp	G	.	40.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923417	41923418	snp	A	.	37.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923418	41923419	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
-chr22	41923419	41923420	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923420	41923421	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923421	41923422	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
-chr22	41923422	41923423	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923423	41923424	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923424	41923425	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923425	41923426	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923426	41923427	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923427	41923428	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923428	41923429	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923429	41923430	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923430	41923431	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923431	41923432	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923432	41923433	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923433	41923434	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923434	41923435	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923435	41923436	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923436	41923437	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923437	41923438	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923438	41923439	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923439	41923440	snp	T	.	43.23	T	T	r	0	0;0			7				7					60.00	0				
-chr22	41923440	41923441	snp	A	.	37.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923441	41923442	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923442	41923443	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923443	41923444	snp	C	.	43.23	C	C	r	0	0;0			7				7					60.00	0				
-chr22	41923444	41923445	snp	A	.	43.23	A	A	r	0	0;0			7				7					60.00	0				
-chr22	41923445	41923446	snp	G	.	43.23	G	G	r	0	0;0			7				7					60.00	0				
-chr22	41923446	41923447	snp	G	.	43.23	G	G	r	0	0;0			6				6					60.00	0				
-chr22	41923447	41923448	snp	C	.	43.23	C	C	r	0	0;0			6				6					60.00	0				
-chr22	41923448	41923449	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923449	41923450	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923450	41923451	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923451	41923452	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923452	41923453	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923453	41923454	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923454	41923455	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923455	41923456	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923456	41923457	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923457	41923458	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923458	41923459	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923459	41923460	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923460	41923461	snp	A	.	43.23	A	A	r	0	0;0			5				5					60.00	0				
-chr22	41923461	41923462	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
-chr22	41923462	41923463	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923463	41923464	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923464	41923465	snp	C	.	43.23	C	C	r	0	0;0			5				5					60.00	0				
-chr22	41923465	41923466	snp	T	.	43.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923366	41923367	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923367	41923368	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923368	41923369	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923369	41923370	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923370	41923371	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923371	41923372	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923372	41923373	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923373	41923374	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923374	41923375	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923375	41923376	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923376	41923377	snp	A	.	40.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923377	41923378	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923378	41923379	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923379	41923380	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923380	41923381	snp	T	.	40.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923381	41923382	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923388	41923389	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923389	41923390	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923390	41923391	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923391	41923392	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923392	41923393	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923393	41923394	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923394	41923395	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923395	41923396	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923396	41923397	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923397	41923398	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923398	41923399	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923399	41923400	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923400	41923401	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923401	41923402	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923402	41923403	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923403	41923404	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923404	41923405	snp	G	.	37.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923405	41923406	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923406	41923407	snp	G	.	37.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923407	41923408	snp	C	.	37.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923408	41923409	snp	T	.	37.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923409	41923410	snp	T	.	37.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923410	41923411	snp	T	.	37.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923411	41923412	snp	G	.	37.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923412	41923413	snp	C	.	37.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923413	41923414	snp	C	.	37.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923414	41923415	snp	A	.	37.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923415	41923416	snp	G	.	37.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923416	41923417	snp	G	.	37.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923417	41923418	snp	A	.	37.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923418	41923419	snp	T	.	37.23	T	T	r	0	0;0			5				5					60.00	0				
+chr22	41923419	41923420	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923420	41923421	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923421	41923422	snp	A	.	37.23	A	A	r	0	0;0			5				5					60.00	0				
+chr22	41923422	41923423	snp	C	.	37.23	C	C	r	0	0;0			5				5					60.00	0				
+chr22	41923423	41923424	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923424	41923425	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923425	41923426	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923426	41923427	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923427	41923428	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923428	41923429	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923429	41923430	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923430	41923431	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923431	41923432	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923432	41923433	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923433	41923434	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923434	41923435	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923435	41923436	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923436	41923437	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923437	41923438	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923438	41923439	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923439	41923440	snp	T	.	40.23	T	T	r	0	0;0			6				6					60.00	0				
+chr22	41923440	41923441	snp	A	.	37.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923441	41923442	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923442	41923443	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923443	41923444	snp	C	.	40.23	C	C	r	0	0;0			6				6					60.00	0				
+chr22	41923444	41923445	snp	A	.	40.23	A	A	r	0	0;0			6				6					60.00	0				
+chr22	41923445	41923446	snp	G	.	40.23	G	G	r	0	0;0			6				6					60.00	0				
+chr22	41923446	41923447	snp	G	.	40.23	G	G	r	0	0;0			5				5					60.00	0				
+chr22	41923447	41923448	snp	C	.	40.23	C	C	r	0	0;0			5				5					60.00	0				

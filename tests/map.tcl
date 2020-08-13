@@ -185,10 +185,11 @@ test map_minimap2 {error dir as refseq} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	file mkdir tmp/ref
+	mklink $::refseqdir/hg19/genome_hg19.ifas tmp/ref/genome_hg19.ifas
 	cg map_minimap2 -paired 1 tmp/ali.bam tmp/ref NA19240m {*}[bsort [glob tmp/*.fq.gz]]
-} {The minimap2 version for preset sr of the refseq does not exist (should be at *tmp/ref.minimap2.sr)
+} {The minimap2 version for preset sr of the refseq does not exist (should be at *tmp/ref/*.minimap2.sr)
 You can create it using:
-cg refseq_minimap2 '*tmp/ref' sr} error match
+cg refseq_minimap2 '*tmp/ref*' sr} error match
 
 test map_minimap2 {error missing fastq} {
 	test_cleantmp

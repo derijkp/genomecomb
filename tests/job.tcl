@@ -1380,20 +1380,16 @@ test job "job_update -r 1 $testname" {
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.finished test1.txt test2.txt test3.txt}} match
 
 test job "-cores 2 $testname" {
-
-time {
 	test_cleantmp
 	test_job_init
 	job test -targets tmp/dep.txt -code {
 		file_write tmp/dep.txt test
 	}
-	job test -cores 2 -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+	job test2 -cores 2 -deps {tmp/dep.txt} -targets tmp/target.txt -code {
 		file_write tmp/target.txt [file_read $dep]_ok
 	}
 	job_wait ; gridwait
 	cg select -f cores -rc 1 [glob tmp/log.*]
-}
-
 } {cores
 1
 2

@@ -2,8 +2,10 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
+# set script [pwd]/all.tcl ; set argv {}
 set script [info script] ; if {$script eq ""} {set script ./t}
 set appdir [file dir [file dir [file normalize $script]]]
+puts "running all tests with script=$script appdir=$appdir argv=$argv"
 if {[inlist $argv testsge]} {
 	puts stderr "testing sge"
 	set testsge 1
