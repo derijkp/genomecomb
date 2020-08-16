@@ -38,7 +38,8 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/addrow$(EXEEXT) \
      ../bin$(ARCH)/csv2tsv$(EXEEXT) \
      ../bin$(ARCH)/distrreg$(EXEEXT) \
-     ../bin$(ARCH)/mergesorted$(EXEEXT)
+     ../bin$(ARCH)/mergesorted$(EXEEXT) \
+     ../bin$(ARCH)/noise$(EXEEXT)
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -176,3 +177,7 @@ clean:
 ../bin$(ARCH)/test_naturalcompare$(EXEEXT): test_naturalcompare.c tools.c
 	echo "test test_naturalcompare"
 	$(GCC) test_naturalcompare.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test_naturalcompare$(EXEEXT)
+
+../bin$(ARCH)/noise$(EXEEXT): noise.c $(TOOLS)
+	$(GCC) noise.c tools.c $(CFLAGS) -o ../bin$(ARCH)/noise$(EXEEXT)
+

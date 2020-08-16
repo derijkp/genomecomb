@@ -795,4 +795,105 @@ test bam_sort {(internal) cg _sam_sort_gnusort, without @HD line} {
 > @HD	VN:1.3	SO:coordinate
 child process exited abnormally} error
 
+test noise {pretest} {
+	file_write tmp/temp.pup [deindent {
+		chr21	9439154	A	3	.gG	CDI
+		chr21	9439155	C	3	.,.	CDI
+		chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
+		chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
+		chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
+		chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
+		chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
+		chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
+		chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
+		chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
+		chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
+		chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		depth	nrdiff	chromosome	pos	ref	depth	bases	qual
+		40	0	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		53	24	chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		20	0	chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
+		20	0	chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
+		22	3	chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
+		26	0	chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
+		26	4	chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		27	5	chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
+		57	0	chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		26	1	chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
+		26	1	chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
+		27	3	chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
+		27	2	chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
+		27	0	chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
+	}]\n
+	exec noise 20 1 < tmp/temp.pup > tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+	cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/temp.tsv
+	cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/temp.tsv
+	exec noise 20 < tmp/temp.pup
+} {percentage	count
+0.0	6
+5.0	2
+10.0	1
+15.0	2
+20.0	2
+25.0	0
+30.0	0
+35.0	0
+40.0	0
+45.0	0
+50.0	1
+55.0	0
+60.0	0
+65.0	0
+70.0	0
+75.0	0
+80.0	0
+85.0	0
+90.0	0
+95.0	0
+100.0	0}
+
+test noise {noise basic} {
+	test_cleantmp
+	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/temp.bam
+	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam.bai tmp/temp.bam.bai
+	set bamfile tmp/temp.bam
+	set refseq $::refseqdir/hg19
+	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
+	file_write tmp/expected.tsv [deindent {
+		percentage	count
+		0.0	1565926
+		5.0	71151
+		10.0	4889
+		15.0	1251
+		20.0	726
+		25.0	489
+		30.0	306
+		35.0	343
+		40.0	355
+		45.0	334
+		50.0	372
+		55.0	212
+		60.0	152
+		65.0	112
+		70.0	67
+		75.0	37
+		80.0	47
+		85.0	26
+		90.0	33
+		95.0	80
+		100.0	667
+	}]\n
+	cg noise -refseq $refseq $bamfile > tmp/result.tsv
+	catch {
+		exec diff tmp/result.tsv tmp/expected.tsv
+	}
+} 0
+
 testsummarize
