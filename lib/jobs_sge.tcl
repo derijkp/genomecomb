@@ -156,7 +156,6 @@ if 0 {
 proc job_logfile_sge_close {} {
 	global cgjob
 	set logfile $cgjob(logfile).running
-	set name [sge_safename [file tail $logfile]]
 	set runfile $logfile.update
 	set outfile $logfile.update.out
 	set errfile $logfile.update.err
@@ -179,6 +178,12 @@ proc job_wait_sge {} {
 	global cgjob cgjob_id
 	set priority [get cgjob(priority) 0]
 	job_logfile_par_close
+	set logfile $cgjob(logfile).running
+	set name [file tail $logfile]
+	regsub -all {[^A-Za-z0-9_.-]} $name __ name
+	set runfile $logfile.update
+	set outfile $logfile.update.out
+	set errfile $logfile.update.err
 	set cmd {#!/bin/sh}
 	append cmd \n
 	append cmd {#$ -S /bin/bash} \n
@@ -186,7 +191,7 @@ proc job_wait_sge {} {
 	append cmd {#$ -cwd} \n
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 	append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
-	append cmd [list array set cgjob [array get cgjob]]
+	append cmd [list array set cgjob [array get cgjob]]\n
 	append cmd job_logfile_sge_close\n
 	file_write $runfile $cmd
 	file attributes $runfile -permissions u+x
