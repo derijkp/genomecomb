@@ -243,6 +243,7 @@ proc meth_nanopolish_job {args} {
 	set distrmethod fast5
 	set distrreg 5000000
 	set maxfastqdistr {}
+	set opts {}
 	cg_options meth_nanopolish args {
 		-callthreshold {
 			set callthreshold $value
