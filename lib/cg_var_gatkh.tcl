@@ -172,7 +172,7 @@ proc var_gatkh_job {args} {
 	job ${pre}gvcf2tsv-$root {*}$skips -deps {
 		$varallfile.gz $gatkrefseq
 	} -targets {
-		${pre}uvar-$root.tsv $vcffile
+		${pre}uvar-$root.tsv $vcffile.gz
 	} -vars {
 		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq vcffile
 	} -skip {
