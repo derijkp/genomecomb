@@ -815,24 +815,27 @@ test noise {pretest} {
 		chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
 	}]\n
 	file_write tmp/expected.tsv [deindent {
-		depth	nrdiff	chromosome	pos	ref	depth	bases	qual
-		40	0	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
-		53	24	chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
-		20	0	chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
-		20	0	chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
-		22	3	chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
-		26	0	chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
-		26	4	chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
-		27	5	chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
-		57	0	chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
-		26	1	chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
-		26	1	chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
-		27	3	chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
-		27	2	chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
-		27	0	chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
+		depth	nrdiff	bracket	bin	chromosome	pos	ref	depth	bases	qual
+		40	0	0.0	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		53	24	50.0	chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		20	0	0.0	chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
+		20	0	0.0	chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
+		22	3	15.0	chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
+		26	0	0.0	chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
+		26	4	20.0	chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		27	5	20.0	chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
+		57	0	0.0	chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		26	1	5.0	chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
+		26	1	5.0	chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
+		27	3	15.0	chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
+		27	2	10.0	chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
+		27	0	0.0	chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
 	}]\n
-	exec noise 20 1 < tmp/temp.pup > tmp/temp.tsv
+	exec noise 20 0 0 < tmp/temp.pup > tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
+	cg select -f {depth nrdiff} tmp/expected.tsv tmp/expected2.tsv
+	exec noise 20 1 < tmp/temp.pup > tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected2.tsv
 	cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/temp.tsv
 	cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/temp.tsv
 	exec noise 20 < tmp/temp.pup
@@ -894,6 +897,12 @@ test noise {noise basic} {
 	catch {
 		exec diff tmp/result.tsv tmp/expected.tsv
 	}
+#	# check stats
+#	cg depth_histo -max 1000 -q 0 -Q 0 tmp/temp.bam > tmp/depthhisto.tsv
+#	set numbaseshist [lindex [cg select -f {{bases=$depth * ($ontarget+$offtarget)}} -g all -gc sum(bases) tmp/depthhisto.tsv] end]
+#	cg noise -refseq $refseq -progress 1000000000 -count-orphans 1 -ignore-overlaps 0 -q 0 -Q 0 $bamfile > tmp/resultall.tsv 2>@ stderr
+#	set numbasesnoise [lindex [exec grep numalignedbases tmp/resultall.tsv] end]
+#	expr {$numbaseshist-$numbasesnoise}
 } 0
 
 testsummarize
