@@ -107,6 +107,24 @@ test svmulticompar {cnv} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test svmulticompar {cnv 2} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type
+		2	106880171	106886171	del
+	}
+	write_tab tmp/s2.tsv {
+		chromosome	begin	end	type
+		2	106880000	106886000	del
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
+		2	106880171	106886171	del	6000		106880171	106886171		106880000	106886000	
+	}]\n
+	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 test svmulticompar {sv del duplicated error} {
 	test_cleantmp
 	write_tab tmp/s1.tsv {
