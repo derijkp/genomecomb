@@ -7,7 +7,7 @@ proc process_project_job {args} {
 	set clip 1
 	set removeskew {}
 	set aligner bwa
-	set varcallers {gatk sam}
+	set varcallers {gatkh strelka}
 	set svcallers {}
 	set methcallers {}
 	set realign 1
