@@ -636,18 +636,6 @@ test pmulticompar$testname {error on badly sorted files 2} {
 } {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
-test pmulticompar$testname {error on file with missing fields} {
-	test_cleantmp
-	write_tab tmp/errorfile.tsv {
-		name amplicon   begin   end     typr    chr     ref     alt
-		{}	{}	{}	{}	{}	{}	{}	{}
-		ATAD3B_1421916  1421915 1421916 snp     chr1    T       C
-	}
-	# exec multi_merge 1 tmp/errorfile.tsv
-	cg pmulticompar -split 0 tmp/result.tsv tmp/errorfile.tsv
-} {field type not found in *errorfile.tsv
-child process exited abnormally} match error
-
 test pmulticompar$testname {split reannot split multiallelic varall,no sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
@@ -1655,6 +1643,31 @@ test pmulticompar$testname {bug check -limitreg missing allvars} {
 	catch {file delete tmp/temp.tsv}
 	cg pmulticompar {*}$::jobopts -split 1 -limitreg tmp/limitreg.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {meth} {
+	test_cleantmp
+	write_tab tmp/meth-sample1.tsv {
+		chromosome	start	end	num_motifs_in_group	called_sites	called_sites_methylated	methylated_frequency	group_sequence
+		chr1	10468	10471	2	2	0	0.000	ACCCTCGCGGTAC
+		chr1	10483	10497	4	4	0	0.000	TCAGCCGGCCCGCCCGCCCGGGTC
+		chr2	10214	10215	1	0	0	0.000	CTACCCGAACC
+	}
+	write_tab tmp/meth-sample2.tsv {
+		chromosome	start	end	num_motifs_in_group	called_sites	called_sites_methylated	methylated_frequency	group_sequence
+		chr1	10468	10471	2	4	2	0.500	ACCCTCGCGGTAC
+		chr1	10483	10497	4	20	12	0.600	TCAGCCGGCCCGCCCGCCCGGGTC
+		chr2	10214	10215	1	6	6	1.000	CTACCCGAACC
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	called_sites-sample1	called_sites_methylated-sample1	methylated_frequency-sample1	called_sites-sample2	called_sites_methylated-sample2	methylated_frequency-sample2
+		1	10468	10471	2	0	0.000	4	2	0.500
+		1	10483	10497	4	0	0.000	20	12	0.600
+		2	10214	10215	0	0	0.000	6	6	1.000
+	}
+	catch {file delete tmp/meth-temp.tsv}
+	cg pmulticompar {*}$::jobopts tmp/meth-temp.tsv tmp/meth-sample1.tsv tmp/meth-sample2.tsv
+	exec diff tmp/meth-temp.tsv tmp/expected.tsv
 } {} 
 
 }

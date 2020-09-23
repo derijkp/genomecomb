@@ -62,6 +62,7 @@ runtests queries.tcl
 runtests reports.tcl
 runtests bam.tcl
 runtests homwes.tcl
+runtests meth.tcl
 
 puts "all tests finished"
 testsummarize

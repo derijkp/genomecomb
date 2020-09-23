@@ -678,6 +678,9 @@ proc pmulticompar_job {args} {
 			if {[string match fannotvar-* [file tail $samplevarsfile]]} {
 				set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 				set keepfields [list_lremove $keepfields $mergefields]
+			} elseif {[string match meth-* [file tail $samplevarsfile]]} {
+				set mergefields {num_motifs_in_group group_sequence}
+				set keepfields [list_lremove $keepfields $mergefields]
 			}
 			set keepfields [list_remove $keepfields sequenced zyg alleleSeq1 alleleSeq2]
 			if {$optkeepfields ne "*"} {
@@ -793,6 +796,11 @@ proc pmulticompar_job {args} {
 	# putsvars pastefiles
 	set endcommand [list file delete {*}$pastefiles]
 	set endcommand {}
+	if {[regexp {^meth-} [file tail $compar_file]]} {
+		append endcommand "set temp \[filetemp_ext [list $compar_file]\]\n"
+		append endcommand "cg select -overwrite 1 -rf {type ref alt sequenced-*} [list $compar_file] \$temp\n"
+		append endcommand "file rename -force \$temp [list $compar_file]\n"
+	}
 	tsv_paste_job -o $compar_file -forcepaste 1 -endcommand $endcommand {*}$pastefiles
 }
 
@@ -801,4 +809,3 @@ proc cg_pmulticompar {args} {
 	pmulticompar_job {*}$args
 	job_wait
 }
-

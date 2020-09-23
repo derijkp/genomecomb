@@ -91,14 +91,20 @@ void DStringSetS(DString *dstring, char *string, int size) {
 }
 
 void DStringCopy(DString *dest, DString *src) {
-	DStringSetSize(dest,src->size);
-	strncpy(dest->string,src->string,src->size+1);
-	dest->size = src->size;
+	if (src == NULL) {
+		dest->string[0] = '\0';
+		dest->size = 0;
+	} else {
+		DStringSetSize(dest,src->size);
+		strncpy(dest->string,src->string,src->size+1);
+		dest->size = src->size;
+	}
 }
 
 void DStringputs(DString *string,FILE *f) {
 	char *cur;
 	int size;
+	if (string == NULL) return;
 	cur = string->string;
 	size = string->size;
 	if (size > 0) {

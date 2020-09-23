@@ -64,11 +64,11 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
 	var->chr = result->data+varpos.chr;
 	sscanf(result->data[varpos.start].string,"%d",&(var->start));
 	sscanf(result->data[varpos.end].string,"%d",&(var->end));
-	if (varpos.type != -1) {var->type = result->data+varpos.type;}
-	if (varpos.ref != -1) {var->ref = result->data+varpos.ref;}
+	if (varpos.type != -1) {var->type = result->data+varpos.type;} else {var->type = DStringEmtpy();}
+	if (varpos.ref != -1) {var->ref = result->data+varpos.ref;} else {var->ref = DStringEmtpy();}
 	if (varpos.a1 != -1) {var->a1 = result->data+varpos.a1;} else {var->a1 = NULL;}
 	if (varpos.a2 != -1) {var->a2 = result->data+varpos.a2;} else {var->a2 = NULL;}
-	if (varpos.alt != -1) {var->alt = result->data+varpos.alt;} else {var->alt = NULL;}
+	if (varpos.alt != -1) {var->alt = result->data+varpos.alt;} else {var->alt = DStringEmtpy();}
 	if (varpos.id == -1) {
 		var->id = -1;
 	} else if (varpos.id == -2) {
@@ -259,6 +259,20 @@ void Varfile_checkbasicfields(VarFile *varfile) {
 	}
 	if (varpos->alt == -1) {
 		fprintf(stderr,"field alt not found in %s\n",varfile->file); exit(EXIT_FAILURE);
+	}
+}
+
+void Varfile_checkbasicfields_basic(VarFile *varfile) {
+	VariantPos *varpos;
+	varpos = &(varfile->varpos);
+	if (varpos->chr == -1) {
+		fprintf(stderr,"field chromosome not found in %s\n",varfile->file); exit(EXIT_FAILURE);
+	}
+	if (varpos->start == -1) {
+		fprintf(stderr,"field begin not found in %s\n",varfile->file); exit(EXIT_FAILURE);
+	}
+	if (varpos->end == -1) {
+		fprintf(stderr,"field end not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 }
 

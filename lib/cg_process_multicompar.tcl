@@ -215,7 +215,10 @@ proc process_multicompar_job {args} {
 			putslog "Starting multicompar"
 			set compar_file [gzroot $compar_file].zst
 			# pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
-			pmulticompar_job -reannotregonly 0 -split $split -limitreg $limitreg -targetvarsfile $targetvarsfile -erroronduplicates 0 -skipincomplete $skipincomplete -keepfields $keepfields $compar_file {*}$stilltodo
+			pmulticompar_job -reannotregonly 0 -split $split -limitreg $limitreg \
+				-targetvarsfile $targetvarsfile -erroronduplicates 0 \
+				-skipincomplete $skipincomplete -keepfields $keepfields \
+				$compar_file {*}$stilltodo
 		} else {
 			putslog "skipping multicompar (no update needed)"
 		}
@@ -302,31 +305,36 @@ proc process_multicompar_job {args} {
 		putslog "No qualifying methfiles: not making meth compar"
 	} else {
 		putslog "Starting meth"
+		putslog "Making/updating multicompar in $destdir/compar/meth-$experiment.tsv"
+		putslog "Finding samples"
 		set methcompar_file compar/meth-${experiment}.tsv.zst
-		set target $methcompar_file
-		testmultitarget $target $methfiles
-		job meth_multicompar -optional 1 -deps $methfiles -targets {$target} -code {
-			puts "Checking $target"
-			if {[file exists $target.temp]} {
-				set done [cg select -a $target.temp]
-			} else {
-				set done {}
+		if {[catch {cg select -a $methcompar_file} done]} {set done {}} else {set done [split $done \n]}
+		if {[file exists $methcompar_file]} {set mtime [file mtime $methcompar_file]} else {set mtime 0}
+		set stilltodo {}
+		foreach methfile $methfiles {
+			if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
+				putslog "redo all: $methfile is newer than $methcompar_file"
+				set stilltodo $methfiles
+				if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
+				break
 			}
-			set todo {}
-			foreach file $deps {
-				regexp {meth-(.*)\.tsv*} [file tail $file] temp name
-				if {![inlist $done $name]} {
-					lappend todo $file
-				}
+			set analysis [file_analysis $methfile]
+			if {![inlist $done $analysis]} {
+				putslog "Still todo: $analysis"
+				lappend stilltodo $methfile
 			}
-			if {[llength $done]} {
-				puts "Multimeth already present: $done"
-			}
-			if {[llength $todo]} {
-				cg multicompar $target.temp {*}$todo
-			}
-			zst $target.temp
-			file rename -force -- $target.temp.zst $target
+		}
+		putslog "methcompar Samples: [llength $methfiles] todo, [llength $done] already done, [llength $stilltodo] to add"
+		if {[llength $stilltodo]} {
+			putslog "Samples to add: $stilltodo"
+			putslog "Starting multicompar"
+			set methcompar_file [gzroot $methcompar_file].zst
+			# pmulticompar_job $methcompar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+			pmulticompar_job -reannotregonly 0 -split 1 -limitreg $limitreg -erroronduplicates 0 \
+				-skipincomplete $skipincomplete \
+				$methcompar_file {*}$stilltodo
+		} else {
+			putslog "skipping meth multicompar (no update needed)"
 		}
 		# annotate methmulticompar
 		# --------------------
