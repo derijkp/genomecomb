@@ -883,13 +883,13 @@ proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	upvar job_logdir job_logdir
 	# This will only set the log file the first time it is called, allowing subcommands to set it if called separately
 	# but not when called from a larger workflow
+	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	if {$dir ne ""} {
 		putslog "basedir: $dir"
 	}
 	if {$cmdline ne ""} {
 		putslog "cmdline: $cmdline"
 	}
-	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	job_logfile_set $logfile $dir $cmdline {*}$args
 	putslog "version_genomecomb: [version genomecomb]"
 	putslog "distribute: $cgjob(distribute)"
