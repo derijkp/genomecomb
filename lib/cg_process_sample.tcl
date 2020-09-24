@@ -957,10 +957,10 @@ proc process_sample_job {args} {
 			set regionfile $amplicons
 		}
 		foreach varcaller $varcallers {
-			switch {$varcaller} {
+			switch $varcaller {
 				gatk {set extraopts [list -dt $dt]}
 				sam {set extraopts [list -dt $dt]}
-				longshot {set extraopts [list --hap_bam $hap_bam}
+				longshot {set extraopts [list -hap_bam $hap_bam]}
 				default {set extraopts {}}
 			}
 			if {![auto_load var_${varcaller}_job]} {
@@ -970,7 +970,7 @@ proc process_sample_job {args} {
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {
-			switch {$svcaller} {
+			switch $svcaller {
 				default {set extraopts {}}
 			}
 			if {![auto_load sv_${svcaller}_job]} {
@@ -980,7 +980,7 @@ proc process_sample_job {args} {
 			lappend todo(sv) [jobglob [file dir $bamfile]/sv-$svcaller-$bambase.tsv]
 		}
 		foreach methcaller $methcallers {
-			switch {$methcaller} {
+			switch $methcaller {
 				default {set extraopts {}}
 			}
 			if {![auto_load meth_${methcaller}_job]} {

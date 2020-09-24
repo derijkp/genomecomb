@@ -237,6 +237,7 @@ proc process_project_job {args} {
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -251,6 +252,7 @@ proc process_project_job {args} {
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
