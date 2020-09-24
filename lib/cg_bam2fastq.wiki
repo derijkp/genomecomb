@@ -14,7 +14,7 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 ; **fastqfile2**: name of the fastq file that will contain the matching second read of each pair
 
 == Options ==
-; -m biobambam/picard/sam (--method): which method is used underneath (default = biobambam)
+; -m biobambam/picard/sam (--method): which method is used underneath (default = sam)
 ; -namesort 0/1: sort (based on name) before converting; this should be
 done to avoid biases during (re)alignment because of position based sort
 (default = 1). Set to 0 if the source bamfile is already namesorted.
