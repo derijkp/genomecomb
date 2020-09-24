@@ -12,7 +12,16 @@ test homwes {basic} {
 	set varfile [gzfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv]
 	set dbdir $::smalltestdir/refseqtest/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile NA19240 $::smalltestdir/tmp/homwes/homwes-out.tsv
-	cg tsvdiff -q 1 -x *.log $::smalltestdir/tmp/homwes $::smalltestdir/expected/yri_exome.homwes-out
+	cg tsvdiff -q 1 -x *.log $::smalltestdir/tmp/homwes $::smalltestdir/expected/homwes
+} {}
+
+test homwes {basic -variantsonly 0} {
+	file delete -force $::smalltestdir/tmp/homwes_variantsonly0
+	file mkdir $::smalltestdir/tmp/homwes_variantsonly0
+	set varfile [gzfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv]
+	set dbdir $::smalltestdir/refseqtest/hg19
+	cg homwes --stack 1 -variantsonly 0 -dbdir $dbdir $varfile NA19240 $::smalltestdir/tmp/homwes_variantsonly0/homwes-out.tsv
+	cg tsvdiff -q 1 -x *.log $::smalltestdir/tmp/homwes_variantsonly0 $::smalltestdir/expected/yri_exome.homwes-out
 } {}
 
 test homwes {samples empty -> multiple samples} {
