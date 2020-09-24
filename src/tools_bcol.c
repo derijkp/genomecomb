@@ -4,6 +4,8 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+/* #define DEBUG 1 */
+
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 
@@ -601,6 +603,7 @@ int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 	FILE *f = fbcol->f;
 	int rsize,c;
 	rsize = (end-start+1)*fbcol->typesize;
+	DPRINT("bcol_getbin start=%uld end=%uld %d",start,end,rsize)
 	if (fbcol->buffersize < rsize) {
 		fbcol->buffer = realloc(fbcol->buffer,rsize);
 		fbcol->buffersize = rsize;

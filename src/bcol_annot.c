@@ -74,9 +74,8 @@ int main(int argc, char *argv[]) {
 	table = bcol->table;
 	tablesize = bcol->tablesize;
 	defaultvalue = bcol->def;
-	NODPRINT("bcol_annot %s %d %d %d %d %d %s %d %d %d %s ...",
-		argv[1],chr1pos,start1pos,end1pos,type1pos,alt1pos,
-		argv[7],chr2pos,start2pos,end2pos,binfile
+	DPRINT("bcol_annot %s %d %d %d %d %d ...",
+		argv[1],chr1pos,start1pos,end1pos,type1pos,alt1pos
 	);
 	skip_header(f1,line1,&numfields1,&pos1);
 	tablepos = 0;
@@ -84,7 +83,7 @@ int main(int argc, char *argv[]) {
 	start2 = table[tablepos].begin;
 	end2 = table[tablepos].end;
 	curstartpos = table[tablepos].pos;
-	NODPRINT("line2 %s,%d,%d",Loc_ChrString(chromosome2),start2,end2)
+	DPRINT("line2 %s,%d,%d",Loc_ChrString(chromosome2),start2,end2)
 	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
 		pos1++;
 		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
@@ -97,8 +96,7 @@ int main(int argc, char *argv[]) {
 		if (alt1pos != -1) {
 			alt1 = result1->data+alt1pos;
 		}
-		NODPRINT("line1 %s,%d,%d (type=%3.3s) %s",chromosome1->string,start1,end1,type1->string,alt1->string)
-		NODPRINT("line2 %s,%d,%d",chromosome2->string,start2,end2)
+		DPRINT("line2 %s,%d,%d",chromosome2->string,start2,end2)
 		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos,1);
 		comp = DStringLocCompare(chromosome2, chromosome1);
 		while (tablepos < tablesize && ((comp < 0) || ((comp == 0) && ((end2 < start1) || (end2 == start1 && start1 != end1))))) {
@@ -113,7 +111,7 @@ int main(int argc, char *argv[]) {
 		|| (comp != 0) || (start1 < start2)
 		|| (alt1pos != -1 && end1 - start1 != 1) 
 		|| (end1 == start2 && start1 != end1)) {
-			NODPRINT("no overlap or ref != 1")
+			DPRINT("no overlap or ref != 1")
 			if (alt1pos == -1) {
 				fprintf(stdout,"%s\n",defaultvalue->string);
 			} else {

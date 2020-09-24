@@ -1,3 +1,5 @@
+/* #define DEBUG 1 */
+
 #include "zstdtools.h"
 
 /* already defined in tools.c */
@@ -127,8 +129,8 @@ uint32_t zstd_readblockheader(ZSTDres *res) {
 
 int zstd_readblock(ZSTDres *res, size_t blocksize) {
 	if (feof(res->finput)) return(0);
-	if (res->bufferpos + blocksize > res->buffersize) {
-		res->buffersize += blocksize;
+	if (res->bufferpos + blocksize + 3 > res->buffersize) {
+		res->buffersize += blocksize + 3;
 		res->buffer = (char *)realloc(res->buffer,res->buffersize);
 	}
 	if (res->lastblock && res->zfh.checksumFlag) {
