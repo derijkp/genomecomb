@@ -190,8 +190,8 @@ coverage, refscore, ... data in the form of [[bcol]] files.
 === Precalculated data ===
 The sampledir may contain precalculated data data from other pipelines.
 If these are in the correct format, they will be integrated in the
-project. vcf files (var-*.vcf) will be converted to tsv files, and their
-variants included in the multicompar.
+project. vcf files (var-*.vcf) in the ori subdirectory of the sample will
+be converted to tsv files, and their variants included in the multicompar.
 
 == Category ==
 Process

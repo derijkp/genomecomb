@@ -709,13 +709,14 @@ proc process_sample_job {args} {
 	}
 	# convert existing vcfs
 	# ----------------------
-	set files [jobglob $sampledir/var-*.vcf]
+	set files [jobglob $sampledir/ori/var-*.vcf]
 	foreach file $files {
-		set target [file root [gzroot $file]].tsv
+		set target $sampledir/[file root [gzroot [file tail $file]]].tsv
 		if {![file exists $target]} {
 			job vcf2tsv-$file -deps {$file} -targets {$target} -vars split -code {
-				cg vcf2tsv -split $split $dep $target.temp
-				file rename -force -- $target.temp $target
+				set tempfile [filetemp $target]
+				cg vcf2tsv -split $split $dep $tempfile
+				file rename -force -- $tempfile $target
 			}
 			lappend todo(var) $target
 		}
