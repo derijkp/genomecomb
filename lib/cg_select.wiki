@@ -126,18 +126,23 @@ will select data line 1000 in the file.
 
 === Operators ===
 Queries support all operators provided by Tcl expr:
-; == !=** : Boolean equal and not equal. Each operator produces a zero/one result. Valid for all operand types.
-; < > <= >=** : Boolean less, greater, less than or equal, and greater than or equal. Each operator produces 1 if the condition is true, 0 otherwise. These operators may be applied to strings as well as numeric operands, in which case string comparison is used.
-; + -** : Add and subtract. Valid for any numeric operands.
+; == != : Boolean equal and not equal. Each operator produces a zero/one result. Valid for all operand types.
+; < > <= >= : Boolean less, greater, less than or equal, and greater than or equal. 
+Each operator produces 1 if the condition is true, 0 otherwise. 
+These operators will give an error if its operands are not numbers. 
+You can use **st**,**gt**,**se**,**ge**, operators if you also want to compare strings
+; lt gt le ge : Boolean less, greater, less than or equal, and greater than or equal; 
+These operators work on strings as well as numbers; the comparison is done as in a natural sort, so e.d. "a10" gt "a2"
+; + - : Add and subtract. Valid for any numeric operands.
 ; * / % : Multiply, divide, remainder. None of these operands may be applied to string operands, and remainder may be applied only to integers. The remainder will always have the same sign as the divisor and an absolute value smaller than the divisor.
-; &&** : Logical AND. Produces a 1 result if both operands are non-zero, 0 otherwise. Valid for numeric operands only (integers or floating-point).
-; ||** : Logical OR. Produces a 0 result if both operands are zero, 1 otherwise. Valid for numeric operands only (integers or floating-point).
-; - + ~ !** : Unary minus, unary plus, bit-wise NOT, logical NOT. None of these operands may be applied to string operands, and bit-wise NOT may be applied only to integers.
-; << >>** : Left and right shift. Valid for integer operands only. A right shift always propagates the sign bit.
-; &** : Bit-wise AND. Valid for integer operands only.
-; ^** : Bit-wise exclusive OR. Valid for integer operands only.
-; |** : Bit-wise OR. Valid for integer operands only.
-; x?y:z** : If-then-else, as in C. If x evaluates to non-zero, then the result is the value of y. Otherwise the result is the value of z. The x operand must have a numeric value.
+; && : Logical AND. Produces a 1 result if both operands are non-zero, 0 otherwise. Valid for numeric operands only (integers or floating-point).
+; || : Logical OR. Produces a 0 result if both operands are zero, 1 otherwise. Valid for numeric operands only (integers or floating-point).
+; - + ~ ! : Unary minus, unary plus, bit-wise NOT, logical NOT. None of these operands may be applied to string operands, and bit-wise NOT may be applied only to integers.
+; << >> : Left and right shift. Valid for integer operands only. A right shift always propagates the sign bit.
+; & : Bit-wise AND. Valid for integer operands only.
+; ^ : Bit-wise exclusive OR. Valid for integer operands only.
+; | : Bit-wise OR. Valid for integer operands only.
+; x?y:z : If-then-else, as in C. If x evaluates to non-zero, then the result is the value of y. Otherwise the result is the value of z. The x operand must have a numeric value.
 
 Some extra operators are added:
 ; condition1 **and** condition2: condition is true if both condition1 and condition2 are true (same as &&)

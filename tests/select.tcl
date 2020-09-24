@@ -571,6 +571,33 @@ test select "-q error on non number <$dboptt" {
 	exec cg select {*}$dbopt -q {$mixed < 4} data/table.tsv
 } {a4 is not a number} regexp error
 
+test select "string operators" {
+	list [tcl::mathfunc::lt a2 a10] \
+		[tcl::mathfunc::lt a2 a2] \
+		[tcl::mathfunc::lt a3 a2] \
+		[tcl::mathfunc::le a2 a10] \
+		[tcl::mathfunc::le a2 a2] \
+		[tcl::mathfunc::le a3 a2] \
+		[tcl::mathfunc::gt a2 a10] \
+		[tcl::mathfunc::gt a2 a2] \
+		[tcl::mathfunc::gt a3 a2] \
+		[tcl::mathfunc::ge a2 a10] \
+		[tcl::mathfunc::ge a2 a2] \
+		[tcl::mathfunc::ge a3 a2]
+} {1 0 0 1 1 0 0 0 1 0 1 1}
+
+test select "-q no error on non number with lt operator$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -q {$mixed lt 4} data/table.tsv
+} {num	text	mixed	other}
+
+test select "-q no error on non number with gt operator$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -q {$mixed gt "a4"} data/table.tsv
+} {num	text	mixed	other
+10	b	b2	bbbbbbbbbb
+100	d	aa3	dd..}
+
 test select "error missing quote$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
