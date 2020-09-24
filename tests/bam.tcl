@@ -815,7 +815,7 @@ test noise {pretest} {
 		chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
 	}]\n
 	file_write tmp/expected.tsv [deindent {
-		depth	nrdiff	bracket	bin	chromosome	pos	ref	depth	bases	qual
+		depth	nrdiff	bin	chromosome	pos	ref	depth	bases	qual
 		40	0	0.0	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
 		53	24	50.0	chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
 		20	0	0.0	chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
@@ -839,7 +839,16 @@ test noise {pretest} {
 	cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/temp.tsv
 	cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/temp.tsv
 	exec noise 20 < tmp/temp.pup
-} {percentage	count
+} {#filetype	tsv/noisefile
+#fileversion	0.99
+#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
+#mindepth	20
+#general bam stats:
+#numalignedbases	428
+#nummismatch	31
+#numdel	28
+#numins	11
+percentage	count
 0.0	6
 5.0	2
 10.0	1
@@ -870,28 +879,37 @@ test noise {noise basic} {
 	set refseq $::refseqdir/hg19
 	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
 	file_write tmp/expected.tsv [deindent {
+		#filetype	tsv/noisefile
+		#fileversion	0.99
+		#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
+		#mindepth	20
+		#general bam stats:
+		#numalignedbases	99280657
+		#nummismatch	377747
+		#numdel	7849
+		#numins	6199
 		percentage	count
-		0.0	1565926
-		5.0	71151
-		10.0	4889
-		15.0	1251
-		20.0	726
-		25.0	489
-		30.0	306
-		35.0	343
-		40.0	355
-		45.0	334
-		50.0	372
-		55.0	212
-		60.0	152
-		65.0	112
-		70.0	67
-		75.0	37
-		80.0	47
-		85.0	26
-		90.0	33
-		95.0	80
-		100.0	667
+		0.0	1544927
+		5.0	105828
+		10.0	6928
+		15.0	1548
+		20.0	927
+		25.0	534
+		30.0	377
+		35.0	397
+		40.0	418
+		45.0	370
+		50.0	413
+		55.0	245
+		60.0	203
+		65.0	128
+		70.0	82
+		75.0	64
+		80.0	63
+		85.0	28
+		90.0	43
+		95.0	86
+		100.0	735
 	}]\n
 	cg noise -refseq $refseq $bamfile > tmp/result.tsv
 	catch {
