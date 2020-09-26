@@ -61,7 +61,8 @@ proc cg_predictgender {args} {
 		set sample [lindex [split [file root [file tail $bamfile]] -] end]
 	}
 	if {$varfile eq ""} {
-		set varfile [gzfile $dir/var-gatk-*.tsv]
+		set varfile [gzfile $dir/var-gatkh-*.tsv]
+		if {![file exists $varfile]} {set varfile [gzfile $dir/var-gatk-*.tsv]}
 		if {![file exists $varfile]} {set varfile [gzfile $dir/var-*.tsv]}
 		if {![file exists $varfile]} {set varfile ""}
 	}
