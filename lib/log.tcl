@@ -84,3 +84,8 @@ proc logvars {args} {
                 }
         }
 }
+
+proc getlogfile {expdir} {
+	set logfiles [lsort -dict [glob -nocomplain $expdir/process_*.submitting $expdir/process_*.running $expdir/process_*.error $expdir/process_*.finished]]
+	lindex $logfiles end
+}
