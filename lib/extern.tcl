@@ -43,16 +43,20 @@ proc findpicard {} {
 proc findjava {jar {version {}}} {
 	if {![info exists javavcmd($jar)]} {
 		if {![catch {exec java$version -XX:ParallelGCThreads=1 -jar $jar} msg]
-			|| ![regexp {Unsupported major.minor version} $msg]} {
+			|| (![regexp {Unsupported major.minor version} $msg] && ![regexp {couldn't execute} $msg])
+		} {
 			set javavcmd($jar) java$version
 		} elseif {![catch {exec java -XX:ParallelGCThreads=1 -jar $jar} msg]
-			|| ![regexp {Unsupported major.minor version} $msg]} {
+			|| (![regexp {Unsupported major.minor version} $msg] && ![regexp {couldn't execute} $msg])
+		} {
 			set javavcmd($jar) java
 		} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $jar} msg2]
-			|| ![regexp {Unsupported major.minor version} $msg2]} {
+			|| (![regexp {Unsupported major.minor version} $msg2] && ![regexp {couldn't execute} $msg2])
+		} {
 			set javavcmd($jar) java1.8
 		} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $jar} msg2]
-			|| ![regexp {Unsupported major.minor version} $msg2]} {
+			|| (![regexp {Unsupported major.minor version} $msg2] && ![regexp {couldn't execute} $msg2])
+		} {
 			set javavcmd($jar) java1.7
 		} else {
 			error "Cannot determine java version for $jar:\n$msg"
