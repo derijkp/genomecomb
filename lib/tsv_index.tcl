@@ -248,6 +248,20 @@ proc cg_maketabix {args} {
 			putslog "Skipping $file: $file.tbi exists"
 			continue
 		}
+		set type [file extension [gzroot $file]]
+		if {$type eq "vcf"} {
+			exec tabix -p vcf $file
+			return
+		} elseif {$type eq "bed"} {
+			exec tabix -p bed $file
+			return
+		} elseif {$type eq "sam"} {
+			exec tabix -p sam $file
+			return
+		} elseif {$type eq "gff"} {
+			exec tabix -p gff $file
+			return
+		}
 		putslog "making tabix for $file"
 		set f [gzopen $file]
 		set header [tsv_open $f comment]

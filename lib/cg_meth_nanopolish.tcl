@@ -45,6 +45,9 @@ proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
 	}
 	gzclose $o
 	gzclose $f
+	if {[file tail $target] in ".gz .bgz"} {
+		cg maketabix $target
+	}
 }
 
 proc fastqs_mergename {fastqfiles} {
@@ -70,7 +73,7 @@ proc fastqs_mergename {fastqfiles} {
 	}
 }
 
-proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr} {
+proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr meth-compression} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
@@ -202,11 +205,14 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 	job meth_nanopolish_smethfinal-$root {*}$skips -deps $seqmethfiles -targets {
 		$smethfile
 	} -vars {
-		bamfile bamcache bamcacheindex
+		bamfile bamcache bamcacheindex meth-compression
 	} -skip {$target} -code {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
-		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
+		cg cat -c 0 {*}$deps | cg select -s - | cg ${meth-compression} > $target.temp
 		file rename -- $target.temp $target
+		if {${meth-compression} in "gz bgz"} {
+			cg maketabix $target
+		}
 		if {$bamcache ne $bamfile} {
 			file delete -force $bamcache
 			file delete -force $bamcacheindex
@@ -225,6 +231,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set tempresult [filetemp_ext $target]
 		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
 		result_rename $tempresult $target
+		file delete -force $target.temp
 	}
 	return [list $resultfile $smethfile]
 }
@@ -238,11 +245,12 @@ proc meth_nanopolish_job {args} {
 	set skips {}
 	set resultfile {}
 	set basecaller {}
-	set callthreshold 2.5
+	set callthreshold [get ::specialopt(-meth_nanopolish-callthreshold) 2.5]
 	set threads 1
 	set distrmethod fast5
 	set distrreg 5000000
 	set maxfastqdistr {}
+	set meth-compression [get ::specialopt(-meth_nanopolish-compression) zst]
 	set opts {}
 	cg_options meth_nanopolish args {
 		-callthreshold {
@@ -267,6 +275,9 @@ proc meth_nanopolish_job {args} {
 		-maxfastqdistr {
 			set maxfastqdistr $value
 		}
+		-meth-compression {
+			set meth-compression $value
+		}
 		-opts {
 			set opts $value
 		}
@@ -278,7 +289,7 @@ proc meth_nanopolish_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root nanopolish-[file_rootname $bamtail]
-		set resultfile [file dir $bamfile]/meth-$root.tsv.zst
+		set resultfile [file dir $bamfile]/meth-$root.tsv.${meth-compression}
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
@@ -286,7 +297,7 @@ proc meth_nanopolish_job {args} {
 	set fastqfile $resultfile.temp/merged-fastq.fastq.gz
 	set destdir [file dir $resultfile]
 	job_logfile $destdir/meth_nanopolish_[file root $bamtail] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
+		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 ${meth-compression} os]
 	# start
 	set keeppwd [pwd]
 	set fastqfiles [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]
@@ -298,7 +309,7 @@ proc meth_nanopolish_job {args} {
 	bam_index_job $bamfile
 
 	if {$distrmethod eq "fast5"} {
-		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr]
+		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr ${meth-compression}]
 	}
 	set tail [file tail $resultfile]
 	if {[regexp ^meth- $tail]} {
@@ -358,8 +369,11 @@ proc meth_nanopolish_job {args} {
 		$smethfile
 	} -skip {$target} -code {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
-		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
+		cg cat -c 0 {*}$deps | cg select -s - | cg ${meth-compression} > $target.temp
 		file rename -- $target.temp $target
+		if {${meth-compression} in "gz bgz"} {
+			cg maketabix $target
+		}
 	}
 
 	set root [file root [file tail [gzroot $resultfile]]]
@@ -375,6 +389,7 @@ proc meth_nanopolish_job {args} {
 		set tempresult [filetemp_ext $target]
 		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
 		result_rename $tempresult $target
+		file delete -force $target.temp
 	}
 	return [list $resultfile $smethfile]
 }

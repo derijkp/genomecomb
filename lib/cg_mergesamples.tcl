@@ -71,16 +71,17 @@ proc mergesamples_job {result args} {
 	set smethfiles [gzfiles $result/orisamples/*/smeth-*.tsv]
 	if {[llength $smethfiles]} {
 		puts "merge meth"
-		set target $result/smeth-nanopolish-$destsample.tsv.zst
+		set extension [file extension [lindex $smethfiles 0]]
+		set target $result/smeth-nanopolish-$destsample.tsv$extension
 		job mergesmeth-$destsample -deps $smethfiles -targets {
 			$target
 		} -vars {
 			smethfiles destsample
 		} -code {
-			exec devcg mergesorted {*}$smethfiles | cg zst > $target.temp.zst
-			file rename $target.temp.zst $target
+			exec devcg mergesorted {*}$smethfiles | cg [string range $extension 1 end] > $target.temp$extension
+			file rename $target.temp$extension $target
 			file copy -force [gzroot [lindex $smethfiles 0]].analysisinfo [gzroot $target].analysisinfo
-			exec cg meth_nanopolish_freqs $target meth-nanopolish-$destsample.zst
+			exec cg meth_nanopolish_freqs $target meth-nanopolish-$destsample$extension
 		}
 	}
 }
