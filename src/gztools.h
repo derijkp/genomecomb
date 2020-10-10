@@ -15,6 +15,7 @@
 #include "lz4tools.h"
 #include "zstdtools.h"
 #include "razf.h"
+#include "bgzf.h"
 #include "debug.h"
 
 #define UNCOMPRESSED 1
@@ -23,6 +24,7 @@
 #define RZ 4
 #define IN 5
 #define ZSTD 6
+#define BGZ 7
 
 typedef struct GZFILE {
 	char *filename;
@@ -30,6 +32,8 @@ typedef struct GZFILE {
 	FILE *fun;
 	LZ4res *lz4;
 	ZSTDres *zstd;
+	gzFile gz;
+	BGZF *bgz;
 	RAZF *rz;
 } GZFILE;
 

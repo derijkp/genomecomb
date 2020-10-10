@@ -118,6 +118,8 @@ proc version {item {minversion {}}} {
 				regsub {.*Version: *} $temp {} temp
 				set _versions($item) [string trim $temp]
 			}
+			bgz {set _versions($item) [version bgzip]}
+			gz {set _versions($item) [version gzip]}
 			default {
 				if {[auto_load version_$item]} {
 					set _versions($item) [version_$item]

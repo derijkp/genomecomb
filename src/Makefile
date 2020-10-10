@@ -7,8 +7,8 @@ ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.4.4
 EXEEXT ?=
 CFLAGS := -D_FILE_OFFSET_BITS=64 -Wall $(COPT) -I~/dev/genomecomb/src ${CFLAGS} -I$(ZSTDDIR)/lib -L$(ZSTDDIR)/lib
 TOOLS = tools.c tools.h debug.h
-GZTOOLS_C = lz4.c lz4tools.c razf.c gztools.c zstdtools.c
-GZTOOLS = $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h zstdtools.h
+GZTOOLS_C = lz4.c lz4tools.c razf.c bgzf.c gztools.c zstdtools.c
+GZTOOLS = $(GZTOOLS_C) gztools.h razf.h bgzf.h lz4.h lz4tools.h debug.h zstdtools.h
 GZPOPEN_C = gzpopen.c
 GZPOPEN = $(GZPOPEN_C) gzpopen.h
 TOOLS_VAR = tools_var.c tools_var.h
