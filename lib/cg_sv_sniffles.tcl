@@ -18,11 +18,15 @@ proc sv_sniffles_job {args} {
 	set split 1
 	set threads 2
 	set cleanup 1
-	set regmincoverage 3
+	set regmincoverage [get ::specialopt(-sniffles-regmincoverage) 3]
 	set resultfiles 0
 	set skips {}
-	set min_support 2
-	set min_seq_size 300
+	set min_support [get ::specialopt(-sniffles-min_support) 2]
+	set min_seq_size [get ::specialopt(-sniffles-min_seq_size) 300]
+	set snifflesopts {}
+	foreach key [list_remove [array names ::specialopt -sniffles-*] -sniffles-regmincoverage -sniffles-min_support -sniffles-min_seq_size] {
+		lappend opts [string range $key 8 end] $::specialopt($key)
+	}
 	set resultfile {}
 	cg_options sv_sniffles args {
 		-refseq {
