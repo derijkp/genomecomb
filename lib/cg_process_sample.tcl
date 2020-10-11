@@ -578,6 +578,9 @@ proc process_sample_job {args} {
 				set ::cgextraopts($k) $v
 			}
 		}
+		-*-* {
+			set ::specialopt($key) $value
+		}
 	} {} 1 2
 	if {[llength $args] == 1} {
 		foreach {sampledir} $args break

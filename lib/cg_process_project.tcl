@@ -160,6 +160,9 @@ proc process_project_job {args} {
 				set ::cgextraopts($k) $v
 			}
 		}
+		-*-* {
+			set ::specialopt($key) $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set adapterfile [adapterfile $adapterfile]

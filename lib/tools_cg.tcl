@@ -49,7 +49,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 			if {\$key eq "-"} break
 			if {\[string range \$key 0 1\] eq "-."} break
 			regsub {^--} \$key - key
-			switch -- \$key {
+			switch -glob -- \$key {
 				$def
 				- {incr pos ; break}
 				default \{$default\}
