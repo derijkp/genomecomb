@@ -839,8 +839,8 @@ proc process_sample_job {args} {
 			foreach aligner $aligners {
 				set bamfile $sampledir/map-${aligner}-$sample.bam
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-				set target $resultbamfile.index/[file_root [file tail [lindex $files 0]]].sam.zst
-				lappend cleanupdeps $resultbamfile.index/$pbase.sam.zst
+				set target $resultbamfile.temp/[file_root [file tail [lindex $files 0]]].sam.zst
+				lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
 			}
 			if {$clip} {
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
@@ -857,8 +857,9 @@ proc process_sample_job {args} {
 				# do not do any of preliminaries if end product is already there
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 				set bamfile $sampledir/map-${aligner}-$sample.bam
-				file mkdir $resultbamfile.index
-				set target $resultbamfile.index/$pbase.sam.zst
+				file mkdir $resultbamfile.temp
+				job_cleanup_add $resultbamfile.temp
+				set target $resultbamfile.temp/$pbase.sam.zst
 				lappend partsa($aligner) $target
 				# map using ${aligner}
 				set opts {}
@@ -891,8 +892,9 @@ proc process_sample_job {args} {
 			if {$distrreg in {0 ""}} {
 				set tempbamfile $bamfile
 			} else {
-				file mkdir $resultbamfile.index
-				set tempbamfile $resultbamfile.index/map-${aligner}-$sample.bam
+				file mkdir $resultbamfile.temp
+				job_cleanup_add $resultbamfile.temp
+				set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.bam
 			}
 			set compressionlevel [defcompressionlevel 5]
 			setdefcompressionlevel 1

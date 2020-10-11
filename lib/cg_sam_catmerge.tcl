@@ -79,7 +79,7 @@ proc sam_catmerge_job {args} {
 			lappend rmfiles $file [index_file $file] [analysisinfo_file $file]
 		}
 		set rmfiles [list_remove $rmfiles {}]
-		job_cleanup_add $tempresultfile
+		job_cleanup_add $tempresultfile $workdir
 	} else {
 		set rmfiles {}
 	}

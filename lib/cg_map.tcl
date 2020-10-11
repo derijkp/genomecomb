@@ -183,6 +183,7 @@ proc map_job {args} {
 		return $result
 	}
 	set workdir [workdir $result]
+	job_cleanup_add $workdir
 	if {!$paired} {
 		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
