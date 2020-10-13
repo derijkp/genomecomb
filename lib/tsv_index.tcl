@@ -4,8 +4,12 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_index {xfield file} {
+proc tsv_index {xfield file {force 0}} {
 	set indexname [gzroot $file].${xfield}_index
+	if {!$force && [file exists $indexname] && [file mtime $indexname] > [file mtime $file]} {
+		puts "index $indexname up todate, not redoing"
+		return
+	}
 	set unzippedfile [gztemp $file]
 	set f [gzopen $unzippedfile]
 	set header [tsv_open $f]

@@ -26,9 +26,7 @@ proc process_indexcompress {file} {
 	if {$fpos == -1} {error "no column offset, end1 in file $file"}
 	if {([gets $f] eq "") && [eof $f]} return
 	gzclose $f
-	if {![file exists $file.${field}_index]} {
-		tsv_index $field $file
-	}
+	tsv_index $field $file
 	putslog "Compressing $file"
 	if {![inlist {.rz .bgz} $ext]} {
 		exec bgzip -c $file > $file.gz.temp
