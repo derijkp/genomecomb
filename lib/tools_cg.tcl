@@ -115,3 +115,12 @@ proc bgcg {progresscommand channelvar cmd args} {
 	}
 }
 
+proc specialopts {key} {
+	global specialopt
+	set result {}
+	foreach name [array names specialopt *$key-*] {
+		if {![regexp -- -?$key\(-.*\) $name temp subkey]} continue
+		lappend result $subkey $specialopt($name)
+	}
+	return $result 
+}

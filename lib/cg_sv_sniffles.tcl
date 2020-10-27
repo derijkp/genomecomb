@@ -24,8 +24,9 @@ proc sv_sniffles_job {args} {
 	set min_support [get ::specialopt(-sniffles-min_support) 2]
 	set min_seq_size [get ::specialopt(-sniffles-min_seq_size) 300]
 	set snifflesopts {}
-	foreach key [list_remove [array names ::specialopt -sniffles-*] -sniffles-regmincoverage -sniffles-min_support -sniffles-min_seq_size] {
-		lappend opts [string range $key 8 end] $::specialopt($key)
+	foreach {key value} [specialopts -sniffles] {
+		if {$key in {-regmincoverage -min_support -min_seq_size}} continue
+		lappend opts $key $value
 	}
 	set resultfile {}
 	cg_options sv_sniffles args {
