@@ -88,11 +88,11 @@ proc cg_bam2fastq {args} {
 	}
 	if {$compress && $method ni "biobambam"} {
 		catch {file delete $tempfastq1.gz}
-		exec gzip $tempfastq1
+		cg_gzip $tempfastq1
 		file rename -force -- $tempfastq1.gz $fastqfile1.gz
 		if {$fastqfile2 ne ""} {
 			catch {file delete $tempfastq2.gz}
-			exec gzip $tempfastq2
+			cg_gzip $tempfastq2
 			file rename -force -- $tempfastq2.gz $fastqfile2.gz
 		}
 	} elseif {$compress} {

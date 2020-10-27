@@ -251,7 +251,7 @@ proc var_longshot_job {args} {
 			file rename -force -- $tempvcf $vcffile
 			file_write $varfile ""
 		} else {
-			exec gzip $tempvcf
+			cg_gzip $tempvcf
 			file rename -force -- $tempvcf.gz $vcffile
 			cg vcf2tsv -split $split $vcffile $varfile
 			cg_zindex $varfile
