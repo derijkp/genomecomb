@@ -40,6 +40,7 @@ proc var_gatkh_job {args} {
 	set resultfiles 0
 	set rootname {}
 	set skips {}
+	set resultfile {}
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -88,22 +89,29 @@ proc var_gatkh_job {args} {
 		-opts {
 			set opts $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
-	set destdir [file dir $bamfile]
-	set bamtail [file tail $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-gatkh-[file_rootname $bamfile].tsv.zst
+	} else {
+		set resultfile [file_absolute $resultfile]
+	}
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
 	if {$rootname eq ""} {
-		set root gatkh-[file_rootname $bamtail]
+		set root [file_rootname $resultfile]
 	} else {
 		set root $rootname
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv
-	set sregfile ${pre}sreg-$root.tsv
-	set varallfile ${pre}varall-$root.gvcf
-	set vcffile ${pre}var-$root.vcf
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/$vcffile.gz $destdir/reg_cluster-$root.tsv.zst]
+	set varfile $resultfile
+	set vcffile [file root [gzroot $varfile]].vcf.gz
+	set varallfile $destdir/${pre}varall-$root.gvcf.gz
+	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set sregfile $destdir/${pre}sreg-$root.tsv.zst
+	set regclusterfile $destdir/reg_cluster-$root.tsv
+	set resultlist [list $varfile $sregfile $varallfile $vcffile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -123,18 +131,16 @@ proc var_gatkh_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_gatkh_$bamtail $destdir $cmdline \
+	job_logfile $destdir/var_gatkh_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
 	## Produce gatkh SNP calls
-	set keeppwd [pwd]
-	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
-	set dep $bamtail
-	set bamtailindex $bamtail.[indexext $bamtail]
-	set deps [list $bamtail $gatkrefseq $bamtailindex {*}$deps]
+	set dep $bamfile
+	set bamindex $bamfile.[indexext $bamfile]
+	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
 	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
-		$varallfile.gz $varallfile.gz.tbi
+		$varallfile $varallfile.tbi
 	} -vars {
 		opts regionfile gatkrefseq refseq root ERC varallfile
 	} -code {
@@ -160,8 +166,8 @@ proc var_gatkh_job {args} {
 				-G StandardHCAnnotation \
 				-G AS_StandardAnnotation \
 				--max-reads-per-alignment-start 0
-			file rename -force -- $varallfile.temp.gz $varallfile.gz
-			file rename -force -- $varallfile.temp.gz.tbi $varallfile.gz.tbi
+			file rename -force -- $varallfile.temp.gz $varallfile
+			file rename -force -- $varallfile.temp.gz.tbi $varallfile.tbi
 			# file delete $varallfile.temp
 			if {$emptyreg && ![file exists $cache]} {
 				file copy -force $target $cache
@@ -170,44 +176,43 @@ proc var_gatkh_job {args} {
 		}
 	}
 	job ${pre}gvcf2tsv-$root {*}$skips -deps {
-		$varallfile.gz $gatkrefseq
+		$varallfile $gatkrefseq
 	} -targets {
-		${pre}uvar-$root.tsv $vcffile.gz
+		$uvarfile $vcffile
 	} -vars {
-		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq vcffile
+		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq vcffile uvarfile
 	} -skip {
-		$varfile.zst
+		$varfile
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
-			-V $varallfile.gz \
+			-V $varallfile \
 			-O ${pre}var-$root.temp.vcf.gz \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}var-$root.temp.vcf.idx}
-		file rename -force -- ${pre}var-$root.temp.vcf.gz $vcffile.gz
+		file rename -force -- ${pre}var-$root.temp.vcf.gz $vcffile
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
 		lappend fields *
 		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} $vcffile.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
-		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
+		} $vcffile | cg select -f $fields | cg zst > $uvarfile.temp
+		file rename -force -- $uvarfile.temp $uvarfile
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst
+	annotvar_clusters_job {*}$skips $uvarfile $varfile
 	# make sreg
-	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.zst $mincoverage $mingenoqual $skips
+	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile $mincoverage $mingenoqual $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
+			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
 		]
-		set cleanupdeps [list $varfile $varallfile.gz]
+		set cleanupdeps [list $varfile $varallfile]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
-	cd $keeppwd
 	return $resultlist
 }
 

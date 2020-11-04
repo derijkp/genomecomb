@@ -15,6 +15,7 @@ proc var_job {args} {
 	set datatype {}
 	set cmdopts {}
 	set var_opts {}
+	set resultfile {}
 	cg_options var args {
 		-method {
 			set method $value
@@ -49,10 +50,13 @@ proc var_job {args} {
 		default {
 			lappend var_opts $key $value
 		}
-	} {bamfile refseq} 2 2
+	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
-	set destdir [file dir $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-${method}-[file_rootname $bamfile].tsv.zst
+	}
+	set destdir [file dir $resultfile]
 	# logfile
 	set tools {gatk picard java gnusort8 zst os}
 	catch {lappend tools {*}[var_${method}_tools]}
@@ -85,13 +89,13 @@ proc var_job {args} {
 	# run
 	if {$distrreg in {0 {}}} {
 		var_${method}_job {*}$var_opts -opts $opts {*}$cmdopts -datatype $datatype -pre $pre \
-			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq
+			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $resultfile
 	} else {
 		# check what the resultfiles are for the method
 		set resultfiles [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
 			-pre $pre \
 			-datatype $datatype \
-			-split $split $bamfile $refseq]
+			-split $split $bamfile $refseq $resultfile]
 		set skips [list -skip [list_remove  $resultfiles {}]]
 		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {varfile sregfile varallfile vcffile} $resultfiles break
@@ -99,9 +103,8 @@ proc var_job {args} {
 		set root [file_rootname $varfile]
 		# start
 		## Create sequencing region files
-#		set keeppwd [pwd]
-#		cd $destdir
 		set workdir [workdir $varfile]
+		file mkdir $workdir
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [gzroot [file tail $varallfile]]
 		if {$supportsregionfile} {
@@ -123,17 +126,13 @@ proc var_job {args} {
 		}
 		set todo {}
 		# Produce variant calls
-		set ibam $workdir/[file tail $bamfile]
-		set indexext [indexext $bamfile]
-		mklink $bamfile $ibam
-		mklink $bamfile.$indexext $ibam.$indexext
 		defcompressionlevel 1
 		if {$supportsregionfile} {
 			foreach region $regions regfile $regfiles {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
 					-datatype $datatype \
-					-rootname $root-$region -regionfile $regfile \
-					-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
+					-regionfile $regfile \
+					-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $workdir/var-$root-$region.tsv.zst]
 			}
 		} else {
 			# if making a new bam file (currently only longshot), we need to process the unmapped reads as well
@@ -147,8 +146,8 @@ proc var_job {args} {
 			foreach region $regions {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
 					-datatype $datatype \
-					-rootname $root-$region -region $region \
-					-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
+					-region $region \
+					-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $workdir/var-$root-$region.tsv.zst]
 			}
 		}
 		defcompressionlevel 9
@@ -160,7 +159,7 @@ proc var_job {args} {
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
-			job var_combineresults-$resultfile {*}$skips -deps $deps -rmtargets $list -targets {
+			job var_combineresults-[file tail $resultfile] {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				list regionfile method bamfile
@@ -196,7 +195,6 @@ proc var_job {args} {
 			lappend cleanupfiles {*}$list
 		}
 		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
-#		cd $keeppwd
 		return $resultfiles
 	}
 }

@@ -32,6 +32,7 @@ proc var_freebayes_job {args} {
 	set rootname {}
 	set resultfiles 0
 	set skips {}
+	set resultfile {}
 	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
@@ -70,23 +71,30 @@ proc var_freebayes_job {args} {
 		-opts {
 			set opts $value
 		}
-	} {bamfile refseq} 2 2 {
+	} {bamfile refseq resultfile} 2 3 {
 		call variants using freebayes
 	}
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
-	set destdir [file dir $bamfile]
-	set bamtail [file tail $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-freebayes-[file_rootname $bamfile].tsv.zst
+	} else {
+		set resultfile [file_absolute $resultfile]
+	}
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
 	if {$rootname eq ""} {
-		set root freebayes-[file_rootname $bamfile]
+		set root [file_rootname $resultfile]
 	} else {
 		set root $rootname
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv
-	set sregfile ${pre}sreg-$root.tsv
-	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
+	set varfile $resultfile
+	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set sregfile $destdir/${pre}sreg-$root.tsv.zst
+	set varallfile $destdir/${pre}varall-$root.tsv.zst
+	set regclusterfile $destdir/reg_cluster-$root.tsv
+	set resultlist [list $varfile $sregfile $varallfile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -105,14 +113,12 @@ proc var_freebayes_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_freebayes_$bamtail $destdir $cmdline \
+	job_logfile $destdir/var_freebayes_$resulttail $destdir $cmdline \
 		{*}[versions bwa samtools freebayes picard java gnusort8 zst os]
 	# start
 	## Produce freebayes SNP calls
-	set keeppwd [pwd]
-	cd $destdir
-	set bamtailindex $bamtail.[indexext $bamtail]
-	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
+	set bamindex $bamfile.[indexext $bamfile]
+	set deps [list $bamfile $refseq $bamindex {*}$deps]
 	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {
@@ -151,20 +157,20 @@ proc var_freebayes_job {args} {
 	job ${pre}varall-freebayes2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf
 	} -targets {
-		$varallfile.zst
-	} -vars {sample split refseq} \
-	-code {
+		$varallfile
+	} -vars {
+		sample split refseq
+	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.zst
 		file rename -force -- $target.temp.zst $target
 	}
 	# zst_job $varallfile -i 1
-	zstindex_job $varallfile.zst
-
+	zstindex_job $varallfile
 	job ${pre}uvar-$root {*}$skips -deps {
 		$varallfile
 	} -targets {
-		${pre}uvar-$root.tsv
+		$uvarfile
 	} -skip {
 		$varfile
 	} -vars {
@@ -178,23 +184,22 @@ proc var_freebayes_job {args} {
 			{zyg=if($genoqual < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $dep $target.temp
-		cg select -s - $target.temp $target.temp2
-		file rename -force -- $target.temp2 $target
+		cg select -overwrite 1 -s - $target.temp $target.temp2[gzext $target]
+		result_rename $target.temp2[gzext $target] $target
 		file delete $target.temp
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst
+	annotvar_clusters_job {*}$skips $uvarfile $varfile
 	# make sreg
-	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.zst $skips
+	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile $skips
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
+			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
 			${pre}varall-$root.vcf \
 		]
 		set cleanupdeps [list $varfile $varallfile]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
-	cd $keeppwd
 	return $resultlist
 }
 

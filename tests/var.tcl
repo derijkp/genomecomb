@@ -67,9 +67,9 @@ test var {var distrreg gatk result exists already} {
 	foreach file {
 		tmp/sreg-cov3-bwa.tsv.zst
 		tmp/varall-gatk-bwa.tsv.zst tmp/varall-gatk-bwa.tsv.zst.zsti tmp/varall-gatk-bwa.tsv.analysisinfo
+		tmp/reg_cluster-gatk-bwa.tsv.zst
 		tmp/var-gatk-bwa.tsv.zst tmp/var-gatk-bwa.tsv.zst.zsti tmp/var-gatk-bwa.tsv.analysisinfo
 		tmp/sreg-gatk-bwa.tsv.zst tmp/sreg-gatk-bwa.tsv.zst.zsti tmp/sreg-gatk-bwa.tsv.analysisinfo
-		tmp/reg_cluster-gatk-bwa.tsv.zst
 	} {
 		after 100
 		file_write $file {}
@@ -202,6 +202,18 @@ test var {var_strelka basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_strelka -stack 1 -v 2 -datatype exome -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg tsvdiff tmp/var-strelka-bwa.tsv.zst data/var-strelka-bwa.tsv
+	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
+	string_change [cg covered tmp/sreg-strelka-bwa.tsv.zst] [list \n\n \n]
+} {chromosome	bases
+chr21	610
+chr22	81
+total	691}
+
+test var {var distrreg strelka} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	cg var -method strelka -stack 1 -v 2 -distrreg 1 -datatype exome -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg tsvdiff tmp/var-strelka-bwa.tsv.zst data/var-strelka-bwa.tsv
 	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-strelka-bwa.tsv.zst] [list \n\n \n]

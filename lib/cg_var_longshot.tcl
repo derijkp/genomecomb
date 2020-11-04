@@ -65,6 +65,7 @@ proc var_longshot_job {args} {
 	set opts {}
 	set hap_bam 0
 	set index 1
+	set resultfile {}
 	cg_options var_longshot args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -116,22 +117,27 @@ proc var_longshot_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
-	set destdir [file dir $bamfile]
-	set bamtail [file tail $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-longshot-[file_rootname $bamfile].tsv.zst
+	} else {
+		set resultfile [file_absolute $resultfile]
+	}
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
 	if {$rootname eq ""} {
-		set root longshot-[file_rootname $bamtail]
+		set root [file_rootname $resultfile]
 	} else {
 		set root $rootname
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv.zst
-	set sregfile ${pre}sreg-$root.tsv.zst
+	set varfile $resultfile
 	set vcffile [file root [gzroot $varfile]].vcf.gz
-	set resultlist [list $destdir/$varfile $destdir/$sregfile {} $destdir/$vcffile]
-	set longshottargets [list $destdir/$varfile $destdir/$vcffile]
+	set sregfile $destdir/${pre}sreg-$root.tsv.zst
+	set resultlist [list $varfile $sregfile {} $vcffile]
+	set longshottargets [list $varfile $vcffile]
 	if {$hap_bam} {
 		set outbam $destdir/${pre}map-h$root.bam
 		lappend resultlist $outbam
@@ -141,18 +147,18 @@ proc var_longshot_job {args} {
 		return $resultlist
 	}
 	# logfile
-	job_logfile $destdir/var_longshot_$bamtail $destdir $cmdline \
+	job_logfile $destdir/var_longshot_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
 	## Produce longshot SNP calls
-	set keeppwd [pwd]
-	cd $destdir
 	set dep $bamfile
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
 #putsvars deps longshottargets vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index
 #error stop
-	job [job_relfile2name longshot- $varfile] {*}$skips -mem 8G -deps $deps -targets $longshottargets -vars {
+	job [job_relfile2name longshot- $varfile] {*}$skips -mem 8G \
+	-deps $deps \
+	-targets $longshottargets -vars {
 		vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index
 	} -code {
 		if {$tech eq "ont"} {
@@ -275,7 +281,6 @@ proc var_longshot_job {args} {
 		file rename -force -- $temptarget $sregfile
 		cg_zindex $sregfile
 	}
-	cd $keeppwd
 	return $resultlist
 }
 

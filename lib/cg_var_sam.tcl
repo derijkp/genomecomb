@@ -38,6 +38,7 @@ proc var_sam_job {args} {
 	set rootname {}
 	set skips {}
 	set callmethod c
+	set resultfile {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -86,20 +87,30 @@ proc var_sam_job {args} {
 		-opts {
 			set opts $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
-	set destdir [file dir $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-sam-[file_rootname $bamfile].tsv.zst
+	} else {
+		set resultfile [file_absolute $resultfile]
+	}
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
 	if {$rootname eq ""} {
-		set root sam-[file_rootname $bamfile]
+		set root [file_rootname $resultfile]
 	} else {
 		set root $rootname
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv
-	set sregfile ${pre}sreg-$root.tsv
-	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
+	set varfile $resultfile
+	set vcffile {}
+	set varallfile $destdir/${pre}varall-$root.tsv.zst
+	set varallvcf $destdir/${pre}varall-$root.vcf.zst
+	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set sregfile $destdir/${pre}sreg-$root.tsv.zst
+	set regclusterfile $destdir/reg_cluster-$root.tsv
+	set resultlist [list $varfile $sregfile $varallfile $vcffile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -118,21 +129,18 @@ proc var_sam_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/var_sam_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
-	set bamtail [file tail $bamfile]
 	# start
-	set keeppwd [pwd]
-	cd $destdir
 	# make sure reference sequence is indexed
 	job ${pre}var_sam_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
-	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
+	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
-		${pre}varall-$root.vcf.zst
+		$varallvcf
 	} -skip {
-		${pre}varall-$root.tsv 
+		$varallfile
 	} -vars {
 		refseq opts BQ regionfile root threads callmethod
 	} -code {
@@ -161,9 +169,9 @@ proc var_sam_job {args} {
 		}
 	}
 	job ${pre}varall-sam2tsv-$root {*}$skips -deps {
-		${pre}varall-$root.vcf.zst
+		$varallvcf
 	} -targets {
-		${pre}varall-$root.tsv.zst
+		$varallfile
 	} -vars {
 		split refseq
 	} -code {
@@ -172,18 +180,19 @@ proc var_sam_job {args} {
 		file rename -force -- $target.temp.zst $target
 	}
 	# zst_job ${pre}varall-$root.tsv -i 1
-	zstindex_job {*}$skips ${pre}varall-$root.tsv.zst
+	zstindex_job {*}$skips $varallfile
 	job ${pre}var-$root {*}$skips -deps {
-		${pre}varall-$root.tsv
+		$varallfile
 	} -targets {
-		${pre}uvar-$root.tsv
+		$uvarfile
 	} -skip {
 		${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo
 	} -vars {
 		root pre
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
-		cg select -q {
+		set tempfile [filetemp_ext $target]
+		cg select -overwrite 1 -q {
 			$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
 			&& $zyg ni "r o"
 		} -f {
@@ -191,24 +200,23 @@ proc var_sam_job {args} {
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
-		} $dep $target.temp
-		file rename -force -- $target.temp $target
+		} $dep $tempfile
+		file rename -force -- $tempfile $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst
+	annotvar_clusters_job {*}$skips $uvarfile $varfile
 	# find regions
-	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.zst 5 30 $skips
+	sreg_sam_job ${pre}sreg-$root $varallfile $sregfile 5 30 $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
-			${pre}varall-$root.vcf.zst \
-			${pre}varall-$root.vcf.idx \
+			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
+			$varallvcf \
+			[gzroot $varallvcf].idx \
 		]
-		set cleanupdeps [list ${pre}var-$root.tsv ${pre}varall-$root.tsv]
+		set cleanupdeps [list $varfile $varallfile]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
-	cd $keeppwd
 	return $resultlist
 }
 

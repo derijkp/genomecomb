@@ -50,6 +50,7 @@ proc var_strelka_job {args} {
 	set rootname {}
 	set datatype {}
 	set skips {}
+	set resultfile {}
 	cg_options var_strelka args {
 		-L - -deps {
 			lappend deps $value
@@ -93,13 +94,18 @@ proc var_strelka_job {args} {
 		-opts {
 			set opts $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
-	set destdir [file dir $bamfile]
-	set bamtail [file tail $bamfile]
+	if {$resultfile eq ""} {
+		set resultfile [file dir $bamfile]/${pre}var-strelka-[file_rootname $bamfile].tsv.zst
+	} else {
+		set resultfile [file_absolute $resultfile]
+	}
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
 	if {$rootname eq ""} {
-		set root strelka-[file_rootname $bamtail]
+		set root [file_rootname $resultfile]
 	} else {
 		set root $rootname
 	}
@@ -118,11 +124,13 @@ proc var_strelka_job {args} {
 		lappend opts --targeted
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv
-	set sregfile ${pre}sreg-$root.tsv
-	set varallfile ${pre}varall-$root.gvcf
-	set vcffile ${pre}var-$root.vcf
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/$vcffile.gz $destdir/reg_cluster-$root.tsv.zst]
+	set varfile $resultfile
+	set vcffile [file root [gzroot $varfile]].vcf.gz
+	set varallfile $destdir/${pre}varall-$root.gvcf.gz
+	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set sregfile $destdir/${pre}sreg-$root.tsv.zst
+	set regclusterfile $destdir/reg_cluster-$root.tsv.zst
+	set resultlist [list $varfile $sregfile $varallfile $vcffile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -137,8 +145,6 @@ proc var_strelka_job {args} {
 		{*}[versions strelka java gnusort8 zst os]
 	# start
 	## Produce strelka SNP calls
-	set keeppwd [pwd]
-	cd $destdir
 	set resultgvcf $varallfile
 	set resultname $varallfile
 	set resultvcf $vcffile
@@ -148,12 +154,12 @@ proc var_strelka_job {args} {
 	} -deps [list \
 		$bamfile $refseq $bamfileindex {*}$deps \
 	] -targets {
-		$resultgvcf.gz $resultgvcf.gz.tbi
-		$resultvcf.gz $resultvcf.gz.tbi
+		$resultgvcf $resultgvcf.tbi
+		$resultvcf $resultvcf.tbi
 	} -vars {
 		bamfile resultgvcf resultvcf opts regionfile refseq threads root refseq varfile
 	} -code {
-		analysisinfo_write $bamfile $resultgvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $bamfile $resultgvcf sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set zerosize 0
 		if {$regionfile ne ""} {
 			set regionfile [gzfile $regionfile]
@@ -184,28 +190,28 @@ proc var_strelka_job {args} {
 			} else {
 				catch_exec $strelkarun/runWorkflow.py -m local -j $threads
 			}
-			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
-			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
-			file rename -force -- $strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
-			file rename -force -- $strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
+			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf
+			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.tbi
+			file rename -force -- $strelkarun/results/variants/variants.vcf.gz $resultvcf
+			file rename -force -- $strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.tbi
 			file delete -force $strelkarun
 		} else {
-			putslog "empty regionfile -> write empty $resultgvcf.gz"
-			file_write $resultgvcf.gz ""
-			file_write $resultgvcf.gz.tbi ""
+			putslog "empty regionfile -> write empty $resultgvcf"
+			file_write $resultgvcf ""
+			file_write $resultgvcf.tbi ""
 			file_write $resultgvcf.analysisinfo ""
-			file_write $resultvcf.gz ""
-			file_write $resultvcf.gz.tbi ""
+			file_write $resultvcf ""
+			file_write $resultvcf.tbi ""
 			file_write $resultvcf.analysisinfo ""
 		}
-		analysisinfo_write $bamfile $resultvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $bamfile $resultvcf sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 	}
 	job ${pre}vcf2tsv-$root {*}$skips -deps {
-		$resultvcf.gz
+		$resultvcf
 	} -targets {
-		${pre}uvar-$root.tsv
+		$uvarfile
 	} -vars {
-		pre root resultvcf sample split mincoverage mingenoqual type refseq
+		pre root resultvcf sample split mincoverage mingenoqual type refseq uvarfile
 	} -skip {
 		$varfile
 	} -code {
@@ -214,28 +220,27 @@ proc var_strelka_job {args} {
 		lappend fields [subst {sequenced=if(def(\$genoqual,0) < $mingenoqual || def(\$coverage,0) < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(def(\$genoqual,0) < $mingenoqual || def(\$coverage,0) < $mincoverage,"u",\$zyg)}]
 		lappend fields *
-		if {[file size $resultvcf.gz]} {
+		if {[file size $resultvcf]} {
 			exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 				name AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-			} $resultvcf.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+			} $resultvcf | cg select -f $fields | cg zst > $uvarfile.temp
 		} else {
-			file_write ${pre}uvar-$root.tsv.temp ""
+			file_write $uvarfile.temp ""
 		}
-		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
+		file rename -force -- $uvarfile.temp $uvarfile
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst
+	annotvar_clusters_job {*}$skips $uvarfile $varfile
 	# make sreg
-	sreg_strelka_job ${pre}sreg-$root $varallfile $sregfile.zst $mincoverage $mingenoqual $skips
+	sreg_strelka_job ${pre}sreg-$root $varallfile $sregfile $mincoverage $mingenoqual $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
+			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
 		]
-		set cleanupdeps [list $varfile $resultgvcf.gz]
+		set cleanupdeps [list $varfile $resultgvcf]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
-	cd $keeppwd
 	return $resultlist
 	# return [file join $destdir $varfile]
 }
