@@ -810,6 +810,15 @@ proc process_sample_job {args} {
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			lappend skips $bamfile [analysisinfo_file $bamfile]
 			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
+			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
+			if {[file exists $bamfile] && ![jobtargetexists $bamfile $fastqfiles]} {
+				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
+				file rename -force $bamfile $bamfile.old
+			}
+			if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
+				putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
+				file rename -force $resultbamfile $resultbamfile.old
+			}
 		}
 		unset -nocomplain partsa
 		foreach pfastqfiles $processlist {

@@ -658,6 +658,7 @@ proc job_targetsreplace {list targetvars} {
 	return $result
 }
 
+# returns 1 if target is ok (no rerun is needed)
 proc job_checktarget {job target skiptarget time timefile checkcompressed {newidsVar {}}} {
 	if {$target eq ""} {return 1}
 	global cgjob_id
@@ -710,6 +711,7 @@ proc job_checktarget {job target skiptarget time timefile checkcompressed {newid
 	return 0
 }
 
+# returns 1 if targets are ok (no rerun is needed)
 proc job_checktargets {job targets skiptarget time timefile checkcompressed {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
