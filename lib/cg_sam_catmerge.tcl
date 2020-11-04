@@ -104,7 +104,7 @@ proc sam_catmerge_job {args} {
 	set deps $samfiles
 	job $name -optional $optional -force $force -cores $threads {*}$skips \
 	-deps $samfiles -rmtargets $rmfiles -targets $targets -vars {
-		samfiles rmfiles regresults tempregresults resultfile regions mergesort sort refseq threads maxopenfiles outputformat workdir tempresultfile
+		samfiles rmfiles regresults tempregresults resultfile regions mergesort sort refseq threads maxopenfiles outputformat workdir tempresultfile index
 	} -code {
 		set testsam [lindex $samfiles 0]
 		if {![llength $regions]} {
@@ -237,9 +237,9 @@ proc sam_catmerge_job {args} {
 			}
 		}
 		foreach rmfile $rmfiles {file delete -force $rmfile}
-	}
-	if {$index} {
-		bam_index_job {*}$skips -optional $optional $resultfile
+		if {$index} {
+			exec samtools index $resultfile
+		}
 	}
 	return $regresults
 }
