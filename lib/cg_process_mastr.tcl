@@ -10,15 +10,29 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 	-code {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
-		##remove samtools analysis & move specific annotfields forwards		
+		##remove samtools analysis & move specific annotfields forwards
 		set cfields [cg select -h $dep]
-		set cfields [list_sub $cfields -exclude [list_find -regexp $cfields -sam-]]
+		set varcallers [list_remdup [list $varcaller gatk gatkh]]
+		foreach test $varcallers {
+			set pos [lsearch -glob $cfields alleledepth-$test-*]
+			if {$pos != -1} {
+				set varcaller $test
+				break
+			}
+		}
+		if {$pos == -1} {
+			error "error making alternative compar: varcaller $varcaller not present"
+		}
 		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred} $cfields]
 		lappend fields *
 		lappend fields [string_change {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)} [list gatk $varcaller]]
 		set compress [compresspipe $target1]
 		set temp [filetemp_ext $target1]
-		exec cg select -rf {*-sam-*} $dep | cg select -f $fields {*}$compress > $temp
+		if {[catch  {
+			exec cg select -rf {*-sam-*} $dep | cg select -f $fields {*}$compress > $temp
+		}]} {
+			exec cg select -rf {*-strelka-*} $dep | cg select -f $fields {*}$compress > $temp
+		}
 		file rename -force -- $temp $target1
 		##depivot compar file
 		set compress [compresspipe $target2]
