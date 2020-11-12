@@ -12,7 +12,7 @@ user interface]] able to browse and query multi-million line tab-separated
 files is also included.
 
 The [[cg_process_project|cg process_project]] command provides a
-pipeline to to generate annotated multisample variant data, reports, etc. 
+pipeline to generate annotated multisample variant data, reports, etc. 
 starting from various raw data source material (e.g. fastq files,Complete
 Genomics data), which can be run locally (optionally using multiple cores) or
 distributed on a cluster. It combines many of the genomecomb commands

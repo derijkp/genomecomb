@@ -5,10 +5,17 @@ exome or targetted sequencing raw data using genomecomb. Starting from raw
 data, a fully annotated [[projectdir]] will be created, that can be further
 queried and analyzed using [[cg_select]] and [[cg_viz]]
 
-In the howto, the smal example and test data set ori_mixed_yri_mx2 downloadable from the genomecomb
+In this howto, the smal example and test data set ori_mixed_yri_mx2 downloadable from the genomecomb
 website will be used. This data set was derived from publically available exome and genome
 sequencing data by extracting only raw data covering the region of the MX2 gene (on
 chr21) and a part of the ACO2 gene (on chr22).
+
+== Create projectdir ==
+
+All analyses happen in a project directory (extensively described in [[projectdir]]): 
+You can create a project directory and add raw data using the [[cg_project_addsample]]
+command as described below. You can also just create the basic structure (fastq files in 
+directories like <projectdir>/samples/<sampledir>/fastq/<fastqfile>) using other means.
 
 == Add samples ==
 
@@ -22,6 +29,7 @@ mkdir -p tmp/mixed_yri_mx2
 
 # Add a Complete genomics sample named cgNA19240mx2. 
 # ori/mixed_yri_mx2/cgNA19240mx2 contains an ASM directory as obtained from Complete Genomics
+# by default the project_addsample creates softlinks to the fastqs in the original directory
 cg project_addsample tmp/mixed_yri_mx2 cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
 
 # Add illumina fastq files from a genome sequencing using wildcards to find all fastq files
