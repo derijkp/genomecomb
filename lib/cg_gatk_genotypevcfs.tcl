@@ -49,5 +49,5 @@ proc cg_gatk_genotypevcfs args {
 		--verbosity ERROR \
 		--create-output-variant-index true \
 		>@ stdout 2>@stderr
-	file rename -- $vcf.temp[gzext $vcf] $vcf
+	file rename -force -- $vcf.temp[gzext $vcf] $vcf
 }
