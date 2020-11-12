@@ -649,11 +649,9 @@ proc process_sample_job {args} {
 	if {$amplicons ne ""} {
 		if {$removeduplicates eq ""} {set removeduplicates 0}
 		if {$removeskew eq ""} {set removeskew 0}
-		if {$dt eq ""} {set dt NONE}
 	} else {
 		if {$removeduplicates eq ""} {set removeduplicates 1}
 		if {$removeskew eq ""} {set removeskew 1}
-		if {$dt eq ""} {set dt BY_SAMPLE}
 	}
 	# targetfile
 	set temp [targetfile $sampledir $ref]

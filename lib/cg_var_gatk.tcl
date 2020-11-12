@@ -119,6 +119,7 @@ proc var_gatk_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set dt {}
 	cg_options var_gatk args {
 		-L - -deps {
 			lappend deps $value
@@ -155,6 +156,9 @@ proc var_gatk_job {args} {
 		}
 		-opts {
 			set opts $value
+		}
+		-dt {
+			set dt $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -196,6 +200,7 @@ proc var_gatk_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
+	if {$dt ne ""} {lappend opts -dt $dt}
 	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads \
 	-deps $deps -targets {
 		${pre}varall-$root.vcf
@@ -251,7 +256,7 @@ proc var_gatk_job {args} {
 	} -skip {
 		$varfile
 	} -vars {
-		gatk opts regionfile gatkrefseq refseq
+		gatk opts regionfile gatkrefseq refseq dt
 	} -code {
 		set emptyreg [reg_isempty $regionfile]
 		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp

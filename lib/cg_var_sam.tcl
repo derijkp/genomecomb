@@ -39,6 +39,7 @@ proc var_sam_job {args} {
 	set skips {}
 	set callmethod c
 	set resultfile {}
+	set dt {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -86,6 +87,9 @@ proc var_sam_job {args} {
 		}
 		-opts {
 			set opts $value
+		}
+		-dt {
+			set dt $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -142,7 +146,7 @@ proc var_sam_job {args} {
 	} -skip {
 		$varallfile
 	} -vars {
-		refseq opts BQ regionfile root threads callmethod
+		refseq opts BQ regionfile root threads callmethod dt
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
@@ -155,6 +159,7 @@ proc var_sam_job {args} {
 				lappend opts -l $bedfile
 			}
 			if {[catch {version samtools 1}]} {
+				if {$dt ne ""} {lappend opts -dt $dt}
 				catch_exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep | bcftools view -cg - {*}[compresspipe $target] > $target.temp.zst
 			} else {
 				# bcftools -v for variant only
