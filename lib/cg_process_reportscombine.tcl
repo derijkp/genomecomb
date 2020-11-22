@@ -656,6 +656,9 @@ proc process_reportscombine_job {args} {
 			foreach analysis $analyses {
 				# only report for "endpoints" analysis (data of partial will be included in endpoints)
 				if {[regexp {^cov5-} $analysis]} continue
+				if {[regexp {^hlongshot-} $analysis]} {
+					if {[inlist $analyses [string range $analysis 10 end]]} continue
+				}
 				if {[llength [array names a *-$analysis]]} continue
 				set sample [lindex [split $analysis -] end]
 				set resultline [list $analysis $sample]
@@ -834,7 +837,15 @@ proc process_reportscombine_job {args} {
 				regsub {,flagstat_reads,in total$} $temp {} temp
 				lappend alignments [split $temp -]
 			}
-			set alignments [bsort -index end [list_remdup $alignments]]
+			# remove hlongshot alignments if without exists
+			set temp {}
+			foreach alignment [bsort -index end [list_remdup $alignments]] {
+				if {[lindex $alignment 0] eq "hlongshot"} {
+					if {[inlist $analyses [join [lrange $alignment 1 end] -]]} continue
+				}
+				lappend temp $alignment
+			}
+			set alignments $temp
 			set vcallers {}
 			foreach temp [array names data *,qvars] {
 				regsub ,genomecomb,qvars\$ $temp {} temp
@@ -909,7 +920,7 @@ proc process_reportscombine_job {args} {
 			}]
 			foreach alignment $alignments {
 				set sample [lindex $alignment end]
-				set line [list_reverse $alignment]
+				set line [list $sample [join [lrange $alignment 0 end-1] -]]
 				set alignment [join $alignment -]
 				lappend line [pget data "$alignment,flagstat_reads,in total"]
 				lappend line [pget data $alignment,flagstat_reads,mapped]
