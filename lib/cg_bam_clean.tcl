@@ -179,8 +179,7 @@ proc bam_clean_job {args} {
 			-compressionlevel $compressionlevel \
 			$clipamplicons
 	}
-	set tempresult [filetemp $resultfile]
-	lappend pipe {*}$optsio > $tempresult
+	lappend pipe {*}$optsio
 	if {!$keep} {
 		set rmtargets [list {*}$cleanuplist $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]]
 	} else {
@@ -189,9 +188,11 @@ proc bam_clean_job {args} {
 	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq rmtargets tempresult
+		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq rmtargets
 	} -code {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
+		set tempresult [filetemp $resultfile]
+		lappend pipe > $tempresult
 		if {![sam_empty $dep]} {
 			catch_exec {*}$pipe
 			result_rename $tempresult $resultfile
