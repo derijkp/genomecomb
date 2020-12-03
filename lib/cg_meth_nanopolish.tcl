@@ -134,8 +134,8 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 			file rename -force $tempfile $bamcacheindex
 			exec touch -h -d [clock format [file mtime $bamfileindex]] $bamcacheindex
 			set tempfile [filetemp $target]
-			file copy $dep $tempfile
-			file rename $tempfile $target
+			file copy -force $dep $tempfile
+			file rename -force $tempfile $target
 			exec touch -h -d [clock format [file mtime $dep]] $target
 		}
 	} else {
