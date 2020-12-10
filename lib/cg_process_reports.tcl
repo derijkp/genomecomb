@@ -17,12 +17,16 @@ proc process_reports_job {args} {
 	set reports basic
 	set dbdir {}
 	set resultbamfile {}
+	set paired 1
 	cg_options process_reports args {
 		-dbdir {
 			set dbdir $value
 		}
 		-r - -reports {
 			set reports $value
+		}
+		-paired {
+			set paired $value
 		}
 		-resultbamfile {
 			set resultbamfile [file_absolute $value]
@@ -219,9 +223,15 @@ proc process_reports_job {args} {
 		}
 	}
 	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
-	set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
+	if {$paired} {
+		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
+	} else {
+		set fastqfiles_fw $fastqfiles
+		set fastqfiles_rev {}
+	}
 	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
+			if {![llength $deps]} continue
 			set target $sampledir/reports/fastqc_$dir-$sample.fastqc
 			job reports_fastqc-$dir-$sample -deps $deps -targets {
 				$target $sampledir/reports/fastqc_$dir-$sample.fastqc/fastqc_data.txt
@@ -242,6 +252,7 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports fastqstats] && [llength $fastqfiles]} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
+			if {![llength $deps]} continue
 			set target $sampledir/reports/report_fastq_$dir-$sample.tsv
 			set target2 $sampledir/reports/fastq_stats_$dir-$sample.txt
 			set target3 $sampledir/reports/fastx_$dir-$sample.tsv

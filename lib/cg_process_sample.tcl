@@ -1007,7 +1007,7 @@ proc process_sample_job {args} {
 	}
 	#calculate reports
 	if {[llength $reports]} {
-		process_reports_job $sampledir $dbdir $reports
+		process_reports_job -paired $paired $sampledir $dbdir $reports
 		lappend todo(reports) $sampledir/reports
 	}
 	return $todo(var)
