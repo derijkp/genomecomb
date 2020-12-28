@@ -35,8 +35,9 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 	Tcl_Obj **objv,*queryresult,*querycmd=NULL;
 	int listobjc,listoutc,listindc,*cols=NULL,*outs=NULL;
 	Tcl_Obj **listobjv,**listoutv,**listindv;
-	DString *line = NULL,*array;
-	int read;
+	DStringArray *array = NULL;
+	DString *line = NULL, *arraydata = NULL;
+	int read=0;
 	int maxtab=0,objc,show,i,error;
 	unsigned int line_nr=0;
 	if ((argc < 5)||(argc > 5)) {
@@ -78,6 +79,7 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 	}
 	line = DStringNew();
 	array = DStringArrayNew(listindc);
+	arraydata = array->data;
 	objv = (Tcl_Obj **)Tcl_Alloc((listobjc+2)*sizeof(Tcl_Obj *));
 	querycmd = argv[1];
 	objv[0]= querycmd;
@@ -91,7 +93,7 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 	objc = listobjc+1;
 	while (1) {
 		for (i = 0 ; i < listindc ; i++) {
-			read = DStringGetLine(array+i,inds[i]);
+			read = DStringGetLine(arraydata+i,inds[i]);
 			if (read == -1) break;
 		}
 		if (read == -1) break;
@@ -102,8 +104,8 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 				Tcl_IncrRefCount(objv[i+1]);
 			}
 			if (cols[i] != -1) {
-				NODPRINT("col = %d, val=%.*s",cols[i],array[cols[i]].size,array[cols[i]].string);
-				Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)array[cols[i]].string,array[cols[i]].size);
+				NODPRINT("col = %d, val=%.*s",cols[i],arraydata[cols[i]].size,arraydata[cols[i]].string);
+				Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)arraydata[cols[i]].string,arraydata[cols[i]].size);
 			} else {
 				Tcl_SetIntObj(objv[i+1],line_nr);
 			}
@@ -134,8 +136,8 @@ genomecomb_tsv_select_indexed_ObjCmd (ClientData clientData,	Tcl_Interp *interp,
 					if (!first) {putc_unlocked('\t',stdout);}
 					first = 0;
 					if (out != -1) {
-						cur = array[out].string;
-						size = array[out].size;
+						cur = arraydata[out].string;
+						size = arraydata[out].size;
 						while(size--) {putc_unlocked(*cur++,stdout);}
 					} else {
 						char *string;

@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 	size_t read;
 	unsigned int curpos=0, flag;
 	unsigned int numfields,pos1;
-	int start,end,fpos,contig=0;
+	int start,end,fpos;
 	char *fields = NULL, *cur,*keep;
 	if (argc < 1) {
 		fprintf(stderr,"Format is: sam2tsv ?field? ...\n");

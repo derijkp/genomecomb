@@ -25,7 +25,7 @@ void DStringInit(DString *dstring) {
 }
 
 DString *DStringNew() {
-	DString *dstring = malloc(sizeof(DString));
+	DString *dstring = (DString *)malloc(sizeof(DString));
 	DStringInit(dstring);
 	return dstring;
 }
@@ -60,17 +60,17 @@ void DStringSetSize(DString *dstring, int size) {
 	size++;
 	if (dstring->memsize < size) {
 		if (dstring->string == dstring->staticspace) {
-			dstring->string = malloc(size);
+			dstring->string = (char *)malloc(size);
 			strncpy(dstring->string,dstring->staticspace,ssize);
 			dstring->string[ssize] = '\0';
 		} else if (dstring->memsize == -1) {
 			char *temp;
-			temp = malloc(size);
+			temp = (char *)malloc(size);
 			strncpy(temp,dstring->string,ssize);
 			dstring->string = temp;
 			dstring->string[ssize] = '\0';
 		} else {
-			dstring->string = realloc(dstring->string,size);
+			dstring->string = (char *)realloc(dstring->string,size);
 		}
 		dstring->memsize = size;
 	}
@@ -733,7 +733,7 @@ int DStringLocCompare(DString *a, DString *b) {
 char *Loc_ChrString(DString *ds) {
 	char *s;
 	if (ds == NULL) {
-		return "";
+		return (char *)"";
 	} else {
 		s = ds->string;
 		if (ds->size > 3) {
@@ -776,7 +776,7 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 		buf_end = linePtr->string+linePtr->memsize;
 		bsz = linePtr->memsize;
 	} else {
-		buf=malloc(128);
+		buf=(char *)malloc(128);
 		bsz=128;
 		buf_end=buf+bsz;
 	}
@@ -787,7 +787,7 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 		*cur++=c;
 		cnt++;
 		if (cur == buf_end) {
-			buf=realloc(buf,bsz*2);
+			buf=(char *)realloc(buf,bsz*2);
 			cur=buf+bsz;
 			bsz*=2;
 			buf_end=buf+bsz;
