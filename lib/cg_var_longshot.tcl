@@ -10,6 +10,25 @@ proc version_longshot {} {
 	return $version
 }
 
+proc longshot_replacebam {finalbam oribam} {
+	file lstat $oribam a
+	set time $a(mtime)
+	catch {
+		file lstat $oribam.bai a
+		set btime $a(mtime)
+	}
+        file rename -force $oribam $oribam.old
+	catch {file rename -force $oribam.bai $oribam.bai.old}
+        mklink $finalbam $oribam
+        exec touch -h -d [clock format $time] $oribam
+	if {[info exists btime]} {
+	        mklink $finalbam.bai $oribam.bai
+	        exec touch -h -d [clock format $btime] $oribam.bai
+	}
+	file delete $oribam.old
+	file delete $oribam.bai.old
+}
+
 proc longshot_empty_vcf {vcffile} {
 	set o [open $vcffile w]
 	puts $o [deindent {

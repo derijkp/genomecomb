@@ -940,4 +940,15 @@ test noise {noise basic} {
 #	expr {$numbaseshist-$numbasesnoise}
 } 0
 
+test bam_varia {longshot_replacebam} {
+	test_cleantmp
+	file copy -force data/minimap2.bam tmp/minimap2.bam
+	file mtime tmp/minimap2.bam 1607468400
+	file copy -force data/minimap2-p.bam tmp/minimap2-p.bam
+	file mtime tmp/minimap2-p.bam 1607554800
+	longshot_replacebam tmp/minimap2-p.bam tmp/minimap2.bam
+	file lstat tmp/minimap2.bam a
+	list [file link tmp/minimap2.bam] $a(mtime) [file size tmp/minimap2.bam] [file mtime tmp/minimap2-p.bam] [file size tmp/minimap2-p.bam]
+} {minimap2-p.bam 1607468400 19446 1607554800 19446}
+
 testsummarize
