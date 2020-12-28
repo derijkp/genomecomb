@@ -37,6 +37,7 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/countlines$(EXEEXT) \
      ../bin$(ARCH)/addrow$(EXEEXT) \
      ../bin$(ARCH)/csv2tsv$(EXEEXT) \
+     ../bin$(ARCH)/tsv2csv$(EXEEXT) \
      ../bin$(ARCH)/distrreg$(EXEEXT) \
      ../bin$(ARCH)/mergesorted$(EXEEXT) \
      ../bin$(ARCH)/noise$(EXEEXT)
@@ -143,6 +144,9 @@ clean:
 
 ../bin$(ARCH)/csv2tsv$(EXEEXT): csv2tsv.c $(TOOLS)
 	$(GCC) csv2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/csv2tsv$(EXEEXT)
+
+../bin$(ARCH)/tsv2csv$(EXEEXT): tsv2csv.c $(TOOLS)
+	$(GCC) tsv2csv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2csv$(EXEEXT)
 
 ../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS) $(GZPOPEN)
 	$(GCC) samcat.c tools.c $(GZPOPEN_C) $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)

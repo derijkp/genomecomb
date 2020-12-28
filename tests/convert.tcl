@@ -841,8 +841,8 @@ test format {tsvjoin} {
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
-test cdv2tsv {cdv2tsv} {
-	file_write tmp/temp.tsv [deindent {
+test csv2tsv {csv2tsv} {
+	file_write tmp/temp.csv [deindent {
 		a,b,c
 		1,2,3
 		a1,"b 2","c 3"
@@ -859,13 +859,13 @@ test cdv2tsv {cdv2tsv} {
 		short	a bit longer	very\nlong indeed
 		4	5	6
 	}]\n
-	cg csv2tsv tmp/temp.tsv tmp/result.tsv
+	cg csv2tsv tmp/temp.csv tmp/result.tsv
 	exec diff tmp/result.tsv tmp/exepected.tsv
 } {}
 
-test cdv2tsv {cdv2tsv long} {
+test csv2tsv {csv2tsv long} {
 	catch {close $o1} ; catch {close $o2}
-	set o1 [open tmp/temp.tsv w]
+	set o1 [open tmp/temp.csv w]
 	set o2 [open tmp/expected.tsv w]
 	for {set i 0} {$i < 10000} {incr i} {
 		puts $o1 [deindent {
@@ -887,8 +887,56 @@ test cdv2tsv {cdv2tsv long} {
 		}]
 	}
 	close $o1 ; close $o2
-	time {cg csv2tsv tmp/temp.tsv tmp/result.tsv}
+	time {cg csv2tsv tmp/temp.csv tmp/result.tsv}
 	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv2csv {tsv2csv} {
+	file_write tmp/test.tsv [deindent {
+		a	b	c
+		1	2	3
+		a1	b,2	c,3
+		A,1	B2	C,3
+		short	a bit longer	very\nlong indeed
+		4	5	6
+	}]\n
+	file_write tmp/expected.csv [deindent {
+		a,b,c
+		1,2,3
+		a1,"b,2","c,3"
+		"A,1",B2,"C,3"
+		short,a bit longer,very\nlong indeed
+		4,5,6
+	}]\n
+	cg tsv2csv tmp/test.tsv tmp/result.csv
+	exec diff tmp/result.csv tmp/expected.csv
+} {}
+
+test tsv2csv {tsv2csv long} {
+	catch {close $o1} ; catch {close $o2}
+	set o1 [open tmp/test.tsv w]
+	set o2 [open tmp/expected.csv w]
+	for {set i 0} {$i < 10000} {incr i} {
+		puts $o1 [deindent {
+			a	b	c
+			1	2	3
+			a1	b,2	c,3
+			A,1	B2	C,3
+			short	a bit longer	very\nlong indeed
+			4	5	6
+		}]
+		puts $o2 [deindent {
+			a,b,c
+			1,2,3
+			a1,"b,2","c,3"
+			"A,1",B2,"C,3"
+			short,a bit longer,very\nlong indeed
+			4,5,6
+		}]
+	}
+	close $o1 ; close $o2
+	cg tsv2csv tmp/test.tsv tmp/result.csv
+	exec diff tmp/result.csv tmp/expected.csv
 } {}
 
 test fasta2tsv {fasta2tsv} {
