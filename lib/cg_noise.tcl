@@ -19,11 +19,13 @@ proc cg_noise {args} {
 	set ignoreoverlaps 1
 	set countorphans 1
 	set progress 1000000
+	set typediffs all
 	cg_options noise args {
 		-refseq {
 			set refseq $value
 		}
 		-mindepth {set mindepth $value}
+		-maxdepth {lappend samtoolsargs -d $value}
 		-perpos {set perpos [true $value]}
 		-q - -min-MQ {set q $value}
 		-Q - -min-BQ {set Q $value}
@@ -32,11 +34,17 @@ proc cg_noise {args} {
 			if {![info exists q]} {set q 20}
 			if {![info exists Q]} {set Q 20}
 		}
+		-typediffs {
+			if {$value ni "all mismatch del ins"} {
+				error "-typediffs must be one of: all mismatch del ins"
+			}
+			set typediffs $value
+		}
 		-exclude {
 			set exclude $value
 		}
 		-include {
-			set incclude $value
+			set include $value
 		}
 		-ignore-overlaps {
 			set ignoreoverlaps $value
@@ -74,8 +82,8 @@ proc cg_noise {args} {
 	# lappend samtoolsargs --output-extra FLAG
 	set o [wgzopen $resultfile]
 	puts stderr "pipe: [list samtools mpileup {*}$samtoolsargs -f $refseq \
-		-q $q -Q $Q $bamfile | noise $mindepth $debug $progress]"
+		-q $q -Q $Q $bamfile | noise $mindepth $debug $progress $typediffs]"
 	catch_exec samtools mpileup {*}$samtoolsargs --no-BAQ -f $refseq  \
-		-q $q -Q $Q $bamfile | noise $mindepth $perpos $debug $progress >@ $o 2>@ stderr
+		-q $q -Q $Q $bamfile | noise $mindepth $perpos $debug $progress $typediffs >@ $o 2>@ stderr
 	gzclose $o
 }

@@ -16,20 +16,21 @@
 
 int main(int argc, char *argv[]) {
 	DString line;
-	char *linepos = NULL, *scanpos = NULL;
+	char *linepos = NULL, *scanpos = NULL,*chr=NULL, typediff='a';
 	ssize_t read;
 	double numbases=0,nummismatch=0,numins=0,numdel=0;
-	int maxcol = 5,count, debug = -1, progress=1000000,progresscur=1000000;
-	int mindepth=20,perpos=0,depth=0,nrdiff,i,num;
+	int maxcol = 5,count, debug = -1, progress=1000000,progresscur=1000000,chrlen=0;
+	int mindepth=20,perpos=0,depth=0,nrdiff,nrmismatch,nrins,nrdel,i,num,begin=0;
 	int *results;
-	if ((argc < 2 || argc > 5)) {
-		fprintf(stderr,"Format is: noise mindepth perpos");
+	if ((argc < 2 || argc > 6)) {
+		fprintf(stderr,"Format is: noise mindepth ?perpos? ?debug? ?progress? ?typediff?");
 		exit(EXIT_FAILURE);
 	}
 	if (argc >= 2) mindepth=atoi(argv[1]);
 	if (argc >= 3) perpos=atoi(argv[2]);
 	if (argc >= 4) debug=atoi(argv[3]);
 	if (argc >= 5) progress=atoi(argv[4]);
+	if (argc >= 6) typediff=argv[4][0];
 	progresscur = progress;
 	results = (int *)malloc((mindepth+2)*sizeof(int));
 	for (i = 0 ; i <= mindepth ; i++) {
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]) {
 	DStringInit(&line);
 	DStringGetLine(&line, stdin);
 	if (perpos) {
-		fprintf(stdout,"depth\tnrdiff\n");
+		fprintf(stdout,"chromosome\tbegin\tdepth\tnrdiff\tnrmismatch\tnrdel\tnrins\tpct_alt\tpct_mismatch\tpct_del\tpct_ins\n");
 	} else if (debug >= 0) {
 		fprintf(stdout,"depth\tnrdiff\tbin\tchromosome\tpos\tref\tdepth\tbases\tqual\n");
 	}
@@ -57,7 +58,11 @@ NODPRINT("%s\n",linepos)
 				} else {
 					scanpos = linepos;
 				}
-				if (count == 2) {
+				if (count == 0) {
+					chr = line.string;
+					chrlen = scanpos - line.string - 1;
+					begin = atoi(scanpos)-1;
+				} else if (count == 2) {
 					depth = atoi(scanpos);
 					/* if (depth < mindepth) break; */
 				} else if (count == 3) {
@@ -69,15 +74,15 @@ NODPRINT("%s\n",linepos)
 		}
 		if (count >= 3) {
 			linepos++;
-			nrdiff = 0;
+			nrdiff = 0; nrmismatch = 0; nrins = 0; nrdel = 0;
 			while (*linepos != '\t' && *linepos != '\0') {
 				char c = *linepos;
 				if (c == '+' || c == '-') {
 					if (c == '+') {
-						nrdiff++;
+						nrdiff++; nrins++;
 						numins++;
 					} else {
-						numdel++;
+						/* next base is a deletion, counted then */
 					}
 					linepos++;
 					num=atoi(linepos);
@@ -85,10 +90,10 @@ NODPRINT("%s\n",linepos)
 					while (num--) linepos++;
 				} else {
 					if ((*linepos >= 'A' && *linepos <= 'Z') || (*linepos >= 'a' && *linepos <= 'z')) {
-						nrdiff++;
+						nrdiff++; nrmismatch++;
 						numbases++; nummismatch++;
 					} else if (*linepos == '*') {
-						nrdiff++;
+						nrdiff++; numdel++; nrdel++;
 					} else if (*linepos == '.' || *linepos == ',') {
 						numbases++;
 					}
@@ -96,20 +101,38 @@ NODPRINT("%s\n",linepos)
 				}
 			}
 			if (depth >= mindepth) {
-				if (nrdiff > depth) {nrdiff = depth;}
-				if (nrdiff == 0) {
+				int diffs;
+				if (typediff == 'a') {
+					diffs = nrdiff;
+				} else if (typediff == 'm') {
+					diffs = nrmismatch;
+				} else if (typediff == 'd') {
+					diffs = nrdel;
+				} else if (typediff == 'i') {
+					diffs = nrins;
+				} else {
+					fprintf(stderr,"Wrong parameter for typediff");
+					exit(1);
+				}
+				if (diffs > depth) {diffs = depth;}
+				if (diffs == 0) {
 					i = 0;
 				} else {
-					i = (int)(0.9999999999+(mindepth*(double)nrdiff/depth));
+					i = (int)(0.9999999999+(mindepth*(double)diffs/depth));
 				}
 				if (i>mindepth) {
 					fprintf(stderr,"at line: %s\n",line.string);
-					fprintf(stderr,"internal error i > mindepth: i=%d mindepth=%d depth=%d nrdiff=%d\n",i,mindepth,depth,nrdiff);
+					fprintf(stderr,"internal error i > mindepth: i=%d mindepth=%d depth=%d diffs=%d\n",i,mindepth,depth,diffs);
 					exit(1);
 				}
 				results[i]++;
-				if (debug >= 0 && nrdiff >= debug) fprintf(stdout,"%d\t%d\t%.1f\t%s\n",depth,nrdiff,100.0*i/mindepth,line.string);
-				if (perpos) fprintf(stdout,"%d\t%d\n",depth,nrdiff);
+				if (debug >= 0 && nrdiff >= debug) fprintf(stdout,"%d\t%d\t%.2f\t%s\n",depth,nrdiff,100.0*i/mindepth,line.string);
+				if (perpos) {
+					fprintf(stdout,"%*.*s\t%d\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\n",chrlen,chrlen,chr,begin,depth,
+						nrdiff,nrmismatch,nrdel,nrins,
+						100.0*nrdiff/depth,100.0*nrmismatch/depth,100.0*nrdel/depth,100.0*nrins/depth
+					);
+				}
 			}
 		}
 		read = DStringGetLine(&line, stdin);
@@ -127,7 +150,7 @@ NODPRINT("%s\n",linepos)
 		fprintf(stdout,"#numins\t%.0f\n",numins);
 		fprintf(stdout,"percentage\tcount\n");
 		for (i = 0 ; i <= mindepth ; i++) {
-			fprintf(stdout,"%0.1f\t%d\n",100.0*i/mindepth,results[i]);
+			fprintf(stdout,"%0.2f\t%d\n",100.0*i/mindepth,results[i]);
 		}
 	}
 	DStringClear(&line);
