@@ -835,7 +835,7 @@ chr1	t2	4100	a
 chr2	t3	4050	a
 chr2	t5	4100	b}
 
-test mergesorted {no header line, coments with @} {
+test mergesorted {no header line, comments with @} {
 	test_cleantmp
 	file_write tmp/vars1.tsv [deindent {
 		@ varcomment

@@ -21,7 +21,14 @@
 #define IN 5
 #define ZSTD 6
 
-FILE *gz_popen(char *filename);
-int gz_pclose(FILE *file);
+typedef struct PFILE {
+	FILE *f;
+	char type;
+	DString *filename;
+	DString *buffer;
+} PFILE;
+
+PFILE *gz_popen(char *filename,char *format);
+int gz_pclose(PFILE *file);
 
 #endif

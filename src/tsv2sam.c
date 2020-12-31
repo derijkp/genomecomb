@@ -14,7 +14,6 @@
 #include <string.h>
 #include <limits.h>
 #include "tools.h"
-#include "gztools.h"
 #include "debug.h"
 
 inline int min ( int a, int b ) { return a < b ? a : b; }

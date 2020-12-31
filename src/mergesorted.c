@@ -18,7 +18,7 @@
 #include "debug.h"
 
 typedef struct MergeFile {
-	FILE *f;
+	PFILE *pf;
 	DString *line;
 	DStringArray *result;
 	int error;
@@ -57,21 +57,21 @@ int main(int argc, char *argv[]) {
 	argv = argv+5;
 	mergefiles = (MergeFile *)malloc(count*sizeof(MergeFile));
 	for (i = 0 ; i < count ; i++) {
-		FILE *f = gz_popen(argv[i]);
+		PFILE *pf = gz_popen(argv[i],NULL);
 		DString *line=DStringNew();
 		mergefile = mergefiles + i;
-		mergefile->f = f;
+		mergefile->pf = pf;
 		mergefile->line = line;
 		mergefile->result = DStringArrayNew(max+2);
-		read = DStringGetLine(line, f);
+		read = DStringGetLine(line, pf->f);
 		while (read != -1) {
 			if (line->size > 0 && line->string[0] != commentchar) break;
 			if (printheader) {DStringputs(line,stdout); putc_unlocked('\n',stdout);}
-			read = DStringGetLine(line, f);
+			read = DStringGetLine(line, pf->f);
 		}
 		if (headerline) {
 			if (printheader) {DStringputs(line,stdout); putc_unlocked('\n',stdout);}
-			read = DStringGetLine(line, f);
+			read = DStringGetLine(line, pf->f);
 		}
 		if (printheader) {printheader = 0;}
 		if (read == -1) {mergefile->error = 1;} else {mergefile->error = 0;}
@@ -112,10 +112,10 @@ int main(int argc, char *argv[]) {
 		mergefile = mergefiles + bestpos;
 		DStringputs(mergefile->line,stdout);
 		putc_unlocked('\n',stdout);
-		mergefile->error = DStringGetTab(mergefile->line,mergefile->f,max,mergefile->result,0,NULL);
+		mergefile->error = DStringGetTab(mergefile->line,mergefile->pf->f,max,mergefile->result,0,NULL);
 	}
 	for (i = 0 ; i < count ; i++) {
-		gz_pclose(mergefiles[i].f);
+		gz_pclose(mergefiles[i].pf);
 		DStringDestroy(mergefiles[i].line);
 		DStringArrayDestroy(mergefiles[i].result);
 	}

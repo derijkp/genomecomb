@@ -15,9 +15,7 @@
 #include <errno.h>
 #include <limits.h>
 #include "tools.h"
-#include "tools_bcol.h"
 #include "debug.h"
-#include "gztools.h"
 
 int main(int argc, char *argv[]) {
 	DString *line = NULL;

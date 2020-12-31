@@ -14,7 +14,6 @@
 #include <string.h>
 #include <limits.h>
 #include "tools.h"
-#include "gztools.h"
 #include "hash.h"
 #include "debug.h"
 

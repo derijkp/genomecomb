@@ -14,7 +14,7 @@ proc depth_histo {bamfile regionfile {max 1000} {Q 0} {q 0} args} {
 	} else {
 		set d 1000000
 	}
-	# puts [list samtools depth -d$d -Q $Q -q $q $bamfile | depth_histo $regionfile {*}$poss2 $max]
+	# puts stderr [list samtools depth -d$d -Q $Q -q $q $bamfile | depth_histo $regionfile {*}$poss2 $max]
 	exec samtools depth -d$d -Q $Q -q $q $bamfile | depth_histo $regionfile {*}$poss2 $max >@ stdout 2>@ stderr
 }
 

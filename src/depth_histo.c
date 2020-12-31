@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
 	start2pos = atoi(argv[3]);
 	end2pos = atoi(argv[4]);
 	max = atoi(argv[5]);
-	ontarget = malloc(max*sizeof(int));
-	memset(ontarget,0,max*sizeof(int));
-	offtarget = malloc(max*sizeof(int));
-	memset(offtarget,0,max*sizeof(int));
+	ontarget = malloc((max+1)*sizeof(int));
+	memset(ontarget,0,(max+1)*sizeof(int));
+	offtarget = malloc((max+1)*sizeof(int));
+	memset(offtarget,0,(max+1)*sizeof(int));
 NODPRINT("reg_select %d %d %d %s %d %d %d %d",chr1pos,start1pos,end1pos,argv[4],chr2pos,start2pos,end2pos,datanear)
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	/* allocate */

@@ -183,6 +183,7 @@ proc sam_catmerge_job {args} {
 				set maxopenfiles [maxopenfiles $maxopenfiles]
 				set len [llength $deps]
 				if {$len <= $maxopenfiles} {
+					# puts [list cg mergesorted -headerline 0 -commentchar @ -sortpos $sortopt {*}$deps {*}$finaloutcmd]
 					exec cg mergesorted -headerline 0 -commentchar @ -sortpos $sortopt \
 						{*}$deps {*}$finaloutcmd
 				} else {

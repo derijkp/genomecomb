@@ -398,27 +398,27 @@ test bcol_make {iu too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
 	exec cg bcol make -p {} -c {} -t iu tmp/temp.bcol coverage < tmp/temp.tsv
-} {conversion error for type iu, value -1: Numerical result out of range.
-} error
+} {conversion error for type iu, value -1: *.
+} error match
 
 test bcol_make {w too large error} {
 	test_cleantmp
 	exec cg bcol make -p {} -c {} -t w tmp/temp.bcol coverage < data/limits.tsv
-} {conversion error for type w, value 9223372036854775808: Numerical result out of range.
-} error
+} {conversion error for type w, value 9223372036854775808: *.
+} error match
 
 test bcol_make {w too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
 	exec cg bcol make -p {} -c {} -t w tmp/temp.bcol coverage < tmp/temp.tsv
-} {conversion error for type w, value -9223372036854775809: Numerical result out of range.
-} error
+} {conversion error for type w, value -9223372036854775809: *
+} error match
 
 test bcol_make {wu too large error} {
 	test_cleantmp
 	exec cg bcol make -p {} -c {} -t wu tmp/temp.bcol coverage < data/limits.tsv
-} {conversion error for type wu, value 18446744073709551616: Numerical result out of range.
-} error
+} {conversion error for type wu, value 18446744073709551616: *
+} error match
 
 test bcol_make {wu too small error} {
 	test_cleantmp

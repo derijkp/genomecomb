@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	int shift,pos=0,accept;
 	int status,begin=0,error;
 	if ((argc != 5)) {
-		fprintf(stderr,"Format is: getregions bcolfile min max shift");
+		fprintf(stderr,"Format is: getregionsbcol2 bcolfile min max shift");
 		exit(EXIT_FAILURE);
 	}
 	bcol = bcol_open(argv[1]);

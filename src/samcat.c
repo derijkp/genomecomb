@@ -14,79 +14,8 @@
 #include "tools.h"
 #include "gzpopen.h"
 
-FILE *sam_popen(char *filename) {
-	int len = strlen(filename);
-	DString *buffer=DStringNew();
-	FILE *result;
-	char *cur,*keepcur;
-	if (len == 1 && *filename == '-') {
-		return stdin;
-	} else if (len >= 3) {
-		keepcur = filename + len - 1;
-		cur = keepcur;
-		if (len >= 4 && *cur == '4') {
-			if (*(--cur) == 'z' && *(--cur) == 'l' && *(--cur) == '.') {
-				DStringAppend(buffer,"lz4 -q -d -c ");
-				DStringAppend(buffer,filename);
-				keepcur = --cur; len -= 4;
-			} else {
-				cur = keepcur;
-			}
-		} else if (len >= 4 && *cur == 't') {
-			if (*(--cur) == 's' && *(--cur) == 'z' && *(--cur) == '.') {
-				DStringAppend(buffer,"zstd-mt -T 1 -k -q -d -c ");
-				DStringAppend(buffer,filename);
-				keepcur = --cur; len -= 4;
-			} else {
-				cur = keepcur;
-			}
-		} else if (*cur == 'z') {
-			cur--;
-			if ((*(cur) == 'g' || *(cur) == 'r') && *(--cur) == '.') {
-				DStringAppend(buffer,"zcat ");
-				DStringAppend(buffer,filename);
-				keepcur = --cur; len -= 3;
-			} else {
-				cur = keepcur;
-			}
-		}
-		if (len >= 4 && *cur == 'm') {
-			if (*(--cur) == 'a' && *(--cur) == 'b' && *(--cur) == '.') {
-				if (buffer->size == 0) {
-					DStringAppend(buffer,"samtools view --no-PG -h ");
-					DStringAppend(buffer,filename);
-				} else {
-					DStringAppend(buffer,"| samtools view --no-PG -h ");
-				}
-				keepcur = --cur;
-			} else {
-				cur = keepcur;
-			}
-		}
-	}
-	if (buffer->size == 0) {
-		return fopen64_or_die(filename,"r");
-	} else {
-		return popen(buffer->string,"r");
-	}
-	return result;
-}
-
-int sam_pclose(FILE *file) {
-	int r;
-	r = pclose(file);
-	if (r == -1) {
-		if (errno == ECHILD) {
-			FCLOSE(file);
-		} else {
-			fprintf(stderr, "%s\n", strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-	}
-	return r;
-}
-
 int main(int argc, char *argv[]) {
+	PFILE *sf = NULL;
 	FILE *f = NULL;
 	int pos;
 	register int c, first = 1;
@@ -100,15 +29,16 @@ int main(int argc, char *argv[]) {
 		}
 		pos = 3;
 	} else {
-		f = sam_popen(argv[1]);
-		while ((c=getc_unlocked(f))!=EOF) {
+		sf = gz_popen(argv[1],"sam");
+		while ((c=getc_unlocked(sf->f))!=EOF) {
 			putc_unlocked(c,stdout);
 		}
-		gz_pclose(f);
+		gz_pclose(sf);
 		pos = 2;
 	}
 	while (pos < argc) {
-		f = sam_popen(argv[pos++]);
+		sf = gz_popen(argv[pos++],"sam");
+		f = sf->f;
 		while ((c=getc_unlocked(f))!=EOF) {
 			if (first) {
 				if (c != '@') break;
@@ -120,7 +50,7 @@ int main(int argc, char *argv[]) {
 		while ((c=getc_unlocked(f))!=EOF) {
 			putc_unlocked(c,stdout);
 		}
-		sam_pclose(f);
+		gz_pclose(sf);
 	}
 	exit(EXIT_SUCCESS);
 }

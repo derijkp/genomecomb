@@ -62,7 +62,7 @@ proc cg_regextract {args} {
 				set file [gzfile $file.bin]
 				set cat [gzcat $file]
 				set error [catch {
-					# puts "$cat $file | getregionsbcol $chr $type $start $min $max $useshift"
+					# puts stderr "$cat $file | getregionsbcol $chr $type $start $min $max $useshift"
 					exec {*}$cat $file | getregionsbcol $chr $type $start $min $max $useshift >@ $o
 				} errmessage]
 				if {$error} {

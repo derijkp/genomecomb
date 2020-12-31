@@ -111,6 +111,7 @@ int bcol_NeedReversing(char format) {
 
 	fprintf(stderr,"unexpected fallthrough, do not know type \"%c\"\n",format);
 	exit(EXIT_FAILURE);
+	return -1; /* just to avoid "function might return no value" warning */
 }
 
 /*
@@ -414,6 +415,7 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 		fprintf(stderr,"unknown type %s\n",type);
 		exit(EXIT_FAILURE);
 	}
+	return -1; /* just to avoid "function might return no value" warning */
 }
 
 char *clipzeros(char *sbuffer) {
@@ -567,6 +569,7 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 		fprintf(stderr,"unknown type %s\n",&type);
 		exit(EXIT_FAILURE);
 	}
+	return -1; /* just to avoid "function might return no value" warning */
 }
 
 void bcol_close(BCol *bcol) {

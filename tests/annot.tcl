@@ -960,7 +960,7 @@ test bcol_var_annot {basic} {
 
 test bcol_var_annot {basic default} {
 	test_cleantmp
-	cg bcol make -t f --multicol alt -d - --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	cg bcol make -t f --multicol alt -d -1 --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	alt
 		chr1	0	1	snp	A
@@ -982,12 +982,12 @@ test bcol_var_annot {basic default} {
 		chr1	0	1	snp	A	0
 		chr1	0	1	snp	C	0.1
 		chr1	1	2	snp	A	2
-		chr1	1	2	snp	C	0
+		chr1	1	2	snp	C	-1
 		chr1	1	2	snp	T	2.1
 		chr1	4	5	snp	T	6.1
 		chr1	10	20	snp	T	0
-		chr2	22	23	snp	G	0
-		chr2	26	27	snp	A	0
+		chr2	22	23	snp	G	-1
+		chr2	26	27	snp	A	-1
 		chr2	29	30	snp	C	3000000
 	}
 	exec diff tmp/results.tsv tmp/expected.tsv

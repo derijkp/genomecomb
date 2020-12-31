@@ -16,69 +16,111 @@
 #include "tools.h"
 #include "gzpopen.h"
 
-FILE *gz_popen(char *filename) {
+PFILE *gz_popen(char *filename,char *format) {
 	int type = UNCOMPRESSED, len = strlen(filename);
-	DString *buffer=DStringNew();
-	FILE *result;
+	PFILE *result = (PFILE *)malloc(sizeof(PFILE));
+	DString *buffer = NULL;
 	char *cur;
+	result->filename = DStringNewFromChar(filename);
+	result->buffer = DStringNew();
+	buffer = result->buffer;
 	if (len == 1 && *filename == '-') {
-		type = IN;
+		result->f = stdin;
+		result->type = 's';
+		return result;
 	} else if (len >= 3) {
-		cur = filename + len - 1;
+		char *keepcur = filename + len - 1;
+		cur = keepcur;
 		if (len >= 4 && *cur == '4') {
 			if (*(--cur) == 'z' && *(--cur) == 'l' && *(--cur) == '.') {
-				type = LZ4;
+				DStringAppend(buffer,"lz4 -q -d -c ");
+				DStringAppend(buffer,filename);
+				keepcur = --cur; len -= 4;
+			} else {
+				cur = keepcur;
 			}
 		} else if (len >= 4 && *cur == 't') {
 			if (*(--cur) == 's' && *(--cur) == 'z' && *(--cur) == '.') {
-				type = ZSTD;
+				DStringAppend(buffer,"zstd-mt -T 1 -k -q -d -c ");
+				DStringAppend(buffer,filename);
+				keepcur = --cur; len -= 4;
+			} else {
+				cur = keepcur;
 			}
 		} else if (*cur == 'z') {
 			cur--;
-			if (*(cur) == 'g' && *(--cur) == '.') {
-				type = GZ;
-			} else if (*(cur) == 'r' && *(--cur) == '.') {
-				type = RZ;
+			if ((*(cur) == 'g' || *(cur) == 'r') && *(--cur) == '.') {
+				DStringAppend(buffer,"zcat ");
+				DStringAppend(buffer,filename);
+				keepcur = --cur; len -= 3;
+			} else {
+				cur = keepcur;
 			}
 		}
+		if (format != NULL) {
+			int flen = strlen(format);
+			int elen = 0;
+			if (flen == 3 && strncmp(format,"sam",3) == 0) {
+				while (*cur != '.' && len > 0) {
+					cur--; len--; elen++;
+				}
+				cur++;
+				if (*cur == '.') {len = 0;}
+				if (
+					(elen == 3 && strncmp(cur,"bam",elen) == 0)
+					|| (elen == 4 && strncmp(cur,"cram",elen) == 0)
+				) {
+					if (buffer->size == 0) {
+						DStringAppend(buffer,"samtools view --no-PG -h ");
+						DStringAppend(buffer,filename);
+					} else {
+						DStringAppend(buffer,"| samtools view --no-PG -h ");
+					}
+					keepcur = --cur;
+				} else {
+					cur = keepcur;
+				}
+			}
+		}
+		if (buffer->size == 0) {
+			result->f = fopen64_or_die(filename,"r");
+			result->type = 'f';
+		} else {
+			result->f = popen(buffer->string,"r");
+			result->type = 'p';
+		}
 	}
-	if (type == IN) {
-		return stdin;
-	} else if (type == UNCOMPRESSED) {
-		result = fopen64_or_die(filename,"r");
-	} else if (type == LZ4) {
-		DStringSet(buffer,"lz4 -q -d -c ");
-		DStringAppend(buffer,filename);
-		result = popen(buffer->string,"r");
-	} else if (type == ZSTD) {
-		DStringSet(buffer,"zstd-mt -T 1 -k -q -d -c ");
-		DStringAppend(buffer,filename);
-		result = popen(buffer->string,"r");
-	} else if (type == RZ || type == GZ) {
-		DStringSet(buffer,"zcat ");
-		DStringAppend(buffer,filename);
-		result = popen(buffer->string,"r");
-	} else {
-		result = fopen64_or_die(filename,"r");
-	}
-	if (result == NULL) {
+	if (result->f == NULL) {
 		fprintf(stderr,"Could not open file %s using popen (%s): %s\n",filename,buffer->string,strerror(errno));
 		exit(1);
 	}
 	return result;
 }
 
-int gz_pclose(FILE *file) {
+int gz_pclose(PFILE *pfile) {
 	int r;
-	r = pclose(file);
+	if (pfile->type == 'p') {
+		r = pclose(pfile->f);
+	} else if (pfile->type == 'f') {
+		r = fclose(pfile->f);
+	}
 	if (r == -1) {
 		if (errno == ECHILD) {
-			FCLOSE(file);
+			FCLOSE(pfile->f);
 		} else {
+			if (pfile->type == 'p') {
+				fprintf(stderr, "error closing stream \"%s\": %s\n", pfile->buffer->string, strerror(errno));
+			} else if (pfile->type == 'f') {
+				fprintf(stderr, "error closing file %s: %s\n", pfile->filename->string, strerror(errno));
+			} else {
+			}
 			fprintf(stderr, "%s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 	}
+	DStringDestroy(pfile->buffer);
+	DStringDestroy(pfile->filename);
+	free(pfile);
 	return r;
 }
 

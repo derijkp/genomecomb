@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 	int shift,pos,accept;
 	int status,begin=0,start,error;
 	if ((argc != 7)) {
-		fprintf(stderr,"Format is: getregions chromosome format start min max shift");
+		fprintf(stderr,"Format is: getregionsbcol chromosome format start min max shift");
 		exit(EXIT_FAILURE);
 	}
 	chr = argv[1];
