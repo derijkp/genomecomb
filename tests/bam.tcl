@@ -799,15 +799,15 @@ test noise {pretest} {
 	file_write tmp/temp.pup [deindent {
 		chr21	9439154	A	3	.gG	CDI
 		chr21	9439155	C	3	.,.	CDI
-		chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
-		chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,..,..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		chr21	9439515	C	53	,$....T*+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
 		chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
 		chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
 		chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
 		chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
 		chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
 		chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
-		chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		chr21	9444119	c	57	.$.,..........................,....,.......,.............^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
 		chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
 		chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
 		chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
@@ -816,28 +816,28 @@ test noise {pretest} {
 	}]\n
 	file_write tmp/expected.tsv [deindent {
 		depth	nrdiff	bin	chromosome	pos	ref	depth	bases	qual
-		40	0	0.00	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,-1c..,-1c..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
-		53	24	50.00	chr21	9439515	C	53	,$....T,+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		40	0	0.00	chr21	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,..,..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		53	25	50.00	chr21	9439515	C	53	,$....T*+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
 		20	0	0.00	chr21	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
 		20	0	0.00	chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
 		22	3	15.00	chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
 		26	0	0.00	chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
 		26	4	20.00	chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
 		27	5	20.00	chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
-		57	0	0.00	chr21	9444119	c	57	.$.,.-2TG...-2TG.-2TG..-2TG.-2TG..-2TG.-2TG.-2TG.-2TG.-2TG..-2TG.-2TG....-2TG.-2TG....,....,.-2TG.-2TG.-2TG....,..-2TG..-2TG.-2TG.-2TG.-2TG.-2TG.....^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		57	0	0.00	chr21	9444119	c	57	.$.,..........................,....,.......,.............^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
 		26	1	5.00	chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
 		26	1	5.00	chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
 		27	3	15.00	chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
 		27	2	10.00	chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
 		27	0	0.00	chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
 	}]\n
-	exec noise 20 0 0 < tmp/temp.pup > tmp/temp.tsv
-	exec diff tmp/temp.tsv tmp/expected.tsv
+	exec noise 20 0 0 < tmp/temp.pup > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
 	# cg select -overwrite 1 -f {chromosome {begin=$pos - 1} depth nrdiff pct_alt="${bin}"} tmp/expected.tsv tmp/expected2.tsv
 	file_write tmp/expected2.tsv [deindent {
 		chromosome	begin	depth	nrdiff	nrmismatch	nrdel	nrins	pct_alt	pct_mismatch	pct_del	pct_ins
 		chr21	9439388	40	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	9439514	53	24	13	0	11	45.28	24.53	0.00	20.75
+		chr21	9439514	53	25	13	1	11	47.17	24.53	1.89	20.75
 		chr21	9439625	20	0	0	0	0	0.00	0.00	0.00	0.00
 		chr21	9439631	20	0	0	0	0	0.00	0.00	0.00	0.00
 		chr21	9439650	22	3	3	0	0	13.64	13.64	0.00	0.00
@@ -851,42 +851,46 @@ test noise {pretest} {
 		chr21	43539137	27	2	0	2	0	7.41	0.00	7.41	0.00
 		chr21	43539138	27	0	0	0	0	0.00	0.00	0.00	0.00
 	}]\n
-	exec noise 20 1 < tmp/temp.pup > tmp/temp2.tsv
-	exec diff tmp/temp2.tsv tmp/expected2.tsv
-	cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/temp.tsv
-	cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/temp.tsv
-	exec noise 20 < tmp/temp.pup
-} {#filetype	tsv/noisefile
-#fileversion	0.99
-#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
-#mindepth	20
-#general bam stats:
-#numalignedbases	428
-#nummismatch	31
-#numdel	28
-#numins	11
-percentage	count
-0.00	6
-5.00	2
-10.00	1
-15.00	2
-20.00	2
-25.00	0
-30.00	0
-35.00	0
-40.00	0
-45.00	0
-50.00	1
-55.00	0
-60.00	0
-65.00	0
-70.00	0
-75.00	0
-80.00	0
-85.00	0
-90.00	0
-95.00	0
-100.00	0}
+	exec noise 20 1 < tmp/temp.pup > tmp/result2.tsv
+	exec diff tmp/result2.tsv tmp/expected2.tsv
+	file_write tmp/expected3.tsv [deindent {
+		#filetype	tsv/noisefile
+		#fileversion	0.99
+		#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
+		#mindepth	20
+		#general bam stats:
+		#numalignedbases	427
+		#nummismatch	31
+		#numdel	4
+		#numins	11
+		percentage	count
+		0.00	6
+		5.00	2
+		10.00	1
+		15.00	2
+		20.00	2
+		25.00	0
+		30.00	0
+		35.00	0
+		40.00	0
+		45.00	0
+		50.00	1
+		55.00	0
+		60.00	0
+		65.00	0
+		70.00	0
+		75.00	0
+		80.00	0
+		85.00	0
+		90.00	0
+		95.00	0
+		100.00	0
+	}]\n
+	# cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/result.tsv
+	# cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/result.tsv
+	exec noise 20 < tmp/temp.pup > tmp/result3.tsv
+	exec diff tmp/result3.tsv tmp/expected3.tsv
+} {}
 
 test noise {noise basic} {
 	test_cleantmp
@@ -901,32 +905,32 @@ test noise {noise basic} {
 		#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
 		#mindepth	20
 		#general bam stats:
-		#numalignedbases	99280657
-		#nummismatch	377747
-		#numdel	7849
-		#numins	6199
+		#numalignedbases	99192000
+		#nummismatch	290470
+		#numdel	17617
+		#numins	5778
 		percentage	count
-		0.00	1544927
-		5.00	105828
-		10.00	6928
-		15.00	1548
-		20.00	927
-		25.00	534
-		30.00	377
-		35.00	397
-		40.00	418
-		45.00	370
-		50.00	413
-		55.00	245
-		60.00	203
-		65.00	128
-		70.00	82
-		75.00	64
-		80.00	63
-		85.00	28
+		0.00	1593017
+		5.00	60713
+		10.00	4189
+		15.00	1382
+		20.00	901
+		25.00	513
+		30.00	370
+		35.00	406
+		40.00	413
+		45.00	358
+		50.00	416
+		55.00	239
+		60.00	204
+		65.00	127
+		70.00	79
+		75.00	63
+		80.00	66
+		85.00	27
 		90.00	43
-		95.00	86
-		100.00	735
+		95.00	85
+		100.00	733
 	}]\n
 	cg noise -refseq $refseq $bamfile > tmp/result.tsv
 	catch {

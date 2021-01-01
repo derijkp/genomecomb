@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	if (argc >= 3) perpos=atoi(argv[2]);
 	if (argc >= 4) debug=atoi(argv[3]);
 	if (argc >= 5) progress=atoi(argv[4]);
-	if (argc >= 6) typediff=argv[4][0];
+	if (argc >= 6) typediff=argv[5][0];
 	progresscur = progress;
 	results = (int *)malloc((mindepth+2)*sizeof(int));
 	for (i = 0 ; i <= mindepth ; i++) {
@@ -79,24 +79,35 @@ NODPRINT("%s\n",linepos)
 				char c = *linepos;
 				if (c == '+' || c == '-') {
 					if (c == '+') {
+						/* insertion after this base */
 						nrdiff++; nrins++;
 						numins++;
 					} else {
-						/* next base is a deletion, counted then */
+						/* next base(s) is a deletion, will be counted in next columns */
 					}
 					linepos++;
+					/* indel symbol (+/-) is followed by:
+					  - number of inserted/deleted bases
+					  - inserted/deleted bases */
 					num=atoi(linepos);
 					while (*linepos >= '0' && *linepos <= '9') linepos++;
 					while (num--) linepos++;
+				} else if (c == '^') {
+					/* first position covered by the read , followed by mapping quality encoded as one ascii char*/
+					linepos++; linepos++;
 				} else {
 					if ((*linepos >= 'A' && *linepos <= 'Z') || (*linepos >= 'a' && *linepos <= 'z')) {
 						nrdiff++; nrmismatch++;
 						numbases++; nummismatch++;
-					} else if (*linepos == '*') {
+					} else if (*linepos == '*' || *linepos == '#') {
 						nrdiff++; numdel++; nrdel++;
 					} else if (*linepos == '.' || *linepos == ',') {
 						numbases++;
 					}
+					/* other characters are ignored for counting :
+						$: If this is the last position covered by the read
+						> and <: Reference skip (due to CIGAR N -> RNA alignment)
+					*/
 					linepos++;
 				}
 			}
@@ -111,7 +122,7 @@ NODPRINT("%s\n",linepos)
 				} else if (typediff == 'i') {
 					diffs = nrins;
 				} else {
-					fprintf(stderr,"Wrong parameter for typediff");
+					fprintf(stderr,"Wrong parameter for typediff\n");
 					exit(1);
 				}
 				if (diffs > depth) {diffs = depth;}
