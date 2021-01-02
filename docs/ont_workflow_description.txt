@@ -1,0 +1,18 @@
+The basecalling of the Nanopore data was performed using the Guppy
+basecaller version v4.0.9+92ae093. Analysis was performed using a pipeline
+integrated in genomecomb (1) Reads were aligned to the hg38 genome
+reference (2) using minimap2 (3) and the resulting sam file sorted and
+converted to bam using samtools (4). Structural variants were called using
+sniffles (5) and npinv (6). SNV calls and haplotype separation of the bam
+were performed using longshot (7). For methylation calls nanopolish (8)
+was used. The resulting variant sets of different individuals were
+combined and annotated using genomecomb (1).
+
+(1) genomecomb 0.101.0, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
+(2) hg38 (GRCh38) downloaded from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz on 2020-06-06, Schneider V.A. et al. (2017) Evaluation of GRCh38 and de novo haploid genome assemblies demonstrates the enduring quality of the reference assembly. Genome Res. 2017 May; 27(5): 849\u2013864. [PMID: 28396521]
+(3) minimap2 2.17-r941, Li, H. (2018). Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics, 34:3094-3100. doi:10.1093/bioinformatics/bty191 [PMID: 29750242]
+(4) samtools 1.10, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943]
+(5) sniffles 1.0.11, Sedlazeck, F. J., Rescheneder, P., Smolka, M., Fang, H., Nattestad, M., von Haeseler, A., & Schatz, M. C. (2018). Accurate detection of complex structural variations using single-molecule sequencing. Nature methods, 15(6), 461\u2013468. https://doi.org/10.1038/s41592-018-0001-7 [PMID: 29713083]
+(6) npinv , Shao, H., Ganesamoorthy, D., Duarte, T., Cao, M. D., Hoggart, C. J., & Coin, L. (2018). npInv: accurate detection and genotyping of inversions using long read sub-alignment. BMC bioinformatics, 19(1), 261. https://doi.org/10.1186/s12859-018-2252-9 [PMID: 30001702]
+(7) longshot , Edge, P., & Bansal, V. (2019). Longshot enables accurate variant calling in diploid genomes from single-molecule long read sequencing. Nature communications, 10(1), 4660. https://doi.org/10.1038/s41467-019-12493-y [PMID: 31604920]
+(8) nanopolish , Loman, N. J., Quick, J., & Simpson, J. T. (2015). A complete bacterial genome assembled de novo using only nanopore sequencing data. Nature methods, 12(8), 733\u2013735. https://doi.org/10.1038/nmeth.3444 [PMID: 26076426]
