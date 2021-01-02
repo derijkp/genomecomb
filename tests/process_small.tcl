@@ -29,8 +29,12 @@ test process_small {process_project mastr_mx2} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
 	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
-	exec cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+	exec cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatk sam} \
+		-reports -predictgender \
+		-minfastqreads 10 \
+		-amplicons tmp/${basename}/samplicons-wgs2.tsv \
+		-extra_reports_mastr 1 \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
@@ -53,7 +57,7 @@ test process_small {process_project mastr_mx2} {
 		-x colinfo \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
-		tmp/${basename} expected.2020_02_02/${basename}]
+		tmp/${basename} expected/${basename}]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
 	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
 		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
@@ -118,8 +122,11 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
 	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		-varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
+		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv \
+		-extra_reports_mastr 1 \
+		-varcallers {gatkh strelka} \
+		-aliformat cram \
+		-extra_reports_mastr gatkh \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
@@ -186,7 +193,10 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 	}
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
 	cg process_project {*}$::runopts {*}$::dopts -jobsample 1 -split 1 \
-		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		-varcallers {gatk sam} \
+		-minfastqreads 10 \
+		-amplicons tmp/${basename}/samplicons-wgs2.tsv \
+		-extra_reports_mastr 1 \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
@@ -283,6 +293,7 @@ test process_small {process_project exomes_yri_mx2} {
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
@@ -315,7 +326,8 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatk freebayes} \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatk freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
@@ -348,7 +360,8 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatkh freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
@@ -420,6 +433,7 @@ test process_small {process_project genomes_yri_mx2} {
 	}
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/${basename}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
@@ -458,9 +472,10 @@ test process_small {process_project mixed_yri_mx2} {
 	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
-	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
-	  tmp/${basename} >& tmp/${basename}.log
+		-varcallers {gatk sam} \
+		-dbdir /complgen/refseq/hg19 \
+		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -496,9 +511,10 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
-	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
-	  tmp/${basename} >& tmp/${basename}.log
+		-varcallers {gatk sam} \
+		-dbdir /complgen/refseq/hg19 \
+		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
