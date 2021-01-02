@@ -608,7 +608,7 @@ test select {spercent} {
 } {}
 
 test select {scount sample} {
-	exec cg select -f {chromosome begin 
+	exec cg select -overwrite 1 -f {chromosome begin 
 		{test=scount(($sample eq "sample1") and $sequenced-gatk == "v")} sequenced-*
 	} data/vars-saggr.tsv tmp/results.tsv
 	write_tab tmp/expected.tsv {

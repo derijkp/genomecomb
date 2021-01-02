@@ -605,9 +605,9 @@ test select {apercent} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
-test select {acount sample} {
-	exec cg select -f {chromosome begin 
-		{test=acount(($sample eq "gatk-sample1" or $sample eq "sam-sample1") and $sequenced == "v")} sequenced-*
+test select {acount analysis} {
+	exec cg select -overwrite 1 -f {chromosome begin 
+		{test=acount(($analysis eq "gatk-sample1" or $analysis eq "sam-sample1") and $sequenced == "v")} sequenced-*
 	} data/vars-saggr.tsv tmp/results.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	test	sequenced-gatk-sample1	sequenced-sam-sample1	sequenced-gatk-sample2
@@ -630,9 +630,9 @@ test select {acount sample} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
-test select {acount sample in query} {
+test select {acount analysis in query} {
 	exec cg select \
-		-q {acount(($sample eq "gatk-sample1" or $sample eq "sam-sample1") and $sequenced == "v") > 1} \
+		-q {acount(($analysis eq "gatk-sample1" or $analysis eq "sam-sample1") and $sequenced == "v") > 1} \
 		-f {chromosome begin sequenced-*} data/vars-saggr.tsv tmp/results.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	sequenced-gatk-sample1	sequenced-sam-sample1	sequenced-gatk-sample2
@@ -646,10 +646,27 @@ test select {acount sample in query} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
+test select {acount analysis in query and fields} {
+	exec cg select -overwrite 1 \
+		-q {acount(($analysis eq "gatk-sample1" or $analysis eq "sam-sample1") and $sequenced == "v") > 1} \
+		-f {chromosome begin {test=acount(($analysis eq "gatk-sample1" or $analysis eq "sam-sample1") and $sequenced == "v")} sequenced-*
+	} data/vars-saggr.tsv tmp/results.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	test	sequenced-gatk-sample1	sequenced-sam-sample1	sequenced-gatk-sample2
+		1	259	2	v	v	v
+		1	4001	2	v	v	r
+		1	5000	2	v	v	r
+		2	4000	2	v	v	v
+		2	5010	2	v	v	v
+		3	876	2	v	v	v
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
 test select {acount sample in query and fields} {
-	exec cg select \
-		-q {acount(($sample eq "gatk-sample1" or $sample eq "sam-sample1") and $sequenced == "v") > 1} \
-		-f {chromosome begin {test=acount(($sample eq "gatk-sample1" or $sample eq "sam-sample1") and $sequenced == "v")} sequenced-*
+	exec cg select -overwrite 1 \
+		-q {acount(($sample eq "sample1") and $sequenced == "v") > 1} \
+		-f {chromosome begin {test=acount(($sample eq "sample1") and $sequenced == "v")} sequenced-*
 	} data/vars-saggr.tsv tmp/results.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	test	sequenced-gatk-sample1	sequenced-sam-sample1	sequenced-gatk-sample2

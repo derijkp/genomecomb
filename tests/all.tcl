@@ -37,6 +37,7 @@ runtests remap.tcl
 runtests select.tcl
 runtests select_group.tcl
 runtests select_saggregates.tcl
+runtests select_aaggregates.tcl
 runtests multiselect.tcl
 runtests tsv.tcl
 runtests val.tcl
