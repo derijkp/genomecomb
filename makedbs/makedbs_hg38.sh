@@ -2,10 +2,12 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
+# settings
+# ========
+
 set build hg38
 set defaultdest /complgen/refseqnew
 
-# settings
 set genomeurl ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
 set par {chromosome	begin	end	name
 X	10001	2781479	PAR1
@@ -13,10 +15,8 @@ X	155701383	156030895	PAR2
 Y	10001	2781479	PAR1
 Y	56887903	57217415	PAR2
 }
-set mirbasegenome hsa
-set mirbaserelease 22.1
-set mirbasebuild hg38
-set dbsnpversion 151
+set dbsnpversion 153
+set mirbase hsa-22.1:hg38
 set gencodeversion 34
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
@@ -33,7 +33,7 @@ set caddversion 1.6
 set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/whole_genome_SNVs.tsv.gz
 set caddbuild hg38
 set gnomadbuild hg38
-set gnomadversion 3.0
+set gnomadversion 3.1
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
 set gnomadexbuild hg19
 set gnomadexversion 2.1.1
@@ -41,6 +41,9 @@ set gnomadexurl https://storage.googleapis.com/gnomad-public/release/$gnomadexve
 set gnomadlofbuild hg19
 set gnomadlofversion 2.1.1
 set gnomadlof https://storage.googleapis.com/gnomad-public/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.lof_metrics.by_gene.txt.bgz
+set gnomadsvbuild hg19
+set gnomadsvversion 2.1
+set gnomadsv https://storage.googleapis.com/gcp-public-data--gnomad/papers/2019-sv/gnomad_v2.1_sv.sites.vcf.gz
 set ccrversion 2.20180420
 set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
 set ccrbuild hg19
@@ -52,19 +55,26 @@ set regionsdb_collapse {
 	phastConsElements100way phastConsElements30way
 }
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
-
 set regionsdb_join {
 	chainSelf dgvMerged genomicSuperDups
 }
-set genesdb_list [list \
-	refGene knownGene wgEncodeGencodeBasicV${gencodeversion} wgEncodeGencodeCompV${gencodeversion} \
-	genscan augustusGene lincRNAsTranscripts \
+set genesdb [list \
+	{refGene int reg} \
+	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
+	{knownGene extra int reg} \
+	[list wgEncodeGencodeCompV${gencodeversion} cgencode extra] \
+	{genscan extra} \
+	{augustusGene extra} \
+	{lincRNAsTranscripts lincRNA} \
 ]
+
+# prepare
+# =======
 
 # keep actual command line used for log
 set cmdline "[list cd [pwd]] \; [list [info script] {*}$argv]"
 
-# arguments
+# arguments, start job system
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
@@ -79,6 +89,7 @@ file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
 
+# set 
 logverbose 2
 set_job_logdir log_jobs
 job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
@@ -87,168 +98,21 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 # ========
 #
 
-# readme
-set c [file_read $appdir/docs/dbdir_README.txt]
-regsub {version: [0-9.]+} $c "version: 0.101.0\ntime: [lindex [timestamp] 0]" c
-file_write README_dbdir.txt $c
+# makerefdb
+# ---------
+# first part is done with the more generic cg makerefdb, but we call it with makerefdb_job to run its jobs under the already started job manager
+makerefdb_job \
+	-genomeurl $genomeurl \
+	-refSeqFuncElemsurl $refSeqFuncElemsurl \
+	-genesdb $genesdb \
+	-pseudoautosomal $par \
+	-dbsnp $dbsnpversion \
+	-mirbase $mirbase \
+	-webcache $webcache \
+	$dest/$build
 
-# download genome
-job genome_${build} -targets {
-	genome_${build}.ifas
-	genome_${build}.ifas.fai
-	extra/reg_${build}_fullgenome.tsv
-	genome_${build}.ifas.index
-} -vars {
-	build genomeurl
-} -code {
-	cg download_genome -alt 0 -url $genomeurl genome_${build}.ifas ${build} 2>@ stderr
-	file rename -force -- reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
-	cg zst -i 1 extra/reg_${build}_fullgenome.tsv
-}
-
-job genome_${build}_cindex -deps {
-	genome_${build}.ifas
-} -targets {
-	genome_${build}.ssa
-} -code {
-	cg make_genomecindex $dep
-}
-
-job genome_${build}_forcram -deps {
-	genome_${build}.ifas
-} -targets {
-	genome_${build}.ifas.forcram
-} -code {
-	cg fasta2cramref $dep $target
-}
-
-job reg_${build}_sequencedgenome -deps {
-	genome_${build}.ifas
-} -targets {
-	extra/reg_${build}_sequencedgenome.tsv.zst
-} -vars {dest build} -code {
-	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-}
-
-# make bwa version of genome
-refseq_bwa_job genome_${build}.ifas
-
-# make ngmlr version of genome
-refseq_ngmlr_job genome_${build}.ifas ont
-
-# make minimap2 versions of genome
-refseq_minimap2_job genome_${build}.ifas sr
-refseq_minimap2_job genome_${build}.ifas map-ont
-refseq_minimap2_job genome_${build}.ifas splice
-
-job extragenome -deps {
-	genome_${build}.ifas
-	genome_${build}.ifas.index
-	genome_${build}.ssa
-} -vars build -targets {
-	extra/genome_${build}.ifas extra/genome_${build}.ifas.fai extra/genome_${build}.ifas.index
-	genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
-	extra/genome_${build}.ssa
-} -code {
-	mklink genome_${build}.ifas extra/genome_${build}.ifas
-	mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
-	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-	mklink genome_${build}.ifas genome_${build}.fa
-	mklink genome_${build}.ifas.fai genome_${build}.fa.fai
-	mklink genome_${build}.ifas.index genome_${build}.fa.index 
-	mklink genome_${build}.ssa extra/genome_${build}.ssa
-}
-# genome in extra
-foreach file [glob genome_*] {
-	catch {
-		file delete extra/[file tail $file]
-		mklink $file extra/[file tail $file]
-	}
-}
-
-# region databases (ucsc)
-# you can explicitely download info on a database using:
-# cg download_ucscinfo resultfile ${build} dbname
-
-# collapse regions
-foreach db $regionsdb_collapse {
-	job reg_${build}_$db -targets {
-		reg_${build}_${db}.tsv
-	} -vars {dest build db} -code {
-		set target [gzroot $target].zst
-		cg download_ucsc $target.ucsc ${build} $db
-		cg regcollapse $target.ucsc > $target.temp
-		file delete $target.ucsc
-		file rename -force -- $target.ucsc.info [gzroot $target].info
-		compress $target.temp $target
-	}
-}
-
-job reg_${build}_refSeqFuncElems -targets {
-	reg_${build}_refSeqFuncElems.tsv.zst
-} -vars {
-	dest build refSeqFuncElemsurl
-} -code {
-	set target [gzroot $target].zst
-	file mkdir $target.temp
-	set tail [file tail $refSeqFuncElemsurl]
-	wgetfile $refSeqFuncElemsurl $target.temp/$tail
-	cg gff2tsv $target.temp/$tail $target.temp/reg.tsv
-	set temp [string trim [cg select -q {$type eq "region" and $chromosome regexp "^NC_0" and $attr_chromosome ne ""} -g {chromosome * attr_chromosome *} $target.temp/reg.tsv]]
-	set temp [lrange [split $temp \n] 1 end]
-	set chrcode {chromosome=if(}
-	list_foreach {chrid chr} $temp {
-		append chrcode "\$chromosome eq \"$chrid\",\"$chr\","
-	}
-	append chrcode "\"?\")"
-	set fields [list $chrcode {*}[list_common {
-		begin end type strand source phase ID Dbxref gbkey Note experiment function regulatory_class standard_name
-	} [cg select -h $target.temp/reg.tsv]]]
-#	set fields {chromosome begin end type strand source phase ID Dbxref gbkey Note experiment function regulatory_class standard_name}
-	cg select -stack 1 -v 2 -overwrite 1 -q {$source eq "RefSeqFE" and $type ne "biological_region" and $chromosome regexp "^NC_0"} -f $fields $target.temp/reg.tsv $target.temp/refseqfe.tsv
-
-	cg select -s - -overwrite 1 $target.temp/refseqfe.tsv $target.temp/srefseqfe.tsv
-	cg regcollapse $target.temp/srefseqfe.tsv | cg zst -compressionlevel 11 > $target.temp/result.tsv.zst
-	# opt and info
-	file_write [gzroot $target].opt "fields\t{type}\n"
-	set version [timestamp]
-	set temp [exec head -20 $target.temp/srefseqfe.tsv]
-	regexp {Annotation Release ([0-9.]+)} $temp temp version
-	file_write [gzroot $target].info [subst [deindent {
-		= RefSeqFE (Refseq functional elements) =
-		
-		== Download info ==
-		dbname	RefSeqFE
-		version	$version
-		source	$refSeqFuncElemsurl
-		time	[timestamp]
-		
-		== Description ==
-		
-		More info on https://www.ncbi.nlm.nih.gov/refseq/functionalelements/
-		
-		== Category ==
-		Annotation
-	}]]
-	file rename -force $target.temp/result.tsv.zst $target
-	file delete -force $target.temp
-}
-
-
-# join regions
-foreach db $regionsdb_join {
-	job reg_${build}_$db -targets {
-		reg_${build}_${db}.tsv
-	} -vars {dest build db} -code {
-		set target [gzroot $target].zst
-		cg download_ucsc $target.ucsc ${build} $db
-		cg regjoin $target.ucsc > $target.temp
-		file delete $target.ucsc
-		file rename -force -- $target.ucsc.info [gzroot $target].info
-		compress $target.temp $target
-	}
-}
+# rest after this is human specific
+# ---------------------------------
 
 job reg_${build}_gwasCatalog -targets {
 	reg_${build}_gwasCatalog.tsv
@@ -264,19 +128,6 @@ job reg_${build}_gwasCatalog -targets {
 	file delete $target.ucsc
 	file rename -force -- $target.ucsc.info [gzroot $target].info
 	compress $target.temp2 $target
-}
-
-foreach db {
-	rmsk simpleRepeat
-} {
-	job maketabix_${build}_$db -deps {
-		reg_${build}_${db}.tsv
-	} -targets {
-		reg_${build}_${db}.tsv.gz.tbi
-		reg_${build}_${db}.tsv.gz
-	} -vars {build db} -code {
-		cg maketabix $dep
-	}
 }
 
 ## 1000 genomes
@@ -296,37 +147,6 @@ job 1000g3 -targets {
 	cplinked $target extra/var_${build}_1000g3.tsv.zst
 	cplinked $target.zsti extra/var_${build}_1000g3.tsv.zst.zsti
 	file_write extra/var_${build}_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
-}
-
-# dbsnp
-job dbsnp -targets {
-	var_${build}_dbsnp.tsv
-	var_${build}_dbsnp.tsv.opt
-} -vars {dest build dbsnpversion} -code {
-	set target [gzroot $target].zst
-	file_write [gzroot $target].opt "fields\t{name}\n"
-	cg download_dbsnp $target ${build} snp$dbsnpversion 2>@ stderr
-	cg zindex $target
-}
-
-job dbsnpCommon -targets {
-	var_${build}_dbsnpCommon.tsv
-} -vars {dest build dbsnpversion} -code {
-	set target [gzroot $target].zst
-	file_write [gzroot $target].opt "fields\t{freqp}\n"
-	cg download_dbsnp $target ${build} snp${dbsnpversion}Common 2>@ stderr
-	cg zindex $target
-}
-
-foreach db [list dbsnp dbsnpCommon] {
-	job maketabix_${build}_$db -deps {
-		var_${build}_${db}.tsv
-	} -targets {
-		var_${build}_${db}.tsv.gz.tbi
-		var_${build}_${db}.tsv.gz
-	} -vars {dest build db} -code {
-		cg maketabix $dep
-	}
 }
 
 job clinvar -targets {
@@ -350,136 +170,6 @@ if {[info exists kaviarurl]} {
 		}
 	}
 }
-
-# genes
-foreach db $genesdb_list {
-	if {$db eq "wgEncodeGencodeCompV19"} {
-		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeBasicV${gencodeversion}"} {
-		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeCompV${gencodeversion}"} {
-		set dbname cgencode
-	} elseif {$db eq "wgEncodeGencodeBasicV${gencodeversion}lift37"} {
-		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeCompV${gencodeversion}lift37"} {
-		set dbname cgencode
-	} elseif {$db eq "lincRNAsTranscripts"} {
-		set dbname lincRNA
-	} else {set dbname $db}
-	if {$db in "refGene lincRNAsTranscripts"} {
-		set target gene_${build}_${dbname}.tsv
-	} else {
-		set target extra/gene_${build}_${dbname}.tsv
-	}
-	job gene_${build}_$dbname -targets {
-		$target.zst
-		$target.gz.tbi
-		$target.gz
-	} -vars {dest build db} -code {
-		set target [gzroot $target].zst
-		file delete $target
-		cg download_genes $target $build $db
-	        cg maketabix $target
-		cg index $target
-	}
-}
-
-set target gene_${build}_intGene.tsv
-job gene_${build}_intGene -deps {
-	gene_${build}_refGene.tsv.zst
-	extra/gene_${build}_gencode.tsv.zst
-	extra/gene_${build}_knownGene.tsv.zst
-} -targets {
-	$target.zst
-	$target.gz
-	$target.gz.tbi
-} -vars {dest build db} -code {
-	set target [gzroot $target].zst
-	cg intgene {*}$deps {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg maketabix $target
-	cg zindex $target
-	cg index $target
-}
-
-job reg_${build}_genes -deps {
-	gene_${build}_refGene.tsv
-	extra/gene_${build}_knownGene.tsv
-	extra/gene_${build}_gencode.tsv
-} -targets {
-	extra/reg_${build}_genes.tsv
-} -code {
-	set target [gzroot $target].zst
-	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg zindex $target
-}
-
-job reg_refcoding -deps {
-	gene_${build}_refGene.tsv
-} -targets {
-	extra/reg_${build}_refcoding.tsv
-} -vars {
-	build
-} -code {
-	mkdbs_write_info $target Regions {
-		Coding regions extracted from refGene
-	} source $dep build $build
-	set target [gzroot $target].zst
-	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg zindex $target
-}
-
-job reg_exome_refGene -deps {
-	gene_${build}_refGene.tsv
-} -targets {
-	extra/reg_${build}_exome_refGene.tsv
-} -vars {
-	build
-} -code {
-	mkdbs_write_info $target Regions {
-		Exome regions (CDS, UTR and RNA) extracted from refGene
-	} source $dep build $build
-	set target [gzroot $target].zst
-	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg zindex $target
-}
-
-job reg_intcoding -deps {
-	gene_${build}_intGene.tsv
-} -targets {
-	extra/reg_${build}_intcoding.tsv
-} -vars {
-	build
-} -code {
-	mkdbs_write_info $target Regions {
-		Coding regions extracted from intGene
-	} source $dep build $build
-	set target [gzroot $target].zst
-	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg zindex $target
-}
-
-job reg_exome_intGene -deps {
-	gene_${build}_intGene.tsv
-} -targets {
-	extra/reg_${build}_exome_intGene.tsv
-} -vars {
-	build
-} -code {
-	mkdbs_write_info $target Regions {
-		Exome regions (CDS, UTR and RNA) extracted from intGene
-	} source $dep build $build
-	set target [gzroot $target].zst
-	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg zindex $target
-}
-
-file_write extra/reg_${build}_pseudoautosomal.tsv $par
 
 job reg_${build}_phenotype -deps {
 	extra/reg_${build}_genes.tsv
@@ -535,32 +225,6 @@ job reg_${build}_go -deps {
 #		file_write $target3 $temp
 #	}
 #}
-
-# homopolymer
-job reg_${build}_homopolymer -deps {
-	genome_${build}.ifas
-} -targets {
-	reg_${build}_homopolymer.tsv.zst
-	reg_${build}_homopolymer.tsv.gz
-	reg_${build}_homopolymer.tsv.gz.tbi
-	reg_${build}_homopolymer.tsv.opt
-} -vars {dest build db} -code {
-	set target reg_${build}_homopolymer.tsv.zst
-	file_write [gzroot $target].opt "fields\t{base size}\n"
-	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-        cg maketabix $target
-}
-
-# mirbase
-job mir_${build}_mirbase -targets {
-	mir_${build}_mirbase$mirbaserelease.tsv
-	mir_${build}_mirbase$mirbaserelease.tsv.info
-} -vars {mirbasegenome mirbaserelease mirbasebuild dest build db} -code {
-	set target [gzroot $target].zst
-	if {$mirbasebuild ne $build} {error "error: mirbase $mirbaserelease for build $mirbasebuild (making $build)"}
-	cg download_mirbase $target $mirbasegenome $mirbaserelease
-}
 
 # exome variant server
 job var_${build}_evs -targets {
@@ -764,6 +428,54 @@ job lofgnomad -deps {
 	cg zstindex $target.zst
 	file delete -force $target.temp
 }
+
+# gnomadsv (todo)
+# ---------------
+job svgnomad -deps {
+} -vars {
+	build gnomadsv gnomadsvbuild gnomadsvversion dest
+} -targets {
+	reg_${build}_svgnomad.tsv
+} -code {
+	file_write $target.info [subst [deindent {
+		= svgnomad (loss of function tolerence) =
+		
+		== Download info ==
+		dbname	svgnomad
+		version	$gnomadsvversion
+		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
+		license	cite
+		source	$gnomadsv
+		time	[timestamp]
+		
+		== Description ==
+		
+		gnomad structural variants
+
+		More info on https://gnomad.broadinstitute.org/faq
+		and in https://doi.org/10.1038/s41586-020-2287-8
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\tpLI\n"
+	file mkdir $target.temp
+	set tail [file tail $gnomadlof]
+	wgetfile $gnomadlof $target.temp/$tail
+	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
+	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
+	if {$build ne $gnomadlofbuild} {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
+		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadlofbuild $build
+	} else {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
+		file rename -force -- $target.temp2.zst $target.zst
+	}
+	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
+
 
 # gnomad
 # ------
@@ -1030,7 +742,7 @@ if {[file exists $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz]} 
 	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
 	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz $target.temp
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp2.zst
-	file rename -- $target.temp2.zst $target
+	file rename -force -- $target.temp2.zst $target
 	file delete $target.temp
 }
 
@@ -1044,7 +756,7 @@ if {[file exists $defaultdest/downloads/geneHancerClusteredInteractions_${build}
 	} $defaultdest/downloads/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
 	cg select -overwrite 1 -s - $target.temp $target.temp2
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp3.zst
-	file rename -- $target.temp3.zst $target
+	file rename -force -- $target.temp3.zst $target
 	file delete $target.temp $target.temp2
 }
 
@@ -1098,13 +810,13 @@ foreach {srcbuild targetname url file} {
 		cg regcollapse -o reg_${srcbuild}_exome_$targetname.tsv s$targetname.tsv
 		if {$srcbuild ne $build} {
 			liftover_refdb reg_${srcbuild}_exome_$targetname.tsv reg_${build}_exome_$targetname.tsv $dest $srcbuild $build
-			file rename reg_${build}_exome_$targetname.tsv.unmapped reg_${build}_exome_$targetname-unmapped.tsv
+			file rename -force reg_${build}_exome_$targetname.tsv.unmapped reg_${build}_exome_$targetname-unmapped.tsv
 			compress reg_${build}_exome_$targetname-unmapped.tsv reg_${build}_exome_$targetname-unmapped.tsv.zst
-			file rename -- reg_${build}_exome_$targetname-unmapped.tsv.zst [file root $fulltarget]-unmapped.tsv.zst
+			file rename -force -- reg_${build}_exome_$targetname-unmapped.tsv.zst [file root $fulltarget]-unmapped.tsv.zst
 		}
 		compress reg_${build}_exome_$targetname.tsv reg_${build}_exome_$targetname.tsv.zst
 		file delete temp.bed s$targetname.tsv u$targetname.tsv
-		file rename -- reg_${build}_exome_$targetname.tsv.zst $fulltarget.zst
+		file rename -force -- reg_${build}_exome_$targetname.tsv.zst $fulltarget.zst
 		cd ${dest}/${build}
 		file delete -force $fulltarget.temp
 		if {$targetname eq "SeqCap_EZ_v3"} {
@@ -1122,7 +834,7 @@ job reg_exome_twistfull -deps {
 } -vars {targetname url file dest build} -code {
 	set fulltarget [file_absolute $target].zst
 	exec cg cat {*}$dep | cg select -s - | cg regcollapse {*}[compresspipe $fulltarget] > $fulltarget.temp
-	file rename -- $fulltarget.temp $fulltarget
+	file rename -force -- $fulltarget.temp $fulltarget
 }
 
 # copy exome target regions collected in $defaultdest/downloads to extra, or lift if needed

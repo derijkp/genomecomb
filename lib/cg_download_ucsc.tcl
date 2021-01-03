@@ -1,3 +1,16 @@
+proc cg_check_ucsc {build dbname} {
+	set tempdir [tempdir]
+	wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $tempdir/$dbname.html
+	set tempfile [tempfile]
+	exec wget -c --tries=4 -O $tempfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname > /dev/null 2> /dev/null
+	set temp [file_read $tempfile]
+	if {[regexp "Can't find $dbname in track database" $temp]} {
+		return 0
+	} else {
+		return 1
+	}
+}
+
 proc cg_download_ucscinfo {args} {
 	cg_options download_ucscinfo args {
 		-c {set continue $value}
