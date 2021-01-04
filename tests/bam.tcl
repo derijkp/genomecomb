@@ -805,7 +805,7 @@ test noise {pretest} {
 		chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
 		chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
 		chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
-		chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		chr21	9439702	C	26	,.,,,g,G,A,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
 		chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
 		chr21	9444119	c	57	.$.,..........................,....,.......,.............^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
 		chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
@@ -822,7 +822,7 @@ test noise {pretest} {
 		20	0	0.00	chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
 		22	3	15.00	chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
 		26	0	0.00	chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
-		26	4	20.00	chr21	9439702	C	26	,.,,,g,G,.,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		26	5	20.00	chr21	9439702	C	26	,.,,,g,G,A,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
 		27	5	20.00	chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
 		57	0	0.00	chr21	9444119	c	57	.$.,..........................,....,.......,.............^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
 		26	1	5.00	chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
@@ -835,21 +835,21 @@ test noise {pretest} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 	# cg select -overwrite 1 -f {chromosome {begin=$pos - 1} depth nrdiff pct_alt="${bin}"} tmp/expected.tsv tmp/expected2.tsv
 	file_write tmp/expected2.tsv [deindent {
-		chromosome	begin	depth	nrdiff	nrmismatch	nrdel	nrins	pct_alt	pct_mismatch	pct_del	pct_ins
-		chr21	9439388	40	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	9439514	53	25	13	1	11	47.17	24.53	1.89	20.75
-		chr21	9439625	20	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	9439631	20	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	9439650	22	3	3	0	0	13.64	13.64	0.00	0.00
-		chr21	9439679	26	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	9439701	26	4	4	0	0	15.38	15.38	0.00	0.00
-		chr21	9439708	27	5	5	0	0	18.52	18.52	0.00	0.00
-		chr21	9444118	57	0	0	0	0	0.00	0.00	0.00	0.00
-		chr21	43539134	26	1	1	0	0	3.85	3.85	0.00	0.00
-		chr21	43539135	26	1	1	0	0	3.85	3.85	0.00	0.00
-		chr21	43539136	27	3	2	1	0	11.11	7.41	3.70	0.00
-		chr21	43539137	27	2	0	2	0	7.41	0.00	7.41	0.00
-		chr21	43539138	27	0	0	0	0	0.00	0.00	0.00	0.00
+		chromosome	begin	depth	ref	nr_diff	nr_mismatch	nr_del	nr_ins	nr_A	nr_C	nr_G	nr_T	pct_diff	pct_mismatch	pct_del	pct_ins	pct_A	pct_C	pct_G	pct_T	pct_mismatch
+		chr21	9439388	40	G	0	0	0	0	0	40	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9439514	53	C	25	13	1	11	0	39	0	13	47.17	24.53	1.89	20.75	0.00	73.58	0.00	24.53	24.53
+		chr21	9439625	20	C	0	0	0	0	0	20	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9439631	20	C	0	0	0	0	0	20	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9439650	22	T	3	3	0	0	0	0	3	19	13.64	13.64	0.00	0.00	0.00	0.00	13.64	86.36	13.64
+		chr21	9439679	26	A	0	0	0	0	26	0	0	0	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00	0.00
+		chr21	9439701	26	C	5	5	0	0	1	21	4	0	19.23	19.23	0.00	0.00	3.85	80.77	15.38	0.00	15.38
+		chr21	9439708	27	C	5	5	0	0	5	22	0	0	18.52	18.52	0.00	0.00	18.52	81.48	0.00	0.00	18.52
+		chr21	9444118	57	c	0	0	0	0	0	57	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	43539134	26	G	1	1	0	0	1	25	0	0	3.85	3.85	0.00	0.00	3.85	96.15	0.00	0.00	3.85
+		chr21	43539135	26	C	1	1	0	0	0	25	0	1	3.85	3.85	0.00	0.00	0.00	96.15	0.00	3.85	3.85
+		chr21	43539136	27	A	3	2	1	0	24	0	0	0	11.11	7.41	3.70	0.00	88.89	0.00	0.00	0.00	7.41
+		chr21	43539137	27	G	2	0	2	0	0	26	0	0	7.41	0.00	7.41	0.00	0.00	96.30	0.00	0.00	0.00
+		chr21	43539138	27	A	0	0	0	0	27	0	0	0	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00	0.00
 	}]\n
 	exec noise 20 1 < tmp/temp.pup > tmp/result2.tsv
 	exec diff tmp/result2.tsv tmp/expected2.tsv
@@ -860,7 +860,7 @@ test noise {pretest} {
 		#mindepth	20
 		#general bam stats:
 		#numalignedbases	427
-		#nummismatch	31
+		#nummismatch	32
 		#numdel	4
 		#numins	11
 		percentage	count
@@ -890,12 +890,49 @@ test noise {pretest} {
 	# cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/result.tsv
 	exec noise 20 < tmp/temp.pup > tmp/result3.tsv
 	exec diff tmp/result3.tsv tmp/expected3.tsv
+	file_write tmp/expected4.tsv [deindent {
+		#filetype	tsv/noisefile
+		#fileversion	0.99
+		#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
+		#mindepth	20
+		#general bam stats:
+		#numalignedbases	427
+		#nummismatch	32
+		#numdel	4
+		#numins	11
+		percentage	count
+		0.00	7
+		5.00	2
+		10.00	1
+		15.00	1
+		20.00	2
+		25.00	1
+		30.00	0
+		35.00	0
+		40.00	0
+		45.00	0
+		50.00	0
+		55.00	0
+		60.00	0
+		65.00	0
+		70.00	0
+		75.00	0
+		80.00	0
+		85.00	0
+		90.00	0
+		95.00	0
+		100.00	0
+	}]\n
+	# cg select -f {{pct=100.0*$nrdiff/$depth} depth nrdiff} tmp/result.tsv
+	# cg select -f {{pct=100.0*$nrdiff/$depth}} -g pct tmp/result.tsv
+	exec noise 20 0 -1 0 b < tmp/temp.pup > tmp/result4.tsv
+	exec diff tmp/result4.tsv tmp/expected4.tsv
 } {}
 
-test noise {noise basic} {
+test noise {noise -typediffs b} {
 	test_cleantmp
-	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/temp.bam
-	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam.bai tmp/temp.bam.bai
+	exec samtools view -b data/map-rdsbwa-NA19240_small.sam > tmp/temp.bam
+	exec samtools index tmp/temp.bam
 	set bamfile tmp/temp.bam
 	set refseq $::refseqdir/hg19
 	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
@@ -905,43 +942,127 @@ test noise {noise basic} {
 		#description	a noise (=percentage alternative allele) histogram for all positions with depth >= mindepth 
 		#mindepth	20
 		#general bam stats:
-		#numalignedbases	99192000
-		#nummismatch	290470
-		#numdel	17617
-		#numins	5778
+		#numalignedbases	8709
+		#nummismatch	103
+		#numdel	73
+		#numins	3
 		percentage	count
-		0.00	1593017
-		5.00	60713
-		10.00	4189
-		15.00	1382
-		20.00	901
-		25.00	513
-		30.00	370
-		35.00	406
-		40.00	413
-		45.00	358
-		50.00	416
-		55.00	239
-		60.00	204
-		65.00	127
-		70.00	79
-		75.00	63
-		80.00	66
-		85.00	27
-		90.00	43
-		95.00	85
-		100.00	733
+		0.00	128
+		5.00	10
+		10.00	1
+		15.00	0
+		20.00	0
+		25.00	0
+		30.00	0
+		35.00	0
+		40.00	0
+		45.00	0
+		50.00	0
+		55.00	0
+		60.00	0
+		65.00	0
+		70.00	0
+		75.00	0
+		80.00	0
+		85.00	0
+		90.00	0
+		95.00	0
+		100.00	1
 	}]\n
-	cg noise -refseq $refseq $bamfile > tmp/result.tsv
+	cg noise -typediffs base -refseq $refseq $bamfile > tmp/result.tsv
 	catch {
 		exec diff tmp/result.tsv tmp/expected.tsv
 	}
-#	# check stats
-#	cg depth_histo -max 1000 -q 0 -Q 0 tmp/temp.bam > tmp/depthhisto.tsv
-#	set numbaseshist [lindex [cg select -f {{bases=$depth * ($ontarget+$offtarget)}} -g all -gc sum(bases) tmp/depthhisto.tsv] end]
-#	cg noise -refseq $refseq -progress 1000000000 -count-orphans 1 -ignore-overlaps 0 -q 0 -Q 0 $bamfile > tmp/resultall.tsv 2>@ stderr
-#	set numbasesnoise [lindex [exec grep numalignedbases tmp/resultall.tsv] end]
-#	expr {$numbaseshist-$numbasesnoise}
+} 0
+
+test noise {noise -perpos 1} {
+	test_cleantmp
+	exec samtools view -b data/map-rdsbwa-NA19240_small.sam > tmp/test.bam
+	exec samtools index tmp/test.bam
+	set refseq $::refseqdir/hg19
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	depth	ref	nr_diff	nr_mismatch	nr_del	nr_ins	nr_A	nr_C	nr_G	nr_T	pct_diff	pct_mismatch	pct_del	pct_ins	pct_A	pct_C	pct_G	pct_T	pct_maxmismatch
+		chr21	9825515	80	G	0	0	0	0	0	80	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825516	80	G	0	0	0	0	0	80	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825517	81	T	0	0	0	0	0	0	0	81	0.00	0.00	0.00	0.00	0.00	0.00	0.00	100.00	0.00
+		chr21	9825518	81	G	0	0	0	0	0	81	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825519	82	C	0	0	0	0	0	82	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825520	82	C	0	0	0	0	0	82	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825521	83	C	0	0	0	0	0	83	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825522	85	T	0	0	0	0	0	0	0	85	0.00	0.00	0.00	0.00	0.00	0.00	0.00	100.00	0.00
+		chr21	9825523	85	T	8	8	0	0	0	8	0	77	9.41	9.41	0.00	0.00	0.00	9.41	0.00	90.59	9.41
+		chr21	9825524	85	G	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825525	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825526	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825527	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825528	85	T	3	0	3	0	0	0	0	82	3.53	0.00	3.53	0.00	0.00	0.00	0.00	96.47	0.00
+		chr21	9825529	86	C	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825530	86	A	86	83	3	0	0	0	83	0	100.00	96.51	3.49	0.00	0.00	0.00	96.51	0.00	96.51
+		chr21	9825531	86	C	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825532	86	G	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825533	87	G	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825534	87	T	3	0	3	0	0	0	0	84	3.45	0.00	3.45	0.00	0.00	0.00	0.00	96.55	0.00
+		chr21	9825535	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825536	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825537	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825538	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825539	87	G	4	1	3	0	1	83	0	0	4.60	1.15	3.45	0.00	1.15	95.40	0.00	0.00	1.15
+		chr21	9825540	85	G	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825541	83	C	3	0	3	0	0	80	0	0	3.61	0.00	3.61	0.00	0.00	96.39	0.00	0.00	0.00
+		chr21	9825542	83	C	3	0	3	0	0	80	0	0	3.61	0.00	3.61	0.00	0.00	96.39	0.00	0.00	0.00
+		chr21	9825543	82	C	3	0	3	0	0	79	0	0	3.66	0.00	3.66	0.00	0.00	96.34	0.00	0.00	0.00
+		chr21	9825544	81	T	6	0	3	3	0	0	0	78	7.41	0.00	3.70	3.70	0.00	0.00	0.00	96.30	0.00
+	}]\n
+	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
+	cg noise -mindepth 80 -refseq $refseq -perpos 1 data/map-rdsbwa-NA19240_small.sam > tmp/result.tsv
+	catch {
+		exec diff tmp/result.tsv tmp/expected.tsv
+	}
+} 0
+
+test noise {noise -perpos 1} {
+	test_cleantmp
+	exec samtools view -b data/map-rdsbwa-NA19240_small.sam > tmp/test.bam
+	exec samtools index tmp/test.bam
+	set refseq $::refseqdir/hg19
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	depth	ref	nr_diff	nr_mismatch	nr_del	nr_ins	nr_A	nr_C	nr_G	nr_T	pct_diff	pct_mismatch	pct_del	pct_ins	pct_A	pct_C	pct_G	pct_T	pct_maxmismatch
+		chr21	9825515	80	G	0	0	0	0	0	80	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825516	80	G	0	0	0	0	0	80	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825517	81	T	0	0	0	0	0	0	0	81	0.00	0.00	0.00	0.00	0.00	0.00	0.00	100.00	0.00
+		chr21	9825518	81	G	0	0	0	0	0	81	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825519	82	C	0	0	0	0	0	82	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825520	82	C	0	0	0	0	0	82	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825521	83	C	0	0	0	0	0	83	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
+		chr21	9825522	85	T	0	0	0	0	0	0	0	85	0.00	0.00	0.00	0.00	0.00	0.00	0.00	100.00	0.00
+		chr21	9825523	85	T	8	8	0	0	0	8	0	77	9.41	9.41	0.00	0.00	0.00	9.41	0.00	90.59	9.41
+		chr21	9825524	85	G	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825525	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825526	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825527	85	C	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825528	85	T	3	0	3	0	0	0	0	82	3.53	0.00	3.53	0.00	0.00	0.00	0.00	96.47	0.00
+		chr21	9825529	86	C	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825530	86	A	86	83	3	0	0	0	83	0	100.00	96.51	3.49	0.00	0.00	0.00	96.51	0.00	96.51
+		chr21	9825531	86	C	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825532	86	G	3	0	3	0	0	83	0	0	3.49	0.00	3.49	0.00	0.00	96.51	0.00	0.00	0.00
+		chr21	9825533	87	G	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825534	87	T	3	0	3	0	0	0	0	84	3.45	0.00	3.45	0.00	0.00	0.00	0.00	96.55	0.00
+		chr21	9825535	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825536	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825537	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825538	87	C	3	0	3	0	0	84	0	0	3.45	0.00	3.45	0.00	0.00	96.55	0.00	0.00	0.00
+		chr21	9825539	87	G	4	1	3	0	1	83	0	0	4.60	1.15	3.45	0.00	1.15	95.40	0.00	0.00	1.15
+		chr21	9825540	85	G	3	0	3	0	0	82	0	0	3.53	0.00	3.53	0.00	0.00	96.47	0.00	0.00	0.00
+		chr21	9825541	83	C	3	0	3	0	0	80	0	0	3.61	0.00	3.61	0.00	0.00	96.39	0.00	0.00	0.00
+		chr21	9825542	83	C	3	0	3	0	0	80	0	0	3.61	0.00	3.61	0.00	0.00	96.39	0.00	0.00	0.00
+		chr21	9825543	82	C	3	0	3	0	0	79	0	0	3.66	0.00	3.66	0.00	0.00	96.34	0.00	0.00	0.00
+		chr21	9825544	81	T	6	0	3	3	0	0	0	78	7.41	0.00	3.70	3.70	0.00	0.00	0.00	96.30	0.00
+	}]\n
+	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
+	cg noise -mindepth 80 -refseq $refseq -perpos 1 data/map-rdsbwa-NA19240_small.sam > tmp/result.tsv
+	catch {
+		exec diff tmp/result.tsv tmp/expected.tsv
+	}
 } 0
 
 test bam_varia {longshot_replacebam} {

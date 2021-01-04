@@ -35,8 +35,8 @@ proc cg_noise {args} {
 			if {![info exists Q]} {set Q 20}
 		}
 		-typediffs {
-			if {$value ni "all mismatch del ins"} {
-				error "-typediffs must be one of: all mismatch del ins"
+			if {$value ni "all mismatch del ins base"} {
+				error "-typediffs must be one of: all mismatch del ins base"
 			}
 			set typediffs $value
 		}
