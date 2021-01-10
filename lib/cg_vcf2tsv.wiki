@@ -90,8 +90,8 @@ in fieldlist (space separated) in the output. Default is to use all fields
 present in the file (*)
 ; -locerror error/keep/correct: some vcfs contain locations that would be
 incorrect (lead to problems for annotation etc.) in a tsv (e.g. end <
-begin). By default vcf will stop with an error on these (**error**). Use
-**keep** produce a tsv file with this wrong entry without error, while
+begin). By default vcf2tsv will stop with an error on these (**error**). Use
+**keep** to continue producing a tsv file including these wrong entries, while
 **correct** will produce a tsv file where this error is corrected (end
 changed to = begin).
 ; -meta: list of key value pairs that will be added to meta data in the comment lines

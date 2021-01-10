@@ -1,6 +1,6 @@
 #filetype	tsv/varfile
 #fileversion	0.99
-#split	1
+#split	ori
 #info	tsv converted from vcf
 #numsamples	3
 #fields	table
@@ -47,9 +47,9 @@ chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleS
 20	17329	17330	snp	T	A	.	3	q10	T	T	r	1	0,0				49	3	58,50	T	A	t	1	0,1				3	5	65,3	T	T	r	0	0;0				41	3		3	11	0.017			
 20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1,2				21	6	23,27	T	G	c	1	2,1				2	0	18,2	T	T	m	0	2;2				35	4		2	10	0.333,0.667	T	1	
 20	1230236	1230237	snp	T	.	.	47	PASS	T	T	r	1	0,0				54	7	56,60	T	T	r	1	0,0				48	4	51,51	T	T	r	0	0;0				61	2		3	13		T		
-20	1234567	1234570	sub	TCT	,TACT	microsat1	50	PASS	GTCT		t	0	0;1				35	4		GTCT	TACT	t	0	0;2				17	2				m	0	1;1				40	3		3	9		G		
-20	1234570	1234573	del	TCT		nodel	50	PASS	GTCT	GTCT	r	0	0;0					4		GTCT	GTCT	r	0	0;0					2		GTCT	GTCT	r	0	0;0					3		3	9		G		
-20	1234590	1234593	del	TCT		del	50	PASS	GTCT		t	0	0;1				35	4				m	0	1;1				17	2		GTCT	GTCT	r	0	0;0				40	3		3	9		G		
+20	1234567	1234570	sub	TCT	,TACT	microsat1	50	PASS	TCT		t	0	0;1				35	4		TCT	TACT	t	0	0;2				17	2				m	0	1;1				40	3		3	9		G		
+20	1234570	1234573	del	TCT		nodel	50	PASS	TCT	TCT	r	0	0;0					4		TCT	TCT	r	0	0;0					2		TCT	TCT	r	0	0;0					3		3	9		G		
+20	1234590	1234593	del	TCT		del	50	PASS	TCT		t	0	0;1				35	4				m	0	1;1				17	2		TCT	TCT	r	0	0;0				40	3		3	9		G		
 20	1234594	1234595	sub	A	AT,T	ins_snp	51	PASS	A	AT	t	0	0;1	10	20,30	1,2	35	4		A	T	t	0	0;2	40	50,60	3,4	17	2		AT	AT	m	0	1;1	70	80,90	5,6	40	3		3	9		G		
 20	1234595	1234597	sub	AT	A,T,C,TT	del_snp	54	PASS	AT	A	t	0	0;1	0	10,20,30,31	1,2,3.4	35	4		AT	T	t	0	0;2	39	40,50,60.61	4,5,6,7	17	2		A	A	m	0	1;1	0	70,80,90,91	7,8,9,10	40	3		3	9		G		
 20	1234597	1234604	sub	GTGGTAC	TTGGTAC,CTGGTAC,G	mixed	52	PASS	GTGGTAC	TTGGTAC	t	0	0;1	10	20,30,40	1,2,3	10	20		TTGGTAC	CTGGTAC	c	0	1;2	50	60,70,80	4,5,6	15	15		TTGGTAC	G	c	0	1;3	81	82,83,84	7,8,9	20	20		3	9	0.2,0.3,0.4	G		

@@ -96,5 +96,6 @@ int naturalcompare (char const *a, char const *b,int alen,int blen);
 int loccompare (char const *a, char const *b,int alen,int blen);
 
 int fileexists(const char * filename);
+char *tempfilename();
 
 #endif

@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "tools.h"
 #include "debug.h"
 
@@ -1389,6 +1390,25 @@ int fileexists(const char * filename) {
 	}
 	return 0;
 }
+
+char *tempfilename() {
+	int fd;
+	char *tmpdir,*name;
+	if ((tmpdir = getenv ("TEMP")) == NULL) {
+		if ((tmpdir = getenv ("TMP")) == NULL) {
+			if ((tmpdir = getenv ("TMPDIR")) == NULL) {
+				tmpdir = "/tmp";
+			}
+		}
+	}
+	name = malloc(strlen(tmpdir)+15);
+	sprintf(name,"%s/tmpfileXXXXXX",tmpdir);
+	fd = mkstemp(name);
+	close(fd);
+	return name;
+}
+
+
 
 #endif
 

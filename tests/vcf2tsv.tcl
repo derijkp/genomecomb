@@ -299,6 +299,8 @@ test vcf2tsv {wrong nr lines with -removefields} {
 	cg checktsv tmp/temp.tsv
 } {}
 
+# structural variants sv
+
 test vcf2tsv {svtest.vcf} {
 	cg vcf2tsv -split 1 data/svtest.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/svtest.tsv
@@ -309,10 +311,10 @@ test vcf2tsv {vcf2tsv -split 0 svtest.vcf} {
 	exec diff tmp/temp.tsv data/svtest-unsplit.tsv
 } {}
 
-test vcf2tsv {svtest.vcf} {
+test vcf2tsv {vcf2tsv -split ori svtest.vcf} {
 	cg vcf2tsv -split ori data/svtest.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/svtest.tsv
-} {*structural variants not supported in -split ori, vcf has SVLEN*} match error
+	exec diff tmp/temp.tsv data/svtest-ori.tsv
+} {}
 
 test vcf2tsv {AD 0} {
 	write_vcf tmp/temp.vcf {
@@ -347,6 +349,28 @@ test vcf2tsv {blocked gvcf} {
 		chr21	42775360	42775366	del	GTTTAA		.	0	.	GTTTAA	GTTTAA	r	0	0;0	29	0		87	29							
 	}]\n
 	cg vcf2tsv -refout 1 tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {blocked gvcf -split ori} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chr21	42775286	.	T	<NON_REF>	.	.	END=42775359	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chr21	42775360	.	TGTTTAA	T,<NON_REF>	0	.	RAW_MQ=70729.00	GT:AD:GQ:PL:SB	0/0:29,0,0:87:0,87,1242,87,1242,1242:18,11,0,0
+		chr21	42775361	.	G	<NON_REF>	.	.	END=42775362	GT:AD:DP:GQ:PL	0/0:5,0:5:12:0,12,180		
+		chr21	42775363	.	TGT	T,<NON_REF>	0	.	RAW_MQ=70730.00	GT:AD:DP:GQ:PL:SB	0/1:29,5,0:34:87:0,87,1242,87,1242,1242:18,11,0,0
+	} {} {
+		##INFO=<ID=END,Number=1,Type=Integer,Description="Stop position of the interval">
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chr21	42775285	42775359	ref	74	.	.	.	.	74	74	r	0	0;0	7	0		18	7							
+		chr21	42775359	42775366	sub	TGTTTAA	T,.	.	0	.	TGTTTAA	TGTTTAA	r	0	0;0	29	0,0		87								
+		chr21	42775360	42775362	ref	2	.	.	.	.	2	2	r	0	0;0	5	0		12	5							
+		chr21	42775362	42775365	sub	TGT	T,.	.	0	.	TGT	T	t	0	0;1	29	5,0		87	34							
+	}]\n
+	cg vcf2tsv -refout 1 -split ori tmp/test.vcf tmp/result.tsv
 	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
 	exec diff tmp/cresult.tsv tmp/expected.tsv
 } {}
@@ -614,6 +638,13 @@ test vcf2tsv {genotype not specified} {
 	cg vcf2tsv tmp/test.vcf tmp/result.tsv
 	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
 	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {exec vcf2tsv} {
+	set tempfile [tempfile]
+	# list vcf2tsv 1 {. AD R RPA R AC A AF A} - - {} 0 * error 0 $tempfile {} < data/test1000glow.vcf > tmp/temp.tsv
+	exec vcf2tsv 1 {. AD R RPA R AC A AF A} - - {} 0 * error 0 $tempfile {} < data/test1000glow.vcf > tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
 testsummarize

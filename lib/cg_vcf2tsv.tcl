@@ -25,7 +25,7 @@ proc cg_vcf2tsv {args} {
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
-				set split 0
+				set split ori
 				set collapse 0
 			} elseif {[true $value]} {
 				set split 1
@@ -39,7 +39,7 @@ proc cg_vcf2tsv {args} {
 			set sort [true $value]
 		}
 		-refout {
-			# deletions and insertians start with a reference base
+			# deletions and insertions start with a reference base
 			# output a ref allele for this (if not overlapping a snp)
 			set refout $value
 		}

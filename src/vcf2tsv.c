@@ -52,7 +52,7 @@ typedef struct OBuffer {
 	int cursize;
 } OBuffer;
 
-/* i know it is ugly, but dont have the time to transfer all, or put in a nice struct at do at the moment */
+/* i know it is ugly in globals, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 static OBuffer *obuffer = NULL;
 static AltVar *altvars;
 static DString *line, *string, *temp;
@@ -62,10 +62,14 @@ static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
 static DString *ref, *alt, *id;
 static DString *num;
+DString *svlens=NULL,*svtype=NULL;
+char *cursvlen=NULL;
 static char *typelist;
 static int *order = NULL;
 static int numalleles,altvarsmax;
+/* svendpos and svend captures position and value of "END" in info fields, it is also used for gvcf <NON_REF> calls */
 static int linenr,svendpos,svlenpos,svtypepos,chr2pos,strandspos=-1;
+int svend=-1, svlen=0;
 static int ADpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
@@ -213,6 +217,18 @@ void printallele(DString *bufferstring,int size,char *string,int limit,int refou
 	}
 }
 
+void fprintallele(FILE *fo,char *allele,int size) {
+	if (size == 0) {
+		return;
+	} else if (size > 20 || allele == NULL) {
+		fprintf(fo,"%d", size);
+	} else if (size == 9 && strncmp(allele,"<NON_REF>",9) == 0) {
+		fputc_unlocked('.',fo);
+	} else {
+		fprintf(fo,"%*.*s", size,size,allele);
+	}
+}
+
 int output_comparator(const void *p1, const void *p2)
 {
 	/* 
@@ -243,346 +259,57 @@ fprintf(stderr,"bucket2: string:%*.*s\n",bucket2->string->size,bucket2->string->
 	);
 }
 
-void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int excludefilter) {
-	DStringArray *lineformat,*alts;
-	DString *ds,*type;
-	char zyg, refch;
-	int curallele,pos,i;
-	int l1,l2,len,igeno,isample,diffchar,diff,begin,end;
-	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
-	/* set genos [lrange $line 9 end] */
-	changetoupper(a_alt(linea));
-	alts = DStringArrayFromChar(a_alt(linea)->string,',');
-	numalleles = alts->size;
-	/* determine type, ref, alt, ... for different alleles */
-	/* check first base */
-	type = NULL;
-	pos = atoi(a_pos(linea)->string);
-	ref = a_ref(linea);
-	changetoupper(ref);
-	refch = ref->string[0];
-	l1 = ref->size;
-	l2 = 0;
-	diffchar = 0;
-	for (curallele = 0 ; curallele < numalleles; curallele++) {
-		DString *temp = DStringArrayGet(alts,curallele);
-		if (temp->size > l2) {l2 = temp->size;}
-		if (temp->string[0] != refch) {diffchar = 1;}
+void process_line_parse_info(DStringArray *linea) 	{
+	DString *info = a_info(linea);
+	char *cur,*curend;
+	int i,pos;
+	for (i = 0 ; i< infofields->size ; i++) {
+		outinfo[i].size = -1;
 	}
-	if (l1 == 1 && l2 == 1) {
-		diff = 0;
-		begin = pos - 1;
-		end = pos;
-		type = snptype;
-	} else if (diffchar) {
-		diff = 0;
-		begin = pos - 1;
-		end = pos + l1 - 1;
-		type = subtype;
-	} else {
-		diff = 1;
-		begin = pos;
-		end = pos + l1 - 1;
-		if (l1 == 1) {
-			type = instype;
-		} else if (l2 == 1) {
-			type = deltype;
-		} else {
-			type = subtype;
-		}
-	}
-	fprintf(fo,"%s\t%d\t%d\t%s", a_chrom(linea)->string, begin, end, type->string);
-	if (l1 > 20) {
-		fprintf(fo,"\t%d", end - pos);
-	} else {
-		if (ref->size == 0 && diff > 0) {
-			fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-		}
-		fprintf(fo,"\t%*.*s", ref->size-diff, ref->size-diff, ref->string+diff);
-	}
-	if (DStringArrayGet(alts,0)->size == 0 && diff > 0) {
-		fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-	}
-	ds = DStringArrayGet(alts,0);
-	fprintf(fo,"\t%*.*s", ds->size-diff, ds->size-diff, ds->string+diff);
-	for (curallele = 1 ; curallele < numalleles; curallele++) {
-		DString *temp = DStringArrayGet(alts,curallele);
-		if (temp->size == 0 && diff > 0) {
-			fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-		}
-		fprintf(fo,",%*.*s", temp->size-diff, temp->size-diff, temp->string+diff);
-	}
-	if (!excludename) fprintf(fo,"\t%s", a_id(linea)->string);
-	fprintf(fo,"\t%s", a_qual(linea)->string);
-	if (!excludefilter) fprintf(fo,"\t%s", a_filter(linea)->string);
-	if (header->size >= 9) {
-		NODPRINT("==== Determine geno fields order ====")
-		order = realloc(order,formatfields->size*sizeof(int));
-		for (i = 0 ; i < formatfields->size ; i++) {
-			order[i] = DStringArraySearch(lineformat,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
-		}
-		NODPRINT("==== Process genos ====")
-		igeno = 9; /* genos start at col 9 */
-		for (isample = 0 ; isample < samples->size ; isample++) {
-			DStringArray *genoa;
-			DString *genotype;
-			char *genotypestring,*genotypecur;
-			int phased,i,a1,a2;
-			geno = DStringArrayGet(linea,igeno++);
-			if (geno->size == 1 && geno->string[0] == '.') {
-				fprintf(fo,"\t?\t?\t?\t?\t?");
-				for (i = 1 ; i < formatfields->size; i++) {
-					fprintf(fo,"\t");
-					if (formatfieldsnumber->string[i] == 'R') {
-						fprintf(fo,"\t");
-					}
-				}
-			} else {
-				genoa = DStringArrayFromChar(geno->string,':');
-				if (order[0] == -1) {
-					genotypestring = "0/0";
-				} else {
-					genotype = DStringArrayGet(genoa,order[0]);
-					genotypestring = genotype->string;
-				}
-				genotypecur = genotypestring;
-				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
-					genotypecur++;
-				}
-				if (*genotypecur == '|') {phased = 1;} else {phased = 0;}
-				/* print out alleleSeq1 and alleleSeq2 */
-				/* ----------------------------------- */
-				if (genotypestring[0] == '.') {
-					fprintf(fo,"\t?");
-					a1 = -2;
-				} else if (genotypestring == genotypecur) {
-					/* empty genotype */
-					fprintf(fo,"\t-");
-					a1 = -1;
-				} else {
-					a1 = atol(genotypestring);
-					if (a1 == 0) {
-						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-					} else {
-						ds = DStringArrayGet(alts,a1-1);
-						if (ds->size == 0 && diff > 0) {
-							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-						}
-						fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
-					}
-				}
-				if (*genotypecur != '\0') {genotypecur++;}
-				if (*genotypecur == '.') {
-					fprintf(fo,"\t?");
-					a2 = -2;
-				} else if (*genotypecur == '\0') {
-					fprintf(fo,"\t-");
-					a2 = -1;
-				} else {
-					a2 = atol(genotypecur);
-					if (a2 == 0) {
-						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-					} else {
-						ds = DStringArrayGet(alts,a2-1);
-						if (ds->size == 0 && diff > 0) {
-							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-						}
-						fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
-					}
-				}
-				/* print out zyg */
-				/* ------------- */
-				if (a1 < 0 || a2 < 0) {
-					zyg = 'v';
-				} else if (a1 > 0) {
-					if (a2 == a1) {
-						zyg = 'm';
-					} else if (a2 > 0) {
-						zyg = 'c';
-					} else {
-						zyg = 't';
-					}
-				} else if (a2 > 0) {
-					zyg = 't';
-				} else {
-					zyg = 'r';
-				}
-				fprintf(fo,"\t%c",zyg);
-				fprintf(fo,"\t%d",phased);
-				/* print out genotypes */
-				/* ------------------- */
-				fputc_unlocked('\t',fo);
-				genotypecur = genotypestring;
-				while (*genotypecur != '\0') {
-					if (*genotypecur == '|') {
-						fputc_unlocked(',',fo);
-					} else if (*genotypecur == '/') {
-						fputc_unlocked(';',fo);
-					} else {
-						fputc_unlocked(*genotypecur,fo);
-					}
-					genotypecur++;
-				}
-				/* print out rest of the fields */
-				/* ---------------------------- */
-				for (i = 1 ; i < formatfields->size; i++) {
-					if (order[i] <= 0 || order[i] >= genoa->size) {
-						fprintf(fo,"\t");
-						if (formatfieldsnumber->string[i] == 'R') {
-							fprintf(fo,"\t");
-						}
-					} else if (formatfieldsnumber->string[i] == 'R') {
-						DString *value;
-						char *cur,test=',';
-						int count;
-						value = DStringArrayGet(genoa,order[i]);
-						cur = value->string; count = value->size;
-						fputc_unlocked('\t',fo);
-						while(count--) {
-							if (*cur == test) {
-								fputc_unlocked('\t',fo); cur++; test = '\0';
-							} else {
-								fputc_unlocked(*cur++,fo);
-							}
-						}
-					} else if (formatfieldsnumber->string[i] == 'A') {
-						DString *value;
-						value = DStringArrayGet(genoa,order[i]);
-						fprintf(fo,"\t%*.*s",value->size,value->size,value->string);
-					} else {
-						fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
-					}
-				}
-				if (genoa != NULL) DStringArrayDestroy(genoa);
-			}
-		}
-	}
-	/* info output */
-	{
-		char *cur,*curend;
-		DString *info = a_info(linea);
-		for (i = 0 ; i< infofields->size ; i++) {
-			outinfo[i].size = -1;
-		}
-		cur = info->string;
-		curend = cur;
-		while (1) {
-			while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
-			if (curend == cur) {
-				cur = ++curend;
-				continue;
-			}
-			pos = DStringArraySearch(infofields,cur,curend-cur);
-			if (*curend == '=') {curend++;}
-			cur = curend;
-			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-			if (pos != -1) {
-				outinfo[pos].string = cur;
-				outinfo[pos].size = curend-cur;
-			}
-			if (*curend == '\0') break;
+	cur = info->string;
+	curend = cur;
+	svlens=(DString *)NULL; svtype=(DString *)NULL; cursvlen=(char *)NULL;
+	while (1) {
+		while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
+		if (curend == cur) {
 			cur = ++curend;
+			continue;
 		}
-		for (i = 0 ; i< infofields->size ; i++) {
-			len  = outinfo[i].size;
-			if (len == -1) {
-				fprintf(fo,"\t");
-				if (infofieldsnumber->string[i] == 'R') {
-					fprintf(fo,"\t");
-				}
-			} else if (len == 0) {
-				if (infofieldsnumber->string[i] == 'R') {
-					fprintf(fo,"\t");
-				}
-				fprintf(fo,"\t1");
-			} else if (infofieldsnumber->string[i] == 'R') {
-				char *cur,test=',';
-				int count;
-				cur = outinfo[i].string; count = outinfo[i].size;
-				fputc_unlocked('\t',fo);
-				while(count--) {
-					if (*cur == test) {
-						fputc_unlocked('\t',fo); cur++; test = '\0';
-					} else {
-						fputc_unlocked(*cur++,fo);
-					}
-				}
-			} else if (infofieldsnumber->string[i] == 'A') {
-				fprintf(fo,"\t%*.*s",outinfo[i].size,outinfo[i].size,outinfo[i].string);
-			} else {
-				fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
+		pos = DStringArraySearch(infofields,cur,curend-cur);
+		if (*curend == '=') {curend++;}
+		cur = curend;
+		if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
+		if (pos != -1) {
+			outinfo[pos].string = cur;
+			outinfo[pos].size = curend-cur;
+			if (pos == svtypepos) {
+				svtype = outinfo + svtypepos;
+			} else if (pos == svendpos) {
+				/* vcf 1 based, but for SVs the pos is given before variant and END is defined as POS + length of REF allele - 1 */
+				/* so no -1 to get correct endpoint in half open */
+				svend=atoi(outinfo[svendpos].string);
+			} else if (pos == svlenpos) {
+				svlens = outinfo + svlenpos;
 			}
 		}
-		fprintf(fo,"\n");
+		if (*curend == '\0') break;
+		cur = ++curend;
 	}
-	DStringArrayDestroy(lineformat);
-	DStringArrayDestroy(alts);
+	if (svlens != NULL)  {
+		cursvlen = svlens->string;
+	} else {
+		cursvlen = NULL;
+	}
 }
 
-int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout,char locerror,int skiprefindels) {
-	DStringArray *lineformat,*alts;
-	DString *svlens=NULL,*svtype=NULL;
-	char *cursvlen=NULL;
-	char *zyg;
-	int l1,l2,len,numalleles,curallele,chrpos,curpos,pos,i,igeno,isample,svend=-1,svlen=0,snpfound;
-	/* determine type, ref, alt, ... for different alleles */
-	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
-	/* set genos [lrange $line 9 end] */
-	changetoupper(a_alt(linea));
-	alts = DStringArrayFromChar(a_alt(linea)->string,',');
-	ref = a_ref(linea);
-	changetoupper(ref);
-	/* prepare 
-	   altvars: data on alt vars in VarAlt structure, order in vcf list)
-	*/
+int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,char locerror,int skiprefindels) {
+	int l1,l2,curallele,chrpos,pos,i;
+	int snpfound = 0;
 	numalleles = alts->size;
 	if (numalleles > altvarsmax) {
 		altvars = (AltVar *)realloc(altvars,numalleles*sizeof(AltVar));
 		altvarsmax = numalleles;
 	}
-	/* parse info first (need END for structural variants) */
-	{
-		char *cur,*curend;
-		DString *info = a_info(linea);
-		for (i = 0 ; i< infofields->size ; i++) {
-			outinfo[i].size = -1;
-		}
-		cur = info->string;
-		curend = cur;
-		while (1) {
-			while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
-			if (curend == cur) {
-				cur = ++curend;
-				continue;
-			}
-			pos = DStringArraySearch(infofields,cur,curend-cur);
-			if (*curend == '=') {curend++;}
-			cur = curend;
-			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-			if (pos != -1) {
-				outinfo[pos].string = cur;
-				outinfo[pos].size = curend-cur;
-				if (pos == svtypepos) {
-					svtype = outinfo + svtypepos;
-				} else if (pos == svendpos) {
-					/* vcf 1 based, but for SVs the pos is given before variant and END is defined as POS + length of REF allele - 1 */
-					/* so no -1 to get correct endpoint in half open */
-					svend=atoi(outinfo[svendpos].string);
-				} else if (pos == svlenpos) {
-					svlens = outinfo + svlenpos;
-				}
-			}
-			if (*curend == '\0') break;
-			cur = ++curend;
-		}
-		if (svlens != NULL)  {
-			cursvlen = svlens->string;
-		} else {
-			cursvlen = NULL;
-		}
-	}
-	/* determine alt alleles (type, begin, etc ..., store in altvars) */
-	snpfound = 0;
 	chrpos = atoi(a_pos(linea)->string);
 	chrpos--; /* vcf 1 based */
 	for (curallele = 0 ; curallele < numalleles; curallele++) {
@@ -811,6 +538,361 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 			}
 		}
 	}
+	return(chrpos);
+}
+
+void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int excludefilter,int refout,char locerror,int skiprefindels) {
+	DStringArray *lineformat,*alts;
+	DString *ds,*type;
+	char zyg, refch;
+	int curallele,pos,i;
+	int l1,l2,len,igeno,isample,diffchar,diff,begin,end;
+	svend=-1; svlen=0;
+	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
+	/* set genos [lrange $line 9 end] */
+	ref = a_ref(linea);
+	changetoupper(ref);
+	changetoupper(a_alt(linea));
+	alts = DStringArrayFromChar(a_alt(linea)->string,',');
+	/* prepare */
+	/* parse info first (need END,SVTYPE and SVLEN for structural variants) */
+	/* initialises (global) outinfo, svlens, svtype, cursvlen */
+	process_line_parse_info(linea);
+	if (svlens != NULL || svtype != NULL ||svend != -1) {
+		AltVar *altvar1,*altvar;
+		/* structural variants or "END" present, other processing needed*/
+		/* determine alt alleles (type, begin, etc ..., store in altvars) */
+		/*   altvars: data on alt vars in VarAlt structure, order in vcf list) */
+		process_line_parse_alts(linea,alts,refout,locerror,skiprefindels);
+		altvar1=altvars+0;
+		fprintf(fo,"%s\t%d\t%d\t%*.*s\t", a_chrom(linea)->string, altvar1->begin, altvar1->end, altvar1->type->size, altvar1->type->size, altvar1->type->string);
+		if (altvar1->refout) {
+			fprintallele(fo,altvar1->ref,altvar1->refsize);
+			fputc_unlocked('\t',fo);
+			fputc_unlocked('.',fo);
+		} else {
+			fprintallele(fo,altvar1->ref,altvar1->refsize);
+			fputc_unlocked('\t',fo);
+			fprintallele(fo,altvar1->alt,altvar1->altsize);
+			for (curallele = 1 ; curallele < numalleles; curallele++) {
+				altvar = altvars+curallele;
+				if (altvar->refsize != altvar1->refsize) {
+					fprintf(stderr,"error in alt alleles (different refs on same line not allowed in unsplit): "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+				}
+				fputc_unlocked(',',fo);
+				fprintallele(fo,altvar->alt,altvar->altsize);
+			}
+		}
+	} else {
+		/* no structural variants present, needs other (simpler) processing */
+		/* will use l1 and l2 to determine type, make sub if one of the alleles differs */
+		numalleles = alts->size;
+		/* check first base */
+		type = NULL;
+		pos = atoi(a_pos(linea)->string);
+		refch = ref->string[0];
+		l1 = ref->size;
+		l2 = 0;
+		diffchar = 0;
+		for (curallele = 0 ; curallele < numalleles; curallele++) {
+			DString *temp = DStringArrayGet(alts,curallele);
+			if (temp->size > l2) {l2 = temp->size;}
+			if (temp->string[0] != refch) {diffchar = 1;}
+		}
+		if (l1 == 1 && l2 == 1) {
+			diff = 0;
+			begin = pos - 1;
+			end = pos;
+			type = snptype;
+		} else if (diffchar) {
+			diff = 0;
+			begin = pos - 1;
+			end = pos + l1 - 1;
+			type = subtype;
+		} else {
+			diff = 1;
+			begin = pos;
+			end = pos + l1 - 1;
+			if (l1 == 1) {
+				type = instype;
+			} else if (l2 == 1) {
+				type = deltype;
+			} else {
+				type = subtype;
+			}
+		}
+		fprintf(fo,"%s\t%d\t%d\t%s", a_chrom(linea)->string, begin, end, type->string);
+		fputc_unlocked('\t',fo);
+		fprintallele(fo,ref->string+diff,ref->size-diff);
+		if (DStringArrayGet(alts,0)->size == 0 && diff > 0) {
+			fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+		}
+		ds = DStringArrayGet(alts,0);
+		fputc_unlocked('\t',fo);
+		fprintallele(fo,ds->string+diff,ds->size-diff);
+		for (curallele = 1 ; curallele < numalleles; curallele++) {
+			DString *temp = DStringArrayGet(alts,curallele);
+			if (temp->size == 0 && diff > 0) {
+				fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+			}
+			fputc_unlocked(',',fo);
+			fprintallele(fo,temp->string+diff,temp->size-diff);
+		}
+	}
+	if (!excludename) fprintf(fo,"\t%s", a_id(linea)->string);
+	fprintf(fo,"\t%s", a_qual(linea)->string);
+	if (!excludefilter) fprintf(fo,"\t%s", a_filter(linea)->string);
+	if (header->size >= 9) {
+		NODPRINT("==== Determine geno fields order ====")
+		order = realloc(order,formatfields->size*sizeof(int));
+		for (i = 0 ; i < formatfields->size ; i++) {
+			order[i] = DStringArraySearch(lineformat,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
+		}
+		NODPRINT("==== Process genos ====")
+		igeno = 9; /* genos start at col 9 */
+		for (isample = 0 ; isample < samples->size ; isample++) {
+			DStringArray *genoa;
+			DString *genotype;
+			char *genotypestring,*genotypecur;
+			int phased,i,a1,a2;
+			geno = DStringArrayGet(linea,igeno++);
+			if (geno->size == 1 && geno->string[0] == '.') {
+				fprintf(fo,"\t?\t?\t?\t?\t?");
+				for (i = 1 ; i < formatfields->size; i++) {
+					fputc_unlocked('\t',fo);
+					if (formatfieldsnumber->string[i] == 'R') {
+						fputc_unlocked('\t',fo);
+					}
+				}
+			} else {
+				genoa = DStringArrayFromChar(geno->string,':');
+				if (order[0] == -1) {
+					genotypestring = "0/0";
+				} else {
+					genotype = DStringArrayGet(genoa,order[0]);
+					genotypestring = genotype->string;
+				}
+				genotypecur = genotypestring;
+				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
+					genotypecur++;
+				}
+				if (*genotypecur == '|') {phased = 1;} else {phased = 0;}
+				/* print out alleleSeq1 and alleleSeq2 */
+				/* ----------------------------------- */
+				fputc_unlocked('\t',fo);
+				if (genotypestring[0] == '.') {
+					fputc_unlocked('?',fo);
+					a1 = -2;
+				} else if (genotypestring == genotypecur) {
+					/* empty genotype */
+					fputc_unlocked('-',fo);
+					a1 = -1;
+				} else {
+					a1 = atol(genotypestring);
+					if (svlens != NULL || svtype != NULL || svend != -1) {
+						if (a1 == 0) {
+							fprintallele(fo,altvars[0].ref,altvars[0].refsize);
+						} else {
+							AltVar *temp = altvars+a1-1;
+							if (a1 > numalleles) {
+								fprintf(stderr,"allele %d does not exist in line %s\n",a1,a_format(linea)->string);
+								exit(1);
+							}
+							fprintallele(fo,temp->alt,temp->altsize);
+						}
+					} else if (a1 == 0) {
+						fprintallele(fo,ref->string+diff,ref->size-diff);
+					} else {
+						ds = DStringArrayGet(alts,a1-1);
+						if (ds->size == 0 && diff > 0) {
+							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+						}
+						fprintallele(fo,ds->string+diff,ds->size-diff);
+					}
+				}
+				if (*genotypecur != '\0') {genotypecur++;}
+				fputc_unlocked('\t',fo);
+				if (*genotypecur == '.') {
+					fputc_unlocked('?',fo);
+					a2 = -2;
+				} else if (*genotypecur == '\0') {
+					fputc_unlocked('-',fo);
+					a2 = -1;
+				} else {
+					a2 = atol(genotypecur);
+					if (svlens != NULL || svtype != NULL || svend != -1) {
+						if (a2 == 0) {
+							fprintallele(fo,altvars[0].ref,altvars[0].refsize);
+						} else {
+							AltVar *temp = altvars+a2-1;
+							if (a1 > numalleles) {
+								fprintf(stderr,"allele %d does not exist in line %s\n",a1,a_format(linea)->string);
+								exit(1);
+							}
+							fprintallele(fo,temp->alt,temp->altsize);
+						}
+					} else if (a2 == 0) {
+						fprintallele(fo,ref->string+diff,ref->size-diff);
+					} else {
+						ds = DStringArrayGet(alts,a2-1);
+						if (ds->size == 0 && diff > 0) {
+							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+						}
+						fprintallele(fo,ds->string+diff,ds->size-diff);
+					}
+				}
+				/* print out zyg */
+				/* ------------- */
+				if (a1 < 0 || a2 < 0) {
+					zyg = 'v';
+				} else if (a1 > 0) {
+					if (a2 == a1) {
+						zyg = 'm';
+					} else if (a2 > 0) {
+						zyg = 'c';
+					} else {
+						zyg = 't';
+					}
+				} else if (a2 > 0) {
+					zyg = 't';
+				} else {
+					zyg = 'r';
+				}
+				fprintf(fo,"\t%c",zyg);
+				fprintf(fo,"\t%d",phased);
+				/* print out genotypes */
+				/* ------------------- */
+				fputc_unlocked('\t',fo);
+				genotypecur = genotypestring;
+				while (*genotypecur != '\0') {
+					if (*genotypecur == '|') {
+						fputc_unlocked(',',fo);
+					} else if (*genotypecur == '/') {
+						fputc_unlocked(';',fo);
+					} else if (*genotypecur == '.') {
+						fputc_unlocked('?',fo);
+					} else {
+						fputc_unlocked(*genotypecur,fo);
+					}
+					genotypecur++;
+				}
+				/* print out rest of the fields */
+				/* ---------------------------- */
+				for (i = 1 ; i < formatfields->size; i++) {
+					if (order[i] <= 0 || order[i] >= genoa->size) {
+						fprintf(fo,"\t");
+						if (formatfieldsnumber->string[i] == 'R') {
+							fprintf(fo,"\t");
+						}
+					} else if (formatfieldsnumber->string[i] == 'R') {
+						DString *value;
+						char *cur,test=',';
+						int count;
+						value = DStringArrayGet(genoa,order[i]);
+						cur = value->string; count = value->size;
+						fputc_unlocked('\t',fo);
+						while(count--) {
+							if (*cur == test) {
+								fputc_unlocked('\t',fo); cur++; test = '\0';
+							} else {
+								fputc_unlocked(*cur++,fo);
+							}
+						}
+					} else if (formatfieldsnumber->string[i] == 'A') {
+						DString *value;
+						value = DStringArrayGet(genoa,order[i]);
+						fprintf(fo,"\t%*.*s",value->size,value->size,value->string);
+					} else {
+						fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
+					}
+				}
+				if (genoa != NULL) DStringArrayDestroy(genoa);
+			}
+		}
+	}
+	/* info output */
+	{
+		char *cur,*curend;
+		DString *info = a_info(linea);
+		for (i = 0 ; i< infofields->size ; i++) {
+			outinfo[i].size = -1;
+		}
+		cur = info->string;
+		curend = cur;
+		while (1) {
+			while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
+			if (curend == cur) {
+				cur = ++curend;
+				continue;
+			}
+			pos = DStringArraySearch(infofields,cur,curend-cur);
+			if (*curend == '=') {curend++;}
+			cur = curend;
+			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
+			if (pos != -1) {
+				outinfo[pos].string = cur;
+				outinfo[pos].size = curend-cur;
+			}
+			if (*curend == '\0') break;
+			cur = ++curend;
+		}
+		for (i = 0 ; i< infofields->size ; i++) {
+			if (i == svendpos || i == svlenpos || i == svtypepos) continue;
+			len  = outinfo[i].size;
+			if (len == -1) {
+				fprintf(fo,"\t");
+				if (infofieldsnumber->string[i] == 'R') {
+					fprintf(fo,"\t");
+				}
+			} else if (len == 0) {
+				if (infofieldsnumber->string[i] == 'R') {
+					fprintf(fo,"\t");
+				}
+				fprintf(fo,"\t1");
+			} else if (infofieldsnumber->string[i] == 'R') {
+				char *cur,test=',';
+				int count;
+				cur = outinfo[i].string; count = outinfo[i].size;
+				fputc_unlocked('\t',fo);
+				while(count--) {
+					if (*cur == test) {
+						fputc_unlocked('\t',fo); cur++; test = '\0';
+					} else {
+						fputc_unlocked(*cur++,fo);
+					}
+				}
+			} else if (infofieldsnumber->string[i] == 'A') {
+				fprintf(fo,"\t%*.*s",outinfo[i].size,outinfo[i].size,outinfo[i].string);
+			} else {
+				fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
+			}
+		}
+		fprintf(fo,"\n");
+	}
+	DStringArrayDestroy(lineformat);
+}
+
+int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout,char locerror,int skiprefindels) {
+	DStringArray *alts = NULL;
+	DStringArray *lineformat = NULL;
+	char *zyg;
+	int len,curallele,chrpos,curpos,i,igeno,isample;
+	svend=-1; svlen=0;
+	/* determine type, ref, alt, ... for different alleles */
+	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
+	/* set genos [lrange $line 9 end] */
+	ref = a_ref(linea);
+	changetoupper(ref);
+	changetoupper(a_alt(linea));
+	alts = DStringArrayFromChar(a_alt(linea)->string,',');
+	/* prepare */
+	/* parse info first (need END,SVTYPE and SVLEN for structural variants) */
+	/* initialises (global) outinfo, svlens, svtype, cursvlen */
+	process_line_parse_info(linea);
+	/* determine alt alleles (type, begin, etc ..., store in altvars) */
+	/*   altvars: data on alt vars in VarAlt structure, order in vcf list) */
+	/*   numalleles: number of alternative alleles */
+	chrpos = process_line_parse_alts(linea,alts,refout,locerror,skiprefindels);
 	/* go over the different alleles, and print out */
 	for (curpos = 0 ; curpos < numalleles; curpos++) {
 		OBufferBucket *bufferbucket;
@@ -895,6 +977,8 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 						genotypecur++;
 					}
 					if (*genotypecur == '|') {phased = 1;} else {phased = 0;}
+					/* print out alleleSeq1 and alleleSeq2 */
+					/* ----------------------------------- */
 					if (genotypestring[0] == '.') {
 						DStringAppendS(bufferstring,"\t?",2);
 						a1 = -2;
@@ -1162,7 +1246,7 @@ int main(int argc, char *argv[]) {
 	FILE *fd = NULL, *fo = NULL, *fh = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew(),*dsbuffer = DStringNew();
-	char *tempfile = NULL, *meta = NULL;
+	char *tempfile = NULL, *meta = NULL, *splitstring;
 	char locerror = 'e';
 	altvars = NULL;
 	int *order = NULL;
@@ -1188,7 +1272,12 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile? ?removefields? ?refout? ?keepfields? ?locerror? ?skiprefindels?\n");
 		exit(EXIT_FAILURE);
 	}
-	split = atoi(argv[1]);
+	splitstring = argv[1];
+	if (splitstring[0] == 'o') {
+		split = 0;
+	} else {
+		split = atoi(splitstring);
+	}
 	if (argc >= 3) {
 		typelist = argv[2];
 	} else {
@@ -1298,23 +1387,18 @@ int main(int argc, char *argv[]) {
 	}
 	if (argc >= 11) {
 		tempfile = argv[10];
-	} else {
-		exit(1);
+	}
+	if (tempfile == NULL) {
+		tempfile = tempfilename();
 	}
 	if (argc >= 12) {
 		meta = argv[11];
 	} else {
-		exit(1);
+		meta="";
 	}
 	/* prepare file for making header */
 	fh = fopen64_or_die(tempfile,"w");
 	fprintf(fh,"%s\n",line->string);
-/*
-	fprintf(fo,"#filetype\ttsv/varfile\n");
-	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
-	fprintf(fo,"#split\t%d\n",split);
-	fprintf(fo,"#info\ttsv converted from vcf, original comments follow\n");
-*/
 	info = DStringArrayNew(10);
 	format = DStringArrayNew(10);
 	while ((read = DStringGetLine(line, fd)) != -1) {
@@ -1335,7 +1419,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	FCLOSE(fh);
-	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -typelist '%s' -showheader 0 -meta '%s' '%s'",typelist,meta,tempfile);
+	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -split %s -typelist '%s' -showheader 0 -meta '%s' '%s'",splitstring,typelist,meta,tempfile);
 	system(dsbuffer->string);
 	fprintf(fo,"# ----\n");
 	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt");
@@ -1425,19 +1509,11 @@ int main(int argc, char *argv[]) {
 			}
 			if (ds->size == 0) {
 				continue;
-			} else if (split && id->size == 3 && strncmp(id->string,"END",3) == 0) {
+			} else if (id->size == 3 && strncmp(id->string,"END",3) == 0) {
 				svendpos = infopos;
 			} else if (id->size == 5 && strncmp(id->string,"SVLEN",5) == 0) {
-				if (!split) {
-					fprintf(stderr,"structural variants not supported in -split ori, vcf has SVLEN\n");
-					exit(1);
-				}
 				svlenpos = infopos;
 			} else if (id->size == 6 && strncmp(id->string,"SVTYPE",6) == 0) {
-				if (!split) {
-					fprintf(stderr,"structural variants not supported in -split ori, vcf has SVTYPE\n");
-					exit(1);
-				}
 				svtypepos = infopos;
 			} else {
 				if (id->size == 7 && strncmp(id->string,"STRANDS",6) == 0) {
@@ -1495,7 +1571,7 @@ int main(int argc, char *argv[]) {
 			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout,locerror,skiprefindels);
 			process_print_buffer(fo,obuffer,pos-1);
 		} else {
-			process_line_unsplit(fo,linea,excludename,excludefilter);
+			process_line_unsplit(fo,linea,excludename,excludefilter,refout,locerror,skiprefindels);
 		}
 	}
 	process_print_buffer(fo,obuffer,2147483647);
