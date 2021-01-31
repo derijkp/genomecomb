@@ -6,6 +6,13 @@ cg hardsync source dest
 == Summary ==
 creates a hardlinked copy of a directory in another location
 
+== Description ==
+cg hardsync creates a hardlinked copy of a directory in another location.
+Given a source and destination directory, an exact copy (using hardlinks for files) will
+be made in the destination directory. If a directory with the same (end)name already exists
+in the destination directory it is updated/replaced by the source. Files not in the source
+will be deleted, so use with care!
+
 == Arguments ==
 ; source: directory to be copied
 ; dest: destination directory; This must be an existing directory into which the source directory will be copied
