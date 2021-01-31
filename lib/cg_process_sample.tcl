@@ -809,7 +809,7 @@ proc process_sample_job {args} {
 			lappend skips $bamfile [analysisinfo_file $bamfile]
 			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
 			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
-			if {[file exists $bamfile] && ![jobtargetexists $bamfile $fastqfiles]} {
+			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
 				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
 				file rename -force $bamfile $bamfile.old
 			}
