@@ -73,7 +73,7 @@ proc fastqs_mergename {fastqfiles} {
 	}
 }
 
-proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr meth-compression} {
+proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr meth-compression nomatchingfast5error} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
@@ -130,11 +130,19 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		} -code {
 			catch {file mkdir $cachedir}
 			set tempfile [filetemp $bamcacheindex]
-			file copy -force $bamfileindex $tempfile
+			if {[catch {file link $dep} link]} {
+				file copy -force $bamfileindex $tempfile
+			} else {
+				file copy -force $link $tempfile
+			}
 			file rename -force $tempfile $bamcacheindex
 			exec touch -h -d [clock format [file mtime $bamfileindex]] $bamcacheindex
 			set tempfile [filetemp $target]
-			file copy -force $dep $tempfile
+			if {[catch {file link $dep} link]} {
+				file copy -force $dep $tempfile
+			} else {
+				file copy -force $link $tempfile
+			}
 			file rename -force $tempfile $target
 			exec touch -h -d [clock format [file mtime $dep]] $target
 		}
@@ -147,26 +155,30 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		foreach fastqfile $fastqfiles {
 			set fast5file $fast5dir/[file root [file tail [gzroot $fastqfile]]].fast5
 			if {![jobfileexists $fast5file]} {
-				puts stderr "Could not find fast5 for $fastqfile, skipping"
-				continue
+				if {$nomatchingfast5error} {
+					error "Could not find fast5 for $fastqfile"
+				} else {
+					puts stderr "Could not find fast5 for $fastqfile, skipping"
+					continue
+				}
 			}
 			lappend fast5files $fast5file
 			lappend usefastqfiles $fastqfile
 		}
-		set root [fastqs_mergename $fastqfiles]
+		set root [fastqs_mergename $usefastqfiles]
 		set target $resultfile.temp/$root.smeth.tsv.zst
 		lappend seqmethfiles $target
 		set deps [list {*}$usefastqfiles {*}$fast5files $refseq $bamcache ($bamfileindex)]
 		job [job_relfile2name seqmeth_nanopolish- $target] {*}$skips -cores $threads -deps $deps -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			fastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex
+			usefastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
 			if {[llength $fast5files] == 1 && [file exists /dev/shm]} {
 				# check if we can use ramdisk
-				set fastqfile [lindex $fastqfiles 0]
+				set fastqfile [lindex $usefastqfiles 0]
 				set fast5file [lindex $fast5files 0]
 				set size [expr {[file size $fast5file]+1.6*[file size $fastqfile]}]
 				# tempdir will only be changed if enough space was free on /dev/shm
@@ -177,13 +189,13 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 			}
 			foreach file [glob -nocomplain $tempdir/*] {file delete $file}
 			exec cp -fL {*}$fast5files $tempdir
-			if {[llength $fastqfiles] == 1} {
-				set fastqfile [lindex $fastqfiles 0]
+			if {[llength $usefastqfiles] == 1} {
+				set fastqfile [lindex $usefastqfiles 0]
 				exec cp -fL $fastqfile $tempdir
 				set fastqfile $tempdir/[file tail $fastqfile]
 			} else {
 				set fastqfile [tempfile].fastq.gz
-				exec cg zcat {*}$fastqfiles | gzip --fast > $fastqfile 2>@ stderr
+				exec cg zcat {*}$usefastqfiles | gzip --fast > $fastqfile 2>@ stderr
 			}
 			set nanopolishprog [exec which nanopolish]
 			if {[file exists $nanopolishprog.plugins]} {
@@ -261,6 +273,7 @@ proc meth_nanopolish_job {args} {
 	set distrmethod fast5
 	set distrreg 5000000
 	set maxfastqdistr {}
+	set nomatchingfast5error 1
 	set meth-compression [get ::specialopt(-meth_nanopolish-compression) zst]
 	set opts {}
 	cg_options meth_nanopolish args {
@@ -288,6 +301,9 @@ proc meth_nanopolish_job {args} {
 		}
 		-meth-compression {
 			set meth-compression $value
+		}
+		-nomatchingfast5error {
+			set nomatchingfast5error [tru $value]
 		}
 		-opts {
 			set opts $value
@@ -320,7 +336,7 @@ proc meth_nanopolish_job {args} {
 	bam_index_job $bamfile
 
 	if {$distrmethod eq "fast5"} {
-		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr ${meth-compression}]
+		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr ${meth-compression} $nomatchingfast5error]
 	}
 	set tail [file tail $resultfile]
 	if {[regexp ^meth- $tail]} {
