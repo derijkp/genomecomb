@@ -187,7 +187,7 @@ proc map_job {args} {
 	if {!$paired} {
 		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
-			set target $resultbase-$name.sam.zst
+			set target $workdir/[file_root [file tail $result]]-$name.sam.zst
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
