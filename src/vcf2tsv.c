@@ -546,7 +546,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 	DString *ds,*type;
 	char zyg, refch;
 	int curallele,pos,i;
-	int l1,l2,len,igeno,isample,diffchar,diff,begin,end;
+	int l1,l2,len,igeno,isample,diffchar,diff=0,begin,end;
 	svend=-1; svlen=0;
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */

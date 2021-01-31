@@ -17,7 +17,7 @@
 #include "gzpopen.h"
 
 PFILE *gz_popen(char *filename,char *format) {
-	int type = UNCOMPRESSED, len = strlen(filename);
+	int len = strlen(filename);
 	PFILE *result = (PFILE *)malloc(sizeof(PFILE));
 	DString *buffer = NULL;
 	char *cur;
@@ -98,7 +98,7 @@ PFILE *gz_popen(char *filename,char *format) {
 }
 
 int gz_pclose(PFILE *pfile) {
-	int r;
+	int r=0;
 	if (pfile->type == 'p') {
 		r = pclose(pfile->f);
 	} else if (pfile->type == 'f') {
