@@ -63,7 +63,7 @@ proc sv_npinv_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
-	set resultanalysisinfo [gzroot $resultfile].analysisinfo
+	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
@@ -77,7 +77,7 @@ proc sv_npinv_job {args} {
 	# start
 	## Produce npinv sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_npinv-$root.vcf {*}$skips -mem 5G -skip [list $resultfile $resultfile.analysisinfo] \
+	job sv_npinv-$root.vcf {*}$skips -mem 5G -skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $bamfileindex
 	} -targets {

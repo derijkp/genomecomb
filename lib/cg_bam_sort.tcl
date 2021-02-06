@@ -40,7 +40,7 @@ proc bam_sort_job {args} {
 			lappend skips -skip $value
 		}
 	} {sourcefile resultfile}
-	set analysisinfo [gzroot $resultfile].analysisinfo
+	set analysisinfo [analysisinfo_file $resultfile]
 	job [job_relfile2name bamsort- $resultfile] -deps {
 		$sourcefile
 	} -targets {

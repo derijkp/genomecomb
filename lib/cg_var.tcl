@@ -164,13 +164,13 @@ proc var_job {args} {
 			} -vars {
 				list regionfile method bamfile
 			} -code {
-				set analysisinfo [gzroot $dep].analysisinfo
+				set analysisinfo [analysisinfo_file $dep]
 				if {[file exists $analysisinfo]} {
 					set root $method-[file_rootname [file tail $bamfile]]
-					analysisinfo_copy $analysisinfo [gzroot $target].analysisinfo \
+					analysisinfo_copy $analysisinfo [analysisinfo_file $target] \
 						[list varcaller_region [file tail $regionfile] \
 						sample $root]
-					exec touch [gzroot $target].analysisinfo
+					exec touch [analysisinfo_file $target]
 				}
 				# using bsort because
 				# files are xxx-100 -> would sort reverse of what we want because of the -

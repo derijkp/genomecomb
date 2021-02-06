@@ -70,7 +70,7 @@ proc sv_sniffles_job {args} {
 		set root [file_rootname $resultfile]
 	}
 	set destdir [file dir $resultfile]
-	set resultanalysisinfo [gzroot $resultfile].analysisinfo
+	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
 	set resultlist [list $resultfile $resultanalysisinfo $vcffile]

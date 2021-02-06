@@ -56,7 +56,7 @@ proc sv_lumpy_job {args} {
 		set root [file_rootname $resultfile]
 	}
 	set vcffile [file root [gzroot $resultfile]].vcf
-	set resultanalysisinfo [gzroot $resultfile].analysisinfo
+	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	# check dependencies (and adapt config if needed)
 	
@@ -73,7 +73,7 @@ proc sv_lumpy_job {args} {
 	## Produce lumpy sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_lumpy-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
-	-skip [list $resultfile $resultfile.analysisinfo] \
+	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai
 	} -targets {

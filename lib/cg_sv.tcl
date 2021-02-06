@@ -124,7 +124,7 @@ proc sv_job {args} {
 			set deps $list
 			set ainfolist {}
 			foreach el $list {
-				set analysisinfo [lindex [jobglob [gzroot $el].analysisinfo]]
+				set analysisinfo [lindex [jobglob [analysisinfo_file $el]]]
 				if {$analysisinfo ne ""} {
 					lappend ainfolist $analysisinfo
 				}
@@ -138,7 +138,7 @@ proc sv_job {args} {
 				analysisinfo list
 			} -code {
 				if {[llength $analysisinfo]} {
-					file copy -force $analysisinfo [gzroot $target].analysisinfo
+					file copy -force $analysisinfo [analysisinfo_file $target]
 				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
@@ -152,7 +152,7 @@ proc sv_job {args} {
 					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
 					if {[file extension $file] eq ".zst"} {file delete $file.zsti}
 					file delete -force [gzroot $file].temp
-					file delete [gzroot $file].analysisinfo
+					file delete [analysisinfo_file $file]
 				}
 			}
 			incr pos

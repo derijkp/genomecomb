@@ -51,7 +51,7 @@ proc sv_gridss_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
-	set resultanalysisinfo [gzroot $resultfile].analysisinfo
+	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
@@ -73,7 +73,7 @@ proc sv_gridss_job {args} {
 		lappend opts BLACKLIST=\"[lindex $blacklist 0]\"
 	}
 	job sv_gridss-$root.vcf {*}$skips -mem [expr {8+1*$threads}]G -cores $threads \
-	-skip [list $resultfile $resultfile.analysisinfo] \
+	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $bwarefseq $bamfileindex $bwarefseq.fai
 	} -targets {

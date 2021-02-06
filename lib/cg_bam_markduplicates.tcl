@@ -27,6 +27,7 @@ proc bam_markduplicates_job {args} {
 			set threads $value
 		}
 	} {src dest}
+	set destanalysisinfo [analysisinfo_file $dest]
 	if {$method eq "1"} {set method samtools}
 	set tail [file tail $src]
 	putslog "removing duplicates $tail"
@@ -34,7 +35,7 @@ proc bam_markduplicates_job {args} {
 	job bamremdup-$tail {*}$skips -deps {
 		$src
 	} -targets {
-		$dest $dest.analysisinfo
+		$dest $destanalysisinfo
 	} -vars {
 		oformat method threads
 	} -code {

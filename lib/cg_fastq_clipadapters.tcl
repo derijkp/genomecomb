@@ -51,7 +51,7 @@ proc fastq_clipadapters_job {args} {
 		} else {
 			lappend resultfastqs $resultdir/[file tail $root].clipped.fastq
 		}
-		lappend resultanalysisinfo $resultdir/[file tail [gzroot $root]].clipped.fastq.analysisinfo
+		lappend resultanalysisinfo [analysisinfo_file $resultdir/[file tail [gzroot $root]].clipped.fastq]
 	}
 	# paired files need to be clipped together!
 	set temptargets {}

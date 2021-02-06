@@ -108,7 +108,7 @@ proc map_job {args} {
 		set_job_logdir [file dir $result]/log_jobs
 	}
 	job_logfile $resultdir/map_${method}_[file tail $result] $resultdir $cmdline \
-		{*}[versions minimap2]
+		{*}[versions $method]
 	# start
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
@@ -225,7 +225,7 @@ proc map_job {args} {
 			set name [file tail [file_root $file1]]
 			set target $workdir/[file_root [file tail $result]]-$name.sam.zst
 			lappend samfiles $target
-			set analysisinfo [gzroot $target].analysisinfo
+			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
 			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \

@@ -596,9 +596,9 @@ proc pmulticompar_job {args} {
 	# analysisinfo
 	set deps {}
 	foreach file [bsort $files] {
-		lappend deps "([gzroot $file].analysisinfo)"
+		lappend deps "([analysisinfo_file $file])"
 	}
-	set target [gzroot $compar_file].analysisinfo
+	set target [analysisinfo_file $compar_file]
 	job [job_relfile2name multicompar_analysisinfo- $compar_file] -deps $deps -optional 1 \
 	-targets {$target} -code {
 		set deps [list_remove $deps {}]

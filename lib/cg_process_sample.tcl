@@ -295,9 +295,13 @@ proc process_sample_cgi_job {workdir split} {
 			file rename -force -- $target.temp $target
 		}
 	}
-	job cg_var-cg-cg-$sample -optional 1 \
-	-deps {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)} \
-	-targets {var-cg-cg-$sample.tsv.zst var-cg-cg-$sample.tsv.analysisinfo} -vars {sample} -code {
+	job cg_var-cg-cg-$sample -optional 1 -deps {
+		annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)
+	} -targets {
+		var-cg-cg-$sample.tsv.zst var-cg-cg-$sample.tsv.analysisinfo
+	} -vars {
+		sample
+	} -code {
 		set cgi_version ?
 		set cgi_reference ?
 		if {[file exists info.txt]} {
@@ -905,8 +909,8 @@ proc process_sample_job {args} {
 			setdefcompressionlevel 1
 			set udistrreg [distrreg_use $distrreg chr chr]
 			set bamfiles [sam_catmerge_job \
-				-skip [list $bamfile $bamfile.analysisinfo] \
-				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+				-skip [list $bamfile [analysisinfo_file $bamfile]] \
+				-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
 				-name mergesams-$aligner-$sample -refseq $refseq \
 				-sort coordinate -mergesort 1 \
 				-distrreg $udistrreg \
@@ -928,7 +932,7 @@ proc process_sample_job {args} {
 				setdefcompressionlevel 1
 				foreach bam $bamfiles {
 					lappend cleanbams [bam_clean_job -sort 2 -outputformat sam.zst -distrreg $distrreg \
-						-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+						-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
 						-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 						-regionfile 5 -refseq $refseq -threads $threads \
 						 $bam]

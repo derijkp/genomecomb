@@ -199,10 +199,10 @@ proc var_strelka_job {args} {
 			putslog "empty regionfile -> write empty $resultgvcf"
 			file_write $resultgvcf ""
 			file_write $resultgvcf.tbi ""
-			file_write $resultgvcf.analysisinfo ""
+			file_write [analysisinfo_file $resultgvcf] ""
 			file_write $resultvcf ""
 			file_write $resultvcf.tbi ""
-			file_write $resultvcf.analysisinfo ""
+			file_write [analysisinfo_file $resultvcf] ""
 		}
 		analysisinfo_write $bamfile $resultvcf sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 	}

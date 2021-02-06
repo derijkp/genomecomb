@@ -488,7 +488,7 @@ proc cg_annotate_job {args} {
 		}
 	}
 	if {$analysisinfo} {
-		set analysisinfofile [gzroot $resultfile].analysisinfo
+		set analysisinfofile [analysisinfo_file $resultfile]
 	} else {
 		set analysisinfofile {}
 	}

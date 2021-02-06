@@ -97,7 +97,7 @@ proc sam_catmerge_job {args} {
 			lappend tempregresults [file_root $tempresultfile]-$region[file_ext $resultfile]
 		}
 		set targets $regresults
-		lappend targets [gzroot [lindex $regresults 0]].analysisinfo
+		lappend targets [analysisinfo_file [lindex $regresults 0]]
 	}
 	if {$sort eq "nosort" && $mergesort} {error "cannot combine -sort nosort with -mergesort 1"}
 	if {![llength $regions] && $sort eq "name"} {error "cannot combine distrreg with name sorting"}
