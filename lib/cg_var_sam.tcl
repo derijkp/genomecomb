@@ -141,16 +141,17 @@ proc var_sam_job {args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
+	set cache [file dir $varallvcf]/cache_vcf_sam_[file tail $refseq].temp.zst
+	job_cleanup_add $cache
 	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
 		$varallvcf
 	} -skip {
 		$varallfile
 	} -vars {
-		refseq opts BQ regionfile root threads callmethod dt
+		refseq opts BQ regionfile root threads callmethod dt cache
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp.zst
 		if {$emptyreg && [file exists $cache]} {
 			copywithindex $cache $target $cache.tbi.temp $target.tbi
 		} else {

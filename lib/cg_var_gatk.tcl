@@ -201,17 +201,18 @@ proc var_gatk_job {args} {
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
 	if {$dt ne ""} {lappend opts -dt $dt}
-	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads \
-	-deps $deps -targets {
+	set target ${pre}varall-$root.vcf
+	set cache [file dir $target]/cache_vcf_gatk_[file tail $refseq].temp
+	job_cleanup_add $cache
+	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {
 		$varallfile
 	} -vars {
-		gatk opts regionfile gatkrefseq refseq threads root
+		gatk opts regionfile gatkrefseq refseq threads root cache
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp]
 		if {$emptyreg && [file exists $cache]} {
 			file copy $cache $target
 		} else {
@@ -249,6 +250,9 @@ proc var_gatk_job {args} {
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	# not using threads, as these cause (sporadic) errors (https://gatkforums.broadinstitute.org/gatk/discussion/3141/unifiedgenotyper-error-somehow-the-requested-coordinate-is-not-covered-by-the-read)
+	set target ${pre}delvar-$root.tsv
+	set cache [file dir $target]/cache_delvar_gatk_[file tail $refseq].temp
+	job_cleanup_add $cache
 	job ${pre}delvar-$root {*}$skips \
 	-deps $deps \
 	-targets {${pre}delvar-$root.vcf} -skip {
@@ -256,10 +260,9 @@ proc var_gatk_job {args} {
 	} -skip {
 		$varfile
 	} -vars {
-		gatk opts regionfile gatkrefseq refseq dt
+		gatk opts regionfile gatkrefseq refseq dt cache
 	} -code {
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
 			file copy $cache $target
 		} else {

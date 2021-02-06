@@ -119,16 +119,18 @@ proc var_freebayes_job {args} {
 	## Produce freebayes SNP calls
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
+	set target ${pre}varall-$root.vcf
+	set cache [file dir $target]/cache_varall_freebayes_[file tail $refseq].temp
+	job_cleanup_add $cache
 	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {
 		$varallfile
 	} -vars {
-		opts regionfile refseq root
+		opts regionfile refseq root cache
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_freebayes_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
 			file copy $cache $target
 		} else {

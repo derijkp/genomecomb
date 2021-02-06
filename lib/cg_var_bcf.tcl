@@ -127,14 +127,15 @@ proc var_bcf_job {args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
+	set cache [file dir $varallfile]/cache_varall_bcf_[file tail $refseq].temp
+	job_cleanup_add $cache
 	job bcfvarall_${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem 5G -targets {
 		$varallfile
 	} -vars {
-		refseq opts BQ BAQ regionfile root threads callmethod split
+		refseq opts BQ BAQ regionfile root threads callmethod split cache
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
 			file copy $cache $target
 		} else {

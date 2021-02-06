@@ -139,14 +139,15 @@ proc var_gatkh_job {args} {
 	set dep $bamfile
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
+	set cache [file dir $varallfile]/cache_varall_gatkh_[file tail $refseq].temp
+	job_cleanup_add $cache
 	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
 		$varallfile $varallfile.tbi
 	} -vars {
-		opts regionfile gatkrefseq refseq root ERC varallfile
+		opts regionfile gatkrefseq refseq root ERC varallfile cache
 	} -code {
 		analysisinfo_write $dep $varallfile sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
-		set cache [file dir $target]/cache_var_gatkh_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
 			copywithindex $cache $target $cache.tbi.temp $target.tbi
 		} else {
