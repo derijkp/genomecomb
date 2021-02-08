@@ -125,6 +125,8 @@ conda install -y lumpy-sv=0.2.13
 
 rm lumpy.tar.gz || true
 conda pack -n lumpy -o lumpy.tar.gz
+rm -rf lumpy-0.2.13.old
+mv lumpy-0.2.13 lumpy-0.2.13.old
 mkdir lumpy-0.2.13
 cd lumpy-0.2.13
 tar xvzf ../lumpy.tar.gz
