@@ -835,7 +835,7 @@ test noise {pretest} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 	# cg select -overwrite 1 -f {chromosome {begin=$pos - 1} depth nrdiff pct_alt="${bin}"} tmp/expected.tsv tmp/expected2.tsv
 	file_write tmp/expected2.tsv [deindent {
-		chromosome	begin	depth	ref	nr_diff	nr_mismatch	nr_del	nr_ins	nr_A	nr_C	nr_G	nr_T	pct_diff	pct_mismatch	pct_del	pct_ins	pct_A	pct_C	pct_G	pct_T	pct_mismatch
+		chromosome	begin	depth	ref	nr_diff	nr_mismatch	nr_del	nr_ins	nr_A	nr_C	nr_G	nr_T	pct_diff	pct_mismatch	pct_del	pct_ins	pct_A	pct_C	pct_G	pct_T	pct_maxmismatch
 		chr21	9439388	40	G	0	0	0	0	0	40	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
 		chr21	9439514	53	C	25	13	1	11	0	39	0	13	47.17	24.53	1.89	20.75	0.00	73.58	0.00	24.53	24.53
 		chr21	9439625	20	C	0	0	0	0	0	20	0	0	0.00	0.00	0.00	0.00	0.00	100.00	0.00	0.00	0.00
