@@ -281,7 +281,6 @@ proc meth_nanopolish_job {args} {
 			set callthreshold $value
 		}
 		-refseq {set maxfastqdistr {}
-
 			set refseq $value
 		}
 		-skip {
