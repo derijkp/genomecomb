@@ -30,14 +30,21 @@
 #fields	CIEND	2	Integer	Confidence interval around END for imprecise variants	info
 #fields	CIPOS	2	Integer	Confidence interval around POS for imprecise variants	info
 #fields	CHR2	1	String	Chromosome for END coordinate in case of a translocation	info
+#fields	POS2	1	Integer	Start coordinate of second breakpoint position.	info
+#fields	END2	1	Integer	End coordinate of second breakpoint position.	info
 #fields	HOMLEN	-1	Integer	Length of base pair identical micro-homology at event breakpoints	info
 #fields	HOMSEQ	-1	String	Sequence of base pair identical micro-homology at event breakpoints	info
 #fields	IMPRECISE	0	Flag	Imprecise structural variation	info
 #fields	MEINFO	4	String	Mobile element info of the form NAME,START,END,POLARITY	info
 #fields	STRANDS	.	String	Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)	info
+#fields	CPX_INTERVALS	.	String	Genomic intervals constituting complex variant.	info
+#fields	CPX_TYPE	1	String	Class of complex variant.	info
 #vcf_assembly	ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
 #ALT	table
 #ALT	ID	Description
+#ALT	BND	Unresolved non-reference breakpoint junction
+#ALT	CPX	Complex SV
+#ALT	CTX	Reciprocal translocation
 #ALT	DEL	Deletion
 #ALT	DEL:ME:ALU	Deletion of ALU element
 #ALT	DEL:ME:L1	Deletion of L1 element
@@ -53,20 +60,24 @@
 #vcf_fileDate	20100501
 #vcf_reference	1000GenomesPilot-NCBI36
 # ----
-chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	genoqual	CN	CNQ	DR	DV	BKPTID	CIEND	CIPOS	CHR2	HOMLEN	HOMSEQ	IMPRECISE	MEINFO	STRANDS
-1	2827694	2827708	del	14		.	.	PASS	14		t	0	0;1	13.9									1	G			
-2	321681	321681	bnd		.[17:123456[,]17:123456].	bnd_W,bnd_V	6	PASS	,]17:123456].	.[17:123456[,]17:123456].	m	0	2;2														
-2	321682	321887	del	205		.	6	PASS	205		t	0	0;1	12						-10,62	-56,20				1		
-2	14477084	14477381	del	297		.	12	PASS	297		t	0	0;1	12						-12,32	-22,18				1	AluYa5,5,307,+	
-3	9425916	9425916	ins		6027,<SEQ1>	.	23,25	PASS	6027,<SEQ1>	6027,<SEQ1>	m	0	2;2	15							-16,22,				1,		
-3	9425918	9425918	ins		<SEQ1>	.	25	PASS	<SEQ1>	<SEQ1>	m	0	1;1	15													
-3	9425919	9425919	ins		<SEQ1>,<SEQ2>	.	25	PASS	<SEQ1>	<SEQ1>	m	0	1;1	15													
-3	9425920	9425920	bnd		.]10:1000],.]17:198982]	bnd_M	6	PASS	.]17:198982]	.]10:1000]	c	0	2;1	20													
-3	12665100	12686200	dup	21100	42200	.	14	PASS	?	?	v	0	?;?.	0	3	16.2				-500,500	-500,500				1		
-4	18665128	18665204	dup	76	152	.	11	PASS	?	?	v	0	?;?.	0	5	8.3				-10,10	-10,10				1		
-5	321681	321681	bnd		.]17:198982]	bnd_W	6	PASS		.]17:198982]	t	0	0;1	20													
-5	9121400	9121400	trans		.[14:93712485[	.	.	PASS		.[14:93712485[	t	0	0;1				4	10				chr14			1		+-
-6	9121400	9121400	trans		.]14:93712485]	.	.	PASS		.]14:93712485]	t	0	0;1				4	10				chr14			1		++
-7	9121400	9121400	trans		]14:93712485].	.	.	PASS		]14:93712485].	t	0	0;1				4	10				chr14			1		-+
-8	9121400	9121400	trans		[14:93712485[.	.	.	PASS		[14:93712485[.	t	0	0;1				4	10				chr14			1		--
-17	123456	123456	bnd		.G[2:321681[,]2:321681]T.	bnd_U,bnd_X	6	PASS	.G[2:321681[,	.G[2:321681[,]2:321681]T.	m	0	1;2														
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	genoqual	CN	CNQ	DR	DV	BKPTID	CIEND	CIPOS	CHR2	POS2	END2	HOMLEN	HOMSEQ	IMPRECISE	MEINFO	STRANDS	CPX_INTERVALS	CPX_TYPE
+1	10642	10642	bnd		[15:19999[	gnomadBND	261	UNRESOLVED		[15:19999[	t	0	0;1	16								15	20000	20001							
+1	66531	66531	ins		59	gnomadINS	58	PASS		59	t	0	0;1	17								1	66576	66577							
+1	774569	828435	cpx	53866	<CPX>	gnomadCPX	1	PASS	53866	<CPX>	t	0	0;1	20																DEL_1:774568-828435	INS_iDEL
+1	874569	874569	trans		[5:56651907[	gnomadCTX	999	PASS		[5:56651907[	t	0	0;1	21								5	12754270	12754271							
+1	2827694	2827708	del	14		.	.	PASS	14		t	0	0;1	13.9											1	G					
+2	321681	321681	bnd		.[17:123456[,]17:123456].	bnd_W,bnd_V	6	PASS	,]17:123456].	.[17:123456[,]17:123456].	m	0	2;2																		
+2	321682	321887	del	205		.	6	PASS	205		t	0	0;1	12						-10,62	-56,20						1				
+2	14477084	14477381	del	297		.	12	PASS	297		t	0	0;1	12						-12,32	-22,18						1	AluYa5,5,307,+			
+3	9425916	9425916	ins		6027,<SEQ1>	.	23,25	PASS	6027,<SEQ1>	6027,<SEQ1>	m	0	2;2	15							-16,22,						1,				
+3	9425918	9425918	ins		<SEQ1>	.	25	PASS	<SEQ1>	<SEQ1>	m	0	1;1	15																	
+3	9425919	9425919	ins		<SEQ1>,<SEQ2>	.	25	PASS	<SEQ1>	<SEQ1>	m	0	1;1	15																	
+3	9425920	9425920	bnd		.]10:1000],.]17:198982]	bnd_M	6	PASS	.]17:198982]	.]10:1000]	c	0	2;1	20																	
+3	12665100	12686200	dup	21100	42200	.	14	PASS	?	?	v	0	?;?.	0	3	16.2				-500,500	-500,500						1				
+4	18665128	18665204	dup	76	152	.	11	PASS	?	?	v	0	?;?.	0	5	8.3				-10,10	-10,10						1				
+5	321681	321681	bnd		.]17:198982]	bnd_W	6	PASS		.]17:198982]	t	0	0;1	20																	
+5	9121400	9121400	trans		.[14:93712485[	.	.	PASS		.[14:93712485[	t	0	0;1				4	10				chr14					1		+-		
+6	9121400	9121400	trans		.]14:93712485]	.	.	PASS		.]14:93712485]	t	0	0;1				4	10				chr14					1		++		
+7	9121400	9121400	trans		]14:93712485].	.	.	PASS		]14:93712485].	t	0	0;1				4	10				chr14					1		-+		
+8	9121400	9121400	trans		[14:93712485[.	.	.	PASS		[14:93712485[.	t	0	0;1				4	10				chr14					1		--		
+17	123456	123456	bnd		.G[2:321681[,]2:321681]T.	bnd_U,bnd_X	6	PASS	.G[2:321681[,	.G[2:321681[,]2:321681]T.	m	0	1;2																		

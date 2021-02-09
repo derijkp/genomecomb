@@ -54,7 +54,7 @@ typedef struct OBuffer {
 
 /* i know it is ugly in globals, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 static OBuffer *obuffer = NULL;
-static AltVar *altvars;
+static AltVar *altvars = NULL;
 static DString *line, *string, *temp;
 static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype, *bndtype;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
@@ -66,9 +66,9 @@ DString *svlens=NULL,*svtype=NULL;
 char *cursvlen=NULL;
 static char *typelist;
 static int *order = NULL;
-static int numalleles,altvarsmax;
+static int numalleles,altvarsmax=0;
 /* svendpos and svend captures position and value of "END" in info fields, it is also used for gvcf <NON_REF> calls */
-static int linenr,svendpos,svlenpos,svtypepos,chr2pos,strandspos=-1;
+static int linenr,svendpos=-1,svlenpos=-1,svtypepos=-1,chr2pos=-1,pos2pos=-1,strandspos=-1;
 int svend=-1, svlen=0;
 static int ADpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
 
@@ -447,6 +447,10 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 				altvar->altsize = 0;
 			} else if (l2 > 3 && strncmp(curalt+1,"INS",3) == 0) {
 				altvar->type = instype;
+				if (altvar->end > altvar->begin) {
+					altvar->end = altvar->begin;
+					altvar->refsize = 0;
+				}
 				if (svlen > 0) {
 					altvar->altsize = svlen;
 					altvar->alt = NULL;
@@ -463,17 +467,24 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 				altvar->type = cnvtype;
 				altvar->altsize = 4;
 				altvar->alt = "cnv";
-			} else if (l2 > 3 && strncmp(curalt+1,"TRA",3) == 0) {
+			} else if (l2 > 3 && (strncmp(curalt+1,"TRA",3) == 0 || strncmp(curalt+1,"CTX",3) == 0 || strncmp(curalt+1,"BND",3) == 0)) {
 				char *curchr; int cursize;
 				altvar->end = altvar->begin;
 				altvar->refsize = 0;
-				altvar->type = transtype;
+				if (curalt[1] == 'B') {
+					altvar->type = bndtype;
+					if (pos2pos != -1) {
+						svend=atoi(outinfo[pos2pos].string);
+					}
+				} else {
+					altvar->type = transtype;
+				}
 				if (altvar->buffer == NULL) {altvar->buffer = DStringNew();}
 				curchr = outinfo[chr2pos].string; cursize = outinfo[chr2pos].size;
 				if (cursize > 3 && (curchr[0] == 'c' || curchr[0] == 'C') && curchr[1] == 'h' && curchr[2] == 'r') {
 					curchr += 3; cursize -= 3;
 				}
-				if (strandspos != -1) {
+				if (strandspos != -1 && outinfo[strandspos].size != -1) {
 					/*
 					------A------|-----B----- chr1
 					------C------|-----D----- chr2
@@ -505,6 +516,7 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 				char *pos,dir = 'r';
 				if (svtype->size == 3 && strncmp(svtype->string,"BND",3) == 0) {
 					altvar->type = bndtype;
+					altvar->refsize = 0;
 				} else {
 					for (i=0 ; i < svtype->size ; i++) {svtype->string[i] = tolower(svtype->string[i]);}
 					altvar->type = svtype;
@@ -1248,7 +1260,6 @@ int main(int argc, char *argv[]) {
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew(),*dsbuffer = DStringNew();
 	char *tempfile = NULL, *meta = NULL, *splitstring;
 	char locerror = 'e';
-	altvars = NULL;
 	int *order = NULL;
 	int split,refout,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0, skiprefindels = 0;
 	line=NULL; string=NULL; temp=NULL;
@@ -1492,7 +1503,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	NODPRINT("\n\n==== Parsing info ====")
+	/* infofields will contain array of info field names */
 	infofields = DStringArrayNew(10);
+	/* infofieldsnumber will contain array of info field number, = "R","A",".", ... */
 	infofieldsnumber = DStringNew();
 	infopos = 0;
 	for (i = 0 ; i < info->size ; i ++) {
@@ -1503,10 +1516,6 @@ int main(int argc, char *argv[]) {
 		} else {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
-			if (keepfields != NULL) {
-				DString *kds = (DString *)dstring_hash_get(keepfields,ds);
-				if (kds == NULL) {continue;}
-			}
 			if (ds->size == 0) {
 				continue;
 			} else if (id->size == 3 && strncmp(id->string,"END",3) == 0) {
@@ -1516,10 +1525,16 @@ int main(int argc, char *argv[]) {
 			} else if (id->size == 6 && strncmp(id->string,"SVTYPE",6) == 0) {
 				svtypepos = infopos;
 			} else {
-				if (id->size == 7 && strncmp(id->string,"STRANDS",6) == 0) {
-					strandspos = i;
-				} else if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
-					chr2pos = i;
+				if (id->size == 7 && strncmp(id->string,"STRANDS",7) == 0) {
+					strandspos = infopos;
+				} else if (id->size == 4 && strncmp(id->string,"CHR2",4) == 0) {
+					chr2pos = infopos;
+				} else if (id->size == 4 && strncmp(id->string,"POS2",4) == 0) {
+					pos2pos = infopos;
+				} else if (keepfields != NULL) {
+					/* only put keepers in header */
+					DString *kds = (DString *)dstring_hash_get(keepfields,ds);
+					if (kds == NULL) {continue;}
 				}
 				num->string[0] = extractNumber(DStringArrayGet(info,i));
 				num->string[0] = numberfromid(id,num->string[0],typelist);
