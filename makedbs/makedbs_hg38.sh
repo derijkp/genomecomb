@@ -78,6 +78,7 @@ set cmdline "[list cd [pwd]] \; [list [info script] {*}$argv]"
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
+
 if {![info exists dest]} {set dest $defaultdest}
 if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
@@ -429,52 +430,6 @@ job lofgnomad -deps {
 	file delete -force $target.temp
 }
 
-# gnomadsv (todo)
-# ---------------
-job svgnomad -deps {
-} -vars {
-	build gnomadsv gnomadsvbuild gnomadsvversion dest
-} -targets {
-	reg_${build}_svgnomad.tsv
-} -code {
-	file_write $target.info [subst [deindent {
-		= svgnomad (loss of function tolerence) =
-		
-		== Download info ==
-		dbname	svgnomad
-		version	$gnomadsvversion
-		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
-		license	cite
-		source	$gnomadsv
-		time	[timestamp]
-		
-		== Description ==
-		
-		gnomad structural variants
-
-		More info on https://gnomad.broadinstitute.org/faq
-		and in https://doi.org/10.1038/s41586-020-2287-8
-		
-		== Category ==
-		Annotation
-	}]]
-	file_write $target.opt "fields\tpLI\n"
-	file mkdir $target.temp
-	set tail [file tail $gnomadlof]
-	wgetfile $gnomadlof $target.temp/$tail
-	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
-	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
-	if {$build ne $gnomadlofbuild} {
-		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
-		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadlofbuild $build
-	} else {
-		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
-		file rename -force -- $target.temp2.zst $target.zst
-	}
-	cg zstindex $target.zst
-	file delete -force $target.temp
-}
-
 
 
 # gnomad
@@ -532,7 +487,7 @@ proc gnomadfields {file} {
 		male female
 	} {
 		if {![inlist $header AN_$population]} continue
-		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$population)/\$AN_$population))"
+		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$${population}_AC)/\$AN_$population))"
 		lappend fields "${population}_homfreqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$nhomalt_$population)/\$AN_$population))"
 		if {[inlist $header controls_AN_$population]} {
 			lappend fields "controls_${population}_homfreqp=if(def(\$controls_AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$controls_nhomalt_$population)/\$controls_AN_$population))"
@@ -662,6 +617,68 @@ job var_${build}_extragnomad-final -deps {
 	file_write extra/var_${build}_gnomadex.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomadex.tsv.zst extra/var_${build}_gnomadex.tsv.zst
 	# file delete -force $tempdir
+}
+
+# gnomadsv (todo)
+# ---------------
+job svgnomad -deps {
+} -targets {
+	sv_${build}_svgnomad.tsv
+} -vars {
+	build gnomadsv gnomadsvbuild gnomadsvversion dest
+} -procs {
+	gnomadfields
+} -code {
+	file_write $target.info [subst [deindent {
+		= svgnomad (loss of function tolerence) =
+		
+		== Download info ==
+		dbname	svgnomad
+		version	$gnomadsvversion
+		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
+		license	cite
+		source	$gnomadsv
+		time	[timestamp]
+		
+		== Description ==
+		
+		gnomad structural variants
+		
+		More info on https://gnomad.broadinstitute.org/faq
+		and in https://doi.org/10.1038/s41586-020-2287-8
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\t{max_freqp eur_freqp}\n"
+	file mkdir $target.temp
+	set tail [file tail $gnomadsv]
+	wgetfile $gnomadsv $target.temp/$tail
+	set root [file root [gzroot $tail]]
+	file delete $target.temp/$root.tsv.zst
+	cg vcf2tsv -split 0 $target.temp/$tail $target.temp/$root.tsv.zst
+	set fields {chromosome begin end type ref alt CPX_INTERVALS CPX_TYPE name}
+	foreach population {
+		afr amr eas eur oth
+		male female
+	} {
+		set upopulation [string toupper $population]
+		if {![inlist $header ${upopulation}_AN]} continue
+		lappend fields "${population}_an=\$${upopulation}_AN"
+		lappend fields "${population}_freqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.3f\",(100.0 @* vdef(\$${upopulation}_AF,0))))"
+		if {[inlist $header ${upopulation}_FREQ_HOMALT]} {
+			lappend fields "${population}_homfreqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.3f\",(100.0 @* vdef(\$${upopulation}_FREQ_HOMREF,0))))"
+		}
+	}
+	lappend fields "max_freqp=vformat(\"%.3f\",(100.0 @* vdef(\$POPMAX_AF,0)))"
+	cg select -overwrite 1 -f $fields $target.temp/$root.tsv.zst $target.temp/$root-2.tsv.zst
+	if {$build ne $gnomadsvbuild} {
+		liftover_refdb $target.temp/$root-2.tsv.zst $target.zst $dest $gnomadsvbuild $build 0
+	} else {
+		file rename -force -- $target.temp/$root-2.tsv.zst $target.zst
+	}
+	cg zstindex $target.zst
+	file delete -force $target.temp
 }
 
 # CADD
