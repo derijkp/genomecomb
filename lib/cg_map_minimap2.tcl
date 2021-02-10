@@ -112,7 +112,7 @@ proc cg_map_minimap2 {args} {
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				$minimap2refseq {*}$files {*}$outpipe
 		} msg]} {
-			if {[regexp ERROR: $msg]} {
+			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {
 				puts stderr $msg
 				error $msg
 			}
@@ -135,7 +135,7 @@ proc cg_map_minimap2 {args} {
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
 		} msg]} {
-			if {[regexp ERROR: $msg]} {
+			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {
 				puts stderr $msg
 				error $msg
 			}
