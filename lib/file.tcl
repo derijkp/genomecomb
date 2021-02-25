@@ -54,6 +54,15 @@ proc pwd {} {
 	return $::genomecomb::cwd
 }
 
+proc mkdir {dir} {
+	if {![file exists $dir]} {file mkdir $dir}	
+}
+
+proc file_mtime {file} {
+	file lstat $file a
+	return $a(mtime)
+}
+
 proc pathsep {} {
 	if {$::tcl_platform(platform) eq "windows"} {return \;} else {return \:}
 }
