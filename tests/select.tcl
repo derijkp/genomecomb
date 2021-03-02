@@ -1520,4 +1520,33 @@ test select "bugfix -s and -rf not enough fields" {
 1
 2}
 
+test select "-hp in pipe" {
+	global dbopt
+	write_tab tmp/vars.tsv {
+		chr1 4001
+		chr1 4002
+		chr1 4003
+	}
+	exec cat tmp/vars.tsv | cg select -hp {chromosome pos} 
+} {chromosome	pos
+chr1	4001
+chr1	4002
+chr1	4003}
+
+test select "-hp in pipe -g" {
+	exec samtools depth data/minimap2.bam | cg select -hp {chromosome pos depth} -g all -gc avg(depth),max(depth)
+} {all	avg_depth	max_depth
+all	2.3893407794099715	9}
+
+test select {empty line} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type	ref
+		chr1 4001 4002 snp A
+		
+		chr1 4002 4003 snp G
+	}
+	exec cg select -g ref tmp/vars.tsv
+} {not enough fields (1 where at least 5 are needed) for line 1 (without comments): 
+} error
+
 testsummarize

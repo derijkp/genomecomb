@@ -1245,7 +1245,7 @@ proc tsv_skipcomments {f} {
 proc tsv_hcheader {f keepcommentsVar headerVar} {
 	upvar $keepcommentsVar keepcomments
 	upvar $headerVar header
-	if {[catch {
+	if {$f eq "stdin" || [catch {
 		# this does not work on a stream
 		if {[info exists ::keepfpos($f)]} {
 			seek $f $::keepfpos($f) start
@@ -1732,7 +1732,6 @@ proc cg_select {args} {
 # puts stderr -------------pipe-------------------
 # puts stderr "pipe: [join $pipe " | "]"
 # puts stderr ------------------------------------
-
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {

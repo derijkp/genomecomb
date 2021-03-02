@@ -1047,6 +1047,7 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 			if (count < maxtab) {
 				result->data[count].size = size;
 			}
+			if (c != EOF) {newdata = 1;}
 			break;
 		}
 		newdata = 1;
