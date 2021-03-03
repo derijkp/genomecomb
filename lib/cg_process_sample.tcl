@@ -995,15 +995,21 @@ proc process_sample_job {args} {
 			lappend todo(sv) [jobglob [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv]
 		}
 		foreach methcaller $methcallers {
-			switch $methcaller {
-				default {set extraopts {}}
+			set extraopts {}
+			if {[regexp {^(.*)_([^_]+)$} $methcaller tmp methcallerprog preset]} {
+				lappend extraopts -preset $preset
+			} else {
+				set methcallerprog $methcaller
 			}
-			if {![auto_load meth_${methcaller}_job]} {
-				error "methcaller $methcaller not supported"
+			switch $methcallerprog {
+				default {}
+			}
+			if {![auto_load meth_${methcallerprog}_job]} {
+				error "methcaller $methcallerprog not supported"
 			}
 			set fast5dir [file dir $cleanedbam]/fast5
 			set fastqdir [file dir $cleanedbam]/fastq
-			lappend cleanupdeps {*}[meth_${methcaller}_job \
+			lappend cleanupdeps {*}[meth_${methcallerprog}_job \
 				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
 				$fast5dir $fastqdir $cleanedbam]
 			lappend todo(meth) [jobglob [file dir $cleanedbam]/meth-$methcaller-$bambase.tsv]

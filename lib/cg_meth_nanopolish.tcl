@@ -73,7 +73,7 @@ proc fastqs_mergename {fastqfiles} {
 	}
 }
 
-proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr meth-compression nomatchingfast5error} {
+proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr meth-compression nomatchingfast5error opts} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
@@ -172,7 +172,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		job [job_relfile2name seqmeth_nanopolish- $target] {*}$skips -cores $threads -deps $deps -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			usefastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex
+			usefastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex opts
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
@@ -207,7 +207,9 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 			}
 			catch_exec nanopolish index -d $tempdir $tempdir/[file tail $fastqfile]
 			set error [catch {
-				exec nanopolish call-methylation -t $threads -r $fastqfile \
+				exec nanopolish call-methylation \
+					{*}$opts \
+					-t $threads -r $fastqfile \
 					-b $bamcache -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst 2>@ stderr
 			} msg opt]
 			if {$error} {
@@ -276,9 +278,17 @@ proc meth_nanopolish_job {args} {
 	set nomatchingfast5error 1
 	set meth-compression [get ::specialopt(-meth_nanopolish-compression) zst]
 	set opts {}
+	set callerroot nanopolish
 	cg_options meth_nanopolish args {
 		-callthreshold {
 			set callthreshold $value
+		}
+		-preset {
+			if {![inlist {cpg gpc dam dcm} $value]} {
+				error "-preset $value unknown, must be one of: cpg gpc dam dcm"
+			}
+			lappend opts --methylation=$value
+			append callerroot _$value
 		}
 		-refseq {set maxfastqdistr {}
 			set refseq $value
@@ -314,7 +324,7 @@ proc meth_nanopolish_job {args} {
 	set fastqdir [file_absolute $fastqdir]
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
-		set root nanopolish-[file_rootname $bamtail]
+		set root $callerroot-[file_rootname $bamtail]
 		set resultfile [file dir $bamfile]/meth-$root.tsv.${meth-compression}
 	} else {
 		set resultfile [file_absolute $resultfile]
@@ -334,9 +344,14 @@ proc meth_nanopolish_job {args} {
 	set bamfileindex [index_file $bamfile]
 	bam_index_job $bamfile
 
+	# distrmethod fast5
+	# -------------------
 	if {$distrmethod eq "fast5"} {
-		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr ${meth-compression} $nomatchingfast5error]
+		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr ${meth-compression} $nomatchingfast5error $opts]
 	}
+
+	# distrmethod regions
+	# -------------------
 	set tail [file tail $resultfile]
 	if {[regexp ^meth- $tail]} {
 		set smethfile [file dir $resultfile]/s$tail
@@ -364,7 +379,7 @@ proc meth_nanopolish_job {args} {
 		} -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			region fastqfile fast5dir refseq bamfile basecaller threads bamfileindex threads
+			region fastqfile fast5dir refseq bamfile basecaller threads bamfileindex threads opts
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
@@ -375,6 +390,7 @@ proc meth_nanopolish_job {args} {
 				exec nanopolish call-methylation -t $threads \
 					-r $fastqfile -b $bamfile -g $refseq \
 					-w $nregion \
+					{*}$opts \
 					 | cg zst --compressionlevel 1 > $target.temp.zst
 			} msg opt]
 			if {$error} {
