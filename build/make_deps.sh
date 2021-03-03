@@ -88,32 +88,44 @@ function download {
 # zstd (for lib)
 # --------------
 cd /build
-if [ ! -f "/build/zstd-1.4.4/lib/libzstd.a" ] ; then
+zstdversion=1.4.8
+if [ ! -f "/build/zstd-$zstdversion/lib/libzstd.a" ] ; then
 	source /hbb_shlib/activate
-	wget -c https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
-	tar xvzf zstd-1.4.4.tar.gz
-	cd /build/zstd-1.4.4
+	wget -c https://github.com/facebook/zstd/releases/download/v$zstdversion/zstd-$zstdversion.tar.gz
+	tar xvzf zstd-$zstdversion.tar.gz
+	cd /build/zstd-$zstdversion
 	CFLAGS="-O3 -fPIC" make
-	cd /build/zstd-1.4.4/contrib/seekable_format/examples
+	cd /build/zstd-$zstdversion/contrib/seekable_format/examples
 	CFLAGS="-O3 -fPIC" make
+	cp zstd /io/extern$ARCH
+	strip /io/extern$ARCH/zstd
 	source /hbb_exe/activate
 fi
 
 # zstdmt
 # ------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/zstd-mt ] ; then
-	download https://github.com/mcmilk/zstdmt/archive/0.6.tar.gz zstdmt-0.6.tar.gz
-	cd /build/zstdmt-0.6/programs
+	zstdmtversion=0.8
+	download https://github.com/mcmilk/zstdmt/archive/v$zstdmtversion.tar.gz zstdmt-$zstdmtversion.tar.gz
+	source /hbb_exe/activate
+	download https://github.com/mcmilk/zstdmt/archive/v$zstdmtversion.tar.gz zstdmt-$zstdmtversion.tar.gz
+	cd /build/zstdmt-$zstdmtversion/programs
 	if [ ! -f main.c.ori ] ; then
 		cp main.c main.c.ori
 	fi
 	cp /io/extern-src/zstdmt_main.c main.c
+	if [ ! -f Makefile.ori ] ; then
+		cp Makefile Makefile.ori
+	fi
+	cp /io/extern-src/adapted_Makefile_zstd-mt Makefile
 	make clean
-	make loadsource
-	make zstd-mt
+	CPATH="/build/zstd-$zstdversion/lib:/build/zstd-$zstdversion/lib/common:$CPATH" \
+		LIBRARY_PATH="/build/zstd-$zstdversion/lib:$LIBRARY_PATH" \
+		make zstd-mt
 	rm -f /io/extern$ARCH/zstd-mt
 	cp zstd-mt /io/extern$ARCH
 	strip /io/extern$ARCH/zstd-mt
+	source /hbb_exe/activate
 fi
 
 # lz4
@@ -183,10 +195,27 @@ if [ ! -f "/build/lib/liblzma.a" ] ; then
 	cd /build/xz-5.2.3
 	make distclean
 	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
-  		./configure --prefix=/build --disable-shared --enable-static
+  		./configure --prefix=/build --disable-shared
 	make
 	make install
 	rm -f /build/lib/liblzma.so*
+	source /hbb_exe/activate
+fi
+
+
+# libcurl, used by samtools
+# -------------------------
+if [ ! -f "/build/lib/liblzma.a" ] ; then
+	source /hbb_shlib/activate
+	download https://curl.se/download/curl-7.75.0.tar.gz
+	cd /build/curl-7.75.0
+	make distclean
+	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
+  		./configure --prefix=/build --disable-shared --enable-static
+	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
+  		./configure --prefix=/build --enable-static
+	make
+	make install
 	source /hbb_exe/activate
 fi
 
@@ -207,14 +236,14 @@ fi
 # htslib (tabix, bgzip, lib for samtools)
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
-	htsversion=1.10.2
+	htsversion=1.11
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
 	cd /build/htslib-$htsversion
 	make distclean
 	env CFLAGS="$STATICLIB_CFLAGS -I/build/include" LDFLAGS="$LDFLAGS -L/build/lib" \
-		./configure --prefix=/build --disable-shared --enable-static
+		./configure --prefix=/build --enable-libcurl
 	make
 	make install
 	rm /build/lib/libhts.so*
@@ -228,7 +257,7 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.10
+	samversion=1.11
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
@@ -242,7 +271,7 @@ fi
 # bcftools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bcftools ] ; then
-	bcfversion=1.10.2
+	bcfversion=1.11
 	download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
 	cd /build/bcftools-$bcfversion
 	make distclean

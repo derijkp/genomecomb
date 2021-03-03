@@ -63,14 +63,14 @@ if [ ! -f /hbb_exe/activate ]; then
 		else
 			buildbox=phusion/holy-build-box-32:latest
 		fi
-		docker run -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
 	else
 		if docker image list | grep --quiet hbb64; then
 			buildbox=hbb64
 		else
 			buildbox=phusion/holy-build-box-64:latest
 		fi
-		docker run -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
 	fi
 	exit
 fi
