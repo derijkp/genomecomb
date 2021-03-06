@@ -40,6 +40,7 @@ runtests select_saggregates.tcl
 runtests select_aaggregates.tcl
 runtests multiselect.tcl
 runtests tsv.tcl
+runtests index.tcl
 runtests val.tcl
 runtests varia.tcl
 runtests bsort.tcl

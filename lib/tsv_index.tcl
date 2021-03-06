@@ -253,16 +253,16 @@ proc cg_maketabix {args} {
 			continue
 		}
 		set type [file extension [gzroot $file]]
-		if {$type eq "vcf"} {
+		if {$type eq ".vcf"} {
 			exec tabix -p vcf $file
 			continue
-		} elseif {$type eq "bed"} {
+		} elseif {$type eq ".bed"} {
 			exec tabix -p bed $file
 			continue
-		} elseif {$type eq "sam"} {
+		} elseif {$type eq ".sam"} {
 			exec tabix -p sam $file
 			continue
-		} elseif {$type eq "gff"} {
+		} elseif {$type eq ".gff"} {
 			exec tabix -p gff $file
 			continue
 		}
@@ -276,3 +276,29 @@ proc cg_maketabix {args} {
 		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file
 	}
 }
+
+proc maketabix_job {args} {
+	upvar job_logdir job_logdir
+	set skips {}
+	set optional 1
+	cg_options bam_index args {
+		-skip {
+			lappend skips -skip $value
+		}
+		-optional {
+			set optional $value
+		}
+	} {file} 1 1
+	set pre [lindex [split $file -] 0]
+	set root [file_rootname $file]
+	set target $file.tbi
+	job [job_relfile2name bamindex- $pre-$root] {*}$skips -optional $optional -deps {$file} -targets {$target} -code {
+		putslog "making $target"
+		set tempfile [filetemp_ext $dep]
+		mklink $dep $tempfile
+		cg_maketabix $tempfile
+		file rename -force $tempfile.tbi $dep.tbi
+		file delete $tempfile
+	}
+}
+
