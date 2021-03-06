@@ -185,14 +185,15 @@ proc var_gatkh_job {args} {
 	} -skip {
 		$varfile
 	} -code {
+		set tempvcf [filetemp_ext $vcffile]
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $varallfile \
-			-O ${pre}var-$root.temp.vcf.gz \
+			-O $tempvcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}var-$root.temp.vcf.idx}
-		file rename -force -- ${pre}var-$root.temp.vcf.gz $vcffile
+		result_rename $tempvcf $vcffile
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
