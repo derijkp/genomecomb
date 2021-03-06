@@ -117,7 +117,17 @@ proc cg_hsmetrics {args} {
 			CLIP_OVERLAPPING_READS=false \
 			I=$bamfile O=$temp
 	}
-	cg select -overwrite 1 -f [list sample=\"$sample\" *] $temp $temptarget
+	set f [open $temp]
+	while {[gets $f line] != -1} {
+		set split [split $line \t]
+		if {[lindex $split 0] eq "BAIT_SET"} break
+	}
+	set o [open $temptarget w]
+	puts $o sample\t$line
+	set line [gets $f]
+	puts $o $sample\t$line
+	close $o
+	close $f
 	file rename -force -- $temptarget $resultfile
 	file delete $target_intervals
 }
