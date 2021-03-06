@@ -255,16 +255,16 @@ proc cg_maketabix {args} {
 		set type [file extension [gzroot $file]]
 		if {$type eq "vcf"} {
 			exec tabix -p vcf $file
-			return
+			continue
 		} elseif {$type eq "bed"} {
 			exec tabix -p bed $file
-			return
+			continue
 		} elseif {$type eq "sam"} {
 			exec tabix -p sam $file
-			return
+			continue
 		} elseif {$type eq "gff"} {
 			exec tabix -p gff $file
-			return
+			continue
 		}
 		putslog "making tabix for $file"
 		set f [gzopen $file]
