@@ -203,6 +203,7 @@ proc var_gatkh_job {args} {
 		} $vcffile | cg select -f $fields | cg zst > $uvarfile.temp
 		file rename -force -- $uvarfile.temp $uvarfile
 	}
+	maketabix_job $vcffile
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips $uvarfile $varfile
 	# make sreg
