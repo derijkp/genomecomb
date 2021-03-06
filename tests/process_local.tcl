@@ -38,7 +38,7 @@ test process_sample {bwa distrreg} {
 		tmp/NA19240m data/NA19240m
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.101.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.101.0	coordinate	1	genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	gatk	3.8-1-0-gf15c1c3ef	genomecomb	0.101.0	nosort	0	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.101.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.101.0	coordinate	1	genomecomb	0.101.0	samtools	1.11 (using htslib 1.11)	gatk	3.8-1-0-gf15c1c3ef	genomecomb	0.101.0	nosort	0	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
@@ -61,7 +61,7 @@ test process_sample {bwa distrreg cram} {
 	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.101.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.101.0	coordinate	1	genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	gatk	3.8-1-0-gf15c1c3ef	genomecomb	0.101.0	nosort	0	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.101.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.101.0	coordinate	1	genomecomb	0.101.0	samtools	1.11 (using htslib 1.11)	gatk	3.8-1-0-gf15c1c3ef	genomecomb	0.101.0	nosort	0	gatk	3.8-1-0-gf15c1c3ef	0.101.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
