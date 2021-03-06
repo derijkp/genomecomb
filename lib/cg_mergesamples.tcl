@@ -83,6 +83,7 @@ proc mergesamples_job {result args} {
 			file copy -force [analysisinfo_file [lindex $smethfiles 0]]] [analysisinfo_file $target]
 			exec cg meth_nanopolish_freqs $target meth-nanopolish-$destsample$extension
 		}
+		maketabix_job $target
 	}
 }
 

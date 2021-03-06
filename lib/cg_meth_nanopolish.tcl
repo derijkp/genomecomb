@@ -413,11 +413,10 @@ proc meth_nanopolish_job {args} {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
 		cg cat -c 0 {*}$deps | cg select -s - | cg ${meth-compression} > $target.temp
 		file rename -- $target.temp $target
-		if {${meth-compression} in "gz bgz"} {
-			cg maketabix $target
-		}
 	}
-
+	if {${meth-compression} in "gz bgz"} {
+		maketabix_job $target
+	}
 	set root [file root [file tail [gzroot $resultfile]]]
 	set dep $smethfile
 	set target $resultfile
@@ -432,6 +431,9 @@ proc meth_nanopolish_job {args} {
 		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
 		result_rename $tempresult $target
 		file delete -force $target.temp
+	}
+	if {${meth-compression} in "gz bgz"} {
+		maketabix_job $target
 	}
 	return [list $resultfile $smethfile]
 }
