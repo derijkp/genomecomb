@@ -125,22 +125,22 @@ test meth {meth_nanopolish} {
 
 test meth {meth_nanopolish with gz results} {
 	cd $::smalltestdir
-	file delete -force tmp/meth
-	file mkdir tmp/meth/samples/methtest/fast5
-	file mkdir tmp/meth/samples/methtest/fastq
+	file delete -force tmp/methgz
+	file mkdir tmp/methgz/samples/methtest/fast5
+	file mkdir tmp/methgz/samples/methtest/fastq
 	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fast5/*] {
-		mklink $file tmp/meth/samples/methtest/fast5/[file tail $file]
+		mklink $file tmp/methgz/samples/methtest/fast5/[file tail $file]
 	}
 	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fastq/*] {
-		mklink $file tmp/meth/samples/methtest/fastq/[file tail $file]
+		mklink $file tmp/methgz/samples/methtest/fastq/[file tail $file]
 	}
-	file mkdir tmp/meth/samples/methtest2/fast5
-	file mkdir tmp/meth/samples/methtest2/fastq
+	file mkdir tmp/methgz/samples/methtest2/fast5
+	file mkdir tmp/methgz/samples/methtest2/fastq
 	foreach file {ori/ont_f5c_chr22_meth_example/fast5/batch_0.fast5 ori/ont_f5c_chr22_meth_example/fast5/batch_1.fast5} {
-		mklink $file tmp/meth/samples/methtest2/fast5/[file tail $file]
+		mklink $file tmp/methgz/samples/methtest2/fast5/[file tail $file]
 	}
 	foreach file {ori/ont_f5c_chr22_meth_example/fastq/batch_0.fastq.gz ori/ont_f5c_chr22_meth_example/fastq/batch_1.fastq.gz} {
-		mklink $file tmp/meth/samples/methtest2/fastq/[file tail $file]
+		mklink $file tmp/methgz/samples/methtest2/fastq/[file tail $file]
 	}
 	# set ::env(CG_FAST_SHAREDSTORAGE) /buffer/tmp
 	puts time:[time {
@@ -158,7 +158,7 @@ test meth {meth_nanopolish with gz results} {
 			-hap_bam 1 \
 			-threads 6 \
 			-reports {-fastqc predictgender} \
-			tmp/meth $::refseqdir/hg19 >& tmp/meth.log
+			tmp/methgz $::refseqdir/hg19 >& tmp/methgz.log
 	}]
 	# check vs expected
 	set result {}
@@ -167,7 +167,7 @@ test meth {meth_nanopolish with gz results} {
 		-x *.gz.tbi \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
-		tmp/meth expected/meth]
+		tmp/methgz expected/meth]
 	join [list_remove $result {}] \n
 } {}
 
