@@ -192,7 +192,7 @@ proc var_gatkh_job {args} {
 			-V $varallfile \
 			-O $tempvcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
-		catch {file delete ${pre}var-$root.temp.vcf.idx}
+		catch {file delete [gzroot $tempvcf].idx}
 		result_rename $tempvcf $vcffile
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
