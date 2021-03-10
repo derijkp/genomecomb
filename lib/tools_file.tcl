@@ -87,6 +87,7 @@ proc filetemp {file {write 1} {ext 0}} {
 }
 
 proc filetemp_ext {file {write 1}} {
+	if {[ispipe $file]} {return $file}
 	filetemp $file $write 1
 }
 
@@ -404,6 +405,16 @@ proc file_root {file} {
 	file root [gzroot $file]
 }
 
+proc ispipe {file} {
+	if {[string index $file 0] ne "-"} {
+		return 0
+	}
+	if {[file_root $file] eq "-"} {
+		return 1
+	}
+	return 0
+}
+
 proc file_ext {file} {
 	return [file extension [gzroot $file]][gzext $file]
 }
@@ -591,7 +602,7 @@ proc convert_pipe {infile outfile args} {
 	if {$addpipe && $pipe ne "" && $inbase eq "-"} {
 		list_unshift pipe |
 	}
-	set outbase [file root [file tail $outgzroot]]
+	set outbase [file root $outgzroot]
 	if {$endpipe} {
 		if {$outbase ne "-"} {
 			lappend pipe > $outfile

@@ -1,5 +1,8 @@
 proc file_absolute {file} {
 	if {$file eq ""} {return $file}
+	if {[string index $file 0] eq "-" && [file_root $file] eq "-"} {
+		return $file
+	}
 	if {[string index $file 0] eq "~"} {
 		if {[string length $file] == 1} {
 			return $::env(HOME)

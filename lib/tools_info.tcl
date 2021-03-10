@@ -4,7 +4,7 @@ proc analysisinfo_file {file} {
 
 proc analysisinfo_write {dep target args} {
 	global env
-	if {[file_root $dep] eq "-" || [file_root $target] eq "-"} {
+	if {[ispipe $dep] || [ispipe $target]} {
 		return
 	}
 	file mkdir [file dir $target]
@@ -92,6 +92,7 @@ proc analysisinfo_copy {src dest {changes {}}} {
 }
 
 proc result_rename {src target} {
+	if {[ispipe $src]} return
 	file rename -force -- $src $target
 	catch {file rename -force -- [analysisinfo_file $src] [analysisinfo_file $target]}
 	set indexext [indexext $target]
