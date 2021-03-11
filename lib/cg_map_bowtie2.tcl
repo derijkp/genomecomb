@@ -78,7 +78,7 @@ proc map_bowtie2_job {args} {
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result aligner bowtie2 aligner_version [version bowtie2] reference [file2refname $bowtie2refseq] aligner_paired $paired
 	set rg {}
-	foreach {key value} $readgroupdata {
+	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 		lappend rg --rg "$key:$value"
 	}
 	if {$paired} {

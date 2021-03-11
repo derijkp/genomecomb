@@ -97,10 +97,10 @@ proc cg_map_bwa {args} {
 	analysisinfo_write $fastqfile1 $result aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired $paired
 	if {!$paired} {
 		set rg {}
-		foreach {key value} $readgroupdata {
+		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
-		exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
+		catch_exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
 	} else {
 		if {$fixmate} {
 			set fixmate "| samtools fixmate -m -O sam - -"
@@ -109,9 +109,9 @@ proc cg_map_bwa {args} {
 			error "bwa needs 2 files for paired analysis"
 		}
 		set rg {}
-		foreach {key value} $readgroupdata {
+		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
-		exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
+		catch_exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
 	}
 }

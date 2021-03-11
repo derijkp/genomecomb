@@ -88,3 +88,15 @@ proc sam_flag flag {
 }
 foreach {QNAME FLAG RNAME POS MAPQ CIGAR MRNM MPOS ISIZE SEQ QUAL OPT} $line break
 }
+
+proc sam_readgroupdata_fix {readgroupdata} {
+	set result {}
+	foreach {key value} $readgroupdata {
+		if {[string length $key] != 2} {
+			set value $key=$value
+			set key CO
+		}
+		lappend result $key $value
+	}
+	return $result
+}

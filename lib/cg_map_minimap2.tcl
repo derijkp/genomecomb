@@ -104,7 +104,7 @@ proc cg_map_minimap2 {args} {
 	if {!$paired} {
 		putslog "making $result"
 		set rg {}
-		foreach {key value} $readgroupdata {
+		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
@@ -127,7 +127,7 @@ proc cg_map_minimap2 {args} {
 		}
 		putslog "making $result"
 		set rg {}
-		foreach {key value} $readgroupdata {
+		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
 		if {[catch {

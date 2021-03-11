@@ -71,7 +71,7 @@ proc cg_map_ngmlr {args} {
 	putslog "making $result"
 	analysisinfo_write $fastqfile $result aligner ngmlr aligner_version [version ngmlr] reference [file2refname $ngmlr_refseq] aligner_paired 0
 	set rg {}
-	foreach {key value} $readgroupdata {
+	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 		lappend rg "$key:$value"
 	}
 	exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastqfile {*}$outpipe 2>@ stderr
