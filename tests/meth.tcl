@@ -167,7 +167,7 @@ test meth {meth_nanopolish with gz results} {
 		-x *.gz.tbi \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
-		tmp/methgz expected/meth]
+		tmp/methgz expected/methgz]
 	join [list_remove $result {}] \n
 } {}
 
