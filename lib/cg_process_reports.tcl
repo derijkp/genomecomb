@@ -260,7 +260,15 @@ proc process_reports_job {args} {
 				analysisinfo_write $dep $target2 fastq_stats_version [version fastq-stats]
 				analysisinfo_write $dep $target3 fastq_stats_version [version fastq-stats]
 				set gzcat [gzcat [lindex $deps 0]]
-				exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+				if {[llength $deps] >= 1000} {
+					set o [open [list | fastq-stats -x $target3 > $target2] w]
+					foreach file $deps {
+						exec {*}$gzcat $file >@ $o
+					}
+					close $o
+				} else {
+					exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+				}
 				analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
 				set o [open $target.temp w]
 				puts $o [join {sample source parameter value} \t]
