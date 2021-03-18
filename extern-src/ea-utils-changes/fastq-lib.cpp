@@ -92,8 +92,22 @@ struct qual_str {
         long long int ns;
 } quals[MAX_FILENO_QUALS+1] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
+int fclose_or_die(FILE *fid) {
+	if (fclose(fid) == EOF) {
+		perror("error in file access");
+		exit(EXIT_FAILURE);
+	}
+}
+
+int pclose_or_die(FILE *fid) {
+	if (pclose(fid) == EOF) {
+		perror("error in file access");
+		exit(EXIT_FAILURE);
+	}
+}
+
 int gzclose(FILE *f, bool isgz) {
-	return isgz ? pclose(f) : fclose(f);
+	return isgz ? pclose_or_die(f) : fclose_or_die(f);
 }
 
 FILE *gzopen(const char *f, const char *m, bool*isgz) {

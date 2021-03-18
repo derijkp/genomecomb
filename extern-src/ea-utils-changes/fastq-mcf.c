@@ -31,7 +31,6 @@ See "void usage" below for usage.
 
 #include "fastq-lib.h"
 
-
 #define MAX_ADAPTER_NUM 1000
 #define SCANLEN 15
 #define SCANMIDP ((int) SCANLEN/2)
@@ -411,7 +410,7 @@ int main (int argc, char **argv) {
 
 	for (i=0;i<i_n;++i) {
 		if (gzin[i]) {
-			fclose(fin[i]);
+			fclose_or_die(fin[i]);
 			fin[i]=gzopen(ifil[i], "r", &gzin[i]);
 		} else {
 			fseek(fin[i],0,0);
@@ -763,7 +762,7 @@ int main (int argc, char **argv) {
 
 	for (i=0;i<i_n;++i) {
 		if (gzin[i]) {
-			fclose(fin[i]);
+			fclose_or_die(fin[i]);
 			fin[i]=gzopen(ifil[i], "r", &gzin[i]);
 		} else {
 			fseek(fin[i],0,0);
@@ -1055,9 +1054,9 @@ int main (int argc, char **argv) {
 	}
 
 	for (i=0;i<i_n;++i) {
-		if (fout[i])  { if (gzout[i])  pclose(fout[i]);  else fclose(fout[i]); }
-		if (fin[i])   { if (gzin[i])   pclose(fin[i]);   else fclose(fin[i]); }
-		if (fskip[i]) { if (gzskip[i]) pclose(fskip[i]); else fclose(fskip[i]); }
+		if (fout[i])  { if (gzout[i])  pclose_or_die(fout[i]);  else fclose_or_die(fout[i]); }
+		if (fin[i])   { if (gzin[i])   pclose_or_die(fin[i]);   else fclose_or_die(fin[i]); }
+		if (fskip[i]) { if (gzskip[i]) pclose_or_die(fskip[i]); else fclose_or_die(fskip[i]); }
 	}
 
 	fprintf(fstat, "Total reads: %d\n", nrec);

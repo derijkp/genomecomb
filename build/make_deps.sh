@@ -309,7 +309,8 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH ] ; then
 	if [ ! -f fastq-mcf.c.ori ] ; then 
 		cp fastq-mcf.c fastq-mcf.c.ori
 	fi
-	cp /io/extern-src/ea-utils-changes/*.c .
+	cp /io/extern-src/ea-utils-changes/*.c* .
+	cp /io/extern-src/ea-utils-changes/*.h .
 	cp /io/extern-src/ea-utils-changes/Makefile .
 	make clean
 	make fastq-mcf

@@ -1,5 +1,6 @@
 The fastq-mcf program (version 1.1.2-537) was obtained from
 https://code.google.com/p/ea-utils/
-A small change has been made to the original: The extra option -a 
-will adjust qualities in the output to the standard Sanger encoding.
-
+Small changes has been made to the original: 
+- The extra option -a will adjust qualities in the output to the standard
+Sanger encoding.
+- fclose and pclose return values are checked (for write errors)
