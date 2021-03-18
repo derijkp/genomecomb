@@ -18,7 +18,7 @@ proc analysisinfo_write {dep target args} {
 		}
 		return
 	}
-	if {[file exists $depanalysisinfo]} {
+	if {[file exists $depanalysisinfo] && [file size $depanalysisinfo] != 0} {
 		if {$dep eq $target} {
 			file rename -force -- $depanalysisinfo $depanalysisinfo.old
 			set f [open $depanalysisinfo.old]
@@ -82,6 +82,9 @@ proc analysisinfo_copy {src dest {changes {}}} {
 		}
 		set header [split [lindex $c 0] \t]
 		set data [split [lindex $c 1] \t]
+		if {[llength $data] < [llength $header]} {
+			lappend data {*}[list_fill [expr {[llength $header] - [llength $data]}] {}]
+		}
 		foreach {key value} $changes {
 			set pos [lsearch $header $key]
 			if {$pos == -1} continue

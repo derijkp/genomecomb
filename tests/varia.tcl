@@ -381,4 +381,30 @@ test error {catch catch_exec testerror 1 1 1} {
 	} msg]
 } 1
 
+test error {analysisinfo_write} {
+	file_write tmp/src.analysisinfo [deindent {
+		source
+		test
+	}]\n
+	analysisinfo_write tmp/src tmp/dest dest test2
+	file_read tmp/dest.analysisinfo
+} {source	dest
+test	test2
+}
+
+test error {analysisinfo_write no src.analysisinfo} {
+	analysisinfo_write tmp/src tmp/dest dest test2
+	file_read tmp/dest.analysisinfo
+} {dest
+test2
+}
+
+test error {analysisinfo_write empty src.analysisinfo} {
+	file_write tmp/src.analysisinfo {}
+	analysisinfo_write tmp/src tmp/dest dest test2
+	file_read tmp/dest.analysisinfo
+} {dest
+test2
+}
+
 testsummarize
