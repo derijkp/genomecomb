@@ -1,0 +1,3 @@
+# ACGT raw counters for first fragments. Use `grep ^FTC | cut -f 2-` to extract this part. The columns are: A,C,G,T,N base counters
+numA	numC	numG	numT	numN
+2413	2671	2557	2274	0

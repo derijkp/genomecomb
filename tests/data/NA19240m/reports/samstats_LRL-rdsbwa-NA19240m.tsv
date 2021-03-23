@@ -1,0 +1,10 @@
+# Read lengths - last fragments. Use `grep ^LRL | cut -f 2-` to extract this part. The columns are: read length, count
+read_length	count
+56	1
+60	1
+75	1
+80	1
+82	1
+92	1
+97	1
+100	93

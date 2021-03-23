@@ -38,24 +38,6 @@ proc pgetsum {var p1 p2} {
 	}
 }
 
-proc plotly_element {name type args} {
-	set result "\{name: \"${name}\",\ntype: '$type'"
-	foreach {key value} $args {
-		append result ",\n$key: $value"
-	}
-	append result \n\}
-	return $result
-}
-
-proc plotly_colors {num} {
-	set list {'#1f77b4' '#ff7f0e' '#2ca02c' '#d62728' '#9467bd' '#8c564b' '#e377c2' '#7f7f7f' '#bcbd22' '#17becf'}
-	set result $list
-	while {$num > [llength $result]} {
-		lappend result {*}$list
-	}
-	lrange $result 0 [expr {$num-1}]
-}
-
 proc report_htmltable {tablename table} {
 	set html "<table id=\"$tablename\" class=\"sort\">\n"
 	set header [lindex $table 0]
@@ -337,6 +319,201 @@ table th.sort-up:before {
 }
 }
 
+proc reportscombine_table_yield {samples dataVar} {
+	upvar $dataVar data
+	set html "\n<h2>Yield and quality overview</h2>\n"
+	set table [list {
+		sample numreads numbases-mb pct-unique-reads
+		fw-qual-mean fw-qual-stdev rev-qual-mean rev-qual-stdev
+	}]
+	foreach sample $samples {
+		set line {}
+		lappend line $sample
+		set numreads [pgetsum data $sample,fastq-stats,fw_numreads $sample,fastq-stats,rev_numreads]
+		lappend line $numreads
+		set data($sample,numbases) [pgetsum data $sample,fastq-stats,fw_total_bases $sample,fastq-stats,rev_total_bases]
+		lappend line [catchdef {expr {$data($sample,numbases)/1000000.0}} ""]
+		lappend line [pget data $sample,pct_pf_unique_reads]
+		foreach field {
+			fw_qual_mean fw_qual_stdev rev_qual_mean rev_qual_stdev
+		} {
+			lappend line [pget data $sample,fastq-stats,$field]
+		}
+		lappend table $line
+	}
+	append html [report_htmltable yieldandquality $table]
+	return $html
+}
+
+proc reportscombine_table_composition {samples dataVar} {
+	upvar $dataVar data
+	set html "\n<h2>Sequence composition</h2>\n"
+	set table [list {
+		sample 
+		fw-pct-A rev-pct-A fw-pct-C rev-pct-C 
+		fw-pct-G rev-pct-G fw-pct-T rev-pct-T fw-pct-N rev-pct-N
+	}]
+	foreach sample $samples {
+		set line {}
+		lappend line $sample
+		foreach field {
+			fw_pct_A rev_pct_A fw_pct_C rev_pct_C 
+			fw_pct_G rev_pct_G fw_pct_T rev_pct_T fw_pct_N rev_pct_N
+		} {
+			lappend line [pget data $sample,fastq-stats,$field]
+		}
+		lappend table $line
+	}
+	append html [report_htmltable composition $table]
+	return $html
+}
+
+proc reportscombine_table_alignment {alignments dataVar dbdir} {
+	upvar $dataVar data
+	set html "\n<h2>Alignment overview</h2>\n"
+	set table [list {
+		sample alignment numreads mapped-reads duplicate-reads properly-paired-reads
+		num-mapped-bases-mb pct-mapped-bases pct-mapped-ontarget
+	}]
+	foreach alignment $alignments {
+		set sample [lindex $alignment end]
+		set line [list $sample [join [lrange $alignment 0 end-1] -]]
+		set alignment [join $alignment -]
+		lappend line [pget data "$alignment,flagstat_reads,in total"]
+		lappend line [pget data $alignment,flagstat_reads,mapped]
+		lappend line [pget data $alignment,flagstat_reads,duplicates]
+		lappend line [pget data "$alignment,flagstat_reads,properly paired"]
+		# mapping
+		set numbases [pget data $sample,numbases]
+		set mappedbases [pget data $alignment,samstats_summary,bases_mapped_cigar]
+		if {$mappedbases eq ""} {
+			set mappedbases [pgetsum data $alignment,numbases_offtarget $alignment,numbases_ontarget]
+		}
+		set numbases_ontarget [pget data $alignment,numbases_ontarget]
+		lappend line [catchexpr {$mappedbases/1000000.0}]
+		lappend line [ppercent $mappedbases $numbases]
+		lappend line [ppercent $numbases_ontarget $mappedbases]
+		lappend table $line
+	}
+	append html [report_htmltable alignmentoverview $table]\n
+	append html "\n<h2>Alignment target overview</h2>\n"
+	set table [list {
+		sample alignment
+		target-region-mb avg-depth-ontarget pct-target-1X pct-target-2X pct-target-10X pct-target-20X pct-target-30X
+	}]
+	set notargetregs {}
+	foreach alignment $alignments {
+		set sample [lindex $alignment end]
+		set line [list_reverse $alignment]
+		set alignment [join $alignment -]
+		set targetbases [pget data $alignment,histodepth,targetbases]
+		if {$targetbases eq ""} {
+			# there was no target defined, we'll take sequencedgenome as target
+			if {![info exists tfile_targetbases]} {
+				set tfile [gzfile $dbdir/extra/reg_*_sequencedgenome.tsv]
+				if {[file exists $tfile]} {
+					set tfile_targetbases [lindex [cg covered $tfile] end]
+				} else {
+					set tfile_targetbases ""
+				}
+			}
+			set targetbases $tfile_targetbases
+			if {$targetbases eq ""} {
+				set targetbases 0
+				lappend line 0
+				lappend line {}
+				foreach num {1 2 10 20 30} {lappend line {}}
+			} else {
+				lappend notargetregs $alignment
+				# with no target defined, all bases are indicated offtarget
+				set numbases_offtarget [pget data $alignment,numbases_offtarget]
+				lappend line [expr {$targetbases/1000000.0}]
+				set avg_target_depth [catchexpr {double($numbases_offtarget)/$targetbases}]
+				lappend line [catchformat %.2f $avg_target_depth]
+				foreach num {1 2 10 20 30} {
+					set value [pget data $alignment,histodepth,offtarget_bases_${num}X]
+					if {$value ne ""} {
+						set value [catchformat %.4f [catchexpr {$value*100.0/$targetbases}]]
+					}
+					lappend line $value
+				}
+			}
+		} else {
+			lappend line [catchexpr {$targetbases/1000000.0}]
+			set avg_target_depth [catchexpr {double($numbases_ontarget)/$targetbases}]
+			lappend line [catchformat %.2f $avg_target_depth]
+			foreach num {1 2 10 20 30} {
+				set value [pget data $alignment,histodepth,pct_target_bases_${num}X]
+				if {$value eq "" && $targetbases != 0} {
+					set value [pget data $alignment,histodepth,ontarget_bases_${num}X]
+					if {$value ne ""} {
+						set value [catchformat %.4f [catchexpr {$value*100.0/$targetbases}]]
+					}
+				}
+				lappend line $value
+			}
+		}
+		lappend table $line
+	}
+	if {[llength $notargetregs]} {
+		append html "no target region was supplied for [join $notargetregs ,].\n\n"
+		append html "The full \"sequenced genome\" region in $tfile was used as target region for calulations in the table\n"
+	}
+	append html [report_htmltable alignmenttarget $table]
+}
+
+proc reportscombine_table_variant {alignments dataVar vcallers} {
+	upvar $dataVar data
+	set table [list {
+		sample alignment varcaller vars qvars qvars-refcoding qvars-zyg-m qvars-zyg-t qvars-TiTv-ratio
+	}]
+	foreach vcaller $vcallers {
+		set sample [lindex $vcaller end]
+		set line [list_reverse $vcaller]
+		set vcaller [join $vcaller -]
+		foreach field {vars qvars qvars_refcoding qvars_zyg_m qvars_zyg_t} {
+			lappend line [pget data $vcaller,genomecomb,$field]
+		}
+		set titv_i [pget data $vcaller,genomecomb,qvars_titv_i]
+		set snps [pget data $vcaller,genomecomb,qvars_type_snp]
+		if {![isint $titv_i] || ![isint $snps]} {
+			lappend line ""
+		} else {
+			set titv [catchexpr {double($titv_i)/($snps-$titv_i)}]
+			lappend line [catchformat %.2f $titv]
+		}
+		lappend table $line
+	}
+	set html "\n<h2>Variants overview</h2>\n"
+	append html [report_htmltable alignmentoverview $table]\n
+}
+
+proc reportscombine_depth {histofiles depthaVar} {
+	upvar $depthaVar deptha
+	# depth histo chart
+	# -----------------
+	set html {}
+	set depthdata {}
+	foreach name [bsort [array names deptha]] {
+		set xs [lrange [list_subindex $deptha($name) 0] 1 end]
+		set ys [lrange [list_subindex $deptha($name) 1] 1 end]
+		lappend depthdata $name $xs $ys
+	}
+	# make chart
+	append html [plotly depthontarget $depthdata "Number of on-target bases with given depth" "depth" "number of positions" 100]\n
+	# offtarget depth histo chart
+	# ---------------------------
+	set depthdata {}
+	foreach name [bsort [array names deptha]] {
+		set xs [lrange [list_subindex $deptha($name) 0] 1 end]
+		set ys [lrange [list_subindex $deptha($name) 2] 1 end]
+		lappend depthdata $name $xs $ys
+	}
+	# make chart
+	append html [plotly depthofftarget $depthdata "Number of off-target bases with given depth" "depth" "number of positions" 100]\n
+}
+
+
 proc report_fastc_perposqual {dir files} {
 	set qdata {}
 	set maxx 0
@@ -529,6 +706,231 @@ proc report_fastc_chart {dir files id title pattern xfield yfield} {
 	}]
 }
 
+proc reportscombine_fastqc {fastqcfiles} {
+	#
+	# gather fastqc data
+	# ------------------
+	set fastqctable {}
+	lappend fastqctable [list \
+		sample dir gc per-base-quality per-sequence-quality \
+		per-base-content per-sequence-gc per-base-N \
+		length-distribution sequence-duplication overrepresented-seq \
+	]
+	unset -nocomplain fastqcfilesa
+	foreach file $fastqcfiles {
+		set name [file tail [file dir $file]]
+		if {[regexp ^fastqc_fw $name]} {
+			set dir forward
+		} elseif {[regexp ^fastqc_rev $name]} {
+			set dir reverse
+		} else {
+			set dir {}
+		}
+		lappend fastqcfilesa($dir) $file
+		set c [file_read $file]
+		set sample [file_sample [file dir $file]]
+		set line [list $sample $dir]
+		set pct-gc {}
+		lappend line [report_getpattern {%GC	([0-9.]+)} $c]
+		lappend line [report_getpattern {>>Per base sequence quality	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Per sequence quality scores	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Per base sequence content	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Per sequence GC content	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Per base N content	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Sequence Length Distribution	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Sequence Duplication Levels	([a-z]+)} $c]
+		lappend line [report_getpattern {>>Overrepresented sequences	([a-z]+)} $c]
+		lappend fastqctable $line
+	}
+	set html {}
+	#
+	# fastqc overview
+	# ---------------
+	append html "\n<h2>fastqc overview</h2>\n"
+	append html [report_htmltable fastqcoverview $fastqctable]\n
+	append html </script>\n</div>\n
+	#
+	# fastqc charts
+	# -------------
+	#
+	# fastqc quality per pos
+	# ----------------------
+	foreach dir [lsort [array names fastqcfilesa]] {
+		append html [report_fastc_perposqual $dir $fastqcfilesa($dir)]\n
+	}
+	#
+	# fastqc per seq quality
+	# ----------------------
+	foreach dir [lsort [array names fastqcfilesa]] {
+		# set html [report_fastc_perseqqual $dir $fastqcfilesa($dir)]
+		append html [report_fastc_chart $dir $fastqcfilesa($dir) \
+			perseqqual \
+			"Fastqc $dir reads per quality" \
+			{Per sequence quality scores} \
+			Quality Count \
+		]\n
+	}
+	#
+	# fastqc per seq gc content
+	# -------------------------
+	foreach dir [lsort [array names fastqcfilesa]] {
+		append html [report_fastc_chart $dir $fastqcfilesa($dir) \
+			perseqgc \
+			"Fastqc $dir reads GC content" \
+			{Per sequence GC content} \
+			{GC Content} Count \
+		]\n
+	}
+	#
+	# sequence length
+	# ---------------
+	foreach dir [lsort [array names fastqcfilesa]] {
+		append html [report_fastc_chart $dir $fastqcfilesa($dir) \
+			seqlen \
+			"Fastqc $dir reads length distribution" \
+			{Sequence Length Distribution} \
+			{Length} Count \
+		]\n
+	}
+	return $html
+}
+
+proc reportscombine_samstats_quality {qualityfiles {name qualityffq} {title "Quality distribution"}} {
+	if {![llength $qualityfiles]} {return {}}
+	set chartdata {}
+	set xmax 30
+	foreach file $qualityfiles {
+		if {![file exists $file]} continue
+		set tail [file tail $file]
+		set prefix {}
+		if {[regsub ^unaligned $tail {} tail]} {
+			append prefix unaligned
+		} elseif {[regsub ^aligned $tail {} tail]} {
+			append prefix aligned
+		}
+		if {[regexp ^samstats_FFQ $tail]} {
+			append prefix fw-
+		} elseif {[regexp ^samstats_LFQ $tail]} {
+			append prefix rv-
+		}
+		set analysis $prefix[file_analysis $file]
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		if {[eof $f]} continue
+		set xs {}
+		set ys {}
+		while {[gets $f line] != -1} {
+			foreach {x y} [split $line \t] break
+			if {$y > 10 && $x > $xmax && $x <= 100} {set xmax $x}
+			lappend xs $x
+			lappend ys $y
+		}
+		close $f
+		lappend chartdata $analysis $xs $ys
+		
+	}
+	#
+	# make chart
+	plotly $name $chartdata $title "quality" "number of bases" $xmax
+}
+
+proc reportscombine_samstats_gc {rfiles {name samstatsgc} {title "GC distribution"}} {
+	if {![llength $rfiles]} {return {}}
+	set chartdata {}
+	foreach file $rfiles {
+		if {![file exists $file]} continue
+		set tail [file tail $file]
+		set prefix {}
+		if {[regsub ^unaligned $tail {} tail]} {
+			append prefix unaligned
+		} elseif {[regsub ^aligned $tail {} tail]} {
+			append prefix aligned
+		}
+		if {[regexp ^samstats_GCF $tail]} {
+			append prefix fw-
+		} elseif {[regexp ^samstats_GCL $tail]} {
+			append prefix rv-
+		}
+		set analysis $prefix[file_analysis $file]
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		if {[eof $f]} continue
+		set xs {}
+		set ys {}
+		while {[gets $f line] != -1} {
+			foreach {x y} [split $line \t] break
+			lappend xs $x
+			lappend ys $y
+		}
+		close $f
+		lappend chartdata $analysis $xs $ys
+		
+	}
+	#
+	# make chart
+	plotly $name $chartdata $title "% GC" "number of reads" 100
+}
+
+proc reportscombine_samstats_readlength {statsrlfiles} {
+	if {![llength $statsrlfiles]} {return ""}
+	set chartdata {}
+	set xmax 50
+	foreach file $statsrlfiles {
+		if {![file exists $file]} continue
+		set analysis [file_analysis $file]
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		set c [split [string trim [read $f]] \n]
+		close $f
+		set poss [list_cor $header {read_length count}]
+		set xs {}
+		set ys {}
+		foreach line $c {
+			set line [list_sub [split $line \t] $poss]
+			foreach {x y} $line break
+			if {$x > $xmax && $y > 10} {set xmax $x}
+			lappend xs $x
+			lappend ys $y
+		}
+		lappend chartdata $analysis $xs $ys
+		
+	}
+	#
+	# make chart
+	plotly readlength $chartdata "Readlength distribution" "number of sequences" "readlength" $xmax
+}
+
+proc reportscombine_samstats_uareadlength {uastatsrlfiles} {
+	if {![llength $uastatsrlfiles]} {return ""}
+	set chartdata {}
+	set xmax 50
+	foreach file $uastatsrlfiles {
+		if {![file exists $file]} continue
+		set prefix {}
+		regsub samstats [lindex [split [file tail $file] _] 0] {} prefix
+		set analysis $prefix-[file_analysis $file]
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		set c [split [string trim [read $f]] \n]
+		close $f
+		set poss [list_cor $header {read_length count}]
+		set xs {}
+		set ys {}
+		foreach line $c {
+			set line [list_sub [split $line \t] $poss]
+			foreach {x y} $line break
+			if {$x > $xmax && $y > 10} {set xmax $x}
+			lappend xs $x
+			lappend ys $y
+		}
+		lappend chartdata $analysis $xs $ys
+		
+	}
+	#
+	# make chart
+	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "number of sequences" "readlength" $xmax
+}
+
 proc process_reportscombine_job {args} {
 	upvar job_logdir job_logdir
 	set overwrite 0
@@ -558,6 +960,7 @@ proc process_reportscombine_job {args} {
 			set experimentname [file tail [file dir $destdir]]
 		}
 	}
+	#
 	# combine hsmetrics (if found)
 	set deps {}
 	foreach dir $reportstodo {
@@ -578,11 +981,18 @@ proc process_reportscombine_job {args} {
 			mklink $target $target2
 		}
 	}
+
 	# combine other reports
 	set reportdirs {}
 	set reports {}
 	set histofiles {}
 	set fastqcfiles {}
+	set statsrlfiles {}
+	set uastatsrlfiles {}
+	set statsqualityfiles {}
+	set uastatsqualityfiles {}
+	set statsgcfiles {}
+	set uastatsgcfiles {}
 	foreach dir $reportstodo {
 		if {[file extension [gzroot $dir]] eq ".txt"} {
 			if {[regexp ^fastqc $dir]} {
@@ -606,12 +1016,30 @@ proc process_reportscombine_job {args} {
 			}
 			lappend histofiles {*}[jobglob $dir/histodepth-*.tsv $dir/reports/histodepth-*.tsv]
 			lappend fastqcfiles {*}[jobglob $dir/fastqc_*.fastqc/fastqc_data.txt $dir/reports/fastqc_*.fastqc/fastqc_data.txt]
+			lappend statsrlfiles {*}[jobglob $dir/samstats_RL-*.tsv.zst]
+			lappend uastatsrlfiles {*}[jobglob $dir/alignedsamstats_RL-*.tsv.zst $dir/unalignedsamstats_RL-*.tsv.zst]
+			lappend statsqualityfiles {*}[jobglob $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
+			lappend uastatsqualityfiles {*}[jobglob \
+				$dir/alignedsamstats_FFQs-*.tsv.zst $dir/unalignedsamstats_FFQs-*.tsv.zst \
+				$dir/alignedsamstats_LFQs-*.tsv.zst $dir/unalignedsamstats_LFQs-*.tsv.zst \
+			]
+			lappend statsqualityfiles {*}[jobglob $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
+			lappend uastatsqualityfiles {*}[jobglob \
+				$dir/alignedsamstats_FFQs-*.tsv.zst $dir/unalignedsamstats_FFQs-*.tsv.zst \
+				$dir/alignedsamstats_LFQs-*.tsv.zst $dir/unalignedsamstats_LFQs-*.tsv.zst \
+			]
+			lappend statsgcfiles {*}[jobglob $dir/samstats_GCF-*.tsv.zst $dir/samstats_GCL-*.tsv.zst]
+			lappend uastatsgcfiles {*}[jobglob \
+				$dir/alignedsamstats_GCF-*.tsv.zst $dir/unalignedsamstats_GCF-*.tsv.zst \
+				$dir/alignedsamstats_GCL-*.tsv.zst $dir/unalignedsamstats_GCL-*.tsv.zst \
+			]
 		}
 	}
 	set reports [bsort [list_remdup $reports]]
 	set histofiles [bsort [list_remdup $histofiles]]
 	set fastqcfiles [bsort [list_remdup $fastqcfiles]]
-	set deps [list_concat $reports $histofiles $fastqcfiles]
+	set deps [list_concat $reports $histofiles $fastqcfiles $statsrlfiles $uastatsrlfiles $statsqualityfiles $statsgcfiles $uastatsgcfiles]
+
 	if {[llength $deps]} {
 		set target $destdir/report_stats-${experimentname}.tsv
 		set target2 $destdir/report_summarytable-${experimentname}.tsv
@@ -620,12 +1048,13 @@ proc process_reportscombine_job {args} {
 			file delete $target $target2 $target3
 		}
 		job reportscombine_stats-$experimentname -deps $deps -vars {
-			reportdirs reports histofiles fastqcfiles experimentname dbdir
+			reportdirs reports histofiles fastqcfiles experimentname dbdir 
+			statsrlfiles statsqualityfiles uastatsqualityfiles uastatsrlfiles statsgcfiles uastatsgcfiles
 		} -targets {
 			$target $target2 $target3
 		} -code {
 			# make report_stats
-			# -----------------
+			# =================
 			file mkdir [file dir $target]
 			cg cat -m -c 0 {*}[bsort $reports] > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
@@ -643,8 +1072,9 @@ proc process_reportscombine_job {args} {
 				set data($analysis,$source,$parameter) $value
 			}
 			close $f
+			#
 			# make report_summarytable
-			# ------------------------
+			# ========================
 			set o [open $target2.temp w]
 			puts $o [join {
 				analysis sample numreads 
@@ -661,20 +1091,25 @@ proc process_reportscombine_job {args} {
 				}
 				if {[llength [array names a *-$analysis]]} continue
 				set sample [lindex [split $analysis -] end]
+				set bamname [join [lrange [split $analysis -] end-1 end] -]
 				set resultline [list $analysis $sample]
 				# numreads
+				set numreads {}
 				set fw_numreads [get data($sample,fastq-stats,fw_numreads) {}]
 				set rev_numreads [get data($sample,fastq-stats,rev_numreads) {}]
 				if {[isint $fw_numreads] && [isint $rev_numreads]} {
 					set numreads [expr {$fw_numreads+$rev_numreads}]
-				} else {
-					set numreads {}
+				}
+				if {$numreads eq ""} {
+					set numreads [get data($bamname,samstats_summary,raw_total_sequences) {}]
 				}
 				lappend resultline $numreads
 				set data($sample,numreads) $numreads
 				# bam based stats
-				set bamname [join [lrange [split $analysis -] end-1 end] -]
-				set pf_reads [get "data($bamname,flagstat_reads,in total)" {}]
+				set pf_reads [expr {
+					[get "data($bamname,flagstat_reads,in total)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
+				}]
+				if {$pf_reads < 0} {set pf_reads {}}
 				set pf_duplicates [get "data($bamname,flagstat_reads,duplicates)" {}]
 				set pf_mapped [get "data($bamname,flagstat_reads,mapped)" {}]
 				set pf_properlypaired [get "data($bamname,flagstat_reads,properly paired)" {}]
@@ -711,8 +1146,9 @@ proc process_reportscombine_job {args} {
 			}
 			close $o
 			file rename -force -- $target2.temp $target2
+			#
 			# make html report
-			# ----------------
+			# ================
 
 			catch {close $o} ; set o [open $target3 w]
 			puts $o [string_change [string trim [deindent {
@@ -746,8 +1182,8 @@ proc process_reportscombine_job {args} {
 				<REPORT_CSS> [report_css]\
 			]]
 			#
-			# gather depth data
-			# -----------------
+			# gather analysis data
+			# --------------------
 			foreach file $deps {
 				set expname ""
 				set dirs [file split [file dir $file]]
@@ -763,6 +1199,39 @@ proc process_reportscombine_job {args} {
 				set expa($expname) 1
 			}
 			set experiments [list_remove [array names expa] ""]
+
+			set samples [list_regsub -all {.*-} $analyses {}]
+			set samples [bsort [list_remdup $samples]]
+			set alignments {}
+			foreach temp [array names data *,histodepth,offtarget_bases_20X] {
+				regsub ,histodepth,offtarget_bases_20X\$ $temp {} temp
+				lappend alignments [split $temp -]
+			}
+			foreach temp [array names data {*,flagstat_reads,in total}] {
+				regsub {,flagstat_reads,in total$} $temp {} temp
+				lappend alignments [split $temp -]
+			}
+			foreach temp [array names data {*,samstats_summary,bases_mapped_cigar}] {
+				regsub {,samstats_summary,bases_mapped_cigar$} $temp {} temp
+				lappend alignments [split $temp -]
+			}
+			# remove hlongshot alignments if without exists
+			set temp {}
+			foreach alignment [bsort -index end [list_remdup $alignments]] {
+				if {[lindex $alignment 0] eq "hlongshot"} {
+					if {[inlist $analyses [join [lrange $alignment 1 end] -]]} continue
+				}
+				lappend temp $alignment
+			}
+			set alignments [list_remdup $temp]
+			set vcallers {}
+			foreach temp [array names data *,qvars] {
+				regsub ,genomecomb,qvars\$ $temp {} temp
+				lappend vcallers [split $temp -]
+			}
+			set vcallers [bsort -index end [bsort [list_remdup $vcallers]]]
+			# gather depth data
+			# -----------------
 			unset -nocomplain deptha
 			foreach file [bsort $histofiles] {
 				set analysis [file_analysis $file]
@@ -787,72 +1256,6 @@ proc process_reportscombine_job {args} {
 				
 			}
 			#
-			# gather fastqc data
-			# ------------------
-			set fastqctable {}
-			if {[llength $fastqcfiles]} {
-				lappend fastqctable [list \
-					sample dir gc per-base-quality per-sequence-quality \
-					per-base-content per-sequence-gc per-base-N \
-					length-distribution sequence-duplication overrepresented-seq \
-				]
-				unset -nocomplain fastqcfilesa
-				foreach file $fastqcfiles {
-					set name [file tail [file dir $file]]
-					if {[regexp ^fastqc_fw $name]} {
-						set dir forward
-					} elseif {[regexp ^fastqc_rev $name]} {
-						set dir reverse
-					} else {
-						set dir {}
-					}
-					lappend fastqcfilesa($dir) $file
-					set c [file_read $file]
-					set sample [file_sample [file dir $file]]
-					set line [list $sample $dir]
-					set pct-gc {}
-					lappend line [report_getpattern {%GC	([0-9.]+)} $c]
-					lappend line [report_getpattern {>>Per base sequence quality	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Per sequence quality scores	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Per base sequence content	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Per sequence GC content	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Per base N content	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Sequence Length Distribution	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Sequence Duplication Levels	([a-z]+)} $c]
-					lappend line [report_getpattern {>>Overrepresented sequences	([a-z]+)} $c]
-					lappend fastqctable $line
-				}
-			}
-			#
-			# gather analysis data
-			# --------------------
-			set samples [list_regsub -all {.*-} $analyses {}]
-			set samples [bsort [list_remdup $samples]]
-			set alignments {}
-			foreach temp [array names data *,histodepth,offtarget_bases_20X] {
-				regsub ,histodepth,offtarget_bases_20X\$ $temp {} temp
-				lappend alignments [split $temp -]
-			}
-			foreach temp [array names data {*,flagstat_reads,in total}] {
-				regsub {,flagstat_reads,in total$} $temp {} temp
-				lappend alignments [split $temp -]
-			}
-			# remove hlongshot alignments if without exists
-			set temp {}
-			foreach alignment [bsort -index end [list_remdup $alignments]] {
-				if {[lindex $alignment 0] eq "hlongshot"} {
-					if {[inlist $analyses [join [lrange $alignment 1 end] -]]} continue
-				}
-				lappend temp $alignment
-			}
-			set alignments $temp
-			set vcallers {}
-			foreach temp [array names data *,qvars] {
-				regsub ,genomecomb,qvars\$ $temp {} temp
-				lappend vcallers [split $temp -]
-			}
-			set vcallers [bsort -index end [bsort [list_remdup $vcallers]]]
-			#
 			# intro
 			# -----
 			puts $o "\n<h2>Experiment info</h2>"
@@ -870,164 +1273,21 @@ proc process_reportscombine_job {args} {
 			#
 			# Yield and quality
 			# -----------------
-			puts $o "\n<h2>Yield and quality overview</h2>"
-			set table [list {
-				sample numreads numbases-mb pct-unique-reads
-				fw-qual-mean fw-qual-stdev rev-qual-mean rev-qual-stdev
-			}]
-			foreach sample $samples {
-				set line {}
-				lappend line $sample
-				lappend line [pgetsum data $sample,fastq-stats,fw_numreads $sample,fastq-stats,rev_numreads]
-				set data($sample,numbases) [pgetsum data $sample,fastq-stats,fw_total_bases $sample,fastq-stats,rev_total_bases]
-				lappend line [catchdef {expr {$data($sample,numbases)/1000000.0}} ""]
-				lappend line [pget data $sample,pct_pf_unique_reads]
-				foreach field {
-					fw_qual_mean fw_qual_stdev rev_qual_mean rev_qual_stdev
-				} {
-					lappend line [pget data $sample,fastq-stats,$field]
-				}
-				lappend table $line
-			}
-			puts $o [report_htmltable yieldandquality $table]
-#			# Sequence composition
-#			# --------------------
-#			puts $o "\n<h2>Sequence composition</h2>"
-#			set table [list {
-#				sample 
-#				fw-pct-A rev-pct-A fw-pct-C rev-pct-C 
-#				fw-pct-G rev-pct-G fw-pct-T rev-pct-T fw-pct-N rev-pct-N
-#			}]
-#			foreach sample $samples {
-#				set line {}
-#				lappend line $sample
-#				foreach field {
-#					fw_pct_A rev_pct_A fw_pct_C rev_pct_C 
-#					fw_pct_G rev_pct_G fw_pct_T rev_pct_T fw_pct_N rev_pct_N
-#				} {
-#					lappend line [pget data $sample,fastq-stats,$field]
-#				}
-#				lappend table $line
-#			}
-#			puts $o [report_htmltable composition $table]
+			puts $o [reportscombine_table_yield $samples data]
+			# Sequence composition
+			# --------------------
+			# puts $o [reportscombine_table_composition $samples data]
 			#
 			# Alignment overview
 			# ------------------
-			puts $o "\n<h2>Alignment overview</h2>"
-			set table [list {
-				sample alignment numreads mapped-reads duplicate-reads properly-paired-reads
-				num-mapped-bases-mb pct-mapped-bases pct-mapped-ontarget
-			}]
-			foreach alignment $alignments {
-				set sample [lindex $alignment end]
-				set line [list $sample [join [lrange $alignment 0 end-1] -]]
-				set alignment [join $alignment -]
-				lappend line [pget data "$alignment,flagstat_reads,in total"]
-				lappend line [pget data $alignment,flagstat_reads,mapped]
-				lappend line [pget data $alignment,flagstat_reads,duplicates]
-				lappend line [pget data "$alignment,flagstat_reads,properly paired"]
-				# mapping
-				set numbases [pget data $sample,numbases]
-				set mappedbases [pgetsum data $alignment,numbases_offtarget $alignment,numbases_ontarget]
-				set numbases_ontarget [pget data $alignment,numbases_ontarget]
-				lappend line [catchexpr {$mappedbases/1000000.0}]
-				lappend line [ppercent $mappedbases $numbases]
-				lappend line [ppercent $numbases_ontarget $mappedbases]
-				lappend table $line
-			}
-			puts $o [report_htmltable alignmentoverview $table]
 			#
 			# alignment target table
 			# ----------------------
-			puts $o "\n<h2>Alignment target overview</h2>"
-			set table [list {
-				sample alignment
-				target-region-mb avg-depth-ontarget pct-target-1X pct-target-2X pct-target-10X pct-target-20X pct-target-30X
-			}]
-			set notargetregs {}
-			foreach alignment $alignments {
-				set sample [lindex $alignment end]
-				set line [list_reverse $alignment]
-				set alignment [join $alignment -]
-				set targetbases [pget data $alignment,histodepth,targetbases]
-				if {$targetbases eq ""} {
-					# there was no target defined, we'll take sequencedgenome as target
-					if {![info exists tfile_targetbases]} {
-						set tfile [gzfile $dbdir/extra/reg_*_sequencedgenome.tsv]
-						if {[file exists $tfile]} {
-							set tfile_targetbases [lindex [cg covered $tfile] end]
-						} else {
-							set tfile_targetbases ""
-						}
-					}
-					set targetbases $tfile_targetbases
-					if {$targetbases eq ""} {
-						set targetbases 0
-						lappend line 0
-						lappend line {}
-						foreach num {1 2 10 20 30} {lappend line {}}
-					} else {
-						lappend notargetregs $alignment
-						# with no target defined, all bases are indicated offtarget
-						set numbases_offtarget [pget data $alignment,numbases_offtarget]
-						lappend line [expr {$targetbases/1000000.0}]
-						set avg_target_depth [catchexpr {double($numbases_offtarget)/$targetbases}]
-						lappend line [catchformat %.2f $avg_target_depth]
-						foreach num {1 2 10 20 30} {
-							set value [pget data $alignment,histodepth,offtarget_bases_${num}X]
-							if {$value ne ""} {
-								set value [catchformat %.4f [catchexpr {$value*100.0/$targetbases}]]
-							}
-							lappend line $value
-						}
-					}
-				} else {
-					lappend line [catchexpr {$targetbases/1000000.0}]
-					set avg_target_depth [catchexpr {double($numbases_ontarget)/$targetbases}]
-					lappend line [catchformat %.2f $avg_target_depth]
-					foreach num {1 2 10 20 30} {
-						set value [pget data $alignment,histodepth,pct_target_bases_${num}X]
-						if {$value eq "" && $targetbases != 0} {
-							set value [pget data $alignment,histodepth,ontarget_bases_${num}X]
-							if {$value ne ""} {
-								set value [catchformat %.4f [catchexpr {$value*100.0/$targetbases}]]
-							}
-						}
-						lappend line $value
-					}
-				}
-				lappend table $line
-			}
-			if {[llength $notargetregs]} {
-				puts $o "no target region was supplied for [join $notargetregs ,].\n"
-				puts $o "The full \"sequenced genome\" region in $tfile was used as target region for calulations in the table"
-			}
-			puts $o [report_htmltable alignmenttarget $table]
+			puts $o [reportscombine_table_alignment $alignments data $dbdir]
 			#
 			# Variant info table
 			# ------------------
-			set table [list {
-				sample alignment varcaller vars qvars qvars-refcoding qvars-zyg-m qvars-zyg-t qvars-TiTv-ratio
-			}]
-			foreach vcaller $vcallers {
-				set sample [lindex $vcaller end]
-				set line [list_reverse $vcaller]
-				set vcaller [join $vcaller -]
-				foreach field {vars qvars qvars_refcoding qvars_zyg_m qvars_zyg_t} {
-					lappend line [pget data $vcaller,genomecomb,$field]
-				}
-				set titv_i [pget data $vcaller,genomecomb,qvars_titv_i]
-				set snps [pget data $vcaller,genomecomb,qvars_type_snp]
-				if {![isint $titv_i] || ![isint $snps]} {
-					lappend line ""
-				} else {
-					set titv [catchexpr {double($titv_i)/($snps-$titv_i)}]
-					lappend line [catchformat %.2f $titv]
-				}
-				lappend table $line
-			}
-			puts $o "\n<h2>Variants overview</h2>"
-			puts $o [report_htmltable alignmentoverview $table]
+			puts $o [reportscombine_table_variant $alignments data $vcallers]
 			#
 			# gender prediction
 			# ------------------
@@ -1042,132 +1302,54 @@ proc process_reportscombine_job {args} {
 				lappend table $line
 			}
 			puts $o "\n<h2>Gender prediction overview</h2>"
-			puts $o [report_htmltable genderprediction $table]
-			# depth histo chart
-			# -----------------
-			puts $o "\n<div class = \"nobreak\">\n<h2>Number of on-target bases with given depth</h2>"
-			puts $o {<div id="depthontarget" class="nobreak" style="height: 400px; width: 100%"></div>}
-			set depthdata {}
-			foreach name [bsort [array names deptha]] {
-				set xs [lrange [list_subindex $deptha($name) 0] 1 end]
-				set ys [lrange [list_subindex $deptha($name) 1] 1 end]
-				lappend depthdata [plotly_element $name line \
-					x \[[join $xs ,]\] y \[[join $ys ,]\]
-				]
+			puts $o [report_htmltable genderprediction $table]\n
+			# depth histo
+			# -----------
+			if {[llength $histofiles]} {
+				puts $o [reportscombine_depth $histofiles deptha]\n
 			}
-			puts $o <script>
-			puts $o [string_change [deindent {
-				var chart_depthontarget = Plotly.plot(
-				document.getElementById('depthontarget'),
-				[
-				<DATA>
-				],{
-					xaxis: {
-						title: 'depth',
-						range: [0,100]
-					},
-					yaxis: {
-						title: 'number of positions'
-					},
-					margin: { t: 0 },
-					paper_bgcolor: 'rgba(0,0,0,0)',
-					plot_bgcolor: 'rgba(0,0,0,0)',
-				},
-				{responsive: true}
-				);
-			}] [list \
-				<DATA> [join $depthdata ,\n] \
-			]]
-			puts $o </script>\n</div>
-			# offtarget depth histo chart
-			# ---------------------------
-			puts $o "\n<div class = \"nobreak\">\n<h2>Number of off-target bases with given depth</h2>"
-			puts $o {<div id="depthofftarget" class="nobreak" style="height: 400px; width: 100%"><svg></svg></div>}
-			set depthdata {}
-			foreach name [bsort [array names deptha]] {
-				set xs [lrange [list_subindex $deptha($name) 0] 1 end]
-				set ys [lrange [list_subindex $deptha($name) 2] 1 end]
-				lappend depthdata [plotly_element $name line \
-					x \[[join $xs ,]\] y \[[join $ys ,]\]
-				]
-			}
-			puts $o <script>
-			puts $o [string_change [deindent {
-				var chart_depthofftarget = Plotly.plot(
-				document.getElementById('depthofftarget'),
-				[
-				<DATA>
-				],{
-					xaxis: {
-						title: 'depth',
-						range: [0,100]
-					},
-					yaxis: {
-						title: 'number of positions'
-					},
-					margin: { t: 0 },
-					paper_bgcolor: 'rgba(0,0,0,0)',
-					plot_bgcolor: 'rgba(0,0,0,0)',
-				},
-				{responsive: true}
-				);
-			}] [list \
-				<DATA> [join $depthdata ,\n] \
-			]]
-			puts $o </script>
 			#
-			# fastqc overview
-			# ---------------
-			puts $o "\n<h2>fastqc overview</h2>"
-			puts $o [report_htmltable fastqcoverview $fastqctable]
-			puts $o </script>\n</div>
-			#
-			# fastqc charts
-			# -------------
+			# fastqc info
+			# -----------
 			if {[llength $fastqcfiles]} {
-				#
-				# fastqc quality per pos
+				puts $o [reportscombine_fastqc $fastqcfiles]
+			}
+			# samstats quality chart
+			# ----------------------
+			# gather seq size data
+			if {[llength $statsqualityfiles]} {
+				puts $o [reportscombine_samstats_quality $statsqualityfiles qualityffq "Quality distribution"]
+			}
+			# samstats ua quality chart
+			# ----------------------
+			# gather seq size data
+			if {[llength $uastatsqualityfiles]} {
+				puts $o [reportscombine_samstats_quality $uastatsqualityfiles uaqualityffq "Quality distribution (aligned and unaligned)"]
+			}
+			# readlength chart
+			# --------------
+			# gather seq size data
+			if {[llength $statsrlfiles]} {
+				puts $o [reportscombine_samstats_readlength $statsrlfiles]
+			}
+			# ua readlength chart
+			# --------------
+			# gather seq size data
+			if {[llength $uastatsrlfiles]} {
+				puts $o [reportscombine_samstats_uareadlength $uastatsrlfiles]
+			}
+			if {![llength $fastqcfiles]} {
+				# samstats GC chart
 				# ----------------------
-				foreach dir [lsort [array names fastqcfilesa]] {
-					set html [report_fastc_perposqual $dir $fastqcfilesa($dir)]
-					puts $o $html
+				# gather seq size data
+				if {[llength $statsgcfiles]} {
+					puts $o [reportscombine_samstats_gc $statsgcfiles samstatsGC "GC distribution"]
 				}
-				#
-				# fastqc per seq quality
+				# samstats ua GC chart
 				# ----------------------
-				foreach dir [lsort [array names fastqcfilesa]] {
-					# set html [report_fastc_perseqqual $dir $fastqcfilesa($dir)]
-					set html [report_fastc_chart $dir $fastqcfilesa($dir) \
-						perseqqual \
-						"Fastqc $dir reads per quality" \
-						{Per sequence quality scores} \
-						Quality Count \
-					]
-					puts $o $html
-				}
-				#
-				# fastqc per seq gc content
-				# -------------------------
-				foreach dir [lsort [array names fastqcfilesa]] {
-					set html [report_fastc_chart $dir $fastqcfilesa($dir) \
-						perseqgc \
-						"Fastqc $dir reads GC content" \
-						{Per sequence GC content} \
-						{GC Content} Count \
-					]
-					puts $o $html
-				}
-				#
-				# sequence length
-				# ---------------
-				foreach dir [lsort [array names fastqcfilesa]] {
-					set html [report_fastc_chart $dir $fastqcfilesa($dir) \
-						seqlen \
-						"Fastqc $dir reads length distribution" \
-						{Sequence Length Distribution} \
-						{Length} Count \
-					]
-					puts $o $html
+				# gather seq size data
+				if {[llength $uastatsgcfiles]} {
+					puts $o [reportscombine_samstats_gc $uastatsgcfiles uasamstatsGC "GC distribution (aligned and unaligned)"]
 				}
 			}
 			#
@@ -1192,4 +1374,5 @@ proc cg_process_reportscombine {args} {
 	process_reportscombine_job {*}$args
 	job_wait
 }
+
 

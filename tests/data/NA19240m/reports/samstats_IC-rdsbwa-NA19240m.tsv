@@ -1,0 +1,3 @@
+# Indels per cycle. Use `grep ^IC | cut -f 2-` to extract this part. The columns are: cycle, number of insertions (fwd), .. (rev) , number of deletions (fwd), .. (rev)
+cycle	number_of_insertions_fwd	number_of_insertions_fwd_rev	number_of_deletions_fwd	number_of_deletions_rev
+44	1	0	0	0

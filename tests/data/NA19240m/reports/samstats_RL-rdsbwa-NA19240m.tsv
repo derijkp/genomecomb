@@ -1,0 +1,14 @@
+# Read lengths. Use `grep ^RL | cut -f 2-` to extract this part. The columns are: read length, count
+read_length	count
+56	1
+60	1
+68	1
+75	2
+80	1
+82	1
+90	1
+92	1
+95	2
+97	3
+98	1
+100	185

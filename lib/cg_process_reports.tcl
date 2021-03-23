@@ -1,6 +1,172 @@
+#set bamroot hlongshot-sminimap2_splice-rr_NA05_055_v4.0.11+f1071ce_189859_hg38s
+#set dir /work/rr/ontr/hg38s/exp157484-hg38s-cDNA-ONT-pilot-FUS/samples/rr_NA05_055_v4.0.11+f1071ce_189859_hg38s/reports
+#set option unaligned
+#
+#set bamfile /work/rr/ontr/hg38s/exp157484-hg38s-cDNA-ONT-pilot-FUS/samples/rr_NA05_055_v4.0.11+f1071ce_189859_hg38s/map-hlongshot-sminimap2_splice-rr_NA05_055_v4.0.11+f1071ce_189859_hg38s.bam
+#set target $sampledir/reports/samstats-$bamroot.stats
+#set target2 $sampledir/reports/report_samstats_summary-$bamroot.tsv
+#
+proc reports_samstats {bamfile {option {}} {resultdir {}}} {
+	upvar job_logdir job_logdir
+	set bamroot [file root [file tail [gzroot $bamfile]]]
+	regsub ^map- $bamroot {} bamroot
+	if {$resultdir eq ""} {
+		set resultdir [file dir $bamfile]/reports
+	}
+	if {![file exists $resultdir]} {file mkdir $resultdir}
+	set dep $bamfile
+	set target $resultdir/${option}samstats-$bamroot.stats
+	set target2 $resultdir/report_${option}samstats_summary-$bamroot.tsv
+	set targets [list $target $target2]
+	set sections {
+		{FFQ {} {First fragment qualities}}
+		{LFQ {} {Last fragment qualities}}
+		{GCF {gc_pct	count} {GC content of first fragments}}
+		{GCL {gc_pct	count} {GC content of last fragments}}
+		{GCC {cycle A_pct C_pxt G_pct T_pct N_pct O_pct} {ACGT content per cycle}}
+		{GCT {cycle A_pct C_pxt G_pct T_pct} {ACGT content per cycle, read oriented}}
+		{FBC {cycle A_pct C_pxt G_pct T_pct N_pct O_pct} {ACGT content per cycle for first fragments only}}
+		{FTC {numA numC numG numT numN} {ACGT raw counters for first fragments}}
+		{LBC {cycle A_pct C_pxt G_pct T_pct N_pct O_pct} {ACGT content per cycle for last fragments only}}
+		{LTC {numA numC numG numT numN} {ACGT raw counters for last fragments}}
+		{IS {insert_size pairs_total inward_oriented_pairs outward_oriented_pairs other_pairs} {Insert sizes}}
+		{RL {read_length count} {Read lengths}}
+		{FRL {read_length count} {Read lengths for first fragments only}}
+		{LRL {read_length count} {Read lengths for last fragments only}}
+		{ID {length number_of_insertions number_of_deletions} {Indel size distribution}}
+		{IC {cycle number_of_insertions_fwd number_of_insertions_fwd_rev number_of_deletions_fwd number_of_deletions_rev} {Indels per cycle}}
+		{COV {range start count} {Coverage (depth) distribution}}
+		{GCD {GC_pct unique_sequence_percentiles depth_percentile_10 depth_percentile_25 depth_percentile_50 depth_percentile_75 depth_percentile_90} {GC-depth}}
+	}
+	foreach section [list_subindex $sections 0] {
+		lappend targets $resultdir/${option}samstats_${section}-$bamroot.tsv.zst
+	}
+	lappend targets $resultdir/${option}samstats_FFQs-$bamroot.tsv.zst
+	lappend targets $resultdir/${option}samstats_LFQs-$bamroot.tsv.zst
+	job [job_relfile2name reports_${option}samstats- $bamfile] -deps {$dep} -targets $targets -vars {
+		bamroot sections option
+	} -code {
+		list_foreach {key fields descr} $sections {
+			set sectionsa($key) $fields
+			set sectionsdescra($key) $descr
+		}
+		set reportsdir [file dir $target]
+		if {![file exists $target.zst]} {
+			putslog "Making $target"
+			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
+			if {$option eq ""} {
+				exec samtools stats $dep > $target.temp
+			} elseif {$option eq "unaligned"} {
+				exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
+			} elseif {$option eq "aligned"} {
+				exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
+			} else {
+				error "unknown option $option"
+			}
+			cg zst $target.temp
+			file rename -force -- $target.temp.zst $target.zst
+		}
+		putslog "Making $target2"
+		catch {close $f} ; catch {close $o}
+		set f [gzopen $target.zst]
+		set curtarget $target2
+		set o [wgzopen $target2.temp.zst w]
+		puts $o [join {sample source parameter value} \t]
+		# do SN (summary)
+		while {[gets $f line] != -1} {
+			if {[regexp ^SN $line]} break
+		}
+		if {$option ne ""} {set aoption ${option}_} else {set aoption ""}
+		while 1 {
+			if {[regexp {^#} $line]} break
+			set line [split $line \t]
+			foreach {key parameter value} $line break
+			if {$key ne "SN"} break
+			set parameter [string_change [string trim $parameter] {{ } _ : {} \( {} \) {} % pct}]
+			puts $o "$bamroot\t${option}samstats_summary\t${aoption}$parameter\t$value"
+			if {[gets $f line] == -1} break
+		}
+		putslog "Making rest of samstats"
+		# do rest
+		while 1 {
+			if {[regexp {^#} $line]} {
+				gzclose $o
+				file rename -force -- $curtarget.temp.zst $curtarget.zst
+				if {![regexp {grep \^([A-Z]+)} $line temp key]} {
+					error "$target not expected format; could not extract key from: $line"
+				}
+				set curtarget $reportsdir/${option}samstats_${key}-$bamroot.tsv
+				set o [wgzopen $curtarget.temp.zst w]
+				puts $o $line
+				if {[gets $f line] == -1} break
+				if {[regexp {^#} $line]} {
+					if {[regexp {grep \^([A-Z]+)} $line temp key]} continue
+					puts $o $line
+				}
+				if {[string range $key 0 2] in "BCC CRC OXC RXC"} {
+					set sectionsa($key) {cycle A_pct C_pxt G_pct T_pct N_pct O_pct}
+				}
+				if {[string range $key 0 2] in "FFQ LFQ QTQ CYQ BZQ QXQ"} {
+					if {[gets $f line] == -1} break
+					if {[regexp {^#} $line]} continue
+					set header [list cycle]
+					set len [expr {[llength [split $line \t]] - 2}]
+					for {set i 0} {$i < $len} {incr i} {
+						lappend header q$i
+					}
+					puts $o [join $header \t]
+				} else {
+					if {[regexp {^#} $line]} continue
+					if {[info exists sectionsa($key)]} {
+						set header $sectionsa($key)
+					} else {
+						set header {{# unknown header}}
+					}
+					puts $o [join $header \t]
+				}
+			}
+			set line [split $line \t]
+			puts $o [join [lrange $line 1 end] \t]
+			if {[gets $f line] == -1} break
+		}
+		gzclose $o
+		close $f
+		file rename -force -- $curtarget.temp.zst $curtarget.zst
+		foreach key {FFQ LFQ} {
+			set f [gzopen $reportsdir/${option}samstats_${key}-$bamroot.tsv.zst]
+			set header [tsv_open $f]
+			if {[eof $f]} {
+				file_write $reportsdir/${option}samstats_${key}s-$bamroot.tsv.zst {}
+				continue
+			}
+			unset -nocomplain a
+			foreach el $header {
+				set a($el) 0.0
+			}
+			while {[gets $f line] != -1} {
+				foreach v [split $line \t] q $header {
+					set a($q) [expr {$a($q) + $v}]
+				}
+			}
+			close $f
+			set o [wgzopen $reportsdir/${option}samstats_${key}s-$bamroot.tsv.temp.zst]
+			puts $o quality\tcount
+			foreach el [lrange $header 1 end] {
+				regsub q $el {} x
+				puts $o $x\t$a($el)
+			}
+			gzclose $o
+			file rename $reportsdir/${option}samstats_${key}s-$bamroot.tsv.temp.zst $reportsdir/${option}samstats_${key}s-$bamroot.tsv.zst
+		}
+		foreach file [lrange $targets 2 end] {
+			if {![file exists $file]} {file_write $file ""}
+		}
+	}
+}
+
 proc reports_expand {reports} {
-	set allreports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo predictgender}
-	set basicreports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo predictgender}
+	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender}
+	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
 	if {$reports eq "all"} {
 		set reports $allreports
 	} elseif {[string index $reports 0] eq "-"} {
@@ -55,11 +221,24 @@ proc process_reports_job {args} {
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
+	# get bamfiles; do not include hlongshot- ones if source exists (are the same anyway except one tag that is not used here)
+	unset -nocomplain a
+	foreach file [bsort [jobglob $sampledir/*.bam $sampledir/*.cram]] {
+		set a([file tail $file]) $file
+	}
+	set bamfiles {}
+	foreach file [array names a] {
+		if {[regexp ^map-hlongshot- $file]} {
+			regsub ^map-hlongshot- $file map- temp
+			if {[info exists a($temp)]} continue
+		}
+		lappend bamfiles $a($file)
+	}
 	if {$resultbamfile eq ""} {
-		set bamfiles [bsort [jobglob $sampledir/*.bam $sampledir/*.cram]]
+		set bamfiles [bsort $bamfiles]
 		set resultbamfile [lindex $bamfiles end]
 	} else {
-		set bamfiles [list_remdup [list $resultbamfile {*}[bsort [jobglob $sampledir/*.bam $sampledir/*.cram]]]]
+		list_addnew bamfiles $resultbamfile
 	}
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
@@ -85,6 +264,15 @@ proc process_reports_job {args} {
 				close $o
 				file rename -force -- $target2.temp $target2
 			}
+		}
+		if {[inlist $reports alignedsamstats]} {
+			reports_samstats $bamfile aligned $sampledir/reports
+		}
+		if {[inlist $reports unalignedsamstats]} {
+			reports_samstats $bamfile unaligned $sampledir/reports
+		}
+		if {[inlist $reports samstats]} {
+			reports_samstats $bamfile {} $sampledir/reports
 		}
 		if {[inlist $reports flagstat_reads]} {
 			set dep $bamfile

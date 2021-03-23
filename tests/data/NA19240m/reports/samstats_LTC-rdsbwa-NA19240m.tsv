@@ -1,0 +1,3 @@
+# ACGT raw counters for last fragments. Use `grep ^LTC | cut -f 2-` to extract this part. The columns are: A,C,G,T,N base counters
+numA	numC	numG	numT	numN
+2324	2798	2511	2209	0

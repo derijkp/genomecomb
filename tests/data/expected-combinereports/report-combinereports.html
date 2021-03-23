@@ -302,7 +302,7 @@ table th.sort-up:before {
 <h2>Alignment target overview</h2>
 no target region was supplied for rdsbwa-ERR194147_30x_NA12878.
 
-The full "sequenced genome" region in /data/genomecomb.smalltestdata/refseqtest/hg19/extra/reg_hg19_sequencedgenome.tsv.lz4 was used as target region for calulations in the table
+The full "sequenced genome" region in /home/peter/genomecomb.smalltestdata/refseqtest/hg19/extra/reg_hg19_sequencedgenome.tsv.lz4 was used as target region for calulations in the table
 <table id="alignmenttarget" class="sort">
 <theader>
 <tr><th class="sort-header">#</th><th class="sort-header">sample</th><th class="sort-header">alignment</th><th class="sort-header">target-region-mb</th><th class="sort-header">avg-depth-ontarget</th><th class="sort-header">pct-target-1X</th><th class="sort-header">pct-target-2X</th><th class="sort-header">pct-target-10X</th><th class="sort-header">pct-target-20X</th><th class="sort-header">pct-target-30X</th></tr>
@@ -328,6 +328,7 @@ The full "sequenced genome" region in /data/genomecomb.smalltestdata/refseqtest/
   new Tablesort(document.getElementById('alignmentoverview'));
 </script>
 
+
 <h2>Gender prediction overview</h2>
 <table id="genderprediction" class="sort">
 <theader>
@@ -340,6 +341,7 @@ The full "sequenced genome" region in /data/genomecomb.smalltestdata/refseqtest/
 <script>
   new Tablesort(document.getElementById('genderprediction'));
 </script>
+
 
 <div class = "nobreak">
 <h2>Number of on-target bases with given depth</h2>
@@ -365,6 +367,7 @@ y: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	},
 	yaxis: {
 		title: 'number of positions'
+		
 	},
 	margin: { t: 0 },
 	paper_bgcolor: 'rgba(0,0,0,0)',
@@ -377,7 +380,7 @@ y: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 <div class = "nobreak">
 <h2>Number of off-target bases with given depth</h2>
-<div id="depthofftarget" class="nobreak" style="height: 400px; width: 100%"><svg></svg></div>
+<div id="depthofftarget" class="nobreak" style="height: 400px; width: 100%"></div>
 <script>
 var chart_depthofftarget = Plotly.plot(
 document.getElementById('depthofftarget'),
@@ -399,6 +402,7 @@ y: [1014417,755712,622926,546843,497637,471663,451741,445410,454046,472264,50114
 	},
 	yaxis: {
 		title: 'number of positions'
+		
 	},
 	margin: { t: 0 },
 	paper_bgcolor: 'rgba(0,0,0,0)',
@@ -407,6 +411,9 @@ y: [1014417,755712,622926,546843,497637,471663,451741,445410,454046,472264,50114
 {responsive: true}
 );
 </script>
+</div>
+
+
 
 <h2>fastqc overview</h2>
 <table id="fastqcoverview" class="sort">
@@ -696,6 +703,7 @@ y: [7.87265109E8]
 );
 </script>
 </div>
+
 <footer class="footer">
 <p>Made by genomecomb 0.101.0</p>
 </footer>

@@ -22,6 +22,9 @@ report_fastq_rev-sample.tsv)
 (file report_flagstat_reads-source.tsv) based on primary alignments only (so counts reads)
 ; flagstat_alignmments: stats about bamfiles in the sampledir made using samtools flagstat 
 (file report_flagstat_alignments-source.tsv). This counts alignments, not reads (includes secondary alignments)
+; samstats: stats about bamfiles in the sampledir made using samtools stats 
+(file report_samstats_summary-source.tsv) all kinds of summary stats based on the sam/bam/cram file (including nr reads, etc)
+Als creates several report_samstats_section-source.tsv file containing information such as readlength distribution (section=RL),
 ; histodepth: create a histogram of the sequencing depth. If a targetfile is present, 
 histograms for on- and off-target regions will be separated. The report_* version
 contains coverage statistics at various depth cutoffs

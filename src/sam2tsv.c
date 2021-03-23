@@ -158,7 +158,36 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	/* fields data */
-	fprintf(stdout,"#filetype tsv/samfile\n#fileversion	0.99\n#fields	table\n#fields	field	number	type	description\n#fields	chromosome	1	String	Chromosome/Contig\n#fields	begin	1	Integer	Begin of feature (0 based - half open)\n#fields	end	1	Integer	End of feature (0 based - half open)\n#fields	type	1	String	Type of feature (snp,del,ins,...)\n#fields	ref	1	String	Reference sequence, can be a number for large features\n#fields	alt	1	String	Alternative sequence, can be a number for large features\n#fields	name	1	String	name of feature\n#fields	quality	1	Float	Quality score of feature\n#fields	filter	1	String	Filter value\n#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype\n#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype\n#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced\n#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced\n#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased\n#fields	genotypes	H	Integer	Genotypes\n#fields	alleledepth_ref	1	Integer	Allelic depths for the ref allele\n#fields	alleledepth	A	Integer	Allelic depths for the alt alleles in the order listed\n#fields	frequency	A	Float	Allele Frequency\n");
+	fprintf(stdout,"#filetype tsv/samfile\n");
+	fprintf(stdout,"#fileversion	0.99\n");
+	fprintf(stdout,"#fields	table\n");
+	fprintf(stdout,"#fields	field	number	type	description\n");
+	fprintf(stdout,"#fields	chromosome	1	String	Chromosome/Contig/Reference name\n");
+	fprintf(stdout,"#fields	begin	1	Integer	Begin of feature (0 based - half open)\n");
+	fprintf(stdout,"#fields	end	1	Integer	End of feature (0 based - half open)\n");
+	fprintf(stdout,"#fields	strand	1	String	strand (+ or -)\n");
+	fprintf(stdout,"#fields	qname	1	String	Query template NAME\n");
+	fprintf(stdout,"#fields	qstart	1	String	Start of the alignment in the query (0 based - half open)\n");
+	fprintf(stdout,"#fields	qend	1	String	End of the alignment in the query (0 based - half open)\n");
+	fprintf(stdout,"#fields	mapquality	1	String	MAPping Quality\n");
+	fprintf(stdout,"#fields	ref2	1	String	Chromosome/Contig/Reference name of the mate/next read\n");
+	fprintf(stdout,"#fields	begin2	1	String	Begin of the mate/next read (0 based - half open)\n");
+	fprintf(stdout,"#fields	strand2	1	String	String	strand (+ or -) of the mate/next read\n");
+	fprintf(stdout,"#fields	tlen	1	String	observed Template LENgth\n");
+	fprintf(stdout,"#fields	pair	1	Bool	template having multiple segments in sequencing\n");
+	fprintf(stdout,"#fields	properpair	1	Bool	each segment properly aligned according to the aligner\n");
+	fprintf(stdout,"#fields	unmapped	1	Bool	segment unmapped\n");
+	fprintf(stdout,"#fields	mateunmapped	1	Bool	next segment in the template unmapped\n");
+	fprintf(stdout,"#fields	read	1	Integer	read: 1 for first segment in the template, 2 for last segment in the template\n");
+	fprintf(stdout,"#fields	secondary	1	Bool	secondary alignment\n");
+	fprintf(stdout,"#fields	qcfail	1	Bool	not passing filters, such as platform/vendor quality controls\n");
+	fprintf(stdout,"#fields	duplicate	1	Bool	PCR or optical duplicate\n");
+	fprintf(stdout,"#fields	supplementary	1	Bool	supplementary alignment\n");
+	fprintf(stdout,"#fields	cigar	1	String	CIGAR string\n");
+	fprintf(stdout,"#fields	seqlen	1	String	sequence length\n");
+	fprintf(stdout,"#fields	seq	1	String	segment sequence.\n");
+	fprintf(stdout,"#fields	quality	1	String	ASCII of base quality plus 33\n");
+	fprintf(stdout,"#fields	other	L	String	\n");
 	header = DStringNewFromChar("chromosome\tbegin\tend\tstrand\tqname\tqstart\tqend\tmapquality\tref2\tbegin2\tstrand2\ttlen\tpair\tproperpair\tunmapped\tmateunmapped\tread\tsecondary\tqcfail\tduplicate\tsupplementary\tcigar\tseqlen\tseq\tquality\tother");
 	if (argc == 1) {
 		hashtable = NULL;

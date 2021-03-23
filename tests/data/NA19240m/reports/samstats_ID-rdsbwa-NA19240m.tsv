@@ -1,0 +1,3 @@
+# Indel distribution. Use `grep ^ID | cut -f 2-` to extract this part. The columns are: length, number of insertions, number of deletions
+length	number_of_insertions	number_of_deletions
+1	1	0

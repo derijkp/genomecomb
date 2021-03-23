@@ -1,0 +1,9 @@
+# Read lengths - first fragments. Use `grep ^FRL | cut -f 2-` to extract this part. The columns are: read length, count
+read_length	count
+68	1
+75	1
+90	1
+95	2
+97	2
+98	1
+100	92

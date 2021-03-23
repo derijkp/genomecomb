@@ -68,7 +68,7 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 ; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
 ; -reports list: use basic (default) for creating most reports (or all for all reports). If you only
 want some made, give these as a space separated list. Possible reports are:
-flagstat_reads flagstat_alignments fastqc histodepth vars hsmetrics covered
+fastqstats fastqc flagstat_reads flagstat_alignments samstats alignedsamstats unalignedsamstats histodepth vars hsmetrics covered histo predictgender
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
 ; -distrreg regions: distribute regions for parallel processing. Possible options are
 ** 0: no distribution (also empty)

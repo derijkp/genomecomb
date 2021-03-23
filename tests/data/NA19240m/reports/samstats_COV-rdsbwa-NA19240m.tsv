@@ -1,0 +1,11 @@
+# Coverage distribution. Use `grep ^COV | cut -f 2-` to extract this part.
+range	start	count
+[1-1]	1	3844
+[2-2]	2	1702
+[3-3]	3	745
+[4-4]	4	741
+[5-5]	5	513
+[6-6]	6	256
+[7-7]	7	306
+[8-8]	8	113
+[9-9]	9	17
