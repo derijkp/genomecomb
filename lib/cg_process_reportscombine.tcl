@@ -1038,6 +1038,12 @@ proc process_reportscombine_job {args} {
 	set reports [bsort [list_remdup $reports]]
 	set histofiles [bsort [list_remdup $histofiles]]
 	set fastqcfiles [bsort [list_remdup $fastqcfiles]]
+	set statsrlfiles [bsort [list_remdup $statsrlfiles]]
+	set uastatsrlfiles [bsort [list_remdup $uastatsrlfiles]]
+	set statsqualityfiles [bsort [list_remdup $statsqualityfiles]]
+	set uastatsqualityfiles [bsort [list_remdup $uastatsqualityfiles]]
+	set statsgcfiles [bsort [list_remdup $statsgcfiles]]
+	set uastatsgcfiles [bsort [list_remdup $uastatsgcfiles]]
 	set deps [list_concat $reports $histofiles $fastqcfiles $statsrlfiles $uastatsrlfiles $statsqualityfiles $statsgcfiles $uastatsgcfiles]
 
 	if {[llength $deps]} {
