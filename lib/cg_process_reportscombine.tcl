@@ -1111,7 +1111,10 @@ proc process_reportscombine_job {args} {
 				}]
 				if {$pf_reads < 0} {set pf_reads {}}
 				set pf_duplicates [get "data($bamname,flagstat_reads,duplicates)" {}]
-				set pf_mapped [get "data($bamname,flagstat_reads,mapped)" {}]
+				set pf_mapped [expr {
+					[get "data($bamname,flagstat_reads,mapped)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
+				}]
+				if {$pf_mapped < 0} {set pf_mapped {}}
 				set pf_properlypaired [get "data($bamname,flagstat_reads,properly paired)" {}]
 				if {[isint $numreads] && [isint $pf_reads]} {
 					set pct_pf_reads [ppercent $pf_reads $numreads]
