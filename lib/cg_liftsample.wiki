@@ -1,7 +1,7 @@
 = liftsample =
 
 == Format ==
-cg liftsample sampledir resultdir liftoverfile dbdir
+cg liftsample sampledir resultdir liftoverfile
 
 == Summary ==
 Use liftover to convert the files from a sample (variant, region, ...) from one build to another

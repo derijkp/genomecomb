@@ -49,9 +49,10 @@ proc cg_liftover {args} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
 	if {[file isdir $varfile]} {
-		cg_liftoversample $varfile $resultfile $liftoverfile {*}$args
+		cg_liftsample $varfile $resultfile $liftoverfile {*}$args
 	}
 	set unmappedfile [gzroot $resultfile].unmapped[gzext $resultfile]
+
 	#
 	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {gzclose $freg} ; catch {close $o} ; catch {close $ou}
 	#
@@ -80,6 +81,7 @@ proc cg_liftover {args} {
 	}
 	#
 	# open varfile
+
 	if {$varfile ne "-"} {
 		set f [gzopen $varfile]
 	} else {
@@ -118,8 +120,9 @@ proc cg_liftover {args} {
 		lset regtemplate $typepos snp
 		set freg [gzopen $regionfile]
 		set regheader [tsv_open $freg]
-		set regposs [tsv_basicfields $header]
-		set curreg [get_region $freg $regposs]
+		set regposs [tsv_basicfields $regheader 3]
+		set regline [split [gets $freg] \t]
+		set curreg [list_sub $regline $regposs]
 		set samples [samples $header]
 		set regsampleposs {}
 		foreach sample $samples {
@@ -256,7 +259,8 @@ proc cg_liftover {args} {
 							break
 						}
 						if {[eof $freg]} break
-						set curreg [get_region $freg $regposs]
+						set regline [split [gets $freg] \t]
+						set curreg [list_sub $freg $regposs]
 					}
 					if {$regcomp == 0} {
 						foreach {cchromosome cbegin cend csrcref cdestchromosome cdestbegin cdestend destref destcomplement} $cline break
@@ -267,15 +271,20 @@ proc cg_liftover {args} {
 						lset temp $refpos $destref
 						if {$altpos != -1} {lset temp $altpos $csrcref}
 						lappend temp $cchromosome $cbegin $cend $csrcref
-						foreach {a1pos a2pos seqpos zygpos} $sposs sreg [list_sub $curreg $regsampleposs] {
+						if {[llength $regsampleposs]} {
+							set sregs [list_sub $regline $regsampleposs]
+						} else {
+							set sregs {}
+						}
+						foreach {a1pos a2pos seqpos zygpos} $sposs sreg $sregs {
 							if {$sreg} {
-								lset temp $a1pos $csrcref
-								lset temp $a2pos $csrcref
-								lset temp $seqpos v
-								lset temp $zygpos m
+								if {$a1pos != -1} {lset temp $a1pos $csrcref}
+								if {$a2pos != -1} {lset temp $a2pos $csrcref}
+								if {$seqpos != -1} {lset temp $seqpos v}
+								if {$zygpos != -1} {lset temp $zygpos m}
 							} else {
-								lset temp $seqpos u
-								lset temp $zygpos u
+								if {$seqpos != -1} {lset temp $seqpos u}
+								if {$zygpos != -1} {lset temp $zygpos u}
 							}
 						}
 						puts $o [join $temp \t]
