@@ -992,7 +992,7 @@ proc process_sample_job {args} {
 				error "svcaller $svcaller not supported"
 			}
 			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
-			lappend todo(sv) [jobglob [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv]
+			lappend todo(sv) [lindex [jobglob [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv] 0]
 		}
 		foreach methcaller $methcallers {
 			set extraopts {}
@@ -1012,7 +1012,7 @@ proc process_sample_job {args} {
 			lappend cleanupdeps {*}[meth_${methcallerprog}_job \
 				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
 				$fast5dir $fastqdir $cleanedbam]
-			lappend todo(meth) [jobglob [file dir $cleanedbam]/meth-$methcaller-$bambase.tsv]
+			lappend todo(meth) [lindex [jobglob [file dir $cleanedbam]/meth-$methcaller-$bambase.tsv] 0]
 		}
 	}
 	#calculate reports
