@@ -623,28 +623,40 @@ proc tempramdir {size} {
 	if {$size > $useablespace} {
 		error "not enough space on /dev/shm"
 	}
-        if {![info exists ::Extral::tempramdir]} {
-                for {set i 0} {$i < 20} {incr i} {
-                        set testdir [file join /dev/shm tempExtral.[pid]-[Extral::randstring 20]]
-                        if {[file exists $testdir]} continue
-                        if {[catch {
-                                file mkdir $testdir
+	if {![info exists ::Extral::tempramdir]} {
+		# clean up old stuck tempdirs in  /dev/shm
+		set dirs [glob -nocomplain /dev/shm/tempExtral.*]
+		foreach dir $dirs {
+			if {[file exists $dir/pid]} {
+				set pid [file_read $dir/pid]
+			} elseif {![regexp {[0-9]+} $dir pid]} continue
+			if {[catch {exec ps -p $pid} msg]} {
+				file delete -force $dir
+			}
+		}
+		# make tmpdir in /dev/shm
+		for {set i 0} {$i < 20} {incr i} {
+			set testdir [file join /dev/shm tempExtral.[pid]-[Extral::randstring 20]]
+			if {[file exists $testdir]} continue
+			if {[catch {
+				file mkdir $testdir
 				atexit add [list file delete -force $testdir]
-                                if {$::tcl_platform(platform) eq "unix"} {
-                                        file attributes $testdir -permissions 0700
-                                }
-                                set files [glob -nocomplain $testdir/*]
-                                if {[llength $files]} {
-                                        error "Very fishy: there are files in the temporary directory I just created"
-                                }
-                                set ::Extral::tempramdir $testdir
-                                set ::Extral::tempramnum 0
-                        }]} continue
-                        break
-                }
-        }
-        if {![info exists ::Extral::tempramdir]} {
-                error "couldn't create temporary ramdisk directory in [file nativename /dev/shm]"
-        }
-        return $::Extral::tempramdir
+				if {$::tcl_platform(platform) eq "unix"} {
+					file attributes $testdir -permissions 0700
+				}
+				set files [glob -nocomplain $testdir/*]
+				if {[llength $files]} {
+					error "Very fishy: there are files in the temporary directory I just created"
+				}
+				set ::Extral::tempramdir $testdir
+				set ::Extral::tempramnum 0
+			}]} continue
+			break
+		}
+	}
+	if {![info exists ::Extral::tempramdir]} {
+		error "couldn't create temporary ramdisk directory in [file nativename /dev/shm]"
+	}
+	file_write $::Extral::tempramdir/pid [pid]
+	return $::Extral::tempramdir
 }
