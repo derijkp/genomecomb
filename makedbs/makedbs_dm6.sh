@@ -130,7 +130,7 @@ foreach db $dbs_gene {
 	job gene_${build}_$dbname -targets {$target.zst $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
 		file delete $target
 		cg download_genes $target $build $dbname
-	        cg maketabix $target
+		cg maketabix $target
 		cg index $target
 	}
 }
@@ -149,7 +149,7 @@ job gene_${build}_intGene \
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.zst reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
 	file rename -force -- $target.temp $target
-        cg maketabix $target
+	cg maketabix $target
 	file_write $target2 "fields\t{base size}\n"
 }
 
