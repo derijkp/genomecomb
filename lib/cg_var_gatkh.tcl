@@ -171,8 +171,8 @@ proc var_gatkh_job {args} {
 			file rename -force -- $varallfile.temp.gz.tbi $varallfile.tbi
 			# file delete $varallfile.temp
 			if {$emptyreg && ![file exists $cache]} {
-				file copy -force $target $cache
-				file copy -force $target.tbi $cache.tbi.temp
+				file_copy -force $target $cache
+				file_copy -force $target.tbi $cache.tbi.temp
 			}
 		}
 	}

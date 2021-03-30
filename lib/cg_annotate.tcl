@@ -359,7 +359,7 @@ proc cg_annotate_job {args} {
 			if {$ext eq ".vcf"} {
 				cg vcf2tsv -split 1 $dep $target.temp
 			} else {
-				file copy $dep $target.temp
+				file_copy $dep $target.temp
 			}
 			file rename -force -- $target.temp $target
 		}

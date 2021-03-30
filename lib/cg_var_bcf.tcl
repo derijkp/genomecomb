@@ -137,7 +137,7 @@ proc var_bcf_job {args} {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
-			file copy $cache $target
+			file_copy $cache $target
 		} else {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]
@@ -169,7 +169,7 @@ proc var_bcf_job {args} {
 			}
 			file rename -force -- $target.temp $target
 			if {$emptyreg && ![file exists $cache]} {
-				file copy $target $cache
+				file_copy $target $cache
 			}
 		}
 	}

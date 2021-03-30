@@ -14,7 +14,7 @@ proc analysisinfo_write {dep target args} {
 	set targetanalysisinfo [analysisinfo_file $target]
 	if {![llength $args]} {
 		if {[file exists $depanalysisinfo] && $dep ne $target} {
-			file copy -force $depanalysisinfo $targetanalysisinfo
+			file_copy $depanalysisinfo $targetanalysisinfo
 		}
 		return
 	}
@@ -73,7 +73,7 @@ proc analysisinfo_write {dep target args} {
 
 proc analysisinfo_copy {src dest {changes {}}} {
 	if {![llength $changes]} {
-		file copy $src $dest
+		file_copy $src $dest
 	} else {
 		set c [string trim [file_read $src]]
 		set c [split $c \n]

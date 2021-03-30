@@ -62,7 +62,7 @@ proc mergesamples_job {result args} {
 			} -vars {
 				type destsample bams result
 			} -code {
-				file copy [analysisinfo_file [lindex $bams 0]] [analysisinfo_file $result/$type-$destsample.bam]
+				file_copy [analysisinfo_file [lindex $bams 0]] [analysisinfo_file $result/$type-$destsample.bam]
 				exec samtools merge -c -p --threads 8 $result/temp$type-$destsample.bam {*}$bams
 				file rename -force $result/temp$type-$destsample.bam $target
 			}
@@ -80,7 +80,7 @@ proc mergesamples_job {result args} {
 		} -code {
 			exec devcg mergesorted {*}$smethfiles | cg [string range $extension 1 end] > $target.temp$extension
 			file rename $target.temp$extension $target
-			file copy -force [analysisinfo_file [lindex $smethfiles 0]]] [analysisinfo_file $target]
+			file_copy [analysisinfo_file [lindex $smethfiles 0]]] [analysisinfo_file $target]
 			exec cg meth_nanopolish_freqs $target meth-nanopolish-$destsample$extension
 		}
 		maketabix_job $target

@@ -132,7 +132,7 @@ proc var_freebayes_job {args} {
 		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
-			file copy $cache $target
+			file_copy $cache $target
 		} else {
 			if {$regionfile ne ""} {
 				set regionfilesize [file size $regionfile]
@@ -152,7 +152,7 @@ proc var_freebayes_job {args} {
 			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
-				file copy $target $cache
+				file_copy $target $cache
 			}
 		}
 	}

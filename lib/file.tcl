@@ -99,3 +99,14 @@ proc workdir {file} {
 	job_cleanup_add $workdir
 	return $workdir
 }
+
+proc touch {args} {
+	exec touch {*}$args
+}
+
+# like file copy, but always used -force, and if target is a file, it changes it's time to the current
+proc file_copy {args} {
+	file copy -force {*}$args
+	set target [lindex $args end]
+	exec touch $target
+}

@@ -138,7 +138,7 @@ proc sv_job {args} {
 				analysisinfo list
 			} -code {
 				if {[llength $analysisinfo]} {
-					file copy -force $analysisinfo [analysisinfo_file $target]
+					file_copy $analysisinfo [analysisinfo_file $target]
 				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
