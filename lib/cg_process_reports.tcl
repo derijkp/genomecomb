@@ -3,8 +3,8 @@
 #set option unaligned
 #
 #set bamfile /work/rr/ontr/hg38s/exp157484-hg38s-cDNA-ONT-pilot-FUS/samples/rr_NA05_055_v4.0.11+f1071ce_189859_hg38s/map-hlongshot-sminimap2_splice-rr_NA05_055_v4.0.11+f1071ce_189859_hg38s.bam
-#set target $sampledir/reports/samstats-$bamroot.stats
-#set target2 $sampledir/reports/report_samstats_summary-$bamroot.tsv
+#set target $sampledir/reports/samstats-$bamroot.stats.zst
+#set target2 $sampledir/reports/report_samstats_summary-$bamroot.tsv.zst
 #
 proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 	upvar job_logdir job_logdir
@@ -15,8 +15,8 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 	}
 	if {![file exists $resultdir]} {file mkdir $resultdir}
 	set dep $bamfile
-	set target $resultdir/${option}samstats-$bamroot.stats
-	set target2 $resultdir/report_${option}samstats_summary-$bamroot.tsv
+	set target $resultdir/${option}samstats-$bamroot.stats.zst
+	set target2 $resultdir/report_${option}samstats_summary-$bamroot.tsv.zst
 	set targets [list $target $target2]
 	set sections {
 		{FFQ {} {First fragment qualities}}
@@ -51,7 +51,7 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 			set sectionsdescra($key) $descr
 		}
 		set reportsdir [file dir $target]
-		if {![file exists $target.zst]} {
+		if {![file exists $target]} {
 			putslog "Making $target"
 			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
 			if {$option eq ""} {
@@ -64,11 +64,11 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 				error "unknown option $option"
 			}
 			cg zst $target.temp
-			file rename -force -- $target.temp.zst $target.zst
+			file rename -force -- $target.temp.zst $target
 		}
 		putslog "Making $target2"
 		catch {close $f} ; catch {close $o}
-		set f [gzopen $target.zst]
+		set f [gzopen $target]
 		set curtarget $target2
 		set o [wgzopen $target2.temp.zst w]
 		puts $o [join {sample source parameter value} \t]
@@ -91,11 +91,11 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 		while 1 {
 			if {[regexp {^#} $line]} {
 				gzclose $o
-				file rename -force -- $curtarget.temp.zst $curtarget.zst
+				file rename -force -- $curtarget.temp.zst $curtarget
 				if {![regexp {grep \^([A-Z]+)} $line temp key]} {
 					error "$target not expected format; could not extract key from: $line"
 				}
-				set curtarget $reportsdir/${option}samstats_${key}-$bamroot.tsv
+				set curtarget $reportsdir/${option}samstats_${key}-$bamroot.tsv.zst
 				set o [wgzopen $curtarget.temp.zst w]
 				puts $o $line
 				if {[gets $f line] == -1} break
@@ -131,7 +131,7 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 		}
 		gzclose $o
 		close $f
-		file rename -force -- $curtarget.temp.zst $curtarget.zst
+		file rename -force -- $curtarget.temp.zst $curtarget
 		foreach key {FFQ LFQ} {
 			set f [gzopen $reportsdir/${option}samstats_${key}-$bamroot.tsv.zst]
 			set header [tsv_open $f]
