@@ -42,7 +42,7 @@ proc job_process_submit_sge {job runfile args} {
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
-				set value [list_remove $value {}]
+				set value [list_remove $value {} q]
 				if {[llength $value]} {
 					lappend options -hold_jid [join $value ,]
 					set cgjob(endjobids) [list_lremove $cgjob(endjobids) $value]
