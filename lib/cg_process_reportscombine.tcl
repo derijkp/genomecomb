@@ -931,6 +931,23 @@ proc reportscombine_samstats_uareadlength {uastatsrlfiles} {
 	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "number of sequences" "readlength" $xmax
 }
 
+proc reportscombine_remove_hlongshot {files} {
+	unset -nocomplain a
+	foreach file $files {
+		set a([file_rootname $file]) $file
+	}
+	foreach name [array names a hlongshot-*] {
+		if {[info exists a([string range $name 10 end])]} {
+			unset a($name)
+		}
+	}
+	set result {}
+	foreach name [bsort [array names a]] {
+		lappend result $a($name)
+	}
+	return $result
+}
+
 proc process_reportscombine_job {args} {
 	upvar job_logdir job_logdir
 	set overwrite 0
@@ -1036,7 +1053,7 @@ proc process_reportscombine_job {args} {
 		}
 	}
 	set reports [bsort [list_remdup $reports]]
-	set histofiles [bsort [list_remdup $histofiles]]
+	set histofiles [reportscombine_remove_hlongshot $histofiles]
 	set fastqcfiles [bsort [list_remdup $fastqcfiles]]
 	set statsrlfiles [bsort [list_remdup $statsrlfiles]]
 	set uastatsrlfiles [bsort [list_remdup $uastatsrlfiles]]
