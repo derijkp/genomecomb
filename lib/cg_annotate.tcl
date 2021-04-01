@@ -272,19 +272,20 @@ proc cg_annotate_job {args} {
 		set mtime [file mtime $resultfile]
 		set resultheader [header $resultfile]
 		if {[file exists $orifile] && [file mtime $orifile] > $mtime} {
-			putslog "target $resultfile older than dep $orifile"
+			putslog "target $resultfile older than dep $orifile: renaming to $resultfile.old"
 			set skip 0
 		} else {
 			set skip 1
 			foreach dbfile $dbfiles {
 				if {[file mtime $dbfile] > $mtime} {
-					putslog "target $resultfile older than dep $dbfile"
+					putslog "target $resultfile older than dep $dbfile: renaming to $resultfile.old"
 					set skip 0 ; break
 				}
 				set dbinfo [cg_annotatedb_info $dbfile $near]
 				set dbnewh [dict get $dbinfo newh]
 				set common [list_common $resultheader $dbnewh]
 				if {[llength $common] ne [llength $dbnewh]} {
+					putslog "target $resultfile has different annotation fields ($common) than $dbfile ($dbnewh) (): renaming to $resultfile.old"
 					set skip 0 ; break
 				}
 			}
