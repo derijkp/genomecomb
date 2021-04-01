@@ -18,8 +18,8 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 	set fieldsneeded {}
 	set files {}
 	set todo {}
+	set jobforce 0
 	if {[file exists $compar_file]} {
-		set jobforce 1
 		set f [gzopen $compar_file]
 		set header [tsv_open $f]
 		gzclose $f
@@ -27,7 +27,6 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 		lappend isreg 1
 	} else {
 		set header {}
-		set jobforce 0
 	}
 	foreach file $regfiles {
 		set name [file root [file tail [gzroot $file]]]
@@ -35,6 +34,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			putslog "*** Skipping $file: $name already in $compar_file ***"
 			continue
 		}
+		set jobforce 1
 		putslog "Adding $file to $compar_file"
 		lappend files $file
 		lappend isreg 0
