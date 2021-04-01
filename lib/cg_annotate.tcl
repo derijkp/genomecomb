@@ -90,7 +90,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	file rename -force -- $annotfile.temp $annotfile
 }
 
-proc cg_annotatedb_info {dbfile {near -1}} {
+proc annotatedb_info {dbfile {near -1}} {
 	if {[catch {
 	if {[file exists [gzroot $dbfile].opt]} {
 		set a [dict create {*}[file_read [gzroot $dbfile].opt]]
@@ -158,6 +158,8 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set newh $name
 		if {$dbtype eq "gene"} {
 			set newh [list ${name}_impact ${name}_gene ${name}_descr]
+		} elseif {$dbtype eq "mir"} {
+			set newh [list ${name}_impact ${name}_mir]
 		} elseif {$dbtype eq "bcol"} {
 			set newh [list $name]
 		} else {
@@ -198,6 +200,10 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		error "error getting info from $dbfile: $msg"
 	}
 	return $a
+}
+
+proc cg_annotatedb_info {args} {
+	puts [annotatedb_info {*}$args]
 }
 
 proc cg_annotate_job {args} {
@@ -281,7 +287,7 @@ proc cg_annotate_job {args} {
 					putslog "target $resultfile older than dep $dbfile: renaming to $resultfile.old"
 					set skip 0 ; break
 				}
-				set dbinfo [cg_annotatedb_info $dbfile $near]
+				set dbinfo [annotatedb_info $dbfile $near]
 				set dbnewh [dict get $dbinfo newh]
 				set common [list_common $resultheader $dbnewh]
 				if {[llength $common] ne [llength $dbnewh]} {
@@ -318,7 +324,7 @@ proc cg_annotate_job {args} {
 	set dbfilestodo {}
 	set errors {}
 	foreach dbfile $dbfiles {
-		set dbinfo [cg_annotatedb_info $dbfile $near]
+		set dbinfo [annotatedb_info $dbfile $near]
 		set dbnewh [dict get $dbinfo newh]
 		set common [list_common $header $dbnewh]
 		if {[llength $common]} {
@@ -445,7 +451,7 @@ proc cg_annotate_job {args} {
 				}
 			}
 		} elseif {$dbtype eq "mir"} {
-			if {$near != -1} {error "-near option does not work with gene dbfiles"}
+			if {$near != -1} {error "-near option does not work with mir dbfiles"}
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
