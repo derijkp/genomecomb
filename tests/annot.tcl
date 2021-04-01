@@ -11,6 +11,23 @@ test reg_annot {basic} {
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {}
 
+test reg_annot {basic distributed} {
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate -d 1 tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {}
+
+test reg_annot {basic distributed check no redo} {
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file delete -force tmp/vars1.sft.index
+	exec cg annotate -d 1 -v 2 tmp/vars1.sft tmp/temp.sft data/reg_annot.sft 2> tmp/temp.log
+	if {![catch {exec grep -v clean tmp/temp.log | grep finished}]} {error "some part of analysis was rerun"}
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {}
+
 test reg_annot {error file does not exists} {
 	file copy data/vars1.sft tmp/vars1.sft
 	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_doesnotexist.tsv

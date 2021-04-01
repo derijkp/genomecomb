@@ -239,6 +239,11 @@ proc cg_annotate_job {args} {
 	set dbdir [file_absolute $dbdir]
 	set orifile [file_absolute $orifile]
 	set resultfile [file_absolute $resultfile]
+	if {$analysisinfo} {
+		set analysisinfofile [analysisinfo_file $resultfile]
+	} else {
+		set analysisinfofile {}
+	}
 	set dbfiles {}
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
@@ -284,11 +289,10 @@ proc cg_annotate_job {args} {
 				}
 			}
 		}
-		if {$skip} {
-			putslog "Skipping annotation to $resultfile: already made"
-			return
+		if {!$skip} {
+			file rename -force -- $resultfile $resultfile.old
+			file rename -force -- $analysisinfofile $analysisinfofile.old
 		}
-		file rename -force -- $resultfile $resultfile.old
 	} else {
 		set checkresult 0
 		set resultheader {}
@@ -354,7 +358,7 @@ proc cg_annotate_job {args} {
 	}
 	# if nothing to add, copy orifile
 	if {![llength $dbfilestodo]} {
-		job annotate_copyori -deps {$orifile} -targets {$resultfile} -code {
+		job annotate_copyori -deps {$orifile} -targets {$resultfile $analysisinfofile} -code {
 			set ext [file extension [gzroot $dep]]
 			if {$ext eq ".vcf"} {
 				cg vcf2tsv -split 1 $dep $target.temp
@@ -362,6 +366,7 @@ proc cg_annotate_job {args} {
 				file_copy $dep $target.temp
 			}
 			file rename -force -- $target.temp $target
+			analysisinfo_write $dep $target
 		}
 		return
 	}
@@ -378,9 +383,10 @@ proc cg_annotate_job {args} {
 		set usefile [indexdir_file $orifile vars.tsv ok]
 	}
 	set afiles {}
+	set resultskips [list -skip [list $resultfile $analysisinfofile]]
 	if {!$ok && [llength $dbfilestodo]} {
 		# if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
-		tsv_varsfile_job $orifile $usefile
+		tsv_varsfile_job $orifile $resultskips $usefile
 		set ok 1
 	}
 	foreach {dbfile dbinfo} $dbfilestodo {
@@ -402,7 +408,7 @@ proc cg_annotate_job {args} {
 			}
 			if {$distrreg == "0"} {
 				# putsvars usefile resultname
-				job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+				job annot-$resultname-[file tail $dbfile] -skip {$resultfile $analysisinfofile} -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
 					set genecol [dict_get_default $dbinfo genecol {}]
 					set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
 					# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize
@@ -416,7 +422,9 @@ proc cg_annotate_job {args} {
 				set todo {}
 				foreach chromosome $chromosomes src $distrsrcs {
 					lappend todo $target.$chromosome
-					job annot-$resultname-$chromosome-[file tail $dbfile] -deps {
+					job annot-$resultname-$chromosome-[file tail $dbfile] -skip {
+						$resultfile $analysisinfofile
+					} -deps {
 						$src $genomefile $dbfile
 					} -targets {
 						$target.$chromosome
@@ -429,7 +437,7 @@ proc cg_annotate_job {args} {
 						annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 					}
 				}
-				job annot-$resultname-[file tail $dbfile] -deps $todo -targets {$target} -vars {} -code {
+				job annot-$resultname-[file tail $dbfile] -skip {$resultfile $analysisinfofile} -deps $todo -targets {$target} -vars {} -code {
 					set temp [filetemp $target]
 					cg cat -c 0 {*}$deps > $temp
 					file rename -- $temp $target
@@ -441,7 +449,15 @@ proc cg_annotate_job {args} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
 			set dbdir [dbdir $dbdir]
-			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+			job annot-$resultname-[file tail $dbfile] -skip {
+				$resultfile $analysisinfofile
+			} -deps {
+				$usefile $dbfile
+			} -targets {
+				$target
+			} -vars {
+				dbfile name dbinfo upstreamsize
+			} -code {
 				set genecol [dict_get_default $dbinfo genecol name]
 				set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
 				set extracols [dict_get_default $dbinfo extracols status]
@@ -451,7 +467,9 @@ proc cg_annotate_job {args} {
 			}
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			job annot-$resultname-[file tail $dbfile] -deps {
+			job annot-$resultname-[file tail $dbfile] -skip {
+				$resultfile $analysisinfofile
+			} -deps {
 				$usefile $dbfile
 			} -targets {
 				$target
@@ -476,21 +494,32 @@ proc cg_annotate_job {args} {
 			}
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
-			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name} -code {
+			job annot-$resultname-[file tail $dbfile] -skip {
+				$resultfile $analysisinfofile
+			} -deps {
+				$usefile $dbfile
+			} -targets {
+				$target
+			} -vars {
+				dbfile name
+			} -code {
 				annotatebcol $dep $dbfile $name $target
 			}
 		} else {
-			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo near} -code {
+			job annot-$resultname-[file tail $dbfile] -skip {
+				$resultfile $analysisinfofile
+			} -deps {
+				$usefile $dbfile
+			} -targets {
+				$target
+			} -vars {
+				dbfile name dbinfo near
+			tmp/temp.log} -code {
 				set outfields [dict get $dbinfo outfields]
 				annotatereg $dep $dbfile $name $target.temp $near $dbinfo
 				file rename -force -- $target.temp $target
 			}
 		}
-	}
-	if {$analysisinfo} {
-		set analysisinfofile [analysisinfo_file $resultfile]
-	} else {
-		set analysisinfofile {}
 	}
 	job annot-paste-$resultname -deps [list $orifile {*}$afiles] -targets {
 		$resultfile $analysisinfofile

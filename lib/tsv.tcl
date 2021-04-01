@@ -232,7 +232,7 @@ proc tsv_varsfile {tsvfile {varsfile {}}} {
 }
 
 # if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
-proc tsv_varsfile_job {orifile {usefile {}}} {
+proc tsv_varsfile_job {orifile {skips {}} {usefile {}}} {
 	upvar job_logdir job_logdir
 	if {$usefile eq ""} {
 		set usefile [indexdir_file $orifile vars.tsv]
@@ -240,7 +240,7 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 	if {$usefile eq $orifile} {
 		error "internal error: Trying to create smaller varfile as cache, but target is same as original"
 	}
-	job [job_relfile2name annot-createusefile- $usefile] -deps {
+	job [job_relfile2name annot-createusefile- $usefile] {*}$skips -deps {
 		$orifile
 	} -targets {
 		$usefile
@@ -249,7 +249,7 @@ proc tsv_varsfile_job {orifile {usefile {}}} {
 	} -code {
 		# usefile: smaller file with only variants used for actual annotation; 
 		# if orifile is small, a link to it is made.
-		# If it contains to many extra columns a cut down version is made
+		# If it contains too many extra columns a cut down version is made
 		set f [gzopen $orifile]
 		set header [tsv_open $f]
 		catch {gzclose $f}
