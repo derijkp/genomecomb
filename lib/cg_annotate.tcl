@@ -424,7 +424,7 @@ proc cg_annotate_job {args} {
 			} else {
 				if {![info exists distrsrcs]} {
 					set chromosomes [distrreg_regs chr $genomefile]
-					set distrsrcs [distrreg_job -refseq $genomefile $usefile $usefile.part .tsv $chromosomes]
+					set distrsrcs [distrreg_job -skip [list $resultfile $analysisinfofile] -refseq $genomefile $usefile $usefile.part .tsv $chromosomes]
 				}
 				set todo {}
 				foreach chromosome $chromosomes src $distrsrcs {
