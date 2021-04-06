@@ -429,8 +429,6 @@ proc ucsc_epcr {p1 p2} {
 
 proc makeprimers_check {filename} {
 	# set filename /complgen/compar/primers.tsv
-package require Tclx
-signal -restart error SIGINT
 	set f [open $filename]
 	set line [gets $f]
 	while {![eof $f]} {

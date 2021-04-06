@@ -117,8 +117,7 @@ proc cnvmedian {} {
 	gzclose $f	
 
 # code
-package require Tclx
-signal -restart error SIGINT
+loadTclX
 lappend auto_path ~/dev/genomecomb/lib
 package require Extral
 cd /complgen

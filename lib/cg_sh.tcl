@@ -6,11 +6,21 @@
 
 package require Extral
 
+proc loadTclX {} {
+	if {[catch {package require Tclx} msg]} {
+		return 0
+	}
+	catch {signal -restart error SIGINT}
+	catch {rename cindex tclx_cindex}
+	# TclX redefines mkdir, make sure file.tcl is loaded afterwards to avoid
+	uplevel 0 source $::appdir/lib/file.tcl
+	return 1
+}
+
 proc cg_wish {args} {
 	package require Tk
 	set tk 1
-	package require Tclx
-	catch {signal -restart error SIGINT}
+	loadTclX
 	if {[info commands "console"] == "console"} {
 		console show
 	} else {
@@ -46,15 +56,9 @@ proc cg_sh {args} {
 			}
 		}
 		uplevel #0 interactive
-	} elseif {[lsearch $args nox] == -1 && ![catch {package require Tclx}]} {
-		catch {signal -restart error SIGINT}
-		rename cindex tclx_cindex
+	} elseif {[lsearch $args nox] == -1 && [loadTclX]} {
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
-		if {![catch {package require Tclx}]} {
-			catch {signal -restart error SIGINT}
-			rename cindex tclx_cindex
-		}
 		package require TclReadLine
 		uplevel #0 TclReadLine::interact
 	}

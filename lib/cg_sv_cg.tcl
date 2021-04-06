@@ -1703,8 +1703,7 @@ proc sv_evaluate {file {field check}} {
 
 if 0 {
 
-package require Tclx
-signal -restart error SIGINT
+loadTclX
 lappend auto_path ~/dev/genomecomb/lib ~/dev/genomecomb/lib-exp
 package require Extral
 #cd /complgen/sv

@@ -3,8 +3,7 @@
 exec tclsh "$0" "$@"
 
 lappend auto_path [file join [file join [pwd] [file dirname [info script]]] lib]
-package require Tclx
-signal -restart error SIGINT
+loadTclX
 package require Extral
 
 if {[info commands "console"] == "console"} {
