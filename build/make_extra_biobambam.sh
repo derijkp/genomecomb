@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds the genomecomb binaries using the Holy build box environment
+# This script builds portable biobambam binaries using the Holy build box environment
 # options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
