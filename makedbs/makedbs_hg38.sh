@@ -681,6 +681,31 @@ job svgnomad -deps {
 	file delete -force $target.temp
 }
 
+# GATK resources
+job gatkres_${build} -targets {
+	gatkres
+} -vars {
+	dest build
+} -code {
+	mkdir ${dest}/${build}/gatkres.temp
+	cd ${dest}/${build}/gatkres.temp
+	foreach file {
+		1000G_phase1.snps.high_confidence.hg38.vcf.gz
+		1000G_omni2.5.hg38.vcf.gz
+		hapmap_3.3.hg38.vcf.gz
+		Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+		Homo_sapiens_assembly38.dbsnp138.vcf
+	} {
+		wgetfile https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/$file
+		catch {wgetfile https://storage.googleapis.com/genomics-public-data/resources/broad/hg38/v0/$file.tbi}
+	}
+	cg gzip Homo_sapiens_assembly38.dbsnp138.vcf
+	cg maketabix Homo_sapiens_assembly38.dbsnp138.vcf.gz
+	file rename ${dest}/${build}/gatkres.temp ${dest}/${build}/gatkres
+	cd ${dest}/${build}
+}
+cd ${dest}/${build}
+
 # CADD
 job reg_${build}_cadd -targets {
 	var_${build}_cadd.bcol
