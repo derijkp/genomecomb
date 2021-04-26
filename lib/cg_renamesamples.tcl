@@ -21,19 +21,18 @@ proc renamesamples_newfilename {file changes} {
 		if {[string match *-$name $tail]} {
 			set newfile $dir/[string range $tail 0 [expr {[string length $tail] - [string length $name] - 1}]]$newname
 			break
-		} else {
-			if {[string match *-$name. $tail]} {
-				set pos [string first -$name. $tail]
-				incr pos -1
-				set newfile $dir/[string range $tail 0 $pos]-$newname.[string range $tail [expr {$pos + [string length $name] + 3}] end]
-				break
-			}
+		}
+		set pos [string first -$name. $tail]
+		if {$pos != -1} {
+			incr pos -1
+			set newfile $dir/[string range $tail 0 $pos]-$newname.[string range $tail [expr {$pos + [string length $name] + 3}] end]
+			break
 		}
 	}
 	return $newfile
 }
 
-proc renamesamples_file {file changes} {
+proc renamesamples_file {file changes {relink 0}} {
 	set gzroot [gzroot $file]
 	set gzext [gzext $file]
 	set ext [file extension $gzroot]
@@ -51,10 +50,14 @@ proc renamesamples_file {file changes} {
 	}
 	set newfile $newbasefile$ext$gzext
 	if {![catch {file link $file} link]} {
-		puts "relinking $file to $newfile"
 		set newlink [renamesamples_newfilename $link $changes]
-		file delete $file
-		mklink $newlink $newfile
+		if {$relink && $link ne $newlink && ![regexp ^/ $link]} {
+			puts "relinking $file to $newfile"
+			file delete $file
+			mklink $newlink $newfile
+		} elseif {$file ne $newfile} {
+			file_rename $file $newfile
+		}
 	} elseif {[inlist {.tsv .sft .tab} $ext]} {
 		puts "converting $file to $newfile"
 		set f [gzopen $file]
@@ -84,23 +87,22 @@ proc renamesamples_file {file changes} {
 			file_rename $tempfile$gzext $newfile
 			catch {file delete $tempfile}
 			puts "Adapted $newfile"
-		} else {
+		} elseif {$file ne $newfile} {
 			gzclose $f
 			file_rename $file $newfile
 		}
-	} else {
-		puts "renaming $file to $newfile"
+	} elseif {$file ne $newfile} {
 		file_rename $file $newfile
 	}
 }
 
-proc renamesamples {dir changes} {
+proc renamesamples {dir changes {relink 0}} {
 	putslog "converting $dir"
 	foreach file [glob -nocomplain $dir/*] {
-		if {[file isdir $file]} {
+		if {[file isdir $file] && [catch {file link $file} link]} {
 			renamesamples $file $changes
 		}
-		renamesamples_file $file $changes
+		renamesamples_file $file $changes $relink
 	}
 }
 

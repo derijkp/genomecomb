@@ -723,6 +723,17 @@ test renamesamples {basic} {
 	bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
 } {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
 
+test renamesamples {do not follow softlink to dir} {
+	test_cleantmp
+	test_genomecombdir
+	file mkdir tmp/linkeddir
+	file copy -force tmp/test/compar/compar-test.tsv tmp/linkeddir/linkeddirfile-test.tsv
+	file copy -force tmp/test/samples/sample1 tmp/linkeddir/linkedsample1
+	mklink tmp/linkeddir tmp/test/linkeddir
+	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
+	bsort [glob tmp/linkeddir/linkedsample1/* tmp/test/* tmp/test/*/* tmp/test/*/*/*]
+} {tmp/linkeddir/linkedsample1/sreg-sample1.tsv tmp/linkeddir/linkedsample1/var-sample1.tsv tmp/test/compar tmp/test/compar/compar-test.tsv tmp/test/linkeddir tmp/test/linkeddir/linkeddirfile-test.tsv tmp/test/linkeddir/linkedsample1 tmp/test/linkeddir/linkedsample1/sreg-sample1.tsv tmp/test/linkeddir/linkedsample1/var-sample1.tsv tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
+
 test tsv2bed {basic} {
 	write_tab tmp/test.tsv {
 		chromosome begin test end name
