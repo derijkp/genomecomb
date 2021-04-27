@@ -5,9 +5,11 @@
 #
 
 proc file_rename {file newfile} {
+	set time [file_mtime $file]
 	if {$newfile eq $file} return
 	puts "$file -> $newfile"
 	file rename $file $newfile
+	file mtime $newfile $time
 }
 
 proc renamesamples_newfilename {file changes} {
@@ -60,6 +62,7 @@ proc renamesamples_file {file changes {relink 0}} {
 		}
 	} elseif {[inlist {.tsv .sft .tab} $ext]} {
 		puts "converting $file to $newfile"
+		set time [file_mtime $file]
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
 		set newheader {}
@@ -74,18 +77,36 @@ proc renamesamples_file {file changes {relink 0}} {
 			}
 			lappend newheader $field
 		}
+		set pos [lsearch $header sample]
+		if {$pos != -1} {
+			set changed 1
+		}
 		if {$changed} {
-			set tempfile [filetemp $newbasefile$ext]
-			set o [open $tempfile w]
+			set tempfile [filetemp_ext $newfile 0]
+			set o [wgzopen $tempfile]
 			puts -nonewline $o $comment
 			puts $o [join $newheader \t]
-			fcopy $f $o
+			if {$pos == -1} {
+				fcopy $f $o
+			} else {
+				while {[gets $f line] != -1} {
+					set split [split $line \t]
+					set name [lindex $split $pos]
+					set nsplit [split $name -]
+					set sample [lindex $nsplit end]
+					if {[dict exists $changes $sample]} {
+						set pre [join [lrange $nsplit 0 end-1] -]
+						if {$pre ne ""} {append pre "-"}
+						lset split $pos $pre[dict get $changes $sample]
+					}
+					puts $o [join $split \t]
+				}
+			}
 			close $o
 			gzclose $f
-			if {$gzext ne ""} {compress $tempfile $tempfile$gzext 0 0}
 			file delete $file
-			file_rename $tempfile$gzext $newfile
-			catch {file delete $tempfile}
+			file_rename $tempfile $newfile
+			file mtime $newfile $time
 			puts "Adapted $newfile"
 		} elseif {$file ne $newfile} {
 			gzclose $f
@@ -103,6 +124,11 @@ proc renamesamples {dir changes {relink 0}} {
 			renamesamples $file $changes
 		}
 		renamesamples_file $file $changes $relink
+	}
+	set newdir [renamesamples_newfilename $dir $changes]
+	if {$newdir ne $dir} {
+		if {[file exists $newdir]} {error "cannot rename $dir to $newdir: already exists"}
+		file_rename $dir $newdir
 	}
 }
 
