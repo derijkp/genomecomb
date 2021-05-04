@@ -203,6 +203,7 @@ proc process_project_job {args} {
 	set samples {}
 	set experiment [file tail $destdir]
 	unset -nocomplain a
+	set msamples {}
 	if {[file exists $destdir/$samplesdir]} {
 		set sampledir $destdir/$samplesdir
 		foreach dir [jobglob $sampledir/*] {
@@ -211,6 +212,13 @@ proc process_project_job {args} {
 				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
 			}
 			set a($sample) 1
+		}
+		foreach dir [jobglob $destdir/msamples/*] {
+			set sample [file tail $dir]
+			if {[regexp {[- ]} $sample]} {
+				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
+			}
+			lappend msamples $sample
 		}
 	} else {
 		set sampledir $destdir
@@ -222,6 +230,7 @@ proc process_project_job {args} {
 			set a($sample) 1
 		}
 	}
+	set msamples [bsort $msamples]
 	set samples [bsort [array names a]]
 	set poss [list_find -regexp $samples -]
 	if {[llength $poss]} {
@@ -278,6 +287,21 @@ proc process_project_job {args} {
 					$dir >@ stdout 2>@ stderr
 			}
 		}
+	}
+	# run msamples (not supporting jobsample for these)
+	foreach sample $msamples {
+		putslog "Processing msample $sample"
+		set dir $destdir/msamples/$sample
+		process_sample_job -clip $clip -datatype $datatype -aliformat $aliformat \
+			-aligner $aligner -realign $realign \
+			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+			-hap_bam $hap_bam \
+			-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
+			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
+			-removeduplicates $removeduplicates -amplicons $amplicons \
+			-threads $threads -distrreg $distrreg -keepsams $keepsams \
+			-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
+			$dir
 	}
 	set_job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]

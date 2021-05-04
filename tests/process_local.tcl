@@ -131,7 +131,7 @@ test process_sample {map bwa distrreg mutiple fastq -maxfastqdistr 2} {
 	join [list_remove $result {}] \n
 } {}
 
-test process_project {process_project bwa distrreg mutiple fastq -maxfastqdistr 2} {
+test process_project {process_project bwa distrreg multiple fastq -maxfastqdistr 2} {
 	test_cleantmp
 	file mkdir tmp/samples/NA19240m/fastq
 	# make split up fastq
@@ -146,6 +146,32 @@ test process_project {process_project bwa distrreg mutiple fastq -maxfastqdistr 
 	lappend result [tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv]
 	join [list_remove $result {}] \n
 } {}
+
+test process_project {process_project include msamples directory (analyse, but not include in compar)} {
+	test_cleantmp
+	file mkdir tmp/samples/NA19240m/fastq
+	mklink data/seq_R1.fq.gz tmp/samples/NA19240m/fastq/seq_R1.fq.gz
+	mklink data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq_R2.fq.gz
+	file mkdir tmp/msamples/msample/fastq
+	mklink data/seq_R1.fq.gz tmp/msamples/msample/fastq/seq_R1.fq.gz
+	mklink data/seq_R2.fq.gz tmp/msamples/msample/fastq/seq_R2.fq.gz
+	cg process_project -stack 1 \
+		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
+		-distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas \
+		tmp >& tmp/startup.log
+	# chr21:42730799-42762826
+	set result {}
+	exec samtools sort --no-PG -O sam tmp/samples/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
+	lappend result [tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv]
+	exec samtools sort --no-PG -O sam tmp/msamples/msample/map-rdsbwa-msample.bam > tmp/ali2.sam
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali2.sam | cg select -rf {duplicate other properpair mapquality XS MQ NM RG} -s {chromosome begin end qname} > tmp/ali2.sam.tsv
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ NM RG} -s {chromosome begin end qname} > tmp/bwa2.sam.tsv
+	lappend result [tsvdiff tmp/ali2.sam.tsv tmp/bwa2.sam.tsv]
+	lappend result [cg select -n tmp/compar/annot_compar-tmp.tsv.zst]
+	join [list_remove $result {}] \n
+} NA19240m
 
 testsummarize
 

@@ -170,7 +170,7 @@ proc getnotempty {f} {
 	return $line
 }
 
-# returns absolute path of waht file is linking to
+# returns absolute path of what file is linking to
 proc file_resolve {file {lastlinkVar {}}} {
 	if {$lastlinkVar ne ""} {upvar $lastlinkVar lastlink}
 	if {$::tcl_platform(platform) eq "unix"} {
