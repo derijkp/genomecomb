@@ -720,8 +720,37 @@ test renamesamples {basic} {
 	cg razip tmp/test/compar/compar-test.tsv
 	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
-	bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
-} {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
+	join [bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]] \n
+} {tmp/test/compar
+tmp/test/compar/annot_compar-test.tsv
+tmp/test/compar/compar-test.tsv.rz
+tmp/test/samples
+tmp/test/samples/new1
+tmp/test/samples/new1/sreg-new1.tsv
+tmp/test/samples/new1/var-new1.tsv.zst
+tmp/test/samples/new2
+tmp/test/samples/new2/sreg-new2.tsv
+tmp/test/samples/new2/var-new2.tsv
+tmp/test/samples/new3
+tmp/test/samples/new3/prevar-new3.tsv
+tmp/test/samples/new3/sreg-new3.tsv
+tmp/test/samples/new3/var-new3.tsv}
+
+test renamesamples {rename dir itself} {
+	test_cleantmp
+	test_genomecombdir
+	file copy tmp/test/compar/compar-test.tsv tmp/test/compar/annot_compar-test.tsv
+	cg razip tmp/test/compar/compar-test.tsv
+	cg zst tmp/test/samples/sample1/var-sample1.tsv
+	file delete -force tmp/test/samples/sample2 tmp/test/samples/sample3 tmp/test/compar
+	cg renamesamples tmp/test/samples/sample1 sample1 new1
+	join [bsort [glob tmp/test/samples/* tmp/test/samples/*/*]] \n
+} {tmp/test/samples/new1
+tmp/test/samples/new1/sreg-new1.tsv
+tmp/test/samples/new1/var-new1.tsv.zst
+tmp/test/samples/sample1.old
+tmp/test/samples/sample1.old/sreg-sample1.tsv
+tmp/test/samples/sample1.old/var-sample1.tsv.zst}
 
 test renamesamples {do not follow softlink to dir} {
 	test_cleantmp
@@ -731,8 +760,27 @@ test renamesamples {do not follow softlink to dir} {
 	file copy -force tmp/test/samples/sample1 tmp/linkeddir/linkedsample1
 	mklink tmp/linkeddir tmp/test/linkeddir
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
-	bsort [glob tmp/linkeddir/linkedsample1/* tmp/test/* tmp/test/*/* tmp/test/*/*/*]
-} {tmp/linkeddir/linkedsample1/sreg-sample1.tsv tmp/linkeddir/linkedsample1/var-sample1.tsv tmp/test/compar tmp/test/compar/compar-test.tsv tmp/test/linkeddir tmp/test/linkeddir/linkeddirfile-test.tsv tmp/test/linkeddir/linkedsample1 tmp/test/linkeddir/linkedsample1/sreg-sample1.tsv tmp/test/linkeddir/linkedsample1/var-sample1.tsv tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
+	join [bsort [glob tmp/linkeddir/*/* tmp/test/* tmp/test/*/* tmp/test/*/*/*]] \n
+} {tmp/linkeddir/linkedsample1/sreg-sample1.tsv
+tmp/linkeddir/linkedsample1/var-sample1.tsv
+tmp/test/compar
+tmp/test/compar/compar-test.tsv
+tmp/test/linkeddir
+tmp/test/linkeddir/linkeddirfile-test.tsv
+tmp/test/linkeddir/linkedsample1
+tmp/test/linkeddir/linkedsample1/sreg-sample1.tsv
+tmp/test/linkeddir/linkedsample1/var-sample1.tsv
+tmp/test/samples
+tmp/test/samples/new1
+tmp/test/samples/new1/sreg-new1.tsv
+tmp/test/samples/new1/var-new1.tsv
+tmp/test/samples/new2
+tmp/test/samples/new2/sreg-new2.tsv
+tmp/test/samples/new2/var-new2.tsv
+tmp/test/samples/new3
+tmp/test/samples/new3/prevar-new3.tsv
+tmp/test/samples/new3/sreg-new3.tsv
+tmp/test/samples/new3/var-new3.tsv}
 
 test tsv2bed {basic} {
 	write_tab tmp/test.tsv {

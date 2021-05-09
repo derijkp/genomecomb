@@ -125,11 +125,11 @@ proc renamesamples {dir changes {relink 0}} {
 		}
 		renamesamples_file $file $changes $relink
 	}
-	set newdir [renamesamples_newfilename $dir $changes]
-	if {$newdir ne $dir} {
-		if {[file exists $newdir]} {error "cannot rename $dir to $newdir: already exists"}
-		file_rename $dir $newdir
-	}
+#	set newdir [renamesamples_newfilename $dir $changes]
+#	if {$newdir ne $dir} {
+#		if {[file exists $newdir]} {error "cannot rename $dir to $newdir: already exists"}
+#		file_rename $dir $newdir
+#	}
 }
 
 proc cg_renamesamples {dir args} {
@@ -146,11 +146,15 @@ proc cg_renamesamples {dir args} {
 		putslog "convert root $dir"
 		cd [file dir $dir]
 		set dir [file tail $dir]
-		file delete -force $dir.temp
-		hardlink $dir $dir.temp
-		renamesamples $dir.temp $changes
-		file delete -force $dir.old
+		set newdir [renamesamples_newfilename $dir $changes]
+		if {$newdir ne $dir} {
+			if {[file exists $newdir]} {error "cannot rename $dir to $newdir: already exists"}
+		}
+		file delete -force $newdir.temp
+		hardlink $dir $newdir.temp
+		renamesamples $newdir.temp $changes
+		file delete -force $newdir.old
 		file rename $dir $dir.old
-		file rename $dir.temp $dir
+		file rename $newdir.temp $newdir
 	}
 }
