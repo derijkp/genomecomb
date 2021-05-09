@@ -17,8 +17,9 @@ proc version {item {minversion {}}} {
 				set _versions($item) 0.99
 			}
 			dbdir {
-				if {![catch {dbdir} dbdir] && [file exists $dbdir/README.txt]} {
-					set temp [file_read $dbdir/README.txt]
+				if {![catch {dbdir} dbdir] && [gzfile $dbdir/README*.txt] ne ""} {
+					set readme [gzfile $dbdir/README*.txt]
+					set temp [file_read $readme]
 					regexp {version: ([^\n]+)} $temp temp _versions($item)
 				}
 			}
