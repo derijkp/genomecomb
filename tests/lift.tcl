@@ -298,6 +298,27 @@ test liftover {chr prefix} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test liftover {strand change with special refs or alts} {
+	test_cleantmp
+	file_write tmp/temp.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	376000	382450	del	6450	
+		1	380500	386800	del	6300	
+		1	383000	388000	mcnv	5000	<CN=0>,<CN=1>
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	hg19_chromosome	hg19_begin	hg19_end	hg19_ref
+		1	431336	436336	mcnv	5000	<CN=0>,<CN=1>	1	383000	388000	5000
+		1	432536	438836	del	6300		1	380500	386800	6300
+		1	436886	443336	del	6450		1	376000	382450	6450
+	}]\n
+	file delete tmp/lifted.tsv
+	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg19ToHg38.over.tsv
+	# remove comments to compare
+	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test liftsample {basic} {
 	test_cleantmp
 	file mkdir tmp/sample

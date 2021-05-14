@@ -45,13 +45,13 @@ proc cg_liftover {args} {
 		set liftoverfile $resultfile
 		set resultfile -
 	}
+	set unmappedfile [gzroot $resultfile].unmapped[gzext $resultfile]
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
 	if {[file isdir $varfile]} {
 		cg_liftsample $varfile $resultfile $liftoverfile {*}$args
 	}
-	set unmappedfile [gzroot $resultfile].unmapped[gzext $resultfile]
 
 	#
 	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {gzclose $freg} ; catch {close $o} ; catch {close $ou}
@@ -321,21 +321,34 @@ proc cg_liftover {args} {
 				if {$strand eq "+"} {set ustrand "-"} else {set ustrand "+"}
 				set uend [expr {$destend - $begin + $srcbegin}]
 				set ubegin [expr {$destend - $end + $srcbegin}]
-				set ref [seq_complement $ref]
-				set alts [bsort [seq_complement $alts]]
-				if {$correctvariants} {
-					if {$refpos != -1} {lset line $refpos $ref}
-					if {$altpos != -1} {lset line $altpos [join $alts ,]}
-					foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
-						if {$a1pos == -1 || $a2pos == -1} continue
-						set a1 [seq_complement [lindex $line $a1pos]]
-						set a2 [seq_complement [lindex $line $a2pos]]
-						lset line $a1pos $a1
-						lset line $a2pos $a2
+				if {[regexp {^[A-Za-z]+$} $ref]} {
+					set ref [seq_complement $ref]
+				}
+				if {[llength $alts]} {
+					set doalts 1
+					foreach alt $alts {
+						if {![regexp {^[A-Za-z]+$} $alt]} {
+							set doalts 0
+							break
+						}
+					}
+					if {$doalts} {
+						set alts [bsort [seq_complement $alts]]
+						if {$correctvariants} {
+							if {$refpos != -1} {lset line $refpos $ref}
+							if {$altpos != -1} {lset line $altpos [join $alts ,]}
+							foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
+								if {$a1pos == -1 || $a2pos == -1} continue
+								set a1 [seq_complement [lindex $line $a1pos]]
+								set a2 [seq_complement [lindex $line $a2pos]]
+								lset line $a1pos $a1
+								lset line $a2pos $a2
+							}
+						}
+						set slist [list_sub $line $sposs]
+						set alist [list_sub $line $aposs]
 					}
 				}
-				set slist [list_sub $line $sposs]
-				set alist [list_sub $line $aposs]
 			}
 			lset line $chrpos $destchromosome
 			lset line $beginpos $ubegin
