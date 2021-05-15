@@ -122,7 +122,7 @@ proc version {item {minversion {}}} {
 			bgz {set _versions($item) [version bgzip]}
 			gz {set _versions($item) [version gzip]}
 			default {
-				if {[auto_load version_$item]} {
+				if {[info command version_$item] ne "" || [auto_load version_$item]} {
 					set _versions($item) [version_$item]
 				} else {
 					if {![catch {exec $item --version} temp]} {
