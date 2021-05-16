@@ -283,9 +283,9 @@ proc var_longshot_job {args} {
 		}
 	}
 	# make sreg
-	job [job_relfile2name longshot-sreg- $varfile] {*}$skips -deps {
-		$bamfile
-	} -targets {
+	job [job_relfile2name longshot-sreg- $varfile] {*}$skips \
+	-deps $deps \
+	-targets {
 		$sregfile
 	} -vars {
 		bamfile varfile refseq sregfile region mincoverage refseq maxcov
