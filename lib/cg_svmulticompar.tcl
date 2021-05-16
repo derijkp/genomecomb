@@ -466,6 +466,7 @@ proc cg_svmulticompar {args} {
 		set done [list_sub $list $poss]
 		set done [list_regsub -all {^start1-} $done {}]
 	}
+	analysisinfo_write $svfile $compar_file svmulticompar genomecomb svmulticompar_version [version genomecomb]
 	foreach file $files {
 		set name [file_rootname $file]
 		if {[inlist $done $name]} {
