@@ -655,8 +655,35 @@ job svgnomad -deps {
 	set tail [file tail $gnomadsv]
 	wgetfile $gnomadsv $target.temp/$tail
 	set root [file root [gzroot $tail]]
+	#
+	# convert to tsv
 	file delete $target.temp/$root.tsv.zst
 	cg vcf2tsv -split 0 $target.temp/$tail $target.temp/$root.tsv.zst
+	#
+	# change fields
+	set header [cg select -header $target.temp/$root.tsv.zst]
+	file delete $target.temp/$root-2.tsv.zst
+	catch {gzclose $o} ; catch {gzclose $f}
+	set o [wgzopen $target.temp/$root-2.tsv.zst]
+	set f [gzopen $target.temp/$root.tsv.zst]
+	while {[gets $f line] != -1} {
+		if {[regexp {^#fields} $line]} break
+		if {![regexp {^#} $line]} break
+		puts $o $line
+	}
+	puts $o [deindent {
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#fields	ref	1	String	Reference sequence, can be a number for large features	var
+		#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+		#fields	name	1	String	name of feature	var
+		#fields	CPX_INTERVALS	.	String	Genomic intervals constituting complex variant.	info
+		#fields	CPX_TYPE	1	String	Class of complex variant.	info
+	}]
 	set fields {chromosome begin end type ref alt CPX_INTERVALS CPX_TYPE name}
 	foreach population {
 		afr amr eas eur oth
@@ -664,14 +691,30 @@ job svgnomad -deps {
 	} {
 		set upopulation [string toupper $population]
 		if {![inlist $header ${upopulation}_AN]} continue
+		set POP [string toupper $population]
 		lappend fields "${population}_an=\$${upopulation}_AN"
-		lappend fields "${population}_freqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.3f\",(100.0 @* vdef(\$${upopulation}_AF,0))))"
+		puts $o "\#fields\t${population}_an\t1\tInteger\tTotal number of $POP alleles genotyped (for biallelic sites) or $POP individuals with copy-state estimates (for multiallelic sites)"
+		lappend fields "${population}_ac=\$${upopulation}_AC"
+		puts $o "\#fields\t${population}_ac\t1\tInteger\tNumber of non-reference $POP observed genotyped (for biallelic sites) or $POP individuals with copy-state estimates (for multiallelic sites)"
+		lappend fields "${population}_freqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.4f\",(100.0 @* vdef(\$${upopulation}_AF,0))))"
+		puts $o "\#fields\t${population}_freqp\tA\tFloat\t$POP allele frequency in percent (for biallelic sites) or $POP copy-state frequency in percent (for multiallelic sites)"
 		if {[inlist $header ${upopulation}_FREQ_HOMALT]} {
-			lappend fields "${population}_homfreqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.3f\",(100.0 @* vdef(\$${upopulation}_FREQ_HOMREF,0))))"
+			lappend fields "${population}_homfreqp=if(def(\$${upopulation}_AN,0) < 8, \"-\", vformat(\"%.4f\",(100.0 @* vdef(\$${upopulation}_FREQ_HOMALT,0))))"
+			puts $o "\#fields\t${population}_homfreqp\tA\tFloat\t$POP homozygous alternate genotype frequency in percent (biallelic sites only)"
 		}
 	}
-	lappend fields "max_freqp=vformat(\"%.3f\",(100.0 @* vdef(\$POPMAX_AF,0)))"
-	cg select -overwrite 1 -f $fields $target.temp/$root.tsv.zst $target.temp/$root-2.tsv.zst
+	lappend fields "max_freqp=vformat(\"%.4f\",(100.0 @* vdef(\$POPMAX_AF,0)))"
+	puts $o "\#fields\t${population}_homfreqp\tA\tFloat\t$POP homozygous alternate genotype frequency in percent (biallelic sites only)"
+	while {[regexp {^#} $line]} {
+		if {![regexp {^#fields} $line]} {
+			puts $o $line
+		}
+		if {[gets $f line] == -1} break
+	}
+	gzclose $f
+	exec cg select -rc 1 -f $fields $target.temp/$root.tsv.zst >@ $o
+	gzclose $o
+	file delete $target.zst
 	if {$build ne $gnomadsvbuild} {
 		liftover_refdb $target.temp/$root-2.tsv.zst $target.zst $dest $gnomadsvbuild $build 0
 	} else {
