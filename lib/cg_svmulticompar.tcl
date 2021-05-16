@@ -4,7 +4,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc svopen {file side {name {}}} {
+proc svopen {file side {name {}} {fields {}}} {
 	if {$name eq ""} {
 		set name [file_rootname $file]
 	}
@@ -13,13 +13,24 @@ proc svopen {file side {name {}}} {
 	set poss [tsv_basicfields $header 6 0]
 	set pos [lsearch $poss -1]
 	if {$pos != -1 && $pos < 4} {error "One of chromosome, begin, end, type (or equivalent) missing in file $file"}
-	set temp [list_fill [llength $header] 0 1]
+	# prepend -1 for "side" column
+	set poss [list -1 {*}$poss]
 	set newheader {chromosome begin end type ref alt}
-	foreach field [list_sub $header [list_lremove $temp $poss]] {
-		if {[string first - $field] == -1} {append field -$name}
-		lappend newheader $field
+	if {![llength $fields]} {
+		set temp [list_fill [llength $header] 0 1]
+		foreach field [list_sub $header [list_lremove $temp $poss]] {
+			if {[string first - $field] == -1} {append field -$name}
+			lappend newheader $field
+		}
+		set poss [list {*}$poss {*}[list_lremove $temp $poss]]
+	} else {
+		set fields [list_common $fields $header]
+		foreach field $fields {
+			lappend poss [lsearch $header $field]
+			if {[string first - $field] == -1} {append field -$name}
+			lappend newheader $field
+		}
 	}
-	set poss [list -1 {*}$poss {*}[list_lremove $temp $poss]]
 	if {[lindex $poss 5] == -1} {
 		set makeref 1
 	} else {
@@ -27,10 +38,11 @@ proc svopen {file side {name {}}} {
 	}
 	if {[lindex $poss 6] == -1} {
 		set makealt [lsearch $header size]
-		# if {$makealt == -1} {error "no alt and no size column for file $file"}
-		set makealt [lsearch $poss $makealt]
-		lappend makealt [lsearch $poss [lsearch $header chr2]]
-		lappend makealt [lsearch $poss [lsearch $header start2]]
+		lappend makealt [lsearch $header chr2]
+		lappend makealt [lsearch $header start2]
+#		if {[inlist $makealt -1]} {
+#			error "no alt column for file $file and also one of size,chr2,start2 (for making alt) missing"
+#		}
 	} else {
 		set makealt ""
 	}
@@ -51,6 +63,9 @@ proc svgetline {f} {
 		set line [split $line \t]
 		if {[llength $line]} break
 	}
+	if {[llength $makealt]} {
+		foreach {size chr2 start2} [list_sub $line $makealt] break
+	}
 	set line [list_sub $line $poss]
 	lset line 0 $side
 	foreach {side chr begin end type} $line break
@@ -65,9 +80,9 @@ proc svgetline {f} {
 			} elseif {$type eq "del"} {
 				lset line 6 ""
 			} elseif {$type eq "ins"} {
-				lset line 6 [lindex $line [lindex $makealt 0]]
+				lset line 6 $size
 			} elseif {$type in "trans bnd"} {
-				foreach {size chr2 start2} [list_sub $line $makealt] break
+				# foreach {size chr2 start2} [list_sub $line $makealt] break
 				lset line 6 \[[chr_clip $chr2]:$start2\[
 			} else {
 				lset line 6 ?
@@ -85,49 +100,75 @@ proc svgetline {f} {
 }
 
 proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {tmargin 300} {overlap 75}} {
-# putsvars sline1 sline2
+# putsvars sline1 sline2 margin lmargin tmargin overlap
 	foreach {side1 chr1 begin1 end1 type1 ref1 alt1} $sline1 break
 	foreach {side2 chr2 begin2 end2 type2 ref2 alt2} $sline2 break
+	if {$type1 eq "trans"} {set type1 bnd}
+	if {$type2 eq "trans"} {set type2 bnd}
+	if {$type1 ne $type2} {return 2147483648}
+	set begindiff [expr {abs($begin2 - $begin1)}]
+	set enddiff [expr {abs($end2 - $end1)}]
 	if {$type1 in "del inv"} {
+		if {$begindiff > $lmargin} {return 2147483648}
+		if {$enddiff > $lmargin} {return 2147483648}
 		set overlap1 [max $begin1 $begin2]
 		set overlap2 [min $end1 $end2]
-		set psize [expr {100*($overlap2 - $overlap1)}]
-		if {$end1 == $begin1 || [expr {$psize/($end1-$begin1)}] < $overlap} {return 2147483648}
-		if {$end2 == $begin2 || [expr {$psize/($end2-$begin2)}] < $overlap} {return 2147483648}
+		set maxsize [expr {max($end1-$begin1,$end2-$begin2)}]
+		if {$maxsize > 0} {
+			set pct [expr {100.0*($overlap2 - $overlap1)/$maxsize}]
+		} else {
+			set pct 0
+		}
+		if {$pct < $overlap} {return 2147483648}
 		set margin $lmargin
+		return [expr {$begindiff + $enddiff + 1 + 100 - int($pct)}]
 	} elseif {$type1 in "trans bnd"
 		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt1 temp tchr1 tbegin1]
 		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt2 temp tchr2 tbegin2]
 	} {
 		if {$tchr1 ne $tchr2} {return 2147483648}
+		if {$begindiff > $tmargin} {return 2147483648}
+		if {$enddiff > $tmargin} {return 2147483648}
 		set diff [expr {abs($tbegin2 - $tbegin1)}]
 		if {$diff > $tmargin} {return 2147483648}
-		return [expr {abs($begin2 - $begin1) + $diff}]
+		return [expr {$begindiff + $enddiff + $diff}]
 	} elseif {$type1 in "ins"} {
-		if {![isint $alt1]} {set alt1 [string length $alt1]}
-		if {![isint $alt2]} {set alt1 [string length $alt2]}
-	}
-	set enddiff [expr {abs($end2 - $end1)}]
-	if {$enddiff > $margin} {return 2147483648}
-	if {[isint $alt1]} {
-		if {[isint $alt2]} {
-			set altdiff [expr {abs($alt2 - $alt1)}]
-			if {$altdiff > $margin} {return 2147483648}
-		} else {
+		if {$begindiff > $margin} {return 2147483648}
+		if {$enddiff > $margin} {return 2147483648}
+		if {$alt1 eq $alt2} {
+			return $begindiff
+		}
+		if {![isint $alt1]} {
+			if {[string index $alt1 0] eq "<"} {return 2147483648}
+			set alt1 [string length $alt1]
+		}
+		if {![isint $alt2]} {
+			if {[string index $alt2 0] eq "<"} {return 2147483648}
 			set alt2 [string length $alt2]
+		}
+		set pct [expr {100.0*(min($alt1,$alt2))/max($alt1,$alt2)}]
+		if {$pct < $overlap} {return 2147483648}
+		return [expr {$begindiff + $enddiff + 1 + 100 - int($pct)}]
+	} else {
+		if {$begindiff > $margin} {return 2147483648}
+		if {$enddiff > $margin} {return 2147483648}
+		if {$alt1 eq $alt2} {
+			set altdiff 0
+		} else {
+			if {![isint $alt1]} {
+				if {[string index $alt1 0] eq "<"} {return 2147483648}
+				set alt1 [string length $alt1]
+			}
+			if {![isint $alt2]} {
+				if {[string index $alt2 0] eq "<"} {return 2147483648}
+				set alt2 [string length $alt2]
+			}
 			set altdiff [expr {abs($alt2 - $alt1)}]
 			if {$altdiff > $margin} {return 2147483648}
 		}
-	} elseif {[isint $alt2]} {
-		set alt1 [string length $alt1]
-		set altdiff [expr {abs($alt2 - $alt1)}]
-		if {$altdiff > $margin} {return 2147483648}
-	} else {
-		if {$alt1 ne $alt2} {return 2147483648}
-		set altdiff 0
+		set diff [expr {$begindiff + $enddiff + $altdiff}]
+		return $diff
 	}
-	set diff [expr {abs($begin2 - $begin1) + $enddiff + $altdiff}]
-	return $diff
 }
 
 proc svmulticompar_out {line1 line2 dummy1 dummy2} {
@@ -466,7 +507,9 @@ proc cg_svmulticompar {args} {
 		set done [list_sub $list $poss]
 		set done [list_regsub -all {^start1-} $done {}]
 	}
-	analysisinfo_write $svfile $compar_file svmulticompar genomecomb svmulticompar_version [version genomecomb]
+	analysisinfo_write $svfile $compar_file svmulticompar genomecomb svmulticompar_version [version genomecomb] \
+		svmulticompar_margin $margin svmulticompar_lmargin $lmargin svmulticompar_tmargin $tmargin \
+		svmulticompar_overlap $overlap
 	foreach file $files {
 		set name [file_rootname $file]
 		if {[inlist $done $name]} {

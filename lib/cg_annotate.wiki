@@ -47,18 +47,30 @@ a - allways replace them with new information
 ** a number: distribution into regions of this size
 ** a number preceded by an s: distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size
 ** a file name: the regions in the file will be used for distribution
+; -margin number: (SV only) Allow begin and end to deviate the number of bases given (default 30)
+; -lmargin number: (SV only) Allow begin and end to deviate the number of bases given for deletions, inversions (default 300)
+; -tmargin number: (SV only) Allow begin and end to deviate the number of bases given for translocations (trans) and breakends (bnd) (default 300)
+; -overlap number: (SV only) minimum percent overlap needed to identify deletions, inversions or insertions (size) as the same (default 75)
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 
 Variants are checked for overlap with regions in the file.
 ; **var**: variations file that must at least contain the columns chromosome,start,end,type,ref,alt 
-to annotate variants that match the given values. Typically, columns freq and id are present for annotation.
+to annotate variants that match the given values. Typically, columns freq(p) and id are present for annotation.
 Thus, only variants that match the alleles given in alt will be annotated. If there are multiple alt 
 values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
 var databases can also be a (multivalued) bcol formatted ([[bcol]]) file instead of 
 a [[tsv]]; this is indicated by the extension bcol
 ; **gene**: gene files (in genepred-like format). Variants will be annotated with the effects they have on 
 the genes in these files as descibed below.
+; **sv**: Structural variant file that must at least contain the columns chromosome,start,end,type,ref,alt
+to annotate structural variants that approximately match the given values.
+Typically, columns freq(p) and id are present for annotation.
+SVs match if their respective begin positions (and end positions) differ <
+**margin** bases (**lmargin** for deletions and inversions, **tmargin**
+for translocations/breakends) and overlap at least **overlap** pct for
+deletions and inversions; For insertions the smaller must be at least **overlap** pct of the larger. 
+breakends/translocations must link to the same chromosome at positions < **tmargin** bases apart.
 ; **mir**: The effect of variants on miRNA genes is annotated based on a tsv file of the miRNA 
 genes. (more detail below)
 ; **bcol**: bcol databases are used to annotate positions (e.g. snps) with a given value. Database 

@@ -116,7 +116,10 @@ proc annotatedb_info {dbfile {near -1}} {
 		set outfields {}
 		set poss {}
 	} elseif {$dbtype eq "var"} {
-		set outfields [dict_get_default $a fields {name freqp freq score}]
+		set outfields [dict_get_default $a fields {name id freqp freq score}]
+		set poss [tsv_basicfields $header 3]
+	} elseif {$dbtype eq "sv"} {
+		set outfields [dict_get_default $a fields {name id freqp freq score}]
 		set poss [tsv_basicfields $header 3]
 	} elseif {$dbtype eq "bcol"} {
 		set outfields {}
@@ -215,6 +218,10 @@ proc cg_annotate_job {args} {
 	set upstreamsize 2000
 	set analysisinfo 1
 	set distrreg 0
+	set margin 30
+	set lmargin 300
+	set tmargin 300
+	set overlap 75
 	cg_options annotate args {
 		-near {
 			set near $value
@@ -241,6 +248,10 @@ proc cg_annotate_job {args} {
 		-distrreg {
 			set distrreg [distrreg_checkvalue $value]
 		}
+		-margin {set margin $value}
+		-lmargin {set lmargin $value}
+		-tmargin {set tmargin $value}
+		-overlap {set overlap $value}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
 	set orifile [file_absolute $orifile]
@@ -498,6 +509,22 @@ proc cg_annotate_job {args} {
 				} else {
 					annotatevar $dep $dbfile $name $target $dbinfo
 				}
+			}
+		} elseif {$dbtype eq "sv"} {
+			job annot-$resultname-[file tail $dbfile] -skip {
+				$resultfile $analysisinfofile
+			} -deps {
+				$usefile $dbfile
+			} -targets {
+				$target
+			} -vars {
+				dbfile name dbinfo upstreamsize orifile margin lmargin tmargin overlap
+			} -code {
+				set f [gzopen $dep]
+				set header [tsv_open $f]
+				catch {gzclose $f}
+				set outfields [dict get $dbinfo outfields]
+				annotatesv $dep $dbfile $name $target $dbinfo $margin $lmargin $tmargin $overlap
 			}
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
