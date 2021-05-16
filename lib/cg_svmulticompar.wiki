@@ -17,6 +17,24 @@ small differences due to order of samples given) The values for begin, end
 and alt values of each sample are kept as lbegin-sample, lend-sample and
 lalt-sample.
 
+SVs match if they are the same type (trans and bnd are considered the same
+type for this) and begin, end and alt differences are within the given
+margins.
+Begin (and end) difference are calculated by the number of bases between
+begin positions (and end positions), and must (in general) not be more than
+**margin** (default 30) bases.
+For deletions and inversions **lmargin** (default 300) is used, but they
+also must have at least **minoverlap** (default 75%) percent (vs largest
+SV) to match.
+Insertions use **margin** (30) from begin and end differences, and pct
+overlap (but only based on size, sequence is not compared) must be at
+least **minoverlap** (default 75%). For special insertions (alt starts
+with <) alts must match completely.
+For translocations or breakends **tmargin** (default 300) is used as a
+limit for begin and end differences; They must also link to the same
+chromosome, and difference in position of the link may also be maximaly
+**tmargin**.
+
 == Arguments ==
 ; **svmulticomparfile**: resultfile, will be created if it does not exist
 ; **svfile**: file containing structural variants of new sample to be added
@@ -24,9 +42,9 @@ More than one svfile can added in one command
 
 == Options ==
 ; -margin number: Allow begin and end to deviate the number of bases given (default 30)
-; -lmargin number: Allow begin and end to deviate the number of bases given for deletions, inversions, trans and bnd (default 300)
+; -lmargin number: Allow begin and end to deviate the number of bases given for deletions, inversions (default 300)
 ; -tmargin number: Allow begin and end to deviate the number of bases given for translocations (trans) and breakends (bnd) (default 300)
-; -minoverlap number: minimum percent overlap needed to identify deletions or inversions as the same (default 75)
+; -overlap number: minimum percent overlap needed to identify deletions, inversions or insertions (size) as the same (default 75)
 
 == Category ==
 Variants
