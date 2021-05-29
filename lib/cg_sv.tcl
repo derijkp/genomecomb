@@ -11,11 +11,15 @@ proc sv_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set opts {}
+	set preset {}
 	set cmdline [list cg sv $args]
 	set resultfile {}
 	cg_options sv args {
 		-method {
 			set method $value
+		}
+		-preset {
+			set preset $value
 		}
 		-refseq {
 			set refseq $value
@@ -60,17 +64,17 @@ proc sv_job {args} {
 		if {[info exists regionfile] || $distrreg ni {0 {}}} {
 			putslog "sv_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
 		}
-		return [sv_${method}_job {*}$opts \
+		return [sv_${method}_job {*}$opts	-preset $preset \
 			-split $split -threads $threads -cleanup $cleanup \
 			-refseq $refseq $bamfile $resultfile]
 	}			
 	# run
 	if {$distrreg in {0 {}}} {
-		sv_${method}_job {*}$opts -regionfile $regionfile \
+		sv_${method}_job {*}$opts	-preset $preset -regionfile $regionfile \
 			-split $split -threads $threads -cleanup $cleanup	-refseq $refseq $bamfile $resultfile
 	} else {
 		# check what the resultfiles are for the method
-		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts \
+		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts	-preset $preset \
 			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
 		foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
@@ -113,7 +117,7 @@ proc sv_job {args} {
 		set todo {}
 		foreach region $regions regfile $regfiles {
 			set target [file root $ibam]-$region.tsv.zst
-			lappend todo [sv_${method}_job {*}$opts {*}$skips -regionfile $regfile \
+			lappend todo [sv_${method}_job {*}$opts {*}$skips	-preset $preset -regionfile $regfile \
 				-split $split -threads $threads -cleanup $cleanup -refseq $refseq $ibam $target]
 		}
 		defcompressionlevel 9

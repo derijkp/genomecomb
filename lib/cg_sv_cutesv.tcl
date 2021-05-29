@@ -1,0 +1,141 @@
+proc version_cuteSV {} {
+	set version ?
+	lindex [exec cuteSV --version] end
+}
+
+proc sv_cuteSV_job {args} {
+	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg sv_cuteSV {*}$args]"
+	set refseq {}
+	set opts {}
+	set split 1
+	set threads 2
+	set cleanup 1
+	set regmincoverage [get ::specialopt(-cuteSV-regmincoverage) 3]
+	set resultfiles 0
+	set skips {}
+	set min_support [get ::specialopt(-cuteSV-min_support) 2]
+	set min_seq_size [get ::specialopt(-cuteSV-min_seq_size) 300]
+	set max_cluster_bias_DEL [get ::specialopt(-cuteSV-max_cluster_bias_DEL) 100]
+	set diff_ratio_merging_DEL [get ::specialopt(-cuteSV-diff_ratio_merging_DEL) 0.3]
+	set min_support [get ::specialopt(-cuteSV-min_support) 2]
+	set preset {}
+	foreach {key value} [specialopts -cuteSV] {
+		if {$key in {-regmincoverage -min_support -min_seq_size}} continue
+		lappend opts $key $value
+	}
+	set resultfile {}
+	cg_options sv_cuteSV args {
+		-refseq {
+			set refseq $value
+		}
+		-split {
+			set split $value
+		}
+		-preset {
+			set preset $value
+		}
+		-threads - -t {
+			set threads $value
+		}
+		-cleanup {
+			set cleanup $value
+		}
+		-resultfiles {
+			set resultfiles $value
+		}
+		-skip {
+			lappend skips -skip $value
+		}
+		-maxdist {
+			lappend opts -d $value
+		}
+		-min_support {
+			set min_support $value
+		}
+		-min_seq_size {
+			set min_seq_size $value
+		}
+		-cuteSVopts {
+			lappend opts {*}$value
+		}
+	} {bamfile resultfile} 1 2
+	set bamfile [file_absolute $bamfile]
+	set refseq [refseq $refseq]
+	if {$resultfile eq ""} {
+		if {$preset eq ""} {
+			set root cuteSV-[file_rootname $bamfile]
+		} else {
+			set root cuteSV_${preset}-[file_rootname $bamfile]
+		}
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
+	} else {
+		set root [file_rootname $resultfile]
+	}
+	set destdir [file dir $resultfile]
+	set resultanalysisinfo [analysisinfo_file $resultfile]
+	set vcffile [file root [gzroot $resultfile]].vcf
+	
+	if {$preset eq "pacbioclr" || $preset eq "pacbio"} {
+		lappend opts --max_cluster_bias_INS 100 --diff_ratio_merging_INS	0.3 \
+			--max_cluster_bias_DEL 200 --diff_ratio_merging_DEL	0.5
+	} elseif {$preset eq "pacbioccs"} {
+		lappend opts --max_cluster_bias_INS 1000 --diff_ratio_merging_INS	0.9 \
+			--max_cluster_bias_DEL 1000 --diff_ratio_merging_DEL	0.5
+	} elseif {$preset eq "ont"} {
+		lappend opts --max_cluster_bias_INS 100 --diff_ratio_merging_INS	0.3 \
+			--max_cluster_bias_DEL 100 --diff_ratio_merging_DEL	0.3
+	} else {
+		lappend opts --max_cluster_bias_DEL $max_cluster_bias_DEL --diff_ratio_merging_DEL	$max_cluster_bias_DEL
+	}
+	# resultfiles
+	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	if {$resultfiles} {
+		return $resultlist
+	}
+	# logfile
+	job_logfile $destdir/sv_cuteSV_[file tail $resultfile] $destdir $cmdline \
+		{*}[versions cuteSV gnusort8 zst os]
+	# start
+	## Produce cuteSV SNP calls
+	set keeppwd [pwd]
+	cd $destdir
+	set bamfileindex $bamfile.[indexext $bamfile]
+	job sv_$root.vcf {*}$skips -mem 1G -cores $threads \
+	-skip [list $resultfile $resultanalysisinfo] \
+	-deps {
+		$bamfile $refseq $bamfileindex
+	} -targets {
+		$vcffile $vcffile.analysisinfo
+	} -vars {
+		bamfile cuteSV opts refseq threads root min_support min_seq_size
+	} -code {
+		set workdir [scratchdir]
+		analysisinfo_write $dep $target sample $root varcaller cuteSV varcaller_version [version cuteSV] varcaller_cg_version [version genomecomb]
+		exec cuteSV {*}$opts --threads $threads --genotype \
+			--min_support $min_support \
+			$bamfile $refseq $target.temp $workdir 2>@ stderr >@ stdout
+		file rename -force -- $target.temp $target
+	}
+	# 
+	job sv_vcf2tsv-$root {*}$skips -deps {
+		$vcffile
+	} -targets {
+		$resultfile $resultanalysisinfo
+	} -vars {
+		sample split
+	} -code {
+		analysisinfo_write $dep $target
+		cg vcf2tsv -locerror correct -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp[gzext $target]
+		file rename -force -- $target.temp[gzext $target] $target
+	}
+	# cleanup
+	cd $keeppwd
+	return $resultlist
+}
+
+proc cg_sv_cuteSV {args} {
+	set args [job_init {*}$args]
+	sv_cuteSV_job {*}$args
+	job_wait
+}

@@ -35,6 +35,9 @@ proc sv_gridss_job {args} {
 		-exome {
 			# notused
 		}
+		-preset {
+			# not used
+		}		
 		-skip {
 			lappend skips -skip $value
 		}

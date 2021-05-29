@@ -988,10 +988,15 @@ proc process_sample_job {args} {
 			switch $svcaller {
 				default {set extraopts {}}
 			}
-			if {![auto_load sv_${svcaller}_job]} {
+			if {[regexp {^(.*)_([^_]+)$} $svcaller tmp svcallerprog preset]} {
+				lappend extraopts -preset $preset
+			} else {
+				set svcallerprog $svcaller
+			}
+			if {![auto_load sv_${svcallerprog}_job]} {
 				error "svcaller $svcaller not supported"
 			}
-			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
+			lappend cleanupdeps {*}[sv_job -method ${svcallerprog} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
 			lappend todo(sv) [lindex [jobglob [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv] 0]
 		}
 		foreach methcaller $methcallers {

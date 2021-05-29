@@ -39,6 +39,9 @@ proc sv_lumpy_job {args} {
 		-exome {
 			# notused
 		}
+		-preset {
+			# not used
+		}		
 		-skip {
 			lappend skips -skip $value
 		}

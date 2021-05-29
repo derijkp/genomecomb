@@ -40,6 +40,9 @@ proc sv_manta_job {args} {
 		-resultfiles {
 			set resultfiles $value
 		}
+		-preset {
+			# not used
+		}		
 		-skip {
 			lappend skips -skip $value
 		}
