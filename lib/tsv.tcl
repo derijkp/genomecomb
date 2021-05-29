@@ -255,7 +255,6 @@ proc tsv_varsfile_job {orifile {skips {}} {usefile {}}} {
 		catch {gzclose $f}
 		if {[gziscompressed $orifile] || [file dir $target] ne "$orifile.index" || ([llength $header] > 10 && [llength $dbfiles] >= 4)} {
 			tsv_varsfile $orifile $usefile
-			puts "Using varfile $usefile"
 		} else {
 			mklink $orifile $target
 		}
