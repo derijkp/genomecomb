@@ -619,8 +619,8 @@ job var_${build}_extragnomad-final -deps {
 	# file delete -force $tempdir
 }
 
-# gnomadsv (todo)
-# ---------------
+# gnomadsv
+# --------
 job svgnomad -deps {
 } -targets {
 	sv_${build}_svgnomad.tsv
@@ -657,15 +657,17 @@ job svgnomad -deps {
 	set root [file root [gzroot $tail]]
 	#
 	# convert to tsv
+	set temptsv $target.temp/$root.tsv.zst
 	file delete $target.temp/$root.tsv.zst
-	cg vcf2tsv -split 0 $target.temp/$tail $target.temp/$root.tsv.zst
+	cg vcf2tsv -split 0 $target.temp/$tail $temptsv
 	#
 	# change fields
-	set header [cg select -header $target.temp/$root.tsv.zst]
-	file delete $target.temp/$root-2.tsv.zst
+	set temptarget $target.temp/$root-2.tsv.zst
+	set header [cg select -header $temptsv]
+	file delete $temptarget
 	catch {gzclose $o} ; catch {gzclose $f}
-	set o [wgzopen $target.temp/$root-2.tsv.zst]
-	set f [gzopen $target.temp/$root.tsv.zst]
+	set o [wgzopen $temptarget]
+	set f [gzopen $temptsv]
 	while {[gets $f line] != -1} {
 		if {[regexp {^#fields} $line]} break
 		if {![regexp {^#} $line]} break
@@ -712,13 +714,13 @@ job svgnomad -deps {
 		if {[gets $f line] == -1} break
 	}
 	gzclose $f
-	exec cg select -rc 1 -f $fields $target.temp/$root.tsv.zst >@ $o
+	exec cg select -rc 1 -f $fields $temptsv >@ $o
 	gzclose $o
 	file delete $target.zst
 	if {$build ne $gnomadsvbuild} {
-		liftover_refdb $target.temp/$root-2.tsv.zst $target.zst $dest $gnomadsvbuild $build 0
+		liftover_refdb $temptarget $target.zst $dest $gnomadsvbuild $build 0
 	} else {
-		file rename -force -- $target.temp/$root-2.tsv.zst $target.zst
+		file rename -force -- $temptarget $target.zst
 	}
 	cg zstindex $target.zst
 	file delete -force $target.temp
