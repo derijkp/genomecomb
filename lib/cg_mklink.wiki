@@ -1,0 +1,29 @@
+= cplinked =
+
+== Format ==
+cg mklink ?options? source ... dest
+
+== Summary ==
+Create softlinks (improved)
+
+== Description ==
+cg mklink creates softlinks using a syntax similar to "ln -s": **dest** will be a softlink pointing 
+to **src**. If **dest** is a directory, more than one src can be linked/copied.
+
+cg mklink "improves" on using ln -s in following ways:
+* You do not have to be in the dest directory to get the correct relative link.
+The correct relative link will be calculated based on the full path of src and dest, 
+no matter where your pwd is, no matter if src is given as an absolute path, or as an extended relative path.
+* The link (dest) will get the same time as **src**
+* Links can be created to files that do not exist (yet)
+* If dest is a link, it will be overwritten, if it is a real file, an error is given
+
+== Arguments ==
+; src: file to be copied
+; dest: destination
+
+== Options ==
+; -absolute 0/1 (-a): softlinks will use absolute paths if 1, relative paths if 0 (default)
+
+== Category ==
+Tools
