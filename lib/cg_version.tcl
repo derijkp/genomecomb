@@ -36,6 +36,7 @@ proc version {item {minversion {}}} {
 			picard {
 				catch {picard MarkDuplicates --version} version_picard
 				set _versions($item) [lindex [split $version_picard \n] 0]
+				regexp {Version:([^\n]+)} $_versions($item) temp _versions($item)
 			}
 			fastqc {
 				catch {exec fastqc -v} temp
