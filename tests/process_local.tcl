@@ -157,7 +157,7 @@ test process_project {process_project include msamples directory (analyse, but n
 	mklink data/seq_R2.fq.gz tmp/msamples/msample/fastq/seq_R2.fq.gz
 	cg process_project -stack 1 \
 		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
-		-distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas \
+		-distrreg chr -dbdir $::refseqdir/hg19 \
 		tmp >& tmp/startup.log
 	# chr21:42730799-42762826
 	set result {}

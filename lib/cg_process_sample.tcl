@@ -181,8 +181,9 @@ proc process_sample_cgi_job {workdir split} {
 			lappend todo bcolall/refScore-cg-cg-$sample.bcol
 		}
 		if {[llength $todo]} {
-			cg annotate -analysisinfo 0 $target.temp $target.temp2 {*}$todo
+			cg annotate $target.temp $target.temp2 {*}$todo
 			file rename -force -- $target.temp2 $target
+			file rename -force -- $target.temp2.analysisinfo $target.analysisinfo
 			file delete -force $target.temp $target.temp.index $target.temp2.index
 		} else {
 			file rename -force -- $target.temp $target
@@ -317,10 +318,11 @@ proc process_sample_cgi_job {workdir split} {
 			}
 		}
 		set tempfile [filetemp_ext $target 0]
-		cg annotate -analysisinfo 0 $dep $tempfile {*}[list_remove [lrange $deps 1 end] {}]
-		analysisinfo_write $dep $target sample cg-cg-$sample aligner cgi aligner_version $cgi_version varcaller cgi varcaller_version $cgi_version reference $reference
+		analysisinfo_write $dep $dep sample cg-cg-$sample aligner cgi aligner_version $cgi_version varcaller cgi varcaller_version $cgi_version reference $reference
+		cg annotate $dep $tempfile {*}[list_remove [lrange $deps 1 end] {}]
 		file rename $tempfile $target
 		file rename $tempfile.zsti $target.zsti
+		file rename $tempfile.analysisinfo $target.analysisinfo
 		file delete -force [gzroot $tempfile].index
 		file delete -force [gzroot $dep].index
 	}

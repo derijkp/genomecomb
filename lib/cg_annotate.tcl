@@ -216,7 +216,6 @@ proc cg_annotate_job {args} {
 	set replace e
 	set multidb 0
 	set upstreamsize 2000
-	set analysisinfo 1
 	set distrreg 0
 	set margin 30
 	set lmargin 300
@@ -242,9 +241,6 @@ proc cg_annotate_job {args} {
 		-u - -upstreamsize {
 			set upstreamsize $value
 		}
-		-analysisinfo {
-			set analysisinfo $value
-		}
 		-distrreg {
 			set distrreg [distrreg_checkvalue $value]
 		}
@@ -256,11 +252,7 @@ proc cg_annotate_job {args} {
 	set dbdir [file_absolute $dbdir]
 	set orifile [file_absolute $orifile]
 	set resultfile [file_absolute $resultfile]
-	if {$analysisinfo} {
-		set analysisinfofile [analysisinfo_file $resultfile]
-	} else {
-		set analysisinfofile {}
-	}
+	set analysisinfofile [analysisinfo_file $resultfile]
 	set dbfiles {}
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
@@ -560,11 +552,9 @@ proc cg_annotate_job {args} {
 	} -rmtargets {
 		$usefile
 	} -vars {
-		orifile afiles multidb replace newh resultfile analysisinfo usefile
+		orifile afiles multidb replace newh resultfile usefile
 	} -code {
-		if {$analysisinfo} {
-			analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
-		}
+		analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
 		set compress [compresspipe $target]
 		set temp {}
 		foreach file $afiles {

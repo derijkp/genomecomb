@@ -1,6 +1,7 @@
 proc process_project_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg process_project {*}$args]"
+	unset -nocomplain split
 	set dbdir {}
 	set dbfiles {}
 	set minfastqreads 0

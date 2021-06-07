@@ -75,7 +75,7 @@ proc annotvar_clusters_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		if {[file size $dep]} {
-			cg annotate -stack 1 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
+			cg annotate -stack 1 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
 		} else {
 			file_write $target ""
 		}
