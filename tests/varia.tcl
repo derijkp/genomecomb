@@ -392,6 +392,17 @@ test error {analysisinfo_write} {
 test	test2
 }
 
+test error {analysisinfo_write no duplicates} {
+	file_write tmp/src.analysisinfo [deindent {
+		source	dest
+		test	test1
+	}]\n
+	analysisinfo_write tmp/src tmp/dest dest testnew dest2 test2
+	file_read tmp/dest.analysisinfo
+} {source	dest	dest2
+test	test1	test2
+}
+
 test error {analysisinfo_write no src.analysisinfo} {
 	analysisinfo_write tmp/src tmp/dest dest test2
 	file_read tmp/dest.analysisinfo

@@ -26,23 +26,27 @@ proc analysisinfo_write {dep target args} {
 			set f [open $depanalysisinfo]
 		}
 		set fields [tsv_open $f]
+		set addvalues {}
+		unset -nocomplain samplevalue
 		foreach {field value} $args {
+			if {$field in $fields} continue
 			if {$field eq "sample"} {
 				set fields [list sample {*}$fields]
+				set samplevalue $value
 			} else {
 				lappend fields $field
+				lappend addvalues $value
 			}
 		}
+		set addvalues [join $addvalues \t]
+		if {[llength $addvalues]} {set addvalues \t$addvalues}
 		set o [open $targetanalysisinfo w]
 		puts $o [join $fields \t]
 		while {[gets $f line] != -1} {
-			set values [split $line \t]
-			foreach {field value} $args {
-				if {$field eq "sample"} {
-					set line $value\t$line
-				} else {
-					append line \t $value
-				}
+			if {[info exists samplevalue]} {
+				set line $samplevalue\t$line$addvalues
+			} else {
+				append line $addvalues
 			}
 			puts $o $line
 			
