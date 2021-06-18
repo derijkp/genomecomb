@@ -381,7 +381,7 @@ test error {catch catch_exec testerror 1 1 1} {
 	} msg]
 } 1
 
-test error {analysisinfo_write} {
+test analysisinfo_write {analysisinfo_write} {
 	file_write tmp/src.analysisinfo [deindent {
 		source
 		test
@@ -392,7 +392,7 @@ test error {analysisinfo_write} {
 test	test2
 }
 
-test error {analysisinfo_write no duplicates} {
+test analysisinfo_write {analysisinfo_write no duplicates} {
 	file_write tmp/src.analysisinfo [deindent {
 		source	dest
 		test	test1
@@ -403,16 +403,34 @@ test error {analysisinfo_write no duplicates} {
 test	test1	test2
 }
 
-test error {analysisinfo_write no src.analysisinfo} {
+test analysisinfo_write {analysisinfo_write no src.analysisinfo} {
 	analysisinfo_write tmp/src tmp/dest dest test2
 	file_read tmp/dest.analysisinfo
 } {dest
 test2
 }
 
-test error {analysisinfo_write empty src.analysisinfo} {
+test analysisinfo_write {analysisinfo_write empty src.analysisinfo} {
 	file_write tmp/src.analysisinfo {}
 	analysisinfo_write tmp/src tmp/dest dest test2
+	file_read tmp/dest.analysisinfo
+} {dest
+test2
+}
+
+test analysisinfo_write {analysisinfo_write add} {
+	file_write tmp/src.analysisinfo [deindent {
+		annotate_cg_version
+		0.101.0
+	}]\n
+	analysisinfo_write tmp/src tmp/dest.zst sample cg-cg-tmp
+	file_read tmp/dest.analysisinfo
+} {sample	annotate_cg_version
+cg-cg-tmp	0.101.0
+}
+
+test analysisinfo_write {analysisinfo_write from empty} {
+	analysisinfo_write {} tmp/dest dest test2
 	file_read tmp/dest.analysisinfo
 } {dest
 test2
