@@ -1226,6 +1226,11 @@ proc job {jobname args} {
 				lappend submitopts -cores $cores
 				incr pos
 			}
+			-priority {
+				set priority [lindex $args $pos]
+				lappend submitopts -priority $priority
+				incr pos
+			}
 			-mem {
 				lappend submitopts -mem [lindex $args $pos]
 				incr pos
