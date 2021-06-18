@@ -376,13 +376,16 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			zst $target.temp
-			file rename -force -- $target.temp.zst $target
+			# cg sv (old fromat) can be sorted incorrectly
+			cg select -s - $target.temp $target.temp2
+			zst $target.temp2
+			file rename -force -- $target.temp2.zst $target
+			file delete $target.temp
 		}
 		job cgsv_annotate -optional 1 \
 		-deps {compar/cgsv-$experiment.tsv} \
-		-targets {compar/annot_cgsv-$experiment.tsv.zst} -vars {refseqdir build} -code {
-			cg annotate $dep $target $refseqdir/$build
+		-targets {compar/annot_cgsv-$experiment.tsv.zst} -vars {dbdir} -code {
+			cg annotate $dep $target $dbdir
 		}
 		job cgsv_annotate_index -optional 1 \
 		-deps {compar/annot_cgsv-$experiment.tsv.zst} \
@@ -423,8 +426,8 @@ proc process_multicompar_job {args} {
 		}
 		job cgcnv_annotate -optional 1 \
 		-deps {compar/cgcnv-$experiment.tsv.zst} \
-		-targets {compar/annot_cgcnv-$experiment.tsv.zst} -vars {refseqdir build} -code {
-			cg annotate $dep $target $refseqdir/$build
+		-targets {compar/annot_cgcnv-$experiment.tsv.zst} -vars {dbdir} -code {
+			cg annotate $dep $target $dbdir
 		}
 		job cgcnv_annotate_index -optional 1 \
 		-deps {compar/annot_cgcnv-$experiment.tsv.zst} \
