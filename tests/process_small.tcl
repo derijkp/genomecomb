@@ -461,6 +461,42 @@ test process_small {process_project genomes_yri_mx2} {
 	join [list_remove $result {}] \n
 } {}
 
+test process_small {process_project cg_mx2} {
+	cd $::smalltestdir
+	set basename cg_mx2
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
+	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-varcallers {gatk sam} \
+		-dbdir $::refseqdir/hg19 \
+		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		tmp/${basename} >& tmp/${basename}.log
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo -x summary-*.txt \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *dupmetrics \
+		tmp/${basename} expected/${basename}]
+	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
+		lappend result [checkdiff -I finished \
+			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
+	}
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+			$file1 $file2]
+	}
+	join [list_remove $result {}] \n
+} {}
+
 test process_small {process_project mixed_yri_mx2} {
 	cd $::smalltestdir
 	set basename mixed_yri_mx2
@@ -473,7 +509,7 @@ test process_small {process_project mixed_yri_mx2} {
 	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
-		-dbdir /complgen/refseq/hg19 \
+		-dbdir $::refseqdir/hg19 \
 		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
@@ -512,7 +548,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 		-varcallers {gatk sam} \
-		-dbdir /complgen/refseq/hg19 \
+		-dbdir $::refseqdir/hg19 \
 		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
 	# check vs expected
