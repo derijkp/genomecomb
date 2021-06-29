@@ -14,7 +14,7 @@ proc info_analysis_file {resultfile sample parameters versions args} {
 	close $o
 	if {[file exists $resultfile]} {
 		if {[catch {exec diff $resultfile $resultfile.temp}]} {
-			file rename $resultfile $resultfile.[file_timestamp $resultfile]
+			file rename -force $resultfile $resultfile.[file_timestamp $resultfile]
 		}
 	}
 	file rename -force -- $resultfile.temp $resultfile
