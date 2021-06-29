@@ -36,26 +36,26 @@ proc cg_vcfcat {args} {
 		fcopy $f $o
 		close $o
 		gzclose $f
-		exit 0
-	}
-	set header 1
-	foreach file $args {
-		if {![file size $file]} continue
-		set f [gzopen $file]
-		if {$header} {
-			fcopy $f $o
-			set header 0
-		} else {
-			while {[gets $f line] != -1} {
-				if {[string index $line 0] eq {#}} continue
-				puts $o $line
-				break
+	} else {
+		set header 1
+		foreach file $args {
+			if {![file size $file]} continue
+			set f [gzopen $file]
+			if {$header} {
+				fcopy $f $o
+				set header 0
+			} else {
+				while {[gets $f line] != -1} {
+					if {[string index $line 0] eq {#}} continue
+					puts $o $line
+					break
+				}
+				fcopy $f $o
 			}
-			fcopy $f $o
+			gzclose $f
 		}
-		gzclose $f
+		close $o
 	}
-	close $o
 	if {[info exists outfile]} {
 		file rename -force -- $outfile.temp $outfile
 		if {$index} {
