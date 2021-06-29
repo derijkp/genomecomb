@@ -67,6 +67,7 @@ proc cg_report_vars {args} {
 	if {[llength $annotfiles]} {
 		cg annotate $varfile $tempfile {*}$annotfiles
 	} else {
+		set tempfile $tempfile[gzext $varfile]
 		mklink $varfile $tempfile
 	}
 	if {[inlist $header sequenced]} {
