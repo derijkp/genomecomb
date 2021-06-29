@@ -370,12 +370,14 @@ proc cg_annotate_job {args} {
 	if {![llength $dbfilestodo]} {
 		job annotate_copyori -deps {$orifile} -targets {$resultfile $analysisinfofile} -code {
 			set ext [file extension [gzroot $dep]]
+			set tempfile [filetemp_ext $target]
 			if {$ext eq ".vcf"} {
-				cg vcf2tsv -split 1 $dep $target.temp
+				cg vcf2tsv -split 1 $dep $tempfile
 			} else {
-				file_copy $dep $target.temp
+				# file_copy $dep $target.temp
+				exec {*}[convert_pipe $dep $tempfile -endpipe 1]
 			}
-			file rename -force -- $target.temp $target
+			file rename -force -- $tempfile $target
 			analysisinfo_write $dep $target
 		}
 		return
