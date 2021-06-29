@@ -434,6 +434,7 @@ proc convert_pipe {infile outfile args} {
 	set defaultout {}
 	set addpipe 0
 	set endpipe 0
+	set cpcmd cp
 	set threads {}
 	set compressionlevel {}
 	foreach {key value} $args {
@@ -469,6 +470,9 @@ proc convert_pipe {infile outfile args} {
 				set addpipe 1
 				set endpipe $value
 			}
+			-cpcmd {
+				set cpcmd $value
+			}
 		}
 	}
 	if {$defaultin eq ""} {set defaultin [lindex $supportedin 0]}
@@ -490,6 +494,7 @@ proc convert_pipe {infile outfile args} {
 			lappend pipe {*}$decompress
 		} else {
 			lappend pipe {*}$decompress $infile
+			set infiledone 1
 		}
 	}
 	if {$informat eq $outformat} {
@@ -518,6 +523,25 @@ proc convert_pipe {infile outfile args} {
 			lappend pipe $infile
 			set infiledone 1
 		}
+	} elseif {$informat in "tsv csv vcf bed sam bam cram fasta fastq gff gtf" && $outformat in "tsv csv vcf bed sam bam cram fasta fastq gff gtf"} {
+		if {$informat ne "tsv"} {
+			if {[llength $pipe]} {lappend pipe |}
+			if {$informat in "bam cram"} {set srcformat sam} else {set srcformat $informat}
+			lappend pipe cg ${srcformat}2tsv
+			if {$inbase ne "-" && !$infiledone} {
+				lappend pipe $infile
+				set infiledone 1
+			}
+		}
+		if {$outformat ne "tsv"} {
+			if {[llength $pipe]} {lappend pipe |}
+			if {$outformat in "bam cram"} {set destformat sam} else {set destformat $outformat}
+			lappend pipe cg tsv2${destformat}
+			if {$inbase ne "-" && !$infiledone} {
+				lappend pipe $infile
+				set infiledone 1
+			}
+		}
 	} else {
 		error "convert_pipe does not support conversion of $informat to $outformat"
 	}
@@ -528,6 +552,10 @@ proc convert_pipe {infile outfile args} {
 	if {$compress ne ""} {
 		if {[llength $pipe]} {lappend pipe |}
 		lappend pipe {*}[lrange $compress 1 end]
+		if {$inbase ne "-" && !$infiledone} {
+			lappend pipe $infile
+			set infiledone 1
+		}
 	}
 	if {$addpipe && $pipe ne "" && $inbase eq "-"} {
 		list_unshift pipe |
@@ -535,9 +563,17 @@ proc convert_pipe {infile outfile args} {
 	set outbase [file root $outgzroot]
 	if {$endpipe} {
 		if {$outbase ne "-"} {
-			lappend pipe > $outfile
+			if {$inbase ne "-" && !$infiledone} {
+				lappend pipe {*}$cpcmd $infile $outfile
+			} else {
+				lappend pipe > $outfile
+			}
 		} else {
-			lappend pipe >@ stdout
+			if {$inbase ne "-" && !$infiledone} {
+				lappend pipe cat $infile
+			} else {
+				lappend pipe >@ stdout
+			}
 		}
 	} else {
 		if {$outbase ne "-"} {

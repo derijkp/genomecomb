@@ -1323,4 +1323,28 @@ test gtf2tsv {-separate 1} {
 	exec diff tmp/test.tsv tmp/expected.tsv
 } {}
 
+test convert_pipe {convert_pipe various} {
+	set errors {}
+	foreach {test expected} {
+		{convert_pipe a.tsv.zst dg.bam -endpipe 1} {zstd-mt -T 1 -k -q -d -c a.tsv.zst | cg tsv2sam > dg.bam}
+		{convert_pipe a.bam dg.tsv.gz -endpipe 1} {cg sam2tsv a.bam | bgzip -l 1 -c > dg.tsv.gz}
+		{convert_pipe a.vcf dg.vcf.gz -endpipe 1} {bgzip -l 1 -c a.vcf > dg.vcf.gz}
+		{convert_pipe a.vcf dg.vcf.gz} {bgzip -l 1 -c a.vcf}
+		{convert_pipe a.vcf dg.bed} {cg vcf2tsv a.vcf | cg tsv2bed}
+		{convert_pipe -.vcf -.bed} {cg vcf2tsv | cg tsv2bed}
+		{convert_pipe a.vcf.gz dg.bed.zst} {zcat a.vcf.gz | cg vcf2tsv | cg tsv2bed | zstd-mt -k -q -1 -b 0.5 -T 1 -c}
+		{convert_pipe a.tsv b.tsv} {}
+		{convert_pipe a.tsv b.tsv -endpipe 1} {cp a.tsv b.tsv}
+		{convert_pipe a.tsv b.tsv -endpipe 1 -cpcmd {ln -s}} {ln -s a.tsv b.tsv}
+		{convert_pipe -.tsv b.tsv -endpipe 1} {> b.tsv}
+		{convert_pipe a.tsv -.tsv -endpipe 1} {cat a.tsv}
+	} {
+		set result [{*}$test]
+		if {$result ne $expected} {
+			lappend errors "error testing \"$test\": gave \"$result\" instead of \"$expected\""
+		}
+	}
+	join $errors \n
+} {}
+
 testsummarize
