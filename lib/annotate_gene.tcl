@@ -110,11 +110,11 @@ proc annotate_getregion {refseq start end} {
 }
 
 proc switchval {var1 var2} {
-	uplevel 1 [subst {
-		set temp \$$var1
-		set $var1 \$$var2
-		set $var2 \$temp
-	}]
+	upvar $var1 v1
+	upvar $var2 v2
+	set temp $v1
+	set v1 $v2
+	set v2 $temp
 }
 
 proc annotate_complementpos {pos} {
