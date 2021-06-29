@@ -9,6 +9,14 @@ proc cg {cmd args} {
 	catch_exec cg $cmd {*}$args
 }
 
+# default command line argument parsing for subcommands in genomecomb
+# cmd: name of the subcommand it is being used in -> used for error messages and finding the help
+# argsVar: variable name with arguments (usually args); This command changes the contrent of args: options that are recognized are removed from args
+# def: block with options in the form -option optioncommand .... The value of the option is availble in the variable value
+# parameters: list parameters/arguments to subcommand. values will be assigned to the variables in this list. If more args are available, they will stay in args var
+# minargs: minimum number of arguments that must be given
+# maxargs: maximum number of arguments that can be given
+# summary: short help, used if the default help system cannot find the associated wiki format help file (which is search based on cmd)
 proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
 # putsvars cmd argsVar def parameters minargs maxargs summary
 	# we allways need options in the subst command anyway
@@ -70,6 +78,19 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 	uplevel $fullcmd
 }
 
+# specialopts can be used to get subcommand specific options (given as e.g. -sniffles-n) in generic interfaces like cg process_project
+# key is the first part (e.g. -sniffles). 
+# It returns a list of key value ..
+proc specialopts {key} {
+	global specialopt
+	set result {}
+	foreach name [array names specialopt *$key-*] {
+		if {![regexp -- -?$key\(-.*\) $name temp subkey]} continue
+		lappend result $subkey $specialopt($name)
+	}
+	return $result 
+}
+
 proc bgcg_progress {bgexechandleVar args} {
 	upvar #0 $bgexechandleVar bgexechandle
 	if {![isint $args]} {
@@ -113,14 +134,4 @@ proc bgcg {progresscommand channelvar cmd args} {
 				cg source $temprunfile {*}$redirect 2>@1
 		if {$::bgerror ne ""} {error $::bgerror}
 	}
-}
-
-proc specialopts {key} {
-	global specialopt
-	set result {}
-	foreach name [array names specialopt *$key-*] {
-		if {![regexp -- -?$key\(-.*\) $name temp subkey]} continue
-		lappend result $subkey $specialopt($name)
-	}
-	return $result 
 }
