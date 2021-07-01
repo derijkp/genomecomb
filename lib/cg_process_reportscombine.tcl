@@ -897,7 +897,7 @@ proc reportscombine_samstats_readlength {statsrlfiles} {
 	}
 	#
 	# make chart
-	plotly readlength $chartdata "Readlength distribution" "number of sequences" "readlength" $xmax
+	plotly readlength $chartdata "Readlength distribution" "readlength" "number of sequences" $xmax
 }
 
 proc reportscombine_samstats_uareadlength {uastatsrlfiles} {
