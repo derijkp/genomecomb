@@ -13,8 +13,12 @@ proc analysisinfo_write {dep target args} {
 	set depanalysisinfo [analysisinfo_file $dep]
 	set targetanalysisinfo [analysisinfo_file $target]
 	if {![llength $args]} {
-		if {[file exists $depanalysisinfo] && $dep ne $target} {
-			file_copy $depanalysisinfo $targetanalysisinfo
+		if {$dep ne $target} {
+			if {[file exists $depanalysisinfo]} {
+				file_copy $depanalysisinfo $targetanalysisinfo
+			} else {
+				file_write $targetanalysisinfo ""
+			}
 		}
 		return
 	}
