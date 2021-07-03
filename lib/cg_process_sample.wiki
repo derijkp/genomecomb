@@ -85,6 +85,8 @@ processes (alignment etc.) them separately (default, to distribute the load) can
 of data (genome, exome or amplicons) for analysis. You can specify it
 using this option. If not given, it is deduced from acompanying region
 files (reg_*_amplicons.tsv for ampicons or reg_*_amplicons.tsv for exome)
+; -hap_bam 0/1: if 1 produce a bam file with haplotype indictions (longshot only) (default 0)
+; -depth_histo_max number: in reports, count positions with up to **number** depth (default 1000). Larger dfepths will be counted under **number**
 
 This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)

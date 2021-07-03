@@ -184,6 +184,7 @@ proc process_reports_job {args} {
 	set dbdir {}
 	set resultbamfile {}
 	set paired 1
+	set depth_histo_max 1000
 	cg_options process_reports args {
 		-dbdir {
 			set dbdir $value
@@ -193,6 +194,9 @@ proc process_reports_job {args} {
 		}
 		-paired {
 			set paired $value
+		}
+		-depth_histo_max {
+			set depth_histo_max $value
 		}
 		-resultbamfile {
 			set resultbamfile [file_absolute $value]
@@ -338,7 +342,7 @@ proc process_reports_job {args} {
 			} -targets {
 				$target $target2
 			} -vars {
-				bamroot bamfile
+				bamroot bamfile depth_histo_max
 			} -code {
 				analysisinfo_write $dep $target histodepth_tool genomecomb histodepth_version [version genomecomb]
 				set targettemp [filetemp $target]
@@ -349,7 +353,7 @@ proc process_reports_job {args} {
 					set targetfile $dep2
 					set tottarget [lindex [cg covered $targetfile] end]
 				}
-				cg depth_histo -max 1000 -q 0 -Q 0 $dep1 $targetfile > $targettemp
+				cg depth_histo -max $depth_histo_max -q 0 -Q 0 $dep1 $targetfile > $targettemp
 				file rename -force -- $targettemp $target
 				set c [split [string trim [file_read $target]] \n]
 				set header [split [list_shift c] \t]
@@ -514,7 +518,7 @@ proc process_reports_job {args} {
 				analysisinfo_write $dep $target report_covered_tool genomecomb report_covered_version [version genomecomb]
 				set f [open $target.temp w]
 				puts $f [join {sample source parameter value} \t]
-				if {[file size $dep] != 0} {
+				if {[llength [cg select -h $dep]] != 0} {
 					set temp [split [exec cg covered $dep] \n]
 					foreach line [lrange $temp 1 end] {
 						foreach {chr cov} $line break

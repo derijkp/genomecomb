@@ -34,6 +34,7 @@ proc process_project_job {args} {
 	set samplesdir samples
 	set maxfastqdistr {}
 	set hap_bam 0
+	set depth_histo_max 1000
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -155,6 +156,9 @@ proc process_project_job {args} {
 		}
 		-hap_bam {
 			set hap_bam $value
+		}
+		-depth_histo_max {
+			set depth_histo_max $value
 		}
 		-extraopts {
 			foreach {k v} $value {
@@ -302,6 +306,7 @@ proc process_project_job {args} {
 			-removeduplicates $removeduplicates -amplicons $amplicons \
 			-threads $threads -distrreg $distrreg -keepsams $keepsams \
 			-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
+			-depth_histo_max $depth_histo_max \
 			$dir
 	}
 	set_job_logdir $destdir/log_jobs

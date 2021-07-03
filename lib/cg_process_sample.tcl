@@ -484,6 +484,7 @@ proc process_sample_job {args} {
 	set aliformat bam
 	set maxfastqdistr {}
 	set hap_bam 0
+	set depth_histo_max 1000
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -575,6 +576,9 @@ proc process_sample_job {args} {
 		}
 		-hap_bam {
 			set hap_bam $value
+		}
+		-depth_histo_max {
+			set depth_histo_max $value
 		}
 		-extraopts {
 			foreach {k v} $value {
@@ -1023,7 +1027,7 @@ proc process_sample_job {args} {
 	}
 	#calculate reports
 	if {[llength $reports]} {
-		process_reports_job -paired $paired $sampledir $dbdir $reports
+		process_reports_job -paired $paired -depth_histo_max $depth_histo_max $sampledir $dbdir $reports
 		lappend todo(reports) $sampledir/reports
 	}
 	return $todo(var)
