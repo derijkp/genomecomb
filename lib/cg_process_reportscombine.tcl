@@ -1252,8 +1252,9 @@ proc process_reportscombine_job {args} {
 			set alignments [list_remdup $temp]
 			set vcallers {}
 			foreach temp [array names data *,qvars] {
-				regsub ,genomecomb,qvars\$ $temp {} temp
-				lappend vcallers [split $temp -]
+				regsub ,genomecomb,qvars\$ $temp {} temp2
+				if {$temp2 eq {}} continue
+				lappend vcallers [split $temp2 -]
 			}
 			set vcallers [bsort -index end [bsort [list_remdup $vcallers]]]
 			# gather depth data
