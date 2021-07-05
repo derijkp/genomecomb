@@ -3,8 +3,10 @@ proc cg_tsv2sam {args} {
 	set samfile -
 	set namecol name
 	set outformat sam
+	set threads 1
 	cg_options tsv2sam args {
 		-outformat {set outformat $value}
+		-threads {set threads $value}
 	} {tsvfile samfile} 0
 	if {[file extension $samfile] eq ".bam"} {
 		set outformat bam
@@ -19,7 +21,7 @@ proc cg_tsv2sam {args} {
 	}
 	lappend pipe tsv2sam
 	if {$outformat eq "bam"} {
-		lappend pipe \| samtools view --no-PG -h -b --no-PG
+		lappend pipe \| samtools view --threads $threads --no-PG -h -b --no-PG
 	}
 	if {$samfile eq "-"} {
 		lappend pipe >@ stdout
