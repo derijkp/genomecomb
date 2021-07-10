@@ -1355,6 +1355,52 @@ test gene_annot {begin -1} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test gene_annot {end too big} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		M	16572	16572	bnd		.[CHR1:100000[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16572	16572	bnd		.[CHR1:100000[	upstream	MT-ND6	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {end too big segmentation violation} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		M	6100	6100	bnd		.[CHR1:100000[
+		M	16571	16571	bnd		.[CHR1:100000[
+		M	16572	16572	bnd		.[CHR1:100000[
+		M	16572	16572	del	N	
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		chrM	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,				
+		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
+		chrM	15955	16024	-	MT-TP	gene_hg38_gencode	ENST00000387461.2	0	585	15955	15955	1	15955,	16023	MT-TP	none	none	-1,
+		chrM	15998	16571	+	AF079515	known	uc004coz.1			15998	15998	1	15998,	16571,					}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	6100	6100	bnd		.[CHR1:100000[	RNA	x	+x:exon1+75_76:n.75_76ins.[CHR1:100000[
+		M	16571	16571	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1898:c.-1899_-1898ins[000001:1YDG[.;-ENST00000387461.2:up-549_-548:n.-549_-548ins[000001:1YDG[.;+uc004coz.1:exon1+573_down+1:n.573_574ins.[CHR1:100000[
+		M	16572	16572	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.;-ENST00000387461.2:up-550_-549:n.-550_-549ins[000001:1YDG[.;+uc004coz.1:down+1_2:n.574_575ins.[CHR1:100000[
+		M	16572	16572	del	N		upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1900:c.-1899_-1900del;-ENST00000387461.2:up-549_-550:n.-549_-550del;+uc004coz.1:down+2_1:n.575_574del
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test reg_annot {check for diff size in paste error} {
 	write_tab tmp/vars1.tsv {
 		chromosome	begin	end	type	ref	alt

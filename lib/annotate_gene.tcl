@@ -521,7 +521,12 @@ proc annotategene_one_ins {loc} {
 			while {$snppos >= $gbegin} {
 				set from [string index $alt end]
 				# get base just before (current) insert
-				set dest [genome_get $genomef $chr $snppos $snpend 0 1]
+				if {[catch {
+					set dest [genome_get $genomef $chr $snppos $snpend 0 1]
+				} error]} {
+					if {[string match {trying to get sequence beyond end of chromosome*} $error]} break
+					error $error
+				}
 				# puts [genome_get $genomef $chr $gbegin $snpend 0 1]\ $alt
 				if {$from ne $dest} break
 				incr snppos -1; incr snpend -1
