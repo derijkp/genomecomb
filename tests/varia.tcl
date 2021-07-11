@@ -421,12 +421,12 @@ test2
 test analysisinfo_write {analysisinfo_write add} {
 	file_write tmp/src.analysisinfo [deindent {
 		annotate_cg_version
-		0.101.0
+		0.102.0
 	}]\n
 	analysisinfo_write tmp/src tmp/dest.zst sample cg-cg-tmp
 	file_read tmp/dest.analysisinfo
 } {sample	annotate_cg_version
-cg-cg-tmp	0.101.0
+cg-cg-tmp	0.102.0
 }
 
 test analysisinfo_write {analysisinfo_write from empty} {

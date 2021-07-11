@@ -1142,24 +1142,32 @@ test sam2tsv {sam2tsv cases} {
 		#fileversion	0.99
 		#fields	table
 		#fields	field	number	type	description
-		#fields	chromosome	1	String	Chromosome/Contig
+		#fields	chromosome	1	String	Chromosome/Contig/Reference name
 		#fields	begin	1	Integer	Begin of feature (0 based - half open)
 		#fields	end	1	Integer	End of feature (0 based - half open)
-		#fields	type	1	String	Type of feature (snp,del,ins,...)
-		#fields	ref	1	String	Reference sequence, can be a number for large features
-		#fields	alt	1	String	Alternative sequence, can be a number for large features
-		#fields	name	1	String	name of feature
-		#fields	quality	1	Float	Quality score of feature
-		#fields	filter	1	String	Filter value
-		#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
-		#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
-		#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
-		#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced
-		#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased
-		#fields	genotypes	H	Integer	Genotypes
-		#fields	alleledepth_ref	1	Integer	Allelic depths for the ref allele
-		#fields	alleledepth	A	Integer	Allelic depths for the alt alleles in the order listed
-		#fields	frequency	A	Float	Allele Frequency
+		#fields	strand	1	String	strand (+ or -)
+		#fields	qname	1	String	Query template NAME
+		#fields	qstart	1	String	Start of the alignment in the query (0 based - half open)
+		#fields	qend	1	String	End of the alignment in the query (0 based - half open)
+		#fields	mapquality	1	String	MAPping Quality
+		#fields	ref2	1	String	Chromosome/Contig/Reference name of the mate/next read
+		#fields	begin2	1	String	Begin of the mate/next read (0 based - half open)
+		#fields	strand2	1	String	String	strand (+ or -) of the mate/next read
+		#fields	tlen	1	String	observed Template LENgth
+		#fields	pair	1	Bool	template having multiple segments in sequencing
+		#fields	properpair	1	Bool	each segment properly aligned according to the aligner
+		#fields	unmapped	1	Bool	segment unmapped
+		#fields	mateunmapped	1	Bool	next segment in the template unmapped
+		#fields	read	1	Integer	read: 1 for first segment in the template, 2 for last segment in the template
+		#fields	secondary	1	Bool	secondary alignment
+		#fields	qcfail	1	Bool	not passing filters, such as platform/vendor quality controls
+		#fields	duplicate	1	Bool	PCR or optical duplicate
+		#fields	supplementary	1	Bool	supplementary alignment
+		#fields	cigar	1	String	CIGAR string
+		#fields	seqlen	1	String	sequence length
+		#fields	seq	1	String	segment sequence.
+		#fields	quality	1	String	ASCII of base quality plus 33
+		#fields	other	L	String	
 		#@HD	VN:1.3	SO:coordinate
 		#@SQ	SN:chr1	LN:249250621
 		#@SQ	SN:chr2	LN:243199373
@@ -1327,12 +1335,12 @@ test convert_pipe {convert_pipe various} {
 	set errors {}
 	foreach {test expected} {
 		{convert_pipe a.tsv.zst dg.bam -endpipe 1} {zstd-mt -T 1 -k -q -d -c a.tsv.zst | cg tsv2sam > dg.bam}
-		{convert_pipe a.bam dg.tsv.gz -endpipe 1} {cg sam2tsv a.bam | bgzip -l 1 -c > dg.tsv.gz}
-		{convert_pipe a.vcf dg.vcf.gz -endpipe 1} {bgzip -l 1 -c a.vcf > dg.vcf.gz}
-		{convert_pipe a.vcf dg.vcf.gz} {bgzip -l 1 -c a.vcf}
+		{convert_pipe a.bam dg.tsv.gz -endpipe 1} {cg sam2tsv a.bam | bgzip -l 6 -c > dg.tsv.gz}
+		{convert_pipe a.vcf dg.vcf.gz -endpipe 1} {bgzip -l 6 -c a.vcf > dg.vcf.gz}
+		{convert_pipe a.vcf dg.vcf.gz} {bgzip -l 6 -c a.vcf}
 		{convert_pipe a.vcf dg.bed} {cg vcf2tsv a.vcf | cg tsv2bed}
 		{convert_pipe -.vcf -.bed} {cg vcf2tsv | cg tsv2bed}
-		{convert_pipe a.vcf.gz dg.bed.zst} {zcat a.vcf.gz | cg vcf2tsv | cg tsv2bed | zstd-mt -k -q -1 -b 0.5 -T 1 -c}
+		{convert_pipe a.vcf.gz dg.bed.zst} {zcat a.vcf.gz | cg vcf2tsv | cg tsv2bed | zstd-mt -k -q -8 -b 0.5 -T 1 -c}
 		{convert_pipe a.tsv b.tsv} {}
 		{convert_pipe a.tsv b.tsv -endpipe 1} {cp a.tsv b.tsv}
 		{convert_pipe a.tsv b.tsv -endpipe 1 -cpcmd {ln -s}} {ln -s a.tsv b.tsv}

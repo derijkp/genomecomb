@@ -168,14 +168,14 @@ chr21	495709
 chr22	1168356
 total	1664065}
 
-test cg_regextract {regextract -region} {
+test cg_regextract {regextract -region 2} {
 	test_cleantmp
 	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
 	cg regextract -min 20 -region chr21 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
 	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
 } {chromosome	bases
-chr21	495709
-total	495709}
+chr21	409323
+total	409323}
 
 test cg_regextract {regextract -filtered 1 } {
 	test_cleantmp
