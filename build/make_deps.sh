@@ -85,6 +85,19 @@ function download {
     fi
 }
 
+# zlib
+# ---
+if [ $all = 1 ] || [ ! -f /io/extern$ARCH/lz4 ] ; then
+	zlibversion=1.2.11
+	download https://zlib.net/zlib-$zlibversion.tar.gz
+	cd /build/zlib-$zlibversion
+	make distclean
+	env CFLAGS="-O3 -fPIC" \
+            ./configure --prefix=/build
+	make
+	make install
+fi
+
 # zstd (for lib)
 # --------------
 cd /build
@@ -203,18 +216,40 @@ if [ ! -f "/build/lib/liblzma.a" ] ; then
 fi
 
 
+# libssh2
+# ------
+if [ ! -f "/build/lib/libssh2.a" ] ; then
+	cd /build
+	libssh2version=1.9.0
+	libssh2url=https://www.libssh2.org/download/libssh2-$libssh2version.tar.gz
+	download $libssh2url
+	cd /build/libssh2-$libssh2version
+	make distclean
+	env CFLAGS="$STATICLIB_CFLAGS -fPIC -ldl" CPPFLAGS="$STATICLIB_CXXFLAGS -fPIC" \
+            ./configure --prefix=/build --enable-shared=no --disable-shared --enable-static
+	make
+	make install
+}
+
 # libcurl, used by samtools
 # -------------------------
 if [ ! -f "/build/lib/liblzma.a" ] ; then
+	curlversion=7.77.0
 	source /hbb_shlib/activate
-	download https://curl.se/download/curl-7.75.0.tar.gz
-	cd /build/curl-7.75.0
+	download https://curl.se/download/curl-$curlversion.tar.gz
+	cd /build/curl-$curlversion
+#	make distclean
+#	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
+#  		./configure --prefix=/build --disable-shared --enable-static --with-openssl --with-ca-fallback
+#	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
+#  		./configure --prefix=/build --enable-static --with-openssl --with-ca-fallback
+#	make curl_LDFLAGS=-all-static
 	make distclean
-	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
-  		./configure --prefix=/build --disable-shared --enable-static
-	env CFLAGS="$STATICLIB_CFLAGS" CXXFLAGS="$STATICLIB_CXXFLAGS" \
-  		./configure --prefix=/build --enable-static
-	make
+	env CFLAGS="$STATICLIB_CFLAGS -fPIC -ldl" CXXFLAGS="$STATICLIB_CXXFLAGS -fPIC" \
+             PKG_CONFIG="pkg-config --static" \
+             ./configure --prefix=/build --with-ssl --disable-shared --enable-static --disable-ldap --enable-ipv6 --enable-unix-sockets --with-libssh2
+
+	make curl_LDFLAGS=-all-static
 	make install
 	source /hbb_exe/activate
 fi
@@ -236,13 +271,14 @@ fi
 # htslib (tabix, bgzip, lib for samtools)
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
-	htsversion=1.11
+
+	htsversion=1.12
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
 	cd /build/htslib-$htsversion
 	make distclean
-	env CFLAGS="$STATICLIB_CFLAGS -I/build/include" LDFLAGS="$LDFLAGS -L/build/lib" \
+	env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
 		./configure --prefix=/build --enable-libcurl
 	make
 	make install
@@ -257,7 +293,7 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.11
+	samversion=1.12
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
@@ -271,7 +307,7 @@ fi
 # bcftools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bcftools ] ; then
-	bcfversion=1.11
+	bcfversion=1.12
 	download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
 	cd /build/bcftools-$bcfversion
 	make distclean
