@@ -1,6 +1,10 @@
 proc compresscmd_gz {{threads {}} {compressionlevel {}} {blocksize {}}} {
 	set compressionlevel [compressionlevel $compressionlevel 6 1 9]
-	list bgzip -l $compressionlevel -c
+	if {$threads eq {}} {
+		list bgzip -l $compressionlevel -c
+	} else {
+		list bgzip -l $compressionlevel -c --threads $threads
+	}
 }
 
 proc compress_gz {file {destfile {}} {index 1} {keep 1} {threads {}} {compressionlevel {}} {blocksize {}} args} {

@@ -17,6 +17,7 @@ proc bam_index_job {args} {
 	upvar job_logdir job_logdir
 	set skips {}
 	set optional 1
+	set threads 1
 	cg_options bam_index args {
 		-skip {
 			lappend skips -skip $value
@@ -24,14 +25,22 @@ proc bam_index_job {args} {
 		-optional {
 			set optional $value
 		}
+		-threads {
+			set threads $value
+		}
 	} {bam} 1 1
 	if {[file extension [gzroot $bam]] eq ".sam"} return
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
 	set bamindex $bam.[indexext $bam]
-	job [job_relfile2name bamindex- $pre-$root] {*}$skips -optional $optional -deps [list $bam] -targets [list $bamindex] -code {
+	job [job_relfile2name bamindex- $pre-$root] {*}$skips -optional $optional \
+	-deps [list $bam] \
+	-targets [list $bamindex] \
+	-vars {
+		threads
+	} -code {
 		putslog "making $target"
-		exec samtools index $dep >@ stdout 2>@ stderr
+		exec samtools index -@ $threads $dep >@ stdout 2>@ stderr
 	}
 }
 

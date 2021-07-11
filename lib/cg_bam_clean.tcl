@@ -206,7 +206,7 @@ proc bam_clean_job {args} {
 		}
 		if {[llength $rmtargets]} {file delete {*}$rmtargets}
 	}
-	bam_index_job {*}$skips $resultfile
+	bam_index_job {*}$skips -threads $threads $resultfile
 	return $resultfile
 }
 

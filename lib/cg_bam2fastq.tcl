@@ -79,7 +79,11 @@ proc cg_bam2fastq {args} {
 		putslog $msg
 	} elseif {$method in "sam samtools" && $sortmethod eq "collate"} {
 		putslog "Using samtools to convert bam to fastq"
-		catch_exec samtools collate -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
+		if {$fastqfile2 ne ""} {
+			catch_exec samtools collate -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
+		} else {
+			catch_exec samtools collate --threads $threads -u -O $tempbam | samtools fastq -n -N -F 0x900 - > $tempfastq1
+		}
 	} elseif {$method in "sam samtools"} {
 		putslog "Using samtools to convert bam to fastq"
 		catch_exec samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
@@ -88,11 +92,11 @@ proc cg_bam2fastq {args} {
 	}
 	if {$compress && $method ni "biobambam"} {
 		catch {file delete $tempfastq1.gz}
-		cg_gzip $tempfastq1
+		cg_gzip -threads $threads $tempfastq1
 		file rename -force -- $tempfastq1.gz $fastqfile1.gz
 		if {$fastqfile2 ne ""} {
 			catch {file delete $tempfastq2.gz}
-			cg_gzip $tempfastq2
+			cg_gzip -threads $threads $tempfastq2
 			file rename -force -- $tempfastq2.gz $fastqfile2.gz
 		}
 	} elseif {$compress} {

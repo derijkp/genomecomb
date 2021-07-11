@@ -111,7 +111,7 @@ proc sam_merge_job {args} {
 		
 	}
 	if {$index} {	
-		bam_index_job -optional $optional -force $force $outputfile
+		bam_index_job -optional $optional -force $force -threads $threads $outputfile
 	}
 }
 
