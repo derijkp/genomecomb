@@ -27,7 +27,6 @@ proc distrreg_job {args} {
 	foreach region $regions {
 		lappend targets $resultprefix$region$resultsuffix
 	}
-putsvars file skips targets
 	job [job_relfile2name distrreg- $file] {*}$skips -deps {$file} -targets $targets -vars {
 		refseq threads file resultprefix resultsuffix regions other
 	} -code {
