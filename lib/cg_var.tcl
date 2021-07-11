@@ -27,7 +27,11 @@ proc var_job {args} {
 			set regmincoverage $value
 		}
 		-distrreg {
-			set distrreg [distrreg_checkvalue $value]
+			if {$value eq "regionfile"} {
+				set distrreg regionfile
+			} else {
+				set distrreg [distrreg_checkvalue $value]
+			}
 		}
 		-pre {
 			set pre $value
@@ -105,23 +109,41 @@ proc var_job {args} {
 		## Create sequencing region files
 		set workdir [workdir $varfile]
 		file mkdir $workdir
-		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
-		set basename [gzroot [file tail $varallfile]]
-		if {$supportsregionfile} {
-			set regfiles {}
-			foreach region $regions {
-				lappend regfiles $workdir/$basename-$region.bed
+		if {$distrreg eq "regionfile"} {
+			if {$regionfile eq ""} {
+				error "use -distrreg regionfile and -regionfile is not given"
 			}
-			job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
-				$regionfile
-			} -targets $regfiles -vars {
-				regionfile regions appdir basename workdir
-			} -code {
-				set header [cg select -h $regionfile]
-				set poss [tsv_basicfields $header 3]
-				set header [list_sub $header $poss]
-				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
-				cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+			if {![file exists $regionfile]} {
+				error "-regionfile $regionfile does not exist"
+			}
+			set regions {}
+			set f [gzopen $regionfile]
+			set header [tsv_open $f]
+			set poss [tsv_basicfields $header 3]
+			while {[gets $f line] != -1} {
+				foreach {chr b e} [list_sub [split $line \t] $poss] break
+				lappend regions ${chr}-${b}-${e}
+			}
+			close $f
+		} else {
+			set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
+			set basename [gzroot [file tail $varallfile]]
+			if {$supportsregionfile} {
+				set regfiles {}
+				foreach region $regions {
+					lappend regfiles $workdir/$basename-$region.bed
+				}
+				job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
+					$regionfile
+				} -targets $regfiles -vars {
+					regionfile regions appdir basename workdir
+				} -code {
+					set header [cg select -h $regionfile]
+					set poss [tsv_basicfields $header 3]
+					set header [list_sub $header $poss]
+					# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
+					cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+				}
 			}
 		}
 		set todo {}
