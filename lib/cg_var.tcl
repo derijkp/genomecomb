@@ -82,6 +82,10 @@ proc var_job {args} {
 			set supportsregion 1
 		}
 	}
+	catch {
+		# see if method wants to change distrreg from requested
+		set distrreg [var_${method}_distrreg $distrreg]
+	}
 	if {!$supportsregionfile && !$supportsregion} {set distrreg 0}
 	if {$supportsregionfile} {
 		if {$regionfile ne ""} {
@@ -205,11 +209,11 @@ proc var_job {args} {
 						-deletesams 1 \
 						$target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
-					cg cat -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				} else {
-					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
+					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				}

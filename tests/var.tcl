@@ -4,6 +4,19 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+if 0 {
+	mkdir $::smalltestdir/ori/pepperdeepvariant_example_data
+	cd $::smalltestdir/ori/pepperdeepvariant_example_data
+	# download data
+	exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam
+	exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai
+	# exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/GRCh38_no_alt.chr20.fa
+	# exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/GRCh38_no_alt.chr20.fa.fai
+	exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz
+	exec wget -c https://storage.googleapis.com/pepper-deepvariant-public/quickstart_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed
+	
+}
+
 test var {var_gatk basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
@@ -477,5 +490,100 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 	}
 } {}
 
-testsummarize
+test var {var_medaka basic} {
+	cd $::smalltestdir
+	file delete -force tmp/medaka
+	file mkdir tmp/medaka
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka/sreg-truth.tsv
+	#
+	cg var_medaka {*}$::dopts tmp/medaka/test.bam $::refseqdir/hg38
+	file delete tmp/medaka/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
+		tmp/medaka expected/medaka
+	list [cg select -g chromosome tmp/medaka/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+} {{chromosome	count
+20	10014} {zyg-medaka-test	zyg-truth	count
+c	u	220
+m	m	36
+m	r	1
+m	u	212
+t	r	1
+t	t	12}}
 
+test var {var_medaka distrreg} {
+	cd $::smalltestdir
+	file delete -force tmp/medaka
+	file mkdir tmp/medaka
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka/sreg-truth.tsv
+	#
+	cg var -method medaka -distrreg 1 {*}$::dopts tmp/medaka/test.bam $::refseqdir/hg38
+	file delete tmp/medaka/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
+		tmp/medaka expected/medaka
+	list [cg select -g chromosome tmp/medaka/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+} {chromosome	bases
+chr21	1047
+chr22	156
+total	1203}
+
+test var {var -method medaka -regionfile} {
+	cd $::smalltestdir
+	file delete -force tmp/medaka_reg
+	file mkdir tmp/medaka_reg
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka_reg/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka_reg/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka_reg/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka_reg/sreg-truth.tsv
+	file_write tmp/medaka_reg/targets.tsv [string trim [deindent {
+		chromosome	begin	end
+		chr20	831400	831600
+		chr20	840000	841000
+	}]]\n
+	#
+	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
+	file delete tmp/medaka_reg/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
+		tmp/medaka_reg expected/medaka_reg
+	list [cg select -g chromosome tmp/medaka_reg/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
+} {{chromosome	count
+20	71} {zyg-medaka-test	zyg-truth	count
+m	u	23
+u	m	36
+u	t	12}}
+
+test var {var -method medaka -regionfile -distreg regionfile} {
+	cd $::smalltestdir
+	file delete -force tmp/medaka_reg
+	file mkdir tmp/medaka_reg
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka_reg/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka_reg/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka_reg/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka_reg/sreg-truth.tsv
+	file_write tmp/medaka_reg/targets.tsv [string trim [deindent {
+		chromosome	begin	end
+		chr20	831400	831600
+		chr20	840000	841000
+	}]]\n
+	#
+	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv -distrreg regionfile {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
+	file delete tmp/medaka_reg/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
+		tmp/medaka_reg expected/medaka_reg
+	list [cg select -g chromosome tmp/medaka_reg/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
+} {{chromosome	count
+20	71} {zyg-medaka-test	zyg-truth	count
+m	u	23
+u	m	36
+u	t	12}}
+
+testsummarize
