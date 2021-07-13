@@ -2,28 +2,25 @@
 # the next line restarts using wish \
 exec cg source "$0" ${1+"$@"}
 
+# simple example of the job system in genomecomb
+# You can get more info on the jobsystem with:
+# cg help jobsystem
+# You can get info on the extra options available to control the job system with:
+# cg help joboptions
+
+# main body of code, called at the end of the file (after initialising the job system)
 proc main args {
-	set num 2
+	set num 5
 	set max 10
 	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-num {
-				set num $value
-			}
-			-max {
-				set max $value
-			}
-			default break
+	cg_options job_example args {
+		-num {
+			set num $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len != 1} {
-		error "format is: job_example.tcl ?options? dir"
-	}
-	foreach {dir} $args break
+		-max {
+			set max $value
+		}
+	} dir 1 1
 	file mkdir $dir
 	cd $dir
 	#
@@ -53,13 +50,21 @@ proc main args {
 		}
 	}
 	# separate jobs for each file following a pattern
-	# these files are not necesarily created yet, they are targets from previous job
-	job sum -foreach {^numbers-(.*).txt$} -targets {sum-\1.txt} -code {
-		set list [file_read $dep]
-		file_write $target.temp [lmath_sum $list]\n
-		file rename -force -- $target.temp $target
+	# These files are not necesarily created yet, they are targets from previous job
+	for {set i 0} {$i < $num} {incr i} {
+		job sum-$i -deps {numbers-$i.txt} -targets {sum-$i.txt} -code {
+			set list [file_read $dep]
+			file_write $target.temp [lmath_sum $list]\n
+			file rename -force -- $target.temp $target
+		}
 	}
-	job error_nonexistingdep.txt -deps {nonexistingdep.txt} -targets {error_nonexistingdep.txt} -code {
+# next (commented out) would give an error, as it is a required job where a dependency does not exist, 
+# nor is being made by one of the previous jobs
+#	job error_nonexistingdep.txt -deps {nonexistingdep.txt} -targets {error_nonexistingdep.txt} -code {
+#		# this depends on nonexistingdep.txt, since it does not exist, this will not be run
+#	}
+	# The -optional 1 indicates that if dependencies are not met, the job can be skipped
+	job optional_nonexistingdep.txt -optional 1 -deps {nonexistingdep.txt} -targets {error_nonexistingdep.txt} -code {
 		# this depends on nonexistingdep.txt, since it does not exist, this will not be run
 	}
 	# multiple dependencies, multiple targets
