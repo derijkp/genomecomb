@@ -22,9 +22,10 @@ proc sv_npinv_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set region {}
+	set sample {}
 	cg_options sv_npinv args {
 		-refseq {
-			# not actually used by npinv
 			set refseq $value
 		}
 		-split {
@@ -51,6 +52,12 @@ proc sv_npinv_job {args} {
 		-preset {
 			# not used
 		}		
+		-region {
+			set region $value
+		}
+		-sample {
+			set sample $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
@@ -86,11 +93,18 @@ proc sv_npinv_job {args} {
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {
-		vcffile opts root min max
+		bamfile vcffile opts root min max region sample refseq
 	} -code {
-		analysisinfo_write $dep $vcffile sample $root varcaller npinv varcaller_version [version npinv] varcaller_cg_version [version genomecomb]
+		analysisinfo_write $dep $vcffile sample $sample varcaller npinv varcaller_version [version npinv] varcaller_cg_version [version genomecomb]
+		if {$region ne ""} {
+			set usebam [scratchfile].bam
+			catch_exec samtools view -h -b -1 $bamfile {*}[samregions $region $refseq] > $usebam
+			exec samtools index $usebam
+		} else {
+			set usebam $bamfile
+		}
 		execjar -javaversion 1.8 npInv {*}$opts \
-			--input $dep \
+			--input $usebam \
 			--output $vcffile.temp \
 			--min $min -max $max
 		file rename -force -- $vcffile.temp $vcffile

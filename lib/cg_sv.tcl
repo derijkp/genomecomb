@@ -7,6 +7,7 @@ proc sv_job {args} {
 	set opts {}
 	set split 1
 	set deps {}
+	set regionfile {}
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
@@ -25,7 +26,7 @@ proc sv_job {args} {
 			set refseq $value
 		}
 		-regionfile {
-			set regionfile $value
+			set regionfile [file_absolute $value]
 		}
 		-regmincoverage {
 			set regmincoverage $value
@@ -52,26 +53,43 @@ proc sv_job {args} {
 	# logfile
 	job_logfile $destdir/sv_${method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
-	# check if regionfile is supported
+	# check if regionfile or region is supported
+	set cmdopts {}
 	catch {sv_${method}_job} temp
-	if {[regexp {with options:(.*)} $temp temp temp] && ![inlist [split $temp ,] -regionfile]} {
-		set distrreg 0
+	set supportsregionfile 0
+	set supportsregion 0
+	if {[regexp {with options:(.*)} $temp temp methodoptions]} {
+		set methodoptions [split $methodoptions ,]
+		if {[inlist $methodoptions -regionfile]} {
+			lappend cmdopts -regionfile $regionfile
+			set supportsregionfile 1
+		}
+		if {[inlist $methodoptions -region]} {
+			set supportsregion 1
+		}
 	}
-	if {
-		($distrreg in {0 {}} && ![info exists regionfile])
-		|| ([catch {sv_${method}_job} temp] && [regexp {with options:(.*)} $temp temp temp] && ![inlist [split $temp ,] -regionfile])
-	} {
-		if {[info exists regionfile] || $distrreg ni {0 {}}} {
+	catch {
+		# see if method wants to change distrreg from requested
+		set distrreg [sv_${method}_distrreg $distrreg]
+	}
+	if {!$supportsregionfile && !$supportsregion} {
+		if {$distrreg ni {0 {}}} {
 			putslog "sv_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
 		}
-		return [sv_${method}_job {*}$opts	-preset $preset \
-			-split $split -threads $threads -cleanup $cleanup \
-			-refseq $refseq $bamfile $resultfile]
-	}			
+		set distrreg 0
+	}
+	if {$supportsregionfile} {
+		if {$regionfile ne ""} {
+			set regionfile [file_absolute $regionfile]
+		} else {
+			set regionfile [bam2reg_job -mincoverage $regmincoverage -distrreg $distrreg -refseq $refseq $bamfile]
+		}
+	}
 	# run
 	if {$distrreg in {0 {}}} {
-		sv_${method}_job {*}$opts	-preset $preset -regionfile $regionfile \
-			-split $split -threads $threads -cleanup $cleanup	-refseq $refseq $bamfile $resultfile
+		sv_${method}_job {*}$opts	-preset $preset {*}$cmdopts \
+			-split $split -threads $threads -cleanup $cleanup	\
+			-refseq $refseq $bamfile $resultfile
 	} else {
 		# check what the resultfiles are for the method
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts	-preset $preset \
@@ -85,40 +103,69 @@ proc sv_job {args} {
 		set keeppwd [pwd]
 		cd $destdir
 		set workdir [workdir $resultfile]
-		set regions [distrreg_regs $distrreg $refseq]
+
+
+		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [file_root [file tail $resultfile]]
 		set regfiles {}
-		foreach region $regions {
-			lappend regfiles $workdir/$basename-$region.bed
-		}
-		if {[info exists regionfile]} {
-			job [gzroot $resultfile]-distrreg-beds {*}$skips -deps {
-				$regionfile
-			} -targets $regfiles -vars {
-				regionfile regions appdir basename workdir
-			} -code {
-				set header [cg select -h $regionfile]
-				set poss [tsv_basicfields $header 3]
-				set header [list_sub $header $poss]
-				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
-				cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+		if {$supportsregionfile} {
+			foreach region $regions {
+				lappend regfiles $workdir/$basename-$region.bed
+			}
+			if {[info exists regionfile]} {
+				job [gzroot $resultfile]-distrreg-beds {*}$skips -deps {
+					$regionfile
+				} -targets $regfiles -vars {
+					regionfile regions appdir basename workdir
+				} -code {
+					set header [cg select -h $regionfile]
+					set poss [tsv_basicfields $header 3]
+					set header [list_sub $header $poss]
+					# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
+					cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+				}
+			} else {
+				# if regionfile is supported, but not defined, 
+				# make a regionfile for each region inregions and use for distrreg
+				foreach region $regions {
+					distrreg_reg2bed $workdir/$basename-$region.bed $region $refseq
+				}
 			}
 		} else {
-			foreach region $regions {
-				distrreg_reg2bed $workdir/$basename-$region.bed $region $refseq
-			}
+			# we'll just run per region
 		}
-		# Produce variant calls
+		# Produce SV calls
 		set ibam $workdir/[file tail $bamfile]
 		set indexext [indexext $bamfile]
 		mklink $bamfile $ibam
 		mklink $bamfile.$indexext $ibam.$indexext
 		defcompressionlevel 1
 		set todo {}
-		foreach region $regions regfile $regfiles {
-			set target [file root $ibam]-$region.tsv.zst
-			lappend todo [sv_${method}_job {*}$opts {*}$skips	-preset $preset -regionfile $regfile \
-				-split $split -threads $threads -cleanup $cleanup -refseq $refseq $ibam $target]
+		set sample [file_rootname $resultfile]
+		if {$supportsregionfile} {
+			foreach region $regions regfile $regfiles {
+				set target [file root $ibam]-$region.tsv.zst
+				lappend todo [sv_${method}_job {*}$opts {*}$skips	\
+					-split $split -threads $threads -cleanup $cleanup \
+					-preset $preset \
+					-regionfile $regfile \
+					-refseq $refseq \
+					-sample $sample \
+					$ibam $target]
+			}
+		} else {
+			# run per region
+			foreach region $regions {
+				set target $workdir/var-$root-$region.tsv.zst
+				lappend todo [sv_${method}_job {*}$opts {*}$skips \
+					-split $split -threads $threads -cleanup $cleanup \
+					-preset $preset \
+					-region $region \
+					-refseq $refseq \
+					-sample $sample \
+					$bamfile $target]
+
+			}
 		}
 		defcompressionlevel 9
 		# concatenate results
@@ -136,16 +183,21 @@ proc sv_job {args} {
 			}
 			set analysisinfo [lindex $ainfolist 0]
 			lappend deps {*}$ainfolist
-			job $resultfile  {*}$skips -deps $list -rmtargets $list -targets {
+			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
-				analysisinfo list
+				analysisinfo list method
 			} -code {
 				if {[llength $analysisinfo]} {
 					file_copy $analysisinfo [analysisinfo_file $target]
 				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
-					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
+					if {![auto_load sv_${method}_sortvcf]} {
+						set sort 0
+					} else {
+						set sort [sv_${method}_sortvcf]
+					}
+					cg vcfcat -i 0 -s $sort -o $target {*}[bsort [jobglob {*}$list]]
 				} else {
 					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
@@ -161,7 +213,9 @@ proc sv_job {args} {
 			}
 			incr pos
 		}
-		cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles] $resultfiles
+		if {[llength $regfiles]} {
+			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles] $resultfiles
+		}
 		cd $keeppwd
 		return $resultfiles
 	}

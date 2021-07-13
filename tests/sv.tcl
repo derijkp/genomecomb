@@ -58,6 +58,20 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
 
+test sv {sniffles -distrreg chr} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-sniffles2_minimap2
+	file mkdir tmp/sv-sniffles2_minimap2
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam.bai
+	cg sv {*}$::dopts \
+		-method sniffles -distrreg chr \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
+} {}
+
 test sv {cuteSV} {
 	cd $::smalltestdir
 	file delete -force tmp/sv-cuteSV
@@ -69,6 +83,20 @@ test sv {cuteSV} {
 		tmp/sv-cuteSV expected/sv-cuteSV
 } {}
 
+test sv {cuteSV -distrreg chr} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-cuteSV
+	file mkdir tmp/sv-cuteSV
+	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-cuteSV/map-sngmlr-NA12878.bam
+	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-cuteSV/map-sngmlr-NA12878.bam.bai
+	cg sv -method cuteSV {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		-distrreg chr \
+		tmp/sv-cuteSV/map-sngmlr-NA12878.bam
+	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi -x *.submitting -x *.zsti \
+		tmp/sv-cuteSV expected/sv-cuteSV
+} {}
+
 test sv {npinv} {
 	cd $::smalltestdir
 	file delete -force tmp/sv-npinv
@@ -77,6 +105,20 @@ test sv {npinv} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_npinv {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
 	cg tsvdiff -q 1 -x *.tbi \
+		tmp/sv-npinv expected/sv-npinv
+} {}
+
+test sv {npinv -distrreg chr} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-npinv
+	file mkdir tmp/sv-npinv
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
+	cg sv -method npinv {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		-distrreg chr \
+		tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
+	cg tsvdiff -q 1 -x *.tbi -x *.zsti \
 		tmp/sv-npinv expected/sv-npinv
 } {}
 

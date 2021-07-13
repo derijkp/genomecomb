@@ -1,3 +1,7 @@
+proc sv_sniffles_sortvcf {} {
+	return 1
+}
+
 proc version_sniffles {} {
 	set version ?
 	catch {exec sniffles} msg
@@ -25,6 +29,8 @@ proc sv_sniffles_job {args} {
 	set min_seq_size 300
 	set snifflesopts {}
 	set resultfile {}
+	set region {}
+	set sample {}
 	cg_options sv_sniffles args {
 		-refseq {
 			set refseq $value
@@ -49,6 +55,12 @@ proc sv_sniffles_job {args} {
 		}
 		-maxdist {
 			lappend opts -d $value
+		}
+		-region {
+			set region $value
+		}
+		-sample {
+			set sample $value
 		}
 		-min_support {
 			set min_support $value
@@ -79,6 +91,7 @@ proc sv_sniffles_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$sample eq ""} {set sample $root}
 	set destdir [file dir $resultfile]
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
@@ -95,23 +108,39 @@ proc sv_sniffles_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_sniffles_$root.vcf {*}$skips -mem 1G -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {
-		sniffles opts refseq threads root min_support min_seq_size
+		bamfile sniffles opts refseq threads root sample min_support min_seq_size region threads
 	} -code {
-		analysisinfo_write $dep $target sample $root varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
-		exec sniffles {*}$opts --threads $threads --genotype --skip_parameter_estimation \
-			--min_support $min_support --min_seq_size $min_seq_size \
-			-m $dep -v $target.temp 2>@ stderr >@ stdout
-		file rename -force -- $target.temp $target
+		analysisinfo_write $dep $target sample $sample varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
+		if {$region ne ""} {
+			set usebam [scratchfile].bam
+			exec samtools view -h -b -1 --threads $threads $bamfile {*}[samregions $region $refseq] > $usebam
+		} else {
+			set usebam $bamfile
+		}
+		if {[catch {
+			exec sniffles {*}$opts --threads $threads --genotype --skip_parameter_estimation \
+				--min_support $min_support --min_seq_size $min_seq_size \
+				-m $usebam -v $target.temp 2>@ stderr >@ stdout
+			file rename -force -- $target.temp $target
+		} msg]} {
+			# sniffles sometinmes (allways?) crashes on empty or small bam
+			# only give error on larger bam, otherwise write empty result
+			set temp [exec samtools view $usebam | head -100 | wc -l]
+			if {$temp >= 100} {
+				error $msg
+			}
+			file_write $target {}
+		}
 	}
 	# 
-	job sv_vcf2tsv-$root {*}$skips -deps {
+	job sv_sniffles_vcf2tsv-$root {*}$skips -deps {
 		$vcffile
 	} -targets {
 		$resultfile $resultanalysisinfo
@@ -119,8 +148,12 @@ proc sv_sniffles_job {args} {
 		sample split
 	} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -locerror correct -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp[gzext $target]
-		file rename -force -- $target.temp[gzext $target] $target
+		if {[file size $dep] == 0} {
+			file_write $target ""
+		} else {
+			cg vcf2tsv -locerror correct -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp[gzext $target]
+			file rename -force -- $target.temp[gzext $target] $target
+		}
 	}
 	# cleanup
 	cd $keeppwd

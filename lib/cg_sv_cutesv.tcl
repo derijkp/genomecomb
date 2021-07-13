@@ -20,6 +20,8 @@ proc sv_cuteSV_job {args} {
 	set diff_ratio_merging_DEL 0.3
 	set preset {}
 	set resultfile {}
+	set region {}
+	set sample {}
 	cg_options sv_cuteSV args {
 		-refseq {
 			set refseq $value
@@ -44,6 +46,12 @@ proc sv_cuteSV_job {args} {
 		}
 		-maxdist {
 			lappend opts -d $value
+		}
+		-region {
+			set region $value
+		}
+		-sample {
+			set sample $value
 		}
 		-min_support {
 			set min_support $value
@@ -80,6 +88,7 @@ proc sv_cuteSV_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$sample eq ""} {set sample $root}
 	set destdir [file dir $resultfile]
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
@@ -109,24 +118,31 @@ proc sv_cuteSV_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_cutesv_$root.vcf {*}$skips -mem 1G -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {
-		bamfile cuteSV opts refseq threads root min_support min_seq_size
+		bamfile cuteSV opts refseq threads root sample min_support min_seq_size region
 	} -code {
 		set workdir [scratchdir]
-		analysisinfo_write $dep $target sample $root varcaller cuteSV varcaller_version [version cuteSV] varcaller_cg_version [version genomecomb]
+		analysisinfo_write $dep $target sample $sample varcaller cuteSV varcaller_version [version cuteSV] varcaller_cg_version [version genomecomb]
+		if {$region ne ""} {
+			set usebam [scratchfile].bam
+			exec samtools view -h -b -1 --threads $threads $bamfile {*}[samregions $region $refseq] > $usebam
+			exec samtools index $usebam
+		} else {
+			set usebam $bamfile
+		}
 		exec cuteSV {*}$opts --threads $threads --genotype \
 			--min_support $min_support \
-			$bamfile $refseq $target.temp $workdir 2>@ stderr >@ stdout
+			$usebam $refseq $target.temp $workdir 2>@ stderr >@ stdout
 		file rename -force -- $target.temp $target
 	}
 	# 
-	job sv_vcf2tsv-$root {*}$skips -deps {
+	job sv_cutesv_vcf2tsv-$root {*}$skips -deps {
 		$vcffile
 	} -targets {
 		$resultfile $resultanalysisinfo
