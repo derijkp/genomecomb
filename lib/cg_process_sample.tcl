@@ -1027,7 +1027,7 @@ proc process_sample_job {args} {
 	}
 	#calculate reports
 	if {[llength $reports]} {
-		process_reports_job -paired $paired -depth_histo_max $depth_histo_max $sampledir $dbdir $reports
+		process_reports_job -paired $paired -depth_histo_max $depth_histo_max -threads $threads $sampledir $dbdir $reports
 		lappend todo(reports) $sampledir/reports
 	}
 	return $todo(var)

@@ -6,7 +6,7 @@
 #set target $sampledir/reports/samstats-$bamroot.stats.zst
 #set target2 $sampledir/reports/report_samstats_summary-$bamroot.tsv.zst
 #
-proc reports_samstats {bamfile {option {}} {resultdir {}}} {
+proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 	upvar job_logdir job_logdir
 	set bamroot [file root [file tail [gzroot $bamfile]]]
 	regsub ^map- $bamroot {} bamroot
@@ -43,8 +43,11 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 	}
 	lappend targets $resultdir/${option}samstats_FFQs-$bamroot.tsv.zst
 	lappend targets $resultdir/${option}samstats_LFQs-$bamroot.tsv.zst
-	job [job_relfile2name reports_${option}samstats- $bamfile] -deps {$dep} -targets $targets -vars {
-		bamroot sections option
+	if {$option eq ""} {set cores $threads} else {set cores 1}
+	job [job_relfile2name reports_${option}samstats- $bamfile] -cores $cores -deps {
+		$dep
+	} -targets $targets -vars {
+		bamroot sections option threads
 	} -code {
 		list_foreach {key fields descr} $sections {
 			set sectionsa($key) $fields
@@ -55,7 +58,7 @@ proc reports_samstats {bamfile {option {}} {resultdir {}}} {
 			putslog "Making $target"
 			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
 			if {$option eq ""} {
-				exec samtools stats $dep > $target.temp
+				exec samtools stats -@ $threads $dep > $target.temp
 			} elseif {$option eq "unaligned"} {
 				exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
 			} elseif {$option eq "aligned"} {
@@ -185,6 +188,7 @@ proc process_reports_job {args} {
 	set resultbamfile {}
 	set paired 1
 	set depth_histo_max 1000
+	set threads 1
 	cg_options process_reports args {
 		-dbdir {
 			set dbdir $value
@@ -200,6 +204,9 @@ proc process_reports_job {args} {
 		}
 		-resultbamfile {
 			set resultbamfile [file_absolute $value]
+		}
+		-threads {
+			set threads $value
 		}
 	} {sampledir dbdir reports} 1 3 {
 		Calculates a number of statistics on a sample in the reports subdir
@@ -253,9 +260,15 @@ proc process_reports_job {args} {
 			set dep $bamfile
 			set target $sampledir/reports/flagstat_alignments-$bamroot.flagstat
 			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
-			job [job_relfile2name reports_flagstat_alignments- $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+			job [job_relfile2name reports_flagstat_alignments- $bamfile] -cores $threads -deps {
+				$dep
+			} -targets {
+				$target $target2
+			} -vars {
+				bamroot threads
+			} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
-				exec samtools flagstat $dep > $target.temp
+				exec samtools flagstat -@ $threads $dep > $target.temp
 				file rename -force -- $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
@@ -270,7 +283,7 @@ proc process_reports_job {args} {
 			}
 		}
 		if {[inlist $reports alignedsamstats]} {
-			reports_samstats $bamfile aligned $sampledir/reports
+			reports_samstats $bamfile aligned $sampledir/reports $threads
 		}
 		if {[inlist $reports unalignedsamstats]} {
 			reports_samstats $bamfile unaligned $sampledir/reports

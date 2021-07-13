@@ -14,6 +14,7 @@ rdsbwa-NA19240m	samstats_summary	reads_duplicated	6
 rdsbwa-NA19240m	samstats_summary	reads_MQ0	0
 rdsbwa-NA19240m	samstats_summary	reads_QC_failed	0
 rdsbwa-NA19240m	samstats_summary	non-primary_alignments	0
+rdsbwa-NA19240m	samstats_summary	supplementary_alignments	0
 rdsbwa-NA19240m	samstats_summary	total_length	19757
 rdsbwa-NA19240m	samstats_summary	total_first_fragment_length	9915
 rdsbwa-NA19240m	samstats_summary	total_last_fragment_length	9842

@@ -48,6 +48,7 @@ or **all** to create all report types.
 ; -dbdir dbdir: dir containing the reference databases
 ; -r reports (also --reports): list of reports to make
 ; -paired 0/1: fastq reports are split in fw and rev if paired is 1 (default), all data is put under fw if 0
+; -threads integer: The underlying code my use **integer** number of threads (default 1, not all reports can use threads)
 
 This command can be distributed on a cluster or using multiple threads with
 [[joboptions|job options]] (more info with cg help joboptions)
