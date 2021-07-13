@@ -2,6 +2,7 @@ proc cg_vcfcat {args} {
 	set index 0
 	set o stdout
 	set threads 1
+	set sort 0
 	cg_options catvcf args {
 		-o {
 			set outfile $value
@@ -9,26 +10,45 @@ proc cg_vcfcat {args} {
 		-i {
 			set index $value
 		}
+		-s - -sort {
+			set sort $value
+		}
 		-threads {
 			set threads $value
 		}
 	} {} 1 ... {
 		concatenate vcf files that must have the same basic header:
-		The header of the first file is used without checking for compatibility!
+		The header of the first (non-empty) file is used without checking for compatibility!
 	}
 	if {$index && ![info exists outfile]} {
 		error "cg vcfcat cannot index (-i 1) if no outputfile is given (-o)"
 	}
-	if {[info exist outfile]} {
-		if {[file extension $outfile] eq ".gz"} {
-			set o [open "| bgzip -c -@ $threads > $outfile.temp" w]
-		} else {
-			set compress [compresspipe $outfile]
-			if {$compress ne ""} {
-				set o [open "$compress > $outfile.temp" w]
-			} else {
-				set o [open $outfile.temp w]
+	set pipe {}
+	if {$sort} {
+		# get headersize
+		foreach file $args {
+			if {![file size $file]} continue
+			set f [gzopen $file]
+			set header {}
+			while {[gets $f line] != -1} {
+				if {[string index $line 0] ne "\#"} break
+				lappend header $line
 			}
+			gzclose $f
+			break
+		}
+		set headersize [llength $header]
+		append pipe "| gnusort8 --header-lines $headersize --parallel $threads -T \"[scratchdir]\" -t \\t -s -N "
+	}
+	if {[info exist outfile]} {
+		set compress [compresspipe $outfile {} $threads]
+		if {$compress ne ""} {
+			append pipe $compress
+		}
+		if {$pipe ne ""} {
+			set o [open "$pipe > $outfile.temp" w]
+		} else {
+			set o [open $outfile.temp w]
 		}
 	}
 	if {[llength $args] == 1} {
