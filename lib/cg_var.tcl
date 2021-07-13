@@ -67,8 +67,8 @@ proc var_job {args} {
 	set tools [list_remdup $tools]
 	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions {*}$tools]
-	set cmdopts {}
 	# check if regionfile is supported
+	set cmdopts {}
 	catch {var_${method}_job} temp
 	set supportsregionfile 0
 	set supportsregion 0
@@ -86,7 +86,12 @@ proc var_job {args} {
 		# see if method wants to change distrreg from requested
 		set distrreg [var_${method}_distrreg $distrreg]
 	}
-	if {!$supportsregionfile && !$supportsregion} {set distrreg 0}
+	if {!$supportsregionfile && !$supportsregion} {
+		if {$distrreg ni {0 {}}} {
+			putslog "var_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
+		}
+		set distrreg 0
+	}
 	if {$supportsregionfile} {
 		if {$regionfile ne ""} {
 			set regionfile [file_absolute $regionfile]
@@ -169,11 +174,13 @@ proc var_job {args} {
 					lappend regions unmapped
 				}
 			}
+			# run per region
 			foreach region $regions {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
 					-datatype $datatype \
 					-region $region \
-					-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $workdir/var-$root-$region.tsv.zst]
+					-split $split -threads $threads -cleanup $cleanup \
+					$bamfile $refseq $workdir/var-$root-$region.tsv.zst]
 			}
 		}
 		defcompressionlevel 9

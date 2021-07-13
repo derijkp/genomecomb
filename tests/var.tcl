@@ -502,9 +502,13 @@ test var {var_medaka basic} {
 	cg var_medaka {*}$::dopts tmp/medaka/test.bam $::refseqdir/hg38
 	file delete tmp/medaka/compar.tsv
 	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
-		tmp/medaka expected/medaka
-	list [cg select -g chromosome tmp/medaka/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		tmp/medaka expected/medaka]
+	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+	join [list_remove $result {}] \n
 } {{chromosome	count
 20	10014} {zyg-medaka-test	zyg-truth	count
 c	u	220
@@ -526,9 +530,13 @@ test var {var_medaka distrreg} {
 	cg var -method medaka -distrreg 1 {*}$::dopts tmp/medaka/test.bam $::refseqdir/hg38
 	file delete tmp/medaka/compar.tsv
 	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
-		tmp/medaka expected/medaka
-	list [cg select -g chromosome tmp/medaka/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		tmp/medaka expected/medaka]
+	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+	join [list_remove $result {}] \n
 } {chromosome	bases
 chr21	1047
 chr22	156
@@ -551,14 +559,19 @@ test var {var -method medaka -regionfile} {
 	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
 	file delete tmp/medaka_reg/compar.tsv
 	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
-		tmp/medaka_reg expected/medaka_reg
-	list [cg select -g chromosome tmp/medaka_reg/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
-} {{chromosome	count
-20	71} {zyg-medaka-test	zyg-truth	count
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
+		tmp/medaka_reg expected/medaka_reg]
+	lappend result [cg select -g chromosome tmp/medaka_reg/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
+	join [list_remove $result {}] \n
+} {chromosome	count
+20	71
+zyg-medaka-test	zyg-truth	count
 m	u	23
 u	m	36
-u	t	12}}
+u	t	12}
 
 test var {var -method medaka -regionfile -distreg regionfile} {
 	cd $::smalltestdir
@@ -577,13 +590,18 @@ test var {var -method medaka -regionfile -distreg regionfile} {
 	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv -distrreg regionfile {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
 	file delete tmp/medaka_reg/compar.tsv
 	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti -x *.submitting \
-		tmp/medaka_reg expected/medaka_reg
-	list [cg select -g chromosome tmp/medaka_reg/compar.tsv] [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
-} {{chromosome	count
-20	71} {zyg-medaka-test	zyg-truth	count
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tbi -x *.tsv.reannot \
+		tmp/medaka_reg expected/medaka_reg]
+	lappend result [cg select -g chromosome tmp/medaka_reg/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
+	join [list_remove $result {}] \n
+} {chromosome	count
+20	71
+zyg-medaka-test	zyg-truth	count
 m	u	23
 u	m	36
-u	t	12}}
+u	t	12}
 
 testsummarize
