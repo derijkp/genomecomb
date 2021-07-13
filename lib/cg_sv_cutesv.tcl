@@ -11,19 +11,14 @@ proc sv_cuteSV_job {args} {
 	set split 1
 	set threads 2
 	set cleanup 1
-	set regmincoverage [get ::specialopt(-cuteSV-regmincoverage) 3]
+	set regmincoverage 3
 	set resultfiles 0
 	set skips {}
-	set min_support [get ::specialopt(-cuteSV-min_support) 2]
-	set min_seq_size [get ::specialopt(-cuteSV-min_seq_size) 300]
-	set max_cluster_bias_DEL [get ::specialopt(-cuteSV-max_cluster_bias_DEL) 100]
-	set diff_ratio_merging_DEL [get ::specialopt(-cuteSV-diff_ratio_merging_DEL) 0.3]
-	set min_support [get ::specialopt(-cuteSV-min_support) 2]
+	set min_support 2
+	set min_seq_size 300
+	set max_cluster_bias_DEL 100
+	set diff_ratio_merging_DEL 0.3
 	set preset {}
-	foreach {key value} [specialopts -cuteSV] {
-		if {$key in {-regmincoverage -min_support -min_seq_size}} continue
-		lappend opts $key $value
-	}
 	set resultfile {}
 	cg_options sv_cuteSV args {
 		-refseq {
@@ -60,6 +55,19 @@ proc sv_cuteSV_job {args} {
 			lappend opts {*}$value
 		}
 	} {bamfile resultfile} 1 2
+	foreach {key value} [specialopts -cuteSV] {
+		switch $key {
+			-regmincoverage {set regmincoverage $value}
+			-min_support {set min_support $value}
+			-min_seq_size {set min_seq_size $value}
+			-max_cluster_bias_DEL {set max_cluster_bias_DEL $value}
+			-diff_ratio_merging_DEL {set diff_ratio_merging_DEL $value}
+			-threads {set threads $value}
+			default {
+				lappend opts $key $value
+			}
+		}
+	}
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {

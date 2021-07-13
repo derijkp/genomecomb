@@ -38,11 +38,7 @@ proc var_medaka_job {args} {
 	set opts {}
 	set index 1
 	set resultfile {}
-	foreach {key value} [specialopts -medaka] {
-		if {$key eq "-b"} {set batchsize $value}
-		lappend opts $key $value
-	}
-	if {![info exists batchsize]} {lappend key -b 40}
+	set batchsize 40
 	cg_options var_medaka args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -89,6 +85,13 @@ proc var_medaka_job {args} {
 			lappend skips -skip $value
 		}
 	} {bamfile refseq resultfile} 2 3
+	foreach {key value} [specialopts -medaka] {
+		switch $key {
+			-b {set batchsize $value}
+			default {lappend opts $key $value}
+		}
+	}
+	lappend opts -b $batchsize
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
