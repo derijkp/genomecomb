@@ -45,16 +45,7 @@ test process_small {process_project mastr_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
-		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
-		-x *-blanco2_8485* \
-		tmp/${basename} expected/${basename}]
-	set result {}
-	lappend result [tsvdiff -q 1 \
-		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
-		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
-		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		tmp/${basename} expected/${basename}]
@@ -94,7 +85,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		tmp/${basename} expected/${basename}]
@@ -137,7 +128,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-x *.zsti -x *.lz4i -x *.tbi -x *.png -x *.cram -x *.crai -x *.bai \
 		-x *.finished -x *.submitting -x info_analysis.tsv \
 		-x projectinfo.tsv -x *.vcf.gz\
-		-x fastqc_report.html -x colinfo -x ${basename}.html -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x fastqc_report.html -x colinfo -x *.stats.zst -x ${basename}.html -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x report_stats-${basename}.tsv \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
@@ -170,7 +161,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 #	# check vs expected
 #	set result {}
 #	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-#		-x colinfo -x "mastr_mx2 space.html" -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png -x *.submitting \
+#		-x colinfo -x *.stats.zst -x "mastr_mx2 space.html" -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png -x *.submitting \
 #		-x *.analysisinfo \
 #		$mastrdir $expected
 #	lappend result [diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo]
@@ -207,7 +198,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		tmp/${basename} expected/${basename}]
@@ -241,7 +232,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *bam.dupmetrics \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
@@ -272,7 +263,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
 	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command \
@@ -301,7 +292,7 @@ test process_small {process_project exomes_yri_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
@@ -335,7 +326,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
@@ -369,7 +360,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *log_jobs -x *.finished -x *.submitting \
 		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
-		-x colinfo -x fastqc_report.html -x *.vcf.gz \
+		-x colinfo -x *.stats.zst -x fastqc_report.html -x *.vcf.gz \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
@@ -394,9 +385,9 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 #	cg process_project --stack 1 --verbose 2 {*}$::runopts {*}$::dopts -split 1 -dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
 #	# check vs expected
 #	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
-#	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
+#	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *.stats.zst -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
 #	# could have used this, but previous is faster
-#	# cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2 > temp
+#	# cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x *.stats.zst -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2 > temp
 #} {}
 
 test process_small {process_sample one_genome_yri_mx2} {
@@ -441,7 +432,7 @@ test process_small {process_project genomes_yri_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x summary-*.txt \
 		tmp/${basename} expected/${basename}]
@@ -479,7 +470,7 @@ test process_small {process_project cg_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo -x summary-*.txt \
+		-x colinfo -x *.stats.zst -x summary-*.txt \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		tmp/${basename} expected/${basename}]
@@ -518,7 +509,7 @@ test process_small {process_project mixed_yri_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo -x summary-*.txt \
+		-x colinfo -x *.stats.zst -x summary-*.txt \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		tmp/${basename} expected/${basename}]
@@ -557,7 +548,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo -x summary-*.txt \
+		-x colinfo -x *.stats.zst -x summary-*.txt \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		tmp/${basename} expected/${basename}]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {

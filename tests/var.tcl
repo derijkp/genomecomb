@@ -504,7 +504,7 @@ test var {var_medaka basic} {
 	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 \
-		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
 		tmp/medaka expected/medaka]
 	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
