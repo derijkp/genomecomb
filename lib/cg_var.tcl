@@ -217,11 +217,11 @@ proc var_job {args} {
 						$target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
 					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
-					file rename $target.temp $target
+					file rename -force $target.temp $target
 					cg_zindex $target
 				} else {
 					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
-					file rename $target.temp $target
+					file rename -force $target.temp $target
 					cg_zindex $target
 				}
 			}
