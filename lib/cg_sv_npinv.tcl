@@ -73,6 +73,7 @@ proc sv_npinv_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$sample eq ""} {set sample $root}
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf

@@ -1,4 +1,4 @@
-proc sv_sniffles_sortvcf {} {
+proc sv_sniffles_sortdistrreg {} {
 	return 1
 }
 
@@ -39,6 +39,10 @@ proc sv_sniffles_job {args} {
 			set split $value
 		}
 		-threads - -t {
+			if {$value > 2} {
+				puts stderr "warning: reduced -threads to 2 for running sniffles (use distrreg for more efficient distribution, you can overrule this with -sniffles-threads)"
+				set value 2
+			}
 			set threads $value
 		}
 		-cleanup {
@@ -121,11 +125,13 @@ proc sv_sniffles_job {args} {
 		if {$region ne ""} {
 			set usebam [scratchfile].bam
 			exec samtools view -h -b -1 --threads $threads $bamfile {*}[samregions $region $refseq] > $usebam
+			exec samtools index $usebam
 		} else {
 			set usebam $bamfile
 		}
 		if {[catch {
-			exec sniffles {*}$opts --threads $threads --genotype --skip_parameter_estimation \
+			exec sniffles {*}$opts --threads $threads --skip_parameter_estimation \
+				--genotype --cluster \
 				--min_support $min_support --min_seq_size $min_seq_size \
 				-m $usebam -v $target.temp 2>@ stderr >@ stdout
 			file rename -force -- $target.temp $target

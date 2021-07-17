@@ -3,6 +3,10 @@ proc version_cuteSV {} {
 	lindex [exec cuteSV --version] end
 }
 
+proc sv_cuteSV_sortdistrreg {} {
+	return 1
+}
+
 proc sv_cuteSV_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg sv_cuteSV {*}$args]"
@@ -33,6 +37,10 @@ proc sv_cuteSV_job {args} {
 			set preset $value
 		}
 		-threads - -t {
+			if {$value > 3} {
+				puts stderr "warning: reduced -threads to 3 for running cuteSV (use -distrreg for more efficient distribution, you can overrule this with -cuteSV-threads)"
+				set value 3
+			}
 			set threads $value
 		}
 		-cleanup {

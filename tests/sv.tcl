@@ -68,7 +68,7 @@ test sv {sniffles -distrreg chr} {
 		-method sniffles -distrreg chr \
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
 

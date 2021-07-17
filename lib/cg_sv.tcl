@@ -97,14 +97,12 @@ proc sv_job {args} {
 		set skips [list -skip $resultfiles]
 		foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
 		set file [file tail $bamfile]
-		set root [file_rootname $file]
+		set root [file_rootname $resultfile]
 		# start
 		## Create sequencing region files
 		set keeppwd [pwd]
 		cd $destdir
 		set workdir [workdir $resultfile]
-
-
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [file_root [file tail $resultfile]]
 		set regfiles {}
@@ -144,7 +142,7 @@ proc sv_job {args} {
 		set sample [file_rootname $resultfile]
 		if {$supportsregionfile} {
 			foreach region $regions regfile $regfiles {
-				set target [file root $ibam]-$region.tsv.zst
+				set target $workdir/sv-$root-$region.tsv.zst
 				lappend todo [sv_${method}_job {*}$opts {*}$skips	\
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
@@ -156,7 +154,7 @@ proc sv_job {args} {
 		} else {
 			# run per region
 			foreach region $regions {
-				set target $workdir/var-$root-$region.tsv.zst
+				set target $workdir/sv-$root-$region.tsv.zst
 				lappend todo [sv_${method}_job {*}$opts {*}$skips \
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
@@ -191,16 +189,18 @@ proc sv_job {args} {
 				if {[llength $analysisinfo]} {
 					file_copy $analysisinfo [analysisinfo_file $target]
 				}
+				if {![auto_load sv_${method}_sortdistrreg]} {
+					set sort 0
+					set sortpipe {}
+				} else {
+					set sort [sv_${method}_sortdistrreg]
+					set sortpipe {| cg select -s - }
+				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
-					if {![auto_load sv_${method}_sortvcf]} {
-						set sort 0
-					} else {
-						set sort [sv_${method}_sortvcf]
-					}
 					cg vcfcat -i 0 -s $sort -o $target {*}[bsort [jobglob {*}$list]]
 				} else {
-					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
-					file rename $target.temp $target
+					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
+					file rename -force $target.temp $target
 					cg_zindex $target
 				}
 				foreach file $list {
