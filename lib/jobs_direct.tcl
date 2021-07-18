@@ -14,9 +14,9 @@ proc job_running_direct {job} {
 proc job_status_direct {job {jobloginfo {}}} {
 	if {$jobloginfo eq ""} {
 		if {![file exists $job.log]} {return unkown}
-		set jobloginfo [job_parse_log $job $totalduration]
+		set jobloginfo [job_parse_log $job]
 	}
-	foreach {status starttime endtime run duration totalduration} $jobloginfo break
+	foreach {status starttime endtime run duration} $jobloginfo break
 	return $status
 }
 

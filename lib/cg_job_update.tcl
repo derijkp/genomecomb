@@ -55,6 +55,7 @@ proc correct_time_ms {timeVar} {
 # running: still running, can be updated
 # finished: after completely successful run
 # error: some jobs had errors
+# set cleanup never ; set force 0 ; set removeold 0 ; set rundone 0
 proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} {
 	global cgjob
 	if {![file exists $logfile]} {
@@ -153,7 +154,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	set totalendcode {}
 	set totalendtime {}
 	set endstatus finished
-	set totalduration {0 0}
+	set totalseconds 0
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
@@ -174,7 +175,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
 		set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
 		if {$jobo eq "total"} {
-			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run {}] \t]
+			set walltime [timediff2duration [lmath_calc $totalendcode - $totalstartcode]]
+			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime "$walltime (wall) [time_seconds2duration $totalseconds] (total)" "$totalseconds (total)" $targets [job_cleanmsg $msg] $run {}] \t]
 			break
 		}
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
@@ -197,19 +199,19 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				if {[info exists joblogcachea($job)]} {
 					set jobloginfo $joblogcachea($job)
 				} else {
-					set jobloginfo [job_parse_log $job $totalduration]
+					set jobloginfo [job_parse_log $job]
 				}
 				if {$status eq "skipped"} {
 					set joblogcachea($job) $jobloginfo
 				}
-				foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
+				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
 					set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 					set time_seconds [timebetween_inseconds $starttime $endtime]
 				}
 				set msg {}
 			} else {
-				set jobloginfo [list $status $starttime $endtime $run $duration $totalduration $submittime $time_seconds]
+				set jobloginfo [list $status $starttime $endtime $run $duration $submittime $time_seconds]
 			}
 			if {$status eq "error"} {
 				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
@@ -232,9 +234,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set endstatus error
 		}
 		if {$startcode ne "" && $endcode ne ""} {
-			set diff [lmath_calc $endcode - $startcode]
-			if {[isint $cores] && $cores > 1} {set diff [lmath_calc $diff * $cores]}
-			set totalduration [lmath_calc $totalduration + $diff]
+			if {![isint $cores]} {set cores 1}
+			set totalseconds [expr {$totalseconds + $cores * $time_seconds}]
 		}
 		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run $cores] \t]
 		if {$totalstartcode eq "" || [time_comp $startcode $totalstartcode] < 0} {

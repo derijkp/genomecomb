@@ -35,9 +35,9 @@ proc job_status_distr {job {jobloginfo {}}} {
 	set totalduration {0 0}
 	if {$jobloginfo eq ""} {
 		if {![file exists $job.log]} {return unkown}
-		set jobloginfo [job_parse_log $job $totalduration]
+		set jobloginfo [job_parse_log $job]
 	}
-	foreach {status starttime endtime run duration totalduration} $jobloginfo break
+	foreach {status starttime endtime run duration} $jobloginfo break
 	if {$status ni {submitted running}} {return $status}
 	if {![info exists cgjob(pid)] || [catch {exec ps $cgjob(pid)}]} {return error}
 	if {$status eq "submitted"} {return $status}

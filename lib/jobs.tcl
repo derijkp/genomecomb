@@ -927,12 +927,19 @@ proc timebetween_inseconds {starttime endtime} {
 	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
 }
 
+proc time_seconds2duration {seconds} {
+	set days [expr {int($seconds/86400)}]
+	set miliseconds [expr {int(1000*($seconds - 86400*$days))}]
+	set diff [list $days $miliseconds]
+	timediff2duration $diff
+}
+
 proc time_seconds {diff} {
 	foreach {days miliseconds} $diff break
 	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
 }
 
-proc job_parse_log {job {totalduration {0 0}}} {
+proc job_parse_log {job} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
 	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {}
 	set time_seconds ""
@@ -986,10 +993,14 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		set submittime $currentsubmittime
 		set starttime $currentstarttime
 		set endtime {}
-		if {![file exists $job.jid] || [catch {exec qstat -j [file_read $job.jid]}]} {
+		if {![file exists $job.jid] || ![job_running [file_read $job.jid]]} {
 			set status error
-			set endtime [clock format [file mtime $job.err] -format "%Y-%m-%d %H:%M:%S"]
-			if {[string range $starttime 0 18] eq $endtime} {set endtime $starttime}
+			if {[file exists $job.err]} {
+				set endtime [clock format [file mtime $job.err] -format "%Y-%m-%d %H:%M:%S"]
+				if {[string range $starttime 0 18] eq $endtime} {set endtime $starttime}
+			} else {
+				set endtime {}
+			}
 		} else {
 			set status $currentstatus
 			set endtime {}
@@ -1010,7 +1021,6 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			set extratime {}
 			set diff [lmath_calc $endcode - $startcode]
 			set time_seconds [time_seconds $diff]
-			set totalduration [lmath_calc $totalduration + $diff]
 		} else {
 			set endtime ""
 			set extratime ...
@@ -1019,7 +1029,7 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		}
 		set duration [timediff2duration $diff]$extratime
 	}
-	return [list $status $starttime $endtime $run $duration $totalduration $submittime $time_seconds]
+	return [list $status $starttime $endtime $run $duration $submittime $time_seconds]
 }
 
 proc job_cleanmsg {msg} {

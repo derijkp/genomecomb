@@ -19,7 +19,7 @@ proc job_status_sge {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job]
 	}
-	foreach {status starttime endtime run duration totalduration submittime} $jobloginfo break
+	foreach {status starttime endtime run duration submittime} $jobloginfo break
 	if {$status ni {submitted running}} {return $status}
 	set jobnum [job_process_par_jobid $job]
 	if {[job_running_sge $jobnum]} {
