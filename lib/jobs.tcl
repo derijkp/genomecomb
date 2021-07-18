@@ -934,7 +934,7 @@ proc time_seconds {diff} {
 
 proc job_parse_log {job {totalduration {0 0}}} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
-	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {}
 	set time_seconds ""
 	set status submitted
 	set logdata [split [file_read $job.log] \n]
@@ -955,17 +955,20 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			set run $currentrun
 			set submittime $currentsubmittime
 			set starttime $currentstarttime
+			set currentstatus finished
 			set status finished
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
 			set run $currentrun
 			set submittime $currentsubmittime
 			set starttime $currentstarttime
+			set currentstatus error
 			set status error
 			set failed 1
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
 			set run $currentrun
 			set submittime $currentsubmittime
 			set starttime $currentstarttime
+			set currentstatus error
 			set status error
 			set failed 1
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t>-]+job ${tail} skipped($|:)}] $line temp skiptime]} {
@@ -977,6 +980,19 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			if {$status ni {finished error}} {
 				set status skipped
 			}
+		}
+	}
+	if {$currentstatus in "running submitted"} {
+		set submittime $currentsubmittime
+		set starttime $currentstarttime
+		set endtime {}
+		if {![file exists $job.jid] || [catch {exec qstat -j [file_read $job.jid]}]} {
+			set status error
+			set endtime [clock format [file mtime $job.err] -format "%Y-%m-%d %H:%M:%S"]
+			if {[string range $starttime 0 18] eq $endtime} {set endtime $starttime}
+		} else {
+			set status $currentstatus
+			set endtime {}
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
