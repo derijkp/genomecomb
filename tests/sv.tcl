@@ -60,16 +60,16 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 
 test sv {sniffles -distrreg chr} {
 	cd $::smalltestdir
-	file delete -force tmp/sv-sniffles2_minimap2
-	file mkdir tmp/sv-sniffles2_minimap2
-	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
-	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam.bai
+	file delete -force tmp/sv-sniffles2_minimap2_distrchr
+	file mkdir tmp/sv-sniffles2_minimap2_distrchr
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam.bai
 	cg sv {*}$::dopts \
 		-method sniffles -distrreg chr \
 		-refseq $::smalltestdir/refseqtest/hg19 \
-		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+		tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
-		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
+		tmp/sv-sniffles2_minimap2_distrchr expected/sv-sniffles2_minimap2
 } {}
 
 test sv {cuteSV} {
@@ -95,6 +95,19 @@ test sv {cuteSV -distrreg chr} {
 		tmp/sv-cuteSV/map-sngmlr-NA12878.bam
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi -x *.submitting -x *.zsti \
 		tmp/sv-cuteSV expected/sv-cuteSV
+} {}
+
+test sv {cuteSV NA12878 minimap2} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-cuteSV2_minimap2
+	file mkdir tmp/sv-cuteSV2_minimap2
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam tmp/sv-cuteSV2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-cuteSV2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam.bai
+	cg sv_cuteSV {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-cuteSV2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		tmp/sv-cuteSV2_minimap2 expected/sv-cuteSV2_minimap2
 } {}
 
 test sv {npinv} {
