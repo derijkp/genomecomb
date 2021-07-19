@@ -272,7 +272,7 @@ fi
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
 
-	htsversion=1.12
+	htsversion=1.13
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
@@ -293,7 +293,7 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.12
+	samversion=1.13
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
@@ -307,7 +307,7 @@ fi
 # bcftools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bcftools ] ; then
-	bcfversion=1.12
+	bcfversion=1.13
 	download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
 	cd /build/bcftools-$bcfversion
 	make distclean

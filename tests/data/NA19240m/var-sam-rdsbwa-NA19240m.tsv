@@ -19,7 +19,7 @@
 #fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno	
 #fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno	
 #fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno	
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno	
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced	geno	
 #fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno	
 #fields	genotypes	H	Integer	Genotypes	geno	
 #fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format	
@@ -131,19 +131,19 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_samtoolsVersion	1.10+htslib-1.10
-#vcf_bcftools_callVersion	1.10.2+htslib-1.10.2
+#vcf_samtoolsVersion	1.13+htslib-1.13
+#vcf_bcftools_callVersion	1.13+htslib-1.13
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
-#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.index/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.index/map-rdsbwa-NA19240m.cram
+#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg_cram/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg_cram/tmp/NA19240m/map-rdsbwa-NA19240m.cram
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Tue Jun 30 00:36:48 2020
+#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Mon Jul 19 15:33:45 2021
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
-#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
+#vcf_reference	file:///home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
 # ----
 chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	AF1	AF2	AC1	MQ	FQ	PV4	DP4	cluster
-chr21	42735718	42735719	snp	G	A	49.0072	G	A	v	t	0	0;1	79,0,104	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	52.0016	1,0.296574,1,0.269117	2,2,2,2	
+chr21	42735718	42735719	snp	G	A	49.0072	G	A	v	t	0	0;1	79,0,103	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	51.9981	1,0.296574,1,0.269117	2,2,2,2	
 chr21	42775179	42775180	snp	C	T	103.133	T	T	v	m	0	1;1	136,18,0	6	0			6	0.177551				1	-0.616816	0	1		2	60	-44.9861		0,0,5,1	

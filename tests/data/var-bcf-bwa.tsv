@@ -38,10 +38,12 @@
 #fields	IMF	1	Float	Maximum fraction of raw reads supporting an indel	info	
 #fields	totalcoverage	1	Integer	Raw read depth	info	
 #fields	VDB	1	Float	Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)	info	3
-#fields	RPB	1	Float	Mann-Whitney U test of Read Position Bias (bigger is better)	info	
-#fields	MQB	1	Float	Mann-Whitney U test of Mapping Quality Bias (bigger is better)	info	
-#fields	BQB	1	Float	Mann-Whitney U test of Base Quality Bias (bigger is better)	info	
-#fields	MQSB	1	Float	Mann-Whitney U test of Mapping Quality vs Strand Bias (bigger is better)	info	
+#fields	RPBZ	1	Float	Mann-Whitney U-z test of Read Position Bias (closer to 0 is better)	info	
+#fields	MQBZ	1	Float	Mann-Whitney U-z test of Mapping Quality Bias (closer to 0 is better)	info	
+#fields	BQBZ	1	Float	Mann-Whitney U-z test of Base Quality Bias (closer to 0 is better)	info	
+#fields	MQSBZ	1	Float	Mann-Whitney U-z test of Mapping Quality vs Strand Bias (closer to 0 is better)	info	
+#fields	SCBZ	1	Float	Mann-Whitney U-z test of Soft-Clip Length Bias (closer to 0 is better)	info	
+#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias	info	
 #fields	SGB	1	Float	Segregation based metric.	info	
 #fields	MQ0F	1	Float	Fraction of MQ0 reads (smaller is better)	info	
 #fields	allelecount	A	Integer	Allele count in genotypes for each ALT allele, in the same order as listed	info	
@@ -134,19 +136,19 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_bcftools_callVersion	1.12+htslib-1.12
+#vcf_bcftools_callVersion	1.13+htslib-1.13
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --format-fields GQ,GP -m --threads 2; Date=Sat Jul 10 23:01:11 2021
-#vcf_bcftoolsVersion	1.12+htslib-1.12
+#vcf_bcftools_callCommand	call --format-fields GQ,GP -m --threads 2; Date=Mon Jul 19 10:36:38 2021
+#vcf_bcftoolsVersion	1.13+htslib-1.13
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
 #vcf_reference	file:///home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
-#vcf_bcftoolsCommand	mpileup -Ou --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas --count-orphans --max-depth 1000 --min-BQ 0 --annotate FORMAT/AD,FORMAT/ADF,FORMAT/ADR,FORMAT/DP,FORMAT/SP -T /tmp/tempExtral.28593-wDnCyaeoKaUFseuPBjEZ/_Extral_temp_1.tmp.bed /home/peter/dev/tests_genomecomb/var__var_bcf_basic/tmp/bwa.bam
+#vcf_bcftoolsCommand	mpileup -Ou --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas --count-orphans --max-depth 1000 --min-BQ 0 --annotate FORMAT/AD,FORMAT/ADF,FORMAT/ADR,FORMAT/DP,FORMAT/SP -T /tmp/tempExtral.28451-iZrgjLIVRtRIFNZsIZbD/_Extral_temp_1.tmp.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
 # ----
-chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	alleledepth_ref	alleledepth	ADF_ref	ADF	ADR_ref	ADR	genoqual	GP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	DP4	MQ	cluster
-chr21	42735718	42735719	snp	G	A	46.3581	G	A	v	t	0	0;1	79,0,104	8	0	4	4	2	2	2	2	81	7.73835e-09,1,1.61917e-11			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	2,2,2,2	60	
-chr21	42775179	42775180	snp	C	T	106.415	T	T	v	m	0	1;1	136,18,0	6	0	0	6	0	5	0	1	127	0,0,1			6	0.177551				1	-0.616816	0	0,0,5,1	60	
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	alleledepth_ref	alleledepth	ADF_ref	ADF	ADR_ref	ADR	genoqual	GP	IDV	IMF	totalcoverage	VDB	RPBZ	MQBZ	BQBZ	MQSBZ	SCBZ	FS	SGB	MQ0F	DP4	MQ	cluster
+chr21	42735718	42735719	snp	G	A	72.4031	G	A	v	t	0	0;1	105,0,103	8	0	4	4	2	2	2	2	103	1.52426e-11,1,2.59944e-11			8	0.879194	1.1547		0			0	-0.556411	0	2,2,2,2	60	
+chr21	42775179	42775180	snp	C	T	106.415	T	T	v	m	0	1;1	136,18,0	6	0	0	6	0	5	0	1	127	0,0,1			6	0.177551						0	-0.616816	0	0,0,5,1	60	

@@ -131,14 +131,14 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_samtoolsVersion	1.10+htslib-1.10
-#vcf_bcftools_callVersion	1.10.2+htslib-1.10.2
+#vcf_samtoolsVersion	1.13+htslib-1.13
+#vcf_bcftools_callVersion	1.13+htslib-1.13
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
-#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/map-rdsbwa-NA19240m.bam
+#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg/tmp/NA19240m/map-rdsbwa-NA19240m.bam
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Thu Aug 13 11:17:50 2020
+#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Mon Jul 19 01:12:20 2021
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
@@ -294,7 +294,7 @@ chr21	42735714	42735715	snp	G	.	53.9942	G	G	r	0	0;0	0	8	0			8					0.992367		0	0	
 chr21	42735715	42735716	snp	T	.	53.9942	T	T	r	0	0;0	0	8	0			8					0.992367		0	0		0	60	-50.986		4,4,0,0
 chr21	42735716	42735717	snp	C	.	50.9942	C	C	r	0	0;0	0	7	0			7					1.01283		0	0		0	60	-47.986		3,4,0,0
 chr21	42735717	42735718	snp	C	.	50.9942	C	C	r	0	0;0	0	7	0			7					1.01283		0	0		0	60	-47.986		3,4,0,0
-chr21	42735718	42735719	snp	G	A	49.0072	G	A	t	0	0;1	79,0,104	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	52.0016	1,0.296574,1,0.269117	2,2,2,2
+chr21	42735718	42735719	snp	G	A	49.0072	G	A	t	0	0;1	79,0,103	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	51.9981	1,0.296574,1,0.269117	2,2,2,2
 chr21	42735719	42735720	snp	G	.	50.9942	G	G	r	0	0;0	0	7	0			7					1.01283		0	0		0	60	-47.986		4,3,0,0
 chr21	42735720	42735721	snp	C	.	50.9942	C	C	r	0	0;0	0	7	0			7					1.01283		0	0		0	60	-47.986		4,3,0,0
 chr21	42735721	42735722	snp	A	.	50.9942	A	A	r	0	0;0	0	7	0			7					1.01283		0	0		0	60	-47.986		4,3,0,0

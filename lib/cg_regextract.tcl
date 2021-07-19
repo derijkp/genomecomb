@@ -102,7 +102,7 @@ proc cg_regextract {args} {
 						catch_exec samtools mpileup --ignore-overlaps {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $min $max $useshift 0 >@ $o
 					}
 				} msg]} {
-					if {$region ne "" && [regexp "samtools depth: can't parse region \"$region\"" $msg]} {
+					if {$region ne "" && [regexp "samtools depth: can..?t parse region \"$region\"" $msg]} {
 						putslog "warning: $msg"
 					} else {
 						error $msg

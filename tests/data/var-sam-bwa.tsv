@@ -6,45 +6,45 @@
 #numsamples	1
 #samplename	NA19240m
 #fields	table
-#fields	field	number	type	description	,Version
-#fields	chromosome	1	String	Chromosome/Contig	
-#fields	begin	1	Integer	Begin of feature (0 based - half open)	
-#fields	end	1	Integer	End of feature (0 based - half open)	
-#fields	type	1	String	Type of feature (snp,del,ins,...)	
-#fields	ref	1	String	Reference sequence, can be a number for large features	
-#fields	alt	1	String	Alternative sequence, can be a number for large features	
-#fields	name	1	String	name of feature	
-#fields	quality	1	Float	Quality score of feature	
-#fields	filter	1	String	Filter value	
-#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	
-#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	
-#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced	
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	
-#fields	genotypes	H	Integer	Genotypes	
-#fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	
-#fields	coverage	1	Integer	Number of high-quality bases	
-#fields	SP	1	Integer	Phred-scaled strand bias P-value	
-#fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	
-#fields	IDV	1	Integer	Maximum number of reads supporting an indel	
-#fields	IMF	1	Float	Maximum fraction of reads supporting an indel	
-#fields	totalcoverage	1	Integer	Raw read depth	
-#fields	VDB	1	Float	Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)	3
-#fields	RPB	1	Float	Mann-Whitney U test of Read Position Bias (bigger is better)	
-#fields	MQB	1	Float	Mann-Whitney U test of Mapping Quality Bias (bigger is better)	
-#fields	BQB	1	Float	Mann-Whitney U test of Base Quality Bias (bigger is better)	
-#fields	MQSB	1	Float	Mann-Whitney U test of Mapping Quality vs Strand Bias (bigger is better)	
-#fields	SGB	1	Float	Segregation based metric.	
-#fields	MQ0F	1	Float	Fraction of MQ0 reads (smaller is better)	
-#fields	AF1	1	Float	Max-likelihood estimate of the first ALT allele frequency (assuming HWE)	
-#fields	AF2	1	Float	Max-likelihood estimate of the first and second group ALT allele frequency (assuming HWE)	
-#fields	AC1	1	Float	Max-likelihood estimate of the first ALT allele count (no HWE assumption)	
-#fields	MQ	1	Integer	Root-mean-square mapping quality of covering reads	
-#fields	FQ	1	Float	Phred probability of all samples being the same	
-#fields	PV4	4	Float	P-values for strand bias, baseQ bias, mapQ bias and tail distance bias	
-#fields	G3	3	Float	ML estimate of genotype frequencies	
-#fields	HWE	1	Float	Chi^2 based HWE test P-value based on G3	
-#fields	DP4	4	Integer	Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases	
+#fields	field	number	type	description	source	Version
+#fields	chromosome	1	String	Chromosome/Contig	var	
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var	
+#fields	end	1	Integer	End of feature (0 based - half open)	var	
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var	
+#fields	ref	1	String	Reference sequence, can be a number for large features	var	
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var	
+#fields	name	1	String	name of feature	var	
+#fields	quality	1	Float	Quality score of feature	var	
+#fields	filter	1	String	Filter value	var	
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno	
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno	
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno	
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced	geno	
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno	
+#fields	genotypes	H	Integer	Genotypes	geno	
+#fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format	
+#fields	coverage	1	Integer	Number of high-quality bases	format	
+#fields	SP	1	Integer	Phred-scaled strand bias P-value	format	
+#fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	info	
+#fields	IDV	1	Integer	Maximum number of reads supporting an indel	info	
+#fields	IMF	1	Float	Maximum fraction of reads supporting an indel	info	
+#fields	totalcoverage	1	Integer	Raw read depth	info	
+#fields	VDB	1	Float	Variant Distance Bias for filtering splice-site artefacts in RNA-seq data (bigger is better)	info	3
+#fields	RPB	1	Float	Mann-Whitney U test of Read Position Bias (bigger is better)	info	
+#fields	MQB	1	Float	Mann-Whitney U test of Mapping Quality Bias (bigger is better)	info	
+#fields	BQB	1	Float	Mann-Whitney U test of Base Quality Bias (bigger is better)	info	
+#fields	MQSB	1	Float	Mann-Whitney U test of Mapping Quality vs Strand Bias (bigger is better)	info	
+#fields	SGB	1	Float	Segregation based metric.	info	
+#fields	MQ0F	1	Float	Fraction of MQ0 reads (smaller is better)	info	
+#fields	AF1	1	Float	Max-likelihood estimate of the first ALT allele frequency (assuming HWE)	info	
+#fields	AF2	1	Float	Max-likelihood estimate of the first and second group ALT allele frequency (assuming HWE)	info	
+#fields	AC1	1	Float	Max-likelihood estimate of the first ALT allele count (no HWE assumption)	info	
+#fields	MQ	1	Integer	Root-mean-square mapping quality of covering reads	info	
+#fields	FQ	1	Float	Phred probability of all samples being the same	info	
+#fields	PV4	4	Float	P-values for strand bias, baseQ bias, mapQ bias and tail distance bias	info	
+#fields	G3	3	Float	ML estimate of genotype frequencies	info	
+#fields	HWE	1	Float	Chi^2 based HWE test P-value based on G3	info	
+#fields	DP4	4	Integer	Number of high-quality ref-forward , ref-reverse, alt-forward and alt-reverse bases	info	
 #contig	table
 #contig	ID	length
 #contig	chr1	249250621
@@ -131,19 +131,19 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_samtoolsVersion	1.6+htslib-1.6
-#vcf_bcftools_callVersion	1.6+htslib-1.6
+#vcf_samtoolsVersion	1.13+htslib-1.13
+#vcf_bcftools_callVersion	1.13+htslib-1.13
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
-#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /tmp/tempExtral.12626-UTxkzPNkhPNYarJvxsMS/_Extral_temp_1.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
+#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /tmp/tempExtral.27578-bWBIBlYDNDXIwnYTEJfw/_Extral_temp_1.tmp.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call -c -; Date=Sun Dec  9 21:36:46 2018
+#vcf_bcftools_callCommand	call --threads 2 -c -; Date=Mon Jul 19 10:33:20 2021
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
-#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
+#vcf_reference	file:///home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
 # ----
 chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	AF1	AF2	AC1	MQ	FQ	PV4	DP4	cluster
-chr21	42735718	42735719	snp	G	A	49.0072	G	A	v	t	0	0;1	79,0,104	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	52.0016	1,0.296574,1,0.269117	2,2,2,2	
+chr21	42735718	42735719	snp	G	A	49.0072	G	A	v	t	0	0;1	79,0,103	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	0.5		1	60	51.9981	1,0.296574,1,0.269117	2,2,2,2	
 chr21	42775179	42775180	snp	C	T	103.133	T	T	v	m	0	1;1	136,18,0	6	0			6	0.177551				1	-0.616816	0	1		2	60	-44.9861		0,0,5,1	

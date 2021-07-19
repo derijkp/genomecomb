@@ -1,9 +1,12 @@
 sample	source	parameter	value	value_qcfail
 rdsbwa-NA19240m	flagstat_reads	in total	200	0
+rdsbwa-NA19240m	flagstat_reads	primary	200	0
 rdsbwa-NA19240m	flagstat_reads	secondary	0	0
 rdsbwa-NA19240m	flagstat_reads	supplementary	0	0
 rdsbwa-NA19240m	flagstat_reads	duplicates	6	0
+rdsbwa-NA19240m	flagstat_reads	primary duplicates	6	0
 rdsbwa-NA19240m	flagstat_reads	mapped	200	0
+rdsbwa-NA19240m	flagstat_reads	primary mapped	200	0
 rdsbwa-NA19240m	flagstat_reads	paired in sequencing	200	0
 rdsbwa-NA19240m	flagstat_reads	read1	100	0
 rdsbwa-NA19240m	flagstat_reads	read2	100	0
