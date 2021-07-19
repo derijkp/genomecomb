@@ -233,7 +233,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} elseif {$status eq "error" && $endstatus ne "running"} {
 			set endstatus error
 		}
-		if {$startcode ne "" && $endcode ne ""} {
+		if {$startcode ne "" && $endcode ne "" && $time_seconds ne ""} {
 			if {![isint $cores]} {set cores 1}
 			set totalseconds [expr {$totalseconds + $cores * $time_seconds}]
 		}
