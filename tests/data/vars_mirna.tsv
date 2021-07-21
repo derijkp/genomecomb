@@ -15,7 +15,7 @@ chr1	567792	567793	snp	T	C	arm-3p-end2
 chr1	567793	567794	snp	A	C	flank-3p
 chr1	567893	567894	snp	A	C	post
 chr1	1102483	1102578	del	95		del mir2
-chr1	1102502	1102503	snp	N	A	arm-5p-end1
+chr1	1102502	1102503	snp	A	G	arm-5p-end1
 chr1	1102503	1102504	snp	C	A	mature-5p-1
 chr1	1102503	1102525	del	22		del seed,arm mir-200b
 chr1	1102504	1102505	snp	A	C	seed-5p-1

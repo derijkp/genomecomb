@@ -647,4 +647,106 @@ test vcf2tsv {exec vcf2tsv} {
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
+test vcf2tsv {vcf2tsv sniffles N in del} {
+	file_write tmp/test.vcf [deindent {
+		##fileformat=VCFv4.1
+		##source=Sniffles
+		##fileDate=20210719
+		##contig=<ID=chr7_gl000195_random,length=182896>
+		##ALT=<ID=DEL,Description="Deletion">
+		##ALT=<ID=DUP,Description="Duplication">
+		##ALT=<ID=INV,Description="Inversion">
+		##ALT=<ID=INVDUP,Description="InvertedDUP with unknown boundaries">
+		##ALT=<ID=TRA,Description="Translocation">
+		##ALT=<ID=INS,Description="Insertion">
+		##INFO=<ID=CHR2,Number=1,Type=String,Description="Chromosome for END coordinate in case of a translocation">
+		##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the structural variant">
+		##INFO=<ID=MAPQ,Number=1,Type=Integer,Description="Median mapping quality of paired-ends">
+		##INFO=<ID=RE,Number=1,Type=Integer,Description="read support">
+		##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+		##INFO=<ID=PRECISE,Number=0,Type=Flag,Description="Precise structural variation">
+		##INFO=<ID=UNRESOLVED,Number=0,Type=Flag,Description="An insertion that is longer than the read and thus we cannot predict the full size.">
+		##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of the SV">
+		##INFO=<ID=REF_strand,Number=2,Type=Integer,Description="Length of the SV">
+		##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
+		##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+		##INFO=<ID=SEQ,Number=1,Type=String,Description="Extracted sequence from the best representative read.">
+		##INFO=<ID=STD_quant_start,Number=A,Type=Float,Description="STD of the start breakpoints across the reads.">
+		##INFO=<ID=STD_quant_stop,Number=A,Type=Float,Description="STD of the stop breakpoints across the reads.">
+		##INFO=<ID=Kurtosis_quant_start,Number=A,Type=Float,Description="Kurtosis value of the start breakpoints across the reads.">
+		##INFO=<ID=Kurtosis_quant_stop,Number=A,Type=Float,Description="Kurtosis value of the stop breakpoints across the reads.">
+		##INFO=<ID=SUPTYPE,Number=A,Type=String,Description="Type by which the variant is supported.(SR,ALN,NR)">
+		##INFO=<ID=STRANDS,Number=A,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">
+		##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency.">
+		##INFO=<ID=ZMW,Number=A,Type=Integer,Description="Number of ZMWs (Pacbio) supporting SV.">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=DR,Number=1,Type=Integer,Description="# high-quality reference reads">
+		##FORMAT=<ID=DV,Number=1,Type=Integer,Description="# high-quality variant reads">
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	/backup/scratchdir/scratchExtral.19580-zXTaSpcQmSnrSrTPiFNE/_Extral_scratch_1.tmp.bam
+		chr7_gl000195_random	56947	0	TCAAGTTTTTTTTCTTTCTTTCTTTCTTTCTTTTTTTTTTTT	N	.	PASS	PRECISE;SVMETHOD=Snifflesv1.0.11;CHR2=chr7_gl000195_random;END=56987;STD_quant_start=9.643651;STD_quant_stop=8.645808;Kurtosis_quant_start=-1.328477;Kurtosis_quant_stop=-0.032561;SVTYPE=DEL;SUPTYPE=AL;SVLEN=-40;STRANDS=+-;RE=4;REF_strand=0,0;AF=1	GT:DR:DV	1/1:0:4
+	}]
+	file_write tmp/expected.tsv [deindent {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#info	tsv converted from vcf
+		#numsamples	1
+		#samplename	/backup/scratchdir/scratchExtral.19580-zXTaSpcQmSnrSrTPiFNE/_Extral_scratch_1.tmp.bam
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#fields	ref	1	String	Reference sequence, can be a number for large features	var
+		#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+		#fields	name	1	String	name of feature	var
+		#fields	quality	1	Float	Quality score of feature	var
+		#fields	filter	1	String	Filter value	var
+		#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+		#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+		#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+		#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced	geno
+		#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
+		#fields	genotypes	H	Integer	Genotypes	geno
+		#fields	DR	1	Integer	# high-quality reference reads	format
+		#fields	DV	1	Integer	# high-quality variant reads	format
+		#fields	CHR2	1	String	Chromosome for END coordinate in case of a translocation	info
+		#fields	MAPQ	1	Integer	Median mapping quality of paired-ends	info
+		#fields	RE	1	Integer	read support	info
+		#fields	IMPRECISE	0	Flag	Imprecise structural variation	info
+		#fields	PRECISE	0	Flag	Precise structural variation	info
+		#fields	UNRESOLVED	0	Flag	An insertion that is longer than the read and thus we cannot predict the full size.	info
+		#fields	REF_strand	2	Integer	Length of the SV	info
+		#fields	SVMETHOD	1	String	Type of approach used to detect SV	info
+		#fields	SEQ	1	String	Extracted sequence from the best representative read.	info
+		#fields	STD_quant_start	A	Float	STD of the start breakpoints across the reads.	info
+		#fields	STD_quant_stop	A	Float	STD of the stop breakpoints across the reads.	info
+		#fields	Kurtosis_quant_start	A	Float	Kurtosis value of the start breakpoints across the reads.	info
+		#fields	Kurtosis_quant_stop	A	Float	Kurtosis value of the stop breakpoints across the reads.	info
+		#fields	SUPTYPE	A	String	Type by which the variant is supported.(SR,ALN,NR)	info
+		#fields	STRANDS	A	String	Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)	info
+		#fields	frequency	A	Float	Allele Frequency.	info
+		#fields	ZMW	A	Integer	Number of ZMWs (Pacbio) supporting SV.	info
+		#contig	table
+		#contig	ID	length
+		#contig	chr7_gl000195_random	182896
+		#ALT	table
+		#ALT	ID	Description
+		#ALT	DEL	Deletion
+		#ALT	DUP	Duplication
+		#ALT	INV	Inversion
+		#ALT	INVDUP	InvertedDUP with unknown boundaries
+		#ALT	TRA	Translocation
+		#ALT	INS	Insertion
+		#vcf_source	Sniffles
+		#vcf_fileformat	VCFv4.1
+		#vcf_fileDate	20210719
+		# ----
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	DR	DV	CHR2	MAPQ	RE	IMPRECISE	PRECISE	UNRESOLVED	REF_strand	SVMETHOD	SEQ	STD_quant_start	STD_quant_stop	Kurtosis_quant_start	Kurtosis_quant_stop	SUPTYPE	STRANDS	frequency	ZMW
+		chr7_gl000195_random	56946	56987	del	41		0	.	PASS			m	0	1;1	0	4	chr7_gl000195_random		4		1		0,0	Snifflesv1.0.11		9.643651	8.645808	-1.328477	-0.032561	AL	+-	1	
+	}]
+	cg vcf2tsv tmp/test.vcf tmp/expected.tsv
+} {}
+
 testsummarize

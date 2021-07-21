@@ -330,7 +330,11 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 		l2 = altallele->size;
 		/* if ((l2 == 0 || *curalt != '<') && (l2 < 2 || (curalt[1] != '<'))) */
 		/* remove first base at start if equal (vcf start base for indels) */
-		if (*curref == *curalt && l1 > 0 && l2 > 0) {
+		if (l1 > 0 && l2 > 0 && (
+			*curref == *curalt
+			|| (*curref == 'N' && *curalt >= 'A' && *curalt <= 'Z')
+			|| (*curalt == 'N' && *curref >= 'A' && *curref <= 'Z')
+		)) {
 			pos++;
 			curref++; l1--;
 			curalt++; l2--;

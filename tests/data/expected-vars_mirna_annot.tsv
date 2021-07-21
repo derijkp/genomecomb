@@ -17,7 +17,7 @@ chr1	567792	567793	snp	T	C	arm-3p-end2	mir1+:arm3p(m+10e);mir1-a:arm5p(m-e10);mi
 chr1	567793	567794	snp	A	C	flank-3p	mir1+:flank3p(a+e1);mir1-a:flank5p(a-1e);mir1-b:flank5p(a-1e)	mir1+;mir1-;mir1-
 chr1	567893	567894	snp	A	C	post	mir1+:downstream(a+e101);mir1-a:upstream(a-101e);mir1-b:upstream(a-101e)	mir1+;mir1-;mir1-
 chr1	1102483	1102578	del	95		del mir2	mir2:GENEDEL	mir2
-chr1	1102502	1102503	snp	N	A	arm-5p-end1	mir2:arm5p(m-1e)	mir2
+chr1	1102502	1102503	snp	A	G	arm-5p-end1	mir2:arm5p(m-1e)	mir2
 chr1	1102503	1102504	snp	C	A	mature-5p-1	mir2:mature5p21_43(a+e1)	mir2
 chr1	1102503	1102525	del	22		del seed,arm mir-200b	mir2:mature5p21_43(a+e1:22e)seed	mir2
 chr1	1102504	1102505	snp	A	C	seed-5p-1	mir2:mature5p21_43(a+2)seed	mir2
