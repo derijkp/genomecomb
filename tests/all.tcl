@@ -12,9 +12,13 @@ if {[inlist $argv testsge]} {
 } else {
 	set testsge 0
 }
+set keeptimes {}
 proc runtests file {
 	cd $::appdir/tests
-	uplevel source $file
+	set time [time {uplevel source $file}]
+	set time [expr {[lindex $time 0]/1000000.0}]
+	lappend ::keeptimes $file\t$time
+	puts "ran $file: $time seconds"
 }
 
 runtests analysis.tcl
@@ -41,36 +45,50 @@ runtests select_aaggregates.tcl
 runtests multiselect.tcl
 runtests tsv.tcl
 runtests index.tcl
-runtests val.tcl
 runtests varia.tcl
 runtests bsort.tcl
 runtests vcf.tcl
 runtests vcf2tsv.tcl
 runtests tsv2vcf.tcl
-runtests bam_clean.tcl
-runtests map.tcl
-runtests var.tcl
-runtests job.tcl
 runtests compar.tcl
 runtests nanopore.tcl
-runtests svmulticompar.tcl
-runtests sv.tcl
-runtests pmulticompar.tcl
-runtests process_multicompar.tcl
-runtests process_local.tcl
-
-# next ones take longer, use larger data in genomecomb.testdata
 runtests queries.tcl
 runtests reports.tcl
 runtests bam.tcl
 runtests homwes.tcl
+runtests svmulticompar.tcl
+runtests pmulticompar.tcl
+runtests process_multicompar.tcl
+runtests process_local.tcl
+runtests bam_clean.tcl
+runtests val.tcl
+runtests job.tcl
+runtests map.tcl
+runtests sv.tcl
+runtests var.tcl
 runtests meth.tcl
 
 puts "all tests finished"
+puts "times (seconds):\n[join $::keeptimes \n]"
 testsummarize
 
-# long time, run separately
-# runtests process.tcl
+# take long time, run separately
+# ./process_small.tcl
+# ./process_ont.tcl
 
+# take longer still, run separately on cluster (will be run in ~/genomecomb_giab_testdata)
+# without parameter, the code will only check previous runs (should be run after analysis is finished on the cluster)
+# use with parameter run to delete results in tmp and completely (re)run the analysis
+#./process_giab.tcl run
+#./process_giab.tcl
+#./process_giab_ont.tcl run
+#./process_giab_ont.tcl
+# not yet working adapted to this way of working:
+#./process_giab_exome.tcl run
+#./process_giab_exome.tcl
+
+# larger still, not kept up to date
+# ./process.tcl
+# ./process_large.tcl
 # not really used
 # runtests mselect.tcl

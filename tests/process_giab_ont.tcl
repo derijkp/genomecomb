@@ -133,10 +133,8 @@ test process_giab {process small_giab_ont} {
 			}
 		}
 		# run
-		set varcallers {longshot medaka}
+		set varcallers {longshot}
 		set svcallers {sniffles cuteSV cuteSV_pacbio npinv}
-		set varcallers {}
-		set svcallers {}
 		exec devcg process_project -stack 1 -v 2 -d sge -split 1 -threads 8 \
 			-paired 0 -clip 0 \
 			-maxfastqdistr 250 \
@@ -155,8 +153,8 @@ test process_giab {process small_giab_ont} {
 		# check vs expected
 		benchmarkvars \
 			-analyses {longshot-sminimap2-HG003_NA24149_father} \
-			-regionfile tmp/small_giab_ont/samples/ref_HG003_NA24149_father/sreg-ref-ref-HG003_NA24149_father.tsv.zst \
-			tmp/small_giab_ont/compar/annot_compar-small_giab_ont.tsv.zst ref-ref-HG003_NA24149_father tmp/small_giab_ont/benchmark_HG003.tsv
+			-regionfile tmp/small_giab_ont/samples/truth421_HG003_NA24149_father/sreg-truth-truth-truth421_HG003_NA24149_father.tsv.zst \
+			tmp/small_giab_ont/compar/annot_compar-small_giab_ont.tsv.zst truth-truth-truth421_HG003_NA24149_father tmp/small_giab_ont/benchmark_HG003.tsv
 		set result {}
 		lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 			-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
