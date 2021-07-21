@@ -126,7 +126,10 @@ proc maxopenfiles {args} {
 
 proc file_add {file args} {
 	file mkdir [file dir $file]
-	exec echo [join $args \n] >> $file
+#	exec echo [join $args \n] >> $file
+	set o [open $file a]
+	puts $o [join $args \n]
+	close $o
 #	set o [open $file a]
 #	foreach arg $args {
 #		puts $o $arg

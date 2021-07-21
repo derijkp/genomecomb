@@ -52,6 +52,7 @@ if 0 {
 		uplevel job_init -skipjoberrors 1 {*}$args
 		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
+	interp alias {} job_wait {} job_wait_direct
 	proc gridwait {} {}
 
 	set testname "-d 2"
@@ -61,11 +62,20 @@ if 0 {
 	}
 	proc gridwait {} {}
 
+	set testname "-d 4"
+	proc test_job_init {args} {
+		uplevel job_init -d 4 {*}$args
+		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	}
+	interp alias {} job_wait {} job_wait_distr
+	proc gridwait {} {}
+
 	set testname "-d 30"
 	proc test_job_init {args} {
 		uplevel job_init -d 30 {*}$args
 		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
+	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
 
 	set testname "-d sge"
@@ -73,6 +83,7 @@ if 0 {
 		uplevel job_init -d sge {*}$args
 		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
+	interp alias {} job_wait {} job_wait_sge
 	proc gridwait {} {
 		while 1 {
 			after 500
@@ -310,6 +321,7 @@ if {$testname eq "-d sge"} {
 		puts "Cannot test sge option (missing qstat; grid engine not installed?)"
 		continue
 	}
+	interp alias {} job_wait {} job_wait_sge
 	proc gridwait {} {
 		while 1 {
 			after 500
@@ -318,7 +330,10 @@ if {$testname eq "-d sge"} {
 			if {[exec qstat] eq ""} break
 		}
 	}
+} elseif {[regexp -- {-d [0-9]} $testname]} {
+	interp alias {} job_wait {} job_wait_distr
 } else {
+	interp alias {} job_wait {} job_wait_direct
 	proc gridwait {} {}
 }
 
