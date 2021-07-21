@@ -90,8 +90,9 @@ if [ $all = 1 ] || [ ! -f /io/extra$ARCH/snifles ] ; then
 	yuminstall gcc-c++
 	# sniffles
 	# --------
-	snifflesversion=1.0.11
-	download https://github.com/fritzsedlazeck/Sniffles/archive/$snifflesversion.tar.gz
+	snifflesversion=1.0.12b
+	snifflesdirversion=1.0.12
+	download https://github.com/fritzsedlazeck/Sniffles/archive/refs/tags/v$snifflesversion.tar.gz
 	mv $snifflesversion.tar.gz sniffles-$snifflesversion.tar.gz
 	cd /build/Sniffles-$snifflesversion
 	rm -rf /build/Sniffles-$snifflesversion/build
@@ -99,7 +100,8 @@ if [ $all = 1 ] || [ ! -f /io/extra$ARCH/snifles ] ; then
 	cd /build/Sniffles-$snifflesversion/build
 	cmake ..
 	make
-	cp ../bin/sniffles-core-$snifflesversion/sniffles /io/extra$ARCH/sniffles-$snifflesversion
+	cp ../bin/sniffles-core-$snifflesdirversion/sniffles /io/extra$ARCH/sniffles-$snifflesversion
+	strip /io/extra$ARCH/sniffles-$snifflesversion
 	cd /io/extra$ARCH
 	ln -sf sniffles-$snifflesversion sniffles
 fi
