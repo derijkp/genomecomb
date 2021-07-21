@@ -16,6 +16,7 @@ proc var_job {args} {
 	set cmdopts {}
 	set var_opts {}
 	set resultfile {}
+	set hap_bam 0
 	cg_options var args {
 		-method {
 			set method $value
@@ -51,6 +52,9 @@ proc var_job {args} {
 		-opts {
 			set opts $value
 		}
+		-hap_bam {
+			set hap_bam [true $value]
+		}
 		default {
 			lappend var_opts $key $value
 		}
@@ -72,7 +76,7 @@ proc var_job {args} {
 	catch {var_${method}_job} temp
 	set supportsregionfile 0
 	set supportsregion 0
-	if {[regexp {with options:(.*)} $temp temp methodoptions]} {
+	if {[regexp {with options: *([^\n]*)} $temp temp methodoptions]} {
 		set methodoptions [split $methodoptions ,]
 		if {[inlist $methodoptions -regionfile]} {
 			lappend cmdopts -regionfile $regionfile
@@ -81,6 +85,19 @@ proc var_job {args} {
 		if {[inlist $methodoptions -region]} {
 			set supportsregion 1
 		}
+		if {![inlist $methodoptions -hap_bam]} {
+			set hap_bam 0
+		}
+	} else {
+		set hap_bam 0
+	}
+	if {$hap_bam} {
+		# limit regdistr to chr as smaller distribution than chr can cause errors when making a haplotyped bam:
+		# alignments can stick out of the regions, or even cover multiple regions
+		# -> they could get in multiple times, or get incorrectly sorted
+		if {$distrreg ni "0 chr"} {set distrreg chr}
+		# give option only when supported and needed via var_opts
+		lappend var_opts -hap_bam 1
 	}
 	catch {
 		# see if method wants to change distrreg from requested
@@ -120,7 +137,7 @@ proc var_job {args} {
 		file mkdir $workdir
 		if {$distrreg eq "regionfile"} {
 			if {$regionfile eq ""} {
-				error "use -distrreg regionfile and -regionfile is not given"
+				error "used -distrreg regionfile and -regionfile is not given"
 			}
 			if {![file exists $regionfile]} {
 				error "-regionfile $regionfile does not exist"
@@ -134,7 +151,13 @@ proc var_job {args} {
 				lappend regions ${chr}-${b}-${e}
 			}
 			close $f
+			# make sure it is going to work using -region only
+			set supportsregionfile 0
 		} else {
+			# at some point I thought of supporting -regionfile here for methods that do not support it using -region
+			# however, forcing working on the typically small regions in -regionfile is a bad idea 
+			# as several methods do not support -regionfile because working on such small regions would give 
+			# bad results (longshot and medaka use haplotype info for improving varcall)
 			set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 			set basename [gzroot [file tail $varallfile]]
 			if {$supportsregionfile} {
@@ -158,7 +181,7 @@ proc var_job {args} {
 		set todo {}
 		# Produce variant calls
 		defcompressionlevel 1
-		if {$supportsregionfile} {
+		if {$supportsregionfile && !$hap_bam} {
 			foreach region $regions regfile $regfiles {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
 					-datatype $datatype \
@@ -167,12 +190,8 @@ proc var_job {args} {
 			}
 		} else {
 			# if making a new bam file (currently only longshot), we need to process the unmapped reads as well
-			set pos [lsearch $var_opts -hap_bam]
-			if {$pos != -1} {
-				set hap_bam [lindex $var_opts [incr pos]]
-				if {$hap_bam} {
-					lappend regions unmapped
-				}
+			if {$hap_bam} {
+				lappend regions unmapped
 			}
 			# run per region
 			foreach region $regions {

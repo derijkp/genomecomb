@@ -509,38 +509,46 @@ test var {var_medaka basic} {
 	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
 	join [list_remove $result {}] \n
-} {{chromosome	count
-20	10014} {zyg-medaka-test	zyg-truth	count
+} {chromosome	count
+20	10014
+zyg-medaka-test	zyg-truth	count
 c	u	220
 m	m	36
 m	r	1
 m	u	212
 t	r	1
-t	t	12}}
+t	t	12
+t	u	9532}
 
 test var {var_medaka distrreg} {
 	cd $::smalltestdir
-	file delete -force tmp/medaka
-	file mkdir tmp/medaka
-	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka/test.bam
-	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka/test.bam.bai
-	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka/var-truth.tsv
-	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka/sreg-truth.tsv
+	file delete -force tmp/medaka_distrreg
+	file mkdir tmp/medaka_distrreg
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka_distrreg/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka_distrreg/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka_distrreg/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka_distrreg/sreg-truth.tsv
 	#
-	cg var -method medaka -distrreg 1 {*}$::dopts tmp/medaka/test.bam $::refseqdir/hg38
-	file delete tmp/medaka/compar.tsv
-	cg multicompar -reannot 1 tmp/medaka/compar.tsv tmp/medaka/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
+	cg var -method medaka -distrreg 1 {*}$::dopts tmp/medaka_distrreg/test.bam $::refseqdir/hg38
+	file delete tmp/medaka_distrreg/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka_distrreg/compar.tsv tmp/medaka_distrreg/var-medaka-test.tsv.zst tmp/medaka/var-truth.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 \
-		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
-		tmp/medaka expected/medaka]
-	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
-	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
+		-x *.old -x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		tmp/medaka_distrreg expected/medaka_distrreg]
+	lappend result [cg select -g chromosome tmp/medaka_distrreg/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_distrreg/compar.tsv]
 	join [list_remove $result {}] \n
-} {chromosome	bases
-chr21	1047
-chr22	156
-total	1203}
+} {chromosome	count
+20	10014
+zyg-medaka-test	zyg-truth	count
+c	u	220
+m	m	36
+m	r	1
+m	u	212
+t	r	1
+t	t	12
+t	u	9532}
 
 test var {var -method medaka -regionfile} {
 	cd $::smalltestdir
@@ -554,6 +562,7 @@ test var {var -method medaka -regionfile} {
 		chromosome	begin	end
 		chr20	831400	831600
 		chr20	840000	841000
+		chr20	1005000	1009000
 	}]]\n
 	#
 	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
@@ -569,39 +578,42 @@ test var {var -method medaka -regionfile} {
 } {chromosome	count
 20	71
 zyg-medaka-test	zyg-truth	count
+m	m	6
 m	u	23
-u	m	36
+u	m	30
 u	t	12}
 
 test var {var -method medaka -regionfile -distreg regionfile} {
 	cd $::smalltestdir
-	file delete -force tmp/medaka_reg
-	file mkdir tmp/medaka_reg
-	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka_reg/test.bam
-	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka_reg/test.bam.bai
-	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka_reg/var-truth.tsv
-	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka_reg/sreg-truth.tsv
-	file_write tmp/medaka_reg/targets.tsv [string trim [deindent {
+	file delete -force tmp/medaka_reg_distrreg
+	file mkdir tmp/medaka_reg_distrreg
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/medaka_reg_distrreg/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/medaka_reg_distrreg/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/medaka_reg_distrreg/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/medaka_reg_distrreg/sreg-truth.tsv
+	file_write tmp/medaka_reg_distrreg/targets.tsv [string trim [deindent {
 		chromosome	begin	end
 		chr20	831400	831600
 		chr20	840000	841000
+		chr20	1005000	1009000
 	}]]\n
 	#
-	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv -distrreg regionfile {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
-	file delete tmp/medaka_reg/compar.tsv
-	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
+	cg var -method medaka -regionfile tmp/medaka_reg_distrreg/targets.tsv -distrreg regionfile {*}$::dopts tmp/medaka_reg_distrreg/test.bam $::refseqdir/hg38
+	file delete tmp/medaka_reg_distrreg/compar.tsv
+	cg multicompar -reannot 1 tmp/medaka_reg_distrreg/compar.tsv tmp/medaka_reg_distrreg/var-medaka-test.tsv.zst tmp/medaka_reg_distrreg/var-truth.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tbi -x *.tsv.reannot \
-		tmp/medaka_reg expected/medaka_reg]
-	lappend result [cg select -g chromosome tmp/medaka_reg/compar.tsv]
-	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
+		tmp/medaka_reg_distrreg expected/medaka_reg_distrreg]
+	lappend result [cg select -g chromosome tmp/medaka_reg_distrreg/compar.tsv]
+	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg_distrreg/compar.tsv]
 	join [list_remove $result {}] \n
 } {chromosome	count
 20	71
 zyg-medaka-test	zyg-truth	count
+m	m	6
 m	u	23
-u	m	36
+u	m	30
 u	t	12}
 
 testsummarize

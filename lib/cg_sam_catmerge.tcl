@@ -237,10 +237,10 @@ proc sam_catmerge_job {args} {
 				result_rename $tempregresult $regresult
 			}
 		}
-		foreach rmfile $rmfiles {file delete -force $rmfile}
 		if {$index} {
 			exec samtools index $resultfile
 		}
+		foreach rmfile $rmfiles {file delete -force $rmfile}
 	}
 	return $regresults
 }
