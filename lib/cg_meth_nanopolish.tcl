@@ -89,6 +89,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 	}
 	# start
 	set fastqfiles [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]
+	if {![llength $fastqfiles]} {error "no fastq files found in $fastqdir"}
 	if {[file exists $smethfile] && ![jobtargetexists $smethfile $fastqfiles]} {
 		putslog "$smethfile older than one of fastqfiles (renaming to .old)"
 		file rename -force $smethfile $smethfile.old
