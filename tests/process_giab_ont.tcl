@@ -210,7 +210,7 @@ test process_giab {process_giab_ont_ds3} {
 			-distrreg chr \
 			-sniffles-n -1 \
 			-svcallers {sniffles cuteSV cuteSV_pacbio npinv} \
-			-varcallers {longshot medaka} \
+			-varcallers {longshot} \
 			-reports {-fastqc predictgender} \
 			-dbdir /complgen/refseq/hg38 \
 			tmp/giab_ont_ds3 >& tmp/giab_ont_ds3.log

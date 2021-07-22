@@ -79,7 +79,7 @@ if 0 {
 	# cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam.bai ori/ont_f5c_chr22_meth_example/
 }
 
-test meth {meth_nanopolish} {
+test meth {ont meth_nanopolish} {
 	cd $::smalltestdir
 	file delete -force tmp/meth
 	file mkdir tmp/meth/samples/methtest/fast5
@@ -120,7 +120,7 @@ test meth {meth_nanopolish} {
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
-		-x *log_jobs -x *.index \
+		-x *log_jobs -x *.index -x *.log \
 		tmp/meth expected/meth]
 	join [list_remove $result {}] \n
 } {}
