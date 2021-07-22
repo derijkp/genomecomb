@@ -106,7 +106,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			if {$addcores} {
 				lappend line {}
 			}
-			if {$status ne "skipped" || [lindex $oldlogsa($job) 2] ne "finished"} {
+			if {[info exists oldlogsa($job)] && ($status ne "skipped" || [lindex $oldlogsa($job) 2] ne "finished")} {
 				set oldlogsa($job) $line
 			}
 		}

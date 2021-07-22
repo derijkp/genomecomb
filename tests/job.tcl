@@ -60,6 +60,7 @@ if 0 {
 		uplevel job_init -d 2 {*}$args
 		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
+	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
 
 	set testname "-d 4"
