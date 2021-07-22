@@ -36,6 +36,8 @@ variants. Default varcaller is gatkh for the GATK haplotyped genotype caller.
 Other possible values are: gatk (GATK unified genoptype caller), strelka, sam, bcf, 
 freebayes, longshot, medaka
 ; -regionfile regionfile: only call variants in the region(s) given in regionfile
+if the method used does not support -regionfile (e.g. longshot, medaka), this option will be ignored: 
+the entire genome is called, and results will not be limited to the given regionfile
 ; -regmincoverage mincoverage: If no regionfile is given, variants will be called only in regions with
 a coverage of at least **mincoverage** (default 3)
 ; -distrreg: distribute regions for parallel processing (default s50000000).

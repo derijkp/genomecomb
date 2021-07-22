@@ -551,6 +551,8 @@ t	t	12
 t	u	9532}
 
 test var {var -method medaka -regionfile} {
+	# not all methods support -regionfile (e.g. medaka)
+	# in this case the -regionfile parameter is ignored, and the entire genome is run
 	cd $::smalltestdir
 	file delete -force tmp/medaka_reg
 	file mkdir tmp/medaka_reg
@@ -576,12 +578,15 @@ test var {var -method medaka -regionfile} {
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
 	join [list_remove $result {}] \n
 } {chromosome	count
-20	71
+20	10014
 zyg-medaka-test	zyg-truth	count
-m	m	6
-m	u	23
-u	m	30
-u	t	12}
+c	u	220
+m	m	36
+m	r	1
+m	u	212
+t	r	1
+t	t	12
+t	u	9532}
 
 test var {var -method medaka -regionfile -distreg regionfile} {
 	cd $::smalltestdir
