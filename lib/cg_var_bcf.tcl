@@ -101,6 +101,7 @@ proc var_bcf_job {args} {
 	set varallfile $destdir/${pre}varall-$root.tsv.zst
 	set regclusterfile $destdir/reg_cluster-$root.tsv
 	set resultlist [list $varfile $sregfile $varallfile {} $regclusterfile]
+	lappend skips -skip $resultlist
 	if {$resultfiles} {
 		return $resultlist
 	}

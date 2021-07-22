@@ -82,13 +82,14 @@ proc sv_npinv_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/sv_npinv_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions npinv gnusort8 zst os]
 	# start
 	## Produce npinv sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_npinv-$root.vcf {*}$skips -mem 5G -skip [list $resultfile [analysisinfo_file $resultfile]] \
+	job sv_npinv-$root.vcf {*}$skips -mem 5G \
 	-deps {
 		$bamfile $bamfileindex
 	} -targets {

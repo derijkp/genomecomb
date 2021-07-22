@@ -98,6 +98,7 @@ proc var_freebayes_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {

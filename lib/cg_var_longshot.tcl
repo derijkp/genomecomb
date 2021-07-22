@@ -165,6 +165,7 @@ proc var_longshot_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/var_longshot_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]

@@ -104,6 +104,7 @@ proc sv_sniffles_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/sv_sniffles_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions sniffles gnusort8 zst os]
@@ -113,7 +114,6 @@ proc sv_sniffles_job {args} {
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_sniffles_$root.vcf {*}$skips -mem 1G -cores $threads \
-	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {

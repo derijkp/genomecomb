@@ -118,6 +118,7 @@ proc sv_cuteSV_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/sv_cuteSV_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions cuteSV gnusort8 zst os]

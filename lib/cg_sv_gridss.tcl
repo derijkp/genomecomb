@@ -62,6 +62,7 @@ proc sv_gridss_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/sv_gridss_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions gridss gnusort8 zst os]

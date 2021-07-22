@@ -81,6 +81,7 @@ proc sv_manta_job {args} {
 	if {$resultfiles} {
 		return $resultlist
 	}
+	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/sv_manta_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions manta gnusort8 zst os]
@@ -89,7 +90,6 @@ proc sv_manta_job {args} {
 	## Produce manta sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_manta-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
-	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai ($regionfile)
 	} -targets {
