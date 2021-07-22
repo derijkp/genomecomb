@@ -941,57 +941,67 @@ proc time_seconds {diff} {
 
 proc job_parse_log {job} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
-	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {} ; set currenthost {}
 	set time_seconds ""
-	set status submitted
+	set status unkown
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
 #	set tail [file tail $job]
 	set tail .*
 #	set poss [list_find -regexp $logdata submitted|running]
 #	set logdata [lrange $logdata [lindex $poss end] end]
+	set finishedlist {}
+	set errorlist {}
 	foreach line $logdata {
 		# if {![regexp {submitted|starting|finished|failed|skipped|skipping} $line]} continue
 		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
-			set currentstatus submitted
+			set status submitted
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp currentstarttime currenthost]} {
-			set currentstatus running
+			set status running
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp currentstarttime]} {
-			set currentstatus running
+			set status running
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
 			set run $currentrun
 			set submittime $currentsubmittime
 			set starttime $currentstarttime
-			set currentstatus finished
 			set status finished
-		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
+			set host $currenthost
+			set status finished
+			lappend finishedlist [list $run $submittime $starttime $endtime $host]
+		} elseif {
+			[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime] 
+			|| [regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]
+		} {
 			set run $currentrun
 			set submittime $currentsubmittime
 			set starttime $currentstarttime
-			set currentstatus error
 			set status error
-			set failed 1
-		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
-			set run $currentrun
-			set submittime $currentsubmittime
-			set starttime $currentstarttime
-			set currentstatus error
+			set host $currenthost
 			set status error
-			set failed 1
+			lappend errorlist [list $run $submittime $starttime $endtime $host]
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t>-]+job ${tail} skipped($|:)}] $line temp skiptime]} {
-			if {$status ni {finished error}} {
-				set status skipped
-			}
-			set failed 1
+			set status skipped
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]skipping ${tail}($|:)}] $line temp skiptime]} {
-			if {$status ni {finished error}} {
-				set status skipped
-			}
+			set status skipped
 		}
 	}
-	if {$currentstatus in "running submitted"} {
+	if {$status eq "skipped"} {
+		# if "skipped" it means that the result is there, so the job is finished, but
+		# look for the last successful analysis to fill in times
+		# if there is none, the log is incomplete (e.g. is finished outside of normal pipeline)
+		# -> we should not check if still running or error though (as in next part)
+		if {[llength $finishedlist]} {
+			foreach {run submittime starttime endtime host} [lindex $finishedlist end] break
+		} else {
+			set submittime $skiptime
+			set starttime $skiptime
+			set endtime {}
+			set host {}
+		}
+	} elseif {$status in "running submitted"} {
 		set submittime $currentsubmittime
 		set starttime $currentstarttime
+		set host $currenthost
 		set endtime {}
 		if {![file exists $job.jid] || ![job_running [file_read $job.jid]]} {
 			set status error
@@ -1007,7 +1017,6 @@ proc job_parse_log {job} {
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
-	if {$status eq ""} {set status $currentstatus}
 	if {$submittime eq ""} {set submittime $currentsubmittime}
 	if {$starttime eq ""} {set submittime $currentstarttime}
 	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime currentstatus
@@ -1029,7 +1038,7 @@ proc job_parse_log {job} {
 		}
 		set duration [timediff2duration $diff]$extratime
 	}
-	return [list $status $starttime $endtime $run $duration $submittime $time_seconds]
+	return [list $status $starttime $endtime $run $duration $submittime $time_seconds $host]
 }
 
 proc job_cleanmsg {msg} {

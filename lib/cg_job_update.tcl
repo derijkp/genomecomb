@@ -106,7 +106,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			if {$addcores} {
 				lappend line {}
 			}
-			if {$status ne "skipped"} {
+			if {$status ne "skipped" || [lindex $oldlogsa($job) 2] ne "finished"} {
 				set oldlogsa($job) $line
 			}
 		}
@@ -196,15 +196,15 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		}
 		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
 			if {[job_file_exists $job.log]} {
-				if {[info exists joblogcachea($job)]} {
+				set jobloginfo [job_parse_log $job]
+				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
+				if {($starttime eq "" || $endtime eq "") && [info exists joblogcachea($job)]} {
 					set jobloginfo $joblogcachea($job)
-				} else {
-					set jobloginfo [job_parse_log $job]
+					foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				}
 				if {$status eq "skipped"} {
 					set joblogcachea($job) $jobloginfo
 				}
-				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
 					set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 					set time_seconds [timebetween_inseconds $starttime $endtime]
