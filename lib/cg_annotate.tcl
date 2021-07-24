@@ -221,6 +221,7 @@ proc cg_annotate_job {args} {
 	set lmargin 300
 	set tmargin 300
 	set overlap 75
+	set types {var gene mir reg sv bcol}
 	cg_options annotate args {
 		-near {
 			set near $value
@@ -244,6 +245,15 @@ proc cg_annotate_job {args} {
 		-distrreg {
 			set distrreg [distrreg_checkvalue $value]
 		}
+		-type {
+			if {$value eq "sv"} {
+				set types {sv gene mir reg bcol}
+			} elseif {$value eq "var"} {
+				set types {var gene mir reg bcol}
+			} else {
+				set types $type
+			}
+		}
 		-margin {set margin $value}
 		-lmargin {set lmargin $value}
 		-tmargin {set tmargin $value}
@@ -257,7 +267,13 @@ proc cg_annotate_job {args} {
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
 		if {[file isdir $testfile]} {
-			lappend dbfiles {*}[bsort [gzfiles $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/*.bcol]]
+			foreach type $types {
+				if {$type eq "bcol"} {
+					lappend dbfiles {*}[bsort [gzfiles $testfile/*.bcol]]
+				} else {
+					lappend dbfiles {*}[bsort [gzfiles $testfile/${type}_*.tsv]]
+				}
+			}
 		} elseif {![file exists $testfile]} {
 			set testfile [gzfile $testfile]
 			if {![file exists $testfile]} {
@@ -269,6 +285,7 @@ proc cg_annotate_job {args} {
 			lappend dbfiles $testfile
 		}
 	}
+	set dbfiles [list_remdup $dbfiles]
 	# start
 #	if {[jobtargetexists $resultfile [list $orifile {*}$dbfiles]]} {
 #		putslog "Skipping annotation to $resultfile: already made"
