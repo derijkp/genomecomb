@@ -77,6 +77,24 @@ test vcfcat {vcfcat -s 1 -o} {
 	exec diff tmp/temp3.vcf tmp/expected.vcf
 } {}
 
+test vcfcat {vcfcat -sample} {
+	write_vcf tmp/temp1.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      test
+		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51
+	}
+	write_vcf tmp/temp2.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      test
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51
+	}
+	write_vcf tmp/expected.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      renamed
+		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51
+	}
+	cg vcfcat -sample renamed tmp/temp1.vcf tmp/temp2.vcf > tmp/temp3.vcf
+	exec diff tmp/temp3.vcf tmp/expected.vcf
+} {}
+
 test sortvcf {sortvcf basic} {
 	file_write tmp/temp.vcf [deindent {
 		##fileformat=VCFv4.0

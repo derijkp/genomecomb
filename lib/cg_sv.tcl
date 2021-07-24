@@ -194,7 +194,8 @@ proc sv_job {args} {
 					exec touch [analysisinfo_file $target]
 				}
 				if {$ext in ".vcf .gvcf"} {
-					cg vcfcat -i 0 -s $sort -o $target {*}[bsort [jobglob {*}$list]]
+					set sample [file_sample $target]
+					cg vcfcat -i 0 -s $sort -o $target -sample $sample {*}[bsort [jobglob {*}$list]]
 				} elseif {$ext in ".analysisinfo"} {
 					analysisinfo_copy $dep $target [list \
 						svcaller_region [file tail $regfile] \

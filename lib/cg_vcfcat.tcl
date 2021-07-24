@@ -3,6 +3,7 @@ proc cg_vcfcat {args} {
 	set o stdout
 	set threads 1
 	set sort 0
+	set sample {}
 	cg_options catvcf args {
 		-o {
 			set outfile $value
@@ -12,6 +13,9 @@ proc cg_vcfcat {args} {
 		}
 		-s - -sort {
 			set sort $value
+		}
+		-sample {
+			set sample $value
 		}
 		-threads {
 			set threads $value
@@ -62,7 +66,29 @@ proc cg_vcfcat {args} {
 			if {![file size $file]} continue
 			set f [gzopen $file]
 			if {$header} {
-				fcopy $f $o
+				if {$sample eq ""} {
+					fcopy $f $o
+				} else {
+					gets $f prevline
+					while 1 {
+						set r [gets $f line]
+						if {$r == -1} break
+						if {[string index $line 0] ne {#}} break
+						puts $o $prevline
+						set prevline $line
+					}
+					set prevline [split $prevline \t]
+					if {[llength $line] > 10} {
+						error "error making $target: cannot use -sample option with multisample file ($file)"
+					}
+					lset prevline 9 $sample
+					puts $o [join $prevline \t]
+					if {$r != -1} {
+						puts $o $line
+						fcopy $f $o
+						set header 0
+					}
+				}
 				set header 0
 			} else {
 				while {[gets $f line] != -1} {
