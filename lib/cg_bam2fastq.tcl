@@ -7,6 +7,7 @@ proc cg_bam2fastq {args} {
 	set singlefile [scratchfile]
 	set unmatchedfile [scratchfile]
 	set unmatchedfile2 [scratchfile]
+	set refseq {}
 	set threads 1
 	cg_options bam2fastq args {
 		-m - -method {
@@ -27,10 +28,25 @@ proc cg_bam2fastq {args} {
 		-u2 - -unmatched2 {
 			set unmatchedfile2 $value
 		}
+		-refseq {
+			set refseq $value
+		}
 		-threads {
 			set threads $value
 		}
 	} {bamfile fastqfile1 fastqfile2} 2 3
+	if {$refseq ne ""} {
+		set refseq [refseq $refseq]
+		set samopts [list --reference $refseq]
+		set cgopts [list --refseq $refseq]
+		set picardopts [list -R $refseq]
+		set biobambamopts [list reference=$refseq]
+	} else {
+		set samopts {}
+		set cgopts {}
+		set picardopts {}
+		set biobambamopts {}
+	}
 	set compress 0
 	if {[file extension $fastqfile1] eq ".gz"} {
 		set fastqfile1 [file root $fastqfile1]
@@ -51,7 +67,7 @@ proc cg_bam2fastq {args} {
 	if {$namesort && !($method in "sam samtools" && $sortmethod eq "collate")} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
-		cg_bam_sort -threads $threads -sort name -method $sortmethod $bamfile $tempbam
+		cg_bam_sort {*}$cgopts -threads $threads -sort name -method $sortmethod $bamfile $tempbam
 	} else {
 		set tempbam $bamfile
 	}
@@ -60,33 +76,33 @@ proc cg_bam2fastq {args} {
 	if {$method eq "biobambam"} {
 		putslog "Using biobambam to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
-			biobambam bamtofastq filename=$tempbam F=$tempfastq1 F2=$tempfastq2 S=$singlefile O=$unmatchedfile O2=$unmatchedfile2 collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress
+			biobambam bamtofastq {*}$biobambamopts filename=$tempbam F=$tempfastq1 F2=$tempfastq2 S=$singlefile O=$unmatchedfile O2=$unmatchedfile2 collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress
 		} else {
-			biobambam bamtofastq filename=$tempbam F=$tempfastq1 S=$singlefile O=$unmatchedfile collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress
+			biobambam bamtofastq {*}$biobambamopts filename=$tempbam F=$tempfastq1 S=$singlefile O=$unmatchedfile collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress
 		}
 	} elseif {$method eq "picard"} {
 		putslog "Using picard to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
 			set picard [findpicard]
 			if {[catch {
-				exec samtools view --no-PG -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$tempfastq1 F2=$tempfastq2 VALIDATION_STRINGENCY=SILENT
+				exec samtools view {*}$samopts --no-PG -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$tempfastq1 F2=$tempfastq2 VALIDATION_STRINGENCY=SILENT
 			} msg] && ![regexp "done. Elapsed time:" $msg]} {
 				error $msg
 			}
 		} else {
-			picard SamToFastq I=$tempbam F=$tempfastq1 VALIDATION_STRINGENCY=SILENT >@ stdout
+			picard SamToFastq {*}$picardopts I=$tempbam F=$tempfastq1 VALIDATION_STRINGENCY=SILENT >@ stdout
 		}
 		putslog $msg
 	} elseif {$method in "sam samtools" && $sortmethod eq "collate"} {
 		putslog "Using samtools to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
-			catch_exec samtools collate -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
+			catch_exec samtools collate {*}$samopts -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
 		} else {
-			catch_exec samtools collate --threads $threads -u -O $tempbam | samtools fastq -n -N -F 0x900 - > $tempfastq1
+			catch_exec samtools collate {*}$samopts --threads $threads -u -O $tempbam | samtools fastq -n -N -F 0x900 - > $tempfastq1
 		}
 	} elseif {$method in "sam samtools"} {
 		putslog "Using samtools to convert bam to fastq"
-		catch_exec samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
+		catch_exec samtools fastq {*}$samopts -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
