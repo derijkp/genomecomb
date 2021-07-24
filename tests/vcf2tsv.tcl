@@ -749,4 +749,20 @@ test vcf2tsv {vcf2tsv sniffles N in del} {
 	cg vcf2tsv tmp/test.vcf tmp/expected.tsv
 } {}
 
+test vcf2tsv {bug fix check} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		19	11071527	.	G	<CGA_NOCALL>	.	.	END=11071900;NS=1;AN=0	GT:PS	./.:.
+		19	11071528	.	G	<CGA_NOCALL>	.	.	END=11071900;NS=1;AN=0	GT:PS	1/0:.
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		19	11071527	11071527	unk		<CGA_NOCALL>	.	.	.	?	?	v	0	?;?.							1					
+		19	11071528	11071528	unk		<CGA_NOCALL>	.	.	.	<CGA_NOCALL>		t	0	1;0							1					
+	}]\n
+	cg vcf2tsv tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
 testsummarize

@@ -56,7 +56,7 @@ typedef struct OBuffer {
 static OBuffer *obuffer = NULL;
 static AltVar *altvars = NULL;
 static DString *line, *string, *temp;
-static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype, *bndtype;
+static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype, *bndtype, *unknowntype;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -551,6 +551,11 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 					altvar->altsize = l2;
 					altvar->alt = curalt;
 				}
+			} else {
+				/* END without SVTYPE, nor any known variant type in ALT */
+				altvar->type = unknowntype;
+				altvar->altsize = l2;
+				altvar->alt = curalt;
 			}
 		}
 	}
@@ -1270,7 +1275,7 @@ int main(int argc, char *argv[]) {
 	reftype=DStringNewFromChar("ref");
 	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
 	duptype=DStringNewFromChar("dup"); invtype=DStringNewFromChar("inv"); cnvtype=DStringNewFromChar("cnv"); transtype=DStringNewFromChar("trans");
-	bndtype=DStringNewFromChar("bnd");
+	bndtype=DStringNewFromChar("bnd"); unknowntype=DStringNewFromChar("unk");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
 	header=NULL; format=NULL; info=NULL; samples=NULL;
 	formatfields=NULL ; headerfields=NULL; infofields=NULL; linea=NULL;
