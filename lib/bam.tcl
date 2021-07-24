@@ -33,7 +33,7 @@ proc bam_index_job {args} {
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
 	set bamindex $bam.[indexext $bam]
-	job [job_relfile2name bamindex- $pre-$root] {*}$skips -optional $optional \
+	job [job_relfile2name bamindex- [file tail $bam]] {*}$skips -optional $optional \
 	-deps [list $bam] \
 	-targets [list $bamindex] \
 	-vars {

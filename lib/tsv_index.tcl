@@ -292,7 +292,7 @@ proc maketabix_job {args} {
 	set pre [lindex [split $file -] 0]
 	set root [file_rootname $file]
 	set target $file.tbi
-	job [job_relfile2name bamindex- $pre-$root] {*}$skips -optional $optional -deps {$file} -targets {$target} -code {
+	job [job_relfile2name maketabix [file tail $file]] {*}$skips -optional $optional -deps {$file} -targets {$target} -code {
 		putslog "making $target"
 		set tempfile [filetemp_ext $dep]
 		mklink $dep $tempfile
