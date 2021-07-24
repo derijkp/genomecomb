@@ -13,7 +13,10 @@ test sv {sniffles} {
 	file mkdir tmp/sv-sniffles
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-sniffles/map-sngmlr-NA12878.bam
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-sniffles/map-sngmlr-NA12878.bam.bai
-	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles/map-sngmlr-NA12878.bam
+	cg sv_sniffles {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-sniffles/map-sngmlr-NA12878.bam \
+		>& tmp/sv-sniffles.log
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
 		tmp/sv-sniffles expected/sv-sniffles
 } {}
@@ -25,7 +28,10 @@ test sv {sniffles2 NA12878} {
 	file mkdir tmp/sv-sniffles2
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam.bai
-	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
+	cg sv_sniffles {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam \
+		>& tmp/sv-sniffles2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2 expected/sv-sniffles2
 } {}
@@ -39,7 +45,8 @@ test sv {sniffles2 ngmlr NA12878} {
 	mklink ori/ont/map-ngmlr-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam.bai
 	cg sv_sniffles {*}$::dopts \
 		-refseq $::smalltestdir/refseqtest/hg19 \
-		tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam
+		tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam \
+		>& tmp/sv-sniffles2_ngmlr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2_ngmlr expected/sv-sniffles2_ngmlr
 } {}
@@ -53,7 +60,8 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam.bai
 	cg sv_sniffles {*}$::dopts \
 		-refseq $::smalltestdir/refseqtest/hg19 \
-		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
+		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam \
+		>& tmp/sv-sniffles2_minimap2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
@@ -67,7 +75,8 @@ test sv {sniffles -distrreg chr} {
 	cg sv {*}$::dopts \
 		-method sniffles -distrreg chr \
 		-refseq $::smalltestdir/refseqtest/hg19 \
-		tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam
+		tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam \
+		>& tmp/sv-sniffles2_minimap2_distrchr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
 		tmp/sv-sniffles2_minimap2_distrchr expected/sv-sniffles2_minimap2
 } {}
@@ -78,7 +87,10 @@ test sv {cuteSV} {
 	file mkdir tmp/sv-cuteSV
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-cuteSV/map-sngmlr-NA12878.bam
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-cuteSV/map-sngmlr-NA12878.bam.bai
-	cg sv_cuteSV {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-cuteSV/map-sngmlr-NA12878.bam
+	cg sv_cuteSV {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-cuteSV/map-sngmlr-NA12878.bam \
+		>& tmp/sv-cuteSV.log
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
 		tmp/sv-cuteSV expected/sv-cuteSV
 } {}

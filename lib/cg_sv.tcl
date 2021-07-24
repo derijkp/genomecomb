@@ -168,27 +168,15 @@ proc sv_job {args} {
 		defcompressionlevel 9
 		# concatenate results
 		set pos 0
+		set cleanupfiles $regfiles
 		foreach resultfile $resultfiles {
 			set list [list_subindex $todo $pos]
 			set deps $list
-#			set ainfolist {}
-#			foreach el $list {
-#				set analysisinfo [lindex [jobglob [analysisinfo_file $el]]]
-#				if {$analysisinfo ne ""} {
-#					lappend ainfolist $analysisinfo
-#				}
-#				
-#			}
-#			set analysisinfo [lindex $ainfolist 0]
-#			lappend deps {*}$ainfolist
 			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list method regfile distrreg sample
 			} -code {
-#				if {[llength $analysisinfo]} {
-#					file_copy $analysisinfo [analysisinfo_file $target]
-#				}
 				if {![auto_load sv_${method}_sortdistrreg]} {
 					set sort 0
 					set sortpipe {}
@@ -196,30 +184,39 @@ proc sv_job {args} {
 					set sort [sv_${method}_sortdistrreg]
 					set sortpipe {| cg select -s - }
 				}
-				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
+				set ext [file extension [gzroot $target]]
+				set analysisinfo [analysisinfo_file $dep]
+				if {[file exists $analysisinfo] && $ext ni ".analysisinfo"} {
+					analysisinfo_copy $analysisinfo [analysisinfo_file $target] [list \
+						svcaller_region [file tail $regfile] \
+						svcaller_distrreg [file tail $distrreg] \
+						sample $sample]
+					exec touch [analysisinfo_file $target]
+				}
+				if {$ext in ".vcf .gvcf"} {
 					cg vcfcat -i 0 -s $sort -o $target {*}[bsort [jobglob {*}$list]]
-				} elseif {[file extension [gzroot $target]] in ".analysisinfo"} {
-					analysisinfo_copy $dep $target \
-						[list svcaller_region [file tail $regfile] \
-						[list svcaller_distrreg [file tail $distrreg] \
+				} elseif {$ext in ".analysisinfo"} {
+					analysisinfo_copy $dep $target [list \
+						svcaller_region [file tail $regfile] \
+						svcaller_distrreg [file tail $distrreg] \
 						sample $sample]
 				} else {
 					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
 					file rename -force $target.temp $target
 					cg_zindex $target
 				}
-				foreach file $list {
-					file delete $file
-					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
-					if {[file extension $file] eq ".zst"} {file delete $file.zsti}
-					file delete -force [gzroot $file].temp
-					file delete [analysisinfo_file $file]
-				}
+			}
+			foreach file $list {
+				lappend cleanupfiles $file
+				if {[file extension $file] eq ".lz4"} {lappend cleanupfiles $file.lz4i}
+				if {[file extension $file] eq ".zst"} {lappend cleanupfiles $file.zsti}
+				lappend cleanupfiles [gzroot $file].temp
+				lappend cleanupfiles [analysisinfo_file $file]
 			}
 			incr pos
 		}
 		if {[llength $regfiles]} {
-			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles] $resultfiles
+			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles
 		}
 		cd $keeppwd
 		return $resultfiles
