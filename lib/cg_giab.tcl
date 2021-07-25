@@ -63,8 +63,36 @@ proc cg_giab_gettruth {args} {
 		} {
 			exec wget -c $url 2>@ stderr >@ stdout
 		}
-		cg vcf2tsv hg38.hybrid.vcf.gz | cg select -s - > var_hg38.hybrid.tsv.zst
-		cg bed2tsv hg38.hybrid.bed.gz | cg select -s - > reg_hg38.hybrid.tsv.zst
+		cg vcf2tsv hg38.hybrid.vcf.gz | cg select -s - | cg zst > var_hg38.hybrid.tsv.zst
+		cg bed2tsv hg38.hybrid.bed.gz | cg select -s - | cg zst > reg_hg38.hybrid.tsv.zst
+		return
+	}
+	if {[regexp {sv(.*)} $version temp svversion]} {
+		if {$svversion eq ""} {
+			set svversion 0.6
+		} elseif {$svversion ne 0.6} {
+			error "only sv0.6 supported"
+		}
+		if {$basedir eq ""} {
+			set basedir ~/public/giab/truth/truth_hg38_sv$svversion
+		}
+		puts stderr "Making $basedir"
+		mkdir $basedir
+		cd $basedir
+		set baseurl ftp://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/analysis/NIST_SVs_Integration_v$svversion/
+		foreach file {
+			*.vcf.gz
+			*.vcf.gz.tbi
+			*.bed
+		} {
+			exec wget -c $baseurl/$file 2>@ stderr >@ stdout
+		}
+		foreach vcf [glob *.vcf.gz] {
+			cg vcf2tsv $vcf | cg select -s - | cg zst > sv_hg38_[file root [gzroot $vcf]].tsv.zst
+		}
+		foreach bed [glob *.bed] {
+			cg bed2tsv $bed | cg select -s - | cg zst > reg_hg38_[file root [gzroot $bed]].tsv.zst
+		}
 		return
 	}
 	if {$basedir eq ""} {
