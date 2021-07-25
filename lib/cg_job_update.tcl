@@ -106,7 +106,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			if {$addcores} {
 				lappend line {}
 			}
-			if {[info exists oldlogsa($job)] && ($status ne "skipped" || [lindex $oldlogsa($job) 2] ne "finished")} {
+			if {![info exists oldlogsa($job)] || $status ne "skipped" || [lindex $oldlogsa($job) 2] ne "finished"} {
 				set oldlogsa($job) $line
 			}
 		}
@@ -172,13 +172,13 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				set time_seconds [timebetween_inseconds $starttime $endtime]
 			}
 		}
-		set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
-		set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
 		if {$jobo eq "total"} {
 			set walltime [timediff2duration [lmath_calc $totalendcode - $totalstartcode]]
 			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime "$walltime (wall) [time_seconds2duration $totalseconds] (total)" "$totalseconds (total)" $targets [job_cleanmsg $msg] $run {}] \t]
 			break
 		}
+		set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
+		set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
 			set job $cgjob(basedir)/$jobo
 		} else {
