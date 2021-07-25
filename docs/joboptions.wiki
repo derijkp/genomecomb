@@ -17,9 +17,11 @@ The --distribute or -d option can be used to select alternative processing metho
 Without a -d option (or -d direct) the command will run jobs sequentially,
 stopping when an error occurs in a job. It will skip any job where the
 targets were already completed (and the files it uses as input were not
-changed after this completion). The command produces a logfile containing
+changed after this completion). While runing the command maintains a logfile containing
 one line with information for each job (such as job name, status, starttime,
-endtime, duration, target files).
+endtime, duration, target files), which can be useful to check when an
+error occurs. After a succesful run this logfile is removed unless you
+specifically specified -d direct or -d 1.
 
 === distributed run ===
 An analysis can be run faster by running multiple jobs at the same
