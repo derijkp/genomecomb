@@ -44,7 +44,7 @@ test meth {meth_nanopolish} {
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
-		-x *log_jobs -x *.index \
+		-x *log_jobs -x *.index -x *.log \
 		tmp/meth_nanopolish expected/meth_nanopolish]
 	join [list_remove $result {}] \n
 } {}
@@ -90,7 +90,7 @@ test meth {meth_nanopolish with gz results} {
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.gz.tbi \
+		-x *.gz.tbi -x *sniffles*.vcf \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
 		tmp/methgz expected/methgz]

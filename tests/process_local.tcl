@@ -34,7 +34,7 @@ test process_sample {bwa distrreg} {
 	# chr21:42730799-42762826
 	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x projectinfo.tsv -x *.analysisinfo -x *.stats.zst \
-		-x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
+		-x info_analysis.tsv -x *.submitting -x *.finished -x fastqc* -x *.index -x log_jobs \
 		tmp/NA19240m data/NA19240m
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
@@ -54,7 +54,7 @@ test process_sample {bwa distrreg cram} {
 	lappend result [tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x *.cram -x *.sam -x *.stats.zst \
 		-x projectinfo.tsv -x *.analysisinfo \
-		-x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs \
+		-x info_analysis.tsv -x *.submitting -x *.finished -x fastqc* -x *.index -x log_jobs \
 		tmp/NA19240m data/NA19240m]
 	# do cram diff separate as there may be differences in the "other" fields
 	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.cram | cg select -rf other > tmp/temp.tsv

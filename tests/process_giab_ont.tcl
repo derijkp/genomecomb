@@ -146,6 +146,7 @@ test process_giab {process small_giab_ont} {
 			-svcallers $svcallers \
 			-cuteSV-threads 16 \
 			-varcallers $varcallers \
+			-hap_bam 1 \
 			-reports {-fastqc predictgender} \
 			-dbdir /complgen/refseq/hg38 \
 			tmp/small_giab_ont >& tmp/small_giab_ont.log
@@ -211,6 +212,7 @@ test process_giab {process_giab_ont_ds3} {
 			-sniffles-n -1 \
 			-svcallers {sniffles cuteSV cuteSV_pacbio npinv} \
 			-varcallers {longshot} \
+			-hap_bam 1 \
 			-reports {-fastqc predictgender} \
 			-dbdir /complgen/refseq/hg38 \
 			tmp/giab_ont_ds3 >& tmp/giab_ont_ds3.log
