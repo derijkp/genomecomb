@@ -171,19 +171,23 @@ test process_giab {process small_giab_ont} {
 	}
 } {}
 
-# downsample 3 times for smaller testset (still has size similar to our normal runs) and thus faster testing
-test process_giab {process_giab_ont_ds3} {
+# downsample 9/20 times for smaller testset (still has size similar to our normal runs) and thus faster testing
+test process_giab {process_giab_ont_ds} {
 	cd ~/genomecomb_giab_testdata
 	if {$::run} {
-		file delete -force tmp/giab_ont_ds3
-		file mkdir tmp/giab_ont_ds3/samples
+		file delete -force tmp/giab_ont_ds
+		file mkdir tmp/giab_ont_ds/samples
 		foreach sample {
 			HG002_NA24385_son	HG003_NA24149_father	HG004_NA24143_mother
 		} {
-			file mkdir tmp/giab_ont_ds3/samples/$sample/fastq
+			file mkdir tmp/giab_ont_ds/samples/$sample/fastq
 			# skip 2 fastqs everytime
-			foreach {file temp temp} [glob public/giab/fastqs/giab_ont_ultralong/$sample/split/*fastq.gz] {
-				mklink $file tmp/giab_ont_ds3/samples/$sample/fastq/[file tail $file]
+			set files [glob public/giab/fastqs/giab_ont_ultralong/$sample/split/*fastq.gz]
+			set pos 0
+			foreach {file temp} $files {
+				incr pos
+				if {$pos == 10} {set pos 0 ; continue}
+				mklink $file tmp/giab_ont_ds/samples/$sample/fastq/[file tail $file]
 			}
 			foreach version {3.3.2 4.2.1} {
 				if {$version eq "3.3.2"} {
@@ -191,7 +195,7 @@ test process_giab {process_giab_ont_ds3} {
 				} else {
 					set samplename truth[string_change $version {. {}}]_$sample
 				}
-				set sampledir tmp/giab_ont_ds3/samples/$samplename
+				set sampledir tmp/giab_ont_ds/samples/$samplename
 				mkdir $sampledir
 				set vcf [glob public/giab/truth/truth_hg38_v$version/*/${sample}_hg38/*.vcf.gz]
 				set region [glob public/giab/truth/truth_hg38_v$version/*/${sample}_hg38/*.bed.tsv.zst]
@@ -201,7 +205,7 @@ test process_giab {process_giab_ont_ds3} {
 			}
 		}
 		# run
-		puts "Starting process_giab_ont_ds3 run"
+		puts "Starting process_giab_ont_ds run"
 		exec devcg process_project -stack 1 -v 2 -d sge -split 1 -threads 6 \
 			-paired 0 -clip 0 \
 			-maxfastqdistr 250 \
@@ -215,40 +219,119 @@ test process_giab {process_giab_ont_ds3} {
 			-hap_bam 1 \
 			-reports {-fastqc predictgender} \
 			-dbdir /complgen/refseq/hg38 \
-			tmp/giab_ont_ds3 >& tmp/giab_ont_ds3.log
+			tmp/giab_ont_ds >& tmp/giab_ont_ds.log
 	} else {
 		# check vs expected
 		foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
 			benchmarkvars \
 				-analyses longshot-sminimap2-$sample \
-				-regionfile tmp/giab_ont_ds3/samples/truth421_$sample/sreg-truth-truth-truth421_$sample.tsv.zst \
-				tmp/giab_ont_ds3/compar/annot_compar-giab_ont_ds3.tsv.zst \
+				-regionfile tmp/giab_ont_ds/samples/truth421_$sample/sreg-truth-truth-truth421_$sample.tsv.zst \
+				tmp/giab_ont_ds/compar/annot_compar-giab_ont_ds.tsv.zst \
 				truth-truth-truth421_$sample \
-				tmp/giab_ont_ds3/benchmark_truth421_$sample.tsv
+				tmp/giab_ont_ds/benchmark_truth421_$sample.tsv
 			benchmarkvars \
 				-analyses longshot-sminimap2-$sample \
-				-regionfile tmp/giab_ont_ds3/samples/truth_$sample/sreg-truth-truth-truth_$sample.tsv.zst \
-				tmp/giab_ont_ds3/compar/annot_compar-giab_ont_ds3.tsv.zst \
+				-regionfile tmp/giab_ont_ds/samples/truth_$sample/sreg-truth-truth-truth_$sample.tsv.zst \
+				tmp/giab_ont_ds/compar/annot_compar-giab_ont_ds.tsv.zst \
 				truth-truth-truth_$sample \
-				tmp/giab_ont_ds3/benchmark_truth_$sample.tsv
-			#set truthsample tmp/giab_ont_ds3/samples/truth421_HG003_NA24149_father
-			#set sample tmp/giab_ont_ds3/samples/HG003_NA24149_father
-			#cg giab_benchmark -refseq /complgen/refseq/hg38 tmp/giab_ont_ds3/giab_benchmark_${sample}_ $truthsample $sample
+				tmp/giab_ont_ds/benchmark_truth_$sample.tsv
+			#set truthsample tmp/giab_ont_ds/samples/truth421_HG003_NA24149_father
+			#set sample tmp/giab_ont_ds/samples/HG003_NA24149_father
+			#cg giab_benchmark -refseq /complgen/refseq/hg38 tmp/giab_ont_ds/giab_benchmark_${sample}_ $truthsample $sample
 		}
 		set result {}
 		lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 			-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
 			-x *.analysisinfo -x *.png -x *.submitting \
-			tmp/giab_ont_ds3 expected/giab]
-		lappend result [diffanalysisinfo tmp/giab_ont_ds3/compar/annot_compar-*.tsv.analysisinfo expected/giab/compar/annot_compar-*.tsv.analysisinfo]
-		# lappend result [checkdiff -y --suppress-common-lines tmp/giab_ont_ds3/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/giab/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-		foreach file1 [glob tmp/giab_ont_ds3/compar/info_analysis.tsv tmp/giab_ont_ds3/samples/*/info_analysis.tsv] {
+			tmp/giab_ont_ds expected/giab]
+		lappend result [diffanalysisinfo tmp/giab_ont_ds/compar/annot_compar-*.tsv.analysisinfo expected/giab/compar/annot_compar-*.tsv.analysisinfo]
+		# lappend result [checkdiff -y --suppress-common-lines tmp/giab_ont_ds/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/giab/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+		foreach file1 [glob tmp/giab_ont_ds/compar/info_analysis.tsv tmp/giab_ont_ds/samples/*/info_analysis.tsv] {
 			regsub ^tmp $file1 expected file2
 			lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 		}
 		join [list_remove $result {}] \n
 	}
 } {}
+
+## downsample 3 times for smaller testset (still has size similar to our normal runs) and thus faster testing
+#test process_giab {process_giab_ont_ds3} {
+#	cd ~/genomecomb_giab_testdata
+#	if {$::run} {
+#		file delete -force tmp/giab_ont_ds3
+#		file mkdir tmp/giab_ont_ds3/samples
+#		foreach sample {
+#			HG002_NA24385_son	HG003_NA24149_father	HG004_NA24143_mother
+#		} {
+#			file mkdir tmp/giab_ont_ds3/samples/$sample/fastq
+#			# skip 2 fastqs everytime
+#			foreach {file temp temp} [glob public/giab/fastqs/giab_ont_ultralong/$sample/split/*fastq.gz] {
+#				mklink $file tmp/giab_ont_ds3/samples/$sample/fastq/[file tail $file]
+#			}
+#			foreach version {3.3.2 4.2.1} {
+#				if {$version eq "3.3.2"} {
+#					set samplename truth_$sample
+#				} else {
+#					set samplename truth[string_change $version {. {}}]_$sample
+#				}
+#				set sampledir tmp/giab_ont_ds3/samples/$samplename
+#				mkdir $sampledir
+#				set vcf [glob public/giab/truth/truth_hg38_v$version/*/${sample}_hg38/*.vcf.gz]
+#				set region [glob public/giab/truth/truth_hg38_v$version/*/${sample}_hg38/*.bed.tsv.zst]
+#				mklink $vcf $sampledir/var-truth-truth-$samplename.vcf.gz 1
+#				mklink [file root [gzroot $vcf]].tsv.zst $sampledir/var-truth-truth-$samplename.tsv.zst 1
+#				mklink $region $sampledir/sreg-truth-truth-$samplename.tsv.zst 1
+#			}
+#		}
+#		# run
+#		puts "Starting process_giab_ont_ds3 run"
+#		exec devcg process_project -stack 1 -v 2 -d sge -split 1 -threads 6 \
+#			-paired 0 -clip 0 \
+#			-maxfastqdistr 250 \
+#			-aligner {minimap2} \
+#			-removeduplicates 0 \
+#			-realign 0 \
+#			-distrreg chr \
+#			-sniffles-n -1 \
+#			-svcallers {sniffles cuteSV cuteSV_pacbio npinv} \
+#			-varcallers {longshot} \
+#			-hap_bam 1 \
+#			-reports {-fastqc predictgender} \
+#			-dbdir /complgen/refseq/hg38 \
+#			tmp/giab_ont_ds3 >& tmp/giab_ont_ds3.log
+#	} else {
+#		# check vs expected
+#		foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
+#			benchmarkvars \
+#				-analyses longshot-sminimap2-$sample \
+#				-regionfile tmp/giab_ont_ds3/samples/truth421_$sample/sreg-truth-truth-truth421_$sample.tsv.zst \
+#				tmp/giab_ont_ds3/compar/annot_compar-giab_ont_ds3.tsv.zst \
+#				truth-truth-truth421_$sample \
+#				tmp/giab_ont_ds3/benchmark_truth421_$sample.tsv
+#			benchmarkvars \
+#				-analyses longshot-sminimap2-$sample \
+#				-regionfile tmp/giab_ont_ds3/samples/truth_$sample/sreg-truth-truth-truth_$sample.tsv.zst \
+#				tmp/giab_ont_ds3/compar/annot_compar-giab_ont_ds3.tsv.zst \
+#				truth-truth-truth_$sample \
+#				tmp/giab_ont_ds3/benchmark_truth_$sample.tsv
+#			#set truthsample tmp/giab_ont_ds3/samples/truth421_HG003_NA24149_father
+#			#set sample tmp/giab_ont_ds3/samples/HG003_NA24149_father
+#			#cg giab_benchmark -refseq /complgen/refseq/hg38 tmp/giab_ont_ds3/giab_benchmark_${sample}_ $truthsample $sample
+#		}
+#		set result {}
+#		lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+#			-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+#			-x *.analysisinfo -x *.png -x *.submitting \
+#			tmp/giab_ont_ds3 expected/giab]
+#		lappend result [diffanalysisinfo tmp/giab_ont_ds3/compar/annot_compar-*.tsv.analysisinfo expected/giab/compar/annot_compar-*.tsv.analysisinfo]
+#		# lappend result [checkdiff -y --suppress-common-lines tmp/giab_ont_ds3/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/giab/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+#		foreach file1 [glob tmp/giab_ont_ds3/compar/info_analysis.tsv tmp/giab_ont_ds3/samples/*/info_analysis.tsv] {
+#			regsub ^tmp $file1 expected file2
+#			lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+#		}
+#		join [list_remove $result {}] \n
+#	}
+#} {}
 
 # full data is too slow for easy testing
 #test process_giab {process_giab_ont} {
