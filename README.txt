@@ -1,12 +1,26 @@
 GenomeComb
 ========== A program for the analysis of complete genome data
-           Copyright 2010 VIB and Universiteit Antwerpen
+           Copyright 2010 to 2021 VIB and Universiteit Antwerpen
 
 Purpose
 -------
-Genomecomb is a package designed for the analysis of complete genome data.
-It can be used to compare, annotate and especially filter the results of
-complete genome sequencing.
+Genomecomb is a package designed to analyze, combine, annotate
+and query whole genome, exome or targetted sequencing data.
+
+It provides pipelines to analyse data sets made with different sequencing
+technologies (Illumina, nanopore) using a (choosable) set of aligners,
+variant callers, structural variant callers, etc. and to extensively
+annotate the results.
+
+It also provides a very flexible tool to query or summarise the results, and
+includes a graphical table browser that can handle browsing (and querying)
+multigigabyte tables with millions of rows
+
+Other included tools can be used for region operations (including making a
+queryable multisample regionfile), validation (primer design and
+checking), genetics analysis of sequencing data (homwes, plink export),
+conversion (between different formats, extended liftover) and reporting
+(depth histograms, pipeline results, gender prediction)
 
 System requirements and Installation
 ------------------------------------
@@ -52,10 +66,10 @@ How to contact me
 -----------------
 
 Peter De Rijk
-Applied Molecular Genomics Group, VIB Department of Molecular Genetics
+VIB - UAntwerp Center for Molecular Neurology, Neuromics Support Facility - Bioinformatics
 University of Antwerp
 Universiteitsplein 1
 B-2610 Antwerpen, Belgium
 
-tel.: 32-03-265.10.30
-E-mail: Peter.DeRijk@molgen.vib-ua.be
+tel.: +32-03-265.10.40
+E-mail: Peter.DeRijk@uantwerpen.vib.be
