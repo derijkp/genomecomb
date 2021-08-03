@@ -29,6 +29,8 @@ In an **inner** join only lines are present where the id was found in both files
 join shows all lines of file1; if the id values where not found in file2, the file2 based fields
 are empty. A **right** join contains all lines in file2 and a **full** join has data for all lines
 in both files, putting empty values where needed.
+; -comments 0/1/2: by default comments (start of tsv file) from file1 will be included in the result (1), 
+select 2 to include comments from file2, or 0 to not include comments
 
 == Category ==
 tsv

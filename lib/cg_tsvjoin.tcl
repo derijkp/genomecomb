@@ -4,11 +4,18 @@ proc cg_tsvjoin {args} {
 	set idfields1 {}
 	set idfields2 {}
 	set type f
+	set usecomments 1
 	cg_options tsvjoin args {
 		-pre1 {set pre1 $value}
 		-pre2 {set pre2 $value}
 		-idfields - -idfields1 {set idfields1 $value}
 		-idfields2 {set idfields2 $value}
+		-comments {
+			if {$value ni "0 1 2"} {
+				error "-comments should be one of:0,1,2"
+			}
+			set usecomments $value
+		}
 		-type {
 			switch $value {
 				full {set type f}
@@ -30,9 +37,9 @@ proc cg_tsvjoin {args} {
 
 	catch {close $f1} ; catch {close $f2}
 	set f1 [gzopen $file1]
-	set header1 [tsv_open $f1]
+	set header1 [tsv_open $f1 comments1]
 	set f2 [gzopen $file2]
-	set header2 [tsv_open $f2]
+	set header2 [tsv_open $f2 comments2]
 	if {![llength $idfields1]} {
 		set idfields1 [list_common $header1 $header2]
 		set idfields2 $idfields1
@@ -63,6 +70,11 @@ proc cg_tsvjoin {args} {
 		foreach field $remain2 {
 			lappend newheader ${pre2}$field
 		}
+	}
+	if {$usecomments eq "1"} {
+		puts -nonewline $o $comments1
+	} elseif {$usecomments eq "2"} {
+		puts -nonewline $o $comments1
 	}
 	puts $o [join $newheader \t]
 	set previd1 {}

@@ -920,6 +920,29 @@ test format {tsvjoin -pre2} {
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test format {tsvjoin -pre2} {
+	write_file tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+	}]
+	write_tab tmp/file2.tsv {
+		# test 2
+		id	v2
+		id1	1
+		id2	2
+	}
+	write_tab tmp/expected.tsv {
+		# test 1
+		id	v1	p2_v2
+		id1	a	1
+		id2	b	2
+	}
+	exec cg tsvjoin -pre2 p2_ -comments 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test csv2tsv {csv2tsv} {
 	file_write tmp/temp.csv [deindent {
 		a,b,c
