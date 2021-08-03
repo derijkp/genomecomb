@@ -60,7 +60,6 @@ proc cg_tsvjoin {args} {
 	if {$pre2 eq ""} {
 		lappend newheader {*}$remain2
 	} else {
-		set newheader {}
 		foreach field $remain2 {
 			lappend newheader ${pre2}$field
 		}
@@ -102,7 +101,7 @@ proc cg_tsvjoin {args} {
 			set c [loc_compare $id1 $id2]
 		}
 		if {$c == 0} {
-			puts $o [join $line1 \t]\t[join [list_sub $line2 -exclude $poss2] \t]
+			puts $o $line1\t[join [list_sub $line2 -exclude $poss2] \t]
 			set line2 [split [gets $f2] \t]
 			set id2 [list_sub $line2 $poss2]
 			if {[loc_compare $previd2 $id2] > 0} {
@@ -111,7 +110,7 @@ proc cg_tsvjoin {args} {
 			set previd2 $id2
 		} else {
 			if {$type in "f l"} {
-				puts $o [join $line1 \t]\t$defline2
+				puts $o $line1\t$defline2
 			}
 		}
 	}
