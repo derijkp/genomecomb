@@ -1,3 +1,28 @@
+proc cg_tsvjoin_fullout {o sdefline1 poss1 id2 line2 poss2} {
+	set temp $sdefline1
+	foreach v $id2 pos $poss1 {
+		lset temp $pos $v
+	}
+	puts $o [join $temp \t]\t[join [list_sub $line2 -exclude $poss2] \t]
+}
+
+proc cg_tsvjoin_next {file f idfields poss previdVar prevlineVar idVar lineVar} {
+	upvar $previdVar previd
+	upvar $prevlineVar prevline
+	upvar $idVar id
+	upvar $lineVar line
+	set previd $id
+	set prevline $line
+	set r [gets $f line]
+	if {$r < -1} {return $r}
+	set line [split $line \t]
+	set id [list_sub $line $poss]
+	if {[loc_compare $previd $id] > 0} {
+		error "file $file not properly sorted on $idfields ($previd comes before $id)"
+	}
+	return $r
+}
+
 proc cg_tsvjoin {args} {
 	set pre1 {}
 	set pre2 {}
@@ -49,8 +74,10 @@ proc cg_tsvjoin {args} {
 	set poss2 [list_cor $header2 $idfields2]
 	if {[inlist $poss2 -1]} {error "missing idfields in $file2: [list_sub $idfields2 [list_find $poss2 -1]]"}
 	set remain2 [list_lremove $header2 $idfields2]
-	set defline1 [join [list_fill [llength $header1] {}] \t]
-	set defline2 [join [list_fill [llength $remain2] {}] \t]
+	set sdefline1 [list_fill [llength $header1] {}]
+	set defline1 [join $sdefline1 \t]
+	set sdefline2 [list_fill [llength $remain2] {}]
+	set defline2 [join $sdefline2 \t]
 	if {[llength [list_common $remain2 [list_lremove $header1 $idfields1]]]} {
 		if {$pre1 eq $pre2} {
 			error "The same (non-id) field is present in both filesnd pre1 and pre2 are the same"
@@ -78,56 +105,62 @@ proc cg_tsvjoin {args} {
 	}
 	puts $o [join $newheader \t]
 	set previd1 {}
+	set line1 [split [gets $f1] \t]
+	set id1 [list_sub $line1 $poss1]
+	set previd2 {}
 	set line2 [split [gets $f2] \t]
 	set id2 [list_sub $line2 $poss2]
-	set previd2 $id2
 	while 1 {
-		if {[gets $f1 line1] == -1} {
-			if {$type in "f r"} {
-				while {[gets $f2 line2] != -1} {
-					set line2 [split $line2 \t]
-					puts $o $defline1\t[join [list_sub $line2 -exclude $poss2] \t]
+		# putsvars previd1 prevline1 id1 line1
+		# putsvars previd2 prevline2 id2 line2
+		set c [loc_compare $id1 $id2]
+		if {$c == 0} {
+			puts $o [join $line1 \t]\t[join [list_sub $line2 -exclude $poss2] \t]
+			set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
+			set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
+			if {$r1 == -1 || $r2 == -1} break
+			while 1 {
+				if {[loc_compare $previd1 $id2] == 0} {
+					puts $o [join $prevline1 \t]\t[join [list_sub $line2 -exclude $poss2] \t]
+					set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
+					if {$r2 < -1} break
+				} elseif {[loc_compare $id1 $previd2] == 0} {
+					puts $o [join $line1 \t]\t[join [list_sub $prevline2 -exclude $poss2] \t]
+					set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
+					if {$r1 < -1} break
+				} else {
+					break
 				}
 			}
-			break
-		}
-		set sline1 [split $line1 \t]
-		if {![llength $sline1]} continue
-		set id1 [list_sub $sline1 $poss1]
-		if {[loc_compare $previd1 $id1] > 0} {
-			error "file $file1 not properly sorted on $idfields1 ($previd1 comes before $id1)"
-		}
-		set previd1 $id1
-		set c [loc_compare $id1 $id2]
-		while {$c > 0} {
+		} elseif {$c > 0} {
 			if {$type in "f r"} {
-				puts $o $defline1\t[join [list_sub $line2 -exclude $poss2] \t]
+				cg_tsvjoin_fullout $o $sdefline1 $poss1 $id2 $line2 $poss2
 			}
-			if {[gets $f2 line] == -1} {set c -1 ; break}
-			set line2 [split $line2 \t]
-			set id2 [list_sub $line2 $poss2]
-			if {[loc_compare $previd2 $id2] > 0} {
-				error "file $file2 not properly sorted on $idfields2 ($previd2 comes before $id2)"
-			}
-			set previd2 $id2
-			set c [loc_compare $id1 $id2]
-		}
-		if {$c == 0} {
-			puts $o $line1\t[join [list_sub $line2 -exclude $poss2] \t]
-			set line2 [split [gets $f2] \t]
-			set id2 [list_sub $line2 $poss2]
-			if {[loc_compare $previd2 $id2] > 0} {
-				error "file $file2 not properly sorted on $idfields2 ($previd2 comes before $id2)"
-			}
-			set previd2 $id2
+			set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
+			if {$r2 == -1} break
 		} else {
 			if {$type in "f l"} {
-				puts $o $line1\t$defline2
+				puts $o [join $line1 \t]\t$defline2
 			}
+			set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
+			if {$r1 == -1} break
 		}
 	}
 
+	while {$r1 > 0} {
+		if {$type in "f l"} {
+			puts $o [join $line1 \t]\t$defline2
+		}
+		set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
+	}
+	while {$r2 > 0} {
+		if {$type in "f r"} {
+			cg_tsvjoin_fullout $o $sdefline1 $poss1 $id2 $line2 $poss2
+		}
+		set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
+	}
 	gzclose $f1
 	gzclose $f2
+
 	if {$o ne "stdout"} {close $o}
 }

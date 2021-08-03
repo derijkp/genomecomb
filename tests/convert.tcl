@@ -920,8 +920,8 @@ test format {tsvjoin -pre2} {
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
-test format {tsvjoin -pre2} {
-	write_file tmp/file1.tsv [deindent {
+test format {tsvjoin -comments 1} {
+	file_write tmp/file1.tsv [deindent {
 		# test 1
 		id	v1
 		id1	a
@@ -935,11 +935,185 @@ test format {tsvjoin -pre2} {
 	}
 	write_tab tmp/expected.tsv {
 		# test 1
-		id	v1	p2_v2
+		id	v1	v2
 		id1	a	1
 		id2	b	2
 	}
-	exec cg tsvjoin -pre2 p2_ -comments 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	exec cg tsvjoin -comments 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin -comments 2} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+	}]
+	write_tab tmp/file2.tsv {
+		# test 2
+		id	v2
+		id1	1
+		id2	2
+	}
+	write_tab tmp/expected.tsv {
+		# test 2
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+	}
+	exec cg tsvjoin -comments 2 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin l -type left} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+		id3	c
+	}]
+	file_write tmp/file2.tsv [deindent {
+		# test 2
+		id	v2
+		id1	1
+		id3	3
+		id4	4
+	}]
+	file_write tmp/expected.tsv [deindent {
+		# test 1
+		id	v1	v2
+		id1	a	1
+		id2	b	
+		id3	c	3
+	}]
+	exec cg tsvjoin -stack 1 -type left tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin l -type right} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+		id3	c
+	}]
+	file_write tmp/file2.tsv [deindent {
+		# test 2
+		id	v2
+		id1	1
+		id3	3
+		id4	4
+	}]
+	file_write tmp/expected.tsv [deindent {
+		# test 1
+		id	v1	v2
+		id1	a	1
+		id3	c	3
+		id4		4
+	}]
+	exec cg tsvjoin -stack 1 -type right tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin l -type inner} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+		id3	c
+	}]
+	file_write tmp/file2.tsv [deindent {
+		# test 2
+		id	v2
+		id1	1
+		id3	3
+		id4	4
+	}]
+	file_write tmp/expected.tsv [deindent {
+		# test 1
+		id	v1	v2
+		id1	a	1
+		id3	c	3
+	}]
+	exec cg tsvjoin -stack 1 -type inner tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin -type full with duplicates} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+		id3	c
+		id4	d
+		id4	db
+		id6	f
+	}]
+	file_write tmp/file2.tsv [deindent {
+		# test 2
+		id	v2
+		id1	1
+		id2	2
+		id2	2b
+		id3	3
+		id4	4
+		id5	5
+	}]
+	file_write tmp/expected.tsv [deindent {
+		# test 1
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+		id2	b	2b
+		id3	c	3
+		id4	d	4
+		id4	db	4
+		id5		5
+		id6	f	
+	}]
+	exec cg tsvjoin -stack 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin -type full with duplicates, file2 longer} {
+	file_write tmp/file1.tsv [deindent {
+		# test 1
+		id	v1
+		id1	a
+		id2	b
+		id3	c
+		id4	d
+		id4	db
+	}]
+	file_write tmp/file2.tsv [deindent {
+		# test 2
+		id	v2
+		id1	1
+		id2	2
+		id2	2b
+		id3	3
+		id4	4
+		id5	5
+		id6	6
+	}]
+	file_write tmp/expected.tsv [deindent {
+		# test 1
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+		id2	b	2b
+		id3	c	3
+		id4	d	4
+		id4	db	4
+		id5		5
+		id6		6	
+	}]
+	exec cg tsvjoin -stack 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
