@@ -92,7 +92,14 @@ table_tsv method table {args} {
 }
 
 table_tsv method queryprogress {args} {
-	progress set [lindex $args 0]
+	private $object queryerror
+	foreach el $args {
+		if {![isint $args]} {
+			lappend queryerror $el
+		} else {
+			progress set [lindex $el 0]
+		}
+	}
 }
 
 table_tsv method sort {args} {
@@ -106,6 +113,7 @@ table_tsv method sort {args} {
 
 table_tsv method query {args} {
 	private $object tdata
+	private $object queryerror
 	if {![llength $args]} {
 		return $tdata(query)
 	}
@@ -156,16 +164,24 @@ table_tsv method query {args} {
 		}
 		if {![info exists numlines]} {
 			progress message "Running query, please be patient (no progress shown)"
-			exec cg select -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
+			set queryerror {}
+			if {![catch {
+				exec cg select -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
+			} queryerror] } {
+				set queryerror ""
+			}
 		} else {
+			private $object queryerror
 			set step [expr {$numlines/10}]
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start $numlines "Running query" "Running query"
-			set ::bgerror {}
+			set queryerror {}
 			# puts [list cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv]
-			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
+			Extral::bgexec \
+				-progresscommand [list $object queryprogress] \
+				-no_error_redir \
+				-channelvar [privatevar $object bgexechandle] \
 				cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
-			if {$::bgerror ne ""} {error $::bgerror}
 			progress stop
 		}
 	} else {
@@ -189,6 +205,9 @@ table_tsv method query {args} {
 	putslog "query done"
 	progress stop
 	Extral::event generate querychanged $object
+	if {$queryerror ne ""} {
+		error [join $queryerror \n]
+	}
 }
 
 table_tsv method subsql {args} {

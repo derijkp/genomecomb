@@ -195,6 +195,7 @@ mainw method redrawselection {args} {
 
 mainw method redrawlineinfo {} {
 	private $object view
+	private $object.tb queryerror
 	set text ""
 	if {$view(cur) in "summary summarygraph"} {
 		private $object summary
@@ -207,7 +208,11 @@ mainw method redrawlineinfo {} {
 		set len 0
 		set total 0
 	}
-	append text "[commify $len] / [commify $total] lines"
+	if {[get queryerror ""] ne ""} {
+		append text "error / [commify $total] lines"
+	} else {
+		append text "[commify $len] / [commify $total] lines"
+	}
 	$object.buttons.label1 configure -text $text
 }
 
