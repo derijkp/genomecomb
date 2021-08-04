@@ -62,6 +62,7 @@ destdir=$dirtcldir/exts
 mkdir /build/bin || true
 cd /build/bin
 ln -sf $dirtcldir/tclsh8.5 .
+ln -sf $dirtcldir/tclsh8.5 tclsh
 PATH=/build/bin:$PATH
 
 # Build
