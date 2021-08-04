@@ -73,6 +73,7 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 		set oheader {name chr begin end}
 		set names {}
 		set regionlist [split [cg select -sh /dev/null -f {name chromosome begin end} $regfile] \n]
+		unset -nocomplain avga ; unset -nocomplain fraca
 		foreach line $regionlist {
 			set line [split $line \t]
 			set avga($line) $line
