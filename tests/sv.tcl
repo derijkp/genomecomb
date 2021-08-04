@@ -129,7 +129,7 @@ test sv {npinv} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_npinv {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
 		tmp/sv-npinv expected/sv-npinv
 } {}
 
