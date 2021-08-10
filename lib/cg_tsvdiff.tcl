@@ -43,7 +43,7 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
+proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}} {ignorefields {}}} {
 	global errors
 	set tempdir [tempdir]
 	if {[file extension [gzroot $file1]] in ".bam .sam .cram"}  {
@@ -70,6 +70,11 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	set f2 [gzopen $usefile2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
+	set header1 [list_lremove $header1 $ignorefields]
+	set header2 [list_lremove $header2 $ignorefields]
+	if {![llength $header1] && ![llength $header2]} {
+		return ""
+	}
 	set temp1 $tempdir/[file tail $file1]
 	set temp2 $tempdir/[file tail $file2]
 	if {$temp2 eq $temp1} {append temp2 -b}
@@ -157,7 +162,8 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 }
 
-proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
+proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}} {ignorefields {}}} {
+# putsvars file1 file2 rcomments type fields diffopts splitlines diffprog lines sort ignorefields
 	global errors
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set tempdir [tempdir]
@@ -185,6 +191,11 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	set f2 [gzopen $usefile2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
+	set header1 [list_lremove $header1 $ignorefields]
+	set header2 [list_lremove $header2 $ignorefields]
+	if {![llength $header1] && ![llength $header2]} {
+		return ""
+	}
 	set common [list_common $header1 $header2]
 	set error {}
 	if {[llength $common] != [llength $header1] || [llength $common] != [llength $header2]} {
@@ -239,6 +250,7 @@ proc cg_tsvdiff args {
 	set excludeopts {}
 	set lines {}
 	set sort {}
+	set ignorefields {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
@@ -248,6 +260,9 @@ proc cg_tsvdiff args {
 		}
 		-x - -exclude {
 			lappend excludeopts -x $value
+		}
+		-i - -ignorefields {
+			set ignorefields $value
 		}
 		-t - -type {
 			set type $value
@@ -298,9 +313,9 @@ proc cg_tsvdiff args {
 	if {![catch {exec diff -r {*}$diffopts {*}$excludeopts --brief $dir1 $dir2} diff]} {exit 0}
 	if {![file isdir $dir1] && ![file isdir $dir2]} {
 		if {!$brief} {
-			tsvdiff_file $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+			tsvdiff_file $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 		} else {
-			tsvdiff_file_brief $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+			tsvdiff_file_brief $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 		}
 		if {$errors} {exit 1} else {exit 0}
 	}
@@ -323,9 +338,9 @@ proc cg_tsvdiff args {
 				}
 				if {[file exists $file2]} {
 					if {!$brief} {
-						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 					} else {
-						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 					}
 				} else {
 					incr errors
@@ -347,11 +362,11 @@ proc cg_tsvdiff args {
 				}
 			}
 		} elseif {[regexp {^Files (.*) and (.*) differ$} $line temp file1 file2]} {
-			if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics .vcf .gvcf .sam .bam .cram"} {
+			if {[file extension [gzroot $file1]] in ".tsv .sft .analysisinfo .hsmetrics .vcf .gvcf .sam .bam .cram"} {
 				if {$brief} {
-					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 				} else {
-					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 				}
 			} else {
 				if {$brief} {

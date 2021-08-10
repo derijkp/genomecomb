@@ -313,6 +313,43 @@ Only in 1: tmp/d1/only1
 Only in 2: tmp/d2/only2
 child process exited abnormally} error
 
+test tsvdiff {-ignorefields} {
+	write_tab tmp/file1.tsv {
+		chromosome	begin	end
+		chr1	1	2
+		chr2	3	4
+	}
+	cg zst tmp/file1.tsv
+	write_tab tmp/file2.tsv {
+		chromosome	begin	end	test
+		chr1	1	2	t1
+		chr2	3	5	t2
+	}
+	cg tsvdiff -ignorefields {end test} tmp/file1.tsv.zst tmp/file2.tsv
+} {}
+
+test tsvdiff {-ignorefields} {
+	write_tab tmp/file1.tsv {
+		chromosome	begin	end
+		chr1	1	2
+		chr2	3	4
+	}
+	cg zst tmp/file1.tsv
+	write_tab tmp/file2.tsv {
+		chromosome	begin	end	test
+		chr1	1	2	t1
+		chr2	x	5	t2
+	}
+	cg tsvdiff -ignorefields {end test} tmp/file1.tsv.zst tmp/file2.tsv
+} {diff tmp/file1.tsv.zst tmp/file2.tsv
+header
+  chromosome	begin
+3c3
+< chr2	3
+---
+> chr2	x
+child process exited abnormally} error
+
 test cg_extracthomopolymers {basic} {
 	file_write tmp/genome_test.ifas [deindent {
 		>chr1

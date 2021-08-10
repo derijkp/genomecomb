@@ -26,6 +26,7 @@ file is compressed and the other not.
 ; -c 0/1: ignore differences in comments
 ; -f fields: only compare the given fields
 ; -x excludepattern (-exclude): exclude files that match **excludepattern**. This option can be given multiple times
+; -i ignorefields (-ignorefields): ignore differences in the given fields. This option  can only be given once. For more fields, give a (space spearated) list.
 ; -t l/xl/sd/diff (-type): type of diff: 
 l first converts files to a long format where each line is split so that for each field you get a line of the form "fieldname fieldvalue"
 xl is similar to l, but adds extra data describing the variant or region before each line (-> variant fieldname fieldvalue)
