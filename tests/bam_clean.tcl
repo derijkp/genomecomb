@@ -125,10 +125,11 @@ test bam_clean {bam_clean} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
 	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
-	file_write tmp/expected.analysisinfo [string trim [deindent {
+	set cgversion [cg version]
+	file_write tmp/expected.analysisinfo [string trim [deindent [subst {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.102.0	samtools	1.13 (using htslib 1.13)	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef
-	}]]\n
+		genomecomb	$cgversion	samtools	1.13 (using htslib 1.13)	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef
+	}]]]\n
 	exec diff tmp/rdsbwa.bam.analysisinfo tmp/expected.analysisinfo
 	exec cg sam2tsv tmp/rdsbwa.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
@@ -141,10 +142,11 @@ test bam_clean {bam_clean to cram} {
 	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
 		-sort 1 -removeduplicates 1 -realign 1 \
 		-outputformat cram tmp/bwa.sam
-	file_write tmp/expected.analysisinfo [string trim [deindent {
+	set cgversion [cg version]
+	file_write tmp/expected.analysisinfo [string trim [deindent [subst {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.102.0	samtools	1.13 (using htslib 1.13)	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef
-	}]]\n
+		genomecomb	$cgversion	samtools	1.13 (using htslib 1.13)	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef
+	}]]]\n
 	exec diff tmp/rdsbwa.cram.analysisinfo tmp/expected.analysisinfo
 	exec samtools index tmp/rdsbwa.cram
 	if {![file exists tmp/rdsbwa.cram.crai]} {

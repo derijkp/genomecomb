@@ -79,6 +79,11 @@ test reports {process_reports no targetfile} {
 	file_regsub > >\n tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html
 	set result [tsvdiff -q 1 -x *.png -x fastqc_report.html -x samstats-*.stats.zst \
+		-ignorefields {
+			clipping_cg_version sammerge_version bamclean_version 
+			varcaller_cg_version report_vars_version histodepth_version
+			predictgender_version report_covered_version
+		} \
 		tmp/test_reportsnotarget/NA19240mx2/reports expected/test_reportsnotarget/NA19240mx2/reports]
 	set e [checkdiff -y --suppress-common-lines tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html]
 	if {[llength [split [string trim $e] \n]] > 3} {append result "too many differences in fastqc_report.html\n"}
@@ -102,20 +107,15 @@ test reports {process_reportscombine} {
 	}
 	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-ERR194147_30x_NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
 	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/ERR194147_30x_NA12878/reports tmp/samples/test/reports
-	if {[catch {exec diff -r -y --suppress-common-lines tmp/combinereports data/expected-combinereports \
-		| grep -v {The full "sequenced genome" region in} \
-		| grep -v {diff -r -y --suppress-common-lines}} msg]} {
-		if {![string match {child process exited abnormally} $msg]} {
-				error $msg
-		}
-	}
+	diffhtmlreport tmp/combinereports data/expected-combinereports 1
 } {}
 
 test reports {process_reportscombine 2} {
 	cd $::smalltestdir
 	file delete -force tmp/combinereports
 	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[bsort [glob expected/exomes_yri_mx2/samples/* expected/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
-	cg tsvdiff -q 1 tmp/combinereports expected/combinereports
+	cg tsvdiff -q 1 -x report-combinereports.html tmp/combinereports expected/combinereports
+	diffhtmlreport tmp/combinereports/report-combinereports.html expected/combinereports/report-combinereports.html 1
 } {}
 
 testsummarize

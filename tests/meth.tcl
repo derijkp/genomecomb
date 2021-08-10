@@ -93,7 +93,9 @@ test meth {meth_nanopolish with gz results} {
 		-x *.gz.tbi -x *sniffles*.vcf \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
+		-x *.html \
 		tmp/methgz expected/methgz]
+	lappend result [diffhtmlreport tmp/methgz/reports/report-methgz.html expected/methgz/reports/report-methgz.html]
 	join [list_remove $result {}] \n
 } {}
 
@@ -139,7 +141,9 @@ test meth {meth_nanopolish preset gpc} {
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
+		-x *.html \
 		tmp/methgpc expected/methgpc]
+	lappend result [diffhtmlreport tmp/methgpc/reports/report-methgpc.html expected/methgpc/reports/report-methgpc.html]
 	join [list_remove $result {}] \n
 } {}
 

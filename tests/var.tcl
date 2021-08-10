@@ -254,6 +254,7 @@ test var {var_longshot basic} {
 	cg vcf2tsv tmp/longshot/ground_truth_variants.vcf tmp/longshot/ground_truth_variants.tsv
 	cg multicompar tmp/longshot/compar.tsv tmp/longshot/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot/ground_truth_variants.tsv
 	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
 		tmp/longshot expected/longshot
 	list [cg select -g chromosome tmp/longshot/compar.tsv] [cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
 } {{chromosome	count
@@ -277,6 +278,7 @@ test var {var_longshot distrreg} {
 	cg vcf2tsv tmp/longshot_d/ground_truth_variants.vcf tmp/longshot_d/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_d/compar.tsv tmp/longshot_d/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
 		tmp/longshot_d expected/longshot_d
 	list	[cg select -g chromosome tmp/longshot_d/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -312,6 +314,7 @@ test var {var_longshot distrreg with contig1_ and empty contig} {
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d2/pacbio_reads_30x.bam tmp/longshot_d2/genome.fa
 	cg multicompar tmp/longshot_d2/compar.tsv tmp/longshot_d2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d2/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
 		tmp/longshot_d2 expected/longshot_d2
 	list	[cg select -g chromosome tmp/longshot_d2/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -346,6 +349,7 @@ test var {var_longshot distrreg with contig1_ and empty contig and contig not in
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d3/pacbio_reads_30x.bam tmp/longshot_d3/genome.fa
 	cg multicompar tmp/longshot_d3/compar.tsv tmp/longshot_d3/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d3/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
 		tmp/longshot_d3 expected/longshot_d3
 	list	[cg select -g chromosome tmp/longshot_d2/compar.tsv] \
 		[cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -370,6 +374,7 @@ test var {var_longshot distrreg with -hap_bam 1 option} {
 	cg vcf2tsv tmp/longshot_hapbam/ground_truth_variants.vcf tmp/longshot_hapbam/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam/compar.tsv tmp/longshot_hapbam/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/longshot_hapbam expected/longshot_hapbam
 	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam/map-hlongshot-pacbio_reads_30x.bam | cg select -q {$HP == 1} | cg regjoin | cg  covered]]
 	if {$temp ne [string trim [deindent {
@@ -418,6 +423,7 @@ test var {var_longshot distrreg with -hap_bam 1 optionm contig1_ and empty conti
 		tmp/longshot_hapbam2/pacbio_reads_30x.bam tmp/longshot_hapbam2/genome.fa
 	cg multicompar tmp/longshot_hapbam2/compar.tsv tmp/longshot_hapbam2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam2/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/longshot_hapbam2 expected/longshot_hapbam2
 	list	[exec cg sam2tsv tmp/longshot_hapbam2/map-hlongshot-pacbio_reads_30x.bam | cg select -g chromosome] \
 		[cg select -g chromosome tmp/longshot_hapbam2/compar.tsv] \
@@ -463,6 +469,7 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 	cg vcf2tsv tmp/longshot_hapbam_multi/ground_truth_variants.vcf tmp/longshot_hapbam_multi/ground_truth_variants.tsv
 	cg multicompar tmp/longshot_hapbam_multi/compar.tsv tmp/longshot_hapbam_multi/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam_multi/ground_truth_variants.tsv
 	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/longshot_hapbam_multi expected/longshot_hapbam_multi
 	# check nr of reads
 	set temp [string trim [exec cg sam2tsv -fields HP tmp/longshot_hapbam_multi/map-hlongshot-pacbio_reads_30x.bam | cg select -g chromosome]]
@@ -505,6 +512,7 @@ test var {var_medaka basic} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/medaka expected/medaka]
 	lappend result [cg select -g chromosome tmp/medaka/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka/compar.tsv]
@@ -535,6 +543,7 @@ test var {var_medaka distrreg} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.old -x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/medaka_distrreg expected/medaka_distrreg]
 	lappend result [cg select -g chromosome tmp/medaka_distrreg/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_distrreg/compar.tsv]
@@ -573,6 +582,7 @@ test var {var -method medaka -regionfile} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/medaka_reg expected/medaka_reg]
 	lappend result [cg select -g chromosome tmp/medaka_reg/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg/compar.tsv]
@@ -609,6 +619,7 @@ test var {var -method medaka -regionfile -distreg regionfile} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tbi -x *.tsv.reannot \
+		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/medaka_reg_distrreg expected/medaka_reg_distrreg]
 	lappend result [cg select -g chromosome tmp/medaka_reg_distrreg/compar.tsv]
 	lappend result [cg select -g {zyg-medaka-test * zyg-truth *} tmp/medaka_reg_distrreg/compar.tsv]

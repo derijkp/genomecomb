@@ -18,6 +18,7 @@ test sv {sniffles} {
 		tmp/sv-sniffles/map-sngmlr-NA12878.bam \
 		>& tmp/sv-sniffles.log
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles expected/sv-sniffles
 } {}
 
@@ -33,6 +34,7 @@ test sv {sniffles2 NA12878} {
 		tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2 expected/sv-sniffles2
 } {}
 
@@ -48,6 +50,7 @@ test sv {sniffles2 ngmlr NA12878} {
 		tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_ngmlr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_ngmlr expected/sv-sniffles2_ngmlr
 } {}
 
@@ -63,6 +66,7 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_minimap2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
 
@@ -78,6 +82,7 @@ test sv {sniffles -distrreg chr} {
 		tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_minimap2_distrchr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_minimap2_distrchr expected/sv-sniffles2_minimap2
 } {}
 
@@ -91,7 +96,10 @@ test sv {cuteSV} {
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-cuteSV/map-sngmlr-NA12878.bam \
 		>& tmp/sv-cuteSV.log
-	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
+	cg tsvdiff -q 1 \
+		-x *.xml -x *.vcf -x svLocusGraphStats.tsv \
+		-x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-cuteSV expected/sv-cuteSV
 } {}
 
@@ -106,6 +114,7 @@ test sv {cuteSV -distrreg chr} {
 		-distrreg chr \
 		tmp/sv-cuteSV/map-sngmlr-NA12878.bam
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi -x *.submitting -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-cuteSV expected/sv-cuteSV
 } {}
 
@@ -119,6 +128,7 @@ test sv {cuteSV NA12878 minimap2} {
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-cuteSV2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-cuteSV2_minimap2 expected/sv-cuteSV2_minimap2
 } {}
 
@@ -129,7 +139,8 @@ test sv {npinv} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_npinv {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
-	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-npinv expected/sv-npinv
 } {}
 
@@ -144,6 +155,7 @@ test sv {npinv -distrreg chr} {
 		-distrreg chr \
 		tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
 	cg tsvdiff -q 1 -x *.tbi -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-npinv expected/sv-npinv
 } {}
 
@@ -155,6 +167,7 @@ test sv {manta} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_manta {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-manta expected/sv-manta
 } {}
 
@@ -193,6 +206,7 @@ test sv {cg sv -method manta -distreg 1} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	exec cg sv -method manta -distrreg 1 {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+		-ignorefields {varcaller_cg_version} \
 		tmp/sv-manta expected/sv-manta
 } {}
 
@@ -214,7 +228,9 @@ test sv {lumpy} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_lumpy {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -q 1 -x *.tbi tmp/sv-lumpy expected/sv-lumpy
+	cg tsvdiff -q 1 -x *.tbi \
+		-ignorefields {varcaller_cg_version} \
+		tmp/sv-lumpy expected/sv-lumpy
 } {}
 
 test sv {lumpy error} {

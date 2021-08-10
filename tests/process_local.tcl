@@ -32,14 +32,14 @@ test process_sample {bwa distrreg} {
 	exec cg process_sample {*}$::dopts -threads 1 -aligners bwa -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
 	# chr21:42730799-42762826
+	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
+		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.103.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.103.0	coordinate	1	genomecomb	0.103.0	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.103.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+	}]\n
 	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x projectinfo.tsv -x *.analysisinfo -x *.stats.zst \
 		-x info_analysis.tsv -x *.submitting -x *.finished -x fastqc* -x *.index -x log_jobs \
 		tmp/NA19240m data/NA19240m
-	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
-		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.102.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.102.0	coordinate	1	genomecomb	0.102.0	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.102.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
-	}]\n
 	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
 
@@ -50,6 +50,10 @@ test process_sample {bwa distrreg cram} {
 	exec cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >& tmp/NA19240m.startuplog
 	# chr21:42730799-42762826
+	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
+		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.103.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.103.0	coordinate	1	genomecomb	0.103.0	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.103.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+	}]\n
 	set result {}
 	lappend result [tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x *.cram -x *.sam -x *.stats.zst \
@@ -60,10 +64,6 @@ test process_sample {bwa distrreg cram} {
 	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.cram | cg select -rf other > tmp/temp.tsv
 	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.sam | cg select -rf other > tmp/expected.tsv
 	lappend result [tsvdiff tmp/temp.tsv tmp/expected.tsv]
-	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
-		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.102.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.102.0	coordinate	1	genomecomb	0.102.0	samtools	1.13 (using htslib 1.13)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.102.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
-	}]\n
 	lappend result [tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo]
 	join [list_remove $result {}] \n
 } {}
