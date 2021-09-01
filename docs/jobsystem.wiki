@@ -187,7 +187,7 @@ after the ptargets job is finished.)
 ; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)
 If using multiple cores, other requirements on sge are per core!
 For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
-; -mem memorysize: indication of memory needed (on sge (hard): -l mem_free=$value, where value is corrected based on -cores)
+; -mem memorysize: indication of memory needed (on sge (hard): -l mem_free=$value,virtual_free=$value, where value is corrected based on -cores)
 ; -hard hardlimits: on sge: extra options passed on as hard limits
 ; -soft softlimits: on sge: extra options passed on as soft limits
 

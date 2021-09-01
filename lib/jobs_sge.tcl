@@ -54,15 +54,26 @@ proc job_process_submit_sge {job runfile args} {
 			}
 			-cores {
 				# we will use a PE named local, which must be present/made on the cluster
+				# if PE local does not exists, PE smp is tried
 				# -l slots=$value mentioned in http://www.softpanorama.org/HPC/Grid_engine/Reference/qsub.shtml
 				# would be easier, but does not seem to work (if there is any PE defined?)
 				# lappend hard -l slots=$value
 				set cores $value
-				if {![info exists cgjob_distr(no_local_pe)]} {
-					set cgjob_distr(no_local_pe) [catch {exec qconf -sp local}]
+				if {![info exists cgjob_distr(local_pe)]} {
+					set error [catch {exec qconf -sp local}]
+					if {!$error} {
+						set cgjob_distr(local_pe) local
+					} else {
+						set error [catch {exec qconf -sp smp}]
+						if {!$error} {
+							set cgjob_distr(local_pe) smp
+						} else {
+							set cgjob_distr(local_pe) {}
+						}
+					}
 				}
-				if {!$cgjob_distr(no_local_pe)} {
-					lappend hard -pe local $cores -R y
+				if {$cgjob_distr(local_pe) ne ""} {
+					lappend hard -pe $cgjob_distr(local_pe) $cores -R y
 				}
 				incr pos 2
 			}
@@ -99,7 +110,13 @@ proc job_process_submit_sge {job runfile args} {
 		}
 	}
 	if {$mem ne ""} {
-		lappend hard -l mem_free=[job_mempercore $mem $cores]
+		# mem_free: only start job if the given amount of memory is free on the node
+		#  -> often not sufficient if running jobs increase memory use during run
+		# virtual_free: reserves this much memory, can be defined as a consumable resource
+		#	-> if all memory is reserved for running kjobs, no new jobs are started on node
+		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
+		set temp [job_mempercore $mem $cores]
+		lappend hard -l mem_free=$temp,virtual_free=$temp
 	}
 	if {[llength $soft]} {
 		lappend options -soft {*}$soft
