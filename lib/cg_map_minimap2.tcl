@@ -33,8 +33,14 @@ cg refseq_minimap2 \'$refseq\' $preset"
 	return $minimap2refseq
 }
 
-proc map_mem_minimap2 {mem threads} {
-	if {$mem eq ""} {set mem 10G}
+proc map_mem_minimap2 {mem threads preset} {
+	if {$mem eq ""} {
+		if {$preset eq "splice"} {
+			set mem 20G
+		} else {
+			set mem 10G
+		}
+	}
 	return $mem
 }
 

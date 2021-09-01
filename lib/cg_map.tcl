@@ -23,9 +23,9 @@ proc methods_map {args} {
 	}
 }
 
-proc map_mem {method {mem {}} {threads 1}} {
+proc map_mem {method {mem {}} {threads 1} {preset {}}} {
 	if {[auto_load map_mem_$method]} {
-		return [map_mem_$method $mem $threads]
+		return [map_mem_$method $mem $threads $preset]
 	}
 	if {$mem eq ""} {set mem 5G}
 	return $mem
@@ -125,7 +125,7 @@ proc map_job {args} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
 		job [job_relfile2name map_${method}- $result] {*}$skips \
-			-mem [map_mem $method $mem $threads] -cores $threads \
+			-mem [map_mem $method $mem $threads $preset] -cores $threads \
 		-deps [list {*}$fastqfiles $refseq] -targets {
 			$result $analysisinfo
 		} -vars {
