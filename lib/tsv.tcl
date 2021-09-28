@@ -194,6 +194,24 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	return $poss
 }
 
+proc tsv_comment2var {comment varName} {
+	upvar $varName a
+	unset -nocomplain a
+	set keepcomments {}
+	foreach line [split $comment \n] {
+		if {$line eq ""} continue
+		set line [split $line \t]
+		if {[lrange $line 0 8] eq "{#CHROM} POS ID REF ALT QUAL FILTER INFO FORMAT"} continue
+		if {[llength $line] == 1} {
+			lappend a() [lindex $line 0]
+			continue
+		}
+		set key [string range [lindex $line 0] 1 end]
+		set value [lrange $line 1 end]
+		lappend a($key) $value
+	}	
+}
+
 proc tsv_count {tsvfile} {
 	set countfile [indexdir_file $tsvfile vars.tsv.count ok]
 	if {!$ok} {

@@ -15,7 +15,7 @@ child process exited abnormally} error
 
 test tsv2vcf {no metadata in comments} {
 	exec cg vcf2tsv data/test3.vcf tmp/temp.tsv.temp
-	cg select -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
+	cg select -overwrite 1 -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
 	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec diff tmp/temp.vcf data/test3.vcf
 } {1a2,6

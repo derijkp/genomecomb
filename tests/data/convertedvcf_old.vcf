@@ -29,7 +29,6 @@
 ##INFO=<ID=NDA,Number=1,Type=Integer,Description="Number of alternate alleles discovered (but not necessarily genotyped) at this site">
 ##INFO=<ID=RAW_MQ,Number=1,Type=Float,Description="Raw data for RMS Mapping Quality">
 ##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
-##CHROM=POS ID REF ALT QUAL FILTER INFO FORMAT NA19240m
 ##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
 ##split=0
 ##split=0

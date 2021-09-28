@@ -196,7 +196,9 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 		return
 	}
 	if {[llength $value] == 1} {
-		puts $o "##$key=[lindex $value 0]"
+		set v [lindex $value 0]
+		set v [join $v \t]
+		puts $o "##$key=$v"
 	} elseif {[lindex $value 0] eq "table"} {
 		set tfields [lindex $value 1]
 		foreach line [lrange $value 2 end] {
@@ -212,6 +214,7 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 		}
 	} else {
 		foreach v $value {
+			set v [join $v \t]
 			puts $o "##$key=$v"
 		}
 	}
@@ -436,34 +439,17 @@ proc cg_tsv2vcf {args} {
 	}]
 	set header [tsv_open $f comment]
 	unset -nocomplain a
-	set keepcomments {}
-	foreach line [split $comment \n] {
-		set line [split $line \t]
-		if {[llength $line] == 1} {
-			lappend keepcomments [lindex $line 0]
-			continue
-		}
-		set key [string range [lindex $line 0] 1 end]
-		if {[llength $line] > 2} {
-			set value [lrange $line 1 end]
-		} else {
-			set value [lindex $line 1]
-		}
-		lappend a($key) $value
-	}
+	tsv_comment2var $comment a
+	set keepcomments [get a()]
 	if {[info exists a(info)] && [regexp {original comments follow} $a(info)]} {
 		set vcfinfo [vcf2tsvheader $keepcomments $header $split {} {}]
 		foreach line $vcfinfo {
 			set line [split $line \t]
 			set key [string range [lindex $line 0] 1 end]
-			if {[llength $line] > 2} {
-				set value [lrange $line 1 end]
-			} else {
-				set value [lindex $line 1]
-			}
+			set value [lrange $line 1 end]
 			lappend a($key) $value
 		}
-		if {[info exists a(info)]} {set a(info) [list_remove $a(info) {tsv converted from vcf, original comments follow}]}
+		if {[info exists a(info)]} {set a(info) [list_remove $a(info) {{tsv converted from vcf, original comments follow}}]}
 	}
 	set poss [tsv_basicfields $header 6]
 	set analyses [listanalyses $header {} analysisfields]
@@ -602,7 +588,7 @@ proc cg_tsv2vcf {args} {
 		unset -nocomplain a($key)
 	}
 	foreach field [bsort [array names a vcf_*]] {
-		puts $o "##[string range $field 4 end]=[lindex $a($field) 0]"
+		puts $o "##[string range $field 4 end]=[join [lindex $a($field) 0] \t]"
 		unset a($field)
 	}
 	tsv2vcf_outputheaderfield $o FILTER a
