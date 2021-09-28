@@ -2,9 +2,9 @@ proc cg_cat {args} {
 	set fields {}
 	set force 0
 	set merge 0
-	set addcomment 1
 	set namefield {}
 	set sort 0
+	unset -nocomplain addcomment
 	cg_options cat args {
 		-f - -force {
 			if {$value in "1 0"} {
@@ -41,6 +41,9 @@ proc cg_cat {args} {
 		}
 	} {} 1
 	if {$merge} {set force m} elseif {$force} {set force f} else {set force ""}
+	if {![info exists addcomment]} {
+		set addcomment m
+	}
 	if {[llength $args] == 1} {
 		set f [gzopen [lindex $args 0]]
 		fcopy $f stdout
@@ -51,6 +54,9 @@ proc cg_cat {args} {
 	set headers {}
 	set comments {}
 	set files {}
+	set diffcomments 0
+	unset -nocomplain commenta
+	unset -nocomplain firstcomment
 	foreach file $args {
 		if {[file size $file] == 0} continue
 		set f [gzopen $file]
@@ -61,18 +67,37 @@ proc cg_cat {args} {
 		lappend headers $header
 		lappend files $file
 		gzclose $f
-		if {$addcomment eq "1"} {
-			lappend comments "# ++++ $file ++++"
-			if {[inlist {f m} $force]} {
-				lappend comments "# ++ $header"
+		if {$addcomment eq "m"} {
+			if {![info exists firstcomment]} {
+				set firstcomment $comment
+			} elseif {$comment ne $firstcomment} {
+				if {!$diffcomments} {
+					tsv_comment2var $firstcomment commenta
+					set diffcomments 1
+				}
+				tsv_comment2var $comment a
+				foreach key [array names a] {
+					if {![info exists commenta($key)]} {
+						set commenta($key) $a($key)
+					} else {
+						list_addnew commenta($key) {*}$a($key)
+					}
+				}
 			}
-		}
-		if {$addcomment in {f 0 1}} {
-			foreach line [split $comment \n] {
-				if {[string index $line 0] ne "#"} continue
-				lappend comments $line
+		} else {
+			if {$addcomment eq "1"} {
+				lappend comments "# ++++ $file ++++"
+				if {[inlist {f m} $force]} {
+					lappend comments "# ++ $header"
+				}
 			}
-			if {$addcomment eq "f"} {set addcomment n}
+			if {$addcomment in {f 0 1}} {
+				foreach line [split $comment \n] {
+					if {[string index $line 0] ne "#"} continue
+					lappend comments $line
+				}
+				if {$addcomment eq "f"} {set addcomment n}
+			}
 		}
 	}
 	if {$fields ne ""} {
@@ -96,7 +121,14 @@ proc cg_cat {args} {
 			}
 		}
 	}
-	if {[llength $comments]} {
+	if {$addcomment eq "m"} {
+		if {!$diffcomments} {
+			puts $firstcomment
+		} else {
+			set commenta(catfiles) $files
+			puts [tsv_var2comment commenta]
+		}
+	} elseif {[llength $comments]} {
 		puts [join $comments \n]
 	}
 	set defcor [list_cor $header $header]

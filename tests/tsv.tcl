@@ -109,63 +109,101 @@ test tsv_cat {one} {
 1	t	10	20
 1	t	50	60}
 
+test tsv_cat {two same header -c 1} {
+	cg cat -c 1 data/reg2.tsv data/reg4.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# ++++ data/reg2.tsv ++++
+		# comments added
+		#
+		# ++++ data/reg4.tsv ++++
+		## header
+		##
+		test	chromosome	begin	end	test2
+		t	1	15	25	t2
+		t	1	45	55	t2
+		t	2	150	160	t2
+		t	2	170	180	t2
+		t	2	300	400	t2
+		t	2	400	500	t2
+		t	3	1000	1100	t2
+		t	M	10	25	t2
+		t	X	90	200	t2
+		t	Y	1010	1900	t2
+		t	chr1	15	25	t2
+		t	chr1	45	55	t2
+		t	chr2	150	160	t2
+		t	chr2	170	180	t2
+		t	chr2	300	400	t2
+		t	chr2	400	500	t2
+		t	chr3	1000	1100	t2
+		t	chrM	10	25	t2
+		t	chrX	90	200	t2
+		t	chrY	1010	1900	t2
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test tsv_cat {two same header} {
-	cg cat data/reg2.tsv data/reg4.tsv
-} {# ++++ data/reg2.tsv ++++
-# comments added
-#
-# ++++ data/reg4.tsv ++++
-## header
-##
-test	chromosome	begin	end	test2
-t	1	15	25	t2
-t	1	45	55	t2
-t	2	150	160	t2
-t	2	170	180	t2
-t	2	300	400	t2
-t	2	400	500	t2
-t	3	1000	1100	t2
-t	M	10	25	t2
-t	X	90	200	t2
-t	Y	1010	1900	t2
-t	chr1	15	25	t2
-t	chr1	45	55	t2
-t	chr2	150	160	t2
-t	chr2	170	180	t2
-t	chr2	300	400	t2
-t	chr2	400	500	t2
-t	chr3	1000	1100	t2
-t	chrM	10	25	t2
-t	chrX	90	200	t2
-t	chrY	1010	1900	t2}
+	cg cat data/reg2.tsv data/reg4.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		#catfiles	data/reg2.tsv
+		#catfiles	data/reg4.tsv
+		test	chromosome	begin	end	test2
+		t	1	15	25	t2
+		t	1	45	55	t2
+		t	2	150	160	t2
+		t	2	170	180	t2
+		t	2	300	400	t2
+		t	2	400	500	t2
+		t	3	1000	1100	t2
+		t	M	10	25	t2
+		t	X	90	200	t2
+		t	Y	1010	1900	t2
+		t	chr1	15	25	t2
+		t	chr1	45	55	t2
+		t	chr2	150	160	t2
+		t	chr2	170	180	t2
+		t	chr2	300	400	t2
+		t	chr2	400	500	t2
+		t	chr3	1000	1100	t2
+		t	chrM	10	25	t2
+		t	chrX	90	200	t2
+		t	chrY	1010	1900	t2
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {two same header -n file -c 0} {
-	cg cat -c 0 -n file data/reg2.tsv data/reg4.tsv
-} {# comments added
-#
-## header
-##
-test	chromosome	begin	end	test2	file
-t	1	15	25	t2	reg2.tsv
-t	1	45	55	t2	reg2.tsv
-t	2	150	160	t2	reg2.tsv
-t	2	170	180	t2	reg2.tsv
-t	2	300	400	t2	reg2.tsv
-t	2	400	500	t2	reg2.tsv
-t	3	1000	1100	t2	reg2.tsv
-t	M	10	25	t2	reg2.tsv
-t	X	90	200	t2	reg2.tsv
-t	Y	1010	1900	t2	reg2.tsv
-t	chr1	15	25	t2	reg4.tsv
-t	chr1	45	55	t2	reg4.tsv
-t	chr2	150	160	t2	reg4.tsv
-t	chr2	170	180	t2	reg4.tsv
-t	chr2	300	400	t2	reg4.tsv
-t	chr2	400	500	t2	reg4.tsv
-t	chr3	1000	1100	t2	reg4.tsv
-t	chrM	10	25	t2	reg4.tsv
-t	chrX	90	200	t2	reg4.tsv
-t	chrY	1010	1900	t2	reg4.tsv}
+	cg cat -c 0 -n file data/reg2.tsv data/reg4.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# comments added
+		#
+		## header
+		##
+		test	chromosome	begin	end	test2	file
+		t	1	15	25	t2	reg2.tsv
+		t	1	45	55	t2	reg2.tsv
+		t	2	150	160	t2	reg2.tsv
+		t	2	170	180	t2	reg2.tsv
+		t	2	300	400	t2	reg2.tsv
+		t	2	400	500	t2	reg2.tsv
+		t	3	1000	1100	t2	reg2.tsv
+		t	M	10	25	t2	reg2.tsv
+		t	X	90	200	t2	reg2.tsv
+		t	Y	1010	1900	t2	reg2.tsv
+		t	chr1	15	25	t2	reg4.tsv
+		t	chr1	45	55	t2	reg4.tsv
+		t	chr2	150	160	t2	reg4.tsv
+		t	chr2	170	180	t2	reg4.tsv
+		t	chr2	300	400	t2	reg4.tsv
+		t	chr2	400	500	t2	reg4.tsv
+		t	chr3	1000	1100	t2	reg4.tsv
+		t	chrM	10	25	t2	reg4.tsv
+		t	chrX	90	200	t2	reg4.tsv
+		t	chrY	1010	1900	t2	reg4.tsv
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {two diff header} {
 	exec cg cat data/reg1b.tsv data/reg2.tsv
@@ -179,118 +217,135 @@ test tsv_cat {two diff header} {
 	exec cg cat data/reg1b.tsv tmp/reg.tsv
 } {headers do not match, use -f to force or -m to merge (at file tmp/reg.tsv)} error
 
-test tsv_cat {two diff header -m} {
-	cg cat -m data/reg2.tsv data/reg1b.tsv
-} {# ++++ data/reg2.tsv ++++
-# ++ test chromosome begin end test2
-# comments added
-#
-# ++++ data/reg1b.tsv ++++
-# ++ chromosome test begin end
-test	chromosome	begin	end	test2
-t	1	15	25	t2
-t	1	45	55	t2
-t	2	150	160	t2
-t	2	170	180	t2
-t	2	300	400	t2
-t	2	400	500	t2
-t	3	1000	1100	t2
-t	M	10	25	t2
-t	X	90	200	t2
-t	Y	1010	1900	t2
-t	1	10	20	
-t	1	50	60	}
+test tsv_cat {two diff header -m -c 1} {
+	cg cat -m -c 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# ++++ data/reg2.tsv ++++
+		# ++ test chromosome begin end test2
+		# comments added
+		#
+		# ++++ data/reg1b.tsv ++++
+		# ++ chromosome test begin end
+		test	chromosome	begin	end	test2
+		t	1	15	25	t2
+		t	1	45	55	t2
+		t	2	150	160	t2
+		t	2	170	180	t2
+		t	2	300	400	t2
+		t	2	400	500	t2
+		t	3	1000	1100	t2
+		t	M	10	25	t2
+		t	X	90	200	t2
+		t	Y	1010	1900	t2
+		t	1	10	20	
+		t	1	50	60	
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {two diff header -m 1} {
-	cg cat -m 1 data/reg2.tsv data/reg1b.tsv
-} {# ++++ data/reg2.tsv ++++
-# ++ test chromosome begin end test2
-# comments added
-#
-# ++++ data/reg1b.tsv ++++
-# ++ chromosome test begin end
-test	chromosome	begin	end	test2
-t	1	15	25	t2
-t	1	45	55	t2
-t	2	150	160	t2
-t	2	170	180	t2
-t	2	300	400	t2
-t	2	400	500	t2
-t	3	1000	1100	t2
-t	M	10	25	t2
-t	X	90	200	t2
-t	Y	1010	1900	t2
-t	1	10	20	
-t	1	50	60	}
+	cg cat -m 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		#catfiles	data/reg2.tsv
+		#catfiles	data/reg1b.tsv
+		test	chromosome	begin	end	test2
+		t	1	15	25	t2
+		t	1	45	55	t2
+		t	2	150	160	t2
+		t	2	170	180	t2
+		t	2	300	400	t2
+		t	2	400	500	t2
+		t	3	1000	1100	t2
+		t	M	10	25	t2
+		t	X	90	200	t2
+		t	Y	1010	1900	t2
+		t	1	10	20	
+		t	1	50	60	
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {two diff header -m, -n -c 0} {
-	cg cat -n file -c 0 -m 1 data/reg2.tsv data/reg1b.tsv
-} {# comments added
-#
-test	chromosome	begin	end	test2	file
-t	1	15	25	t2	reg2.tsv
-t	1	45	55	t2	reg2.tsv
-t	2	150	160	t2	reg2.tsv
-t	2	170	180	t2	reg2.tsv
-t	2	300	400	t2	reg2.tsv
-t	2	400	500	t2	reg2.tsv
-t	3	1000	1100	t2	reg2.tsv
-t	M	10	25	t2	reg2.tsv
-t	X	90	200	t2	reg2.tsv
-t	Y	1010	1900	t2	reg2.tsv
-t	1	10	20		reg1b.tsv
-t	1	50	60		reg1b.tsv}
+	cg cat -n file -c 0 -m 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# comments added
+		#
+		test	chromosome	begin	end	test2	file
+		t	1	15	25	t2	reg2.tsv
+		t	1	45	55	t2	reg2.tsv
+		t	2	150	160	t2	reg2.tsv
+		t	2	170	180	t2	reg2.tsv
+		t	2	300	400	t2	reg2.tsv
+		t	2	400	500	t2	reg2.tsv
+		t	3	1000	1100	t2	reg2.tsv
+		t	M	10	25	t2	reg2.tsv
+		t	X	90	200	t2	reg2.tsv
+		t	Y	1010	1900	t2	reg2.tsv
+		t	1	10	20		reg1b.tsv
+		t	1	50	60		reg1b.tsv
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
-test tsv_cat {two diff header -m} {
-	cg cat -m data/reg1.tsv data/reg2.tsv
-} {# ++++ data/reg1.tsv ++++
-# ++ chromosome test begin end
-# ++++ data/reg2.tsv ++++
-# ++ test chromosome begin end test2
-# comments added
-#
-chromosome	test	begin	end	test2
-1	t	10	20	
-1	t	50	60	
-2	t	100	200	
-2	t	450	480	
-3	t	1000	1100	
-3	t	2000	2100	
-M	t	10	20	
-X	t	100	200	
-Y	t	1000	2000	
-1	t	15	25	t2
-1	t	45	55	t2
-2	t	150	160	t2
-2	t	170	180	t2
-2	t	300	400	t2
-2	t	400	500	t2
-3	t	1000	1100	t2
-M	t	10	25	t2
-X	t	90	200	t2
-Y	t	1010	1900	t2}
+test tsv_cat {two diff header -m -c 1} {
+	cg cat -m -c 1 data/reg1.tsv data/reg2.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# ++++ data/reg1.tsv ++++
+		# ++ chromosome test begin end
+		# ++++ data/reg2.tsv ++++
+		# ++ test chromosome begin end test2
+		# comments added
+		#
+		chromosome	test	begin	end	test2
+		1	t	10	20	
+		1	t	50	60	
+		2	t	100	200	
+		2	t	450	480	
+		3	t	1000	1100	
+		3	t	2000	2100	
+		M	t	10	20	
+		X	t	100	200	
+		Y	t	1000	2000	
+		1	t	15	25	t2
+		1	t	45	55	t2
+		2	t	150	160	t2
+		2	t	170	180	t2
+		2	t	300	400	t2
+		2	t	400	500	t2
+		3	t	1000	1100	t2
+		M	t	10	25	t2
+		X	t	90	200	t2
+		Y	t	1010	1900	t2
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
-test tsv_cat {two diff header -f} {
-	cg cat -m data/reg2.tsv data/reg1b.tsv
-} {# ++++ data/reg2.tsv ++++
-# ++ test chromosome begin end test2
-# comments added
-#
-# ++++ data/reg1b.tsv ++++
-# ++ chromosome test begin end
-test	chromosome	begin	end	test2
-t	1	15	25	t2
-t	1	45	55	t2
-t	2	150	160	t2
-t	2	170	180	t2
-t	2	300	400	t2
-t	2	400	500	t2
-t	3	1000	1100	t2
-t	M	10	25	t2
-t	X	90	200	t2
-t	Y	1010	1900	t2
-t	1	10	20	
-t	1	50	60	}
+test tsv_cat {two diff header -f -c 1} {
+	# ! This is not something you would want to do normally
+	cg cat -f -c 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# ++++ data/reg2.tsv ++++
+		# ++ test chromosome begin end test2
+		# comments added
+		#
+		# ++++ data/reg1b.tsv ++++
+		# ++ chromosome test begin end
+		test	chromosome	begin	end	test2
+		t	1	15	25	t2
+		t	1	45	55	t2
+		t	2	150	160	t2
+		t	2	170	180	t2
+		t	2	300	400	t2
+		t	2	400	500	t2
+		t	3	1000	1100	t2
+		t	M	10	25	t2
+		t	X	90	200	t2
+		t	Y	1010	1900	t2
+		1	t	10	20
+		1	t	50	60
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {two diff header -fields} {
 	write_tab tmp/reg.tsv {
@@ -298,14 +353,18 @@ test tsv_cat {two diff header -fields} {
 		t       1       15      25      t2
 		t       1       45      55      t2
 	}
-	exec cg cat -fields {chromosome begin end test} data/reg1b.tsv tmp/reg.tsv
-} {# ++++ data/reg1b.tsv ++++
-# ++++ tmp/reg.tsv ++++
-chromosome	begin	end	test
-1	10	20	t
-1	50	60	t
-1	15	25	t
-1	45	55	t}
+	exec cg cat -fields {chromosome begin end test} -c 1 data/reg1b.tsv tmp/reg.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		# ++++ data/reg1b.tsv ++++
+		# ++++ tmp/reg.tsv ++++
+		chromosome	begin	end	test
+		1	10	20	t
+		1	50	60	t
+		1	15	25	t
+		1	45	55	t
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {-n file} {
 	write_tab tmp/reg1.tsv {
@@ -316,10 +375,14 @@ test tsv_cat {-n file} {
 		chromosome	begin	end
 		1	45	55
 	}
-	exec cg cat -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv
-} {chromosome	begin	end	file
-1	15	25	reg1.tsv
-1	45	55	reg2.tsv}
+	exec cg cat -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		chromosome	begin	end	file
+		1	15	25	reg1.tsv
+		1	45	55	reg2.tsv
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test tsv_cat {-m 1 -n file} {
 	write_tab tmp/reg1.tsv {
@@ -330,10 +393,94 @@ test tsv_cat {-m 1 -n file} {
 		chromosome	begin	end
 		1	45	55
 	}
-	exec cg cat -m 1 -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv
-} {chromosome	test	begin	end	file
-1	test	15	25	reg1.tsv
-1		45	55	reg2.tsv}
+	exec cg cat -m 1 -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv > tmp/result.tsv
+	write_deindent tmp/expected.tsv {
+		chromosome	test	begin	end	file
+		1	test	15	25	reg1.tsv
+		1		45	55	reg2.tsv
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_cat {cg cat -m 1 -c m} {
+	write_deindent tmp/var1.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#extra	1
+		#info	test 1
+		#info	test 2
+		#plain comment
+		#samplename	NA19240m
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	test	1	String	test	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr1	249250621
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#info	tsv converted from vcf
+		#info	test 3
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#extra2	2
+		#samplename	NA19240m
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr2	243199373
+		chromosome	begin	end	type
+		chr2	45	55	del
+	}
+	write_deindent tmp/expected.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#info	test 1
+		#info	test 2
+		#info	tsv converted from vcf
+		#info	test 3
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#samplename	NA19240m
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	test	1	String	test	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr1	249250621
+		#contig	chr2	243199373
+		#catfiles	tmp/var1.tsv
+		#catfiles	tmp/var2.tsv
+		#extra	1
+		#extra2	2
+		chromosome	test	begin	end	type
+		chr1	test	15	25	
+		chr2		45	55	del
+	}
+	exec cg cat -m 1 -c m tmp/var1.tsv tmp/var2.tsv > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test check_sort {sort error 1 in vars} {
 	exec cg checksort data/vars_sorterror1.sft
@@ -805,25 +952,25 @@ test tsv_paste {size mismatch} {
 
 test mergesorted {basic} {
 	test_cleantmp
-	file_write tmp/vars1.tsv [deindent {
+	write_deindent tmp/vars1.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t1	4000	a
 		chr1	t2	4100	a
 		chr2	t3	4050	a
-	}]\n
-	file_write tmp/vars2.tsv [deindent {
+	}
+	write_deindent tmp/vars2.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t4	3000	b
 		chr1	t4	4050	b
 		chr2	t5	4100	b
-	}]\n
-	file_write tmp/vars3.tsv [deindent {
+	}
+	write_deindent tmp/vars3.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t6	2000	c
-	}]\n
+	}
 	exec mergesorted \# 1 {} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
 } {# varcomment
 chromosome	name	begin	other
@@ -837,25 +984,25 @@ chr2	t5	4100	b}
 
 test mergesorted {no header line, comments with @} {
 	test_cleantmp
-	file_write tmp/vars1.tsv [deindent {
+	write_deindent tmp/vars1.tsv {
 		@ varcomment
 		@ varcomment 1
 		chr1	t1	4000	a
 		chr1	t2	4100	a
 		chr2	t3	4050	a
-	}]\n
-	file_write tmp/vars2.tsv [deindent {
+	}
+	write_deindent tmp/vars2.tsv {
 		@ varcomment
 		@ varcomment 2
 		chr1	t4	3000	b
 		chr1	t4	4050	b
-	}]\n
-	file_write tmp/vars3.tsv [deindent {
+	}
+	write_deindent tmp/vars3.tsv {
 		@ varcomment
 		@ varcomment 3
 		chr1	t6	2000	c
 		chr2	t5	4100	b
-	}]\n
+	}
 	exec mergesorted @ 0 {} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
 } {@ varcomment
 @ varcomment 1
@@ -868,23 +1015,23 @@ chr2	t3	4050	a
 chr2	t5	4100	b}
 
 test mergesorted {header} {
-	file_write tmp/vars1.tsv [deindent {
+	write_deindent tmp/vars1.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t1	4000	a
-	}]\n
-	file_write tmp/vars2.tsv [deindent {
+	}
+	write_deindent tmp/vars2.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t4	3000	b
 		chr1	t4	4050	b
 		chr2	t5	4100	b
-	}]\n
-	file_write tmp/vars3.tsv [deindent {
+	}
+	write_deindent tmp/vars3.tsv {
 		# varcomment
 		chromosome	name	begin	other
 		chr1	t6	2000	c
-	}]\n
+	}
 	exec mergesorted \# 1 {chr	n	b	o} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
 } {chr	n	b	o
 chr1	t6	2000	c
@@ -894,20 +1041,20 @@ chr1	t4	4050	b
 chr2	t5	4100	b}
 
 test mergesorted {basic} {
-	file_write tmp/reg1.tsv [deindent {
+	write_deindent tmp/reg1.tsv {
 		chromosome	begin	end	test
 		1	10	20	a1
 		1	90	100	b1
 		2	10	20	c1
 		10	40	50	d1
-	}]\n
-	file_write tmp/reg2.tsv [deindent {
+	}
+	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
 		1	40	41	b2
 		5	42	43	c2
 		10	51	51	d2
-	}]\n
+	}
 	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
 } {chromosome	begin	end	test
 1	8	9	a2
@@ -920,15 +1067,15 @@ test mergesorted {basic} {
 10	51	51	d2}
 
 test mergesorted {short} {
-	file_write tmp/reg1.tsv [deindent {
+	write_deindent tmp/reg1.tsv {
 		chromosome	begin	end	test
 		1	10	20	a1
 		1	90	100	b1
-	}]\n
-	file_write tmp/reg2.tsv [deindent {
+	}
+	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
-	}]\n
+	}
 	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
 } {chromosome	begin	end	test
 1	8	9	a2
@@ -936,15 +1083,15 @@ test mergesorted {short} {
 1	90	100	b1}
 
 test mergesorted {compressed (gz_popen test)} {
-	file_write tmp/reg1.tsv [deindent {
+	write_deindent tmp/reg1.tsv {
 		chromosome	begin	end	test
 		1	10	20	a1
 		1	90	100	b1
-	}]\n
-	file_write tmp/reg2.tsv [deindent {
+	}
+	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
-	}]\n
+	}
 	cg zst tmp/reg1.tsv
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
 } {chromosome	begin	end	test
@@ -953,23 +1100,23 @@ test mergesorted {compressed (gz_popen test)} {
 1	90	100	b1}
 
 test mergesorted {error in gz_popen test} {
-	file_write tmp/reg1.tsv.zst [deindent {
+	write_deindent tmp/reg1.tsv.zst {
 		chromosome	begin	end	test
 		1	10	20	a1
 		1	90	100	b1
-	}]\n
-	file_write tmp/reg2.tsv [deindent {
+	}
+	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
-	}]\n
+	}
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
 } {error reading header of file tmp/reg1.tsv.zst: error closing file */reg1.tsv.zst: zstd-mt: */reg1.tsv.zst: Malformed input} match error
 
 test mergesorted {error file does not exist} {
-	file_write tmp/reg2.tsv [deindent {
+	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
-	}]\n
+	}
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
 } {could not read "tmp/reg1.tsv.zst": no such file or directory} error
 

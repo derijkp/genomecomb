@@ -130,6 +130,10 @@ proc write_tab {file data {comment {}}} {
 	close $f
 }
 
+proc write_deindent {file data} {
+	file_write $file [deindent $data]\n
+}
+
 proc diff_tab {file data {comment {}}} {
 	set tempfile [tempfile]
 	set data [split [string trim $data] \n]

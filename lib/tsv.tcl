@@ -212,6 +212,23 @@ proc tsv_comment2var {comment varName} {
 	}	
 }
 
+proc tsv_var2comment {varName} {
+	upvar $varName a
+	set keys [list_remove [array names a] {}]
+	set deffields {
+		filetype fileversion split info refseq numsamples samplename
+		fields contig
+	}
+	set keys [list_concat [list_common $deffields $keys] [list_lremove $keys $deffields]]
+	set result {}
+	foreach key $keys {
+		foreach line $a($key) {
+			lappend result \#$key\t[join $line \t]
+		}
+	}
+	return [join $result \n]
+}
+
 proc tsv_count {tsvfile} {
 	set countfile [indexdir_file $tsvfile vars.tsv.count ok]
 	if {!$ok} {
