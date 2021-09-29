@@ -47,11 +47,15 @@ proc cg_vcfcat {args} {
 			set prevfile $file
 		} elseif {$header ne $firstheader} {
 			if {[llength $firstheader] > [llength $header]} {
-				if {[llength [list_lremove $header $firstheader]]} {
+				set temp [list_lremove [lrange $header 0 end-1] $firstheader]
+				set temp [list_sub $temp -exclude [list_find -regexp $temp {^##(fileDate|CommandLine|GATKCommandLine|arguments)=}]]
+				if {[llength $temp]} {
 					error "error concatenating vcf files: $file has a different header from $prevfile"
 				}
 			} else {
-				if {[llength [list_lremove $firstheader $header]]} {
+				set temp [list_lremove [lrange $firstheader 0 end-1] $header]
+				set temp [list_sub $temp -exclude [list_find -regexp $temp {^##(fileDate|CommandLine|GATKCommandLine|arguments)=}]]
+				if {[llength $temp]} {
 					error "error concatenating vcf files: $file has a different header from $prevfile"
 				}
 				set firstheader $header
@@ -100,11 +104,14 @@ proc cg_vcfcat {args} {
 		foreach file $args {
 			if {![file size $file]} continue
 			set f [gzopen $file]
-			while {[gets $f line] != -1} {
-				if {[string index $line 0] ne {#}} break
+			while 1 {
+				set r [gets $f line]
+				if {$r == -1 || [string index $line 0] ne {#}} break
 			}
-			puts $o $line
-			fcopy $f $o
+			if {$r != -1} {
+				puts $o $line
+				fcopy $f $o
+			}
 			gzclose $f
 		}
 		close $o
