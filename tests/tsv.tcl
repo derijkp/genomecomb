@@ -146,8 +146,6 @@ test tsv_cat {two same header -c 1} {
 test tsv_cat {two same header} {
 	cg cat data/reg2.tsv data/reg4.tsv > tmp/result.tsv
 	write_deindent tmp/expected.tsv {
-		#catfiles	data/reg2.tsv
-		#catfiles	data/reg4.tsv
 		test	chromosome	begin	end	test2
 		t	1	15	25	t2
 		t	1	45	55	t2
@@ -244,7 +242,7 @@ test tsv_cat {two diff header -m -c 1} {
 } {}
 
 test tsv_cat {two diff header -m 1} {
-	cg cat -m 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
+	cg cat -m 1 -catfiles 1 data/reg2.tsv data/reg1b.tsv > tmp/result.tsv
 	write_deindent tmp/expected.tsv {
 		#catfiles	data/reg2.tsv
 		#catfiles	data/reg1b.tsv
@@ -470,8 +468,6 @@ test tsv_cat {cg cat -m 1 -c m} {
 		#contig	ID	length
 		#contig	chr1	249250621
 		#contig	chr2	243199373
-		#catfiles	tmp/var1.tsv
-		#catfiles	tmp/var2.tsv
 		#extra	1
 		#extra2	2
 		chromosome	test	begin	end	type

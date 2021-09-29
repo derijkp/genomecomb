@@ -4,6 +4,7 @@ proc cg_cat {args} {
 	set merge 0
 	set namefield {}
 	set sort 0
+	set catfiles 0
 	unset -nocomplain addcomment
 	cg_options cat args {
 		-f - -force {
@@ -38,6 +39,9 @@ proc cg_cat {args} {
 		}
 		-fields {
 			set fields $value
+		}
+		-catfiles {
+			set catfiles [true $value]
 		}
 	} {} 1
 	if {$merge} {set force m} elseif {$force} {set force f} else {set force ""}
@@ -125,8 +129,11 @@ proc cg_cat {args} {
 		if {!$diffcomments} {
 			puts $firstcomment
 		} else {
-			set commenta(catfiles) $files
-			puts [tsv_var2comment commenta]
+			if {$catfiles} {
+				set commenta(catfiles) $files
+			}
+			set temp [tsv_var2comment commenta]
+			if {$temp ne ""} {puts $temp}
 		}
 	} elseif {[llength $comments]} {
 		puts [join $comments \n]
