@@ -136,10 +136,10 @@ proc sv_sniffles_job {args} {
 				-m $usebam -v $target.temp 2>@ stderr >@ stdout
 			file rename -force -- $target.temp $target
 		} msg]} {
-			# sniffles sometinmes (allways?) crashes on empty or small bam
+			# sniffles sometimes (allways?) crashes on empty or small bam
 			# only give error on larger bam, otherwise write empty result
-			set temp [exec samtools view $usebam | head -100 | wc -l]
-			if {$temp >= 100} {
+			set temp [exec samtools view $usebam | head -200 | wc -l]
+			if {$temp >= 200} {
 				error $msg
 			}
 			file_write $target {}
