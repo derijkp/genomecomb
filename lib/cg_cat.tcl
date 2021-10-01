@@ -5,6 +5,7 @@ proc cg_cat {args} {
 	set namefield {}
 	set sort 0
 	set catfiles 0
+	set sample {}
 	unset -nocomplain addcomment
 	cg_options cat args {
 		-f - -force {
@@ -42,6 +43,9 @@ proc cg_cat {args} {
 		}
 		-catfiles {
 			set catfiles [true $value]
+		}
+		-sample {
+			set sample $value
 		}
 	} {} 1
 	if {$merge} {set force m} elseif {$force} {set force f} else {set force ""}
@@ -87,6 +91,9 @@ proc cg_cat {args} {
 						list_addnew commenta($key) {*}$a($key)
 					}
 				}
+			}
+			if {$sample ne ""} {
+				set commenta(samplename) [list $sample]
 			}
 		} else {
 			if {$addcomment eq "1"} {

@@ -543,6 +543,7 @@ test var {var_medaka distrreg} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.old -x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot \
+		-x *.tbi \
 		-ignorefields {varcaller_cg_version sammerge_version} \
 		tmp/medaka_distrreg expected/medaka_distrreg]
 	lappend result [cg select -g chromosome tmp/medaka_distrreg/compar.tsv]

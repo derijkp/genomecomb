@@ -209,7 +209,7 @@ proc tsv_comment2var {comment varName} {
 		set key [string range [lindex $line 0] 1 end]
 		set value [lrange $line 1 end]
 		lappend a($key) $value
-	}	
+	}
 }
 
 proc tsv_var2comment {varName} {

@@ -202,7 +202,7 @@ proc sv_job {args} {
 						svcaller_distrreg [file tail $distrreg] \
 						sample $sample]
 				} else {
-					cg cat -c m -m 1 {*}[bsort [jobglob {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
+					cg cat -c m -m 1 -sample $sample {*}[bsort [jobglob {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
 					file rename -force $target.temp $target
 					cg_zindex $target
 				}

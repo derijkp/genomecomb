@@ -478,6 +478,84 @@ test tsv_cat {cg cat -m 1 -c m} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test tsv_cat {cg cat -m 1 -c m -sample testsample} {
+	write_deindent tmp/var1.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#extra	1
+		#info	test 1
+		#info	test 2
+		#plain comment
+		#samplename	x1
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	test	1	String	test	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr1	249250621
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#info	tsv converted from vcf
+		#info	test 3
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#extra2	2
+		#samplename	x2
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr2	243199373
+		chromosome	begin	end	type
+		chr2	45	55	del
+	}
+	write_deindent tmp/expected.tsv {
+		#filetype	tsv/varfile
+		#fileversion	0.99
+		#split	1
+		#info	test 1
+		#info	test 2
+		#info	tsv converted from vcf
+		#info	test 3
+		#refseq	genome_hg19.ifas
+		#numsamples	1
+		#samplename	testsample
+		#fields	table
+		#fields	field	number	type	description	source
+		#fields	chromosome	1	String	Chromosome/Contig	var
+		#fields	test	1	String	test	var
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+		#fields	end	1	Integer	End of feature (0 based - half open)	var
+		#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+		#contig	table
+		#contig	ID	length
+		#contig	chr1	249250621
+		#contig	chr2	243199373
+		#extra	1
+		#extra2	2
+		chromosome	test	begin	end	type
+		chr1	test	15	25	
+		chr2		45	55	del
+	}
+	exec cg cat -m 1 -c m -sample testsample tmp/var1.tsv tmp/var2.tsv > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test check_sort {sort error 1 in vars} {
 	exec cg checksort data/vars_sorterror1.sft
 } {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")
