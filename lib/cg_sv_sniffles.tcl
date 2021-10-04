@@ -138,8 +138,9 @@ proc sv_sniffles_job {args} {
 		} msg]} {
 			# sniffles sometimes (allways?) crashes on empty or small bam
 			# only give error on larger bam, otherwise write empty result
-			set temp [exec samtools view $usebam | head -200 | wc -l]
-			if {$temp >= 200} {
+			# use bash to avoid "child killed: write on pipe with no readers" error because of head stopping samtools
+			set temp [exec -- bash -c "samtools view \"$usebam\" | head -200 | wc -l"]
+			if {$temp >= 300} {
 				error $msg
 			}
 			file_write $target {}
