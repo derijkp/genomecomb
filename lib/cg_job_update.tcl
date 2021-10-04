@@ -191,6 +191,10 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
+			if {$status in "error skipped" && [job_file_exists $job.log]} {
+				set jobloginfo [job_parse_log $job]
+				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
+			}
 			correct_time_ms starttime
 			correct_time_ms endtime
 			set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
@@ -198,7 +202,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_exists $job.log])} {
 			if {[job_file_exists $job.log]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break

@@ -980,9 +980,9 @@ proc job_parse_log {job} {
 			set status error
 			lappend errorlist [list $run $submittime $starttime $endtime $host]
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t>-]+job ${tail} skipped($|:)}] $line temp skiptime]} {
-			set status skipped
+			if {$status ne "finished"} {set status skipped}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]skipping ${tail}($|:)}] $line temp skiptime]} {
-			set status skipped
+			if {$status ne "finished"} {set status skipped}
 		}
 	}
 	if {$status eq "skipped"} {
