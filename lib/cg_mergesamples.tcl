@@ -78,7 +78,7 @@ proc mergesamples_job {result args} {
 		} -vars {
 			smethfiles destsample
 		} -code {
-			exec devcg mergesorted {*}$smethfiles | cg [string range $extension 1 end] > $target.temp$extension
+			exec cg mergesorted {*}$smethfiles | cg [string range $extension 1 end] > $target.temp$extension
 			file rename $target.temp$extension $target
 			file_copy [analysisinfo_file [lindex $smethfiles 0]]] [analysisinfo_file $target]
 			exec cg meth_nanopolish_freqs $target meth-nanopolish-$destsample$extension
