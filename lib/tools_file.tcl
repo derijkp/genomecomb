@@ -507,7 +507,7 @@ proc convert_pipe {infile outfile args} {
 			set compressionlevel [defcompressionlevel 5]
 		}
 		lappend pipe samtools view --no-PG -h --output-fmt-option level=$compressionlevel
-		if {$threads ne "" && [lindex [version samtools] 0] ni "1.10 1.11"} {
+		if {$threads ne "" && $threads ne "1" && [lindex [version samtools] 0] ni "1.10 1.11"} {
 			# version 1.10 (intermittently) fails when run using threads with following error
 			# [E::sam_parse1] incomplete aux field
 			# [main_samview] truncated file.
