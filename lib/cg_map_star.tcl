@@ -122,6 +122,7 @@ proc cg_map_star {args} {
 		foreach {file} $files {
 			lappend rgids ID:$sample\ [join $rg " "]
 		}
+		file delete -force ./_STARtmp
 		if {[catch {
 			exec STAR {*}$extraopts \
 				--runThreadN $threads \
@@ -159,6 +160,7 @@ proc cg_map_star {args} {
 			lappend rgids ID:$sample\ [join $rg " "]
 		}
 		putslog "making $result"
+		file delete -force ./_STARtmp
 		if {[catch {
 			exec STAR {*}$extraopts \
 				--runThreadN $threads \
