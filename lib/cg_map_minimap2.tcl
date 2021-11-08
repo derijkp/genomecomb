@@ -3,7 +3,9 @@ proc refseq_minimap2_job {refseq preset} {
 	set minimap2refseq $refseq.minimap2.$preset
 	if {[file exists $minimap2refseq]} {return $minimap2refseq}
 	set tail [file tail $refseq]
-	if {[jobtargetexists [list $minimap2refseq] $refseq]} return
+	if {[jobtargetexists [list $minimap2refseq] $refseq]} {	
+		return $minimap2refseq
+	}
 	job [job_relfile2name minimap2_2refseq- $refseq] -deps {$refseq} -targets {$minimap2refseq} -vars {preset} -code {
 		set temp [catch_exec minimap2 -x $preset -d $target.temp $dep]
 		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
@@ -70,7 +72,7 @@ proc cg_map_minimap2 {args} {
 		-paired - -p {
 			set paired $value
 		}
-		-x - -preset - -p {
+		-x - -preset {
 			if {$value eq "splicehq"} {set value splice:hq}
 			if {$value eq "splicesmall"} {
 				set value splice
