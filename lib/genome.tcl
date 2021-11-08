@@ -62,15 +62,15 @@ proc cg_fas2ifas {srcfile destfile} {
 		foreach name $sids {
 			if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
 				if {![regexp {chr([^ ,]+)} $name temp chr]} {
-					set chr [lindex $name end]
+					set chr [lindex $name 0]
 				}
 			}
 			set len [expr {$a(e,$name) - $a(s,$name)}]
 			puts $oi "$chr\t$a(s,$name) $len"
 		}
  		close $oi
-		file rename $destfile.temp $destfile
-		file rename $destfile.index.temp $destfile.index
+		file rename -force $destfile.temp $destfile
+		file rename -force $destfile.index.temp $destfile.index
 	}
 }
 
