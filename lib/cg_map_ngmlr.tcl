@@ -1,20 +1,33 @@
 proc refseq_ngmlr_job {refseq preset} {
 	upvar job_logdir job_logdir
+	set tail [file tail $refseq]
+	set ngmlrrefseqdir $refseq.ngmlr.$preset
+	set ngmlrrefseq $ngmlrrefseqdir/$tail
+	if {[jobtargetexists $ngmlrrefseq]} {
+		return $ngmlrrefseq
+	}
 	if {![jobtargetexists [list $refseq-ht-13-2.2.ngm $refseq-enc.2.ngm] [list $refseq]]} {
-		set tail [file tail $refseq]
-		job [job_relfile2name ngmlr_2refseq- $refseq] -deps {$refseq} -targets {
-			$refseq-ht-13-2.2.ngm $refseq-enc.2.ngm
-		} -vars {preset} -code {
+		job [job_relfile2name ngmlr_2refseq- $refseq] -deps {
+			$refseq
+		} -targets {
+			$ngmlrrefseq
+		} -vars {
+			refseq ngmlrrefseqdir ngmlrrefseq preset
+		} -code {
+			file mkdir $ngmlrrefseqdir.temp
+			set tail [file tail $refseq]
+			mklink $refseq $ngmlrrefseqdir.temp/$tail
 			set temp [tempfile]
 			file_write $temp ""
 			if {[catch {
-				exec -ignorestderr ngmlr -x $preset -r $dep -q $temp 2>@ stderr
+				exec -ignorestderr ngmlr -x $preset -r $ngmlrrefseqdir.temp/$tail -q $temp 2>@ stderr
 			} e]} {
 				error $e
 			}
+			file rename $ngmlrrefseqdir.temp $ngmlrrefseqdir
 		}
 	}
-	return [list $refseq $refseq-ht-13-2.2.ngm $refseq-enc.2.ngm]
+	return $ngmlrrefseq
 }
 
 proc cg_refseq_ngmlr args {
@@ -27,12 +40,13 @@ proc cg_refseq_ngmlr args {
 proc refseq_ngmlr {refseq preset} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
-	if {![file exists $refseq] || ![file exists $refseq-ht-13-2.2.ngm] || ![file exists $refseq-enc.2.ngm]} {
-		error "The ngmlr version of the refseq does not exist (should be at $refseq-ht-13-2.2.ngm and $refseq-enc.2.ngm)
+	set ngmlrrefseq $refseq.ngmlr.$preset/[file tail $refseq]
+	if {![file exists $ngmlrrefseq]} {
+		error "The ngmlr version of the refseq (preset $preset) does not exist (should be $ngmlrrefseq)
 You can create it using:
 cg refseq_ngmlr \'$refseq\' $preset"
 	}
-	return $refseq
+	return $ngmlrrefseq
 }
 
 proc cg_map_ngmlr {args} {
