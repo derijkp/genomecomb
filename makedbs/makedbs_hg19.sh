@@ -65,6 +65,8 @@ set genesdb [list \
 	{augustusGene extra} \
 	{lincRNAsTranscripts lincRNA} \
 ]
+set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/genes/hg19.ensGene.gtf.gz
+set gtffile genes_hg19_ensGene.gtf.gz
 
 # keep actual command line used for log
 set cmdline "[list cd [pwd]] \; [list [info script] {*}$argv]"
@@ -103,6 +105,13 @@ makerefdb_job \
 	-dbsnp $dbsnpversion \
 	-mirbase $mirbase \
 	/complgen/refseqnew/$build >@ stdout 2>@ stderr
+
+job gtf -targets {
+	$gtffile
+} -vars {gtfurl gtffile} -code {
+	wgetfile $gtfurl $gtffile.temp
+	file rename $gtffile.temp $gtffile
+}
 
 job reg_${build}_gwasCatalog -targets {
 	reg_${build}_gwasCatalog.tsv

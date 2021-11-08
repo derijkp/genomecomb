@@ -67,6 +67,8 @@ set genesdb [list \
 	{augustusGene extra} \
 	{lincRNAsTranscripts lincRNA} \
 ]
+set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz
+set gtffile genes_hg38_ensGene.gtf.gz
 
 # prepare
 # =======
@@ -114,6 +116,13 @@ makerefdb_job \
 
 # rest after this is human specific
 # ---------------------------------
+
+job gtf -targets {
+	$gtffile
+} -vars {gtfurl gtffile} -code {
+	wgetfile $gtfurl $gtffile.temp
+	file rename $gtffile.temp $gtffile
+}
 
 job reg_${build}_gwasCatalog -targets {
 	reg_${build}_gwasCatalog.tsv
