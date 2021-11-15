@@ -177,7 +177,7 @@ proc job_logfile_sge_close {} {
 	set outfile $logfile.update.out
 	set errfile $logfile.update.err
 	job_init
-	job_update $logfile $cgjob(cleanup)
+	job_update $logfile $cgjob(cleanup) 1
 	set statusok [file exists $cgjob(logfile).finished]
 	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $statusok)} {
 		job_cleanup
