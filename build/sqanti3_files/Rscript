@@ -1,0 +1,11 @@
+#!/bin/sh
+# Shell wrapper for R executable.
+
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+cmd=$1 ; shift;
+if [ $cmd = '--version' ] ; then
+    R --version
+else
+    $dir/R --slave --no-restore --file="$cmd" --args $*
+fi

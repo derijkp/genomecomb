@@ -133,6 +133,7 @@ mv flair-$flairversion flair-$flairversion.old || true
 mkdir flair-$flairversion
 cd flair-$flairversion
 tar xvzf ../flair.tar.gz
+cp /io/build/flair_files/plot_isoform_usage.patched.py bin/bin
 rm ../flair.tar.gz
 cd /build
 tar cvzf flair-$flairversion.tar.gz flair-$flairversion
