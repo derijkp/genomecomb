@@ -37,6 +37,69 @@ test select "-q$dboptt" {
 4	a	a4	aaaa
 2	c	a2	cc}
 
+test select "-q with regexp$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	CDS
+		2	CD
+		3	CDSMIS
+	}]
+	cg select -q {$b regexp "CDS"} tmp/temp.tsv
+} {a	b
+1	CDS
+3	CDSMIS}
+
+test select "-q with regexp$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	AB
+		2	CD
+		3	EF
+	}]
+	cg select -q {$b regexp {[AF]}} tmp/temp.tsv
+} {a	b
+1	AB
+3	EF}
+
+test select "-q with regexp using \$$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	AB
+		2	AD
+		3	EF
+	}]
+	cg select -q {$b regexp {^[AB]+\$}} tmp/temp.tsv
+} {a	b
+1	AB}
+
+test select "-q with not$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	AB
+		2	1
+		3	EF
+	}]
+	cg select -q {not(isint($b))} tmp/temp.tsv
+} {a	b
+1	AB
+3	EF}
+
+test select "-q with isnt$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	AB
+		2	1
+		3	2.3
+	}]
+	cg select -q {isint($b)} tmp/temp.tsv
+} {a	b
+2	1}
+
 test select "-s$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s num data/table.tsv

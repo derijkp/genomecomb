@@ -741,6 +741,12 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			append newcode [string range $code $prevpos end]
 			break
 		}
+		if {[string index $code [expr {$pos-1}]] eq "\\"} {
+			append newcode [string range $code $prevpos [expr {$pos-2}]]\$
+			incr pos
+			set prevpos $pos
+			continue
+		}
 		append newcode [string range $code $prevpos $pos]
 		incr pos
 		set prevpos $pos

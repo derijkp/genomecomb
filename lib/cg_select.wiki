@@ -195,6 +195,7 @@ Queries support all functions provided by Tcl expr
 Several extra functions have been added:
 
 ==== Logical functions ====
+; not(condition): condition is true if condition is not true
 ; if(condition,true,?condition2,true2, ...?false): if **condition** is true, the value for "true" will be returned, 
 otherwise the last parameter (**false**) is returned
 ; catch(value,?errorvalue?): if an error is generated when calculating **value**, the function returns **errorvalue**.
@@ -245,6 +246,7 @@ list of numbers, or not numbers.
 ; avg(value,...): returns the average of the values given. Non-number values are ignored.
 If no number was given, the answer will be NaN
 ; isnum(value): true if value is a valid number
+; isint(value): true if value is a valid integer
 ; percent(value): returns a fraction as a percent 
 ; def(value,default): if value is not a number, it returns the given default, otherwise value
 ; format(formatstring, arg, ...): format the given arguments according to the given **formatstring**. 
@@ -254,10 +256,12 @@ with two digits after the decimel point
 ==== String functions ====
 ; oneof($field,value1,value2,...): returns true if the given field is equal to one of the values
 ; regexp(value,pattern): true if value matches the regular expression given by **pattern**
+; ncregexp(value,pattern): true if value matches the regular expression given by **pattern** without taking into account case (nocase)
 ; regextract(value,pattern): extract the part matching the given **pattern** from **value**
 ; regsub(value,pattern,replace): substitutes values matched by **pattern** in **value** by **replace**
 ; matches(value,pattern):  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
+; matches(value,pattern):  like matches but without taking into account case (nocase)
 ; concat(value,...): makes one long string by appending all values.
 
 ==== multifield functions ====
@@ -429,7 +433,7 @@ error is given. Further, only only one of **sample** or **analysis** can
 be used as a field. Using both together (in either -g or -gc) will also
 cause an error)
 
-I a field is given that only exists in the file as part of an
+If a field is given that only exists in the file as part of an
 analysis/sample specific one, processing per sample/analysis is also
 triggered, even though the aggregate will not be separated per sample.
 e.g. using zyg (in a file with only zyg-samplexx fields) will result in

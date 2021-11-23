@@ -18,7 +18,7 @@ proc matchlist {v1 v2} {
 proc tcl::mathfunc::lone {args} {
 	foreach value $args {
 		foreach el [split $value ";, "] {
-			if {[isint $el]} {
+			if {[::isint $el]} {
 				if {$el} {return 1}
 			}
 		}
@@ -29,7 +29,7 @@ proc tcl::mathfunc::lone {args} {
 proc tcl::mathfunc::lall {args} {
 	foreach value $args {
 		foreach el [split $value ";, "] {
-			if {[isint $el]} {
+			if {[::isint $el]} {
 				if {!$el} {return 0}
 			}
 		}
@@ -41,7 +41,7 @@ proc tcl::mathfunc::lcount {args} {
 	set result 0
 	foreach value $args {
 		foreach el [split $value ";, "] {
-			if {[isint $el]} {
+			if {[::isint $el]} {
 				if {$el} {incr result}
 			}
 		}
