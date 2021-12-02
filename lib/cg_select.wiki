@@ -254,6 +254,10 @@ If no number was given, the answer will be NaN
 with two digits after the decimel point
 
 ==== String functions ====
+; length(value): returns the string length of value
+; toupper(value): returns the uppercase version of string value
+; split(value,splitchars): splits the string value on each occurence of any character in splitchars
+; concat(value,...): makes one long string by appending all values.
 ; oneof($field,value1,value2,...): returns true if the given field is equal to one of the values
 ; regexp(value,pattern): true if value matches the regular expression given by **pattern**
 ; ncregexp(value,pattern): true if value matches the regular expression given by **pattern** without taking into account case (nocase)
@@ -261,8 +265,7 @@ with two digits after the decimel point
 ; regsub(value,pattern,replace): substitutes values matched by **pattern** in **value** by **replace**
 ; matches(value,pattern):  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
-; matches(value,pattern):  like matches but without taking into account case (nocase)
-; concat(value,...): makes one long string by appending all values.
+; ncmatches(value,pattern):  like matches but without taking into account case (nocase)
 
 ==== multifield functions ====
 The following functions address multiple fields.
