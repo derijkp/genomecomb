@@ -92,10 +92,23 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 
 proc annotatedb_info {dbfile {near -1}} {
 	if {[catch {
+	set a [dict create]
 	if {[file exists [gzroot $dbfile].opt]} {
-		set a [dict create {*}[file_read [gzroot $dbfile].opt]]
-	} else {
-		set a [dict create]
+		set c [split [string trim [file_read [gzroot $dbfile].opt]] \n]
+		foreach line $c {
+			set sline [split $line \t]
+			if {[llength $sline] == 2} {
+				foreach {key value} $sline break
+			} else {
+				set key [lindex $line 0]
+				set value [lrange $line 1 end]
+				foreach {key value} $line break
+			}
+			if {[string index $value 0] eq "\{" && [string index $value end] eq "\}"} {
+				set value [string range $value 1 end-1]
+			}
+			dict set a $key $value
+		}
 	}
 	if {[dict exists $a name]} {
 		set name [dict get $a name]
