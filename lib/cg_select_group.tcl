@@ -1,6 +1,6 @@
 set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct ucount distinct list list sum sum median list q1 list q3 list}
 
-proc select_parse_grouptypes {grouptypelist} {
+proc select_parse_grouptypes {grouptypelist header} {
 	global typetodoa
 	set grouptypes {}
 	foreach grouptype $grouptypelist {
@@ -14,7 +14,13 @@ proc select_parse_grouptypes {grouptypelist} {
 			if {![dict exists $typetodoa $func]} {
 				error "aggregate function $func unknown"
 			}
-			lappend grouptypes $func $field
+			if {[string first * $field] == -1} {
+				lappend grouptypes $func $field
+			} else {
+				foreach f [expandfields $header $field] {
+					lappend grouptypes $func $f
+				}
+			}
 		} else {
 			error "aggregate function (last element in groupcol argument) must be of the form function(value) or count"
 		}
@@ -441,7 +447,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 	}
 	set grouptypelist [split [list_pop groupcol] ,]
 	# parse grouptypes (aggregate results), and see which functions are needed
-	set grouptypes [select_parse_grouptypes $grouptypelist]
+	set grouptypes [select_parse_grouptypes $grouptypelist $header]
 	# check for calculated fields in group, groupcol and grouptypes, add to qposs and qfields for making precalc
 	set curpos 0
 	set newgroup {}

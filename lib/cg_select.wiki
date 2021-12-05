@@ -470,7 +470,8 @@ group and column. Supported functions are
 ; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
 **functions** can be a comma separated list to display multiple summary
 functions, eg. min(coverage),max(coverage) to display minimum and maximum
-coverage (in separate columns).
+coverage (in separate columns). A string with an asterix can be used as field, adding the aggregate function
+for all matching fields as a new entry to the list, e.g. min(coverage-*)
 
 The name of the new summary field created starts with the summary function; if it
 has a field "argument", the name will start with function_field (e.g. max_freq).

@@ -120,6 +120,21 @@ del	1	32	1	41
 ins	1	32	1	41
 snp	12	1,47,54	12	0,35,52}
 
+test select_group {group sum with *} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type	val-s1	val-s2
+		i1	1	0	2
+		i2	1	1	0
+		i3	2	5	1
+		i4	2	3	0
+		i5	1	0	1
+	}
+	cg select -stack 1 -g type -gc sum(val-*) tmp/temp.tsv
+} {type	sum_val-s1	sum_val-s2
+1	1	3
+2	8	1}
+
 test select_group {group distinct sample with list} {
 	cg select -g type -gc {sample {sample2} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	count-sample2	distinct_coverage-sample2
