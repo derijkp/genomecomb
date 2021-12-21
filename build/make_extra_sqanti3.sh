@@ -126,9 +126,9 @@ sqanti3version=4.2
 conda create -y -n sqanti3
 conda activate sqanti3
 
-wget https://github.com/ConesaLab/SQANTI3/archive/refs/tags/v4.2.tar.gz
-tar -xvf v4.2.tar.gz
-cd SQANTI3-4.2
+wget https://github.com/ConesaLab/SQANTI3/archive/refs/tags/v$sqanti3version.tar.gz
+tar -xvf v$version.tar.gz
+cd SQANTI3-$version
 
 # install dependencies
 conda install -y cdna_cupcake
@@ -150,12 +150,12 @@ mv sqanti3-$sqanti3version sqanti3-$sqanti3version.old || true
 mkdir sqanti3-$sqanti3version
 cd /build/sqanti3-$sqanti3version
 tar xvzf ../sqanti3.tar.gz
-cp -ra /build/SQANTI3-4.2 .
+cp -ra /build/SQANTI3-$version .
 
 # replace sqanti3 gtfToGenePred with hbb compiled one (that should work on more systems)
 cd /build/sqanti3-$sqanti3version
-mv ./SQANTI3-4.2/utilities/gtfToGenePred ./SQANTI3-4.2/utilities/gtfToGenePred.sqanti3
-cp -al ./bin/gtfToGenePred ./SQANTI3-4.2/utilities/gtfToGenePred
+mv ./SQANTI3-$version/utilities/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred.sqanti3
+cp -al ./bin/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred
 
 
 # make import from cdna_cupcake work
@@ -175,7 +175,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-4.2/sqanti3_qc.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_qc.py ${1+"$@"}
 ' > sqanti3_qc.py
 chmod ugo+x sqanti3_qc.py
 
@@ -184,7 +184,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-4.2/sqanti3_qc.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_qc.py ${1+"$@"}
 ' > sqanti3_qc
 chmod ugo+x sqanti3_qc
 
@@ -193,7 +193,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-4.2/sqanti3_RulesFilter.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_RulesFilter.py ${1+"$@"}
 ' > sqanti3_RulesFilter.py
 chmod ugo+x sqanti3_RulesFilter.py
 

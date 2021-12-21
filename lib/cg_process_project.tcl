@@ -35,6 +35,7 @@ proc process_project_job {args} {
 	set maxfastqdistr {}
 	set hap_bam 0
 	set depth_histo_max 1000
+	set flair 0
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -82,6 +83,9 @@ proc process_project_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-flair {
+			set flair $value
 		}
 		-s - -split {
 			set split $value
@@ -320,8 +324,9 @@ proc process_project_job {args} {
 		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
 		-threads $threads -distrreg $distrreg \
 		-keepfields $keepfields \
-		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir \
-		-reports $todo(reports)
+		-split $split -dbfiles $dbfiles -cleanup $cleanup \
+		-reports $todo(reports) \
+		$destdir $dbdir
 	if {$extra_reports_mastr ne ""} {
 		make_alternative_compar_job $experiment $destdir $extra_reports_mastr
 		set histofiles {}
@@ -332,6 +337,9 @@ proc process_project_job {args} {
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
+	}
+	if {$flair} {
+		flair_job -refseq [refseq $dbdir] -compar 1 -sqanti 1 $destdir
 	}
 	list $todo(var)
 }
