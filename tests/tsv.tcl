@@ -1194,4 +1194,15 @@ test mergesorted {error file does not exist} {
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
 } {could not read "tmp/reg1.tsv.zst": no such file or directory} error
 
+test renamesamples {basic renamesamples test} {
+	write_deindent tmp/test.tsv {
+		chromosome	begin	end	test-sample1	test-sample2 test-sample3
+		1	8	9	a	b	c
+	}
+	cg renamesamples tmp/test.tsv sample1 samplea	sample3 samplec sample4 nosample
+	file_read tmp/test.tsv
+} {chromosome	begin	end	test-samplea	test-sample2 test-samplec
+1	8	9	a	b	c
+}
+
 testsummarize
