@@ -65,7 +65,7 @@ proc cg_map_minimap2 {args} {
 	set preset {}
 	set readgroupdata {}
 	set threads 2
-	set mem 10G
+	set mem {}
 	set fixmate 1
 	set aliformat bam
 	cg_options map_minimap2 args {
@@ -101,6 +101,7 @@ proc cg_map_minimap2 {args} {
 	if {$preset eq ""} {
 		if {$paired} {set preset sr} else {set preset map-ont}
 	}
+	set mem [map_mem_minimap2 $mem $threads $preset]
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
