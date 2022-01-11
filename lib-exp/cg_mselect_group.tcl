@@ -40,7 +40,7 @@ proc monetdb_makesql_group {db table header theader query qfieldsVar {inverse 0}
 	# check groupcols for presence of sample field
 	set gsamples [select_parse_for_samples $groupcol $header]
 	# parse grouptypes (aggregate results), and see which functions are needed
-	set grouptypes [select_parse_grouptypes $grouptypelist]
+	set grouptypes [select_parse_grouptypes $grouptypelist $header]
 	# make groupby
 	set colnames {}
 	set rowname {}
