@@ -1,4 +1,5 @@
 proc fastq_split_job {args} {
+	upvar job_logdir job_logdir
 	set infile -
 	set numseq 1000000
 	set maxparts .
@@ -21,7 +22,7 @@ proc fastq_split_job {args} {
 		set outtemplate $infile
 		set infile -
 	}
-	job_logfile_set [file dir $outtemplate]/fastq_split_[file tail $outtemplate] [file dir $outtemplate]
+	job_logfile [file dir $outtemplate]/fastq_split_[file tail $outtemplate] [file dir $outtemplate]
 	set compressed [gziscompressed $outtemplate]
 	set ext [gzext $outtemplate]
 	set outdir [file dir $outtemplate]
@@ -38,10 +39,12 @@ proc fastq_split_job {args} {
 		set files [split [string trim $files] \n]
 	} elseif {[info exists parts]} {
 		set files {}
+		set skips {}
 		for {set part 1} {$part <= $parts} {incr part} {
 			lappend files $outdir/p${part}_$outfile.temp
+			lappend skips $outdir/p${part}_$outfile
 		}
-		job [job_relfile2name fastq_split- $infile] -deps {
+		job [job_relfile2name fastq_split- $infile] -skip $skips -deps {
 			$infile
 		} -targets $files -vars {
 			infile outdir outfile parts

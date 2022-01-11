@@ -140,50 +140,45 @@ proc cg_giab_gettruth {args} {
 	}
 }
 
-proc cg_giab_getfastqs {args} {
+proc giab_getdata_job {args} {
+	upvar job_logdir job_logdir
 	set version precisionfda_v2016_04
 	set basedir {}
-	set d sge
+	set threads 1
+	set todo {}
+	set paralleldownload 0
+	set parts 200
+	set align {}
+	set refseq {}
 	cg_options giab_gettruth args {
-		-d {
-			set d $value
-		}
+		-paralleldownload {set paralleldownload $value}
+		-todo {set todo $value}
+		-parts {set parts $value}
+		-align {set align $value}
+		-refseq {set refseq [refseq $value]}
+		-threads {set threads $value}
 	} {version basedir} 0 2
 	if {$basedir eq ""} {
-		set basedir ~/public/giab/fastqs/$version
+		set basedir $::env(HOME)/public/giab/$version
 	}
+	job_logfile $basedir/giab_getdata_$version $basedir
+	puts stderr "Making $basedir"
+	mkdir $basedir
 	if {[regexp ^precisionfda $version]} {
 		if {$version ne "precisionfda_v2016_04"} {
 			error "error downloading precision FDA data: only version precisionfda_v2016_04 supported"
 		}
-		if {$basedir eq ""} {
-			set basedir $::env(HOME)/public/giab/fastqs/$version
-		}
-		puts stderr "Making $basedir"
-		mkdir $basedir
-		set list {
-			HG002_NA24385_son https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG002-NA24385-pFDA_S2_L002_R1_001.fastq.gz
-			HG002_NA24385_son https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG002-NA24385-pFDA_S2_L002_R2_001.fastq.gz
-			HG001_NA12878 https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG001-NA12878-pFDA_S1_L001_R1_001.fastq.gz
-			HG001_NA12878 https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG001-NA12878-pFDA_S1_L001_R2_001.fastq.gz
-		}
-		unset -nocomplain a
-		foreach {name url} $list {
-			if {![info exists a($name)]} {
-				puts stderr "downloading $name"
-				mkdir $basedir/$name
-				set a($name) $basedir/$name
+		set todo {
+			HG002_NA24385_son {
+				https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG002-NA24385-pFDA_S2_L002_R1_001.fastq.gz
+				https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG002-NA24385-pFDA_S2_L002_R2_001.fastq.gz
 			}
-			cd $basedir/$name
-			exec wget -c $url >@ stdout 2>@ stderr
+			HG001_NA12878 {
+				https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG001-NA12878-pFDA_S1_L001_R1_001.fastq.gz
+				https://storage.googleapis.com/genomics-public-data/precision-fda/input/HG001-NA12878-pFDA_S1_L001_R2_001.fastq.gz
+			}
 		}
-		foreach {name url} $list {
-			cd $basedir/$name
-			set file [file tail $url]
-			puts stderr "splitting $file"
-			mkdir split
-			exec cg fastq_split -d $d -parts 200 $file split/$file
-		}
+		set parts 200
 		# precisionFDA Truth Challenge V2: Calling variants from short- and long-reads in difficult-to-map regions
 		# https://www.biorxiv.org/content/10.1101/2020.11.13.380741v4
 		# cannot find download without login .. ?
@@ -195,10 +190,7 @@ proc cg_giab_getfastqs {args} {
 		# - (https://emea.illumina.com/platinumgenomes.html): 
 		# - 17 member CEPH pedigree 1463 fully sequenced
 		# - Eberle, MA et al. (2017) A reference data set of 5.4 million phased human variants validated by genetic inheritance from sequencing a three-generation 17-member pedigree. Genome Research 27: 157-164. doi:10.1101/gr.210500.116
-		if {$basedir eq ""} {
-			set basedir $::env(HOME)/public/giab/fastqs/$version
-		}
-		set list {
+		set pretodo {
 			ERR194147 HG001_NA12878	30x
 			ERR194146	NA12877	30x
 			ERR194158	NA12889	30x
@@ -206,77 +198,133 @@ proc cg_giab_getfastqs {args} {
 			ERR194160	NA12891	30x
 			ERR194161	NA12892	30x
 		}
-		set list {
+		set pretodo {
 			ERR194147 HG001_NA12878	30x
 			ERR194160	NA12891	30x
 			ERR194161	NA12892	30x
 		}
-	
-		# download publically available
-		foreach {runid name var} $list {
-			set dir ${runid}_${var}_$name
-			putsvars dir
-			set dest $basedir/ori/${runid}_${var}_$name
-			mkdir $dest
-			cd $dest
-			wgetfile ftp://ftp.sra.ebi.ac.uk/vol1/fastq/[string range $runid 0 5]/${runid}/${runid}_1.fastq.gz
-			wgetfile ftp://ftp.sra.ebi.ac.uk/vol1/fastq/[string range $runid 0 5]/${runid}/${runid}_2.fastq.gz
+		set todo {}
+		foreach {runid name var} $pretodo {
+			lappend todo ${runid}_${var}_$name
+			lappend todo [todo \
+				ftp://ftp.sra.ebi.ac.uk/vol1/fastq/[string range $runid 0 5]/${runid}/${runid}_1.fastq.gz \
+				ftp://ftp.sra.ebi.ac.uk/vol1/fastq/[string range $runid 0 5]/${runid}/${runid}_2.fastq.gz \
+			]
 		}
-	
-		foreach {runid name var} $list {
-			set files [glob $basedir/ori/${runid}_${var}_$name/*.fastq.gz]
-			set dest $basedir/ori/${runid}_${var}_$name/fastqsplit
-			mkdir $dest
-			catch {file delete {*}[glob $dest/*]}
-			foreach file $files {
-				putsvars file
-				exec cg fastq_split -stack 1 -v 2 -d $d -parts 200 $file $basedir/ori/${runid}_${var}_$name/fastqsplit/[file tail $file] >@ stdout 2>@stderr
-			}
-		}
+		set parts 200
 	} elseif {$version eq "giab_ont_ultralong"} {
-		if {$basedir eq ""} {
-			set basedir $::env(HOME)/public/giab/fastqs/$version
-		}
 		puts stderr "Making $basedir"
 		mkdir $basedir
-		set list {
-			HG002_NA24385_son_guppy3.4.5 ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/Ultralong_OxfordNanopore/guppy-V3.4.5/*.fastq.gz
-			HG002_NA24385_son_guppy3.4.5 ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/Ultralong_OxfordNanopore/guppy-V3.4.5/*.sequencing_summary.txt.gz
-			HG002_NA24385_son ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/*.fastq.gz
-			HG002_NA24385_son ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/*.sequencing_summary.txt.gz
-			HG003_NA24149_father ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/*.fastq.gz
-			HG003_NA24149_father ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/*.sequencing_summary.txt.gz
-			HG004_NA24143_mother ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/*.fastq.gz
-			HG004_NA24143_mother ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/*.sequencing_summary.txt.gz
-		}
-		unset -nocomplain a
-		foreach {name url} $list {
-			if {![info exists a($name)]} {
-				puts stderr "downloading $name"
-				mkdir $basedir/$name
-				set a($name) $basedir/$name
+		set todo {
+			HG002_NA24385_son_guppy3.4.5 {
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/Ultralong_OxfordNanopore/guppy-V3.4.5/HG002_ONT-UL_GIAB_20200204.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/Ultralong_OxfordNanopore/guppy-V3.4.5/HG002_ONT-UL_GIAB_20200204.sequencing_summary.txt.gz
 			}
-			cd $basedir/$name
-			exec wget -c $url >@ stdout 2>@ stderr
-		}
-		foreach {name url} $list {
-			cd $basedir/$name
-			set file [file tail $url]
-			if {![regexp {.fastq.gz$} $file]} continue
-			mkdir split
-			if {[string first * $file] != -1} {
-				foreach file [glob -nocomplain $file] {
-					puts stderr "splitting $file"
-					exec cg fastq_split -d $d -parts 1000 $file split/$file
-				}
-			} else {
-				puts stderr "splitting $file"
-				exec cg fastq_split -d $d -parts 2000 $file split/$file
+			HG002_NA24385_son {
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_1.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_2.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_3.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_1.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_2.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG002_NA24385_son/UCSC_Ultralong_OxfordNanopore_Promethion/GM24385_3.sequencing_summary.txt.gz
+			}
+			HG003_NA24149_father {
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_1.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_2.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_3.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_1.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_2.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG003_NA24149_father/UCSC_Ultralong_OxfordNanopore_Promethion/GM24149_3.sequencing_summary.txt.gz
+			}
+			HG004_NA24143_mother {
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_1.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_2.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_3.fastq.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_1.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_2.sequencing_summary.txt.gz
+				ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/HG004_NA24143_mother/UCSC_Ultralong_OxfordNanopore_Promethion/GM24143_3.sequencing_summary.txt.gz
 			}
 		}
-	} else {
-		error "version $version not supported by cg cg giab_getfastqs; must be one of: platinum_genomes precisionfda_v2016_04"
+		set parts 1000
+	} elseif {![llength $todo]} {
+		error "version $version not supported by cg giab_getdata; must be one of: platinum_genomes precisionfda_v2016_04"
 	}
+	foreach {sample urls} $todo {
+		mkdir $basedir/$sample
+		cd $basedir/$sample
+		mkdir fastqsplit
+		set files {}
+		set endtargets {}
+		foreach url $urls {
+			set file [file tail $url]
+			set ext [file extension [gzroot $file]]
+			lappend files $file
+			if {$ext ni ".fastq .fq"} continue
+			for {set part 1} {$part <= $parts} {incr part} {
+				lappend endtargets fastqsplit/p${part}_$file
+			}
+		}
+		if {$paralleldownload} {
+			job giab_getdata-download-$version-$sample -skip $endtargets -deps {
+			} -targets $files -vars {
+				basedir version sample urls parts
+			} -code {
+				mkdir tmp
+				cd tmp
+				foreach url $urls {
+					exec wget -c $url >@ stdout 2>@ stderr
+					lappend files tmp/[file tail $url]
+				}
+				cd ..
+				file rename {*}$files .
+				file delete tmp
+			}
+		} else {
+			set donedownload 1
+			foreach file $files {
+				if {![file exists $file]} {set donedownload 0}
+			}
+			set done 1
+			foreach file $endtargets {
+				if {![file exists $file]} {set done 0}
+			}
+			if {![llength $endtargets]} {set done 0}
+			if {!$done && !$donedownload} {
+				mkdir tmp
+				cd tmp
+				foreach url $urls {
+					exec wget -c $url >@ stdout 2>@ stderr
+					lappend files tmp/[file tail $url]
+				}
+				cd ..
+				file rename {*}$files .
+				file delete tmp
+			}
+		}
+		cd $basedir/$sample
+		foreach file $files {
+			set ext [file extension [gzroot $file]]
+			if {$ext ni ".fastq .fq"} continue
+			puts stderr "splitting $file"
+			fastq_split_job -parts $parts -threads $threads $file fastqsplit/$file
+		}
+		if {$align ne ""} {
+			set fastqs [jobglob fastqsplit/*.fastq.gz]
+			if {[llength $fastqs]} {
+				map_job -method $align -paired 0 -threads 8 \
+					map-sminimap2-${sample}_hg38.bam \
+					$refseq \
+					$sample {*}$fastqs
+				bam_index_job map-sminimap2-${sample}_hg38.bam
+			}
+		}
+	}
+}
+
+proc cg_giab_getdata {args} {
+	set args [job_init {*}$args]
+	giab_getdata_job {*}$args
+	job_wait
 }
 
 if 0 {
