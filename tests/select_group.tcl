@@ -297,6 +297,19 @@ sample1	Ax	1
 sample1	Bx	1
 sample2	Bx	2}
 
+test select_group {group with wildcard calc col + in fieldname} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1+1	type-sample2+2
+		1	A	B
+		2	B	B
+	}
+	exec cg select -f {{typex-*="${type-*}x"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
+} {sample	typex	count
+sample1	Ax	1
+sample1	Bx	1
+sample2	Bx	2}
+
 test select_group {group with sample in -gc} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
