@@ -200,6 +200,47 @@ test cg_options {do not set parameters not given} {
 	list $a [info exists b]
 } {1 0}
 
+test cg_options {specialopts} {
+	set args {-opt o 1 2 3 4}
+	set ::specialopt(-test-opt2) o2
+	set opt 1
+	set opt2 2
+	set opt3 3
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+		-opt2 {
+			set opt2 $value
+		}
+		-opt3 {
+			set opt3 $value
+		}
+	} {p1 p2}
+	list $opt $opt2 $opt3 $p1 $p2 $args
+} {o o2 3 1 2 {3 4}}
+
+test cg_options {specialopts with optsVar} {
+	set args {-opt o 1 2 3 4}
+	set ::specialopt(-test-opt2) o2
+	set ::specialopt(-test-sopt) so
+	set opt 1
+	set opt2 2
+	set opt3 3
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+		-opt2 {
+			set opt2 $value
+		}
+		-opt3 {
+			set opt3 $value
+		}
+	} {p1 p2} 2 ... {} opts
+	list $opt $opt2 $opt3 $p1 $p2 $args $opts
+} {o o2 3 1 2 {3 4} {-sopt so}}
+
 test tsvdiff {basic} {
 	write_tab tmp/file1.tsv {
 		chromosome	begin	end

@@ -17,12 +17,16 @@ proc cg {cmd args} {
 # minargs: minimum number of arguments that must be given
 # maxargs: maximum number of arguments that can be given
 # summary: short help, used if the default help system cannot find the associated wiki format help file (which is search based on cmd)
-proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
+#
+# supports subcommand specific options (given as e.g. -sniffles-n) in generic interfaces like cg process_project by
+# if the variable ::specialopt(-$cmd-$option) exists for a supported $option, it will be set to the given value
+# 
+proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}} {optsVar {}}} {
 # putsvars cmd argsVar def parameters minargs maxargs summary
 	# we allways need options in the subst command anyway
-	set temp [list_unmerge $def]
-	set options [join [list_remove $temp default] ,]
-	if {[inlist $temp default]} {append options ,...}
+	set optionlist [list_unmerge $def]
+	set options [join [list_remove $optionlist default] ,]
+	if {[inlist $optionlist default]} {append options ,...}
 	set len [llength $parameters]
 	if {$minargs eq ""} {set minargs $len}
 	if {$maxargs eq "" || $maxargs eq "-1"} {set maxargs $len}
@@ -47,6 +51,11 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 			break
 		}]
 	}
+	if {$optsVar eq ""} {
+		set optsdefault {}
+	} else {
+		set optsdefault "lappend $optsVar \$key \$value"
+	}
 	set fullcmd [subst {
 		set pos 0
 		while 1 {
@@ -68,6 +77,13 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 		set len \[llength \$$argsVar\]
 		if {(\$len < $minargs) $test} {
 			[list errorformat $cmd $options $minargs $maxargs $parameters]
+		}
+		foreach {key value} [list [specialopts -$cmd]] {
+			regsub {^--} \$key - key
+			switch -glob -- \$key {
+				$def
+				default \{$optsdefault\}
+			}
 		}
 	}]
 	if {[llength $parameters]} {
