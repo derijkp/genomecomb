@@ -167,7 +167,7 @@ cd /build/sqanti3-$sqanti3version/cDNA_Cupcake
 # clean a bit
 rm -rf /build/sqanti3-$sqanti3version/cDNA_Cupcake/.git
 
-# make excutables in appdir root that will take use the appdir env
+# make excutables in appdir root that will use the appdir env
 cd /build/sqanti3-$sqanti3version
 
 echo '#!/bin/bash

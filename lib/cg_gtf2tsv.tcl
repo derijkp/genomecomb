@@ -22,7 +22,7 @@ proc cg_gtf2tsv {args} {
 	} {filename outfile} 0 2
 	set f [gzopen $filename]
 
-	set comment {# -- sft converted from gtf, original comments follow --}
+	set comment {# -- tsv converted from gtf, original comments follow --}
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
@@ -39,6 +39,24 @@ proc cg_gtf2tsv {args} {
 	set attrtemplate {}
  	unset -nocomplain attra
 	if {!$separate} {
+		set cheader [deindent {
+			#filetype	tsv/transcriptsfile
+			#fileversion	0.99
+			#fields	table
+			#fields	field	number	type	description
+			#fields	chromosome	1	String	Chromosome name
+			#fields	begin	1	Integer	Transcription start position
+			#fields	end	1	Integer	Transcription end position
+			#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+			#fields	strand	1	String	+ or - for strand
+			#fields	cdsStart	1	Integer	Coding region start
+			#fields	cdsEnd	1	Integer	Coding region end
+			#fields	exonCount	1	Integer	Number of exons
+			#fields	exonStarts	E	Integer	Exon start positions
+			#fields	exonEnds	E	Integer	Exon end positions
+			#fields	source	1	String	Source of data
+		}]
 		set nheader {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 		unset -nocomplain curchromosome
 		set num 0
@@ -142,6 +160,21 @@ proc cg_gtf2tsv {args} {
 			set line [gets $f]
 		}
 	} else {
+		set cheader [deindent {
+			#filetype	tsv/transcriptsfile
+			#fileversion	0.99
+			#fields	table
+			#fields	field	number	type	description
+			#fields	chromosome	1	String	Chromosome name
+			#fields	begin	1	Integer	Transcription start position
+			#fields	end	1	Integer	Transcription end position
+			#fields	type	1	String	type of element (transcript/exon)
+			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
+			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+			#fields	strand	1	String	+ or - for strand
+			#fields	source	1	String	Source of data
+			#fields	comments	1	String	extra info on element
+		}]
 		set nheader {chromosome begin end type transcript gene strand source comments}
 		set num 0
 		set curattr [dict create]
@@ -175,6 +208,7 @@ proc cg_gtf2tsv {args} {
 
 	putsprogress "Assembling file"
 	set o [wgzopen $outfile]
+	puts $o $cheader
 	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
 	set fb [open $tempbase]

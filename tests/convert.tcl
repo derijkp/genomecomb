@@ -1506,7 +1506,23 @@ test gtf2tsv {basic} {
 		chr4	source2	exon	4500	5000	.	+	60	gene_id "gene2"; transcript_id "transcript2-2"; exon_number "2";
 	}]]\n
 	file_write tmp/expected.tsv [string trim [deindent {
-		# -- sft converted from gtf, original comments follow --
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome name
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
+		#fields	cdsStart	1	Integer	Coding region start
+		#fields	cdsEnd	1	Integer	Coding region end
+		#fields	exonCount	1	Integer	Number of exons
+		#fields	exonStarts	E	Integer	Exon start positions
+		#fields	exonEnds	E	Integer	Exon end positions
+		#fields	source	1	String	Source of data
+		# -- tsv converted from gtf, original comments follow --
 		# ----
 		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
 		chr3	999	2000	transcript1	gene1	-			1	999	2000	source2	gene1	transcript1	0
@@ -1531,7 +1547,20 @@ test gtf2tsv {-separate 1} {
 		chr4	source2	exon	4500	5000	.	+	60	gene_id "gene2"; transcript_id "transcript2-2"; exon_number "2";
 	}]]\n
 	file_write tmp/expected.tsv [string trim [deindent {
-		# -- sft converted from gtf, original comments follow --
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome name
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	type	1	String	type of element (transcript/exon)
+		#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
+		#fields	source	1	String	Source of data
+		#fields	comments	1	String	extra info on element
+		# -- tsv converted from gtf, original comments follow --
 		# ----
 		chromosome	begin	end	type	transcript	gene	strand	source	comments	gene_id	transcript_id	exon_number
 		chr3	999	2000	transcript	transcript1	gene1	-	source2		gene1	transcript1	

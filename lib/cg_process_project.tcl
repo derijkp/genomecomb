@@ -339,7 +339,7 @@ proc process_project_job {args} {
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
 	}
 	if {$flair} {
-		flair_job -refseq [refseq $dbdir] -compar 1 -sqanti 1 $destdir
+		flair_job -refseq [refseq $dbdir] $destdir
 	}
 	list $todo(var)
 }

@@ -126,6 +126,7 @@ conda create -y -n flair
 conda activate flair
 conda install -y flair=$flairversion
 
+# make portable appdir
 rm flair.tar.gz || true
 conda pack -n flair -o flair.tar.gz
 rm -rf flair-$flairversion.old
@@ -134,6 +135,74 @@ mkdir flair-$flairversion
 cd flair-$flairversion
 tar xvzf ../flair.tar.gz
 cp /io/build/flair_files/plot_isoform_usage.patched.py bin/bin
+
+# make excutables in appdir root that will use the appdir env
+cd /build/flair-$flairversion
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+$dir/bin/flair.py ${1+"$@"}
+' > flair.py
+chmod ugo+x flair.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+$dir/bin/bin/bam2Bed12.py ${1+"$@"}
+' > bam2Bed12.py
+chmod ugo+x bam2Bed12.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/bin/plot_isoform_usage.py ${1+"$@"}
+' > plot_isoform_usage.py
+chmod ugo+x plot_isoform_usage.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/bin/predictProductivity.py ${1+"$@"}
+' > predictProductivity.py
+chmod ugo+x predictProductivity.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/bin/mark_intron_retention.py ${1+"$@"}
+' > mark_intron_retention.py
+chmod ugo+x mark_intron_retention.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/bin/diff_iso_usage.py ${1+"$@"}
+' > diff_iso_usage.py
+chmod ugo+x diff_iso_usage.py
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/bin/diffsplice_fishers_exact.py ${1+"$@"}
+' > diffsplice_fishers_exact.py
+chmod ugo+x diffsplice_fishers_exact.py
+
+# package
 rm ../flair.tar.gz
 cd /build
 tar cvzf flair-$flairversion.tar.gz flair-$flairversion
