@@ -22,6 +22,9 @@ extern int genomecomb_annotategene_findregc_ObjCmd _ANSI_ARGS_((ClientData clien
 extern int genomecomb_bsortObjCmd _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp, int argc, char *argv[]));
 
+extern int genomecomb_alignedseqObjCmd _ANSI_ARGS_((ClientData clientData,
+	Tcl_Interp *interp, int argc, char *argv[]));
+
 int
 Genomecomb_Init(interp)
 	Tcl_Interp *interp;		/* Interpreter to add extra commands */
@@ -37,5 +40,6 @@ Genomecomb_Init(interp)
 	Tcl_CreateObjCommand(interp,"nat_compare",(Tcl_ObjCmdProc *)genomecomb_nat_compare_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateObjCommand(interp,"annotategene_findregc",(Tcl_ObjCmdProc *)genomecomb_annotategene_findregc_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateObjCommand(interp,"bsort",(Tcl_ObjCmdProc *)genomecomb_bsortObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateObjCommand(interp,"alignedseq",(Tcl_ObjCmdProc *)genomecomb_alignedseqObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	return TCL_OK;
 }

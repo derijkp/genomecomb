@@ -439,6 +439,33 @@ proc tsv_select_transcripts {ids header neededfieldsVar} {
 	return "transcripts(\$${geneset}_gene,\$${geneset}_impact,\$${geneset}_descr,\"$filter\",\"$format\")"
 }
 
+proc tsv_select_alignedseq {arguments header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set len [llength $arguments]
+	if {$len == 1} {
+		set list [split [string trim [lindex $arguments 0] \"] :-]
+		if {[llength $list] != 3} {
+			error "if alignedseqhas only one argument, it has to have the format \"chr:begin-end\""
+		}
+		lappend neededfields chromosome	begin end cigar	seq 
+		return "\[alignedseq \$chromosome \$begin \$end \$cigar \$seq $list\]"
+	} elseif {$len == 2} {
+		set list [split [string trim [lindex $arguments 0] \"] :-]
+		if {[llength $list] != 3} {
+			error "if alignedseqhas 2 argumenta, the first has to have the format \"chr:begin-end\""
+		}
+		lappend neededfields chromosome	begin end cigar	seq 
+		return "\[alignedseq \$chromosome \$begin \$end \$cigar \$seq $list [lindex $arguments 1]\]"
+	} elseif {$len == 3 || $len == 4} {
+		lappend neededfields chromosome	begin end cigar	seq 
+		return "\[alignedseq \$chromosome \$begin \$end \$cigar \$seq $arguments\]"
+	} elseif {$len == 8 || $len == 9} {
+		return "\[alignedseq {*}$arguments\]"
+	} else {
+		error "wrong # args for function alignedseq, must be: alignedseq("region"), alignedseqreqqchromosome,reqbegin,reqend) or alignedseq(chromosome,begin,end,cigar,seq,reqchr,reqbegin,reqend)"
+	}
+}
+
 proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	if {$qpossVar ne ""} {upvar $qpossVar qposs}
 	if {$field eq "ROW"} {return "ROW"}
@@ -1149,6 +1176,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					transcripts {
 						set temp [tsv_select_transcripts $ids $header neededfields]
+					}
+					alignedseq {
+						set temp [tsv_select_alignedseq $ids $header neededfields]
 					}
 					counthasone {
 						foreach {operator value} [lindex $line end] break

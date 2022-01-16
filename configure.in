@@ -73,7 +73,7 @@ TEA_SETUP_COMPILER
 # and PKG_TCL_SOURCES.
 #-----------------------------------------------------------------------
 
-TEA_ADD_SOURCES([genomecombInit.c genomecomb.c genomecomb_selectindexed.c bsort.c tools.c])
+TEA_ADD_SOURCES([genomecombInit.c genomecomb.c genomecomb_selectindexed.c alignedseq.c bsort.c tools.c])
 TEA_ADD_HEADERS([])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])

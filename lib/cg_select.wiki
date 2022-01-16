@@ -233,6 +233,13 @@ of missense and higher in the list).
 gene and transcript name and g for only the gene name.
 ; maximpact(list,...): returns the maximum impact from one or more lists of impacts. The order of impact
 is as in the list given in [[cg_annotate]]
+; alignedseq(region,?includeins?): for an alignment tsv (typically converted from a bam/sam file) 
+this will return the allele of the aligned sequence at the specifield (reference) position.
+The fields chromosome, begin, end, cigar and seq must be present in the tsv file.
+If the read does not align in the region, the empty string is returned.
+If the region is completely in a deletion of the read, "-" will be returned
+**region** is in the format "<chr>:<begin>-<end>", the optional parameter **includeins** can be set to 1 to include
+neighboring insertion sequences, or 0 (default) to not include them
 
 ==== Number functions ====
 ; between(value,{min max})** or **between(value,min,max): true of value is >= min and <= max (e.g. "between($begin,1000,2000)")

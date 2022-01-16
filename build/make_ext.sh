@@ -53,17 +53,18 @@ set -x
 # ------------------
 
 # locations
-tcldir=/build/tcl$tclversion
-tkdir=/build/tk$tclversion
-dirtcldir=/build/dirtcl$tclversion-$arch
+base=/build
+tcldir=$base/tcl$tclversion
+tkdir=$base/tk$tclversion
+dirtcldir=$base/dirtcl$tclversion-$arch
 destdir=$dirtcldir/exts
 
 # put dirtcl tclsh in PATH
-mkdir /build/bin || true
-cd /build/bin
+mkdir $base/bin || true
+cd $base/bin
 ln -sf $dirtcldir/tclsh8.5 .
 ln -sf $dirtcldir/tclsh8.5 tclsh
-PATH=/build/bin:$PATH
+PATH=$base/bin:$PATH
 
 # Build
 # -----
@@ -76,7 +77,7 @@ cd linux-$arch
 if [ "$clean" = 1 ] ; then
 	make distclean || true
 	if [ "$debug" = 1 ] ; then
-		../configure --enable-symbols --disable-threads --prefix="$dirtcldir"
+		../configure --enable-symbols --disable-threads --prefix="$dirtcldir" --exec-prefix="$dirtcldir"
 	else
 		../configure --disable-threads --prefix="$dirtcldir"
 	fi

@@ -5033,7 +5033,7 @@ done
 #-----------------------------------------------------------------------
 
 
-    vars="genomecombInit.c genomecomb.c genomecomb_selectindexed.c bsort.c tools.c"
+    vars="genomecombInit.c genomecomb.c genomecomb_selectindexed.c alignedseq.c bsort.c tools.c"
     for i in $vars; do
 	case $i in
 	    \$*)
