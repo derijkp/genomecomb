@@ -132,10 +132,14 @@ proc calc_rpos {rsnppos} {
 	}
 }
 
-proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
+proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000} {nocds 0}} {
 	global adata
 	# splice 8 bases, essentialsplice 2 bases intron, upstream,downstream -> 2k bases
 	foreach {dchrom dstart dend strand cdsStart cdsEnd exonCount exonStarts exonEnds transcriptname genename} [list_sub $dbline $dposs] break
+	if {$nocds} {
+		set cdsStart {}
+		set cdsEnd {}
+	}
 	if {$strand eq "-"} {set complement 1} else {set complement 0}
 	unset -nocomplain adata
 	set adata(genomef) $genomef

@@ -2,8 +2,10 @@ proc cg_gene2reg {args} {
 	set file {}
 	set outfile {}
 	set upstream 0
+	set nocds 0
 	cg_options gene2reg args {
 		-upstream {set upstream $value}
+		-nocds {set nocds $value}
 	}  {file outfile} 0 2
 	if {[llength $args] > 2} {
 		errorformat gene2reg
@@ -26,7 +28,7 @@ proc cg_gene2reg {args} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs 2000]
+		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs 2000 $nocds]
 		set ftlist [dict get $geneobj ftlist]
 		set chr [lindex $line [lindex $dposs 0]]
 		set gene [dict get $geneobj genename]
