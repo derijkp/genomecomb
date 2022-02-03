@@ -758,8 +758,9 @@ test gene_annot {hgvs - strand gene coding} {
 		chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames
 		chr1	1706588	1812355	NM_002074	-	598	1708629	1746752	12	1706588,1708620,1710351,1711693,1714543,1725717,1727773,1737054,1739135,1746695,1760488,1812118,	1708352,1708736,1710568,1711895,1714610,1725880,1727837,1737161,1739174,1746798,1760537,1812355,	0	GNB1	cmpl	cmpl	-1,1,0,2,1,0,2,0,0,0,-1,-1,
 	}
-	cg select -s - data/annot_gene_tests_rv_coding.tsv tmp/sannot_gene_tests.tsv
-	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	cg select -overwrite 1 -s - data/annot_gene_tests_rv_coding.tsv tmp/sannot_gene_tests.tsv
+	file delete tmp/annot_results.tsv
+	cg annotate -stack 1 -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
 		set line [split $line \t]
@@ -1083,6 +1084,20 @@ test gene_annot {end too big segmentation violation} {
 		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
+
+test gene_annot {annotatevar_gene_makegeneobj} {
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	2000	3000	test	+	2050	2950	3	2000,2500,2900,	2100,2600,3000,	testgene
+	}]\n
+	set upstreamsize 2000
+	set genomef [genome_open $::refseqdir/hg18]
+	set df [gzopen tmp/gene_test.tsv]
+	set header [open_genefile $df dposs]
+	set line [split [gets $df] \t]
+	set geneobj [annotatevar_gene_makegeneobj $genomef $line $dposs $upstreamsize]
+	annotatevar_gene_rnaseq geneobj
+} {CTGCATGTAACTTAATACCACAACCAGGCATAGGGGAAAGATTGGAGGAAAGATGAGTGAGAGCATCAACTTCTCTCACAACCTAGGCCAGTAAGTAGTGTTCCCCAGCATCAGGTCTCCAGAGCTGCAGAAGACGACGGCCGACTTGGATCACACTCTTGTGAGTGTCCCCAGTGTTGCAGAGGTGAGAGGAGAGTAGATCAACCAGTCCATAGGCAAGCCTGGCTGCCTCCAGCTGGGTCGACAGACAGGGGCTGGAGAAGGGGAGAAGAGGAAAGTGAGGTTGCCTGCCCTGTCTCC}
 
 test bcol_annot {basic} {
 	test_cleantmp
