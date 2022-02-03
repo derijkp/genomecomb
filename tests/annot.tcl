@@ -145,6 +145,63 @@ test reg_annot {sort error 3 in database file} {
 	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
 } {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
+test reg_annot {bugcheck overwrite of .temp src} {
+	file copy data/vars1.sft tmp/vars1.tsv.temp
+	exec cg annotate tmp/vars1.tsv.temp tmp/vars1.tsv data/reg_annot.sft
+	exec cg select -rf {list} tmp/vars1.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv data/expected-vars1-reg_annot.sft
+} {}
+
+test reg_annot {check for diff size in paste error} {
+	write_tab tmp/vars1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	4000	4001	snp	G	A
+		chr2	4000	4001	snp	G	A
+	}
+	file mkdir tmp/vars1.tsv.index
+	write_tab tmp/vars1.tsv.index/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	4000	4001	snp	G	A
+	}
+	write_tab tmp/reg_annot.tsv {
+		chromosome	begin	end	name
+		chr1	4000	4010	A
+		chr2	4000	4010	B
+	}
+	exec cg annotate tmp/vars1.tsv tmp/temp.tsv tmp/reg_annot.tsv
+} {*file */vars.tsv.annot_annot has less lines than other files in paste*} error match
+
+test reg_annot {bug fix, hang chromosome not in reference (do not match Ns when moving del pos)} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		6_qbl_hap6	1191644	1191645	del	T
+	}
+	write_tab tmp/gene_annot.tsv {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	proteinID	alignID
+		chr6_qbl_hap6	1150112	1203581	+	HLA-A	known	uc031suu.1	{}	{}	1150221	1203580	2	1150112,1203311,	1150294,1203581,	{}	{}	{}	{}	O19559	uc031suu.1
+		chr6_qbl_hap6	1150221	1152943	+	HLA-H	ens	ENST00000429724	0	593	1152943	1152943	7	1150221,1150418,1150929,1151790,1152167,1152724,1152899,	1150294,1150688,1151205,1152065,1152284,1152757,1152943,	ENSG00000227296	none	none	-1,-1,-1,-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1151792	1206454	+	HLA-A	known	uc011igl.2	{}	{}	1151807	1206025	6	1151792,1204756,1205073,1205628,1205803,1206020,	1151848,1204974,1205190,1205661,1205851,1206454,	{}	{}	{}	{}	B4DJI3	uc011igl.2
+		chr6_qbl_hap6	1159017	1160149	+	HLA-T	ens	ENST00000430243	0	593	1160149	1160149	4	1159017,1159414,1159925,1160110,	1159289,1159527,1159962,1160149,	ENSG00000229552	none	none	-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1161752	1203991	-	AK097625	known	uc011ign.1	{}	{}	1161752	1161752	6	1161752,1187266,1189768,1190537,1190824,1203805,	1163306,1187359,1189984,1190641,1190932,1203991,	{}	{}	{}	{}	{}	uc011ign.1
+		chr6_qbl_hap6	1168977	1169344	+	DDX39BP1	ens	ENST00000439001	0	593	1169344	1169344	2	1168977,1169287,	1169112,1169344,	ENSG00000236441	none	none	-1,-1,	{}	{}
+		chr6_qbl_hap6	1170219	1171079	-	MCCD1P1	ens	ENST00000429760	0	593	1171079	1171079	2	1170219,1170912,	1170377,1171079,	ENSG00000229411	none	none	-1,-1,	{}	{}
+		chr6_qbl_hap6	1187015	1188075	-	HCG4B	known	uc011igo.1	{}	{}	1187015	1187015	1	1187015,	1188075,	{}	{}	{}	{}	{}	uc011igo.1
+		chr6_qbl_hap6	1187015	1189600	-	HCG4B	ref	NR_001317	0	594	1189600	1189600	1	1187015,	1189600,	HCG4B	unk	unk	-1,	{}	{}
+		chr6_qbl_hap6	1187146	1189600	-	HCG4B	ens	ENST00000550894	0	594	1189600	1189600	1	1187146,	1189600,	ENSG00000220391	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1188367	1189358	-	HCG4B	ens	ENST00000406611	0	594	1189358	1189358	1	1188367,	1189358,	ENSG00000220391	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1188713	1192114	+	BC035647	known	uc011igp.2	{}	{}	1188713	1188713	5	1188713,1190842,1191404,1191571,1191788,	1190713,1190959,1191431,1191619,1192114,	{}	{}	{}	{}	{}	uc011igp.2
+		chr6_qbl_hap6	1188843	1191618	+	HLA-K	ens	ENST00000431463	0	594	1191618	1191618	6	1188843,1189044,1189562,1190434,1190842,1191571,	1188915,1189305,1189837,1190713,1190959,1191618,	ENSG00000224526	none	none	-1,-1,-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1194728	1194913	+	HLA-U	ens	ENST00000442622	0	594	1194913	1194913	1	1194728,	1194913,	ENSG00000229428	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1201813	1206454	+	HLA-A	ens	ENST00000383605	0	594	1203108	1206025	10	1201813,1202520,1202958,1203311,1203822,1204698,1205073,1205628,1205803,1206020,	1201873,1202651,1203181,1203581,1204098,1204974,1205190,1205661,1205851,1206454,	ENSG00000206505	cmpl	cmpl	-1,-1,0,1,1,1,1,1,1,1,	{}	{}
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	annot_impact	annot_gene	annot_descr
+		6_qbl_hap6	1191644	1191645	del	T	{}	intron	HLA-A;HLA-A;AK097625;BC035647	+uc031suu.1:intron1+41351:c.74-11667del;+uc011igl.2:intron1+39797:c.42-13112del;-uc011ign.1:intron1+12161:n.187-713del;+uc011igp.2:intron4+26:n.2192+26del
+	}
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/annot_vars.tsv tmp/gene_annot.tsv
+	exec diff tmp/annot_vars.tsv tmp/expected.tsv
+} {}
+
 test reg_annot {bug fix deal with duplicate field in opt} {
 	file copy data/vars1.sft tmp/vars1.sft
 	cg select -f {chromosome begin end type ref alt} tmp/vars1.sft tmp/vars.sft
@@ -152,6 +209,127 @@ test reg_annot {bug fix deal with duplicate field in opt} {
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end begin}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
 	exec diff tmp/temp.sft data/expected-vars1-reg_annot-multi.sft
+} {}
+
+test reg_annot {basic, extra comments} {
+	file_write tmp/temp2.sft "# a comment\n"
+	exec cat data/vars1.sft >> tmp/temp2.sft
+	exec cg annotate tmp/temp2.sft tmp/temp.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected-vars1-reg_annot.sft
+} {1d0
+< # a comment
+child process exited abnormally} error
+
+test reg_annot {existing field error} {
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+} {*Error: field(s) regtest already in file} match error
+
+test reg_annot {-replace y dbfile newer} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 1000
+	exec touch tmp/reg_annot.tsv
+	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
+	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
+	split [cg select -f regtest tmp/temp2.sft] \n
+} {regtest reg1 reg1 reg1 reg1 reg1 reg3 reg3 reg3 reg3 reg3 reg3 reg3 reg3 {}}
+
+test reg_annot {-replace y dbfile older} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 100
+	exec touch tmp/temp.sft
+	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
+	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+
+test reg_annot {-replace a} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 100
+	exec touch tmp/temp.sft
+	exec cg annotate -near 1000 -replace a tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
+	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
+} {}
+
+test reg_annot {-replace n} {
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+
+test reg_annot {-replace e} {
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg annotate -near 1000 -replace e tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {Error: field(s) regtest already in file} error
+
+test reg_annot {ins at end of reg} {
+	test_cleantmp
+	write_tab tmp/vars.tsv {
+		chromosome begin end	type	num
+		1	9	10	snp	1
+		1	10	10	ins	2
+		1	10	11	snp	3
+		1	11	11	ins	4
+		1	19	20	snp	5
+		1	20	20	ins	6
+		1	20	21	snp	7
+		1	21	21	ins	8
+	}
+	write_tab tmp/reg_test.tsv {
+		chromosome	begin	end	name
+		1	10	20	10-20
+	}
+	write_tab tmp/expected.tsv {
+		chromosome begin end	type	num	test
+		1	9	10	snp	1	{}
+		1	10	10	ins	2	10-20
+		1	10	11	snp	3	10-20
+		1	11	11	ins	4	10-20
+		1	19	20	snp	5	10-20
+		1	20	20	ins	6	10-20
+		1	20	21	snp	7	{}
+		1	21	21	ins	8	{}
+	}
+	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test reg_annot {comments} {
+	test_cleantmp
+	write_tab tmp/vars.tsv {
+		#a	b
+		chromosome begin end	type	num
+		1	19	20	snp	5
+	}
+	write_tab tmp/reg_test.tsv {
+		chromosome	begin	end	name
+		1	10	20	10-20
+	}
+	write_tab tmp/expected.tsv {
+		#a	b
+		chromosome begin end	type	num	test
+		1	19	20	snp	5	10-20
+	}
+	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test var_annot {basic} {
@@ -385,30 +563,24 @@ test var_annot {skip var_ annots if no alt field, check other annot} {
 	exec diff tmp/annot_vars.tsv tmp/expected.tsv
 } {}
 
-test gene_annot {variant file sort error 1} {
-	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
-} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+test var_annot {different types on same pos, extra comments} {
+	file_write tmp/temp2.sft "# a comment\n"
+	exec cat data/vars2.tsv >> tmp/temp2.sft
+	exec cg annotate tmp/temp2.sft tmp/temp.tsv data/var_annot3.tsv
+	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
+} {1d0
+< # a comment
+child process exited abnormally} error
 
-test gene_annot {variant file sort error 2} {
-	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
-} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
-
-test gene_annot {variant file sort error 3} {
-	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
-} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
-
-test gene_annot {gene wrongly sorted database file error} {
-	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong1.tsv
-} {*Cannot annotate because the database file (data/gene_test-wrong1.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
-
-test gene_annot {gene wrongly sorted database file error} {
-	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
-} {*Cannot annotate because the database file (data/gene_test-wrong2.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+test var_annot {basic from vcf} {
+	file copy data/vars1.vcf tmp/vars1.vcf
+	exec cg annotate tmp/vars1.vcf tmp/annot.sft data/var_annot.sft
+	set fields {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	annot_name	annot_freq}
+	exec cg select -rc 1 -f $fields tmp/annot.sft tmp/annot2.sft
+	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.sft.temp
+	exec cg select -rc 1 -f $fields tmp/expected.sft.temp tmp/expected.sft
+	exec diff tmp/annot2.sft tmp/expected.sft
+} {}
 
 test gene_annot {gene} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
@@ -433,6 +605,31 @@ test gene_annot {gene --upstreamsize option} {
 ---
 > chr1	43198434	43198435	snp	T	G	"upstream SLC2A1"	upstream	SLC2A1	-NM_006516:up-1001:c.-1526A>C
 child process exited abnormally} error
+
+test gene_annot {variant file sort error 1} {
+	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {variant file sort error 2} {
+	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {variant file sort error 3} {
+	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {gene wrongly sorted database file error} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong1.tsv
+} {*Cannot annotate because the database file (data/gene_test-wrong1.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {gene wrongly sorted database file error} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
+} {*Cannot annotate because the database file (data/gene_test-wrong2.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
@@ -660,83 +857,232 @@ test gene_annot {variant error end > end chromosome} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
-test reg_annot {basic, extra comments} {
-	file_write tmp/temp2.sft "# a comment\n"
-	exec cat data/vars1.sft >> tmp/temp2.sft
-	exec cg annotate tmp/temp2.sft tmp/temp.sft data/reg_annot.sft
-	exec cg select -rf {list} tmp/temp.sft tmp/temp3.sft
-	exec diff tmp/temp3.sft data/expected-vars1-reg_annot.sft
-} {1d0
-< # a comment
-child process exited abnormally} error
-
-test var_annot {different types on same pos, extra comments} {
-	file_write tmp/temp2.sft "# a comment\n"
-	exec cat data/vars2.tsv >> tmp/temp2.sft
-	exec cg annotate tmp/temp2.sft tmp/temp.tsv data/var_annot3.tsv
-	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
-} {1d0
-< # a comment
-child process exited abnormally} error
-
-test reg_annot {existing field error} {
-	file copy data/vars1.sft tmp/vars1.sft
-	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
-	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
-} {*Error: field(s) regtest already in file} match error
-
-test reg_annot {-replace y dbfile newer} {
-	file copy -force data/vars1.sft tmp/vars1.sft
-	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
-	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
-	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
-	after 1000
-	exec touch tmp/reg_annot.tsv
-	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
-	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
-	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
-	split [cg select -f regtest tmp/temp2.sft] \n
-} {regtest reg1 reg1 reg1 reg1 reg1 reg3 reg3 reg3 reg3 reg3 reg3 reg3 reg3 {}}
-
-test reg_annot {-replace y dbfile older} {
-	file copy -force data/vars1.sft tmp/vars1.sft
-	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
-	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
-	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
-	after 100
-	exec touch tmp/temp.sft
-	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
-	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
-	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
-
-test reg_annot {-replace a} {
-	file copy -force data/vars1.sft tmp/vars1.sft
-	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
-	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
-	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
-	after 100
-	exec touch tmp/temp.sft
-	exec cg annotate -near 1000 -replace a tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
-	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
-	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
+test gene_annot {multiple dbs} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	1000	2000	del	1000	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
+		chr1	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
+	}
+	write_tab tmp/reg_rtest.tsv {
+		chrom	start	end	name	score
+		chr1	500	1000	test1	1
+		chr1	1000	2000	test2	2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr	rtest_name	rtest_score
+		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del	test2	2
+	}
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
-test reg_annot {-replace n} {
-	file copy data/vars1.sft tmp/vars1.sft
-	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
-	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
-	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
-	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+test gene_annot {no refseq} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		test	1600	1601	del	N	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		test	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
+		test	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		test	1600	1601	del	N	{}	RNA;CDSFRAME	testgene;cdstestgene	+test:exon1+101:n.101del;+cdstest:exon1+101:c.101del:p.X101Xfs*?
+	}
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
-test reg_annot {-replace e} {
-	file copy data/vars1.sft tmp/vars1.sft
-	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
-	exec cg annotate -near 1000 -replace e tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
-	exec cg select -overwrite 1 -rf {list} tmp/temp2.sft tmp/temp3.sft
-	split [cg select -f regtest tmp/temp3.sft] \n
-} {Error: field(s) regtest already in file} error
+test gene_annot {end of chromosome} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		M	16571	16571	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16570	+	x	15998	15998	1	15998,	16570,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16571	16571	ins		A	downstream	x	+:down+1_2:n.573_574insA
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+
+test gene_annot {bnd} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		5	7685	7685	bnd		.[CHRY:11324332[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -stack 1 -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {bnd pos 0, -1} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		5	-1	-1	bnd		.[CHR6:10000[
+		5	0	0	bnd		.[CHR6:10000[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	1025	1107	+	x	known	x			1025	1025	1	1025,	1107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		5	-1	-1	bnd		.[CHR6:10000[	upstream	x	+x:up-1027_-1026:n.-1027_-1026ins.[CHR6:10000[
+		5	0	0	bnd		.[CHR6:10000[	upstream	x	+x:up-1026_-1025:n.-1026_-1025ins.[CHR6:10000[
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {near end of chromosome} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		M	16570	16570	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16569	+	x	15998	15998	1	15998,	16569,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	cg_annotate_job -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {-distrreg chr with gene in chr1_gl000191_random} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	16570	16570	ins	{}	A
+		chr1_gl000191_random	16570	16570	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		1	15998	16569	+	x	15998	15998	1	15998,	16569,
+		chr1_gl000191_random	15998	16569	+	x	15998	15998	1	15998,	16569,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		1	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+		chr1_gl000191_random	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+	}]\n
+	file delete -force tmp/result.tsv tmp/result.tsv.index
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {-distrreg chr with variants outside of distrreg regions} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	16570	16570	ins	{}	A
+		1x	16570	16570	ins	{}	A
+		2	16570	16570	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		1	15998	16569	+	x	15998	15998	1	15998,	16569,
+		1x	15998	16569	+	x	15998	15998	1	15998,	16569,
+		2	15998	16569	+	x	15998	15998	1	15998,	16569,
+	}
+	file delete -force tmp/result.tsv tmp/result.tsv.index
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {*variants outside of distrreg regions*} error match
+
+test gene_annot {begin -1} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	16570	16570	ins		A
+		5	-1	-1	bnd		]CHRUN_xx:1000].
+		5	7685	7685	bnd		.[CHRY:11324332[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		1	16570	16570	ins		A			
+		5	-1	-1	bnd		]CHRUN_xx:1000].			
+		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {end too big} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		M	16572	16572	bnd		.[CHR1:100000[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16572	16572	bnd		.[CHR1:100000[	upstream	MT-ND6	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {end too big segmentation violation} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		M	6100	6100	bnd		.[CHR1:100000[
+		M	16571	16571	bnd		.[CHR1:100000[
+		M	16572	16572	bnd		.[CHR1:100000[
+		M	16572	16572	del	N	
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		chrM	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,				
+		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
+		chrM	15955	16024	-	MT-TP	gene_hg38_gencode	ENST00000387461.2	0	585	15955	15955	1	15955,	16023	MT-TP	none	none	-1,
+		chrM	15998	16571	+	AF079515	known	uc004coz.1			15998	15998	1	15998,	16571,					}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	6100	6100	bnd		.[CHR1:100000[	RNA	x	+x:exon1+75_76:n.75_76ins.[CHR1:100000[
+		M	16571	16571	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1898:c.-1899_-1898ins[000001:1YDG[.;-ENST00000387461.2:up-549_-548:n.-549_-548ins[000001:1YDG[.;+uc004coz.1:exon1+573_down+1:n.573_574ins.[CHR1:100000[
+		M	16572	16572	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.;-ENST00000387461.2:up-550_-549:n.-550_-549ins[000001:1YDG[.;+uc004coz.1:down+1_2:n.574_575ins.[CHR1:100000[
+		M	16572	16572	del	N		upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1900:c.-1899_-1900del;-ENST00000387461.2:up-549_-550:n.-549_-550del;+uc004coz.1:down+2_1:n.575_574del
+	}]\n
+	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
+	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
+		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test bcol_annot {basic} {
 	test_cleantmp
@@ -885,68 +1231,6 @@ test bcol_annot {bugfix sv} {
 	}]\n
 	exec cg bcol make -p pos -c chromosome tmp/bcol_score.bcol score < tmp/score.tsv
 	exec cg annotate tmp/test.tsv tmp/annot_test.tsv tmp/bcol_score.bcol
-} {}
-
-test var_annot {basic from vcf} {
-	file copy data/vars1.vcf tmp/vars1.vcf
-	exec cg annotate tmp/vars1.vcf tmp/annot.sft data/var_annot.sft
-	set fields {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	annot_name	annot_freq}
-	exec cg select -rc 1 -f $fields tmp/annot.sft tmp/annot2.sft
-	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.sft.temp
-	exec cg select -rc 1 -f $fields tmp/expected.sft.temp tmp/expected.sft
-	exec diff tmp/annot2.sft tmp/expected.sft
-} {}
-
-test reg_annot {ins at end of reg} {
-	test_cleantmp
-	write_tab tmp/vars.tsv {
-		chromosome begin end	type	num
-		1	9	10	snp	1
-		1	10	10	ins	2
-		1	10	11	snp	3
-		1	11	11	ins	4
-		1	19	20	snp	5
-		1	20	20	ins	6
-		1	20	21	snp	7
-		1	21	21	ins	8
-	}
-	write_tab tmp/reg_test.tsv {
-		chromosome	begin	end	name
-		1	10	20	10-20
-	}
-	write_tab tmp/expected.tsv {
-		chromosome begin end	type	num	test
-		1	9	10	snp	1	{}
-		1	10	10	ins	2	10-20
-		1	10	11	snp	3	10-20
-		1	11	11	ins	4	10-20
-		1	19	20	snp	5	10-20
-		1	20	20	ins	6	10-20
-		1	20	21	snp	7	{}
-		1	21	21	ins	8	{}
-	}
-	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test reg_annot {comments} {
-	test_cleantmp
-	write_tab tmp/vars.tsv {
-		#a	b
-		chromosome begin end	type	num
-		1	19	20	snp	5
-	}
-	write_tab tmp/reg_test.tsv {
-		chromosome	begin	end	name
-		1	10	20	10-20
-	}
-	write_tab tmp/expected.tsv {
-		#a	b
-		chromosome begin end	type	num	test
-		1	19	20	snp	5	10-20
-	}
-	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test bcol_var_annot {basic} {
@@ -1172,292 +1456,6 @@ test bcol_var_annot {bug fix overlapping variant but earlier, pos 0,-1} {
 		1	90	110	del	20		0
 	}]\n
 	exec diff tmp/results.tsv tmp/expected.tsv
-} {}
-
-
-
-test gene_annot {multiple dbs} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		chr1	1000	2000	del	1000	{}
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
-		chr1	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
-		chr1	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
-	}
-	write_tab tmp/reg_rtest.tsv {
-		chrom	start	end	name	score
-		chr1	500	1000	test1	1
-		chr1	1000	2000	test2	2
-	}
-	write_tab tmp/expected.tsv {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr	rtest_name	rtest_score
-		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del	test2	2
-	}
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test reg_annot {bugcheck overwrite of .temp src} {
-	file copy data/vars1.sft tmp/vars1.tsv.temp
-	exec cg annotate tmp/vars1.tsv.temp tmp/vars1.tsv data/reg_annot.sft
-	exec cg select -rf {list} tmp/vars1.tsv tmp/temp2.tsv
-	exec diff tmp/temp2.tsv data/expected-vars1-reg_annot.sft
-} {}
-
-test gene_annot {no refseq} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		test	1600	1601	del	N	{}
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
-		test	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
-		test	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
-	}
-	write_tab tmp/expected.tsv {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		test	1600	1601	del	N	{}	RNA;CDSFRAME	testgene;cdstestgene	+test:exon1+101:n.101del;+cdstest:exon1+101:c.101del:p.X101Xfs*?
-	}
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {end of chromosome} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		M	16571	16571	ins	{}	A
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		M	15998	16570	+	x	15998	15998	1	15998,	16570,
-	}
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	16571	16571	ins		A	downstream	x	+:down+1_2:n.573_574insA
-	}]\n
-	file delete tmp/result.tsv
-	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-
-test gene_annot {bnd} {
-	file_write tmp/vars.tsv [deindent {
-		chromosome	begin	end	type	ref	alt
-		5	7685	7685	bnd		.[CHRY:11324332[
-	}]\n
-	file_write tmp/gene_test.tsv [deindent {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
-		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
-	}]\n
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
-	}]\n
-	file delete tmp/result.tsv
-	exec cg annotate -stack 1 -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {bnd pos 0, -1} {
-	file_write tmp/vars.tsv [deindent {
-		chromosome	begin	end	type	ref	alt
-		5	-1	-1	bnd		.[CHR6:10000[
-		5	0	0	bnd		.[CHR6:10000[
-	}]\n
-	file_write tmp/gene_test.tsv [deindent {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
-		5	1025	1107	+	x	known	x			1025	1025	1	1025,	1107,					2
-	}]\n
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		5	-1	-1	bnd		.[CHR6:10000[	upstream	x	+x:up-1027_-1026:n.-1027_-1026ins.[CHR6:10000[
-		5	0	0	bnd		.[CHR6:10000[	upstream	x	+x:up-1026_-1025:n.-1026_-1025ins.[CHR6:10000[
-	}]\n
-	file delete tmp/result.tsv
-	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {near end of chromosome} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		M	16570	16570	ins	{}	A
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		M	15998	16569	+	x	15998	15998	1	15998,	16569,
-	}
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
-	}]\n
-	file delete tmp/result.tsv
-	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	cg_annotate_job -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {-distrreg chr with gene in chr1_gl000191_random} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		1	16570	16570	ins	{}	A
-		chr1_gl000191_random	16570	16570	ins	{}	A
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		1	15998	16569	+	x	15998	15998	1	15998,	16569,
-		chr1_gl000191_random	15998	16569	+	x	15998	15998	1	15998,	16569,
-	}
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		1	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
-		chr1_gl000191_random	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
-	}]\n
-	file delete -force tmp/result.tsv tmp/result.tsv.index
-	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
-		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {-distrreg chr with variants outside of distrreg regions} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		1	16570	16570	ins	{}	A
-		1x	16570	16570	ins	{}	A
-		2	16570	16570	ins	{}	A
-	}
-	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		1	15998	16569	+	x	15998	15998	1	15998,	16569,
-		1x	15998	16569	+	x	15998	15998	1	15998,	16569,
-		2	15998	16569	+	x	15998	15998	1	15998,	16569,
-	}
-	file delete -force tmp/result.tsv tmp/result.tsv.index
-	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
-		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {*variants outside of distrreg regions*} error match
-
-test gene_annot {begin -1} {
-	file_write tmp/vars.tsv [deindent {
-		chromosome	begin	end	type	ref	alt
-		1	16570	16570	ins		A
-		5	-1	-1	bnd		]CHRUN_xx:1000].
-		5	7685	7685	bnd		.[CHRY:11324332[
-	}]\n
-	file_write tmp/gene_test.tsv [deindent {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
-		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
-	}]\n
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		1	16570	16570	ins		A			
-		5	-1	-1	bnd		]CHRUN_xx:1000].			
-		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
-	}]\n
-	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
-	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
-		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {end too big} {
-	file_write tmp/vars.tsv [deindent {
-		chromosome	begin	end	type	ref	alt
-		M	16572	16572	bnd		.[CHR1:100000[
-	}]\n
-	file_write tmp/gene_test.tsv [deindent {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
-		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
-	}]\n
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	16572	16572	bnd		.[CHR1:100000[	upstream	MT-ND6	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.
-	}]\n
-	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
-	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
-		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test gene_annot {end too big segmentation violation} {
-	file_write tmp/vars.tsv [deindent {
-		chromosome	begin	end	type	ref	alt
-		M	6100	6100	bnd		.[CHR1:100000[
-		M	16571	16571	bnd		.[CHR1:100000[
-		M	16572	16572	bnd		.[CHR1:100000[
-		M	16572	16572	del	N	
-	}]\n
-	file_write tmp/gene_test.tsv [deindent {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
-		chrM	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,				
-		chrM	14148	14673	-	MT-ND6	gene_hg38_gencode	ENST00000361681.2	0	585	14148	14673	1	14148,	14673,	MT-ND6	cmpl	cmpl	0,
-		chrM	15955	16024	-	MT-TP	gene_hg38_gencode	ENST00000387461.2	0	585	15955	15955	1	15955,	16023	MT-TP	none	none	-1,
-		chrM	15998	16571	+	AF079515	known	uc004coz.1			15998	15998	1	15998,	16571,					}]\n
-	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	6100	6100	bnd		.[CHR1:100000[	RNA	x	+x:exon1+75_76:n.75_76ins.[CHR1:100000[
-		M	16571	16571	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1898:c.-1899_-1898ins[000001:1YDG[.;-ENST00000387461.2:up-549_-548:n.-549_-548ins[000001:1YDG[.;+uc004coz.1:exon1+573_down+1:n.573_574ins.[CHR1:100000[
-		M	16572	16572	bnd		.[CHR1:100000[	upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1900_-1899:c.-1900_-1899ins[000001:1YDG[.;-ENST00000387461.2:up-550_-549:n.-550_-549ins[000001:1YDG[.;+uc004coz.1:down+1_2:n.574_575ins.[CHR1:100000[
-		M	16572	16572	del	N		upstream;upstream;downstream	MT-ND6;MT-TP;AF079515	-ENST00000361681.2:up-1899_-1900:c.-1899_-1900del;-ENST00000387461.2:up-549_-550:n.-549_-550del;+uc004coz.1:down+2_1:n.575_574del
-	}]\n
-	file delete -force tmp/vars.tsv.index tmp/result.tsv tmp/result.tsv.index 
-	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
-		tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
-
-test reg_annot {check for diff size in paste error} {
-	write_tab tmp/vars1.tsv {
-		chromosome	begin	end	type	ref	alt
-		chr1	4000	4001	snp	G	A
-		chr2	4000	4001	snp	G	A
-	}
-	file mkdir tmp/vars1.tsv.index
-	write_tab tmp/vars1.tsv.index/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		chr1	4000	4001	snp	G	A
-	}
-	write_tab tmp/reg_annot.tsv {
-		chromosome	begin	end	name
-		chr1	4000	4010	A
-		chr2	4000	4010	B
-	}
-	exec cg annotate tmp/vars1.tsv tmp/temp.tsv tmp/reg_annot.tsv
-} {*file */vars.tsv.annot_annot has less lines than other files in paste*} error match
-
-test reg_annot {bug fix, hang chromosome not in reference (do not match Ns when moving del pos)} {
-	write_tab tmp/vars.tsv {
-		chromosome	begin	end	type	ref	alt
-		6_qbl_hap6	1191644	1191645	del	T
-	}
-	write_tab tmp/gene_annot.tsv {
-		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	proteinID	alignID
-		chr6_qbl_hap6	1150112	1203581	+	HLA-A	known	uc031suu.1	{}	{}	1150221	1203580	2	1150112,1203311,	1150294,1203581,	{}	{}	{}	{}	O19559	uc031suu.1
-		chr6_qbl_hap6	1150221	1152943	+	HLA-H	ens	ENST00000429724	0	593	1152943	1152943	7	1150221,1150418,1150929,1151790,1152167,1152724,1152899,	1150294,1150688,1151205,1152065,1152284,1152757,1152943,	ENSG00000227296	none	none	-1,-1,-1,-1,-1,-1,-1,	{}	{}
-		chr6_qbl_hap6	1151792	1206454	+	HLA-A	known	uc011igl.2	{}	{}	1151807	1206025	6	1151792,1204756,1205073,1205628,1205803,1206020,	1151848,1204974,1205190,1205661,1205851,1206454,	{}	{}	{}	{}	B4DJI3	uc011igl.2
-		chr6_qbl_hap6	1159017	1160149	+	HLA-T	ens	ENST00000430243	0	593	1160149	1160149	4	1159017,1159414,1159925,1160110,	1159289,1159527,1159962,1160149,	ENSG00000229552	none	none	-1,-1,-1,-1,	{}	{}
-		chr6_qbl_hap6	1161752	1203991	-	AK097625	known	uc011ign.1	{}	{}	1161752	1161752	6	1161752,1187266,1189768,1190537,1190824,1203805,	1163306,1187359,1189984,1190641,1190932,1203991,	{}	{}	{}	{}	{}	uc011ign.1
-		chr6_qbl_hap6	1168977	1169344	+	DDX39BP1	ens	ENST00000439001	0	593	1169344	1169344	2	1168977,1169287,	1169112,1169344,	ENSG00000236441	none	none	-1,-1,	{}	{}
-		chr6_qbl_hap6	1170219	1171079	-	MCCD1P1	ens	ENST00000429760	0	593	1171079	1171079	2	1170219,1170912,	1170377,1171079,	ENSG00000229411	none	none	-1,-1,	{}	{}
-		chr6_qbl_hap6	1187015	1188075	-	HCG4B	known	uc011igo.1	{}	{}	1187015	1187015	1	1187015,	1188075,	{}	{}	{}	{}	{}	uc011igo.1
-		chr6_qbl_hap6	1187015	1189600	-	HCG4B	ref	NR_001317	0	594	1189600	1189600	1	1187015,	1189600,	HCG4B	unk	unk	-1,	{}	{}
-		chr6_qbl_hap6	1187146	1189600	-	HCG4B	ens	ENST00000550894	0	594	1189600	1189600	1	1187146,	1189600,	ENSG00000220391	none	none	-1,	{}	{}
-		chr6_qbl_hap6	1188367	1189358	-	HCG4B	ens	ENST00000406611	0	594	1189358	1189358	1	1188367,	1189358,	ENSG00000220391	none	none	-1,	{}	{}
-		chr6_qbl_hap6	1188713	1192114	+	BC035647	known	uc011igp.2	{}	{}	1188713	1188713	5	1188713,1190842,1191404,1191571,1191788,	1190713,1190959,1191431,1191619,1192114,	{}	{}	{}	{}	{}	uc011igp.2
-		chr6_qbl_hap6	1188843	1191618	+	HLA-K	ens	ENST00000431463	0	594	1191618	1191618	6	1188843,1189044,1189562,1190434,1190842,1191571,	1188915,1189305,1189837,1190713,1190959,1191618,	ENSG00000224526	none	none	-1,-1,-1,-1,-1,-1,	{}	{}
-		chr6_qbl_hap6	1194728	1194913	+	HLA-U	ens	ENST00000442622	0	594	1194913	1194913	1	1194728,	1194913,	ENSG00000229428	none	none	-1,	{}	{}
-		chr6_qbl_hap6	1201813	1206454	+	HLA-A	ens	ENST00000383605	0	594	1203108	1206025	10	1201813,1202520,1202958,1203311,1203822,1204698,1205073,1205628,1205803,1206020,	1201873,1202651,1203181,1203581,1204098,1204974,1205190,1205661,1205851,1206454,	ENSG00000206505	cmpl	cmpl	-1,-1,0,1,1,1,1,1,1,1,	{}	{}
-	}
-	write_tab tmp/expected.tsv {
-		chromosome	begin	end	type	ref	alt	annot_impact	annot_gene	annot_descr
-		6_qbl_hap6	1191644	1191645	del	T	{}	intron	HLA-A;HLA-A;AK097625;BC035647	+uc031suu.1:intron1+41351:c.74-11667del;+uc011igl.2:intron1+39797:c.42-13112del;-uc011ign.1:intron1+12161:n.187-713del;+uc011igp.2:intron4+26:n.2192+26del
-	}
-	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/annot_vars.tsv tmp/gene_annot.tsv
-	exec diff tmp/annot_vars.tsv tmp/expected.tsv
 } {}
 
 test annotsv {basic} {
