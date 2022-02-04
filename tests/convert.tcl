@@ -650,7 +650,7 @@ child process exited abnormally} error
 test correctvariants {basic} {
 	test_cleantmp
 	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_h19referrors.tsv tmp/vars.tsv
-	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv $::refseqdir/hg19
 	cg select -f {chromosome begin end type ref alt sequenced zyg} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	zyg
@@ -672,7 +672,7 @@ test correctvariants {basic with doubles} {
 	set f [open tmp/vars.tsv a]
 	puts $f [join {15 26517559 26517560 snp T A v t A T} \t]
 	close $f
-	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv $::refseqdir/hg19
 	cg select -f {chromosome begin end type ref alt sequenced zyg} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	zyg
@@ -691,7 +691,7 @@ test correctvariants {basic with doubles} {
 test correctvariants {basic missing zyg col} {
 	test_cleantmp
 	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_h19referrors.tsv tmp/vars.tsv
-	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv $::refseqdir/hg19
 	cg select -f {chromosome begin end type ref alt sequenced} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced
@@ -709,7 +709,7 @@ test correctvariants {basic missing zyg col} {
 
 test correctvariants {basic multicompar} {
 	test_cleantmp
-	exec cg correctvariants -f 1 -s 1 data/var_h19referrors.tsv tmp/temp.tsv /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 1 data/var_h19referrors.tsv tmp/temp.tsv $::refseqdir/hg19
 	cg select -f {chromosome begin end type ref alt sequenced-* zyg-*} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	sequenced-sample2	zyg-sample1	zyg-sample2
@@ -734,7 +734,7 @@ test correctvariants {basic multicompar doubles} {
 		15	26517559	26517560	snp	G	T,A	v	t	T	A	v	o	A	A
 		15	26517559	26517560	snp	G	T,A	v	m	T	T	v	o	A	A
 	}
-	exec cg correctvariants -f 1 -s 0 tmp/temp.tsv tmp/result.tsv /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 0 tmp/temp.tsv tmp/result.tsv $::refseqdir/hg19
 	cg select -f {chromosome begin end type ref alt sequenced-* zyg-*} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1 alleleSeq2-sample1 sequenced-sample2	zyg-sample2	alleleSeq1-sample2 alleleSeq2-sample2
@@ -746,14 +746,14 @@ test correctvariants {basic multicompar doubles} {
 
 test correctvariants {-c 1} {
 	test_cleantmp
-	exec cg correctvariants -split 0 -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18
+	exec cg correctvariants -split 0 -c 1 data/updatavartest.tsv tmp/temp.tsv $::refseqdir/hg18
 	exec diff tmp/temp.tsv data/expected-updatavartest.tsv
 } {}
 
 test correctvariants {-f} {
 	test_cleantmp
 	exec cg select -f {chromosome begin end type ref alt} data/updatavartest.tsv tmp/temp.tsv
-	exec cg correctvariants -split 0 -c 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg18
+	exec cg correctvariants -split 0 -c 1 tmp/temp.tsv tmp/temp2.tsv $::refseqdir/hg18
 	exec diff tmp/temp2.tsv data/expected-updatavartest2.tsv
 } {}
 
