@@ -10,7 +10,7 @@ proc cg_gene2reg {args} {
 	if {[llength $args] > 2} {
 		errorformat gene2reg
 	}
-	catch {close $f}; catch {close $o};
+	catch {sclose $f} ; catch {sclose $o}
 	if {$file eq ""} {
 		set f stdin
 	} else {
@@ -24,7 +24,7 @@ proc cg_gene2reg {args} {
 	set header [open_genefile $f dposs]
 	set rest [list_sub $header -exclude $dposs]
 	set restposs [list_cor $header $rest]
-	puts $o [join [list_concat {chromosome begin end type element rna_start rna_end protein_start protein_end gene transcript} $rest] \t]
+	puts $o [join [list_concat {chromosome begin end strand type element rna_start rna_end protein_start protein_end gene transcript} $rest] \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -33,6 +33,8 @@ proc cg_gene2reg {args} {
 		set chr [lindex $line [lindex $dposs 0]]
 		set gene [dict get $geneobj genename]
 		set transcript [dict get $geneobj transcriptname]
+		set compl [dict get $geneobj complement]
+		if {!$compl} {set strand +} else {set strand -}
 		set rest [list_sub $line $restposs]
 		if {$upstream} {
 			set dline [lindex $ftlist 0]
@@ -41,10 +43,12 @@ proc cg_gene2reg {args} {
 			lset dline 3 -1
 			lset dline 4 -1
 			lset dline 5 -1
+			set dline [linsert $dline 2 $strand]
 			puts $o [join [list $chr {*}$dline $gene $transcript {*}$rest] \t]
 		}
 		foreach dline [lrange $ftlist 1 end-1] {
 			lset dline 1 [expr {[lindex $dline 1]+1}]
+			set dline [linsert $dline 2 $strand]
 			puts $o [join [list $chr {*}$dline $gene $transcript {*}$rest] \t]
 		}
 		if {$upstream} {
@@ -53,6 +57,7 @@ proc cg_gene2reg {args} {
 			lset dline 3 -1
 			lset dline 4 -1
 			lset dline 5 -1
+			set dline [linsert $dline 2 $strand]
 			puts $o [join [list $chr {*}$dline $gene $transcript {*}$rest] \t]
 		}
 	}

@@ -598,7 +598,7 @@ test format {colvalue} {
 } {}
 
 test gene2reg {gene2reg basic} {
-	cg select -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
+	cg select -overwrite 1 -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
 	cg gene2reg tmp/genetmp.tsv tmp/result.tsv
 	exec diff tmp/result.tsv data/expected-gene2reg.tsv
 } {}
@@ -608,19 +608,19 @@ test gene2reg {gene2reg -upstream 100} {
 	cg gene2reg -upstream 100 tmp/genetmp.tsv tmp/result.tsv
 	exec diff tmp/result.tsv data/expected-gene2reg.tsv
 } {2d1
-< chr1	924104	924204	downstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	924104	924204	-	downstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
 12,13d10
-< chr1	925415	925515	upstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-< chr1	924106	924206	downstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	925415	925515	-	upstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	924106	924206	-	downstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 21d17
-< chr1	925415	925515	upstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	925415	925515	-	upstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 child process exited abnormally} error
 
 test gene2reg {gene2reg nocds} {
 	cg select -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
 	cg gene2reg -nocds 1 tmp/genetmp.tsv tmp/result.tsv
 	cg select -overwrite 1 -f {
-		chromosome begin end
+		chromosome begin end strand
 		{type=if($type in "UTR CDS","RNA",$type)} 
 		element rna_start rna_end
 		protein_start=-1 protein_end=-1
@@ -628,23 +628,23 @@ test gene2reg {gene2reg nocds} {
 	} data/expected-gene2reg.tsv tmp/expected-gene2reg.tsv
 	exec diff tmp/result.tsv tmp/expected-gene2reg.tsv
 } {2c2,3
-< chr1	924204	924675	RNA	exon4	491	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	924204	924675	-	RNA	exon4	491	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
 ---
-> chr1	924204	924301	RNA	exon4	865	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	924301	924675	RNA	exon4	491	864	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+> chr1	924204	924301	-	RNA	exon4	865	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+> chr1	924301	924675	-	RNA	exon4	491	864	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
 8,9c9,12
-< chr1	925108	925415	RNA	exon1	0	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-< chr1	924206	924675	RNA	exon3	569	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	925108	925415	-	RNA	exon1	0	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	924206	924675	-	RNA	exon3	569	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 ---
-> chr1	925108	925216	RNA	exon1	199	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	925216	925415	RNA	exon1	0	198	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	924206	924301	RNA	exon3	943	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
-> chr1	924301	924675	RNA	exon3	569	942	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	925108	925216	-	RNA	exon1	199	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+> chr1	925216	925415	-	RNA	exon1	0	198	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+> chr1	924206	924301	-	RNA	exon3	943	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	924301	924675	-	RNA	exon3	569	942	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 13c16,17
-< chr1	924934	925415	RNA	exon1	0	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	924934	925415	-	RNA	exon1	0	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 ---
-> chr1	924934	925216	RNA	exon1	199	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
-> chr1	925216	925415	RNA	exon1	0	198	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	924934	925216	-	RNA	exon1	199	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	925216	925415	-	RNA	exon1	0	198	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
 child process exited abnormally} error
 
 test correctvariants {basic} {
