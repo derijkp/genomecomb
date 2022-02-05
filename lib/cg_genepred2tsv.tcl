@@ -8,7 +8,7 @@ proc cg_genepred2tsv {args} {
 	set filename -
 	set outfile -
 	set separate 0
-	cg_options gtf2tsv args {
+	cg_options genepred2tsv args {
 		-separate {
 			set separate $value
 		}
