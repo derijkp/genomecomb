@@ -1146,7 +1146,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	if {$transcriptcol eq ""} {
 		set transcriptcol name
 	}
-	foreach genecol [list $genecol geneid gene_name gene_id name2 name] {
+	foreach genecol [list $genecol geneid gene_name gene_id gene name2 name] {
 		if {$genecol eq ""} continue
 		set pos [lsearch $header $genecol]
 		if {$pos != -1} {break}
