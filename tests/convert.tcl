@@ -1544,6 +1544,7 @@ test gtf2tsv {basic} {
 		chr4	source2	transcript	1000	4000	.	+	.	gene_id "gene2"; transcript_id "transcript2-1";
 		chr4	source2	exon	1000	1500	.	+	60	gene_id "gene2"; transcript_id "transcript2-1"; exon_number "0";
 		chr4	source2	exon	3000	4000	.	+	60	gene_id "gene2"; transcript_id "transcript2-1"; exon_number "1";
+		chr4	source2	gene	1000	5000	.	+	.	gene_id "gene2"; 
 		chr4	source2	transcript	1000	5000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
 		chr4	source2	exon	1000	1500	.	+	60	gene_id "gene2"; transcript_id "transcript2-2"; exon_number "0";
 		chr4	source2	exon	3000	4000	.	+	60	gene_id "gene2"; transcript_id "transcript2-2"; exon_number "1";
@@ -1569,13 +1570,13 @@ test gtf2tsv {basic} {
 		# -- tsv converted from gtf, original comments follow --
 		# ----
 		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
-		chr3	999	2000	transcript1	gene1	-			1	999	2000	source2	gene1	transcript1	0
-		chr4	999	4000	transcript2-1	gene2	+			2	999,2999	1500,4000	source2	gene2	transcript2-1	1
-		chr4	999	5000	transcript2-2	gene2	+			3	999,2999,4499	1500,4000,5000	source2	gene2	transcript2-2	2
+		chr3	999	2000	transcript1	gene1	-			1	999,	2000,	source2	gene1	transcript1	0
+		chr4	999	4000	transcript2-1	gene2	+			2	999,2999,	1500,4000,	source2	gene2	transcript2-1	0,1
+		chr4	999	5000	transcript2-2	gene2	+			3	999,2999,4499,	1500,4000,5000,	source2	gene2	transcript2-2	0,1,2
 	}]]\n
 	cg gtf2tsv tmp/test.gtf tmp/test.tsv
 	cg checktsv tmp/test.tsv
-	exec diff tmp/test.tsv tmp/expected.tsv
+	cg tsvdiff tmp/test.tsv tmp/expected.tsv
 } {}
 
 test gtf2tsv {-separate 1} {
@@ -1618,7 +1619,14 @@ test gtf2tsv {-separate 1} {
 		chr4	4499	5000	exon	transcript2-2	gene2	+	source2		gene2	transcript2-2	2
 	}]]\n
 	cg gtf2tsv -separate 1 tmp/test.gtf tmp/test.tsv
-	exec diff tmp/test.tsv tmp/expected.tsv
+	cg tsvdiff tmp/test.tsv tmp/expected.tsv
+} {}
+
+test gtf2tsv {ENSG00000187583} {
+	cg gtf2tsv data/ENSG00000187583.gtf tmp/test.tsv
+	exec diff tmp/test.tsv data/ENSG00000187583.tsv
+} {}
+
 } {}
 
 test convert_pipe {convert_pipe various} {

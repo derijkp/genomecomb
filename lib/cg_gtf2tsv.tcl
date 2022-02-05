@@ -15,13 +15,18 @@ proc cg_gtf2tsv {args} {
 	set filename -
 	set outfile -
 	set separate 0
+	set ignorecodon 1
 	cg_options gtf2tsv args {
 		-separate {
 			set separate $value
 		}
+		-ignorecodon {
+			set ignorecodon $value
+		}
 	} {filename outfile} 0 2
-	set f [gzopen $filename]
 
+	catch {close $f} ;	catch {close $fb} ; catch {close $fa}
+	set f [gzopen $filename]
 	set comment {# -- tsv converted from gtf, original comments follow --}
 	while {![eof $f]} {
 		set line [gets $f]
@@ -32,12 +37,11 @@ proc cg_gtf2tsv {args} {
 	set next 100000; set num 0
 	set tempbase [tempfile]
 	set tempattr [tempfile]
-	catch {close $fb} ; catch {close $fa}
 	set fb [open $tempbase w]
 	set fa [open $tempattr w]
 	set attrheader {}
 	set attrtemplate {}
- 	unset -nocomplain attra
+	unset -nocomplain attra
 	if {!$separate} {
 		set cheader [deindent {
 			#filetype	tsv/transcriptsfile
@@ -59,105 +63,124 @@ proc cg_gtf2tsv {args} {
 		}]
 		set nheader {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 		unset -nocomplain curchromosome
+		set curtranscript {}
+		set curlines {}
 		set num 0
+		set line [split $line \t]
 		while 1 {
-			if {[string index $line 0] eq "#"} continue
-			set line [split $line \t]
-			set eof [eof $f]
-			if {!$eof} {
+			while 1 {
+				foreach {chrom source type start end score strand phase attributes comments} $line break
+				if {$type in "exon CDS start_codon stop_codon"} break
+				if {[gets $f line] == -1} break
+				set line [split $line \t]
+			}
+			set a [dict create {*}[string_change $attributes {; " "}]]
+			set curtranscript [dict get $a transcript_id]
+			if {[eof $f] && $line eq ""} break
+			set curlines [list $line]
+			while {[gets $f line] != -1} {
+				if {[string index $line 0] eq "#"} continue
+				set line [split $line \t]
 				if {![llength $line]} continue
 				foreach {chrom source type start end score strand phase attributes comments} $line break
-				if {![inlist {exon CDS start_codon stop_codon 5UTR 3UTR inter inter_CNS intron_CNS} $type]} {
-					set line [gets $f]
+				if {![inlist {exon CDS start_codon stop_codon} $type]} {
 					continue
 				}
-				incr start -1
 				set a [dict create {*}[string_change $attributes {; " "}]]
 				set transcript [dict get $a transcript_id]
-				set gene [dict get $a gene_id]
-			} else {
-				set transcript {}
-				set gene {}
+				if {$transcript ne $curtranscript} break
+				lappend curlines $line
 			}
-			if {![info exists curchromosome] || $transcript ne $curtranscript} {
-				# write previous to output
-				if {[info exists curchromosome]} {
-					if {$curstrand eq "-"} {
-						set curexonStarts [list_reverse $curexonStarts]
-						set curexonEnds [list_reverse $curexonEnds]
-					}
-					puts $fb [join [list $curchromosome $curbegin $curend $curtranscript $curgene $curstrand \
-						$curcdsStart $curcdsEnd $curexonCount \
-						[join $curexonStarts ,] [join $curexonEnds ,] $cursource] \t]
-					set attrlist $attrtemplate
-					dict for {key value} $curattr {
-						if {![info exists attra($key)]} {
-							set attra($key) [llength $attrtemplate]
-							lappend attrheader $key
-							lappend attrtemplate {}
-							lappend attrlist $value
-						} else {
-							lset attrlist $attra($key) $value
-						}
-					}
-					puts $fa [join $attrlist \t]
-				}
-				if {$eof} break
-				# start next
-				set curtranscript $transcript
-				set curgene $gene
-				set curchromosome $chrom
-				set curbegin $start
-				set curend $end
-				set curstrand $strand
-				set curcdsStart {}
-				set curcdsEnd {}
-				set curexonCount 0
-				set curexonStarts {}
-				set curexonEnds {}
-				set cursource $source
-				set curscore {}
-				set curattr $a
-			}
+			if {![llength $curlines]} break
+			# join $curlines \n
+
 			if {$num >= $next} {putsprogress $curchromosome:$curbegin-$curend; incr next 100000}
 			incr num
-			switch $type {
-				exon {
-					lappend curexonStarts $start
-					lappend curexonEnds $end
-					lappend curscore $score
-					if {$start < $curbegin} {set curbegin $start}
-					if {$end > $curend} {set curend $end}
-					incr curexonCount
+
+			# 
+			set curlines [lsort -dict -index 3 $curlines]
+			# start next
+			foreach {curchromosome source type curbegin curend score curstrand phase attributes comments} [lindex $curlines 0] break
+			unset -nocomplain curattra
+			set cursource {}
+			lappend cursource $source
+			set curcdsStart {}
+			set curcdsEnd {}
+			set curexonCount 0
+			set curexonStarts {}
+			set curexonEnds {}
+			set curscore {}
+			foreach iline $curlines {
+				foreach {chrom source type start end score strand phase attributes comments} $iline break
+				foreach {key value}  [string_change $attributes {; " "}] {
+					lappend curattra($key) $value
 				}
-				CDS {
-					if {$strand eq "+"} {
-						set curcdsStart $start
-						set curcdsEnd [expr {$end+3}]
-					} else {
-						set curcdsStart [expr {$start-3}]
-						set curcdsEnd $end
+				incr start -1
+				switch $type {
+					exon {
+						lappend curexonStarts $start
+						lappend curexonEnds $end
+						lappend curscore $score
+						if {$start < $curbegin} {set curbegin $start}
+						if {$end > $curend} {set curend $end}
+						incr curexonCount
 					}
-					if {$start < $curbegin} {set curbegin $start}
-					if {$end > $curend} {set curend $end}
-				}
-				start_codon {
-					if {$strand eq "+"} {
-						set curcdsStart $start
-					} else {
-						set curcdsEnd $end
+					CDS {
+						if {$strand eq "+"} {
+							if {$curcdsStart eq "" || $start < $curcdsStart} {set curcdsStart $start}
+							set temp [expr {$end+3}]
+							if {$curcdsEnd eq "" || $temp > $curcdsEnd} {set curcdsEnd $temp}
+						} else {
+							set temp [expr {$start-3}]
+							if {$curcdsStart eq "" || $temp < $curcdsStart} {set curcdsStart $temp}
+							if {$curcdsEnd eq "" || $end > $curcdsEnd} {set curcdsEnd $end}
+						}
+						if {$start < $curbegin} {set curbegin $start}
+						if {$end > $curend} {set curend $end}
 					}
-				}
-				stop_codon {
-					if {$strand eq "+"} {
-						set curcdsEnd $end
-					} else {
-						set curcdsStart $start
+					start_codon {
+						if {!$ignorecodon} {
+							if {$strand eq "+"} {
+								set curcdsStart $start
+							} else {
+								set curcdsEnd $end
+							}
+						}
+					}
+					stop_codon {
+						if {!$ignorecodon} {
+							if {$strand eq "+"} {
+								set curcdsEnd $end
+							} else {
+								set curcdsStart $start
+							}
+						}
 					}
 				}
 			}
-			set curattr [dict merge $curattr $a]
-			set line [gets $f]
+			if {![info exists curattra(gene_id)]} {
+				error "field gene_id not found in attributes"
+			}
+			set curgene [list_remdup $curattra(gene_id)]
+			if {![info exists curattra(transcript_id)]} {
+				error "field transcript_id not found in attributes"
+			}
+			set curtranscript [list_remdup $curattra(transcript_id)]
+			puts $fb [join [list $chrom $curbegin $curend $curtranscript $curgene $curstrand \
+				$curcdsStart $curcdsEnd $curexonCount \
+				[join $curexonStarts ,], [join $curexonEnds ,], [join [list_remdup $cursource] ,]] \t]
+			set attrlist $attrtemplate
+			foreach {key value} [array get curattra] {
+				if {![info exists attra($key)]} {
+					set attra($key) [llength $attrtemplate]
+					lappend attrheader $key
+					lappend attrtemplate {}
+					lappend attrlist [join [list_remdup $value] ,]
+				} else {
+					lset attrlist $attra($key) [join [list_remdup $value] ,]
+				}
+			}
+			puts $fa $attrlist
 		}
 	} else {
 		set cheader [deindent {
@@ -184,19 +207,28 @@ proc cg_gtf2tsv {args} {
 			if {![llength $line]} continue
 			foreach {chrom source type start end score strand phase attributes comments} $line break
 			incr start -1
-			set attributes [dict create {*}[string_change $attributes {; " "}]]
-			set transcript [dict get $attributes transcript_id]
-			set gene [dict get $attributes gene_id]
+			unset -nocomplain curattra
+			foreach {key value}  [string_change $attributes {; " "}] {
+				lappend curattra($key) $value
+			}
+			if {![info exists curattra(gene_id)]} {
+				error "field gene_id not found in attributes"
+			}
+			set gene [list_remdup $curattra(gene_id)]
+			if {![info exists curattra(transcript_id)]} {
+				error "field transcript_id not found in attributes"
+			}
+			set transcript [list_remdup $curattra(transcript_id)]
 			puts $fb [join [list $chrom $start $end $type $transcript $gene $strand $source $comments] \t]
 			set attrlist $attrtemplate
-			dict for {key value} $attributes {
+			foreach {key value} [array get curattra] {
 				if {![info exists attra($key)]} {
 					set attra($key) [llength $attrtemplate]
 					lappend attrheader $key
 					lappend attrtemplate {}
-					lappend attrlist $value
+					lappend attrlist [join [list_remdup $value] ,]
 				} else {
-					lset attrlist $attra($key) $value
+					lset attrlist $attra($key) [join [list_remdup $value] ,]
 				}
 			}
 			puts $fa $attrlist
