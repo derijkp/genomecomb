@@ -1,0 +1,24 @@
+= Bam2reg =
+
+== Format ==
+cg bam_sort ?options? ?bamfile? ?sortedbamfile?
+
+== Summary ==
+sort a bam file.
+
+== Description ==
+
+== Arguments ==
+; bamfile: bam file to sort
+; sortedbamfile: resulting sorted bam file
+
+== Options ==
+; -method gnusort/samtools/biobambam: method used for sorting, must be one of gnusort,samtools,biobambam (default samtools)
+; -sort coordinate/name/hash: what to sort on (default coordinate)
+; -inputformat format: input format (default derived drom file name extension)
+; -outputformat format: output format (default derived drom file name extension)
+; -threads nrthreads: number of threads to use
+; -refseq refseq: genomic reference sequence (needed for cram format sorting)
+
+== Category ==
+Conversion
