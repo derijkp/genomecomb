@@ -139,6 +139,7 @@ table_tsv method query {args} {
 	putslog "Doing query $query\nsort $sort"
 	regsub -all \n $query { } query
 	if {![info exists tdata(sqlbackend_db)]} {
+		set header $tdata(header)
 		if {[info exists tdata(size)]} {
 			set numlines $tdata(size)
 		} else {
@@ -148,9 +149,17 @@ table_tsv method query {args} {
 				catch {set numlines [dict get $info size]}
 			}
 		}
-		set fieldopt [list {rowid=$ROW}]
+		if {"ROW" in $header} {
+			set num 1
+			while {"ROW$num" in $header} {
+				incr num
+			}
+			set rfield ROW$num
+		} else {
+			set rfield ROW
+		}
+		set fieldopt [list "rowid=\$$rfield"]
 		if {$query ne ""} {
-			set header $tdata(header)
 			set fields $tdata(fields)
 			tsv_select_expandcode $header $query neededfields
 			set neededfields [list_lremove [list_remdup $neededfields] $header]
@@ -166,7 +175,7 @@ table_tsv method query {args} {
 			progress message "Running query, please be patient (no progress shown)"
 			set queryerror {}
 			if {![catch {
-				exec cg select -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
+				exec cg select -rowfield $rfield -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
 			} queryerror] } {
 				set queryerror ""
 			}
@@ -176,12 +185,12 @@ table_tsv method query {args} {
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start $numlines "Running query" "Running query"
 			set queryerror {}
-			# puts [list cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv]
+			# puts [list cg select -rowfield $rfield -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv]
 			Extral::bgexec \
 				-progresscommand [list $object queryprogress] \
 				-no_error_redir \
 				-channelvar [privatevar $object bgexechandle] \
-				cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+				cg select -rowfield $rfield -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
 			progress stop
 		}
 	} else {
