@@ -196,6 +196,13 @@ test select "-f calculated functions error catch$dboptt" {
 chr1	4000	4001	error
 chr1	4001	4002	error}
 
+test select "-rowfield R -f calculated functions error catch$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -rowfield R -f {chromosome begin end {error=catch(blabla($alt),"error")}} -q {$R < 2} [gzfile data/vars1.sft]
+} {chromosome	begin	end	error
+chr1	4000	4001	error
+chr1	4001	4002	error}
+
 test select "-f calculated functions error not a number$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -f {chromosome begin end {error=($list<1)}} [gzfile data/vars1.sft] tmp/temp.tsv
@@ -471,6 +478,11 @@ test select "counthasone column$dboptt" {
 test select "ROW$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin end} -q {$ROW == 2} < data/vars1.sft] \n
+} {{chromosome	begin	end} {chr1	4099	4100}}
+
+test select "-rowfield R ROW$dboptt" {
+	global dbopt
+	split [exec cg select {*}$dbopt -rowfield R -f {chromosome begin end} -q {$R == 2} < data/vars1.sft] \n
 } {{chromosome	begin	end} {chr1	4099	4100}}
 
 test select "ROW$dboptt" {

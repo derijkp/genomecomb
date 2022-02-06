@@ -52,6 +52,7 @@ further (Summaries using -g and -gc)
 option. **groupcols** has the following format: "field1 filter1 field2
 filter2 ... functions". For more information, see further (Summaries using
 -g and -gc)
+; -rowfield: field that will contain the (current) row number (default ROW)
 
 == Fields (option -f) ==
 With the -f option, the output can be limited to the fields given (whitespace
@@ -123,6 +124,8 @@ $ROW starts at 0 for this first line after the header/comments.
 e.g.:
 $ROW == 1000
 will select data line 1000 in the file.
+If the tsv file already has a field ROW, you must define another fieldname to contain the row number
+with the -rowfield option.
 
 === Operators ===
 Queries support all operators provided by Tcl expr:

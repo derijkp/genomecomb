@@ -4,6 +4,8 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+set rowfield ROW
+
 proc tsv_select_sampleinfo_findfile {filename} {
 	# Try different sources (older versions)
 	set sampleinfofile [gzroot $filename].sampleinfo
@@ -165,7 +167,7 @@ proc cg_missing_analysisinfo {filename} {
 
 proc tsv_select_fieldpresent {field header} {
 	global calccols
-	if {$field eq "ROW" || $field in $header || [info exists calccols($field)]} {return 1}
+	if {$field eq "$::rowfield" || $field in $header || [info exists calccols($field)]} {return 1}
 	if {![catch {tsv_select_sampleinfo $field $header}]} {return 1}
 	return 0
 }
@@ -468,7 +470,7 @@ proc tsv_select_alignedseq {arguments header neededfieldsVar} {
 
 proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	if {$qpossVar ne ""} {upvar $qpossVar qposs}
-	if {$field eq "ROW"} {return "ROW"}
+	if {$field eq "$::rowfield"} {return "$::rowfield"}
 	if {[string index $field 0] eq "-"} {
 		set field [string range $field 1 end]
 		if {[string first * $field] == -1} {
@@ -616,8 +618,8 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 			if {[inlist $rfields $field]} continue
 			set pos [lsearch $header $field]
 			if {$pos == -1} {
-				if {$field eq "ROW"} {
-					lappend rfields ROW
+				if {$field eq "$::rowfield"} {
+					lappend rfields $::rowfield
 		#			lappend qposs {}
 		#			# empty for code will output ROW directly later
 					lappend qposs ROW
@@ -1239,7 +1241,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}}} {
 	if {$prequeryVar ne ""} {
 		upvar $prequeryVar prequery
 		set calcfieldsquery [list_lremove $tempneededfields $header]
-		set calcfieldsquery [list_remove $calcfieldsquery ROW]
+		set calcfieldsquery [list_remove $calcfieldsquery $::rowfield]
 		set tempneededfields [list_lremove $tempneededfields $calcfieldsquery]
 		set prequery {}
 		foreach field $calcfieldsquery {
@@ -1423,6 +1425,9 @@ proc cg_select {args} {
 		-overwrite {
 			set overwrite $value
 		}
+		-rowfield {
+			set ::rowfield $value
+		}
 	}
 	if {$showheader} {
 		set args [lrange $args 1 end]
@@ -1524,7 +1529,7 @@ proc cg_select {args} {
 	if {[llength $sortfields] && $group eq ""} {
 		set usesort 1
 		set reverse 0
-		lappend header ROW
+		lappend header $::rowfield
 		set index {}
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
@@ -1563,9 +1568,9 @@ proc cg_select {args} {
 			set qfields $header
 		}
 		set qfields [tsv_select_expandfields $header $qfields qposs]
-		if {$usesort && [inlist $qfields ROW]} {set useaddrow 1}
+		if {$usesort && [inlist $qfields $::rowfield]} {set useaddrow 1}
 	} else {
-		if {$usesort} {set temp [list_remove $header ROW]} else {set temp $header}
+		if {$usesort} {set temp [list_remove $header $::rowfield]} else {set temp $header}
 		set qfields [tsv_select_removefields $temp $qfields qposs]
 	}
 	if {[llength $samples]} {
@@ -1620,10 +1625,10 @@ proc cg_select {args} {
 			if {[string index $field 0] eq "-"} {set rfield [string range $field 1 end]} else {set rfield $field}
 			if {[isint $el]} {
 				lappend outcols $el
-			} elseif {$el eq "ROW"} {
+			} elseif {$el eq "$::rowfield"} {
 				if {$usesort} {
 					# when sorting ROW filed will be added before
-					lappend outcols ROW
+					lappend outcols $::rowfield
 					set useaddrow 1
 				} else {
 					# empty instead of code or int will directly output ROW
@@ -1680,7 +1685,7 @@ proc cg_select {args} {
 		# see what we need of calculated fields
 		set calcfieldsquery [list_lremove $neededfields $header]
 		if {!$usesort} {
-			set calcfieldsquery [list_remove $calcfieldsquery ROW]
+			set calcfieldsquery [list_remove $calcfieldsquery $::rowfield]
 		}
 		set neededfields [list_lremove $neededfields $calcfieldsquery]
 		set prequery {}
@@ -1704,7 +1709,7 @@ proc cg_select {args} {
 		}
 		set neededfields [list_remdup $neededfields]
 		set neededcols [list_cor $header $neededfields]
-		if {$usesort && "ROW" in $neededfields} {
+		if {$usesort && "$::rowfield" in $neededfields} {
 			set useaddrow 1
 		}
 		if {$index eq ""} {
@@ -1771,7 +1776,7 @@ proc cg_select {args} {
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
-		if {$usesort && [lindex $header end] eq "ROW"} {set header [lrange $header 0 end-1]}
+		if {$usesort && [lindex $header end] eq "$::rowfield"} {set header [lrange $header 0 end-1]}
 		set nh $header
 	}
 	if {$group ne ""} {
