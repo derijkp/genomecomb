@@ -110,3 +110,16 @@ proc file_copy {args} {
 	set target [lindex $args end]
 	exec touch $target
 }
+
+proc follow_links {file} {
+	set file [file_absolute $file]
+	while 1 {
+		if {[catch {set file [file join [file dir $file] [file readlink $file]]}]} break
+	}
+	return $file
+}
+
+proc sclose {f} {
+	if {$f in "stdin stdout stderr"} return
+	close $f
+}
