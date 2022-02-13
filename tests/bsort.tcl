@@ -196,4 +196,13 @@ test bsort {looking for trouble} {
 	checkbsort $list
 } {}
 
+test bsort {bugfix: undetermined when starting with 0} {
+	bsort {
+		86e1c438
+		903c145d
+		0445a746
+		1440c004
+	}
+} {86e1c438 0445a746 903c145d 1440c004}
+
 testsummarize
