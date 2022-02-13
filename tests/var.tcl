@@ -497,6 +497,31 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 	}
 } {}
 
+test var {var_clair3 basic} {
+	cd $::smalltestdir
+	file delete -force tmp/clair3
+	file mkdir tmp/clair3
+	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
+		mklink $file tmp/clair3/[file tail $file]
+	}
+	cg var_clair3 {*}$::dopts -platform hifi -model hifi \
+		tmp/clair3/pacbio_reads_30x.bam tmp/clair3/genome.fa
+	cg vcf2tsv tmp/clair3/ground_truth_variants.vcf tmp/clair3/ground_truth_variants.tsv
+	cg multicompar tmp/clair3/compar.tsv tmp/clair3/var-clair3-pacbio_reads_30x.tsv.zst tmp/clair3/ground_truth_variants.tsv
+	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+		-ignorefields {varcaller_cg_version} \
+		tmp/clair3 expected/clair3
+	list [cg select -g chromosome tmp/clair3/compar.tsv] [cg select -g {zyg-clair3-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/clair3/compar.tsv]
+} {{chromosome	count
+contig1	250
+contig2	219
+contig3	246} {zyg-clair3-pacbio_reads_30x	zyg-ground_truth_variants	count
+?	m	2
+?	t	9
+m	m	228
+t	?	1
+t	t	475}}
+
 test var {var_medaka basic} {
 	cd $::smalltestdir
 	file delete -force tmp/medaka
