@@ -232,9 +232,9 @@ test alignedseq {2S2M2I16M2S} {
 	set result [alignedseq chr1 100 118 2S2M2I16M2S YZABCDEFGHIJKLMNOPQRSTXY chr1 102 103]
 	if {$result ne "E"} {error "wrong result \"$result\", should have been \"E\""}
 	set result [alignedseq chr1 100 118 2S2M2I16M2S YZABCDEFGHIJKLMNOPQRSTXY chr1 101 102 1]
-	if {$result ne "B"} {error "wrong result \"$result\", should have been \"B\""}
+	if {$result ne "BCD"} {error "wrong result \"$result\", should have been \"BCD\""}
 	set result [alignedseq chr1 100 118 2S2M2I16M2S YZABCDEFGHIJKLMNOPQRSTXY chr1 102 103 1]
-	if {$result ne "E"} {error "wrong result \"$result\", should have been \"E\""}
+	if {$result ne "CDE"} {error "wrong result \"$result\", should have been \"CDE\""}
 } {}
 
 test alignedseq {2S2M2D18M2S} {
