@@ -3,12 +3,21 @@ proc version_flair {} {
 	lindex [split [file tail $flairdir] -] end
 }
 
-proc flair_getref {} {
-	cd /complgen/refseq/hg38/extra
-#	exec wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_37/gencode.v37.annotation.gtf.gz
-#	exec gunzip gencode.v37.annotation.gtf.gz
-	exec wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
-	exec gunzip gencode.v39.annotation.gtf.gz
+proc flair_getref {refseq} {
+	set refseq [refseq $refseq]
+	set refdir [file dir $refseq]
+	if {[catch {
+		set ref [lindex [bsort [glob $refdir/extra/gencode*.gtf]] end]
+	}]} {
+		set keeppwd [pwd]
+		cd $refdir/hg38/extra
+	#	exec wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_37/gencode.v37.annotation.gtf.gz
+	#	exec gunzip gencode.v37.annotation.gtf.gz
+		exec wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
+		exec gunzip gencode.v39.annotation.gtf.gz
+		cd $keeppwd
+	}
+	set ref [lindex [bsort [glob $refdir/extra/gencode*.gtf]] end]
 }
 
 proc findflair {} {
@@ -269,7 +278,7 @@ proc flair_job {args} {
 	} {projectdir}
 	set projectdir [file_absolute $projectdir]
 	set refseq [refseq $refseq]
-	set gtfannotation [lindex [bsort [glob [file dir $refseq]/extra/gencode*.gtf]] end]
+	set gtfannotation [flair_getref $refseq]
 	set flairdir [findflair]
 	cd $projectdir
 	set samples [glob samples/*]
