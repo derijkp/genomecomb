@@ -86,6 +86,18 @@ proc filetemp {file {write 1} {ext 0}} {
 	return $result
 }
 
+proc dirtemp {file} {
+	if {![file exists $file.temp]} {
+		set result $file.temp
+	} else {
+		set num 2
+		while {[file exists $file.temp.$num]} {incr num}
+		set result $file.temp.$num
+	}
+	mkdir $result
+	return $result
+}
+
 proc filetemp_ext {file {write 1}} {
 	if {[ispipe $file]} {return $file}
 	filetemp $file $write 1
