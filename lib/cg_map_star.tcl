@@ -106,6 +106,12 @@ proc cg_map_star {args} {
 		}
 	}
 	set files [list $fastqfile1 {*}$args]
+	if {$paired && [llength $files] != 2} {
+		error "cg map_star error: for paired read alignment 2 fastq files must be given"
+	}
+	if {!$paired && [llength $files] != 1} {
+		error "cg map_star error: for single read alignment 1 fastq files must be given"
+	}
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	#
@@ -113,32 +119,42 @@ proc cg_map_star {args} {
 	set starrefseq [refseq_star $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result aligner star aligner_version [version star] reference [file2refname $starrefseq] aligner_paired $paired
+	putslog "making $result"
+	set rg {}
+	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
+		lappend rg "$key:$value"
+	}
 	if {!$paired} {
-		putslog "making $result"
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
+		set files1 {}
 		foreach {file} $files {
 			lappend rgids ID:$sample\ [join $rg " "]
+			lappend files1 [file_absolute $file]
 		}
-		file delete -force ./_STARtmp
+		set scratch [scratchdir]/STAR
+		catch {file delete -force $scratch}
+		set keepdir [pwd]
+		set workdir [dirtemp $result]
+		cd $workdir
 		if {[catch {
 			exec STAR {*}$extraopts \
+				--outTmpDir $scratch \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
-				--readFilesIn [join $files ,] \
-				--readFilesCommand {*}[gzcat [lindex $files]] \
+				--readFilesIn [join $files1,] \
+				--readFilesCommand {*}[gzcat [lindex $files1 0]] \
 				--outSAMattrRGline {*}[join $rgids " , "] \
 				--outSAMunmapped Within \
 				--outStd SAM \
 				{*}$outpipe
 		} msg]} {
+			cd $keepdir
 			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {
 				puts stderr $msg
 				error $msg
 			}
 		}
+		cd $keepdir
+		file delete -force $workdir
 		puts stderr $msg
 	} else {
 		if {$fixmate} {
@@ -147,36 +163,40 @@ proc cg_map_star {args} {
 		if {[expr {[llength $files]%2}]} {
 			error "star needs even number of files for paired analysis"
 		}
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
 		set files1 {}
 		set files2 {}
 		set rgids {}
 		foreach {file1 file2} $files {
-			lappend files1 $file1
-			lappend files2 $file2
+			lappend files1 [file_absolute $file1]
+			lappend files2 [file_absolute $file2]
 			lappend rgids ID:$sample\ [join $rg " "]
 		}
 		putslog "making $result"
-		file delete -force ./_STARtmp
+		set scratch [scratchdir]/STAR
+		catch {file delete -force $scratch}
+		set keepdir [pwd]
+		set workdir [dirtemp $result]
+		cd $workdir
 		if {[catch {
 			exec STAR {*}$extraopts \
+				--outTmpDir $scratch \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
 				--readFilesIn [join $files1 ,] [join $files2 ,] \
-				--readFilesCommand {*}[gzcat [lindex $files1]] \
+				--readFilesCommand {*}[gzcat [lindex $files1 0]] \
 				--outSAMattrRGline {*}[join $rgids " , "] \
 				--outSAMunmapped Within \
 				--outStd SAM \
 				{*}$outpipe
 		} msg]} {
+			cd $keepdir
 			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {
 				puts stderr $msg
 				error $msg
 			}
 		}
+		cd $keepdir
+		file delete -force $workdir
 		puts stderr $msg
 	}
 }
