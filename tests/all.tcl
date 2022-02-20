@@ -66,6 +66,7 @@ runtests job.tcl
 runtests map.tcl
 runtests sv.tcl
 runtests var.tcl
+runtests all.tcl
 # not yet updated
 # runtests meth.tcl
 
