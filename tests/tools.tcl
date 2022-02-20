@@ -3,6 +3,7 @@ catch {tk appname test}
 
 set bigtestdir $env(HOME)/genomecomb.testdata
 set smalltestdir $env(HOME)/genomecomb.smalltestdata
+set publicdir $env(HOME)/public
 if {![info exists refseqdir]} {
 	set refseqdir $smalltestdir/refseqtest
 }
@@ -114,6 +115,10 @@ proc checkdiff args {
 
 proc test_cleantmp {} {
 	foreach file [list_remove [glob -nocomplain $::testdir/tmp/* $::testdir/tmp/.*] $::testdir/tmp/.. $::testdir/tmp/.] {
+		catch {file attributes $file -permissions ugo+xw}
+		catch {file delete -force $file}
+	}
+	foreach file [list_remove [glob -nocomplain tmp/* tmp/.*] tmp/.. tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
 		catch {file delete -force $file}
 	}
