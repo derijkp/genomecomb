@@ -321,13 +321,27 @@ test map_star {map_star paired 2p} {
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
 
-test map_star {map_star} {
+test map_star {map_star -paired 0} {
 	if {![file exists $::refseqdir/hg19/genome_hg19.ifas.star]} {
 		error "star index not made"
 	}
 	test_cleantmp
 	file copy -force data/seq_R1.fq.gz tmp
 	cg map_star -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
+	# chr21:42730799-42762826
+	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
+	cg sam2tsv -fields {RG NM AS MD MQ MC XN XM XO XG YS YT NH ms} tmp/ali.sam  > tmp/alis.tsv
+	cg sam2tsv -fields {RG NM AS MD MQ MC XN XM XO XG YS YT NH ms} data/star.sam  > tmp/expected.tsv
+	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
+} 0
+
+test map {map -method star basic} {
+	if {![file exists $::refseqdir/hg19/genome_hg19.ifas.star]} {
+		error "star index not made"
+	}
+	test_cleantmp
+	file copy -force data/seq_R1.fq.gz tmp
+	cg map -stack 1 -method star -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
 	cg sam2tsv -fields {RG NM AS MD MQ MC XN XM XO XG YS YT NH ms} tmp/ali.sam  > tmp/alis.tsv

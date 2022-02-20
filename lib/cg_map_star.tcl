@@ -101,6 +101,9 @@ proc cg_map_star {args} {
 	foreach {key value} [specialopts -star] {
 		switch $key {
 			default {
+				if {[string index $key 1] != "-"} {
+					set key -$key
+				}
 				lappend extraopts $key $value
 			}
 		}
@@ -130,14 +133,14 @@ proc cg_map_star {args} {
 			lappend rgids ID:$sample\ [join $rg " "]
 			lappend files1 [file_absolute $file]
 		}
+		set keepdir [pwd]
 		set scratch [scratchdir]/STAR
 		catch {file delete -force $scratch}
-		set keepdir [pwd]
-		set workdir [dirtemp $result]
-		cd $workdir
+		mkdir $scratch
+		cd $scratch
 		if {[catch {
 			exec STAR {*}$extraopts \
-				--outTmpDir $scratch \
+				--outTmpDir $scratch/STARTMP \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
 				--readFilesIn [join $files1,] \
@@ -154,7 +157,7 @@ proc cg_map_star {args} {
 			}
 		}
 		cd $keepdir
-		file delete -force $workdir
+		file delete -force $scratch
 		puts stderr $msg
 	} else {
 		if {$fixmate} {
@@ -172,14 +175,14 @@ proc cg_map_star {args} {
 			lappend rgids ID:$sample\ [join $rg " "]
 		}
 		putslog "making $result"
+		set keepdir [pwd]
 		set scratch [scratchdir]/STAR
 		catch {file delete -force $scratch}
-		set keepdir [pwd]
-		set workdir [dirtemp $result]
-		cd $workdir
+		mkdir $scratch
+		cd $scratch
 		if {[catch {
 			exec STAR {*}$extraopts \
-				--outTmpDir $scratch \
+				--outTmpDir $scratch/STARTMP \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
 				--readFilesIn [join $files1 ,] [join $files2 ,] \
@@ -196,7 +199,7 @@ proc cg_map_star {args} {
 			}
 		}
 		cd $keepdir
-		file delete -force $workdir
+		file delete -force $scratch
 		puts stderr $msg
 	}
 }
