@@ -188,6 +188,9 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} else {
 			set job $jobo
 		}
+		if {[file exists $job.jid] && [job_running [file_read $job.jid]]} {
+			set status submitted
+		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break

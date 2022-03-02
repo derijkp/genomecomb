@@ -941,7 +941,7 @@ proc time_seconds {diff} {
 
 proc job_parse_log {job} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
-	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {} ; set currenthost {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentjobid {} ; set currenthost {}
 	set time_seconds ""
 	set status unkown
 	set logdata [split [file_read $job.log] \n]
@@ -1012,14 +1012,14 @@ proc job_parse_log {job} {
 				set endtime {}
 			}
 		} else {
-			set status $currentstatus
+			set status running
 			set endtime {}
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
 	if {$submittime eq ""} {set submittime $currentsubmittime}
 	if {$starttime eq ""} {set submittime $currentstarttime}
-	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime currentstatus
+	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}
