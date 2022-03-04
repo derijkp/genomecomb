@@ -295,32 +295,26 @@ PATH=/usr/local/bin:$PATH \
     make install
 
 # copy dl libraries to R local lib dir
-cp -a /usr/lib64/libgfortran*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/libgomp*.so.1* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/*pango* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /lib64/libreadline*.so.6* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/libquadmath.so.0* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /build/zlib-1.2.11/libz.so.1* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib64/libssl*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib64/libcrypto*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libcurl*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/libjpeg*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/*tcl* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
-cp -a /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
-cp -ar /usr/share/tcl8.5 /build/dirR-$version-$arch/lib64/R/share
-cp -ar /usr/share/tk8.5 /build/dirR-$version-$arch/lib64/R/share
-
-#cp -a /lib64/libtinfo.so.5* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a /lib64/libdl* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a /lib64/librt* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a /lib64/libgcc* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a /lib64/linux-vdso.so.1* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libgfortran*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libgomp*.so.1* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*pango* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /lib64/libreadline*.so.6* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libquadmath.so.0* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /build/zlib-1.2.11/libz.so.1* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib64/libssl*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib64/libcrypto*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libcurl*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tcl* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -fr /usr/share/tcl8.5 /build/dirR-$version-$arch/lib64/R/share
+cp -a -fr /usr/share/tk8.5 /build/dirR-$version-$arch/lib64/R/share
 
 echo '
 puts [list set argv $argv]
@@ -359,7 +353,6 @@ tclsh /tmp/convert /build/dirR-$version-$arch/lib64/R/bin/R /build/dirR-$version
 #    | sed 's#CXX11FLAGS =  $(LTO)#CXX11FLAGS = -I/usr/local/include -fPIC#g' \
 #    > /build/dirR-$version-$arch/lib64/R/etc/Makeconf
 
-/build/dirR-$version-$arch/R --vanilla -e --configure-vars='INCLUDE_DIR= LIB_DIR=...' 'install.packages("ragg", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("tidyverse", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("rmarkdown", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("shiny", repos="http://cran.us.r-project.org")'
