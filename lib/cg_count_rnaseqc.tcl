@@ -89,7 +89,9 @@ proc gct2tsv {gct tsv datafield datatype datadescr {idfield geneid} {namefield g
 	fcopy $f $o
 }
 
-proc cg_count_rnaseqc_job {args} {
+proc count_rnaseqc_job {args} {
+	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg count_rnaseqc_job {*}$args]"
 	set extraopts {}
 	set stranded 1
 	set keepargs $args
@@ -122,6 +124,9 @@ proc cg_count_rnaseqc_job {args} {
 		count reads for genes in rna-seq experiment
 	}
 	set extraopts {}
+	if {$preset eq "ht"} {
+		lappend extraopts -q 10
+	}
 	foreach {key value} [specialopts -rnaseqc] {
 		switch $key {
 			default {
@@ -137,13 +142,13 @@ proc cg_count_rnaseqc_job {args} {
 	set bamtail [file tail $bamfile]
 	set refseq [refseq $refseq]
 	if {$gtffile eq ""} {
-		set gtffile [lindex [gzfiles [bsort [file dir $refseq]/extra/collapsedgene_*gencode*.gtf]] end]
+		set gtffile [lindex [jobgzfiles [bsort [file dir $refseq]/extra/collapsedgene_*gencode*.gtf]] end]
 	}
 	if {$gtffile eq ""} {
-		set gtffile [lindex [gzfiles [bsort [file dir $refseq]/extra/collapsedgene*.gtf]] end]
+		set gtffile [lindex [jobgzfiles [bsort [file dir $refseq]/extra/collapsedgene*.gtf]] end]
 	}
 	if {$gtffile eq ""} {
-		error "no gtffile found in refdir (looking for [file dir $refseq]/extra/gene_collapsed-gencode*.gtf)"
+		error "no gtffile found in refdir (looking for [file dir $refseq]/extra/collapsedgene_*gencode*.gtf)"
 	}
 	if {$resultfile eq ""} {
 		set root [file_rootname $bamtail]
@@ -153,27 +158,42 @@ proc cg_count_rnaseqc_job {args} {
 	}
 	set resultdir [file dir $resultfile]
 	set root [file_rootname $resultfile]
+	set rnaseqcdir [file dir $resultfile]/$root
+	job_logfile $resultdir/count_rnaseqc_$root $resultdir $cmdline \
+		{*}[versions rnaseqc os]
 	#
-	analysisinfo_write $bamfile $resultfile counter rnaseqc counter_version [version rnaseqc] reference [file2refname $refseq]
-	putslog "making $resultfile"
-	set workdir [file dir $resultfile]/$root
-	catch_exec rnaseqc $gtffile $bamfile $workdir \
-		--sample=$root \
-		--fasta=$refseq \
-		--unpaired \
-		--coverage \
-		--detection-threshold=3 \
-		{*}$extraopts
-	gct2tsv $workdir/$root.exon_reads.gct $workdir/$root.exon_reads.tsv counts Float "exon counts per sample" exon genename
-	gct2tsv $workdir/$root.gene_reads.gct $workdir/$root.gene_reads.tsv counts Integer "gene counts per sample"
-	gct2tsv $workdir/$root.gene_tpm.gct $workdir/$root.gene_tpm.tsv tpm Float "transcripts per million"
-	mklink $workdir/$root.exon_reads.tsv $resultdir/counts_exon-$root.tsv
-	mklink $workdir/$root.gene_tpm.tsv $resultdir/tpm-$root.tsv
-	mklink $workdir/$root.gene_reads.tsv $resultfile
+	job rnaseqc-$root -deps {
+		$bamfile
+		$gtffile
+		$refseq
+	} -targets {
+		$resultfile
+		$resultdir/counts_exon-$root.tsv
+		$resultdir/tpm-$root.tsv
+	} -vars {
+		bamfile resultfile extraopts resultdir root rnaseqcdir refseq gtffile
+	} -code {
+		analysisinfo_write $bamfile $resultfile counter rnaseqc counter_version [version rnaseqc] reference [file2refname $refseq]
+		putslog "making $resultfile"
+		catch_exec rnaseqc $gtffile $bamfile $rnaseqcdir \
+			--sample=$root \
+			--fasta=$refseq \
+			--unpaired \
+			--coverage \
+			--detection-threshold=3 \
+			{*}$extraopts
+		gct2tsv $rnaseqcdir/$root.exon_reads.gct $rnaseqcdir/$root.exon_reads.tsv counts Float "exon counts per sample" exon genename
+		gct2tsv $rnaseqcdir/$root.gene_reads.gct $rnaseqcdir/$root.gene_reads.tsv counts Integer "gene counts per sample"
+		gct2tsv $rnaseqcdir/$root.gene_tpm.gct $rnaseqcdir/$root.gene_tpm.tsv tpm Float "transcripts per million"
+		mklink $rnaseqcdir/$root.exon_reads.tsv $resultdir/counts_exon-$root.tsv
+		mklink $rnaseqcdir/$root.gene_tpm.tsv $resultdir/tpm-$root.tsv
+		mklink $rnaseqcdir/$root.gene_reads.tsv $resultfile
+	}
+	return {}
 }
 
 proc cg_count_rnaseqc {args} {
 	set args [job_init {*}$args]
-	cg_count_rnaseqc_job {*}$args
+	count_rnaseqc_job {*}$args
 	job_wait
 }
