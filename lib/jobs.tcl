@@ -265,6 +265,23 @@ proc jobglob {args} {
 	list_remdup $resultfiles
 }
 
+proc jobgzfiles {args} {
+	foreach filename $args {
+		if {![catch {jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+			foreach file $list {
+				set root [gzroot $file]
+				if {[info exists a($root)]} continue
+				set a($root) $file
+			}
+		}
+	}
+	set result {}
+	foreach file [array names a] {
+		lappend result $a($file)
+	}
+	return $result
+}
+
 proc jobglob1 {args} {
 	lindex [jobglob {*}$args] 0
 }
