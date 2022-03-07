@@ -27,35 +27,35 @@ proc distrreg_reg2loc {region {refseq {}}} {
 	list $chr $begin $end
 }
 
-proc distrreg_reg2bed {bedfile region {refseq {}}} {
+proc distrreg_reg2bed {bedfile regions {refseq {}}} {
 	set o [open $bedfile w]
-	foreach {chr begin end} [split $region -] break
-	if {$region eq "unaligned"} {
-		close $o
-		return $bedfile
-	}
-	if {[isint $begin] && [isint $end]} {
-		puts $o $chr\t$begin\t$end
-		close $o
-		return $bedfile
-	}
-	global genomecomb_chrsizea
-	if {![info exists genomecomb_chrsizea]} {
-		list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
-			set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
+	foreach region $regions {
+		foreach {chr begin end} [split $region :-] break
+		if {$region eq "unaligned"} {
+			continue
 		}
-	}
-	set cchr [chr_clip $chr]
-	if {[info exists genomecomb_chrsizea($cchr)]} {
-		foreach {chr size} $genomecomb_chrsizea($cchr) break
-		puts $o $chr\t0\t$size
-	} elseif {[string index $chr end] eq "_"} {
-		foreach tchr [array names genomecomb_chrsizea [chr_clip $chr]*] {
-			foreach {chr size} $genomecomb_chrsizea($tchr) break
+		if {[isint $begin] && [isint $end]} {
+			puts $o $chr\t$begin\t$end
+			continue
+		}
+		global genomecomb_chrsizea
+		if {![info exists genomecomb_chrsizea]} {
+			list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
+				set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
+			}
+		}
+		set cchr [chr_clip $chr]
+		if {[info exists genomecomb_chrsizea($cchr)]} {
+			foreach {chr size} $genomecomb_chrsizea($cchr) break
 			puts $o $chr\t0\t$size
+		} elseif {[string index $chr end] eq "_"} {
+			foreach tchr [array names genomecomb_chrsizea [chr_clip $chr]*] {
+				foreach {chr size} $genomecomb_chrsizea($tchr) break
+				puts $o $chr\t0\t$size
+			}
+		} else {
+			puts $o $chr\t0\t536870912
 		}
-	} else {
-		puts $o $chr\t0\t536870912
 	}
 	close $o
 	return $bedfile

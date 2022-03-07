@@ -1627,6 +1627,56 @@ test gtf2tsv {ENSG00000187583} {
 	exec diff tmp/test.tsv data/ENSG00000187583.tsv
 } {}
 
+test tsv2gtf {back and forth} {
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	name	gene	source	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		chr9	27535639	27573494	ENST00000673600.1	C9orf72	intgene	-	27548381	27567120	12	27535639,27548114,27548556,27550649,27556560,27558490,27560226,27561584,27562380,27565530,27566676,27573430,	27536286,27548418,27548666,27550707,27556796,27558607,27560299,27561649,27562476,27565590,27567164,27573494,
+	}]\n
+	cg tsv2gtf tmp/expected.tsv tmp/test.gtf
+	cg gtf2tsv -stack 1 tmp/test.gtf tmp/result.tsv
+	cg select -overwrite 1 -f {chromosome begin end name gene source strand cdsStart cdsEnd exonCount exonStarts exonEnds} -rc 1 tmp/result.tsv tmp/ncresult.tsv
+	exec diff tmp/ncresult.tsv tmp/expected.tsv
+} {}
+
+
+test tsv2gtf {basic} {
+	file_write tmp/test.tsv [string trim [deindent {
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome name
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
+		#fields	cdsStart	1	Integer	Coding region start
+		#fields	cdsEnd	1	Integer	Coding region end
+		#fields	exonCount	1	Integer	Number of exons
+		#fields	exonStarts	E	Integer	Exon start positions
+		#fields	exonEnds	E	Integer	Exon end positions
+		#fields	source	1	String	Source of data
+		# -- tsv converted from gtf, original comments follow --
+		# ----
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr3	999	2000	transcript1	gene1	-			1	999	2000	source2	gene1	transcript1	0
+		chr4	999	4000	transcript2-1	gene2	+			2	999,2999	1500,4000	source2	gene2	transcript2-1	1
+		chr4	999	5000	transcript2-2	gene2	+			3	999,2999,4499	1500,4000,5000	source2	gene2	transcript2-2	2
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr3	source2	transcript	1000	2000	.	-	.	gene_id "gene1"; transcript_id "transcript1";
+		chr3	source2	exon	1000	2000	.	-	.	gene_id "gene1"; transcript_id "transcript1";
+		chr4	source2	transcript	1000	4000	.	+	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	exon	1000	1500	.	+	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	exon	3000	4000	.	+	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	transcript	1000	5000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	1000	1500	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	3000	4000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	4500	5000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+	}]]\n
+	cg tsv2gtf tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
 } {}
 
 test convert_pipe {convert_pipe various} {

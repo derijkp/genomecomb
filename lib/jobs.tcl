@@ -265,6 +265,23 @@ proc jobglob {args} {
 	list_remdup $resultfiles
 }
 
+proc jobgzfiles {args} {
+	foreach filename $args {
+		if {![catch {jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+			foreach file $list {
+				set root [gzroot $file]
+				if {[info exists a($root)]} continue
+				set a($root) $file
+			}
+		}
+	}
+	set result {}
+	foreach file [array names a] {
+		lappend result $a($file)
+	}
+	return $result
+}
+
 proc jobglob1 {args} {
 	lindex [jobglob {*}$args] 0
 }
@@ -941,7 +958,7 @@ proc time_seconds {diff} {
 
 proc job_parse_log {job} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
-	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {} ; set currenthost {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentjobid {} ; set currenthost {}
 	set time_seconds ""
 	set status unkown
 	set logdata [split [file_read $job.log] \n]
@@ -1012,14 +1029,14 @@ proc job_parse_log {job} {
 				set endtime {}
 			}
 		} else {
-			set status $currentstatus
+			set status running
 			set endtime {}
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
 	if {$submittime eq ""} {set submittime $currentsubmittime}
 	if {$starttime eq ""} {set submittime $currentstarttime}
-	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime currentstatus
+	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}

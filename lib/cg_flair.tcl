@@ -269,7 +269,10 @@ proc flair_job {args} {
 	} {projectdir}
 	set projectdir [file_absolute $projectdir]
 	set refseq [refseq $refseq]
-	set gtfannotation [lindex [bsort [glob [file dir $refseq]/extra/gencode*.gtf]] end]
+	set gtfannotation [lindex [bsort [glob [file dir $refseq]/extra/*gencode*.gtf]] end]
+	if {$gtfannotation eq ""} {
+		set gtfannotation [lindex [bsort [glob [file dir $refseq]/*.gtf]] end]
+	}
 	set flairdir [findflair]
 	cd $projectdir
 	set samples [glob samples/*]
