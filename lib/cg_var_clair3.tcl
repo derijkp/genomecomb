@@ -5,9 +5,7 @@ proc var_clair3_tools {} {
 proc version_clair3 {} {
 	set version ?
 	catch {exec run_clair3.sh --version} version
-	set version [string trim $version]
-	regsub {Clair3 *} $version {} version
-	return $version
+	set version [lindex $version end]
 }
 
 proc clair3_replacebam {finalbam oribam} {
@@ -68,6 +66,7 @@ proc var_clair3_job {args} {
 	global appdir
 	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg var_clair3 {*}$args]"
+	set preset {}
 	set platform {}
 	set model {}
 	set pre ""
@@ -83,7 +82,11 @@ proc var_clair3_job {args} {
 	set opts {}
 	set index 1
 	set resultfile {}
+	set cleanup 1
 	cg_options var_clair3 args {
+		-preset {
+			set preset $value
+		}
 		-platform {
 			if {$value ni "ont hifi ilmn"} {
 				error "unsupported platform $value, must be one of: ont hifi ilmn"
@@ -136,9 +139,38 @@ proc var_clair3_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-cleanup {
+			# not actually used here, but must be an option
+			set cleanup $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
+	if {$preset ne ""} {
+		switch $preset {
+			ont {
+				set platform ont
+				set tech ont
+				if {$model eq ""} {
+					puts stderr "warning: -model for clair3 not given; using default r941_prom_hac_g360+g422"
+					set model r941_prom_hac_g360+g422
+				}
+			}
+			hifi {
+				set platform hifi
+				set tech pacbio
+				set model hifi
+			}
+			ilmn {
+				set platform ilmn
+				set tech {}
+				set model ilmn
+			}
+			default {
+				error "preset $preset not supported by var_clair3"
+			}
+		}
+	}
 	if {$platform eq ""} {
 		puts stderr "warning: -platform for clair3 not given; using default ont"
 		set platform ont
@@ -157,27 +189,28 @@ proc var_clair3_job {args} {
 		}
 		set model $clairdir/models/$model
 	}
-	if {$resultfile ne ""} {
-		set root [file_rootname $resultfile]
-	} elseif {$rootname ne ""} {
-		set root $rootname
-	} else {
-		set root [file_rootname $bamfile]
-	}
 	if {$resultfile eq ""} {
-		set resultfile [file dir $bamfile]/${pre}var-clair3-$root.tsv.zst
+		if {$rootname eq ""} {
+			set resultfile [file dir $bamfile]/${pre}var-clair3-[file_rootname $bamfile].tsv.zst
+		} else {
+			set resultfile [file dir $bamfile]/${pre}var-clair3-$rootname.tsv.zst
+		}
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
 	set resulttail [file tail $resultfile]
 	set destdir [file dir $resultfile]
+	if {$rootname eq ""} {
+		set root [file_rootname $resultfile]
+	} else {
+		set root $rootname
+	}
 	# resultfiles
 	set varfile $resultfile
 	set vcffile [file root [gzroot $varfile]].vcf.gz
 	set varallfile $destdir/${pre}varall-$root.gvcf.gz
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
 	set resultlist [list $varfile $sregfile $varallfile $vcffile]
-	set clair3targets [list $varfile $vcffile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -190,11 +223,12 @@ proc var_clair3_job {args} {
 	set dep $bamfile
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
-#putsvars deps clair3targets vcffile region refseq root varfile split tech opts region index
+#putsvars deps vcffile region refseq root varfile split tech opts region index
 #error stop
 	job [job_relfile2name clair3- $varfile] {*}$skips -mem ${threads}G -cores $threads \
-	-deps $deps \
-	-targets $clair3targets -vars {
+	-deps $deps -targets {
+		$varfile $vcffile $varallfile
+	} -vars {
 		vcffile varfile varallfile root refseq
 		region opts index threads
 		mincoverage mingenoqual split platform model
@@ -232,8 +266,12 @@ proc var_clair3_job {args} {
 				--output=$tempvcfdir \
 				--gvcf
 		}
-		cg_gzip $tempvcfdir/merge_output.gvcf
-		file rename -force -- $tempvcfdir/merge_output.gvcf.gz $varallfile
+		if {[file exists $tempvcfdir/merge_output.gvcf]} {
+			cg_gzip $tempvcfdir/merge_output.gvcf
+			file rename -force -- $tempvcfdir/merge_output.gvcf.gz $varallfile
+		} else {
+			file_write $varallfile ""
+		}
 		file rename -force -- $tempvcfdir/merge_output.vcf.gz $vcffile
 		file delete -force $tempvcfdir
 		set tempfile [filetemp $varfile]
@@ -254,14 +292,19 @@ proc var_clair3_job {args} {
 	} -targets {
 		$sregfile
 	} -vars {
-		bamfile varfile refseq sregfile region refseq maxcov
+		bamfile varfile refseq sregfile region refseq
+		mincoverage mingenoqual
 	} -code {
 		set temp [filetemp $target]
-		exec cg vcf2tsv $dep \
-			| cg select -q [subst {
-				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
-			}] -f {chromosome begin end} -s - \
-			| cg regjoin {*}[compresspipe $target] > $temp
+		if {![file size $dep]} {
+			file_write $temp ""
+		} else {
+			exec cg vcf2tsv $dep \
+				| cg select -q [subst {
+					\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
+				}] -f {chromosome begin end} -s - \
+				| cg regjoin {*}[compresspipe $target] > $temp
+		}
 		file rename -force -- $temp $target
 		cg_zindex $target
 	}
