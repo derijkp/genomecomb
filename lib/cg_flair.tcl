@@ -64,13 +64,14 @@ proc cg_flair_genecounts {isoformcounts genecounts} {
 	close $f
 }
 
+# set totalcountsfile {}
 proc cg_flair_mergeresults {target transcript_classification_file transcripts_genepred_file counts_matrix_file {totalcountsfile {}}} {
 	#
 	# combined
 	# adapted tempfiles
-	set tempclassification [tempfile]
-	set tempgenepred [tempfile]
-	set tempcount [tempfile]
+	set tempclassification [tempfile].class
+	set tempgenepred [tempfile].genepred
+	set tempcount [tempfile].count
 	# class
 	set tempfile [tempfile]
 	cg select -overwrite 1 -f {id="a$isoform" *} $transcript_classification_file $tempfile
@@ -120,6 +121,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	set cntheader [lrange [tsv_open $fcnt] 1 end]
 	set o [open $target.temp w]
 	set newheader $gheader
+	set newheader [list_replace $newheader {chrom chromosome txStart begin txEnd end}]
 	set pclassheader [list_remove $classheader id isoform chrom strand]
 	set poss [list_cor $classheader $pclassheader]
 	lappend newheader {*}$pclassheader
@@ -557,7 +559,8 @@ proc flair_job {args} {
 				cg_flair_mergeresults $isoformcounts \
 					$transcript_classification_file \
 					$transcripts_genepred_file \
-					$counts_matrix_file
+					$counts_matrix_file \
+					compar/totalcounts-sqanti3-flair-$exproot.tsv
 				#
 				# make compar/gene_counts-sqanti3-flair-$exproot.genepred.tsv
 				set genecounts compar/gene_counts-sqanti3-flair-$exproot.genepred.tsv
