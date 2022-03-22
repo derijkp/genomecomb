@@ -421,6 +421,7 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 	skip = res->currentpos - res->framepos;
 	if (res->contentsize == 0) {
 		while (res->contentsize == 0) {
+			if (feof(res->finput)) break;
 			zstd_skipframe(res);
 			zstd_readheader(res);
 		}
@@ -430,6 +431,7 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 	} else if (skip > res->contentsize) {
 		zstd_readheader(res);
 		while (res->contentsize == 0) {
+			if (feof(res->finput)) break;
 			zstd_skipframe(res);
 			zstd_readheader(res);
 		}
@@ -450,6 +452,7 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 		if (size == 0) break;
 		zstd_readheader(res);
 		while (res->contentsize == 0) {
+			if (feof(res->finput)) break;
 			zstd_skipframe(res);
 			zstd_readheader(res);
 		}
