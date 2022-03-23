@@ -665,7 +665,7 @@ test indexdir_cache {tsv_varsfile compressed} {
 	exec diff $varsfile tmp/test
 } {}
 
-test indexdir_cache {tsv_varsfile compressed gzfile} {
+test indexdir_cache {tsv_varsfile compressed use plain filename} {
 	test_cleantmp
 	file copy data/vars1.sft tmp/vars1.tsv
 	cg razip tmp/vars1.tsv
@@ -673,6 +673,22 @@ test indexdir_cache {tsv_varsfile compressed gzfile} {
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
 	exec diff $varsfile tmp/test
 } {}
+
+test indexdir_cache {tsv_varsfile fix hang compressed but empty} {
+	test_cleantmp
+	file_write tmp/vars1.tsv.zst {}
+	set varsfile [tsv_varsfile tmp/vars1.tsv.zst]
+	file_read $varsfile
+} {chromosome	begin	end	type	ref	alt
+}
+
+test indexdir_cache {varsfile fix hang compressed but empty} {
+	test_cleantmp
+	file_write tmp/vars1.tsv.zst {}
+	exec varsfile tmp/vars1.tsv.zst
+	file_write tmp/vars1.tsv.gz {}
+	exec varsfile tmp/vars1.tsv.gz
+} {chromosome	begin	end	type	ref	alt}
 
 test indexdir_cache {tsv_count} {
 	test_cleantmp
