@@ -55,6 +55,10 @@ set -x
 yuminstall git
 yuminstall wget
 # yuminstall xz
+yuminstall devtoolset-9
+## use source instead of scl enable so it can run in a script
+## scl enable devtoolset-9 bash
+source /opt/rh/devtoolset-9/enable
 
 for dir in lib include bin share ; do
 	echo $dir
@@ -101,7 +105,7 @@ fi
 # zstd (for lib)
 # --------------
 cd /build
-zstdversion=1.4.8
+zstdversion=1.5.2
 if [ ! -f "/build/zstd-$zstdversion/lib/libzstd.a" ] ; then
 	source /hbb_shlib/activate
 	wget -c https://github.com/facebook/zstd/releases/download/v$zstdversion/zstd-$zstdversion.tar.gz
@@ -110,6 +114,7 @@ if [ ! -f "/build/zstd-$zstdversion/lib/libzstd.a" ] ; then
 	CFLAGS="-O3 -fPIC" make
 	cd /build/zstd-$zstdversion/contrib/seekable_format/examples
 	CFLAGS="-O3 -fPIC" make
+	cd /build/zstd-$zstdversion
 	cp zstd /io/extern$ARCH
 	strip /io/extern$ARCH/zstd
 	source /hbb_exe/activate
@@ -131,6 +136,7 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH/zstd-mt ] ; then
 		cp Makefile Makefile.ori
 	fi
 	cp /io/extern-src/adapted_Makefile_zstd-mt Makefile
+	sed -i "s/ZSTD_VER= \"v1.4.8\"/ZSTD_VER= \"v$zstdversion\"/g" Makefile
 	make clean
 	CPATH="/build/zstd-$zstdversion/lib:/build/zstd-$zstdversion/lib/common:$CPATH" \
 		LIBRARY_PATH="/build/zstd-$zstdversion/lib:$LIBRARY_PATH" \
@@ -144,8 +150,9 @@ fi
 # lz4
 # ---
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/lz4 ] ; then
-	download https://github.com/lz4/lz4/archive/v1.8.3.tar.gz lz4-1.8.3.tar.gz
-	cd /build/lz4-1.8.3
+	lz4version=1.9.3
+	download https://github.com/lz4/lz4/archive/v$lz4version.tar.gz lz4-$lz4version.tar.gz
+	cd /build/lz4-$lz4version
 	make clean
 	make
 	cp lz4 /io/extern$ARCH
@@ -186,8 +193,9 @@ fi
 # ---------------------
 if [ ! -f "/build/lib/libbz2.a" ] ; then
 	source /hbb_shlib/activate
-	download https://sourceforge.net/projects/bzip2/files/latest/bzip2-1.0.6.tar.gz
-	cd /build/bzip2-1.0.6
+	bzip2version=1.0.6
+	download https://sourceforge.net/projects/bzip2/files/latest/bzip2-$bzip2version.tar.gz
+	cd /build/bzip2-$bzip2version
 	if [ ! -f Makefile.ori ] ; then
 		cp Makefile Makefile.ori
 	fi
@@ -195,8 +203,8 @@ if [ ! -f "/build/lib/libbz2.a" ] ; then
 	make clean
 	env CFLAGS="$STATICLIB_CFLAGS -D_FILE_OFFSET_BITS=64" CXXFLAGS="$STATICLIB_CXXFLAGS -D_FILE_OFFSET_BITS=64" \
 		make
-	cp /build/bzip2-1.0.6/libbz2.a /build/lib
-	cp /build/bzip2-1.0.6/*.h /build/include
+	cp /build/bzip2-$bzip2version/libbz2.a /build/lib
+	cp /build/bzip2-$bzip2version/*.h /build/include
 	source /hbb_exe/activate
 fi
 
@@ -234,7 +242,7 @@ if [ ! -f "/build/lib/libssh2.a" ] ; then
 # libcurl, used by samtools
 # -------------------------
 if [ ! -f "/build/lib/liblzma.a" ] ; then
-	curlversion=7.77.0
+	curlversion=7.80.0
 	source /hbb_shlib/activate
 	download https://curl.se/download/curl-$curlversion.tar.gz
 	cd /build/curl-$curlversion
@@ -272,7 +280,7 @@ fi
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
 
-	htsversion=1.13
+	htsversion=1.15
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
@@ -293,11 +301,12 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.13
+	samversion=1.15
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
-	./configure --prefix=/build --disable-shared --enable-static
+	env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
+		./configure --prefix=/build --disable-shared --enable-static --enable-libcurl
 	make
 	make install
 	cp /build/bin/samtools /io/extern$ARCH
@@ -307,11 +316,12 @@ fi
 # bcftools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bcftools ] ; then
-	bcfversion=1.13
+	bcfversion=1.15
 	download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
 	cd /build/bcftools-$bcfversion
 	make distclean
-	./configure --prefix=/build --disable-shared --enable-static
+	env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
+		./configure --prefix=/build --disable-shared --enable-static --enable-libcurl
 	make
 	make install
 	cp /build/bin/bcftools /io/extern$ARCH

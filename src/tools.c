@@ -581,7 +581,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		if (!nmleft && !nmright) {return (diff<0)?-1:1;}
 	}
 	if (simplenum) {
-		 DPRINT("simpelnum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
+		 DPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
 		/* simplenum indicates we have embedded numbers */
 		/* so we will just compare size of integer */
 		/* we will not take into account invert, decimal */
