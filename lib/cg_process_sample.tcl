@@ -465,6 +465,7 @@ proc process_sample_job {args} {
 	set varcallers {gatk sam}
 	set svcallers {}
 	set methcallers {}
+	set counters {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -522,6 +523,9 @@ proc process_sample_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-counters {
+			set counters $value
 		}
 		-s - -split {
 			set split $value
@@ -711,7 +715,7 @@ proc process_sample_job {args} {
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers svcallers methcallers realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers methcallers counters realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -1023,6 +1027,13 @@ proc process_sample_job {args} {
 				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
 				$fast5dir $fastqdir $cleanedbam]
 			lappend todo(meth) [lindex [jobglob [file dir $cleanedbam]/meth-$methcaller-$bambase.tsv] 0]
+		}
+		foreach counter $counters {
+			if {![auto_load count_${counter}_job]} {
+				error "counter $counter not supported"
+			}
+			lappend cleanupdeps {*}[count_${counter}_job -threads $threads {*}$extraopts \
+				-refseq $refseq $cleanedbam]
 		}
 	}
 	#calculate reports
