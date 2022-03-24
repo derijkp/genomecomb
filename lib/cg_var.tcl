@@ -105,7 +105,7 @@ proc var_job {args} {
 	}
 	if {!$supportsregionfile && !$supportsregion} {
 		if {$distrreg ni {0 {}}} {
-			putslog "var_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
+			putslog "var_$method does not support -regionfile or -region, so cannot be run distributed, -distrreg and -regionfile ignored"
 		}
 		set distrreg 0
 	}
