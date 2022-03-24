@@ -292,12 +292,13 @@ proc giab_getdata_job {args} {
 			if {!$done && !$donedownload} {
 				mkdir tmp
 				cd tmp
+				set tempfiles {}
 				foreach url $urls {
 					exec wget -c $url >@ stdout 2>@ stderr
-					lappend files tmp/[file tail $url]
+					lappend tempfiles tmp/[file tail $url]
 				}
 				cd ..
-				file rename {*}$files .
+				file rename {*}$tempfiles .
 				file delete tmp
 			}
 		}
