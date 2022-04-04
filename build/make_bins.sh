@@ -53,19 +53,26 @@ set -x
 
 # set up environment
 # ------------------
+#yuminstall devtoolset-9
+### use source instead of scl enable so it can run in a script
+### scl enable devtoolset-9 bash
+#source /opt/rh/devtoolset-9/enable
 
 # Deps
 # ----
 cd /build
-if [ ! -f /build/zstd-1.4.4/lib/libzstd.a ] ; then
+zstdversion=1.5.2
+if [ ! -f "/build/zstd-$zstdversion/lib/libzstd.a" ] ; then
 	source /hbb_shlib/activate
-	CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
-	CXXFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
-	SHLIB_CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
-	curl -O -L https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
-	tar xvzf zstd-1.4.4.tar.gz
-	cd zstd-1.4.4
-	make
+	wget -c https://github.com/facebook/zstd/releases/download/v$zstdversion/zstd-$zstdversion.tar.gz
+	tar xvzf zstd-$zstdversion.tar.gz
+	cd /build/zstd-$zstdversion
+	CFLAGS="-O3 -fPIC" make
+	cd /build/zstd-$zstdversion/contrib/seekable_format/examples
+	CFLAGS="-O3 -fPIC" make
+	cd /build/zstd-$zstdversion
+	cp zstd /io/extern$ARCH
+	strip /io/extern$ARCH/zstd
 	source /hbb_exe/activate
 fi
 
@@ -79,9 +86,9 @@ if [ "$clean" = 1 ] ; then
 fi
 
 if [ "$debug" = 1 ] ; then
-	COPT="-g" CPATH="/build/zstd-1.4.4/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.4.4/lib:$LIBRARY_PATH" make
+	COPT="-g" CPATH="/build/zstd-$zstdversion/lib:$CPATH" LIBRARY_PATH="/build/zstd-$zstdversion/lib:$LIBRARY_PATH" make
 else
-	CPATH="/build/zstd-1.4.4/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.4.4/lib:$LIBRARY_PATH" make
+	CPATH="/build/zstd-$zstdversion/lib:$CPATH" LIBRARY_PATH="/build/zstd-$zstdversion/lib:$LIBRARY_PATH" make
 fi
 
 if [ "$strip" = 1 ] && [ "$debug" != 1 ] ; then
