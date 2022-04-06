@@ -18,19 +18,20 @@ Below is descibed how genomecomb handles natural sort:
 
 * Strings are sorted alphabetically, based largely on ASCII order (Things like locale 
 or unicode are not taken into account) with the following changes:
-** asterisk (*) sorts first (this gets sam files to sort automatically as expected without further processing )
-** Numbers sort before letters and other characters (after *), but are treated specially (see further).
-** The plus character (+) sorts right after the numbers (and thus also after -)
+** asterisk (*) sorts after everything except control+space (this gets sam files to sort automatically as expected without further processing )
+** The plus character (+) sorts right after the digits (and thus also after -)
+** Numbers sort before letters and other characters, but are treated specially (see further).
 ** letters sort as A,a,B,... Case is not taken into account except as a secondary measure
 (if the strings are the same except for case) when sorting, e.g: A a MRNA mRNA mrna
 ** The characters that are between the upper and lower case letters in ASCII ([,\,],^,_,`) sort after the letters
 
 * Numbers are sorted according to their numerical value; they sort before strings, except strings
-starting with whitespace or an asterix (*). 
+starting with whitespace. 
 
 * Elements are recognized as a (full/isolated) number if they conform to the
 number pattern (up to -10.10e-10) at the start of the element or after
-whitespace. 
+whitespace. If the element starts with a 0, followed by a digit, it is not considered
+a nuber (e.g. 01 0020 are treated as strings, not numbers, 0 and e.g. 0.1 are treated as numbers)
 Numbers are sorted according to their numerical value, taking into account
 negative, decimal and scientific notation for sorting; they sort before
 strings, except strings starting with whitespace or an asterix (*), e.g:
