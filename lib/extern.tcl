@@ -193,13 +193,13 @@ proc gatk3exec {args} {
 			}
 		}
 		
-		if {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} msg]} {
-			set version $msg
-			set ::gatkjava java
-		} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
+		if {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
 			set ::gatkjava java1.8
 		} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
 			set ::gatkjava java1.7
+		} elseif {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} msg]} {
+			set version $msg
+			set ::gatkjava java
 		} else {
 			error "Cannot determine gatk3 version:\n$msg"
 		}
