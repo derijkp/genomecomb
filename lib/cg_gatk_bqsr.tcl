@@ -63,7 +63,7 @@ proc gatk_bqsr_job args {
 		} -vars {
 			srcbam gatkrefseq resultbam knownsitesopt maxmem
 		} -code {
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] BaseRecalibrator \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] BaseRecalibrator \
 				{*}$knownsitesopt \
 				-R $gatkrefseq \
 				-I $srcbam \
@@ -92,7 +92,7 @@ proc gatk_bqsr_job args {
 			} -vars {
 				srcbam gatkrefseq lopts resultbam knownsitesopt maxmem region
 			} -code {
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] BaseRecalibrator \
+				gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] BaseRecalibrator \
 					{*}$knownsitesopt \
 					-R $gatkrefseq \
 					{*}$lopts \
@@ -115,7 +115,7 @@ proc gatk_bqsr_job args {
 			foreach file $deps {
 				lappend inputopts --input $file
 			}
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] GatherBQSRReports \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] GatherBQSRReports \
 				{*}$inputopts \
 				-O $workdir/result.bqsr.table \
 				>@ stdout 2>@stderr
@@ -132,7 +132,7 @@ proc gatk_bqsr_job args {
 	} -vars {
 		srcbam gatkrefseq resultbam maxmem
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] ApplyBQSR \
+		gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] ApplyBQSR \
 			-R $gatkrefseq \
 			-I $srcbam \
 			--bqsr-recal-file $resultbam.bqsr.table \

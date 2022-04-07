@@ -221,7 +221,7 @@ proc var_gatk_job {args} {
 				set bedfile [tempbed $regionfile $refseq]
 				lappend opts -L $bedfile
 			}
-			gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
+			gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} UnifiedGenotyper \
 				{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
@@ -271,7 +271,7 @@ proc var_gatk_job {args} {
 				set bedfile [tempbed $regionfile $refseq]
 				lappend opts -L $bedfile
 			}
-			gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
+			gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} UnifiedGenotyper \
 				{*}$opts -R $dep2 -I $dep -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
@@ -334,7 +334,7 @@ proc var_gatk_job {args} {
 	# make sreg
 	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile $skips
 	## filter SNPs (according to seqanswers exome guide)
-	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
+	# java -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

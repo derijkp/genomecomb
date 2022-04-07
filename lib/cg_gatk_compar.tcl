@@ -115,13 +115,13 @@ proc gatk_compar_job args {
 		 -vars {region gatkrefseq resultvcf samplemapfile maxmem filesarg} \
 		 -code {
 			set combinedgvcf [file root [gzroot $resultvcf]]-combined.gvcf
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] CombineGVCFs \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] CombineGVCFs \
 				-R $gatkrefseq \
 				{*}$filesarg \
 				-O $combinedgvcf
 			#
 			# to vcf
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
 				-R $gatkrefseq \
 				-V $combinedgvcf \
 				-O $resultvcf.temp[file extension $resultvcf] \
@@ -158,7 +158,7 @@ proc gatk_compar_job args {
 				# combine using GenomicsDBImport
 				set tempfile [tempfile]
 				file delete $tempfile
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenomicsDBImport \
+				gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] GenomicsDBImport \
 					--genomicsdb-workspace-path $tempfile \
 					--sample-name-map $samplemapfile \
 					--overwrite-existing-genomicsdb-workspace true \
@@ -168,7 +168,7 @@ proc gatk_compar_job args {
 					--intervals $region >@ stdout 2>@stderr
 				#
 				# to vcf
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
+				gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 					-R $gatkrefseq \
 					-V gendb://$tempfile \
 					-O $resultvcf.$region.temp \

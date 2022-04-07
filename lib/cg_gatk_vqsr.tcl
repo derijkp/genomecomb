@@ -73,7 +73,7 @@ proc gatk_vqsr_job args {
 	} -vars {
 		rawvcf gatkrefseq indelreslist indelannotations resultvcf maxmem
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] VariantRecalibrator \
+		gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] VariantRecalibrator \
 			-R $gatkrefseq \
 			-V $rawvcf \
 			-O $resultvcf.indel.recal.temp \
@@ -97,7 +97,7 @@ proc gatk_vqsr_job args {
 	} -vars {
 		rawvcf gatkrefseq resultvcf maxmem
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] ApplyVQSR \
+		gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] ApplyVQSR \
 			-R $gatkrefseq \
 			-V $rawvcf \
 			-O $rawvcf.indelscalibrated.temp \
@@ -117,7 +117,7 @@ proc gatk_vqsr_job args {
 	} -vars {
 		rawvcf gatkrefseq snpreslist snpannotations resultvcf maxmem
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] VariantRecalibrator \
+		gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] VariantRecalibrator \
 			-R $gatkrefseq \
 			-V $rawvcf \
 			-O $resultvcf.snp.recal.temp \
@@ -140,7 +140,7 @@ proc gatk_vqsr_job args {
 	} -vars {
 		rawvcf gatkrefseq resultvcf maxmem
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx${maxmem}g] ApplyVQSR \
+		gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx${maxmem}g] ApplyVQSR \
 			-R $gatkrefseq \
 			-V $rawvcf.indelscalibrated \
 			-O $resultvcf.temp[file extension $resultvcf] \

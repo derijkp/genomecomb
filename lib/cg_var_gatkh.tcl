@@ -158,7 +158,7 @@ proc var_gatkh_job {args} {
 			}
 			# -finishedpattern is a hack to catch an error that sometimes seems to happen, after fully processing the data
 			# Do not use redirect to stdout/stderr, as the code needs the output to check if actual analysis was finished
-			gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
+			gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} HaplotypeCaller \
 				{*}$opts -R $gatkrefseq \
 				-I $dep \
 				-O $varallfile.temp.gz \
@@ -188,7 +188,7 @@ proc var_gatkh_job {args} {
 	} -code {
 		set tempvcf [filetemp_ext $vcffile]
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
-		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
+		gatkexec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $varallfile \
 			-O $tempvcf \
