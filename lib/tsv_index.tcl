@@ -253,7 +253,7 @@ proc cg_maketabix {args} {
 			continue
 		}
 		set type [file extension [gzroot $file]]
-		if {$type eq ".vcf"} {
+		if {$type in ".vcf .gvcf"} {
 			exec tabix -p vcf $file
 			continue
 		} elseif {$type eq ".bed"} {
