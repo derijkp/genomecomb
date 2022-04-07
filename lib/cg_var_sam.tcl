@@ -167,7 +167,11 @@ proc var_sam_job {args} {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				catch_exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep | bcftools call --threads $threads -$callmethod - {*}[compresspipe $target] > $target.temp.zst
+				# mpileup --uncompressed no longer works with newer samtools -> use older one
+				catch_exec samtools1.13 mpileup \
+					--uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep \
+					| bcftools call --threads $threads -$callmethod - \
+					{*}[compresspipe $target] > $target.temp.zst
 			}
 			file rename -force -- $target.temp.zst $target
 			if {$emptyreg && ![file exists $cache]} {
