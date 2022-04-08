@@ -944,6 +944,26 @@ proc timebetween_inseconds {starttime endtime} {
 	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
 }
 
+proc timebetween_inhours {starttime endtime} {
+	if {[catch {time_scan $endtime} endcode]} {return {}}
+	if {[catch {time_scan $starttime} startcode]} {return {}}
+	set diff [lmath_calc $endcode - $startcode]
+	foreach {days miliseconds} $diff break
+	expr {$days*24.0 + $miliseconds/3600000.0}
+}
+
+proc time_gt {time1 time2} {
+	if {$time1 eq $time2} {return 0}
+	if {[lsort -dict [list $time1 $time2]] eq [list $time1 $time2]} {return 0} else {return 1}
+}
+
+proc emptyifwrong {varVar} {
+	upvar $varVar var
+	if {![isdouble $var]} {set var ""}
+	if {$var == 0} {set var ""}
+	if {$var ne ""} {set var [format %.3f $var]}
+}
+
 proc time_seconds2duration {seconds} {
 	set days [expr {int($seconds/86400)}]
 	set miliseconds [expr {int(1000*($seconds - 86400*$days))}]
