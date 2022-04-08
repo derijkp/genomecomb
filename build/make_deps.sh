@@ -54,11 +54,11 @@ set -x
 # ------------------
 yuminstall git
 yuminstall wget
-# yuminstall xz
 yuminstall devtoolset-9
 ## use source instead of scl enable so it can run in a script
 ## scl enable devtoolset-9 bash
 source /opt/rh/devtoolset-9/enable
+yuminstall xz
 
 for dir in lib include bin share ; do
 	echo $dir
@@ -157,7 +157,7 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH/lz4 ] ; then
 	make
 	cp lz4 /io/extern$ARCH
 	strip /io/extern$ARCH/lz4
-	mkdir /io/extern$ARCH/lz4_docs
+	mkdir /io/extern$ARCH/lz4_docs || true
 	cp LICENSE /io/extern$ARCH/lz4_docs/lz4.LICENSE
 fi
 
@@ -237,7 +237,7 @@ if [ ! -f "/build/lib/libssh2.a" ] ; then
             ./configure --prefix=/build --enable-shared=no --disable-shared --enable-static
 	make
 	make install
-}
+fi
 
 # libcurl, used by samtools
 # -------------------------
