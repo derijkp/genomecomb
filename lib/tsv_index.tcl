@@ -262,7 +262,7 @@ proc cg_maketabix {args} {
 		} elseif {$type eq ".sam"} {
 			exec tabix -p sam $file
 			continue
-		} elseif {$type eq ".gff"} {
+		} elseif {$type in ".gff .gff2 .gff3 .gtf"} {
 			exec tabix -p gff $file
 			continue
 		}
