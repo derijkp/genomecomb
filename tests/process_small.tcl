@@ -54,7 +54,7 @@ test process_small {process_project mastr_mx2} {
 		-x *.html -x *info_analysis.tsv\
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
-			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
+			regextract_version varcaller_cg_version annotate_cg_version varcaller_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename} expected/${basename}]
@@ -689,4 +689,5 @@ test process_small {annotate refseqbuild/hg38} {
 }
 
 testsummarize
+
 
