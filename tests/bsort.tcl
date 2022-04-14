@@ -176,6 +176,7 @@ test bsort {all chars} {
 } {}
 
 test bsort {adding to numbers} {
+	# set list {-1e+1 -1e1 -10a -2a -1 -1a -1e -1e+ 1 +1 1a +1a 1a1 1a1a 1a2 1a2a 1a10 1a10a 1aa 1e 1e+ 2a +2a 10a +10a 1e1 1e+1 -a +a +a1 +a2 +a10 a a-1 a-2 a-10 a1 a2 a10 a-a aa}
 	set list {-1e+1 -1e1 -10a -2a -1 -1a -1e -1e+ 1 +1 1a +1a 1a1 1a1a 1a2 1a2a 1a10 1a10a 1aa 1e 1e+ 2a +2a 10a +10a 1e1 1e+1 -a +a +a1 +a2 +a10 a a-1 a-2 a-10 a1 a2 a10 a-a aa}
 	set test [bsort [list_reverse $list]]
 	if {$test ne $list} {error "wrong sort"}
@@ -197,34 +198,59 @@ test bsort {looking for trouble} {
 } {}
 
 test bsort {bugfix: undetermined when starting with 0} {
-	set list {86e1c438 903c145d 1440c004 0445a746}
+	# 86e1 = 860, so more than (0)445
+	set list {0445a746 86e1c438 903c145d 1440c004}
 	set test [bsort [list_reverse $list]]
 	if {$test ne $list} {error "wrong sort"}
 	checkbsort $list
 } {}
 
-test bsort {bugfix: undetermined when starting with 0} {
-	set list {-1 -0.1 0 0.1 1 2 10 -001 -01 00 001 0010 01 010 011 +001 +01 a1 a2 a10 a001 a0010 a01}
-	set test [bsort [list_reverse $list]]
-	if {$test ne $list} {error "wrong sort"}
-	checkbsort $list
+test bsort {bugfix: undetermined when starting with 0 + various tests} {
+	foreach list {
+		{-010 -001 -01 -1 -00.1 -0.1 00 0 00.1 0.1 001 01 1 +001 +01 2 0010 010 10 011 0100 0101 01000 a-0 a-01 a-1 a0 a001 a01 a1 a2 a0010 a10}
+		{-001 -01 -1 -00.1 -0.1 00 0 00.1 0.1 001 01 1 +001 +01 2 0010 010 10 011 a001 a01 a1 a2 a0010 a10}
+		{{ } -001 -01 -1 -0.1 00 0 0.1 001 01 1 +001 +01 +1 2 0010 010 10 011 ! !a - a001 a01 a1 a2 a0010 a10 at1ta atta}
+		{-10 -2 -1 0 1e-10 1e-1 1 1.0e2 1e2 120 1.0e3 1e3 {a -2} {a -1} a-1 a-2 a-10 de-2 de-10 e-2 e-10}
+		{-2 -1 1 +1 2 +2 - -a + +a a}
+		{-1e4 -10e3 -1e3 -10e2 -1000 -2e2 -200 -101 -1e+2 -1e2 -10e1 -100 -2e1 -20 -12 -1e+1 -1e1 -10 -2 -1.2 -1.10 -1.1 -1 -0.2 -1e-1 -0.10 -0.1 -0.09 -0.011 -1e-2 -0.01 -0 0 10e-10 0.01 +0.01 1e-2 0.011 +0.011 0.09 0.1 +0.1 0.10 +0.10 1e-1 +1e-1 0.18 19e-2 +19e-2 0.2 1 +1 1.1 +1.1 1.10 +1.10 1.2 1.20 2 +2 10 +10 1e1 1e+1 12 19 20 +20 2e1 +2e1 100 +100 10e1 1e2 1e+2 +1e+2 101 200 +200 2e2 1000 +1000 10e2 1e3 19e2 10e3 1e4 1e10 10e10 1e20 1e100}
+		{01 1 010 10}
+		{0 0a 1 1a - -a}
+		{-1 -1a 0 0a 1 1a -a a}
+		{0 -.1 .1}
+		{-10 -1e-1}
+		{-2e2 -2e1}
+		{a+0.01 a+0.10}
+		{a01 a10}
+		{01 1 02 010}
+	} {
+		checkbsort $list
+		set test [bsort [list_reverse $list]]
+		if {$test ne $list} {error "wrong sort for: $list"}
+	}
 } {}
 
 if 0 {
-	COPT=-g make ../bin/test_naturalcompare
 
-	../bin/test_naturalcompare ' ' -1 -0.1 0 0.1 1 2 10 '!' '!a' - -001 -01 00 001 0010 01 010 011 +001 +01 a1 a2 a10 a001 a0010 a01 at1ta atta | grep ' > '
-	../bin/test_naturalcompare -10 -2 -1 0 1e-10 1e-1 1 1.0e2 1e2 120 1.0e3 1e3 'a -2' 'a -1' a-1 a-2 a-10 de-2 de-10 e-2 e-10 | grep ' > '
-	../bin/test_naturalcompare -2 -1 1 +1 2 +2 - -a + +a a  | grep ' > '
-	../bin/test_naturalcompare -1e4 -10e3 -1e3 -10e2 -1000 -2e2 -200 -101 -1e+2 -1e2 -10e1 -100 -2e1 -20 -12 -1e+1 -1e1 -10 -2 -1.2 -1.10 -1.1 -1 -0.2 -1e-1 -0.10 -0.1 -0.09 -0.011 -1e-2 -0.01 -0 0 10e-10 0.01 +0.01 1e-2 0.011 +0.011 0.09 0.1 +0.1 0.10 +0.10 1e-1 +1e-1 0.18 19e-2 +19e-2 0.2 1 +1 1.1 +1.1 1.10 +1.10 1.2 1.20 2 +2 10 +10 1e1 1e+1 12 19 20 +20 2e1 +2e1 100 +100 10e1 1e2 1e+2 +1e+2 101 200 +200 2e2 1000 +1000 10e2 1e3 19e2 10e3 1e4 1e10 10e10 1e20 1e100 | grep ' > '
-	../bin/test_naturalcompare -1e+1 -1e1 -10a -2a -1 -1a -1e -1e+ 1 +1 1a +1a 1a1 1a1a 1a2 1a2a 1a10 1a10a 1aa 1e 1e+ 2a +2a 10a +10a 1e1 1e+1 -a +a +a1 +a2 +a10 a a-1 a-2 a-10 a1 a2 a10 a-a aa | grep ' > '
+	COPT="-g make ../bin/test_naturalcompare
 
+	COPT="-g -DDEBUG=1" make ../bin/test_naturalcompare
+
+	../bin/test_naturalcompare 00     01 # on 0
+	../bin/test_naturalcompare -010 -001 -01 -1 -00.1 -0.1 00 0 00.1 0.1 +001 001 +01 01 1 2 0010 010 10 011 0100 0101 01000 a-0 a-01 a-1 a0 a001 a01 a1 a2 a0010 a10 2> /dev/null | grep ' > '
+	../bin/test_naturalcompare ' ' -001 -01 -1 -0.1 00 0 0.1 001 +001 01 +01 1 2 0010 010 10 011 '!' '!a' - a001 a01 a1 a2 a0010 a10 at1ta atta 2> /dev/null | grep ' > '
+	../bin/test_naturalcompare -10 -2 -1 0 1e-10 1e-1 1 1.0e2 1e2 120 1.0e3 1e3 'a -2' 'a -1' a-1 a-2 a-10 de-2 de-10 e-2 e-10 2> /dev/null | grep ' > '
+	../bin/test_naturalcompare -2 -1 1 +1 2 +2 - -a + +a a  2> /dev/null | grep ' > '
+	../bin/test_naturalcompare -1e4 -10e3 -1e3 -10e2 -1000 -2e2 -200 -101 -1e+2 -1e2 -10e1 -100 -2e1 -20 -12 -1e+1 -1e1 -10 -2 -1.2 -1.10 -1.1 -1 -0.2 -1e-1 -0.10 -0.1 -0.09 -0.011 -1e-2 -0.01 -0 0 10e-10 0.01 +0.01 1e-2 0.011 +0.011 0.09 0.1 +0.1 0.10 +0.10 1e-1 +1e-1 0.18 19e-2 +19e-2 0.2 1 +1 1.1 +1.1 1.10 +1.10 1.2 1.20 2 +2 10 +10 1e1 1e+1 12 19 20 +20 2e1 +2e1 100 +100 10e1 1e2 1e+2 +1e+2 101 200 +200 2e2 1000 +1000 10e2 1e3 19e2 10e3 1e4 1e10 10e10 1e20 1e100 2> /dev/null | grep ' > '
+# 	../bin/test_naturalcompare -1e+1 -1e1 -10a -2a -1 -1a -1e -1e+ 1 +1 1a +1a 1a1 1a1a 1a2 1a2a 1a10 1a10a 1aa 1e 1e+ 2a +2a 10a +10a 1e1 1e+1 -a +a +a1 +a2 +a10 a a-1 a-2 a-10 a1 a2 a10 a-a aa 2> /dev/null | grep ' > '
+
+	../bin/test_naturalcompare 01 1 010 10
 	../bin/test_naturalcompare - -a 0 1 0a 1a
 	../bin/test_naturalcompare -1 -1a -a 0 0a 1 1a a | less
 	../bin/test_naturalcompare  -.1 0 .1
 
 	../bin/test_naturalcompare -10 -1e-1
 	../bin/test_naturalcompare -2e2 -2e1
+
 }
 
 testsummarize

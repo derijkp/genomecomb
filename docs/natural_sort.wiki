@@ -2,7 +2,7 @@
 
 Most software uses an ASCII or lexical sort. This often results in an order that is
 unexpected by most people, e.g. chr11 sorted before chr2. 
-A natural sort interprets strings with embedded numbers in a way that
+A natural sort interprets strings with numbers in them in a way that
 seems more natural to most people (e.g. chr1,chr2,chr11)
 
 All sorting in genomecomb uses a natural sort that can sort both strings and numbers as
@@ -16,35 +16,35 @@ cases with multiple possible ways to handle them. Files sorted using
 another natural sort algorithm might run into these.
 Below is descibed how genomecomb handles natural sort:
 
-* Strings are sorted alphabetically, based largely on ASCII order (Things like locale 
+* strings are sorted alphabetically, based largely on ASCII order (Things like locale 
 or unicode are not taken into account) with the following changes:
+** Numbers sort according to their numerical value, how exactly is explained further.
 ** asterisk (*) sorts after everything except control+space (this gets sam files to sort automatically as expected without further processing )
 ** The plus character (+) sorts right after the digits (and thus also after -)
-** Numbers sort before letters and other characters, but are treated specially (see further).
 ** letters sort as A,a,B,... Case is not taken into account except as a secondary measure
 (if the strings are the same except for case) when sorting, e.g: A a MRNA mRNA mrna
 ** The characters that are between the upper and lower case letters in ASCII ([,\,],^,_,`) sort after the letters
 
 * Numbers are sorted according to their numerical value; they sort before strings, except strings
-starting with whitespace. 
+starting with whitespace or empty strings. 
 
-* Elements are recognized as a (full/isolated) number if they conform to the
-number pattern (up to -10.10e-10) at the start of the element or after
-whitespace. If the element starts with a 0, followed by a digit, it is not considered
-a nuber (e.g. 01 0020 are treated as strings, not numbers, 0 and e.g. 0.1 are treated as numbers)
-Numbers are sorted according to their numerical value, taking into account
-negative, decimal and scientific notation for sorting; they sort before
-strings, except strings starting with whitespace or an asterix (*), e.g:
+* A **standalone (full/isolated) number** starts at the start of the string or after
+whitespace. It follows a number pattern supporting signs, decimals and scientific notation (e.g. -10.10e-10).
+standolone numbers are sorted according to their numerical value, taking into account
+negative, decimal and scientific notation, e.g:
 -1e4 -100 -0.5e2 -2 -1 -0.2 -0.10 -0.1 0 0.1 0.10 0.2 2 10 1e2
-
-* Even if isolated numbers have string characters AFTER them, they will be
+** Even if isolated numbers have string characters AFTER them, they will be
 interpreted as full numbers, e.g: 0.1g 0.10g 0.2g
 
-* Embedded numbers are numbers that are not at the start of an element
+* **Embedded numbers** are numbers that are not at the start of an element
 (e.g. chr1,chr2,chr10). Embedded numbers are also sorted according to
 numerical value, but only based on the integer part (i.e if present -,e,+
 are considered part of the string in this case). e.g. in chr-1 we do not
 interpret the - as a minus, giving us the following sort: chr-1 chr-2 chr-10
+
+* A number may start with a + or a number of zeros; these are ignored unless the numerical value is the same between 2
+elements. In that case the numbers with + in front will sort after the ones without, and the ones with fewer
+zeros are sorted after the ones with more zeros.
 
 * characters after a full number (not separated by whitespace) will be 
 interpreted as a string. Numbers in these are treated as embedded numbers, (e.g.:
