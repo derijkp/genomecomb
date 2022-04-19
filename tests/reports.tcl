@@ -80,7 +80,8 @@ test reports {process_reports no targetfile} {
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html
 	set result [tsvdiff -q 1 -x *.png -x fastqc_report.html -x samstats-*.stats.zst \
 		-ignorefields {
-			clipping_cg_version sammerge_version bamclean_version 
+			clipping_cg_version sammerge_version bamclean_version \
+			removeduplicates_version regextract_version regextrac_samtools varcaller_version
 			varcaller_cg_version report_vars_version histodepth_version
 			predictgender_version report_covered_version
 		} \
@@ -114,8 +115,10 @@ test reports {process_reportscombine 2} {
 	cd $::smalltestdir
 	file delete -force tmp/combinereports
 	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[bsort [glob expected/exomes_yri_mx2/samples/* expected/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
-	cg tsvdiff -q 1 -x report-combinereports.html tmp/combinereports expected/combinereports
-	diffhtmlreport tmp/combinereports/report-combinereports.html expected/combinereports/report-combinereports.html 1
+	set result {}
+	lappend result [tsvdiff -q 1 -x report-combinereports.html tmp/combinereports expected/combinereports]
+	lappend result [diffhtmlreport tmp/combinereports/report-combinereports.html expected/combinereports/report-combinereports.html 1]
+	join [list_remove $result {}] \n
 } {}
 
 testsummarize

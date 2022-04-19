@@ -650,7 +650,7 @@ proc process_sample_job {args} {
 		if {$datatype eq ""} {set datatype amplicons}
 	} elseif {$amplicons ne ""} {
 		set temp [lindex [split [file root [gzroot [file tail $amplicons]]] -] end]
-		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv 1
+		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
 		set amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
 		if {$datatype eq ""} {set datatype amplicons}
 	}

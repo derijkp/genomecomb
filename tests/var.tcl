@@ -270,11 +270,14 @@ test var {var_longshot basic giab ont} {
 		$workdir/var-longshot-sminimap2-pHG002_hg38.tsv.zst \
 		$workdir/var-truth_HG002_hg38.tsv
 	cg benchmarkvars -refcurve_cutoffs {{} 10 20 30 40 50 60} $workdir/compar.tsv truth_HG002_hg38 $workdir/benchmark.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+	set result {}
+	lappend result [tsvdiff -x *.log -x *.finished  -x *.zsti \
+		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
-		$workdir expected/[file tail $workdir]
-
-	list [cg select -g chromosome $workdir/compar.tsv] [cg select -g {zyg-longshot-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} $workdir/compar.tsv]
+		$workdir expected/[file tail $workdir]]
+	lappend result [cg select -g chromosome $workdir/compar.tsv]
+	lappend result [cg select -g {zyg-longshot-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} $workdir/compar.tsv]
+	list_remove $result {}
 } {{chromosome	count
 1	285
 6	120
@@ -573,9 +576,6 @@ test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3
 	file mkdir tmp/clair3
-#	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
-#		mklink $file tmp/clair3/[file tail $file]
-#	}
 	set regions {chr1:2547867-2568902 chr6:32152328-32167543 chr10:975157-1000215}
 	set oridir ori/nanopore-human-pangenomics_regions/HG002
 	exec samtools view -b \
@@ -600,20 +600,26 @@ test var {var_clair3 basic giab data} {
 		tmp/clair3/compar.tsv \
 		truth_HG002_hg38 \
 		tmp/clair3/benchmark.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+	set result {}
+	lappend result [tsvdiff -x *.log -x *.finished  -x *.zsti \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
-		tmp/clair3 expected/clair3
-	list [cg select -g chromosome tmp/clair3/compar.tsv] [cg select -g {zyg-clair3-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/clair3/compar.tsv]
+		tmp/clair3 expected/clair3]
+	lappend result [cg select -g chromosome tmp/clair3/compar.tsv]
+	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3/compar.tsv]
+	list_remove $result {}
 } {{chromosome	count
-contig1	250
-contig2	219
-contig3	246} {zyg-clair3-pacbio_reads_30x	zyg-ground_truth_variants	count
-?	m	2
-?	t	9
-m	m	228
-t	?	1
-t	t	475}}
+1	732
+6	469
+10	331} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
+c	u	12
+m	m	24
+m	u	144
+t	t	59
+t	u	424
+u	c	2
+u	t	1
+u	u	866}}
 
 test var {var_longshot basic pepperdata} {
 	cd $::smalltestdir

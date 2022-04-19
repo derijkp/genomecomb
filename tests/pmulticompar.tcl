@@ -1197,7 +1197,7 @@ test pmulticompar$testname {100 samples} {
 test pmulticompar$testname {20 samples, -m 5} {
 	test_cleantmp
 	set files [multicompartest 20]
-	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files 2>@ stderr >@ stdout
+	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files >& tmp/warnings.log
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 

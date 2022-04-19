@@ -38,7 +38,7 @@ if {[get download 0]} {
 	# - 17 member CEPH pedigree 1463 fully sequenced
 	# - Eberle, MA et al. (2017) A reference data set of 5.4 million phased human variants validated by genetic inheritance from sequencing a three-generation 17-member pedigree. Genome Research 27: 157-164. doi:10.1101/gr.210500.116
 	mkdir a directory ~/public/giab and download publically available giab data to it
-	cg_giab_getfastqs -d sge giab_ont_ultralong ~/public/giab/fastqs/giab_ont_ultralong
+	cg_giab_getdata -d sge giab_ont_ultralong ~/public/giab/fastqs/giab_ont_ultralong
 
 	# limited regions (chr1:2500000-3000000 chr2:2000000-2600000 chr6:32000000-33000000 chr10:1500000-2000000)
 	set file $::env(HOME)/public/giab/fastqs/giab_ont_ultralong_part12610/HG002_NA24385_son/HG002_NA24385_son_part12610.fastq.gz
