@@ -539,7 +539,7 @@ test process_small {process_project cg_mx2} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
@@ -582,10 +582,10 @@ test process_small {process_project mixed_yri_mx2} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/${basename}/cgNA19240mx2
-	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/${basename}/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/${basename}/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} gilNA19240mx2 {*}[glob ori/${basename}/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
@@ -629,10 +629,10 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
-	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \

@@ -8,6 +8,7 @@ proc project_transfer {src dest {type soft} {force 0}} {
 	}
 	switch $type {
 		soft {mklink $src $dest 1}
+		rel {mklink $src $dest 0}
 		hard {hardcopy $src $dest}
 		copy {file copy $src $dest
 		}
@@ -29,7 +30,7 @@ proc cg_project_addsample {args} {
 			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
 		}
 		-transfer {
-			if {$value ni {soft hard copy}} {error "unknown option $value for -transfer, must be one of: soft, hard, copy"}
+			if {$value ni {soft rel hard copy}} {error "unknown option $value for -transfer, must be one of: soft, rel hard, copy"}
 			set transfertype $value
 		}
 		-force {
