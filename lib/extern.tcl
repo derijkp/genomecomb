@@ -244,7 +244,7 @@ proc findjar {program {envvar {}}} {
 proc findR {} {
 	global R
 	if {![info exists R]} {
-		set R [searchpath RCG Rcg R]
+		set R [searchpath RCG dirR-4.1.2 Rcg dirR R]
 	}
 	return $R
 }
