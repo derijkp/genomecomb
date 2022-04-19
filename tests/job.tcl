@@ -655,7 +655,7 @@ test job "basic jobtest $testname" {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt.log {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -710,7 +710,7 @@ test job "--force 0 $testname" {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {6+7+8=21
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
 2
 }}
 
@@ -736,7 +736,7 @@ test job "--force 1 $testname" {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -765,7 +765,7 @@ test job "time $testname" {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all2.txt test/all2.txt.old test/all.txt test/all.txt.old test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum2-test3.txt.old test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
 1+2=3
 3+4+5=12
 replaced
