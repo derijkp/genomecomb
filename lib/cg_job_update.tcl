@@ -26,7 +26,7 @@ proc job_cleanlogs {logfile} {
 		}
 		if {[info exists donea($job)]} continue
 		foreach ext {log run out err ok} {
-			file delete $job.$ext
+			file delete -force $job.$ext
 		}
 		catch {file delete $job.finished}
 		set dirsa([file dir $job]) 1
