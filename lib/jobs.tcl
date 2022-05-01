@@ -226,7 +226,7 @@ proc job_expandvarslist {list {level 0}} {
 	foreach string $list {
 		lappend result {*}[job_expandvars $string $level]
 	}
-	return $result
+	return [list_remove $result {}]
 }
 
 proc jobglob {args} {

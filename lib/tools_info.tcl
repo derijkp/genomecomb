@@ -105,7 +105,8 @@ proc analysisinfo_copy {src dest {changes {}}} {
 proc result_rename {src target} {
 	if {[ispipe $src]} return
 	file rename -force -- $src $target
-	catch {file rename -force -- [analysisinfo_file $src] [analysisinfo_file $target]}
+	set analysisfile [analysisinfo_file $src]
+	if {[file exists $analysisfile]} {file rename -force -- $analysisfile [analysisinfo_file $target]}
 	set indexext [indexext $target]
 	if {[file exists $src.$indexext]} {file rename -force -- $src.$indexext $target.$indexext}
 	if {[file exists $src.tbi]} {file rename -force -- $src.tbi $target.tbi}
