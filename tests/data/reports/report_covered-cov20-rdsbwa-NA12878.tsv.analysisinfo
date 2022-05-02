@@ -1,0 +1,2 @@
+regextract	regextract_version	regextrac_samtools	report_covered_tool	report_covered_version
+genomecomb	0.101.0	1.11 (using htslib 1.11)	genomecomb	0.101.0

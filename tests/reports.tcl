@@ -94,20 +94,21 @@ test reports {process_reports no targetfile} {
 } {}
 
 test reports {process_reportscombine} {
-	file mkdir tmp/samples/ERR194147_30x_NA12878
-	file copy data/reports tmp/samples/ERR194147_30x_NA12878
+	file mkdir tmp/samples/NA12878
+	file copy data/reports tmp/samples/NA12878
 	file mkdir tmp/samples/test/reports
 	foreach file {
-		report_fastq_fw-ERR194147_30x_NA12878.tsv
-		report_fastq_rev-ERR194147_30x_NA12878.tsv		
+		report_fastq_fw-NA12878.tsv
+		report_fastq_rev-NA12878.tsv
+		report_flagstat_reads-rdsbwa-NA12878.tsv
 	} {
-		regsub ERR194147_30x_NA12878 $file test newfile
+		regsub NA12878 $file test newfile
 		set c [file_read data/reports/$file]
-		regsub -all ERR194147_30x_NA12878 $c test c
+		regsub -all NA12878 $c test c
 		file_write tmp/samples/test/reports/$newfile $c
 	}
-	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-ERR194147_30x_NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
-	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/ERR194147_30x_NA12878/reports tmp/samples/test/reports
+	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
+	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/NA12878/reports tmp/samples/test/reports
 	diffhtmlreport tmp/combinereports data/expected-combinereports 1
 } {}
 

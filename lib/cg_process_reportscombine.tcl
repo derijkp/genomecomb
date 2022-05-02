@@ -372,7 +372,7 @@ proc reportscombine_table_alignment {alignments dataVar dbdir} {
 	upvar $dataVar data
 	set html "\n<h2>Alignment overview</h2>\n"
 	set table [list {
-		sample alignment numreads mapped-reads duplicate-reads properly-paired-reads
+		sample alignment numalignments numreads mapped-reads pct_mapped-reads duplicate-reads properly-paired-reads
 		num-mapped-bases-mb pct-mapped-bases pct-mapped-ontarget
 	}]
 	foreach alignment $alignments {
@@ -380,17 +380,23 @@ proc reportscombine_table_alignment {alignments dataVar dbdir} {
 		set line [list $sample [join [lrange $alignment 0 end-1] -]]
 		set alignment [join $alignment -]
 		lappend line [pget data "$alignment,flagstat_reads,in total"]
-		lappend line [pget data $alignment,flagstat_reads,mapped]
+		set numreads [pget data "$alignment,flagstat_reads,primary" "$alignment,samstats_summary,raw_total_sequences"]
+		lappend line $numreads
+		set mapped_reads [pget data $alignment,flagstat_reads,primary "$alignment,samstats_summary,reads_mapped"]
+		lappend line $mapped_reads
+		lappend line [ppercent $mapped_reads $numreads]
 		lappend line [pget data $alignment,flagstat_reads,duplicates]
 		lappend line [pget data "$alignment,flagstat_reads,properly paired"]
 		# mapping
 		set numbases [pget data $sample,numbases]
-		set mappedbases [pget data $alignment,samstats_summary,bases_mapped_cigar]
+		set mappedbases_cigar [pget data $alignment,samstats_summary,bases_mapped_cigar]
+		set mappedbases [pget data $alignment,samstats_summary,bases_mapped]
 		if {$mappedbases eq ""} {
 			set mappedbases [pgetsum data $alignment,numbases_offtarget $alignment,numbases_ontarget]
 		}
 		set numbases_ontarget [pget data $alignment,numbases_ontarget]
 		lappend line [catchexpr {$mappedbases/1000000.0}]
+		lappend line [ppercent $mappedbases_cigar $numbases]
 		lappend line [ppercent $mappedbases $numbases]
 		lappend line [ppercent $numbases_ontarget $mappedbases]
 		lappend table $line
