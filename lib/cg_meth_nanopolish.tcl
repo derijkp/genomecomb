@@ -48,9 +48,6 @@ proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
 	}
 	gzclose $o
 	gzclose $f
-	if {[file extension $target] in ".gz .bgz"} {
-		cg maketabix $target
-	}
 }
 
 proc fastqs_mergename {fastqfiles} {
@@ -231,39 +228,29 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 	}
 	set target $smethfile
 	set root [file root [file tail [gzroot $smethfile]]]
-	if {[file extension $target] in ".gz .bgz"} {
-		set smethfilebi $smethfile.tbi
-	} else {
-		set smethfiletbi {}
-	}
 	job meth_nanopolish_smethfinal-$root {*}$skips -deps $seqmethfiles -targets {
-		$smethfile $smethfile
+		$smethfile
 	} -vars {
 		bamfile bamcache bamcacheindex meth-compression
 	} -skip {$target} -code {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
 		cg cat -c 0 {*}$deps | cg select -s - | cg ${meth-compression} > $target.temp
 		file rename -- $target.temp $target
-		if {${meth-compression} in "gz bgz"} {
-			cg maketabix $target
-		}
 		if {$bamcache ne $bamfile} {
 			file delete -force $bamcache
 			file delete -force $bamcacheindex
 		}
 	}
+	if {[file extension $smethfile] in ".gz .bgz"} {
+		maketabix_job $smethfile
+	}
 	set root [file root [file tail [gzroot $resultfile]]]
 	set dep $smethfile
 	set target $resultfile
-	if {[file extension $target] in ".gz .bgz"} {
-		set targettbi $resultfile.tbi
-	} else {
-		set targettbi {}
-	}
 	job meth_nanopolish_methfinal-$root {*}$skips -deps {
 		$dep
 	} -targets {
-		$target $targettbi
+		$target
 	} -vars {
 		callthreshold
 	} -code {
@@ -271,6 +258,9 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
 		result_rename $tempresult $target
 		file delete -force $target.temp
+	}
+	if {[file extension $target] in ".gz .bgz"} {
+		maketabix_job $target
 	}
 	return [list $resultfile $smethfile]
 }
