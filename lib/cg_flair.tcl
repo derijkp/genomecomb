@@ -536,7 +536,6 @@ proc flair_job {args} {
 				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genePred
 				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genepred.tsv
 				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.fasta
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_SQANTI3_report.pdf
 			} -vars {
 				transcript_classification_file transcripts_genepred_file counts_matrix_file
 				exproot sample refseq gtfannotation gtfannotation
@@ -545,14 +544,25 @@ proc flair_job {args} {
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/gene_counts-sqanti3-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/sqanti3-flair-$exproot/sqanti3-${exproot}_classification.txt sqanti3 [version sqanti3_qc.py]
 				mkdir compar/sqanti3-flair-$exproot
-				catch_exec sqanti3_qc.py \
-					compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-					$gtfannotation \
-					$refseq \
-					-d compar/sqanti3-flair-$exproot \
-					-o sqanti3-flair-$exproot \
-					--saturation \
-					--report pdf
+				if {[catch {
+					catch_exec sqanti3_qc.py \
+						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
+						$gtfannotation \
+						$refseq \
+						-d compar/sqanti3-flair-$exproot \
+						-o sqanti3-flair-$exproot \
+						--saturation \
+						--report pdf
+				}]} {
+					catch_exec sqanti3_qc.py \
+						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
+						$gtfannotation \
+						$refseq \
+						-d compar/sqanti3-flair-$exproot \
+						-o sqanti3-flair-$exproot \
+						--saturation \
+						--report skip
+				}
 				cg genepred2tsv compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genePred $transcripts_genepred_file 
 				# merge results
 				set isoformcounts compar/isoform_counts-sqanti3-flair-$exproot.genepred.tsv
