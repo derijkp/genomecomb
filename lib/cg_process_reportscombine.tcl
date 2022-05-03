@@ -397,7 +397,6 @@ proc reportscombine_table_alignment {alignments dataVar dbdir} {
 		set numbases_ontarget [pget data $alignment,numbases_ontarget]
 		lappend line [catchexpr {$mappedbases/1000000.0}]
 		lappend line [ppercent $mappedbases_cigar $numbases]
-		lappend line [ppercent $mappedbases $numbases]
 		lappend line [ppercent $numbases_ontarget $mappedbases]
 		lappend table $line
 	}
