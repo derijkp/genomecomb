@@ -788,6 +788,12 @@ proc process_sample_job {args} {
 	# create bam from fastq files (if found)
 	set cleanedbams {}
 	set processlist {}
+	# check even number of fastqs for paired analysis
+	if {$paired} {
+		if {[expr {[llength $fastqfiles]%2}] != 0} {
+			error "paired analysis (default, use -paired 0 to turn off), but number of fastqs is uneven ([llength $fastqfiles]) for sample $sampledir"
+		}
+	}
 	if {[isint $maxfastqdistr]} {
 		set len [llength $fastqfiles]
 		if {$paired} {
