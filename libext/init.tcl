@@ -10,7 +10,7 @@
 namespace eval genomecomb {}
 
 # $Format: "set ::genomecomb::version $ProjectMajorVersion$.$ProjectMinorVersion$"$
-set ::genomecomb::version 0.103
+set ::genomecomb::version 0.104
 # $Format: "set ::genomecomb::patchlevel $ProjectPatchLevel$"$
 set ::genomecomb::patchlevel 0
 
