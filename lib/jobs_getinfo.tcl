@@ -25,8 +25,8 @@ proc job_getinfo {{value {}}} {
 	}
 }
 
-proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} {
-# putsvars jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
+proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} {
+# putsvars jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
 	global cgjob job_deps
 	global cgjob_getinfo
 	set jobroot [pwd]

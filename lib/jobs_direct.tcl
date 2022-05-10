@@ -64,40 +64,11 @@ proc job_process_direct {} {
 	while {[llength $cgjob(queue)]} {
 		set joberror {}
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
+		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set timefile {}
 		set job [job_logname $job_logdir $jobname]
-		# check foreach deps, skip if not fullfilled
-		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		set submittime [timestamp]
-		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
-				if {![regexp {^missing dependency} $fadeps]} {
-					set errormsg "error in foreach dependencies for $jobname: $fadeps"
-					job_log $job $errormsg
-					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
-				} else {
-					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $cores $fadeps $submittime
-				}
-				job_log $job "-----> job $jobname failed"
-				job_logclose $job
-				continue
-			}
-			set temp {}
-			# make foreach empty
-			lset line 5 {}
-			foreach fdep $fadeps ftargetvar $ftargetvars {
-				lset line 1 $jobname-$fdep
-				lset line 4 [list $fdep {*}$deps]
-				lset line 6 $ftargetvar
-				lappend temp $line
-			}
-			set cgjob(queue) [list_concat $temp $cgjob(queue)]
-			job_logclear $job
-			continue
-		}
 		cd $pwd
 		job_log $job "==================== $jobname ===================="
 		# check deps, skip if not fullfilled

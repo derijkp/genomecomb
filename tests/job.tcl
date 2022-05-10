@@ -105,7 +105,7 @@ proc writetestfiles {args} {
 
 proc jobtest {args} {
 	set args [job_args $args]
-	foreach {srcdir destdir header} $args break
+	foreach {srcdir destdir header ptargets} $args break
 	set srcdir [file_absolute $srcdir]
 	set destdir [file_absolute $destdir]
 	set job_logdir $destdir/log_jobs
@@ -120,9 +120,11 @@ proc jobtest {args} {
 		lappend names [lindex $line 0]
 	}
 	close $f
-	job sumvar -deps {$srcdir/cgdat*.tsv} \
-	-targets {$destdir/sum-$_names.txt} \
-	-vars destdir -code {
+	job sumvar -deps {
+		$srcdir/cgdat*.tsv
+	} -targets {
+		$destdir/sum-$_names.txt
+	} -vars {destdir} -code {
 		for {set i 1} {$i < 5} {incr i} {
 			# puts "progress $target $i"
 			after 250
@@ -144,9 +146,16 @@ proc jobtest {args} {
 		}
 		close $f
 	}
+	if {$ptargets eq "noptargets"} {
+		set targets {$destdir/sumpattern.log $destdir/sumpattern-test1.txt $destdir/sumpattern-test2.txt $destdir/sumpattern-test3.txt}
+		set ptargets {}
+	} else {
+		set targets {$destdir/sumpattern.log}
+		set ptargets {$destdir/sumpattern-*.txt}
+	}
 	job sumpattern -deps {$srcdir/cgdat*.tsv} \
-	-targets {$destdir/sumpattern.log} \
-	-ptargets {$destdir/sumpattern-*.txt} \
+	-targets $targets \
+	-ptargets $ptargets \
 	-vars destdir -code {
 		# var target contains target
 		# var target1 contains first braced part of target (= destdir)
@@ -175,19 +184,26 @@ proc jobtest {args} {
 		close $f
 		file_write $destdir/sumpattern.log [join $targets \n]
 	}
-	job sumpattern2 -foreach {^$destdir/sumpattern-(.*)\.txt$} \
-	  -skip [list $destdir/allp2.txt] \
-	  -cores 2 \
-	  -targets {$destdir/sumpattern2-\1.txt} -code {
-		for {set i 1} {$i < 5} {incr i} {
-			# puts "progress $i"
-			after 250
+	foreach file [jobglob $destdir/sumpattern-*.txt] {
+		regexp {sumpattern-(.*).txt$} [file tail $file] temp base
+		set target $destdir/sumpattern2-$base.txt
+		job sumpattern2-$base -cores 2 -skip {
+			$destdir/allp2.txt
+		} -deps {
+			$file
+		} -targets {
+			$target
+		} -code {
+			for {set i 1} {$i < 5} {incr i} {
+				# puts "progress $i"
+				after 250
+			}
+			file copy $dep $target.temp
+			exec echo 2 >> $target.temp
+			file rename -force -- $target.temp $target
 		}
-		file copy $dep $target.temp
-		exec echo 2 >> $target.temp
-		file rename -force -- $target.temp $target
 	}
-	job allp2.txt -vars header -deps {^$destdir/sumpattern2-(.*)\.txt$} -targets {$destdir/allp2.txt} -code {
+	job allp2.txt -vars header -deps {$destdir/sumpattern2-*.txt} -targets {$destdir/allp2.txt} -code {
 		after 500
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
@@ -198,19 +214,24 @@ proc jobtest {args} {
 		exec cat {*}$deps >> $target.temp
 		file rename -force -- $target.temp $target
 	}
-	job test -foreach {^$srcdir/cgdat(.*)\.tsv$} -targets {$destdir/test.txt} -code {
+	job test -deps {$srcdir/cgdat*.tsv} -targets {$destdir/test.txt} -code {
 		exec wc $dep > $target
 	}
-	job sum2 -foreach {^$destdir/sum-(.*)\.txt$} \
-	  -skip [list $destdir/all2.txt] \
-	  -targets {$destdir/sum2-\1.txt} -code {
-		for {set i 1} {$i < 5} {incr i} {
-			# puts stderr "progress $i"
-			after 250
+	foreach file [jobglob $destdir/sum-*.txt] {
+		regexp {sum-(.*).txt$} [file tail $file] temp base
+		job sum2-$base -skip [list $destdir/all2.txt] -deps {
+			$file
+		} -targets {
+			$destdir/sum2-$base.txt
+		} -code {
+			for {set i 1} {$i < 5} {incr i} {
+				# puts stderr "progress $i"
+				after 250
+			}
+			file copy $dep $target.temp
+			exec echo 2 >> $target.temp
+			file rename -force -- $target.temp $target
 		}
-		file copy $dep $target.temp
-		exec echo 2 >> $target.temp
-		file rename -force -- $target.temp $target
 	}
 	job error_all.txt -optional 1 -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
@@ -371,9 +392,13 @@ test job "foreach $testname" {
 	test_job_init
 	file_write test1.txt test1\n
 	file_write test2.txt test2\n
-	job job1 -foreach {^test(.*)\.txt$} -targets {rtest\1.txt} -code {
-		set c [file_read $dep]
-		file_write $target r${c}
+	foreach file [jobglob test*.txt] {
+		regexp {test(.*).txt$} $file temp base
+		set target rtest$base.txt
+		job job1-$base -deps {$file} -targets {$target} -code {
+			set c [file_read $dep]
+			file_write $target r${c}
+		}
 	}
 	job_wait
 	gridwait
@@ -392,9 +417,11 @@ test job "chained foreach $testname" {
 		file_write test1.txt test1\n
 		file_write test2.txt test2\n
 	}
-	job job1 -foreach {^test(.*)\.txt$} -targets {rtest\1.txt} -code {
-		set c [file_read $dep]
-		file_write $target r${c}
+	foreach file [jobglob test*.txt] {
+		job job-$file -deps {$file} -targets {r$file} -code {
+			set c [file_read $dep]
+			file_write $target r${c}
+		}
 	}
 	job job2 -deps {rtest1.txt} -targets {final1.txt} -code {
 		set c [file_read $dep]
@@ -417,9 +444,12 @@ test job "chained foreach with glob match $testname" {
 		file_write test1.txt test1\n
 		file_write test2.txt test2\n
 	}
-	job job1 -foreach {test*.txt} -targets {rtest\1.txt} -code {
-		set c [file_read $dep]
-		file_write $target r${c}
+	foreach file [jobglob test*.txt] {
+		regsub {test(.*).txt} $file {rtest\1.txt} target
+		job job1-$file -deps {$file} -targets {$target} -code {
+			set c [file_read $dep]
+			file_write $target r${c}
+		}
 	}
 	job job2 -deps {rtest1.txt} -targets {final1.txt} -code {
 		set c [file_read $dep]
@@ -668,7 +698,7 @@ test job "basic status $testname" {
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
-	jobtest ../data test testh
+	jobtest ../data test testh noptargets
 	job_wait
 	gridwait
 	set result [list \
@@ -683,7 +713,7 @@ test job "basic status $testname" {
 	# status
 	cd $::testdir/tmp
 	job_init -d status
-	jobtest ../data test testh
+	jobtest ../data test testh noptargets
 	job_wait
 	glob jobdeps.dot jobdeps.ps
 } {jobdeps.dot jobdeps.ps}
