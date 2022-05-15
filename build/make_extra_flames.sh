@@ -47,10 +47,6 @@ set -x
 # Build
 # =====
 
-# https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02525-6
-# based on https://github.com/LuyiTian/FLAMES, but
-# https://github.com/LuyiTian/FLAMES-1 forked from https://github.com/OliverVoogd/FLAMES
-
 # set up environment
 # ------------------
 yuminstall git
@@ -60,9 +56,11 @@ yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
 yuminstall devtoolset-8
+# yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
 # scl enable devtoolset-8 rh-python36 bash
 source /opt/rh/devtoolset-8/enable
+# source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -98,19 +96,14 @@ cd /build
 
 # miniconda
 # ---------
-wget https://repo.anaconda.com/miniconda/Miniconda2-py27_4.8.3-Linux-x86_64.sh
+export minicondaversion=py38_4.9.2
+cd /build
+wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
 unset PYTHONPATH
-rm -rf /home/build/miniconda || true
-bash Miniconda2-py27_4.8.3-Linux-x86_64.sh -b -p /home/build/miniconda
+rm -rf /build/miniconda-$minicondaversion
+bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
 
-# bioconda
-# --------
-
-PATH=/home/build/miniconda/bin:$PATH
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
+PATH=/build/miniconda-$minicondaversion/bin:$PATH
 
 conda init bash
 . ~/.bash_profile
@@ -119,65 +112,95 @@ conda init bash
 # -----
 cd /build
 
-flamesversion=0.1
+flamescommit=413e09c0e57b554662bfa341d00f191023ac1fa8
+flamesversion=c1_413e09c
 
-conda create -y -n flames
-conda activate flames
+# conda install
 
-# install dependencies
-conda install -y python=2.7
-conda install -y samtools pysam minimap2 numpy editdistance
-
-git clone https://github.com/LuyiTian/FLAMES.git
-cd /build/FLAMES/src
-# g++ -std=c++11 $STATICLIB_CFLAGS $CFLAGS $LDFLAGS -lz -O2 -o match_cell_barcode ssw/ssw_cpp.cpp ssw/ssw.c match_cell_barcode.cpp kseq.h edit_dist.cpp
-g++ -std=c++11 -O2 -fvisibility=hidden -I/hbb_exe/include -L/hbb_exe/lib -static-libstdc++ -O2 -o match_cell_barcode ssw/ssw_cpp.cpp ssw/ssw.c match_cell_barcode.cpp kseq.h edit_dist.cpp -lz -lm -lc
-mv match_cell_barcode /build/FLAMES
+conda create -y -n flames \
+    python=2.7 samtools pysam minimap2 numpy editdistance \
+    -c bioconda -c conda-forge
 
 # make portable appdir
-conda install -y conda-pack
+
+# installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
+conda install -y -c conda-forge conda-pack
+
 cd /build
 rm flames.tar.gz || true
 conda pack -n flames -o flames.tar.gz
-rm -rf flames-$flamesversion.old
+rm -rf flames-$flamesversion.old || true
 mv flames-$flamesversion flames-$flamesversion.old || true
-mkdir flames-$flamesversion
-cd flames-$flamesversion
-tar xvzf ../flames.tar.gz
-# add FLAMES
-cp -ra /build/FLAMES .
-
-# make excutables in appdir root that will take use the appdir env
+mkdir /build/flames-$flamesversion
 cd /build/flames-$flamesversion
+tar xvzf ../flames.tar.gz
+
+# add flames code
+
+wget -c https://github.com/LuyiTian/FLAMES/archive/$flamescommit.zip
+unzip $flamescommit.zip
+rm $flamescommit.zip
+cd /build
+
+# compile single cell code
+cd /build/flames-$flamesversion/FLAMES-$flamescommit/src
+g++ -std=c++11 -lz -O2 -o ../match_cell_barcode ssw/ssw_cpp.cpp ssw/ssw.c match_cell_barcode.cpp kseq.h edit_dist.cpp
+cd /build/flames-$flamesversion/bin
+ln -s ../FLAMES-$flamescommit/match_cell_barcode .
+cd /build/flames-$flamesversion/FLAMES-$flamescommit/python
+ln -s ../FLAMES-$flamescommit/match_cell_barcode .
+
+# add wrapper scripts
+
+cd /build/flames-$flamesversion
+wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred
+wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gff3ToGenePred
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-PATH=$dir/bin:$dir/FLAMES/python:$PATH
+pythondir=`ls -d $dir/FLAMES-*/python`
+PATH=$pythondir:$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/FLAMES/python/bulk_long_pipeline.py ${1+"$@"}
+bulk_long_pipeline.py ${1+"$@"}
 ' > bulk_long_pipeline.py
 chmod ugo+x bulk_long_pipeline.py
-rm flames_bulk_long_pipeline.py
-ln -s bulk_long_pipeline.py flames_bulk_long_pipeline.py
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-PATH=$dir/bin:$dir/FLAMES/python:$PATH
+pythondir=`ls -d $dir/FLAMES-*/python`
+PATH=$pythondir:$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/FLAMES/python/bulk_long_pipeline.py ${1+"$@"}
+sc_long_pipeline.py ${1+"$@"}
 ' > sc_long_pipeline.py
 chmod ugo+x sc_long_pipeline.py
-rm flames_sc_long_pipeline.py
-ln -s sc_long_pipeline.py flames_sc_long_pipeline.py
 
-rm ../flames.tar.gz
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+pythondir=`ls -d $dir/FLAMES-*/python`
+PATH=$pythondir:$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+if [ $# -eq 0 ] ; then
+	echo "no subcommand given to flames: should be one of: match_cell_barcode `ls $pythondir | grep \.py\$ | tr "\n" " "`"
+	exit 1
+fi
+command=$1
+shift 1
+$command ${1+"$@"}
+' > flames
+chmod ugo+x flames
+
+# copy final appdir to genomecomb extra dir
+
+rm /build/flames.tar.gz
 cd /build
-tar cvzf flames-$flamesversion.tar.gz flames-$flamesversion
+# tar cvzf flames-$flamesversion.tar.gz flames-$flamesversion
 cp -ra flames-$flamesversion /io/extra$ARCH
 cd /io/extra$ARCH/
+ln -s flames-$flamesversion/flames .
 
 conda deactivate
 
-echo "Finished building flames-$flamesversion"
+echo "Finished building flames"
