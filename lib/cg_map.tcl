@@ -96,6 +96,9 @@ proc map_job {args} {
 		-compressionlevel {
 			set compressionlevel $value
 		}
+		-*-* {
+			set ::specialopt($key) $value
+		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome
 	}
