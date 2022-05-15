@@ -9,6 +9,7 @@ proc process_project_job {args} {
 	set removeskew {}
 	set aligner bwa
 	set varcallers {gatkh strelka}
+	set counters {}
 	set svcallers {}
 	set methcallers {}
 	set realign 1
@@ -83,6 +84,9 @@ proc process_project_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-counters {
+			set counters $value
 		}
 		-flair {
 			set flair $value
@@ -257,6 +261,7 @@ proc process_project_job {args} {
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+				-counters $counters \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -272,6 +277,7 @@ proc process_project_job {args} {
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+				-counters $counters \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -285,10 +291,12 @@ proc process_project_job {args} {
 				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
+				counters
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+					-counters $counters \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -304,6 +312,7 @@ proc process_project_job {args} {
 		process_sample_job -clip $clip -datatype $datatype -aliformat $aliformat \
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
+			-counters $counters \
 			-hap_bam $hap_bam \
 			-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -322,6 +331,7 @@ proc process_project_job {args} {
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
+		-counters $counters \
 		-threads $threads -distrreg $distrreg \
 		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup \

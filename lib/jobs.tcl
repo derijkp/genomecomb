@@ -226,7 +226,7 @@ proc job_expandvarslist {list {level 0}} {
 	foreach string $list {
 		lappend result {*}[job_expandvars $string $level]
 	}
-	return $result
+	return [list_remove $result {}]
 }
 
 proc jobglob {args} {
@@ -263,6 +263,23 @@ proc jobglob {args} {
 		}
 	}
 	list_remdup $resultfiles
+}
+
+proc jobgzfiles {args} {
+	foreach filename $args {
+		if {![catch {jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+			foreach file $list {
+				set root [gzroot $file]
+				if {[info exists a($root)]} continue
+				set a($root) $file
+			}
+		}
+	}
+	set result {}
+	foreach file [array names a] {
+		lappend result $a($file)
+	}
+	return $result
 }
 
 proc jobglob1 {args} {
@@ -927,6 +944,26 @@ proc timebetween_inseconds {starttime endtime} {
 	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
 }
 
+proc timebetween_inhours {starttime endtime} {
+	if {[catch {time_scan $endtime} endcode]} {return {}}
+	if {[catch {time_scan $starttime} startcode]} {return {}}
+	set diff [lmath_calc $endcode - $startcode]
+	foreach {days miliseconds} $diff break
+	expr {$days*24.0 + $miliseconds/3600000.0}
+}
+
+proc time_gt {time1 time2} {
+	if {$time1 eq $time2} {return 0}
+	if {[lsort -dict [list $time1 $time2]] eq [list $time1 $time2]} {return 0} else {return 1}
+}
+
+proc emptyifwrong {varVar} {
+	upvar $varVar var
+	if {![isdouble $var]} {set var ""}
+	if {$var == 0} {set var ""}
+	if {$var ne ""} {set var [format %.3f $var]}
+}
+
 proc time_seconds2duration {seconds} {
 	set days [expr {int($seconds/86400)}]
 	set miliseconds [expr {int(1000*($seconds - 86400*$days))}]
@@ -941,7 +978,7 @@ proc time_seconds {diff} {
 
 proc job_parse_log {job} {
 	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
-	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {} ; set currentjobid {} ; set currenthost {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentjobid {} ; set currenthost {}
 	set time_seconds ""
 	set status unkown
 	set logdata [split [file_read $job.log] \n]
@@ -1012,14 +1049,14 @@ proc job_parse_log {job} {
 				set endtime {}
 			}
 		} else {
-			set status $currentstatus
+			set status running
 			set endtime {}
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
 	if {$submittime eq ""} {set submittime $currentsubmittime}
 	if {$starttime eq ""} {set submittime $currentstarttime}
-	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime currentstatus
+	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}
@@ -1197,7 +1234,6 @@ proc job {jobname args} {
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
 	set rmtargets {}
 	set pos 0
-	set foreach {}
 	set vars {}
 	set procs {}
 	set precode {}
@@ -1215,10 +1251,6 @@ proc job {jobname args} {
 		switch -- $key {
 			-deps {
 				set deps [lindex $args $pos]
-				incr pos
-			}
-			-foreach {
-				set foreach [lindex $args $pos]
 				incr pos
 			}
 			-targets {
@@ -1301,7 +1333,7 @@ proc job {jobname args} {
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
-					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -procs, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
+					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -procs, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
 				}
 				break
 			}
@@ -1326,15 +1358,15 @@ proc job {jobname args} {
 #	if {$targets eq ""} {
 #		error "Each job must have targets (use -targets)"
 #	}
-	set edeps [job_expandvarslist $deps 1]
-	set eforeach [job_expandvarslist $foreach 1]
-	set etargets [job_expandvarslist $targets 1]
-	set ermtargets [job_expandvarslist $rmtargets 1]
+	set level 1
+	set edeps [job_expandvarslist $deps $level]
+	set etargets [job_expandvarslist $targets $level]
+	set ermtargets [job_expandvarslist $rmtargets $level]
 	set eskip {}
 	foreach skip $skiplist {
-		lappend eskip [job_expandvarslist $skip 1]
+		lappend eskip [job_expandvarslist $skip $level]
 	}
-	set eptargets [job_expandvarslist $ptargets 1]
+	set eptargets [job_expandvarslist $ptargets $level]
 	set newcode {}
 	if {[info exists ::defcompressionlevel]} {
 		append newcode [list ::defcompressionlevel $::defcompressionlevel]\n
@@ -1348,10 +1380,10 @@ proc job {jobname args} {
 	append newcode $code
 	if {[get ::job_getinfo 0]} {
 		# do not actually run if just gathering info
-		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
+		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
 		return
 	}
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores]
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores]
 	incr cgjob(id)
 	if {!$cgjob(debug)} {job_process}
 }

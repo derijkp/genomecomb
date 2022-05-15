@@ -31,7 +31,7 @@ one or more raw data files.
 ; -amplicons ampliconfile: This option turns on amplicon sequencing
 analysis (see [[cg_process_sample]]) using the amplicons defained in **ampliconfile**
 ; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
-; -tranfer soft/hard/copy: determines how raw data files are "transferred" to the sampledir: soft(link), hard(link) or copy
+; -tranfer soft/rel/hard/copy: determines how raw data files are "transferred" to the sampledir: soft(link absolute path), rel(ative softlink), hard(link) or copy
 ; -force 0/1: Normally an error is given if the target file already exists. use -force 1 to overwrite existing sample data
 
 == Category ==

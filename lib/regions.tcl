@@ -102,6 +102,14 @@ proc samregions {region {refseq {}} {full 0}} {
 	return [list $chr:$begin-$end]
 }
 
+proc samregions_gatk {region {refseq {}} {full 0}} {
+	set regions [samregions $region $refseq $full]
+	if {[llength $regions] == 1} {return [lindex $regions 0]}
+	set tempbed [tempfile].bed
+	distrreg_reg2bed $tempbed $regions $refseq
+	return $tempbed
+}
+
 proc samregion {region {refseq {}} {full 0}} {
 	set regions [samregions $region $refseq $full]
 	if {[llength $regions] != 1} {

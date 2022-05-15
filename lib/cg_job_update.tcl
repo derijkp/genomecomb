@@ -26,7 +26,7 @@ proc job_cleanlogs {logfile} {
 		}
 		if {[info exists donea($job)]} continue
 		foreach ext {log run out err ok} {
-			file delete $job.$ext
+			file delete -force $job.$ext
 		}
 		catch {file delete $job.finished}
 		set dirsa([file dir $job]) 1
@@ -188,6 +188,9 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} else {
 			set job $jobo
 		}
+		if {[file exists $job.jid] && [job_running [file_read $job.jid]]} {
+			set status submitted
+		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
@@ -285,7 +288,6 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 proc cg_job_update args {
 	# init needs to be here, because otherwise variables like cgpub(pid) will 
 	# be reset on first use of functions in jobs.tcl
-	job_init
 	set cleanup success
 	set force 0
 	set removeold 0
@@ -305,5 +307,13 @@ proc cg_job_update args {
 		if {[file extension $logfile] in ".running .finished .error .submitting"} break
 	}
 	set logfile [file_absolute $logfile]
+	set distribute sge
+	set f [open $logfile]
+	while 1 {
+		if {[gets $f line] == -1} break
+		if {[string index $line 0] ne "\#"} break
+		if {[regexp {# *distribute: *(.+)} $line temp distribute]} break
+	}
+	job_init -d $distribute
 	job_update $logfile $cleanup $force $removeold
 }

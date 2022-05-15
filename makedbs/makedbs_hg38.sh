@@ -8,7 +8,7 @@ exec cg source "$0" "$@"
 set build hg38
 set defaultdest /complgen/refseqnew
 
-set genomeurl ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
+set genomeurl http://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
 set par {chromosome	begin	end	name
 X	10001	2781479	PAR1
 X	155701383	156030895	PAR2
@@ -17,7 +17,7 @@ Y	56887903	57217415	PAR2
 }
 set dbsnpversion 153
 set mirbase hsa-22.1:hg38
-set gencodeversion 34
+set gencodeversion 38
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
@@ -33,7 +33,7 @@ set caddversion 1.6
 set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/whole_genome_SNVs.tsv.gz
 set caddbuild hg38
 set gnomadbuild hg38
-set gnomadversion 3.1
+set gnomadversion 3.1.2
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
 set gnomadexbuild hg19
 set gnomadexversion 2.1.1
@@ -60,6 +60,7 @@ set regionsdb_join {
 }
 set genesdb [list \
 	{refGene int reg} \
+	{ncbiRefSeq extra int reg} \
 	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
 	{knownGene extra int reg} \
 	[list wgEncodeGencodeCompV${gencodeversion} cgencode extra] \
@@ -69,6 +70,8 @@ set genesdb [list \
 ]
 set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz
 set gtffile genes_hg38_ensGene.gtf.gz
+set gencodegtfurl ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
+set gencodegtffile extra/gene_hg38_gencode.v39.gtf
 
 # prepare
 # =======
@@ -122,6 +125,28 @@ job gtf -targets {
 } -vars {gtfurl gtffile} -code {
 	wgetfile $gtfurl $gtffile.temp
 	file rename $gtffile.temp $gtffile
+}
+
+job gencodegtf -targets {
+	$gencodegtffile
+} -vars {gencodegtfurl gencodegtffile} -code {
+	set ext [file exts $gencodegtfurl]
+	wgetfile $gencodegtfurl $gencodegtffile.temp$ext
+	cg unzip $gencodegtffile.temp$ext
+	file rename $gencodegtffile.temp $gencodegtffile
+}
+
+job collapsedgencodegtf -deps {
+	$gencodegtffile
+} -targets {
+	extra/collapsedgene_hg38_gencode.v39.gtf
+} -vars {gencodegtffile} -code {
+	set tempdir [tempdir]
+	wgetfile https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/TOPMed_RNAseq_v2/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
+	set gtf /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf
+	set collapsedgtf /complgen/refseq/hg38/extra/collapsedgene_hg38_gencode.v39.gtf
+	exec python3 $tempdir/collapse_annotation.py $gtf $collapsedgtf.temp
+	file rename -force $collapsedgtf.temp $collapsedgtf
 }
 
 job reg_${build}_gwasCatalog -targets {

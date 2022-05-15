@@ -14,6 +14,7 @@ proc process_multicompar_job {args} {
 	set keepfields *
 	set limitreg {}
 	set reports 1
+	set counters {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -58,6 +59,9 @@ proc process_multicompar_job {args} {
 			foreach file $value {
 				lappend methfiles [file_absolute $file]
 			}
+		}
+		-counters {
+			set values $counters
 		}
 		-experiment {
 			set experiment $value
@@ -433,6 +437,29 @@ proc process_multicompar_job {args} {
 		-deps {compar/annot_cgcnv-$experiment.tsv.zst} \
 		-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
 			cg index -colinfo $dep
+		}
+	}
+	# counters
+	# --------
+	foreach counter $counters {
+		set countfiles [jobglob samples/*/counts-*.tsv]
+		set target compar/counts-${experiment}.tsv
+		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
+			cg multicount $target.temp {*}$countfiles
+			file rename -force -- $target.temp $target
+		}
+		# exons
+		set countfiles [jobglob samples/*/counts_exon-*.tsv]
+		set target compar/counts_exon-${experiment}.tsv
+		job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
+			cg multicount $target.temp {*}$countfiles
+			file rename -force -- $target.temp $target
+		}
+		set countfiles [jobglob samples/*/tpm-*.tsv]
+		set target compar/tpm-${experiment}.tsv
+		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
+			cg multicount $target.temp {*}$countfiles
+			file rename -force -- $target.temp $target
 		}
 	}
 	# reports

@@ -51,17 +51,16 @@ test process_small {process_project mastr_mx2} {
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
-			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
-			report_vars_version predictgender_version report_covered_version svmulticompar_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
+			regextract_version varcaller_cg_version annotate_cg_version varcaller_version histodepth_version histo_version
+			report_vars_version predictgender_version report_covered_version svmulticompar_version regextrac_samtools
 		} \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
-		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
@@ -99,16 +98,17 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
-			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			clipping_cg_version sammerge_version bamclean_version clipamplicons_version alignedsamstats_version unalignedsamstats_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles -I maxopenfiles \
 		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
@@ -149,9 +149,10 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-x fastqc_report.html -x colinfo -x *.stats.zst -x ${basename}.html -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x report_stats-${basename}.tsv \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -228,16 +229,17 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
@@ -272,11 +274,12 @@ test process_small {process_sample one_exome_yri_mx2} {
 		{*}[get ::optx {}] \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
@@ -307,12 +310,13 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		{*}[get ::optx {}] \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
@@ -341,9 +345,10 @@ test process_small {process_project exomes_yri_mx2} {
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -353,7 +358,7 @@ test process_small {process_project exomes_yri_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -383,9 +388,10 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -395,7 +401,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -424,9 +430,10 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
 		-x colinfo -x *.stats.zst -x fastqc_report.html -x *.vcf.gz \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -436,7 +443,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -478,6 +485,7 @@ test process_small {process_sample one_genome_yri_mx2} {
 		{*}[get ::optx {}] \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -512,9 +520,10 @@ test process_small {process_project genomes_yri_mx2} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x summary-*.txt \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -527,7 +536,7 @@ test process_small {process_project genomes_yri_mx2} {
 	}
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -539,7 +548,7 @@ test process_small {process_project cg_mx2} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
@@ -555,9 +564,10 @@ test process_small {process_project cg_mx2} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -570,7 +580,7 @@ test process_small {process_project cg_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -582,10 +592,10 @@ test process_small {process_project mixed_yri_mx2} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/${basename}/cgNA19240mx2
-	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/${basename}/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/${basename}/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} gilNA19240mx2 {*}[glob ori/${basename}/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/${basename}/exNA19239mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/${basename}/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/${basename}/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
@@ -601,9 +611,10 @@ test process_small {process_project mixed_yri_mx2} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -617,7 +628,7 @@ test process_small {process_project mixed_yri_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -629,10 +640,10 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	set dest tmp/${basename}
 	file delete -force tmp/${basename}
 	file mkdir tmp/${basename}
-	cg project_addsample tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
-	cg project_addsample tmp/${basename} gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample -transfer rel tmp/${basename} gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -transfer rel -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename} exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
@@ -647,9 +658,10 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		-x colinfo -x *.stats.zst -x summary-*.txt \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x *info_analysis.tsv\
+		-x *.html -x info_analysis.tsv \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
 			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
@@ -663,7 +675,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb \
+		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -689,4 +701,5 @@ test process_small {annotate refseqbuild/hg38} {
 }
 
 testsummarize
+
 

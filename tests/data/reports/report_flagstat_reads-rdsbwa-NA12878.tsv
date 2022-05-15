@@ -1,0 +1,14 @@
+sample	source	parameter	value	value_qcfail
+rdsbwa-NA12878	flagstat_reads	in total	1571753746	0
+rdsbwa-NA12878	flagstat_reads	secondary	0	0
+rdsbwa-NA12878	flagstat_reads	supplementary	0	0
+rdsbwa-NA12878	flagstat_reads	duplicates	19840074	0
+rdsbwa-NA12878	flagstat_reads	mapped	1567863326	0
+rdsbwa-NA12878	flagstat_reads	paired in sequencing	1571753746	0
+rdsbwa-NA12878	flagstat_reads	read1	785876873	0
+rdsbwa-NA12878	flagstat_reads	read2	785876873	0
+rdsbwa-NA12878	flagstat_reads	properly paired	1532839478	0
+rdsbwa-NA12878	flagstat_reads	with itself and mate mapped	1564774190	0
+rdsbwa-NA12878	flagstat_reads	singletons	3089136	0
+rdsbwa-NA12878	flagstat_reads	with mate mapped to a different chr	8336752	0
+rdsbwa-NA12878	flagstat_reads	with mate mapped to a different chr	3816101	0

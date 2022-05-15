@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stdout,"depth\tnrdiff\tbin\tchromosome\tpos\tref\tdepth\tbases\tqual\n");
 	}
 	while (1) {
-		ref="N";
+		ref='N';
 		linepos = line.string;
 NODPRINT("%s\n",linepos)
 		count = 0;

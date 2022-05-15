@@ -40,7 +40,7 @@ proc cg_gatk_genotypevcfs args {
 	} else {
 		lappend opts --allow-old-rms-mapping-quality-annotation-data
 	}
-	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
+	gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 		-R $gatkrefseq \
 		-V $gvcf \
 		-O $vcf.temp[gzext $vcf] \

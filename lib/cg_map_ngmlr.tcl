@@ -6,7 +6,7 @@ proc refseq_ngmlr_job {refseq preset} {
 	if {[jobtargetexists $ngmlrrefseq]} {
 		return $ngmlrrefseq
 	}
-	if {![jobtargetexists [list $refseq-ht-13-2.2.ngm $refseq-enc.2.ngm] [list $refseq]]} {
+	if {![jobtargetexists [list $ngmlrrefseq-ht-13-2.2.ngm $refseq-enc.2.ngm] [list $ngmlrrefseq]]} {
 		job [job_relfile2name ngmlr_2refseq- $refseq] -deps {
 			$refseq
 		} -targets {

@@ -58,7 +58,7 @@ proc job_process_par_onepass {} {
 	while {[llength $queue]} {
 		set joberror {}
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
+		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
@@ -76,45 +76,6 @@ proc job_process_par_onepass {} {
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		set submittime [timestamp]
-		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
-				if {[regexp {^missing dependency} $fadeps]} {
-					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
-				} elseif {[regexp {^ptargets hit} $fadeps]} {
-					# ptarget dependency means the job cannot yet be submitted
-					# nor any of the jobs that may be dependent on it
-					# we wil re-add it to the queue for later processing
-					# and create ptargets from its targets
-					# job_logclear $job
-					job_log $job "blocking at $jobname: $fadeps"
-					lappend cgjob(queue) $line
-					set cgjob_blocked($job) 1
-					job_process_par_marktargets {} [job_targetsreplace $ftargets {}] {} q
-					job_logclose $job
-					continue
-				} else {
-					set errormsg "error in foreach dependencies for $jobname: $fadeps"
-					job_log $job $errormsg
-					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
-				}
-				job_log $job "-----> job $jobname skipped: dependencies not found"
-				job_logclose $job
-				continue
-			}
-			set temp {}
-			# make foreach empty
-			lset line 5 {}
-			foreach fdep $fadeps ftargetvar $ftargetvars {
-				lset line 1 $jobname-$fdep
-				lset line 4 [list $fdep {*}$deps]
-				lset line 6 $ftargetvar
-				lappend temp $line
-			}
-			set queue [list_concat $temp $queue]
-			job_logclear $job
-			continue
-		}
 		job_lognf $job "==================== $jobname ===================="
 		cd $pwd
 		# check if job is already running, if so, mark targets with jobid

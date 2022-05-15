@@ -535,7 +535,7 @@ test pmulticompar$testname {basic reannot varall split gz} {
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.gz tmp/var-annot2.tsv.gz
 	exec diff tmp/temp.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test pmulticompar$testname {basic reannot varall split gvcf} {
 	test_cleantmp
@@ -1197,7 +1197,7 @@ test pmulticompar$testname {100 samples} {
 test pmulticompar$testname {20 samples, -m 5} {
 	test_cleantmp
 	set files [multicompartest 20]
-	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files 2>@ stderr >@ stdout
+	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files >& tmp/warnings.log
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 

@@ -384,3 +384,12 @@ proc catchdef {cmd errorvalue} {
 	}
 }
 
+proc list_replace {list replacelist} {
+	foreach {old new} $replacelist {
+		set pos [lsearch $list $old]
+		if {$pos != -1} {
+			set list [lreplace $list $pos $pos $new]
+		}
+	}
+	return $list
+}

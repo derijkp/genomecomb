@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
 				comp = '=';
 			}
 			fprintf(stdout,"%s %c %s (%d)\n",argv[i],comp,argv[j],diff);
+			fflush(stdout);
 		}
 	}
 	fprintf(stdout,"nr errors = %d\n",errors);

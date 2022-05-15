@@ -465,6 +465,7 @@ proc process_sample_job {args} {
 	set varcallers {gatk sam}
 	set svcallers {}
 	set methcallers {}
+	set counters {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -522,6 +523,9 @@ proc process_sample_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-counters {
+			set counters $value
 		}
 		-s - -split {
 			set split $value
@@ -646,7 +650,7 @@ proc process_sample_job {args} {
 		if {$datatype eq ""} {set datatype amplicons}
 	} elseif {$amplicons ne ""} {
 		set temp [lindex [split [file root [gzroot [file tail $amplicons]]] -] end]
-		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv 1
+		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
 		set amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
 		if {$datatype eq ""} {set datatype amplicons}
 	}
@@ -711,7 +715,7 @@ proc process_sample_job {args} {
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers svcallers methcallers realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers methcallers counters realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -784,6 +788,12 @@ proc process_sample_job {args} {
 	# create bam from fastq files (if found)
 	set cleanedbams {}
 	set processlist {}
+	# check even number of fastqs for paired analysis
+	if {$paired} {
+		if {[expr {[llength $fastqfiles]%2}] != 0} {
+			error "paired analysis (default, use -paired 0 to turn off), but number of fastqs is uneven ([llength $fastqfiles]) for sample $sampledir"
+		}
+	}
 	if {[isint $maxfastqdistr]} {
 		set len [llength $fastqfiles]
 		if {$paired} {
@@ -1023,6 +1033,13 @@ proc process_sample_job {args} {
 				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
 				$fast5dir $fastqdir $cleanedbam]
 			lappend todo(meth) [lindex [jobglob [file dir $cleanedbam]/meth-$methcaller-$bambase.tsv] 0]
+		}
+		foreach counter $counters {
+			if {![auto_load count_${counter}_job]} {
+				error "counter $counter not supported"
+			}
+			lappend cleanupdeps {*}[count_${counter}_job -threads $threads {*}$extraopts \
+				-refseq $refseq $cleanedbam]
 		}
 	}
 	#calculate reports

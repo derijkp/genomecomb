@@ -1,5 +1,8 @@
 proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
 	analysisinfo_write $dep $target meth_nanopolish_cg_version [version genomecomb]
+	if {[file extension $target] in ".gz .bgz"} {
+		catch {file delete $target.tbi}
+	}
 	catch {close $o} ; catch {close $f}
 	set f [gzopen $dep]
 	set header [tsv_open $f]
@@ -45,9 +48,6 @@ proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
 	}
 	gzclose $o
 	gzclose $f
-	if {[file tail $target] in ".gz .bgz"} {
-		cg maketabix $target
-	}
 }
 
 proc fastqs_mergename {fastqfiles} {
@@ -236,13 +236,13 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
 		cg cat -c 0 {*}$deps | cg select -s - | cg ${meth-compression} > $target.temp
 		file rename -- $target.temp $target
-		if {${meth-compression} in "gz bgz"} {
-			cg maketabix $target
-		}
 		if {$bamcache ne $bamfile} {
 			file delete -force $bamcache
 			file delete -force $bamcacheindex
 		}
+	}
+	if {[file extension $smethfile] in ".gz .bgz"} {
+		maketabix_job $smethfile
 	}
 	set root [file root [file tail [gzroot $resultfile]]]
 	set dep $smethfile
@@ -258,6 +258,9 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
 		result_rename $tempresult $target
 		file delete -force $target.temp
+	}
+	if {[file extension $target] in ".gz .bgz"} {
+		maketabix_job $target
 	}
 	return [list $resultfile $smethfile]
 }

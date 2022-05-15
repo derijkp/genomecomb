@@ -398,7 +398,7 @@ proc cg_annotate_job {args} {
 	}
 	# if nothing to add, copy orifile
 	if {![llength $dbfilestodo]} {
-		job annotate_copyori -deps {$orifile} -targets {$resultfile $analysisinfofile} -code {
+		job annotate_copyori-[file tail $resultfile] -deps {$orifile} -targets {$resultfile $analysisinfofile} -code {
 			set ext [file extension [gzroot $dep]]
 			set tempfile [filetemp_ext $target]
 			if {$ext eq ".vcf"} {

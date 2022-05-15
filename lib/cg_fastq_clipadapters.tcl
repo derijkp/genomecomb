@@ -57,7 +57,7 @@ proc fastq_clipadapters_job {args} {
 	set temptargets {}
 	if {[llength $fastqfiles] == 1 || !$paired} {
 		foreach {dep} $fastqfiles {target} $resultfastqs a1 $resultanalysisinfo {
-			set name [file tail [file dir $target]]__[file tail $target]
+			set name [file tail [file dir [file dir $target]]]__[file tail $target]
 			job clip-$name {*}$skips -deps {
 				$dep
 			} -targets {

@@ -8,7 +8,7 @@ output: html_document
 ```{r setOptions, message=FALSE, echo=FALSE}
 #script to generate mastr html report
 #script should be called as R -e 'library(rmarkdown); library(stringr); 
-#                                 mastrdir=getwd(); local_jsapi="/complgen2/mastr-procedure/displayChartHistogram.js" mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");
+#                                 mastrdir=getwd(); local_jsapi="/complgen2/mastr-procedure/displayChartHistogram.js" ; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");
 #                                 knit2html("/complgen2/mastr-procedure/mastrreport.Rmd",
 #                                             output=paste(mastr,"html",sep="."))'
 library('ggplot2')
@@ -31,6 +31,7 @@ google_jsapi_local <- function(googleChart, local_jsapi) {
 ```
 
 ```{r loaddata, results='asis', echo=FALSE}
+SETVARS
 setwd(mastrdir)
 statsfile = paste(mastrdir, '/reports/report_stats-',mastr,'.tsv',sep='')
 if (file.exists(statsfile)) {

@@ -115,13 +115,13 @@ proc gatk_compar_job args {
 		 -vars {region gatkrefseq resultvcf samplemapfile maxmem filesarg} \
 		 -code {
 			set combinedgvcf [file root [gzroot $resultvcf]]-combined.gvcf
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] CombineGVCFs \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] CombineGVCFs \
 				-R $gatkrefseq \
 				{*}$filesarg \
 				-O $combinedgvcf
 			#
 			# to vcf
-			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
+			gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
 				-R $gatkrefseq \
 				-V $combinedgvcf \
 				-O $resultvcf.temp[file extension $resultvcf] \
@@ -153,30 +153,38 @@ proc gatk_compar_job args {
 			 -skip $resultvcf \
 			 -deps $deps \
 			 -targets {$resultvcf.$region} \
-			 -vars {region gatkrefseq resultvcf samplemapfile batchsize maxmem newqual} \
+			 -vars {region gatkrefseq refseq resultvcf samplemapfile batchsize maxmem newqual} \
 			 -code {
 				# combine using GenomicsDBImport
+				set intervals [samregions_gatk $region $refseq]
 				set tempfile [tempfile]
 				file delete $tempfile
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenomicsDBImport \
+				gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g] GenomicsDBImport \
+					-R $gatkrefseq \
 					--genomicsdb-workspace-path $tempfile \
 					--sample-name-map $samplemapfile \
 					--overwrite-existing-genomicsdb-workspace true \
-					--TMP_DIR [scratchdir] \
+					--tmp-dir [scratchdir] \
 					--reader-threads 2 \
 					--batch-size $batchsize \
-					--intervals $region >@ stdout 2>@stderr
+					--intervals $intervals >@ stdout 2>@stderr
 				#
 				# to vcf
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
+				set opts {}
+				if {[catch {version gatk 4.1}]} {
+					lappend opts -new-qual $newqual
+				} else {
+					if {$newqual ne "true"} {error "gatk_compar error: option newqual $newqual given, but version [version gatk] of gatk no longer supports -new-qual option"}
+				}
+				gatkexec [list -XX:ParallelGCThreads=1 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 					-R $gatkrefseq \
 					-V gendb://$tempfile \
 					-O $resultvcf.$region.temp \
 					-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation \
 					--verbosity ERROR \
-					-new-qual $newqual \
+					{*}$opts \
 					--only-output-calls-starting-in-intervals \
-					--intervals $region >@ stdout 2>@stderr
+					--intervals $intervals >@ stdout 2>@stderr
 				file delete -force $tempfile
 				file rename -- $resultvcf.$region.temp $resultvcf.$region
 				file delete $resultvcf.$region.temp.idx

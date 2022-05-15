@@ -80,7 +80,8 @@ test reports {process_reports no targetfile} {
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html
 	set result [tsvdiff -q 1 -x *.png -x fastqc_report.html -x samstats-*.stats.zst \
 		-ignorefields {
-			clipping_cg_version sammerge_version bamclean_version 
+			clipping_cg_version sammerge_version bamclean_version \
+			removeduplicates_version regextract_version regextrac_samtools varcaller_version
 			varcaller_cg_version report_vars_version histodepth_version
 			predictgender_version report_covered_version
 		} \
@@ -93,20 +94,21 @@ test reports {process_reports no targetfile} {
 } {}
 
 test reports {process_reportscombine} {
-	file mkdir tmp/samples/ERR194147_30x_NA12878
-	file copy data/reports tmp/samples/ERR194147_30x_NA12878
+	file mkdir tmp/samples/NA12878
+	file copy data/reports tmp/samples/NA12878
 	file mkdir tmp/samples/test/reports
 	foreach file {
-		report_fastq_fw-ERR194147_30x_NA12878.tsv
-		report_fastq_rev-ERR194147_30x_NA12878.tsv		
+		report_fastq_fw-NA12878.tsv
+		report_fastq_rev-NA12878.tsv
+		report_flagstat_reads-rdsbwa-NA12878.tsv
 	} {
-		regsub ERR194147_30x_NA12878 $file test newfile
+		regsub NA12878 $file test newfile
 		set c [file_read data/reports/$file]
-		regsub -all ERR194147_30x_NA12878 $c test c
+		regsub -all NA12878 $c test c
 		file_write tmp/samples/test/reports/$newfile $c
 	}
-	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-ERR194147_30x_NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
-	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/ERR194147_30x_NA12878/reports tmp/samples/test/reports
+	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
+	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/NA12878/reports tmp/samples/test/reports
 	diffhtmlreport tmp/combinereports data/expected-combinereports 1
 } {}
 
@@ -114,8 +116,10 @@ test reports {process_reportscombine 2} {
 	cd $::smalltestdir
 	file delete -force tmp/combinereports
 	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[bsort [glob expected/exomes_yri_mx2/samples/* expected/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
-	cg tsvdiff -q 1 -x report-combinereports.html tmp/combinereports expected/combinereports
-	diffhtmlreport tmp/combinereports/report-combinereports.html expected/combinereports/report-combinereports.html 1
+	set result {}
+	lappend result [tsvdiff -q 1 -x report-combinereports.html tmp/combinereports expected/combinereports]
+	lappend result [diffhtmlreport tmp/combinereports/report-combinereports.html expected/combinereports/report-combinereports.html 1]
+	join [list_remove $result {}] \n
 } {}
 
 testsummarize

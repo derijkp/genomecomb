@@ -121,7 +121,7 @@ proc job_process_parstatus {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
+		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 #		# If this job was previously blocked because of ptargets deps,
@@ -133,40 +133,9 @@ proc job_process_parstatus {} {
 #			}
 #			unset cgjob_blocked($job)
 #		}
-		# check foreach deps, skip if not fullfilled
-		# check for foreach patterns, expand into one ore more entries in the queue
 		set submittime ""
-		if {[llength $foreach]} {
-			# we assume ptarget locks are resolved
-			unset -nocomplain cgjob_ptargets
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
-				if {[regexp {^missing dependency} $fadeps]} {
-#					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
-				} elseif {[regexp {^ptargets hit} $fadeps]} {
-					error "cannot get status on unfinished ptargets hit"
-				} else {
-					set errormsg "error in foreach dependencies for $jobname: $fadeps"
-					puts "joberror\t$jobname\t\terror in foreach dependencies: $fadeps\t$job"
-					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
-				}
-				puts "skipped\t$jobname\t\tdependencies not found\t$job"
-				lappend graph $jobname
-				continue
-			}
-			set temp {}
-			# make foreach empty
-			lset line 5 {}
-			foreach fdep $fadeps ftargetvar $ftargetvars {
-				lset line 1 $jobname-$fdep
-				lset line 4 [list $fdep {*}$deps]
-				lset line 6 $ftargetvar
-				lappend temp $line
-			}
-			set queue [list_concat $temp $queue]
-			continue
-		}
-		cd $pwd
+		# we assume ptarget locks are resolved
+		unset -nocomplain cgjob_ptargets
 		# get job log information -> duration
 		set duration {}
 		if {[job_file_exists $job.log]} {
@@ -265,6 +234,8 @@ proc job_process_parstatus {} {
 			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets $ptargets
 		}
 		set cgjob_running($job) $jobnum
+		# make sure ptarget locks are seen as resolved
+		unset -nocomplain cgjob_ptargets
 	}
 	cd $jobroot
 }

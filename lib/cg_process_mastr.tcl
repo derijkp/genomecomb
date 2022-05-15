@@ -138,7 +138,13 @@ proc generate_html_report_job {experiment {destdir {}}} {
 		cg select -overwrite 1 -g analysis -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
-		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir="@destdir@"; local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @destdir@ $destdir @rmd@ $rmd @chartjs@ $chartjs]]
+		set mastr [file tail $destdir]
+#		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir="@destdir@"; local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @destdir@ $destdir @rmd@ $rmd @chartjs@ $chartjs]]
+		set c [file_read $rmd]
+		set c [string_change $c [list SETVARS "mastrdir=\"$destdir\"; mastr=\"$mastr\"; local_jsapi=\"$chartjs\"; "]]
+		set tempfile [tempfile].Rmd
+		file_write $tempfile $c
+		set cmd [string_change {library(rmarkdown); library(stringr); render("@rmd@", output_file="@mastr@.html.temp", output_dir = "@mastrdir@")} [list @rmd@ $tempfile @mastrdir@ $destdir @mastr@ $mastr]]
 		exec [findR] -e $cmd >@ stdout 2>@ stderr
 		file rename -force -- $target.temp $target
 		file delete $destdir/compar/summary-compar-${experiment}.tsv
