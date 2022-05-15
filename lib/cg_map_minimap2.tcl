@@ -1,4 +1,7 @@
-proc refseq_minimap2_job {refseq preset} {
+proc refseq_minimap2_job {refseq {preset {}}} {
+	if {$preset eq ""} {
+		set preset map-ont
+	}
 	upvar job_logdir job_logdir
 	set minimap2refseq $refseq.minimap2.$preset
 	if {[file exists $minimap2refseq]} {return $minimap2refseq}
@@ -60,7 +63,7 @@ proc map_mem_minimap2 {mem threads preset} {
 
 proc cg_map_minimap2 {args} {
 	if {[info exists ::cgextraopts(minimap2)]} {set extraopts $::cgextraopts(minimap2)} else {set extraopts {}}
-	set paired 1
+	set paired 0
 	set keepargs $args
 	set preset {}
 	set readgroupdata {}
