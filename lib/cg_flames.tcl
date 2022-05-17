@@ -248,21 +248,21 @@ proc cg_flames_mergeresults {target transcript_classification_file transcripts_g
 
 proc flames_job {args} {
 	# putslog [list flames_job {*}$args]
+	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg flames {*}$args]"
 	global appdir
 	set refseq {}
 	set skips {}
 	set genes {}
+	set extraopts {}
 	set sqanti 1
 	set compar joint
 	set threads 8
-	upvar job_logdir job_logdir
+	set resultfile {}
+	set reftranscripts {}
 	cg_options flames args {
 		-refseq {
 			set refseq $value
-		}
-		-genes {
-			set genes $value
 		}
 		-compar {
 			set compar $value
@@ -270,168 +270,159 @@ proc flames_job {args} {
 		-threads {
 			set threads $value
 		}
+		-reftranscripts {
+			set reftranscripts $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
-	} {projectdir}
-	set projectdir [file_absolute $projectdir]
+	} {fastqdir resultfile} 1 2
+	set fastqdir [file_absolute $fastqdir]
+	if {$resultfile eq ""} {
+		set root [file_rootname [file dir $fastqdir]]
+		set resultfile [file dir $fastqdir]/isoform_counts-sqanti3-flames-$root.genepred.tsv
+	} else {
+		set resultfile [file_absolute $resultfile]
+		set root [file_rootname $resultfile]
+	}
+	set resultfile [file_absolute $resultfile]
+	set resulttail [file tail $resultfile]
+	set destdir [file dir $resultfile]
+	#
 	set refseq [refseq $refseq]
-	set gtfannotation [flames_getref $refseq]
-	set flamesdir [findflames]
-	cd $projectdir
-	set samples [glob samples/*]
-	job_logfile $projectdir/flames_[file tail $projectdir] $projectdir $cmdline \
+	# 
+	job_logfile $destdir/flames_[file tail $destdir] $destdir $cmdline \
 		{*}[versions flames dbdir zstd os]
 	# analysis per sample
-	set allseq_fasqfiles {}
-	foreach sample $samples {
-		putsvars sample
-		cd $projectdir/$sample
-		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
-		set rootname [file_rootname $bam]
-		mkdir flames-$rootname
-		job flames_correct-[file tail $sample] {*}$skips -skip flames-$rootname/counts_matrix-flames-$rootname.tsv \
-		-cores $threads \
-		-deps {
-			$bam $refseq $gtfannotation
-		} -targets {
-			flames-$rootname/all_corrected-flames-$rootname.bed
-		} -vars {
-			bam rootname flamesdir refseq gtfannotation threads
-		} -code {
-			analysisinfo_write $bam $target flames [version flames]
-			set bed12 [file root $bam].bed12
-			exec bam2Bed12.py -i $bam > $bed12.temp
-			file rename -force $bed12.temp $bed12
-			catch_exec flames.py correct -t $threads \
-				-g $refseq \
-				--gtf $gtfannotation \
-				-q $bed12 \
-				-o flames-$rootname/transcripts-flames-$rootname.temp >@ stdout 2>@ stderr
-			file rename flames-$rootname/transcripts-flames-$rootname.temp_all_corrected.bed flames-$rootname/all_corrected-flames-$rootname.bed
-			catch {file rename flames-$rootname/transcripts-flames-$rootname.temp_all_inconsistent.bed flames-$rootname/all_inconsistent-flames-$rootname.bed}
-			file delete $bed12
-		}
-		set fastqfiles [jobglob fastq/*.fastq.gz]
-		set allseq_fasqfile flames-$rootname/allseq-$rootname.fastq.gz
-		lappend allseq_fasqfiles [file_absolute $allseq_fasqfile]
-		job flames_allseq-[file tail $sample] {*}$skips -skip flames-$rootname/counts_matrix-flames-$rootname.tsv \
-		-deps $fastqfiles -targets {
-			flames-$rootname/allseq-$rootname.fastq.gz
-		} -vars {
-			rootname fastqfiles
-		} -code {
-			# next best on combined data from samples
-			set tempfastq flames-$rootname/allseq-$rootname.fastq.gz
-			if {![file exists $tempfastq]} {
-				puts "Making $tempfastq"
-				exec cat {*}$fastqfiles > $tempfastq.temp
-				file rename $tempfastq.temp $tempfastq
+	set flamesdir $destdir/flames-$root
+	mkdir $flamesdir
+	job flames-[file tail $resultfile] {*}$skips -skip flames-$rootname/counts_matrix-flames-$rootname.tsv \
+	-cores $threads \
+	-deps {
+		$fastqdir $refseq $gtfannotation
+	} -targets {
+		$resultfile
+	} -vars {
+		fastqdir resultfile reftranscripts root destdir flamesdir refseq gtfannotation threads
+	} -code {
+		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile flames [version flames]
+		set keeppwd [pwd]
+		cd $flamesdir
+		file_write config.json [deindent {
+			{
+			    "comment":"this is the default config for SIRV spike-in data. use splice annotation on alignment.",
+			    "pipeline_parameters":{
+			        "do_genome_alignment":true,
+			        "do_isoform_identification":true,
+			        "do_read_realignment":true,
+			        "do_transcript_quantification":true
+			    },
+			    "global_parameters":{
+			        "generate_raw_isoform":true,
+			        "has_UMI":false
+			    },
+			    "isoform_parameters":{
+			        "MAX_DIST":10,
+			        "MAX_TS_DIST":100,
+			        "MAX_SPLICE_MATCH_DIST":10,
+			        "min_fl_exon_len":40,
+			        "Max_site_per_splice":3,
+			        "Min_sup_cnt":10,
+			        "Min_cnt_pct":0.01,
+			        "Min_sup_pct":0.2,
+			        "strand_specific":0,
+			        "remove_incomp_reads":5
+			    },
+			    "alignment_parameters":{
+			        "use_junctions":true,
+			        "no_flank":true
+			    },
+			    "realign_parameters":{
+			        "use_annotation":true
+			    },
+			    "transcript_counting":{
+			        "min_tr_coverage":0.75,
+			        "min_read_coverage":0.75
+			    }
 			}
+		}]
+		mklink $refseq [file tail $refseq]
+		mklink $bamfile [file tail $bamfile]
+		mklink $bamfile.bai [file tail $bamfile].bai
+		mklink $reftranscripts [file tail $reftranscripts]
+		mkdir fastq
+		set fastqfiles [bsort [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]]
+		set mergedfastqfile fastq/$root.fastq
+		if {[llength $fastqfiles] > 1} {
+			exec cg zcat {*}$fastqfiles | gzip --fast > $mergedfastqfile.gz.temp
+			file rename $mergedfastqfile.gz.temp $mergedfastqfile.gz
+		} else {
+			set fastqfile [lindex $fastqfiles 0]
+			mklink -absolute 0 $fastqfile $mergedfastqfile[gzext $fastqfile]
 		}
-		job flames_collapse-[file tail $sample] {*}$skips -skip flames-$rootname/counts_matrix-flames-$rootname.tsv \
-		-cores $threads \
-		-deps {
-			flames-$rootname/allseq-$rootname.fastq.gz
-			flames-$rootname/all_corrected-flames-$rootname.bed
-			$refseq $gtfannotation
-		} -targets {
-			flames-$rootname/transcripts-flames-$rootname.isoforms.gtf
-			flames-$rootname/transcripts-flames-$rootname.isoforms.bed
-			flames-$rootname/transcripts-flames-$rootname.isoforms.fa
-		} -vars {
-			rootname refseq gtfannotation threads
-		} -code {
-			analysisinfo_write flames-$rootname/all_corrected-flames-$rootname.bed $target flames [version flames]
-			analysisinfo_write flames-$rootname/all_corrected-flames-$rootname.bed flames-$rootname/transcripts-flames-$rootname.isoforms.fa flames [version flames]
-			puts "collapse -> flames-$rootname-collapse"
-			catch_exec flames.py collapse \
-				-t $threads \
-				-g $refseq \
-				--gtf $gtfannotation \
-				-r flames-$rootname/allseq-$rootname.fastq.gz \
-				-q flames-$rootname/all_corrected-flames-$rootname.bed \
-				-o flames-$rootname/temptranscripts-flames-$rootname >@ stdout 2>@ stderr
-			foreach file [glob flames-$rootname/temptranscripts-flames-$rootname*] {
-				file rename -force $file flames-$rootname/[string range [file tail $file] 4 end]
-			}
+		exec flames bulk_long_pipeline.py {*}$extraopts \
+			--genomefa [file tail $refseq] \
+			--gff3 [file tail $reftranscripts] \
+			--outdir tempflames \
+			--config_file config.json \
+			--fq_dir fastq \
+			>@ stdout 2>@ stderr
+		foreach file [glob tempflames/*] {
+			file rename -force $file .
 		}
-		job flames_quantify-[file tail $sample] {*}$skips -cores $threads -deps {
-			flames-$rootname/transcripts-flames-$rootname.isoforms.fa
-			flames-$rootname/allseq-$rootname.fastq.gz
-		} -targets {
-			flames-$rootname/counts_matrix-flames-$rootname.tsv
-		} -vars {
-			rootname sample threads
-		} -code {
-			analysisinfo_write flames-$rootname/transcripts-flames-$rootname.isoforms.fa $target flames [version flames]
-			set manifestdata {}
-			lappend manifestdata [join [list [file tail $sample] conditionA batch1 flames-$rootname/allseq-$rootname.fastq.gz] \t]
-			file_write reads_manifest.tsv [join $manifestdata \n]\n
-			puts "quantify -> flames-$rootname/counts_matrix-flames-$rootname.tsv"
-			catch_exec flames.py quantify \
-				--threads $threads \
-				-r reads_manifest.tsv \
-				-i flames-$rootname/transcripts-flames-$rootname.isoforms.fa \
-				-o flames-$rootname/counts_matrix-flames-$rootname.tsv.temp >@ stdout 2>@ stderr
-			file rename -force flames-$rootname/counts_matrix-flames-$rootname.tsv.temp flames-$rootname/counts_matrix-flames-$rootname.tsv
-		}
-		job flames_sqanti-$rootname {*}$skips -deps {
-			flames-$rootname/transcripts-flames-$rootname.isoforms.gtf
-			flames-$rootname/counts_matrix-flames-$rootname.tsv
-			$gtfannotation
-			$refseq
-		} -targets {
-			isoform_counts-sqanti3-flames-$rootname.genepred.tsv
-			totalcounts-sqanti3-flames-$rootname.tsv
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_classification.txt
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_junctions.txt
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.gtf
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genePred
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv
-			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.fasta
-		} -vars {
-			rootname sample refseq gtfannotation gtfannotation
-		} -code {
-			mkdir sqanti3-flames-$rootname
-			analysisinfo_write flames-$rootname/transcripts-flames-$rootname.isoforms.gtf isoform_counts-sqanti3-flames-$rootname.genepred.tsv sqanti3 [version sqanti3_qc.py]
-			analysisinfo_write flames-$rootname/transcripts-flames-$rootname.isoforms.gtf sqanti3-flames-$rootname/sqanti3-${rootname}_classification.txt sqanti3 [version sqanti3_qc.py]
-			catch_exec sqanti3_qc.py \
-				flames-$rootname/transcripts-flames-$rootname.isoforms.gtf \
-				$gtfannotation \
-				$refseq \
-				-d sqanti3-flames-$rootname \
-				-o sqanti3-flames-$rootname \
-				--report skip
-			cg genepred2tsv \
-				sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genePred \
-				sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv
-			# merge results
-			set target isoform_counts-sqanti3-flames-$rootname.genepred.tsv
-			cg_flames_mergeresults $target \
-				sqanti3-flames-$rootname/sqanti3-flames-${rootname}_classification.txt \
-				sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv \
-				flames-$rootname/counts_matrix-flames-$rootname.tsv \
-				totalcounts-sqanti3-flames-$rootname.tsv
-		}
-		foreach genename $genes {
-			job flames_plotisoforms-[file tail $sample]-$genename {*}$skips -deps {
-				flames-$rootname/transcripts-flames-$rootname.isoforms.bed 
-				flames-$rootname/counts_matrix-flames-$rootname.tsv
-			} -targets {
-				flames_results/${genename}_isoforms.png
-			} -vars {
-				rootname sample
-			} -code {
-				mkdir flames_results
-				puts "plot $rootname"
-				catch {
-					exec plot_isoform_usage.py flames-$rootname/transcripts-flames-$rootname.isoforms.bed flames-$rootname/counts_matrix-flames-$rootname.tsv $genename
-				}
-				file rename ${genename}_isoforms.png flames_results/${genename}_isoforms.png
-			}
-		}
+		file delete tempflames
+		#
+		cd $destdir
+		mklink -absolute 0 flames-$root/isoform_annotated.filtered.gff3 transcripts-flames-$root.isoforms.gff3
+		mklink -absolute 0 flames-$root/transcript_assembly.fa transcripts-flames-$root.isoforms.fa
+		set f [gzopen flames-$root/transcript_count.csv.gz]
+		set header [split [gets $f] ,]
+		set newheader {transcript_id gene_id}
+		foreach field 
+		mklink -absolute 0 flames-$root/
+		mklink -absolute 0 flames-$root/
 	}
+	job flames_sqanti-$rootname {*}$skips -deps {
+		flames-$rootname/transcripts-flames-$rootname.isoforms.gtf
+		flames-$rootname/counts_matrix-flames-$rootname.tsv
+		$gtfannotation
+		$refseq
+	} -targets {
+		isoform_counts-sqanti3-flames-$rootname.genepred.tsv
+		totalcounts-sqanti3-flames-$rootname.tsv
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_classification.txt
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_junctions.txt
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.gtf
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genePred
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv
+		sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.fasta
+	} -vars {
+		rootname sample refseq gtfannotation gtfannotation
+	} -code {
+		mkdir sqanti3-flames-$rootname
+		analysisinfo_write flames-$rootname/transcripts-flames-$rootname.isoforms.gtf isoform_counts-sqanti3-flames-$rootname.genepred.tsv sqanti3 [version sqanti3_qc.py]
+		analysisinfo_write flames-$rootname/transcripts-flames-$rootname.isoforms.gtf sqanti3-flames-$rootname/sqanti3-${rootname}_classification.txt sqanti3 [version sqanti3_qc.py]
+		catch_exec sqanti3_qc.py \
+			flames-$rootname/transcripts-flames-$rootname.isoforms.gtf \
+			$gtfannotation \
+			$refseq \
+			-d sqanti3-flames-$rootname \
+			-o sqanti3-flames-$rootname \
+			--report skip
+		cg genepred2tsv \
+			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genePred \
+			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv
+		# merge results
+		set target isoform_counts-sqanti3-flames-$rootname.genepred.tsv
+		cg_flames_mergeresults $target \
+			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_classification.txt \
+			sqanti3-flames-$rootname/sqanti3-flames-${rootname}_corrected.genepred.tsv \
+			flames-$rootname/counts_matrix-flames-$rootname.tsv \
+			totalcounts-sqanti3-flames-$rootname.tsv
+	}
+}
+
+if 0 {
 	if {$compar eq "0"} return
 	# combined analysis
 	if {$compar eq "joint"} {
@@ -594,46 +585,6 @@ proc flames_job {args} {
 			cg_flames_genecounts $isoformcounts $genecounts
 		}
 	}
-}
-
-proc cg_flames_plot_isoform_usage {args} {
-	set cutnames {}
-	cg_options cg_flames_plot_isoform_usage args {
-		-cutnames {
-			if {$cutnames eq "0"} {
-				set cutnames {}
-			} else {
-				set cutnames $value
-			}
-		}
-	} {flamestranscriptsbed flamescounts_matrix genename resultprefix}
-	if {$cutnames ne ""} {
-		set tempfile [tempfile]
-		catch {close $f} ; set f [open $flamescounts_matrix]
-		catch {close $o} ; set o [open $tempfile w]
-		set line [split [gets $f] \t]
-		set newheader [list [lindex $line 0]]
-		foreach el [lrange $line 1 end] {
-			set temp [split $el _]
-			if {[llength $temp] > 3} {
-				set temp [lreplace $temp end-2 end-2]
-				set el [join [lrange $temp 0 end-1] _]
-			}
-			lappend newheader $el
-		}
-		puts $o [join $newheader \t]
-		fcopy $f $o
-		close $o
-		close $f
-		set flamescounts_matrix $tempfile
-	}
-	set flamesdir [findflames]
-	if {[info exists ::env(FONTCONFIG_PATH)]} {
-		append ::env(FONTCONFIG_PATH) :/etc/fonts
-	} else {
-		set ::env(FONTCONFIG_PATH) /etc/fonts
-	}
-	exec plot_isoform_usage.py $flamestranscriptsbed $flamescounts_matrix $genename $resultprefix
 }
 
 proc cg_flames {args} {

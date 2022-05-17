@@ -16,32 +16,31 @@ test flames {basic SIRV test} {
 		mklink $file tmp/sirv_flames/[file tail $file]
 	}
 	cd tmp/sirv_flames
-
-	puts time:[time {
-	exec bulk_long_pipeline.py \
-		--gff3 SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		--genomefa SIRV_isoforms_multi-fasta_170612a.fasta \
-		--outdir FLAMES_output \
-		--config_file SIRV_config.json \
-		--fq_dir fastq \
-		>@ stdout 2>@ stderr
-	}]	
-
-	puts time:[time {
-		exec cg sirv_flames {*}$::dopts \
-			-distrreg chr \
-			-threads 6 \
-			-refseq $::refseqdir/hg19 \
-			tmp/sirv_flames/fast5 tmp/sirv_flames/fastq tmp/sirv_flames/map-hlongshot-sminimap2-methtest.bam \
-			tmp/sirv_flames/meth-methtest.tsv.zst \
-			>& tmp/sirv_flames/sirv_flames.log
-	}]
+#	puts time:[time {
+#		exec bulk_long_pipeline.py \
+#			--gff3 SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+#			--genomefa SIRV_isoforms_multi-fasta_170612a.fasta \
+#			--outdir FLAMES_output \
+#			--config_file SIRV_config.json \
+#			--fq_dir fastq \
+#			>@ stdout 2>@ stderr
+#	}]
+	cg refseq_minimap2 /home/peter/genomecomb.smalltestdata/tmp/sirv_flames/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		map-sirv_flames.bam \
+		SIRV_isoforms_multi-fasta_170612a.fasta \
+		sirv_flames \
+		fastq/sample1.fastq.gz fastq/sample2.fastq.gz
+	exec samtools index map-sirv_flames.bam
+	cg flames \
+		-refseq SIRV_isoforms_multi-fasta_170612a.fasta \
+		-reftranscripts SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		map-sirv_flames.bam
+				
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
-		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *.analysisinfo -x *.png -x *.submitting \
-		-x *log_jobs -x *.index -x *.log \
+	lappend result [tsvdiff -q 1 -x *.bam -x *.bai \
 		tmp/sirv_flames expected/sirv_flames]
 	join [list_remove $result {}] \n
 } {}
