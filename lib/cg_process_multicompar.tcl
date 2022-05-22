@@ -311,45 +311,57 @@ proc process_multicompar_job {args} {
 		putslog "Starting meth"
 		putslog "Making/updating multicompar in $destdir/compar/meth-$experiment.tsv"
 		putslog "Finding samples"
-		set methcompar_file compar/meth-${experiment}.tsv.zst
-		if {[catch {cg select -a $methcompar_file} done]} {set done {}} else {set done [split $done \n]}
-		if {[file exists $methcompar_file]} {set mtime [file mtime $methcompar_file]} else {set mtime 0}
-		set stilltodo {}
-		foreach methfile $methfiles {
-			if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
-				putslog "redo all: $methfile is newer than $methcompar_file"
-				set stilltodo $methfiles
-				if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
-				break
-			}
-			set analysis [file_analysis $methfile]
-			if {![inlist $done $analysis]} {
-				putslog "Still todo: $analysis"
-				lappend stilltodo $methfile
-			}
+		# separate special types of methylation calling
+		unset -nocomplain typesa
+		foreach file $methfiles {
+			set type {}
+			regexp {(_[^_]+)$} [lindex [split [file tail $file] -] 1] temp type
+			lappend typesa($type) $file
 		}
-		putslog "methcompar Samples: [llength $methfiles] todo, [llength $done] already done, [llength $stilltodo] to add"
-		if {[llength $stilltodo]} {
-			putslog "Samples to add: $stilltodo"
-			putslog "Starting multicompar"
-			set methcompar_file [gzroot $methcompar_file].zst
-			# pmulticompar_job $methcompar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
-			pmulticompar_job -reannotregonly 0 -split 1 -limitreg $limitreg -erroronduplicates 0 \
-				-skipincomplete $skipincomplete \
-				$methcompar_file {*}$stilltodo
-		} else {
-			putslog "skipping meth multicompar (no update needed)"
-		}
-		# annotate methmulticompar
-		# --------------------
-		putslog "Starting annotation"
-		cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth-$experiment.tsv.zst $dbdir {*}$dbfiles
-		job indexannotcompar-$experiment -deps {
-			compar/annot_meth-$experiment.tsv
-		} -targets {
-			compar/annot_meth-$experiment.tsv.index/info.tsv
-		} -vars dbdir -code {
-			cg index -colinfo $dep
+		foreach type [array names typesa] {
+			set methcompar_file compar/meth${type}-${experiment}.tsv.zst
+			set umethfiles $typesa($type)
+			if {[catch {cg select -a $methcompar_file} done]} {set done {}} else {set done [split $done \n]}
+			if {[file exists $methcompar_file]} {set mtime [file mtime $methcompar_file]} else {set mtime 0}
+			set stilltodo {}
+			foreach methfile $umethfiles {
+				if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
+					putslog "redo all: $methfile is newer than $methcompar_file"
+					set stilltodo $umethfiles
+					if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
+					break
+				}
+				set analysis [file_analysis $methfile]
+				if {![inlist $done $analysis]} {
+					putslog "Still todo: $analysis"
+					lappend stilltodo $methfile
+				}
+			}
+			putslog "methcompar$type Samples: [llength $stilltodo] todo, [llength $done] already done, [llength $stilltodo] to add"
+			if {[llength $stilltodo]} {
+				putslog "Samples to add: $stilltodo"
+				putslog "Starting multicompar"
+				set methcompar_file [gzroot $methcompar_file].zst
+				# pmulticompar_job $methcompar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+				pmulticompar_job -reannotregonly 0 -split 1 -erroronduplicates 0 \
+					-type meth \
+					-limitreg $limitreg \
+					-skipincomplete $skipincomplete \
+					$methcompar_file {*}$stilltodo
+			} else {
+				putslog "skipping meth multicompar (no update needed)"
+			}
+			# annotate methmulticompar
+			# --------------------
+			putslog "Starting annotation"
+			cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth${type}-$experiment.tsv.zst $dbdir {*}$dbfiles
+			job indexannotcompar-$experiment -deps {
+				compar/annot_meth${type}-$experiment.tsv
+			} -targets {
+				compar/annot_meth${type}-$experiment.tsv.index/info.tsv
+			} -vars dbdir -code {
+				cg index -colinfo $dep
+			}
 		}
 	}
 	#

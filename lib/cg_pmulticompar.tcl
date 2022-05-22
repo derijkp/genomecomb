@@ -469,6 +469,7 @@ proc pmulticompar_job {args} {
 	set optkeepfields *
 	set force [job_force_get 1]
 	set limitreg {}
+	set type var
 	cg_options pmulticompar args {
 		-r - -reannotregonly {
 			putslog "Reannot reg only"
@@ -491,6 +492,12 @@ proc pmulticompar_job {args} {
 		}
 		-keepfields {
 			set optkeepfields $value
+		}
+		-type {
+			if {$value ni "var meth"} {
+				error "pmulticompar error: unsupported value \"$value\" for option -type"
+			}
+			set type $value
 		}
 		-m - -maxopenfiles {
 			maxopenfiles [expr {$value - 4}]
@@ -650,7 +657,7 @@ proc pmulticompar_job {args} {
 		job multicompar_addvars-$sample -force $force -deps $deps -targets {
 			$target
 		} -vars {
-			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields limitreg
+			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields limitreg type
 		} -code {
 			set allvarsfile [gzfile $allvarsfile]
 			set samplevarsfile [gzfile $samplevarsfile]
@@ -675,11 +682,11 @@ proc pmulticompar_job {args} {
 			set a1pos [lsearch $header alleleSeq1]
 			set a2pos [lsearch $header alleleSeq2]
 			set keepfields [list_sub $header -exclude $basicposs]
-			if {[string match fannotvar-* [file tail $samplevarsfile]]} {
-				set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
-				set keepfields [list_lremove $keepfields $mergefields]
-			} elseif {[string match meth-* [file tail $samplevarsfile]]} {
+			if {$type eq "meth"} {
 				set mergefields {num_motifs_in_group group_sequence}
+				set keepfields [list_lremove $keepfields $mergefields]
+			} elseif {[string match fannotvar-* [file tail $samplevarsfile]]} {
+				set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 				set keepfields [list_lremove $keepfields $mergefields]
 			}
 			set keepfields [list_remove $keepfields sequenced zyg alleleSeq1 alleleSeq2]
@@ -796,7 +803,7 @@ proc pmulticompar_job {args} {
 	# putsvars pastefiles
 	set endcommand [list file delete {*}$pastefiles]
 	set endcommand {}
-	if {[regexp {^meth-} [file tail $compar_file]]} {
+	if {$type eq "meth"} {
 		append endcommand "set temp \[filetemp_ext [list $compar_file]\]\n"
 		append endcommand "cg select -overwrite 1 -rf {type ref alt sequenced-*} [list $compar_file] \$temp\n"
 		append endcommand "file rename -force \$temp [list $compar_file]\n"

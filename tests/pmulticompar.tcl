@@ -1666,7 +1666,7 @@ test pmulticompar$testname {meth} {
 		2	10214	10215	0	0	0.000	6	6	1.000
 	}
 	catch {file delete tmp/meth-temp.tsv}
-	cg pmulticompar {*}$::jobopts tmp/meth-temp.tsv tmp/meth-sample1.tsv tmp/meth-sample2.tsv
+	cg pmulticompar {*}$::jobopts -type meth tmp/meth-temp.tsv tmp/meth-sample1.tsv tmp/meth-sample2.tsv
 	exec diff tmp/meth-temp.tsv tmp/expected.tsv
 } {} 
 
