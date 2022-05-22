@@ -343,6 +343,7 @@ test process_small {process_project exomes_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
 		-x *.html -x info_analysis.tsv \
@@ -386,6 +387,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
 		-x *.html -x info_analysis.tsv \
@@ -429,6 +431,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		-x *log_jobs -x *.finished -x *.submitting \
 		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
 		-x colinfo -x *.stats.zst -x fastqc_report.html -x *.vcf.gz \
+		-x info_analysis.tsv \
 		{*}[get ::optx {}] \
 		-x *.html -x info_analysis.tsv \
 		-ignorefields {
@@ -517,6 +520,7 @@ test process_small {process_project genomes_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x summary-*.txt \
 		{*}[get ::optx {}] \
@@ -561,6 +565,7 @@ test process_small {process_project cg_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
@@ -608,6 +613,7 @@ test process_small {process_project mixed_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
@@ -656,6 +662,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
+		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
 		-x *.html -x info_analysis.tsv \

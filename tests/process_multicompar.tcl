@@ -261,8 +261,8 @@ test process_multicompar$testname {process_multicompar with reports} {
 	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
 	file mkdir tmp/samples/annot1/reports
 	file mkdir tmp/samples/annot2/reports
-	file copy data/reports/report_fastq_fw-ERR194147_30x_NA12878.tsv tmp/samples/annot1/reports/report_fastq_fw-annot1.tsv
-	file copy data/reports/report_fastq_fw-ERR194147_30x_NA12878.tsv tmp/samples/annot2/reports/report_fastq_fw-annot2.tsv
+	file copy data/reports/report_fastq_fw-NA12878.tsv tmp/samples/annot1/reports/report_fastq_fw-annot1.tsv
+	file copy data/reports/report_fastq_fw-NA12878.tsv tmp/samples/annot2/reports/report_fastq_fw-annot2.tsv
 	#
 	cg process_multicompar {*}$::jobopts -reports 1 -dbdir $::refseqdir/hg19 -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
