@@ -9,7 +9,9 @@ proc file_rename {file newfile} {
 	if {$newfile eq $file} return
 	puts "$file -> $newfile"
 	file rename $file $newfile
-	file mtime $newfile $time
+	if {[catch {file mtime $newfile $time}]} {
+		exec touch -h -d [clock format $time] $dest
+	}
 }
 
 proc renamesamples_newfilename {file changes} {
@@ -50,7 +52,14 @@ proc renamesamples_file {file changes {relink 0}} {
 		set newbasefile [renamesamples_newfilename $basefile $changes]
 		set ext [string range [gzroot $file] [string length $basefile] end]
 	}
-	set newfile $newbasefile$ext$gzext
+	if {$newbasefile eq $basefile} {
+		# maybe the . in the file does not indicate an extension (e.g. sampledirs with . in name)
+		set basefile $gzroot
+		set newbasefile [renamesamples_newfilename $basefile $changes]
+		set newfile $newbasefile$gzext
+	} else {
+		set newfile $newbasefile$ext$gzext
+	}
 	if {![catch {file link $file} link]} {
 		set newlink [renamesamples_newfilename $link $changes]
 		if {$relink && $link ne $newlink && ![regexp ^/ $link]} {
@@ -149,12 +158,30 @@ proc cg_renamesamples {dir args} {
 		set newdir [renamesamples_newfilename $dir $changes]
 		if {$newdir ne $dir} {
 			if {[file exists $newdir]} {error "cannot rename $dir to $newdir: already exists"}
+			file delete -force $newdir.temp
+			hardlink $dir $newdir.temp
+			renamesamples $newdir.temp $changes
+			file delete -force $newdir.old
+			file rename $dir $dir.old
+			file rename $newdir.temp $newdir
+		} else {
+			file delete -force $newdir/rename.temp
+			set files [glob $dir/*]
+			file mkdir $newdir/rename.temp
+			foreach file $files {
+				hardlink $file $newdir/rename.temp
+			}
+			renamesamples $newdir/rename.temp $changes
+			file delete -force $newdir/rename.old
+			file mkdir $newdir/rename.old
+			set files [list_remove [glob $newdir/*] $newdir/rename.temp $newdir/rename.old]
+			foreach file $files {
+				file rename $file $newdir/rename.old
+			}
+			foreach file [glob $newdir/rename.temp/*] {
+				file rename $file $newdir/[file tail $file]
+			}
+			file delete $newdir/rename.temp
 		}
-		file delete -force $newdir.temp
-		hardlink $dir $newdir.temp
-		renamesamples $newdir.temp $changes
-		file delete -force $newdir.old
-		file rename $dir $dir.old
-		file rename $newdir.temp $newdir
 	}
 }

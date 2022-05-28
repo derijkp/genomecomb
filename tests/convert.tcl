@@ -764,6 +764,7 @@ test renamesamples {basic} {
 	cg razip tmp/test/compar/compar-test.tsv
 	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
+	file delete -force tmp/test/rename.old
 	join [bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]] \n
 } {tmp/test/compar
 tmp/test/compar/annot_compar-test.tsv
@@ -788,6 +789,7 @@ test renamesamples {rename dir itself} {
 	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	file delete -force tmp/test/samples/sample2 tmp/test/samples/sample3 tmp/test/compar
 	cg renamesamples tmp/test/samples/sample1 sample1 new1
+	file delete -force tmp/test/rename.old
 	join [bsort [glob tmp/test/samples/* tmp/test/samples/*/*]] \n
 } {tmp/test/samples/new1
 tmp/test/samples/new1/sreg-new1.tsv
@@ -804,6 +806,7 @@ test renamesamples {do not follow softlink to dir} {
 	file copy -force tmp/test/samples/sample1 tmp/linkeddir/linkedsample1
 	mklink tmp/linkeddir tmp/test/linkeddir
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
+	file delete -force tmp/test/rename.old
 	join [bsort [glob tmp/linkeddir/*/* tmp/test/* tmp/test/*/* tmp/test/*/*/*]] \n
 } {tmp/linkeddir/linkedsample1/sreg-sample1.tsv
 tmp/linkeddir/linkedsample1/var-sample1.tsv
