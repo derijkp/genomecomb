@@ -170,6 +170,14 @@ proc version {item {minversion {}}} {
 	return $_versions($item)
 }
 
+proc minversion {version minversion} {
+	if {[lindex [bsort [list $minversion $version]] 0] ne "$minversion"} {
+		return 0
+	} else {
+		return 1
+	}
+}
+
 proc versions {args} {
 	if {![llength $args]} {
 		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java tcl R gnusort8 tabix zst os}

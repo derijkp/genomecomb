@@ -18,6 +18,7 @@ test sv {sniffles} {
 		tmp/sv-sniffles/map-sngmlr-NA12878.bam \
 		>& tmp/sv-sniffles.log
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
+		-x *.snf \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles expected/sv-sniffles
 } {}
@@ -34,6 +35,7 @@ test sv {sniffles2 NA12878} {
 		tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-x *.snf \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2 expected/sv-sniffles2
 } {}
@@ -50,6 +52,7 @@ test sv {sniffles2 ngmlr NA12878} {
 		tmp/sv-sniffles2_ngmlr/map-ngmlr-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_ngmlr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-x *.snf \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_ngmlr expected/sv-sniffles2_ngmlr
 } {}
@@ -66,6 +69,7 @@ test sv {sniffles_minimap2 NA12878 minimap2} {
 		tmp/sv-sniffles2_minimap2/map-minimap2-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_minimap2.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf \
+		-x *.snf \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_minimap2 expected/sv-sniffles2_minimap2
 } {}
@@ -76,12 +80,13 @@ test sv {sniffles -distrreg chr} {
 	file mkdir tmp/sv-sniffles2_minimap2_distrchr
 	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam
 	mklink ori/ont/map-minimap2-NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam.bai
-	cg sv {*}$::dopts \
+	cg sv -stack 1 -v 2 {*}$::dopts \
 		-method sniffles -distrreg chr \
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		tmp/sv-sniffles2_minimap2_distrchr/map-minimap2-NA12878_25FC_part19_21.bam \
 		>& tmp/sv-sniffles2_minimap2_distrchr.log
 	cg tsvdiff -q 1 -x *.tbi -x *.vcf -x *.zsti \
+		-x *.snf \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-sniffles2_minimap2_distrchr expected/sv-sniffles2_minimap2
 } {}

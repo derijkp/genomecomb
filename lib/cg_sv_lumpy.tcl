@@ -64,7 +64,7 @@ proc sv_lumpy_job {args} {
 	# check dependencies (and adapt config if needed)
 	
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}

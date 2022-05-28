@@ -77,7 +77,7 @@ proc sv_manta_job {args} {
 	}
 	# resultfiles
 	set vcffile [file root [gzroot $resultfile]].vcf
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile.gz]
+	set resultlist [list $resultfile {} {} $vcffile.gz $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}

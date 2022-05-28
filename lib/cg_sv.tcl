@@ -95,7 +95,8 @@ proc sv_job {args} {
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts	-preset $preset \
 			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
-		foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
+		# foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
+		foreach {resultfile resultsregfile resultvarallfile resultvcffile resultanalysisfile} $resultfiles break
 		set file [file tail $bamfile]
 		set root [file_rootname $resultfile]
 		# start
@@ -167,9 +168,11 @@ proc sv_job {args} {
 		}
 		defcompressionlevel 9
 		# concatenate results
-		set pos 0
+		set pos -1
 		set cleanupfiles $regfiles
 		foreach resultfile $resultfiles {
+			incr pos
+			if {$resultfile eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
 			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {
@@ -214,7 +217,6 @@ proc sv_job {args} {
 				lappend cleanupfiles [gzroot $file].temp
 				lappend cleanupfiles [analysisinfo_file $file]
 			}
-			incr pos
 		}
 		if {[llength $regfiles]} {
 			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles

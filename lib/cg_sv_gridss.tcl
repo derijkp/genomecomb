@@ -58,7 +58,7 @@ proc sv_gridss_job {args} {
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}

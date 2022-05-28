@@ -94,7 +94,7 @@ proc var_freebayes_job {args} {
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
 	set varallfile $destdir/${pre}varall-$root.tsv.zst
 	set regclusterfile $destdir/reg_cluster-$root.tsv
-	set resultlist [list $varfile $sregfile $varallfile $regclusterfile]
+	set resultlist [list $varfile $sregfile $varallfile {} $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}

@@ -136,6 +136,18 @@ job gencodegtf -targets {
 	file rename $gencodegtffile.temp $gencodegtffile
 }
 
+job sniffles_trf -optional 1 -targets {
+	extra/sniffles_hg38.trf.bed
+} -vars {} -code {
+	wgetfile https://github.com/fritzsedlazeck/Sniffles/raw/master/annotations/human_GRCh38_no_alt_analysis_set.trf.bed extra/sniffles_hg38.trf.bed.temp
+	exec cg bed2tsv extra/sniffles_hg38.trf.bed.temp \
+		| cg select -f {chromosome="chr$chromosome" begin end} \
+		| cg select -s chromosome \
+		| cg tsv2bed > extra/sniffles_hg38.trf.bed.temp2
+	file rename extra/sniffles_hg38.trf.bed.temp2 extra/sniffles_hg38.trf.bed
+	file delete extra/sniffles_hg38.trf.bed.temp
+}
+
 job collapsedgencodegtf -deps {
 	$gencodegtffile
 } -targets {

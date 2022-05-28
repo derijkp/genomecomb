@@ -1,14 +1,31 @@
+proc sv_sniffles_distrtrg {distrreg} {
+	set version [version sniffles]
+	set version2 [minversion $version 2]
+	if {$version2} {
+		# do not do dsitribution for sniffles 2
+		# we cannot properly recompose the snf files
+		return 0
+	} else {
+		return $distrreg
+	}
+}
+
 proc sv_sniffles_sortdistrreg {} {
 	return 1
 }
 
 proc version_sniffles {} {
 	set version ?
-	catch {exec sniffles} msg
-	if {![regexp {Version: *([^\n]+)} $msg temp version]} {
-		set exe [exec which sniffles]
-		if {![catch {file link $exe} exe]} {
-			regsub {^sniffles-} [file tail $exe] {} version
+	catch {exec sniffles --version} msg
+	if {$msg ne ""} {
+		set version [lindex $msg end]
+	} else {
+		catch {exec sniffles} msg
+		if {![regexp {Version: *([^\n]+)} $msg temp version]} {
+			set exe [exec which sniffles]
+			if {![catch {file link $exe} exe]} {
+				regsub {^sniffles-} [file tail $exe] {} version
+			}
 		}
 	}
 	return $version
@@ -16,6 +33,8 @@ proc version_sniffles {} {
 
 proc sv_sniffles_job {args} {
 	upvar job_logdir job_logdir
+	set version [version sniffles]
+	set version2 [minversion $version 2]
 	set cmdline "[list cd [pwd]] \; [list cg sv_sniffles {*}$args]"
 	set refseq {}
 	set opts {}
@@ -67,13 +86,18 @@ proc sv_sniffles_job {args} {
 			set sample $value
 		}
 		-min_support {
+			if {$version2} {puts stderr "warning: given option -min_support is not used by sniffles2"}
 			set min_support $value
 		}
 		-min_seq_size {
+			if {$version2} {puts stderr "warning: given option -min_seq_size is not used by sniffles2"}
 			set min_seq_size $value
 		}
 		-snifflesopts {
 			lappend opts {*}$value
+		}
+		-regmincoverage {
+			set regmincoverage $value
 		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -sniffles] {
@@ -100,7 +124,12 @@ proc sv_sniffles_job {args} {
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	if {$version2} {
+		set varallfile [file dir $resultfile]/svall-$root.snf
+	} else {
+		set varallfile {}
+	}
+	set resultlist [list $resultfile {} $varallfile $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -117,9 +146,10 @@ proc sv_sniffles_job {args} {
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {
-		$vcffile $vcffile.analysisinfo
+		$vcffile $vcffile.analysisinfo $varallfile
 	} -vars {
-		bamfile sniffles opts refseq threads root sample min_support min_seq_size region threads
+		bamfile sniffles opts refseq threads root sample varallfile
+		min_support min_seq_size region threads version2
 	} -code {
 		analysisinfo_write $dep $target sample $sample varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
 		if {$region ne ""} {
@@ -129,21 +159,36 @@ proc sv_sniffles_job {args} {
 		} else {
 			set usebam $bamfile
 		}
-		if {[catch {
-			exec sniffles {*}$opts --threads $threads --skip_parameter_estimation \
-				--genotype --cluster \
-				--min_support $min_support --min_seq_size $min_seq_size \
-				-m $usebam -v $target.temp 2>@ stderr >@ stdout
-			file rename -force -- $target.temp $target
-		} msg]} {
-			# sniffles sometimes (allways?) crashes on empty or small bam
-			# only give error on larger bam, otherwise write empty result
-			# use bash to avoid "child killed: write on pipe with no readers" error because of head stopping samtools
-			set temp [exec -- bash -c "samtools view \"$usebam\" | head -200 | wc -l"]
-			if {$temp >= 300} {
-				error $msg
+		if {$version2} {
+			if {![catch {glob [file dir $refseq]/extra/sniffles_*.trf.bed} trffile]} {
+				lappend opts --tandem-repeats $trffile
 			}
-			file_write $target {}
+			exec sniffles {*}$opts --threads $threads \
+				--reference $refseq \
+				--snf $varallfile.temp \
+				--input $usebam --vcf $target.temp.gz \
+				2>@ stderr >@ stdout
+			file rename -force -- $target.temp.gz $target.gz
+			file rename -force -- $target.temp.gz.tbi $target.gz.tbi
+			file rename -force -- $varallfile.temp $varallfile
+		} else {
+			if {[catch {
+				exec sniffles {*}$opts --threads $threads --skip_parameter_estimation \
+					--genotype --cluster \
+					--min_support $min_support --min_seq_size $min_seq_size \
+					-m $usebam -v $target.temp 2>@ stderr >@ stdout
+				file rename -force -- $target.temp.gz $target
+				file rename -force -- $target.temp.gz.tbi $target.tbi
+			} msg]} {
+				# sniffles sometimes (allways?) crashes on empty or small bam
+				# only give error on larger bam, otherwise write empty result
+				# use bash to avoid "child killed: write on pipe with no readers" error because of head stopping samtools
+				set temp [exec -- bash -c "samtools view \"$usebam\" | head -200 | wc -l"]
+				if {$temp >= 300} {
+					error $msg
+				}
+				file_write $target {}
+			}
 		}
 	}
 	# 
@@ -172,3 +217,4 @@ proc cg_sv_sniffles {args} {
 	sv_sniffles_job {*}$args
 	job_wait
 }
+

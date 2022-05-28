@@ -114,7 +114,7 @@ proc sv_cuteSV_job {args} {
 		lappend opts --max_cluster_bias_DEL $max_cluster_bias_DEL --diff_ratio_merging_DEL	$max_cluster_bias_DEL
 	}
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
