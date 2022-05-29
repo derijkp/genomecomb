@@ -7,9 +7,8 @@ proc job_getinfo {{value {}}} {
 		set cgjob_getinfo(deps) {}
 		set cgjob_getinfo(targets) {}
 	} elseif {$value eq "0"} {
-		global cgjob_id cgjob_ptargets cgjob_rm job_getinfo cgjob_getinfo
+		global cgjob_id cgjob_rm job_getinfo cgjob_getinfo
 		foreach target [get cgjob_getinfo(id) ""] {unset -nocomplain cgjob_id($target)} 
-		foreach target [get cgjob_getinfo(ptargets) ""] {unset -nocomplain cgjob_ptargets($target)} 
 		foreach target [get cgjob_getinfo(rm) ""] {unset -nocomplain cgjob_rm($target)} 
 		foreach job [get cgjob_getinfo(jobs) ""] {
 			catch {close $cgjob(f,$job)}
@@ -25,8 +24,8 @@ proc job_getinfo {{value {}}} {
 	}
 }
 
-proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} {
-# putsvars jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
+proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} {
+# putsvars jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
 	global cgjob job_deps
 	global cgjob_getinfo
 	set jobroot [pwd]
@@ -45,8 +44,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets
 		if {[isint $jobnum]} {
 			set temptargets [job_getfromlog $job cgjobinfo_targets]
 			set temprmtargets [job_getfromlog $job cgjobinfo_rmtargets]
-			set tempptargets [job_getfromlog $job cgjobinfo_ptargets]
-			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
+			job_process_par_marktargets $temptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
 			job_logfile_add $job $jobnum running $ftargets $cores
 			job_logclose $job
@@ -115,12 +113,8 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets
 		} else {
 			set rmtargets {}
 		}
-		set ptargets [job_targetsreplace $fptargets $targetvars]
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
-			set newtargets 1
-		}
 		# indicate targets are in the queue, so job_finddeps will find them
-		job_process_par_marktargets $targets $ptargets $rmtargets q
+		job_process_par_marktargets $targets $rmtargets q
 		job_log $job
 		if {$cgjob(force)} {
 			foreach target $targets {

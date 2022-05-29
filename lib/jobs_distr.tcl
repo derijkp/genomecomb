@@ -9,6 +9,7 @@ proc job_process_init_distr {} {
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	set ::job_method_info [list pid [pid]]
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_runall {} job_runall_par
 	interp alias {} job_running {} job_running_distr
 	interp alias {} job_wait {} job_wait_distr
 	interp alias {} job_process_submit_par {} job_process_submit_distr
@@ -182,7 +183,7 @@ proc job_logfile_distr_close {} {
 }
 
 proc job_wait_distr {} {
-	global cgjob cgjob_exit cgjob_running
+	global cgjob cgjob_exit
 	update
 	job_logfile_par_close
 	unset -nocomplain cgjob_exit

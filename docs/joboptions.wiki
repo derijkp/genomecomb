@@ -83,7 +83,6 @@ job_is_first_task  TRUE
 urgency_slots      min
 accounting_summary FALSE
 
-
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)

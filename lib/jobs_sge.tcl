@@ -4,6 +4,7 @@ proc job_process_init_sge {} {
 	set ::cgjob(endjobids) {}
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_runall {} job_runall_par
 	interp alias {} job_running {} job_running_sge
 	interp alias {} job_wait {} job_wait_sge
 	interp alias {} job_process_submit_par {} job_process_submit_sge

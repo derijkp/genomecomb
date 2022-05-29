@@ -11,8 +11,8 @@ proc job_process_par_jobid {job} {
 	}
 }
 
-proc job_process_par_marktargets {targets ptargets rmtargets id} {
-	global cgjob_id cgjob_ptargets cgjob_rm job_getinfo cgjob_getinfo
+proc job_process_par_marktargets {targets rmtargets id} {
+	global cgjob_id cgjob_rm job_getinfo cgjob_getinfo
 	foreach target $targets {
 		if {[get cgjob_id($target) q] eq "q"} {
 			set gzfile [gzfiles $target]
@@ -21,33 +21,14 @@ proc job_process_par_marktargets {targets ptargets rmtargets id} {
 			set cgjob_id($target) $id
 		}
 	}
-	foreach ptarget $ptargets {
-		if {[get cgjob_ptargets($ptarget) q] eq "q"} {
-			if {[get job_getinfo 0] && ![info exists cgjob_ptargets($ptarget)]} {lappend cgjob_getinfo(ptargets) $ptarget}
-			set cgjob_ptargets($ptarget) $id
-		}
-	}
 	foreach rmtarget $rmtargets {
 		if {[get job_getinfo 0] && ![info exists cgjob_rm($rmtarget)]} {lappend cgjob_getinfo(rm) $rmtarget}
 		set cgjob_rm($rmtarget) $id
 	}
 }
 
-proc job_process_par_checkptargetsfinished {} {
-	global cgjob_ptargets
-	set done 0
-	foreach ptarget [array names cgjob_ptargets] {
-		set jobid $cgjob_ptargets($ptarget)
-		if {![job_running $jobid]} {
-			unset -nocomplain cgjob_ptargets($ptarget)
-			incr done
-		}
-	}
-	return $done
-}
-
 proc job_process_par_onepass {} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked
+	global cgjob cgjob_id cgjob_running
 	set currentrun [file tail [get cgjob(logfile) ""]]
 	set queue $cgjob(queue)
 	# join [list_subindex $queue 1] \n
@@ -58,23 +39,12 @@ proc job_process_par_onepass {} {
 	while {[llength $queue]} {
 		set joberror {}
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
+		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
 		set time 0
 		set timefile {}
-		# If this job was previously blocked because of ptargets deps,
-		# the ptargets set to stop further processing are cleared here
-		# (They can still be reapplied later if they depend on ptargets that are not finished yet)
-		if {[info exists cgjob_blocked($job)]} {
-			foreach ptarget [job_targetsreplace $ftargets {}] {
-				unset -nocomplain cgjob_ptargets($ptarget)
-			}
-			unset cgjob_blocked($job)
-		}
-		# check foreach deps, skip if not fullfilled
-		# check for foreach patterns, expand into one ore more entries in the queue
 		set submittime [timestamp]
 		job_lognf $job "==================== $jobname ===================="
 		cd $pwd
@@ -83,8 +53,7 @@ proc job_process_par_onepass {} {
 		if {[isint $jobnum]} {
 			set temptargets [job_getfromlog $job cgjobinfo_targets]
 			set temprmtargets [job_getfromlog $job cgjobinfo_rmtargets]
-			set tempptargets [job_getfromlog $job cgjobinfo_ptargets]
-			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
+			job_process_par_marktargets $temptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
 			job_logfile_add $job $jobnum running $ftargets $cores
 			job_logclose $job
@@ -103,18 +72,6 @@ proc job_process_par_onepass {} {
 					job_logclose $job
 					continue
 				}
-			} elseif {[regexp {^ptargets hit} $adeps]} {
-				# ptarget dependency means the job cannot yet be submitted
-				# nor any of the jobs that may be dependent on it
-				# we wil re-add it to the queue for later processing
-				# and create ptargets from its targets
-				# job_logclear $job
-				job_log $job "blocking at $jobname: $adeps"
-				lappend cgjob(queue) $line
-				set cgjob_blocked($job) 1
-				job_process_par_marktargets {} [job_targetsreplace $ftargets {}] {} q
-				job_logclose $job
-				continue
 			} else {
 				if {!$optional && !$cgjob(skipjoberrors)} {
 					set joberror "error in dependencies for job $jobname:\n$adeps"
@@ -169,13 +126,8 @@ proc job_process_par_onepass {} {
 		} else {
 			set rmtargets {}
 		}
-		set ptargets [job_targetsreplace $fptargets $targetvars]
-		job_log $job "cgjobinfo_ptargets: [list $ptargets]"
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
-			set newtargets 1
-		}
 		# indicate targets are in the queue, so job_finddeps will find them
-		job_process_par_marktargets $targets $ptargets $rmtargets q
+		job_process_par_marktargets $targets $rmtargets q
 #		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
 #		if {$depsrunning || [llength $targetsrunning]} {
 #			job_logclear $job
@@ -207,7 +159,7 @@ proc job_process_par_onepass {} {
 		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]\n
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]\n
 		append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		set runfile $job.run
 		file_write $runfile $cmd
@@ -220,7 +172,7 @@ proc job_process_par_onepass {} {
 		file_write $job.jid $jobnum
 		job_log $job "cgjobinfo_jobid: [list $jobid]"
 		job_logclose $job
-		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
+		job_process_par_marktargets $targets $rmtargets $jobnum
 		set cgjob_running($job) $jobnum
 	}
 	lappend cgjob(queue) {*}$queue
@@ -232,12 +184,34 @@ proc job_process_par {} {
 	while 1 {
 		job_process_par_onepass
 		if {![llength $cgjob(queue)]} break
-		# The queue may be not empty if jobs with deps on ptargets were present
-		# only if (a) original job with ptargets is finished can we proceed
 		after 1000
-		while {![job_process_par_checkptargetsfinished]} {
+	}
+}
+
+proc job_process_par_checkrunning {} {
+	global cgjob_running
+	set running 0
+	foreach job [array names cgjob_running] {
+		set jobid $cgjob_running($job)
+		if {![job_running $jobid]} {
+			unset -nocomplain cgjob_running($job)
+		} else {
+			incr running
+		}
+	}
+	return $running
+}
+
+proc job_runall_par {} {
+	global cgjob
+	while 1 {
+		job_process_par_onepass
+		# empty queue
+		after 1000
+		while {[job_process_par_checkrunning]} {
 			after 1000
 		}
+		if {![llength $cgjob(queue)]} break
 	}
 }
 

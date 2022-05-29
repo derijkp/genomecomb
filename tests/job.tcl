@@ -105,7 +105,8 @@ proc writetestfiles {args} {
 
 proc jobtest {args} {
 	set args [job_args $args]
-	foreach {srcdir destdir header ptargets} $args break
+	foreach {srcdir destdir header unknowntargets} $args break
+	if {$unknowntargets eq "nounknowntargets"} {set unknowntargets 0} else {set unknowntargets 1}
 	set srcdir [file_absolute $srcdir]
 	set destdir [file_absolute $destdir]
 	set job_logdir $destdir/log_jobs
@@ -146,16 +147,13 @@ proc jobtest {args} {
 		}
 		close $f
 	}
-	if {$ptargets eq "noptargets"} {
+	if {!$unknowntargets} {
 		set targets {$destdir/sumpattern.log $destdir/sumpattern-test1.txt $destdir/sumpattern-test2.txt $destdir/sumpattern-test3.txt}
-		set ptargets {}
 	} else {
 		set targets {$destdir/sumpattern.log}
-		set ptargets {$destdir/sumpattern-*.txt}
 	}
 	job sumpattern -deps {$srcdir/cgdat*.tsv} \
 	-targets $targets \
-	-ptargets $ptargets \
 	-vars destdir -code {
 		# var target contains target
 		# var target1 contains first braced part of target (= destdir)
@@ -183,6 +181,9 @@ proc jobtest {args} {
 		}
 		close $f
 		file_write $destdir/sumpattern.log [join $targets \n]
+	}
+	if {$unknowntargets} {
+		job_runall
 	}
 	foreach file [jobglob $destdir/sumpattern-*.txt] {
 		regexp {sumpattern-(.*).txt$} [file tail $file] temp base
@@ -693,12 +694,37 @@ test job "basic jobtest $testname" {
 2
 } {Intentional job error}}
 
+test job "basic jobtest nounknowntargets $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 1
+	jobtest ../data test testh nounknowntargets
+	job_wait
+	gridwait
+	set result [list \
+		[bsort [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
+	]
+	cd $::testdir
+	set result
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt.log {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+} {Intentional job error}}
+
 test job "basic status $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
-	jobtest ../data test testh noptargets
+	jobtest ../data test testh nounknowntargets
 	job_wait
 	gridwait
 	set result [list \
@@ -713,7 +739,7 @@ test job "basic status $testname" {
 	# status
 	cd $::testdir/tmp
 	job_init -d status
-	jobtest ../data test testh noptargets
+	jobtest ../data test testh nounknowntargets
 	job_wait
 	glob jobdeps.dot jobdeps.ps
 } {jobdeps.dot jobdeps.ps}
