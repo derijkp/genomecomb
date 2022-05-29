@@ -51,7 +51,7 @@ test process_small {process_project mastr_mx2} {
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -98,7 +98,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version alignedsamstats_version unalignedsamstats_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -149,7 +149,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-x fastqc_report.html -x colinfo -x *.stats.zst -x ${basename}.html -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x report_stats-${basename}.tsv \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -229,7 +229,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -343,10 +343,9 @@ test process_small {process_project exomes_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -360,6 +359,7 @@ test process_small {process_project exomes_yri_mx2} {
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -387,10 +387,9 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -404,6 +403,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -431,9 +431,8 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		-x *log_jobs -x *.finished -x *.submitting \
 		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
 		-x colinfo -x *.stats.zst -x fastqc_report.html -x *.vcf.gz \
-		-x info_analysis.tsv \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -447,6 +446,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -520,11 +520,10 @@ test process_small {process_project genomes_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x summary-*.txt \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -541,6 +540,7 @@ test process_small {process_project genomes_yri_mx2} {
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -565,11 +565,10 @@ test process_small {process_project cg_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -586,6 +585,7 @@ test process_small {process_project cg_mx2} {
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -613,11 +613,10 @@ test process_small {process_project mixed_yri_mx2} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -635,6 +634,7 @@ test process_small {process_project mixed_yri_mx2} {
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
@@ -662,10 +662,9 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst -x summary-*.txt \
-		-x info_analysis.tsv \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		{*}[get ::optx {}] \
-		-x *.html -x info_analysis.tsv \
+		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -683,6 +682,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
+			-I param_adapterfile \
 			$file1 $file2]
 	}
 	join [list_remove $result {}] \n
