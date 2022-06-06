@@ -2500,6 +2500,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	leftzeros = sort_skipszeros(start,left,alen);
 	rightzeros = sort_skipszeros(rstart,right,blen);
 	if ((leftzeros || rightzeros) && (leftzeros != rightzeros)) {
+		char *endleft,*endright;
 		int leftplus = (*start == '+'),rightplus = (*rstart == '+');
 		if (!leftplus && rightplus) {
 			startingzero = -1;
@@ -2521,22 +2522,29 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		blen += (right - rstart);
 		right = rstart + rightzeros;
 	 	DPRINT("zero check: start: %s rstart: %s leftzeros: %d rightzeros: %d left: %s right: %s",start,rstart,leftzeros,rightzeros,left,right);
+		contextleft = context;
+		contextright = context;
+		endleft = naturalcompare_numbercontext_after(left, alen, start, nmleft, &contextleft);
+		endright = naturalcompare_numbercontext_after(right, blen, rstart, nmright, &contextright);
 		while (1) {
 			nmleft = ISNUMBER(left);
 			nmright = ISNUMBER(right);
-			if (!nmleft && !nmright) {
+			if (left == endleft && right == endright) {
 				/* diff after number, so is the same (0) */
 				return startingzero;
 			}
+			if (left == endleft || right == endright) {
+				break;
+			}
 			diff = naturalcompare_diff(*left,*right);
 			if (diff != 0) break;
-			if (!alen || !nmleft) {
-				if (!blen || !nmright) {return startingzero;} else {break;}
-			}
-			if (!blen || !nmright) {break;}
 			left++; alen--;
 			right++; blen--;
 		}
+		start = left;
+		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
+	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+		if (context <= LOC_SIMPLE) {simplenum = 1;}
 	 	DPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
 	}
 	if (simplenum) {

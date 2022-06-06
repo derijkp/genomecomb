@@ -229,12 +229,32 @@ test bsort {bugfix: undetermined when starting with 0 + various tests} {
 	}
 } {}
 
+test bsort {bugfix: a00f a0e} {
+	set list {a00 a00f a0e}
+	set list {00f 0e 1e-1 01e 01f 1e a00 a00f a0e}
+	checkbsort $list
+} {}
+
 if 0 {
 
 	COPT="-g make ../bin/test_naturalcompare
 
 	COPT="-g -DDEBUG=1" make ../bin/test_naturalcompare
+	../bin/test_naturalcompare 00 00f 0 0e 0.1 1e-1 01e 01f 1e a00 a00f a0e 2> /dev/null | grep ' > '
 
+	../bin/test_naturalcompare 1e-1 01e
+
+
+	../bin/test_naturalcompare 0e 0f
+	../bin/test_naturalcompare 01e 01f
+	../bin/test_naturalcompare 01f 1e
+	../bin/test_naturalcompare a01e a01f
+	../bin/test_naturalcompare a1e a01f 
+	../bin/test_naturalcompare a00f a0e
+	../bin/test_naturalcompare 00f 0e
+	../bin/test_naturalcompare 01f 1e-1
+	../bin/test_naturalcompare 01f 01e
+	../bin/test_naturalcompare a00f a0a
 	../bin/test_naturalcompare 00     01 # on 0
 	../bin/test_naturalcompare -010 -001 -01 -1 -00.1 -0.1 00 0 00.1 0.1 +001 001 +01 01 1 2 0010 010 10 011 0100 0101 01000 a-0 a-01 a-1 a0 a001 a01 a1 a2 a0010 a10 2> /dev/null | grep ' > '
 	../bin/test_naturalcompare ' ' -001 -01 -1 -0.1 00 0 0.1 001 +001 01 +01 1 2 0010 010 10 011 '!' '!a' - a001 a01 a1 a2 a0010 a10 at1ta atta 2> /dev/null | grep ' > '
