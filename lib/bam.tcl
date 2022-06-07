@@ -40,7 +40,11 @@ proc bam_index_job {args} {
 		threads
 	} -code {
 		putslog "making $target"
-		exec samtools index -@ $threads $dep >@ stdout 2>@ stderr
+		set tempdir [dirtemp $dep]
+		mklink $dep $tempdir/[file tail $dep]
+		exec samtools index -@ $threads $tempdir/[file tail $dep] >@ stdout 2>@ stderr
+		file rename $tempdir/[file tail $dep].[indexext $dep] $dep.[indexext $dep]
+		file delete -force $tempdir
 	}
 }
 
