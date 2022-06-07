@@ -146,7 +146,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		set classline [split $classline \t]
 		set classid [list_shift classline]
 		if {$classid ne $gid} {
-			error "difference in ids at line $nr between $transcripts_genepred_file and $transcript_classification_file: $gid vs $classid"
+			error "classification not found for $gid in $transcripts_genepred_file (in transcript classifiction file $transcript_classification_file)"
 		}
 		set result [join $gline \t]
 		append result \t[join [list_sub $classline $poss] \t]
@@ -436,8 +436,7 @@ proc flair_job {args} {
 		cd $projectdir
 		mkdir compar
 		set exproot [file tail $projectdir]
-		set bedfiles [jobglob samples/*/all_corrected-flair-*.bed]
-		set fastqfiles [jobglob samples/*/fastq/allseq-*.fastq.gz]
+		set bedfiles [jobglob samples/*/flair-*/all_corrected-flair-*.bed]
 		job flair_compar-$exproot {*}$skips \
 		-cores $threads \
 		-deps [list_concat $bedfiles $allseq_fasqfiles] \
