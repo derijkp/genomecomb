@@ -38,6 +38,7 @@ proc map_bowtie2_job {args} {
 	set skips {}
 	set threads 2
 	set fixmate 1
+	set extraopts {}
 	cg_options map_bowtie2 args {
 		-paired {
 			set paired $value
@@ -54,6 +55,9 @@ proc map_bowtie2_job {args} {
 		-threads {
 			set threads $value
 			# not used (yet)
+		}
+		-extraopts {
+			set extraopts $value
 		}
 		-pre {
 			set pre $value
@@ -96,10 +100,12 @@ proc map_bowtie2_job {args} {
 		}
 		exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
 			--rg-id "$sample" {*}$rg \
+			{*}$extraopts \
 			{*}$fixmate {*}$outpipe 2>@ stderr
 	} else {
 		exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -U [join $files ,] \
 			--rg-id "$sample" {*}$rg \
+			{*}$extraopts \
 			{*}$outpipe 2>@ stderr
 	}
 }

@@ -57,6 +57,7 @@ proc cg_map_ngmlr {args} {
 	set readgroupdata {}
 	set threads 2
 	set aliformat bam
+	set extraopts {}
 	cg_options map_ngmlr args {
 		-paired {
 			if {$value} {error "ngmlr does not support paired read alignment"}
@@ -73,6 +74,9 @@ proc cg_map_ngmlr {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-extraopts {
+			set extraopts $value
+		}
 	} {result refseq sample fastqfile} 4 4 {
 		align reads in fastq files to a reference genome using ngmlr
 	}
@@ -88,5 +92,11 @@ proc cg_map_ngmlr {args} {
 	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 		lappend rg "$key:$value"
 	}
-	exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastqfile {*}$outpipe 2>@ stderr
+	exec ngmlr \
+		-x $preset \
+		-t $threads \
+		-r $ngmlr_refseq \
+		-q $fastqfile \
+		{*}$extraopts \
+		{*}$outpipe 2>@ stderr
 }

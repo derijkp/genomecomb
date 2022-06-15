@@ -69,6 +69,7 @@ proc cg_map_bwa {args} {
 	set readgroupdata {}
 	set threads 2
 	set fixmate 1
+	set extraopts {}
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
@@ -85,6 +86,9 @@ proc cg_map_bwa {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-extraopts {
+			set extraopts $value
+		}
 	} {result refseq sample fastqfile1 fastqfile2} 4 5 {
 		align reads in fastq files to a reference genome using bwa-mem
 	}
@@ -100,7 +104,9 @@ proc cg_map_bwa {args} {
 		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
-		catch_exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
+		catch_exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+			{*}$extraopts \
+			$bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
 	} else {
 		if {$fixmate} {
 			set fixmate "| samtools fixmate -m -O sam - -"
@@ -112,6 +118,8 @@ proc cg_map_bwa {args} {
 		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 			lappend rg "$key:$value"
 		}
-		catch_exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
+		catch_exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] \
+			{*}$extraopts \
+			$bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
 	}
 }
