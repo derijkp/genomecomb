@@ -1532,7 +1532,7 @@ proc cg_select {args} {
 		lappend header $::rowfield
 		set index {}
 		if {$sortfields eq "-"} {
-			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
+			set poss [list_sub [tsv_basicfields $header 11 0] -exclude 4]
 			set poss [list_remove $poss -1]
 			set reverse [list_fill [llength $poss] 0]
 		} else {
