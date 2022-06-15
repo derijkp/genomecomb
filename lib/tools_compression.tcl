@@ -108,7 +108,7 @@ proc wgzopen {file {compressionlevel -1} {threads {}} {pipe {}}} {
 				return [open [list {*}$pipe >@ stdout" w]
 			}
 		} else {
-			return [open [list {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
+			return [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
 		}
 	} elseif {![gziscompressed $file]} {
 		if {$pipe eq ""} {
