@@ -6,12 +6,19 @@ proc refseq_bwa_job {refseq} {
 	if {[file exists $bwarefseqfa]} {return $bwarefseqfa}
 	set tail [file tail $refseq]
 	set targets [list $bwarefseq $bwarefseq.fai]
-	set fatargets [list $bwarefseqfa $bwarefseqfa.fai]
 	foreach ext {amb ann bwt pac sa} {
 		lappend targets $bwarefseq.$ext
-		lappend fatargets $bwarefseqfa.$ext
 	}
-	if {[jobtargetexists $fatargets $refseq]} {return $bwarefseqfa}
+	if {[file extension $refseq] ne ".fa"} {
+		set fatargets [list $bwarefseqfa $bwarefseqfa.fai]
+		foreach ext {amb ann bwt pac sa} {
+			lappend fatargets $bwarefseqfa.$ext
+		}
+	} else {
+		set fatargets {}
+	}
+	if {[jobtargetexists $targets $refseq] && [jobtargetexists $fatargets $refseq]} {return $bwarefseqfa}
+	# set dep $refseq ; set target $bwarefseq
 	job [job_relfile2name bwa2refseq- $refseq] -deps {$refseq} -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
@@ -31,15 +38,17 @@ proc refseq_bwa_job {refseq} {
 		mklink $dep.fai $target.fai
 		file delete $target.temp
 	}
-	# with .fa as extension
-	job [job_relfile2name bwa2refseq_fa- $refseq] -deps $targets -targets $fatargets -vars {
-		bwarefseq bwarefseqfa refseq fatargets
-	} -code {
-		foreach file $deps nfile $fatargets {
-			if {$file eq "$refseq.bwa"} continue
-			mklink $file $nfile
+	if {[llength $fatargets]} {
+		# with .fa as extension
+		job [job_relfile2name bwa2refseq_fa- $refseq] -deps $targets -targets $fatargets -vars {
+			bwarefseq bwarefseqfa refseq fatargets
+		} -code {
+			foreach file $deps nfile $fatargets {
+				if {$file eq "$refseq.bwa"} continue
+				mklink $file $nfile
+			}
+			mklink $bwarefseq $bwarefseqfa
 		}
-		mklink $bwarefseq $bwarefseqfa
 	}
 	return $bwarefseqfa
 }
