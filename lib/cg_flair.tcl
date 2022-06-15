@@ -23,10 +23,10 @@ proc findflair {} {
 	return $flair
 }
 
-proc cg_flair_genecounts {isoformcounts genecounts} {
+proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} {
 	set tempfile [tempfile]
 	cg select -overwrite 1 \
-		-g {associated_gene} \
+		-g $genefield \
 		-gc {distinct(structural_category),distinct(subcategory),sum(counts-*),sum(tpm-*)} \
 		$isoformcounts $tempfile
 	catch {close $f} ; catch {close $o}
@@ -145,6 +145,11 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		if {[gets $fclass classline] == -1} break
 		set classline [split $classline \t]
 		set classid [list_shift classline]
+		while {$classid ne $gid} {
+			if {[gets $fclass classline] == -1} break
+			set classline [split $classline \t]
+			set classid [list_shift classline]
+		}
 		if {$classid ne $gid} {
 			error "classification not found for $gid in $transcripts_genepred_file (in transcript classifiction file $transcript_classification_file)"
 		}
