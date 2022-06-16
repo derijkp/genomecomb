@@ -43,7 +43,7 @@ proc bam_index_job {args} {
 		set tempdir [dirtemp $dep]
 		mklink $dep $tempdir/[file tail $dep]
 		exec samtools index -@ $threads $tempdir/[file tail $dep] >@ stdout 2>@ stderr
-		file rename $tempdir/[file tail $dep].[indexext $dep] $dep.[indexext $dep]
+		file rename -force $tempdir/[file tail $dep].[indexext $dep] $dep.[indexext $dep]
 		file delete -force $tempdir
 	}
 }
