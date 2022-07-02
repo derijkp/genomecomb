@@ -933,7 +933,7 @@ proc reportscombine_samstats_uareadlength {uastatsrlfiles} {
 	}
 	#
 	# make chart
-	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "number of sequences" "readlength" $xmax
+	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "readlength" "number of sequences" $xmax
 }
 
 proc reportscombine_remove_hlongshot {files} {
