@@ -164,7 +164,7 @@ cd /build
 download https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
 cd /build/pcre2-10.39
 make distclean || true
-./configure --enable-utf -enable-static -disable-shared
+./configure --enable-utf -enable-static
 make CFLAGS="-fPIC"
 sudo make install
 
@@ -309,6 +309,7 @@ cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libpcre*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/*tcl* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
