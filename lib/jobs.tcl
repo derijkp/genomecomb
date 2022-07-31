@@ -69,9 +69,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(priority)]} {
 		set cgjob(priority) 0
 	}
-	if {![info exists cgjob(dqueue)]} {
-		set cgjob(dqueue) all.q
-	}
+#	if {![info exists cgjob(dqueue)]} {
+#		set cgjob(dqueue) all.q
+#	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -1399,7 +1399,9 @@ proc job_curargs {} {
 	global cgjob
 	set temp ""
 	foreach {opt field} {-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup -runcmd runcmd -skipjoberrors skipjoberrors} {
-		lappend temp $opt $cgjob($field)
+		if {[info exists cgjob($field)]} {
+			lappend temp $opt $cgjob($field)
+		}
 	}
 	return $temp
 }
@@ -1483,5 +1485,6 @@ proc shorten_filename {filename {maxsize 251}} {
 	return $dir$prefix[string range $post $start end]
 }
 
-job_init
-
+if {![info exists cgjob(distribute)]} {
+	job_init
+}

@@ -235,7 +235,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
 				if {$status eq "error"} {
 					if {[catch {set msg [file_read $job.err]}]} {
-						set msg "job no longer running, but no error message found"
+						set msg "job $job no longer running, but no error message found"
 					}
 				}
 			}

@@ -206,6 +206,15 @@ being made. By default if a dep does not exist and is not being made, it
 will not be considered "newer". You can use the -checkdepexists 1 option
 to also return 0 if a dep does not exist.
 
+job_cleanup_add file ?file? ..: add files to list of files that will be cleaned 
+up after the run. Deletion will be done using -force, so if **file** is a directory,
+it will be deleted even if there are still files in it
+
+job_cleanup_ifempty_add file ?file? ..: add files to list of files that will be cleaned 
+up after the run. Deletion will be done without -force, so if **file** is a directory,
+it will only be deleted if empty. These are deleted after regular cleanup
+(which should delete all files in the directory)
+
 == job_runall ==
 Jobs that will make targets that cannot (easily) be determined beforehand,
 e.g. a number of output files with file names based on calculation, are

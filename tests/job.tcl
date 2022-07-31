@@ -22,6 +22,12 @@ if {$pos != -1} {
 		set tests [subst {
 			"-d sge" {uplevel job_init -d sge {*}\$args}
 		}]
+	} elseif {$distribute eq "slurm"} {
+		puts "testing -d slurm only"
+		set testslurm 1
+		set tests [subst {
+			"-d slurm" {uplevel job_init -d slurm {*}\$args}
+		}]
 	} else {
 		error "unknown option -d $distribute"
 	}
@@ -32,6 +38,7 @@ if {$pos != -1} {
 		"-d 4" {uplevel job_init -d 4 {*}$args}
 		"-d 30" {uplevel job_init -d 30 {*}$args}
 		"-d sge" {uplevel job_init -d sge {*}$args}
+		"-d slurm" {uplevel job_init -d slurm {*}$args}
 	}
 }
 
@@ -42,7 +49,7 @@ set keepdir [pwd]
 set testname "-d direct"
 proc test_job_init {args} {
 	uplevel job_init -skipjoberrors 1 -d 0 {*}$args
-	job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 }
 proc gridwait {} {}
 
@@ -50,7 +57,7 @@ if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
 		uplevel job_init -skipjoberrors 1 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_direct
 	proc gridwait {} {}
@@ -58,7 +65,7 @@ if 0 {
 	set testname "-d 2"
 	proc test_job_init {args} {
 		uplevel job_init -d 2 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
@@ -66,7 +73,7 @@ if 0 {
 	set testname "-d 4"
 	proc test_job_init {args} {
 		uplevel job_init -d 4 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
@@ -74,7 +81,7 @@ if 0 {
 	set testname "-d 30"
 	proc test_job_init {args} {
 		uplevel job_init -d 30 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
@@ -82,7 +89,7 @@ if 0 {
 	set testname "-d sge"
 	proc test_job_init {args} {
 		uplevel job_init -d sge {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_sge
 	proc gridwait {} {
@@ -91,6 +98,21 @@ if 0 {
 			puts -nonewline .
 			flush stdout
 			if {[exec qstat] eq ""} break
+		}
+	}
+
+	set testname "-d slurm"
+	proc test_job_init {args} {
+		uplevel job_init -d slurm {*}$args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	}
+	interp alias {} job_wait {} job_wait_slurm
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[llength [split [string trim [exec squeue]] \n]] == 1} break
 		}
 	}
 }
@@ -185,7 +207,8 @@ proc jobtest {args} {
 	if {$unknowntargets} {
 		job_runall
 	}
-	foreach file [jobglob $destdir/sumpattern-*.txt] {
+	set files [jobglob $destdir/sumpattern-*.txt]
+	foreach file $files {
 		regexp {sumpattern-(.*).txt$} [file tail $file] temp base
 		set target $destdir/sumpattern2-$base.txt
 		job sumpattern2-$base -cores 2 -skip {
@@ -353,6 +376,24 @@ if {$testname eq "-d sge"} {
 			if {[exec qstat] eq ""} break
 		}
 	}
+} elseif {$testname eq "-d slurm"} {
+	if {![get testslurm 0]} {
+		puts "skipping slurm tests because testslurm is not set (default), set testslurm 1 or give testslurm as a parameter to all.tcl to run"
+		continue
+	}
+	if {[catch {exec squeue}]} {
+		puts "Cannot test slurm option (missing squeue; slurm not installed?)"
+		continue
+	}
+	interp alias {} job_wait {} job_wait_slurm
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[llength [split [string trim [exec squeue]] \n]] == 1} break
+		}
+	}
 } elseif {[regexp -- {-d [0-9]} $testname]} {
 	interp alias {} job_wait {} job_wait_distr
 } else {
@@ -360,7 +401,9 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {args} "$initcode\njob_logfile_set \$::testdir/tmp/log \$::testdir/tmp"
+# putsvars testname initcode
+
+proc test_job_init {args} "$initcode\nuplevel job_logfile_set \$::testdir/tmp/log \$::testdir/tmp"
 
 test job "basic chain $testname" {
 	cd $::testdir
