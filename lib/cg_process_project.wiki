@@ -69,6 +69,7 @@ ignored.
 ; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
 ; -minfastqreads num: fastq based samples with less than **num** reads in the fastq files are 
 not processed and not added to the final compar. 
+; -clip: clip adaptor sequences prior to alignment using fastq-mcf (default 1)
 ; -paired 1/0 (-p): sequenced are paired/unpaired
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
