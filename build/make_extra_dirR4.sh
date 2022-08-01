@@ -20,7 +20,7 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
@@ -64,13 +64,15 @@ yuminstall gcc-c++
 yuminstall readline-devel
 yuminstall xz
 yuminstall libtool
+yuminstall pcre2-devel
 #yuminstall java
 #yuminstall texlive
 yuminstall texlive-latex
-yuminstall devtoolset-8
+yuminstall devtoolset-11
 ## use source instead of scl enable so it can run in a script
-## scl enable devtoolset-9 bash
-source /opt/rh/devtoolset-8/enable
+## scl enable devtoolset-11 bash
+source /opt/rh/devtoolset-11/enable
+yuminstall xz
 
 # force static nuilds by removing so for libpng, libtiff
 # sudo rm -f /usr/lib64/libpng*
@@ -118,15 +120,15 @@ function download {
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
 export PATH=/usr/local/bin:$PATH
 
-# zlib
-# ----
-cd /build
-download https://zlib.net/zlib-1.2.11.tar.gz
-cd /build/zlib-1.2.11
-make distclean || true
-./configure -static
-make CFLAGS="-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -fPIC"
-sudo make install
+## zlib
+## ----
+#cd /build
+#download https://zlib.net/zlib-1.2.11.tar.gz
+#cd /build/zlib-1.2.11
+#make distclean || true
+#./configure -static
+#make CFLAGS="-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN -fPIC"
+#sudo make install
 
 # bzip2
 # -----
@@ -137,36 +139,36 @@ make clean || true
 make CFLAGS="-fPIC"
 sudo make install
 
-# lzma
-# ----
-cd /build
-download https://tukaani.org/xz/xz-5.2.3.tar.gz
-cd /build/xz-5.2.3
-make distclean || true
-./configure -enable-static -disable-shared
-make CFLAGS="-fPIC"
-sudo make install
-
-# pcre
-# ----
-cd /build
-download ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.43.tar.gz
-cd /build/pcre-8.43
-make distclean || true
-./configure --enable-utf -enable-static -disable-shared
-make CFLAGS="-fPIC"
-sudo make install
-#sudo rm /usr/local/lib/libpcre.so*
-
-# pcre2
-# ----
-cd /build
-download https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
-cd /build/pcre2-10.39
-make distclean || true
-./configure --enable-utf -enable-static
-make CFLAGS="-fPIC"
-sudo make install
+## lzma
+## ----
+#cd /build
+#download https://tukaani.org/xz/xz-5.2.3.tar.gz
+#cd /build/xz-5.2.3
+#make distclean || true
+#./configure -enable-static -disable-shared
+#make CFLAGS="-fPIC"
+#sudo make install
+#
+## pcre
+## ----
+#cd /build
+#download ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.43.tar.gz
+#cd /build/pcre-8.43
+#make distclean || true
+#./configure --enable-utf -enable-static -disable-shared
+#make CFLAGS="-fPIC"
+#sudo make install
+##sudo rm /usr/local/lib/libpcre.so*
+#
+## pcre2
+## ----
+#cd /build
+#download https://github.com/PhilipHazel/pcre2/releases/download/pcre2-10.39/pcre2-10.39.tar.gz
+#cd /build/pcre2-10.39
+#make distclean || true
+#./configure --enable-utf -enable-static -disable-shared
+#make CFLAGS="-fPIC"
+#sudo make install
 
 # openssl
 # -------
@@ -194,45 +196,45 @@ make CFLAGS="-fPIC"
 sudo make install
 #sudo rm /usr/local/lib/libcurl.so*
 
-# libpng
-# ------
-cd /build
-download https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz
-cd /build/libpng-1.6.37
-make distclean || true
-LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" ./configure -enable-static
-make CFLAGS="-fPIC"
-sudo make install
-
-# libtiff
-# -------
-cd /build
-download https://download.osgeo.org/libtiff/tiff-4.0.10.tar.gz
-cd /build/tiff-4.0.10
-make distclean || true
-./configure -enable-static
-make CFLAGS="-fPIC"
-sudo make install
-
-# pixman
-# -------
-cd /build
-download https://www.cairographics.org/releases/pixman-0.36.0.tar.gz
-cd /build/pixman-0.36.0
-make distclean || true
-LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" ./configure --enable-static
-make CFLAGS="-fPIC"
-sudo make install
-
-# cairo
-# -----
-cd /build
-download https://cairographics.org/snapshots/cairo-1.9.14.tar.gz
-cd /build/cairo-1.9.14
-make distclean || true
-PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH ./configure --enable-static --without-python
-make CFLAGS="-fPIC"
-sudo make install
+## libpng
+## ------
+#cd /build
+#download https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz
+#cd /build/libpng-1.6.37
+#make distclean || true
+#LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" ./configure -enable-static
+#make CFLAGS="-fPIC"
+#sudo make install
+#
+## libtiff
+## -------
+#cd /build
+#download https://download.osgeo.org/libtiff/tiff-4.0.10.tar.gz
+#cd /build/tiff-4.0.10
+#make distclean || true
+#./configure -enable-static
+#make CFLAGS="-fPIC"
+#sudo make install
+#
+## pixman
+## -------
+#cd /build
+#download https://www.cairographics.org/releases/pixman-0.36.0.tar.gz
+#cd /build/pixman-0.36.0
+#make distclean || true
+#LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" ./configure --enable-static
+#make CFLAGS="-fPIC"
+#sudo make install
+#
+## cairo
+## -----
+#cd /build
+#download https://cairographics.org/snapshots/cairo-1.9.14.tar.gz
+#cd /build/cairo-1.9.14
+#make distclean || true
+#PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH ./configure --enable-static --without-python
+#make CFLAGS="-fPIC"
+#sudo make install
 
 # libxml2
 # -------
@@ -245,17 +247,17 @@ PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH ./configure --enable-s
 make CFLAGS="-fPIC"
 sudo make install
 
-# libjpeg
-# -------
-cd /build
-download https://sourceforge.net/projects/libjpeg/files/libjpeg/6b/jpegsrc.v6b.tar.gz
-cd /build/jpeg-6b
-
-make distclean || true
-PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH ./configure
-sed -i s#./libtool#libtool#g Makefile
-make CFLAGS="-fPIC"
-sudo make install
+## libjpeg
+## -------
+#cd /build
+#download https://sourceforge.net/projects/libjpeg/files/libjpeg/6b/jpegsrc.v6b.tar.gz
+#cd /build/jpeg-6b
+#
+#make distclean || true
+#PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH ./configure
+#sed -i s#./libtool#libtool#g Makefile
+#make CFLAGS="-fPIC"
+#sudo make install
 
 # R
 # -
@@ -304,18 +306,27 @@ cp -a -f /build/zlib-1.2.11/libz.so.1* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib64/libssl*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib64/libcrypto*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/local/lib/libcurl*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libpcre*.so* /build/dirR-$version-$arch/lib64/R/lib
+# cp -a -f /usr/local/lib/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
+# cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/*tcl* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -fr /usr/share/tcl8.5 /build/dirR-$version-$arch/lib64/R/share
 cp -a -fr /usr/share/tk8.5 /build/dirR-$version-$arch/lib64/R/share
+#cp -a -f /usr/lib64/libpng12.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/liblzma* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicuuc.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicudata.so* /build/dirR-$version-$arch/lib64/R/lib
 
 echo '
 puts [list set argv $argv]
@@ -374,12 +385,11 @@ tclsh /tmp/convert /build/dirR-$version-$arch/lib64/R/bin/R /build/dirR-$version
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("PCAtools")'
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("pcaExplorer")'
 
-# Rhtslib does not compile for some reason, so not for now
-#yuminstall xz-devel
-#cp -a /usr/lib64/liblzma*.so* /build/dirR-$version-$arch/lib64/R/lib
-#/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("Rhtslib")'
-#/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("Rsamtools")'
-#/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("ggbio")'
+/build/dirR-$version-$arch/R --vanilla -e $'BiocManager::install("Rhtslib")'
+/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("Rsamtools")'
+/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("ggbio")'
+
+/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("bambu")'
 
 # leafcutter
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("rstan", repos="http://cran.us.r-project.org")'
