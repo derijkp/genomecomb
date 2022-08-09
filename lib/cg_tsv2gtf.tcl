@@ -4,10 +4,12 @@ proc cg_tsv2gtf {args} {
 	set upstream 0
 	set nocds 0
 	set genecol {}
+	set addgene 0
 	cg_options tsv2gtf args {
 		-upstream {set upstream $value}
 		-nocds {set nocds $value}
 		-genecol {set genecol $value}
+		-addgene {set addgene $value}
 	}  {file outfile} 0 2
 	if {[llength $args] > 2} {
 		errorformat tsv2gtf
@@ -29,6 +31,8 @@ proc cg_tsv2gtf {args} {
 	set scorepos [lsearch $header score]
 	set rest [list_sub $header -exclude $dposs]
 	set restposs [list_cor $header $rest]
+	set gchr {}
+	unset -nocomplain genea
 	while {![eof $f]} {
 		set frame .
 		set attr {}
@@ -53,6 +57,15 @@ proc cg_tsv2gtf {args} {
 		if {!$compl} {set strand +} else {set strand -}
 		set rest [list_sub $line $restposs]
 		set attr "gene_id \"$gene\"\; transcript_id \"$transcript\"\;"
+		#
+		if {$addgene} {
+			if {![info exists genea($gene)]} {
+				set genea($gene) [list $chr $source gene [expr {$begin+1}] $end . $strand . "gene_id \"$gene\"\;"]
+			} else {
+				set gend [lindex $genea($gene) 4]
+				if {$end > $gend} {lset genea($gene) 4 $end}
+			}
+		}
 		#
 		puts $o [join [list $chr $source transcript [expr {$begin+1}] $end $score $strand $frame $attr] \t]
 		if {$upstream} {
@@ -109,6 +122,11 @@ proc cg_tsv2gtf {args} {
 			set end [lindex $dline 0]
 			set begin [expr {$end+$upstream+1}]
 			puts $o [join [list $chr $source downstream $begin $end $score $strand $frame $attr] \t]
+		}
+	}
+	if {$addgene} {
+		foreach gene [array names genea] {
+			puts $o [join $genea($gene) \t]
 		}
 	}
 	if {$o ne "stdout"} {
