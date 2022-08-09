@@ -707,6 +707,46 @@ test regcollapse {basic} {
 	exec diff tmp/test.tsv tmp/expected.tsv
 } {}
 
+test reg_subtract {basic} {
+	write_tab tmp/reg1.tsv {
+		chromosome	begin	end
+		chr1	5	8
+		chr1	20	30
+	}
+	write_tab tmp/reg2.tsv {
+		chromosome	begin	end
+		chr1	6	8
+		chr1	10	20
+		chr1	25	28
+	}
+	exec cg regsubtract tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	begin	end
+chr1	5	6
+chr1	20	25
+chr1	28	30}
+
+test reg_subtract {diff chr notation} {
+	write_tab tmp/reg1.tsv {
+		chromosome	begin	end
+		1	5	8
+		1	20	30
+		2	10	20
+	}
+	write_tab tmp/reg2.tsv {
+		chromosome	begin	end
+		chr1	6	8
+		chr1	10	20
+		chr1	25	28
+		chr1	100	110
+		chr2	16	30
+	}
+	exec cg regsubtract tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	begin	end
+1	5	6
+1	20	25
+1	28	30
+2	10	16}
+
 test regselect {basic} {
 	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv
 	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
