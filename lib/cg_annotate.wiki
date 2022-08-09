@@ -45,7 +45,9 @@ a - allways replace them with new information
 ** schr or schromosome: each chromosome processed separately
 ** chr or chromosome: each chromosome processed separately, except the unsorted, etc. with a _ in the name that will be combined),
 ** a number: distribution into regions of this size
-** a number preceded by an s: distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size
+** a number preceded by an s: distribution into regions targeting the given size, but breaks can only occur in unsequenced regions of the genome (N stretches)
+** a number preceded by an r: distribution into regions targeting the given size, but breaks can only occur in large (>=100000 bases) repeat regions
+** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
 ** a file name: the regions in the file will be used for distribution
 ; -margin number: (SV only) Allow begin and end to deviate the number of bases given (default 30)
 ; -lmargin number: (SV only) Allow begin and end to deviate the number of bases given for deletions, inversions (default 300)

@@ -9,10 +9,14 @@ proc distrreg_checkvalue {value {default s50000000}} {
 		return $value
 	} elseif {[regexp {^s([0-9]+)$} $value]} {
 		return $value
+	} elseif {[regexp {^r([0-9]+)$} $value]} {
+		return $value
+	} elseif {[regexp {^g([0-9]+)$} $value]} {
+		return $value
 	} elseif {[file exists $value]} {
 		return [file_absolute $value]
 	} else {
-		error "unknown value $value for -distrreg, must be an existing (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, a number or a number preceded by an s"
+		error "unknown value $value for -distrreg, must be an existing (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, a number or a number preceded by an s, r, or g"
 	}
 }
 
@@ -59,6 +63,41 @@ proc distrreg_reg2bed {bedfile regions {refseq {}}} {
 	}
 	close $o
 	return $bedfile
+}
+
+proc distrreg_reg2tsv {tsvfile regions {refseq {}}} {
+	set o [open $tsvfile w]
+	puts $o chromosome\tbegin\tend
+	foreach region $regions {
+		foreach {chr begin end} [split $region :-] break
+		if {$region eq "unaligned"} {
+			continue
+		}
+		if {[isint $begin] && [isint $end]} {
+			puts $o $chr\t$begin\t$end
+			continue
+		}
+		global genomecomb_chrsizea
+		if {![info exists genomecomb_chrsizea]} {
+			list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
+				set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
+			}
+		}
+		set cchr [chr_clip $chr]
+		if {[info exists genomecomb_chrsizea($cchr)]} {
+			foreach {chr size} $genomecomb_chrsizea($cchr) break
+			puts $o $chr\t0\t$size
+		} elseif {[string index $chr end] eq "_"} {
+			foreach tchr [array names genomecomb_chrsizea [chr_clip $chr]*] {
+				foreach {chr size} $genomecomb_chrsizea($tchr) break
+				puts $o $chr\t0\t$size
+			}
+		} else {
+			puts $o $chr\t0\t536870912
+		}
+	}
+	close $o
+	return $tsvfile
 }
 
 proc maxint args {
@@ -177,6 +216,117 @@ proc distrreg_regs {regfile refseq {addunaligned 1}} {
 			set result [distrreg_addunaligned $result $addunaligned]
 			return $result
 		}
+	}
+	if {[regexp {^r([0-9]+)$} $regfile temp regsize]} {
+		set ref [file tail [file dir $refseq]]
+		set norep100000file [gzfile [file dir $refseq]/extra/reg_${ref}_norep100000.tsv]
+		set fullgenomefile [gzfile [file dir $refseq]/extra/reg_*_fullgenome.tsv]
+		if {![file exists $norep100000file]} {
+			set rmskfile [gzfile [file dir $refseq]/reg_*_rmsk.tsv]
+			if {![file exists $rmskfile]} {
+				putslog "norep100000file $norep100000file not found, nor rmsk file ($rmskfile) to make it, using distrreg chr"
+				set regfile chr
+			} else {
+				exec cg regjoin $rmskfile | cg select -f {{size=$end - $begin} *} \
+					| cg select -q {$size > 100000} > $norep100000file.temp
+				cg regsubtract $fullgenomefile $norep100000file.temp > $norep100000file
+				file delete $norep100000file.temp
+			}
+		}
+		unset -nocomplain donea
+		set result {}
+		set list [split [string trim [cg select -sh /dev/null -f {chromosome begin end} $norep100000file]] \n]
+		foreach {cchr cbegin cend} [list_pop list 0] break
+		set cbegin 0
+		set cmax [ref_chrsize $refseq $cchr]
+		set csize [expr {$cend-$cbegin}]
+		list_foreach {chr begin end} $list {
+			set size [expr {$end-$begin}]
+			if {$chr ne $cchr} {
+				if {[regexp {^[^_]*_} $cchr base]} {
+					if {![info exists donea($base)]} {
+						lappend result $base
+						set donea($base) 1
+					}
+				} else {
+					lappend result $cchr-$cbegin-$cmax
+					set cmax [ref_chrsize $refseq $chr]
+				}
+				set cchr $chr
+				set cbegin 0
+				set cend $end
+				set cmax [ref_chrsize $refseq $cchr]
+			} elseif {[regexp {^[^_]*_} $cchr base]} {
+				# do not add anything if chr1_*
+			} elseif {[expr {$csize + $size}] > $regsize} {
+				set mid [expr {($cend + $begin)/2}]
+				lappend result $cchr-$cbegin-$mid
+				set cchr $chr
+				set cbegin $mid
+				set cend $end
+			} else {
+				set cend $end
+			}
+			set csize [expr {$cend-$cbegin}]
+		}
+		lappend result $cchr-$cbegin-$cend
+		set result [distrreg_addunaligned $result $addunaligned]
+		return $result
+	}
+	if {[regexp {^g([0-9]+)$} $regfile temp regsize]} {
+		set ref [file tail [file dir $refseq]]
+		set nolowgenefile [gzfile [file dir $refseq]/extra/reg_${ref}_nolowgene250k.tsv]
+		set fullgenomefile [gzfile [file dir $refseq]/extra/reg_*_fullgenome.tsv]
+		if {![file exists $nolowgenefile]} {
+			set temp [tempfile]
+			cg regjoin $genedbtsv > $temp
+			set temp2 [tempfile]
+			cg regsubtract $fullgenomefile $temp > $temp2
+			set temp3 [tempfile]
+			cg select -overwrite 1 -q {$end - $begin > 200000} $temp2 $temp3
+			# cg regsubtract $fullgenomefile $temp3 | cg select -f {{size=$end - $begin} *} | cg select -s size
+			cg regsubtract $fullgenomefile $temp3 > $nolowgenefile.temp
+			file rename $nolowgenefile.temp $nolowgenefile
+		}
+		unset -nocomplain donea
+		set result {}
+		set list [split [string trim [cg select -sh /dev/null -f {chromosome begin end} $nolowgenefile]] \n]
+		foreach {cchr cbegin cend} [list_pop list 0] break
+		set cbegin 0
+		set cmax [ref_chrsize $refseq $cchr]
+		set csize [expr {$cend-$cbegin}]
+		list_foreach {chr begin end} $list {
+			set size [expr {$end-$begin}]
+			if {$chr ne $cchr} {
+				if {[regexp {^[^_]*_} $cchr base]} {
+					if {![info exists donea($base)]} {
+						lappend result $base
+						set donea($base) 1
+					}
+				} else {
+					lappend result $cchr-$cbegin-$cmax
+					set cmax [ref_chrsize $refseq $chr]
+				}
+				set cchr $chr
+				set cbegin 0
+				set cend $end
+				set cmax [ref_chrsize $refseq $cchr]
+			} elseif {[regexp {^[^_]*_} $cchr base]} {
+				# do not add anything if chr1_*
+			} elseif {[expr {$csize + $size}] > $regsize} {
+				set mid [expr {($cend + $begin)/2}]
+				lappend result $cchr-$cbegin-$mid
+				set cchr $chr
+				set cbegin $mid
+				set cend $end
+			} else {
+				set cend $end
+			}
+			set csize [expr {$cend-$cbegin}]
+		}
+		lappend result $cchr-$cbegin-$cend
+		set result [distrreg_addunaligned $result $addunaligned]
+		return $result
 	}
 	if {$regfile in "chr chromosome 1"} {
 		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
