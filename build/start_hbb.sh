@@ -1,6 +1,7 @@
 # This script is meant to be sourced in a Holy build box build script to start the HBB docker
 # it interprets the options:
-# -b|-bits|--bits: 32 for 32 bits build (default 64)
+# -a|-arch|--arch: 64 or x86_64 for 64 bit Linux build (default), ix86 or 32 for 32 bits Linux build, win or mingw-w64 for Windows 64 bit build
+# -b|-bits|--bits: 32 for 32 bits Linux build (default 64 = x86_64)
 # -d|-builddir|--builddir: top directory to build in (default ~/build/bin-$arch)
 # and presents all options (excluding -bbuilddir) to the program in the docker
 
@@ -35,42 +36,43 @@ if [ ! -f /hbb_exe/activate ]; then
 
 	echo "Running script $dir/$file"
 	builddir=""
-	bits=64
+	arch=x86_64
 	argumentspos=1; 
 	while [[ "$#" -gt 0 ]]; do case $1 in
-		-b|-bits|--bits) bits="$2"; shift;;
+		-b|-bits|--bits) arch="$2"; shift;;
+		-a|-arch|--arch) arch="$2"; shift;;
 		-d|-builddir|--builddir) builddir="$(readlink -f "$2")" ; shift;;
 		*) arguments[$argumentspos]="$1"; argumentspos+=1 ; arguments[$argumentspos]="$2"; argumentspos+=1 ; shift;;
 	esac; shift; done
 	if [ "$builddir" = "" ] ; then
-		if [ "$bits" = "32" ] ; 	then
+		if [ "$arch" = "ix86" ] ; 	then
 			builddir="$HOME/build/bin-ix86"
 		else
 			builddir="$HOME/build/bin-x86_64"
 		fi
 	fi
 	mkdir -p "$builddir"
-	echo "Build $bits bits version"
+	echo "Build $arch version"
 	echo "builddir=$builddir"
 	echo "srcdir=$srcdir"
 	# run the script in holy build box
 	uid=$(id -u)
 	gid=$(id -g $uid)
 	
-	if [ "$bits" = "32" ] ; 	then
+	if [ "$arch" = "ix86" ] ; 	then
 		if docker image list | grep --quiet hbb32; then
 			buildbox=hbb32
 		else
-			buildbox=phusion/holy-build-box-32:latest
+			buildbox=phusion/holy-build-box-32:2.2.0
 		fi
-		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" ${arguments[*]}
 	else
 		if docker image list | grep --quiet hbb64; then
 			buildbox=hbb64
 		else
-			buildbox=phusion/holy-build-box-64:latest
+			buildbox=phusion/holy-build-box-64:2.2.0
 		fi
-		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" ${arguments[*]}
 	fi
 	exit
 fi
@@ -79,13 +81,13 @@ if [ "$1" = "stage2" ] ; then
 	# in stage 2 we will create the user build with sudo access
 	# then restart the script (skipping to stage 3)
 	file=$2
-	bits=$3
+	arch=$3
 	uid=$4
 	gid=$5
 	# prepare the user build with sudo rights
 	echo "installing sudo"
 	# to stop "checksum is invalid" errors when using yum in 32 bit docker
-	if [ "$bits" = 32 ] ; then
+	if [ "$arch" = ix86 ] ; then
 		if ! rpm --quiet --query yum-plugin-ovl; then
 			yum install -q -y yum-plugin-ovl
 		fi
@@ -115,7 +117,7 @@ function yuminstall {
 }
 
 # centos 6 is EOL, moved to vault: adapt the repos
-if [ "$bits" = "32" ] ; 	then
+if [ "$arch" = "ix86" ] ; 	then
 
 cd
 echo '
@@ -160,7 +162,7 @@ gpgcheck=1
 enabled=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
 ' > temp
-mv temp /etc/yum.repos.d/CentOS-Base.repo
+sudo mv -f temp /etc/yum.repos.d/CentOS-Base.repo
 
 else
 
@@ -204,7 +206,7 @@ if [ $(basename "$file") = "start_hbb.sh" ] ; then
 fi
 
 # if sourced in another script, continue executing this other script
-if [ "$3" = '32' ] ; then
+if [ "$3" = 'ix86' ] ; then
 	ARCH='-ix86'
 	arch=ix86
 	bits=32
@@ -217,4 +219,4 @@ uid=$4;
 gid=$5;
 shift 5;
 
-echo "Entering Holy Build Box environment; building using $bits bits, uid=$uid, gid=$gid"
+echo "Entering Holy Build Box environment; building using arch $arch, $bits bits, uid=$uid, gid=$gid"
