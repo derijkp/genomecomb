@@ -43,6 +43,8 @@ set -x
 
 # set up environment
 # ------------------
+yuminstall git
+yuminstall wget
 
 function download {
     cd /build
