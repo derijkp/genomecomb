@@ -115,7 +115,7 @@ conda init bash
 # -----
 cd /build
 
-snifflesversion=2.0.3
+snifflesversion=2.0.7
 
 conda create -y -n sniffles
 conda activate sniffles
@@ -125,6 +125,7 @@ conda install -y sniffles=$snifflesversion python=3.7
 conda deactivate
 
 # make package
+# ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
@@ -147,6 +148,7 @@ $dir/bin/sniffles ${1+"$@"}
 ' > sniffles
 chmod ugo+x sniffles
 
+# wrap up
 rm ../sniffles-$snifflesversion-$arch.tar.gz || true
 cd /build
 tar cvzf sniffles-$snifflesversion-$arch.tar.gz sniffles-$snifflesversion-$arch
@@ -156,4 +158,6 @@ rm sniffles || true
 ln -s sniffles-$snifflesversion-$arch/sniffles .
 ln -s sniffles-$snifflesversion-$arch/sniffles sniffles-$snifflesversion
 
+echo "build in $builddir/sniffles-$snifflesversion-$arch"
+echo "installed in $srcdir/sniffles-$snifflesversion-$arch"
 echo "Finished building sniffles2"
