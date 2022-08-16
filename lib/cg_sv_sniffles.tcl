@@ -146,7 +146,7 @@ proc sv_sniffles_job {args} {
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {
-		$vcffile $vcffile.analysisinfo $varallfile
+		$vcffile.gz $vcffile.analysisinfo $varallfile
 	} -vars {
 		bamfile sniffles opts refseq threads root sample varallfile
 		min_support min_seq_size region threads version2
@@ -168,8 +168,8 @@ proc sv_sniffles_job {args} {
 				--snf $varallfile.temp \
 				--input $usebam --vcf $target.temp.gz \
 				2>@ stderr >@ stdout
-			file rename -force -- $target.temp.gz $target.gz
-			file rename -force -- $target.temp.gz.tbi $target.gz.tbi
+			file rename -force -- $target.temp.gz $target
+			file rename -force -- $target.temp.gz.tbi $target.tbi
 			file rename -force -- $varallfile.temp $varallfile
 		} else {
 			if {[catch {
@@ -193,7 +193,7 @@ proc sv_sniffles_job {args} {
 	}
 	# 
 	job sv_sniffles_vcf2tsv-$root {*}$skips -deps {
-		$vcffile
+		$vcffile.gz
 	} -targets {
 		$resultfile $resultanalysisinfo
 	} -vars {
