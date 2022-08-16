@@ -172,7 +172,8 @@ proc sv_job {args} {
 		set cleanupfiles $regfiles
 		foreach resultfile $resultfiles {
 			incr pos
-			if {$resultfile eq ""} continue
+			set tail [file tail $resultfile]
+			if {$tail eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
 			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {

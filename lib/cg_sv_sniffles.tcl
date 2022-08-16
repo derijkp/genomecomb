@@ -1,4 +1,4 @@
-proc sv_sniffles_distrtrg {distrreg} {
+proc sv_sniffles_distrtreg {distrreg} {
 	set version [version sniffles]
 	set version2 [minversion $version 2]
 	if {$version2} {
