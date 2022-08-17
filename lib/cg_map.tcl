@@ -23,12 +23,24 @@ proc methods_map {args} {
 	}
 }
 
-proc map_mem {method {mem {}} {threads 1} {preset {}}} {
+proc map_mem {method {mem {}} {threads 1} {preset {}} {deps {}}} {
+	if {$mem ne ""} {return $mem}
 	if {[auto_load map_mem_$method]} {
-		return [map_mem_$method $mem $threads $preset]
+		return [map_mem_$method $mem $threads $preset $deps]
 	}
-	if {$mem eq ""} {set mem 5G}
+	if {$mem eq ""} {set mem 6G}
 	return $mem
+}
+
+# sge: -l s_rt=hh:mm:ss specify the soft run time limit (hours, minutes and seconds) - Remember to set both s_rt and h_rt.
+#PBS -l walltime=<hours:minutes:seconds>
+proc map_time {method {time {}} {threads 1} {preset {}} {deps {}}} {
+	if {$time ne ""} {return $time}
+	if {[auto_load map_time_$method]} {
+		return [map_time_$method $time $threads $preset $deps]
+	}
+	if {$time eq ""} {set time 4:00:00}
+	return $time
 }
 
 proc map_job {args} {
@@ -46,6 +58,7 @@ proc map_job {args} {
 	set fixmate 1
 	set method bwa
 	set mem {}
+	set time {}
 	set compressionlevel {}
 	set joinfastqs 0
 	set extraopts {}
@@ -91,6 +104,9 @@ proc map_job {args} {
 		-mem {
 			set mem $value
 		}
+		-time {
+			set time $value
+		}
 		-joinfastqs {
 			set joinfastqs [true $value]
 		}
@@ -131,9 +147,12 @@ proc map_job {args} {
 	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
+		set deps [list $refseq {*}$fastqfiles]
 		job [job_relfile2name map_${method}- $result] {*}$skips \
-			-mem [map_mem $method $mem $threads $preset] -cores $threads \
-		-deps [list {*}$fastqfiles $refseq] -targets {
+		-mem [map_mem $method $mem $threads $preset $deps] \
+		-time [map_time $method $time $threads $preset $deps] \
+		-cores $threads \
+		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
 			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts
@@ -198,7 +217,10 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
+			job map_${method}-$sample-$name \
+			-mem [map_mem $method $mem $threads $preset [list $refseq $file]] \
+			-time [map_time $method $time $threads $preset [list $refseq $file]] \
+			-cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file
@@ -234,7 +256,10 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
+			job map_${method}-$sample-$name \
+			-mem [map_mem $method $mem $threads $preset [list $refseq $file1 $file2]] \
+			-time [map_time $method $time $threads $preset [list $refseq $file1 $file2]] \
+			-cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file1 $file2

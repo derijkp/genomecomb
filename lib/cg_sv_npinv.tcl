@@ -24,6 +24,8 @@ proc sv_npinv_job {args} {
 	set resultfile {}
 	set region {}
 	set sample {}
+	set mem 5G
+	set time 1:00:00
 	cg_options sv_npinv args {
 		-refseq {
 			set refseq $value
@@ -61,6 +63,12 @@ proc sv_npinv_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
@@ -89,7 +97,7 @@ proc sv_npinv_job {args} {
 	# start
 	## Produce npinv sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_npinv-$root.vcf {*}$skips -mem 5G \
+	job sv_npinv-$root.vcf {*}$skips -mem $mem -time $time \
 	-deps {
 		$bamfile $bamfileindex
 	} -targets {

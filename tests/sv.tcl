@@ -7,6 +7,7 @@ set keepdir [pwd]
 
 set test_cleantmp 0
 
+
 test sv {sniffles} {
 	cd $::smalltestdir
 	file delete -force tmp/sv-sniffles

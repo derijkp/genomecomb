@@ -33,6 +33,8 @@ proc var_freebayes_job {args} {
 	set resultfiles 0
 	set skips {}
 	set resultfile {}
+	set mem 5G
+	set time 3:00:00
 	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
@@ -123,7 +125,7 @@ proc var_freebayes_job {args} {
 	set target ${pre}varall-$root.vcf
 	set cache [file dir $target]/cache_varall_freebayes_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
+	job ${pre}varall-$root {*}$skips -mem $mem -time $time -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {
 		$varallfile

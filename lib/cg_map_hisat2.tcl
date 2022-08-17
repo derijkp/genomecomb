@@ -42,7 +42,7 @@ cg refseq_hisat2 \'$refseq\'"
 	return $hisat2refseq
 }
 
-proc map_mem_hisat2 {mem threads preset} {
+proc map_mem_hisat2 {mem threads preset deps} {
 	return 5G
 }
 

@@ -38,6 +38,7 @@ proc job_process_submit_sge {job runfile args} {
 	set priority [get cgjob(priority) 0]
 	set cores 1
 	set mem {}
+	set time {}
 	set pos 0
 	set dqueue [get cgjob(dqueue) all.q]
 	foreach {opt value} $args {
@@ -98,6 +99,10 @@ proc job_process_submit_sge {job runfile args} {
 				set mem $value
 				incr pos 2
 			}
+			-time {
+				set time $value
+				incr pos 2
+			}
 			-dqueue {
 				set dqueue $value
 			}
@@ -118,6 +123,10 @@ proc job_process_submit_sge {job runfile args} {
 		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
 		set temp [job_mempercore $mem $cores]
 		lappend hard -l mem_free=$temp,virtual_free=$temp
+	}
+	if {$time ne ""} {
+		# (time format is hh:mm:ss)
+		lappend soft -l s_rt=$time
 	}
 	if {[llength $soft]} {
 		lappend options -soft {*}$soft

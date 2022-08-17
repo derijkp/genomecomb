@@ -21,6 +21,8 @@ proc sv_manta_job {args} {
 	set resultfile {}
 	# regionfile option is actually removed (for now) because it causes too much problems, and is slower
 	set regionfile {}
+	set mem {}
+	set time {}
 	cg_options sv_manta args {
 		-refseq {
 			set refseq $value
@@ -46,6 +48,12 @@ proc sv_manta_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {$key ne "-region"} {
 				if {[regexp {^-..} $key]} {set key -$key}
@@ -63,6 +71,7 @@ proc sv_manta_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$mem eq ""} {set mem [expr {1*$threads}]G}
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	if {![info exists exome]} {
@@ -89,7 +98,7 @@ proc sv_manta_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce manta sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_manta-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
+	job sv_manta-$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai ($regionfile)
 	} -targets {

@@ -144,12 +144,13 @@ doing some analyses (variantcalling, annotations) split by region
 (chromosomes) and combining the results
 
 == Dependencies ==
-Some of the programs needed in this workflow are not distributed with genomecomb. 
-gatk and picard should be installed separately. Their installation location can be given
-using the environment variables GATK and PICARD. These should point to the installation
-directory that contains the jar files. If these environment variables are not set, a directory
-named gatk and picard will be searched in the PATH.
-If used, freebayes must also be installed separately, and should be runnable from the path.
+Some of the programs used in this workflow are not distributed with genomecomb. 
+e.g., gatk and strelka should be installed separately. In general this extra software
+should be made available as executables in the PATH. Some, like picard can be available
+as a directory named picard* that contains the picard jar file. Some also support
+environment variables, e.g. GATK or PICARD to indicated the picard installation
+directory. The genomecomb source distribution has scripts to make a portable version
+of most of this extra software.
 
 == Example ==
 {{{

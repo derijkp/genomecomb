@@ -1,4 +1,4 @@
-proc job_file_exists {file} {
+proc job_file_or_link_exists {file} {
 	if {[file exists $file]} {return 1}
 	if {[catch {file link $file}]} {return 0} else {return 1}
 }
@@ -69,6 +69,12 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(priority)]} {
 		set cgjob(priority) 0
 	}
+	if {![info exists cgjob(dmem)]} {
+		set cgjob(dmem) {}
+	}
+	if {![info exists cgjob(dtime)]} {
+		set cgjob(dtime) {}
+	}
 #	if {![info exists cgjob(dqueue)]} {
 #		set cgjob(dqueue) all.q
 #	}
@@ -95,6 +101,14 @@ proc job_args {jobargs} {
 			}
 			-dqueue {
 				set cgjob(dqueue) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dmem {
+				set cgjob(dmem) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dtime {
+				set cgjob(dtime) [lindex $jobargs $pos]
 				incr pos
 			}
 			-dcleanup {
@@ -1094,10 +1108,10 @@ proc job_logfile_add {job jobid status {targets {}} {cores 1} {msg {}} {submitti
 }
 
 proc job_backup {file {rename 0}} {
-	if {![job_file_exists $file]} return
+	if {![job_file_or_link_exists $file]} return
 	set num 1
 	while 1 {
-		if {![job_file_exists $file.old$num]} break
+		if {![job_file_or_link_exists $file.old$num]} break
 		incr num
 	}
 	if {$rename} {
@@ -1125,7 +1139,7 @@ proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 		}
 		incr num
 		if {$dep ne ""} {
-			append cmd "if \{!\[[list job_file_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
+			append cmd "if \{!\[[list job_file_or_link_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
 		}
 	}
 	set num 1
@@ -1262,6 +1276,10 @@ proc job {jobname args} {
 				lappend submitopts -mem [lindex $args $pos]
 				incr pos
 			}
+			-time {
+				lappend submitopts -time [lindex $args $pos]
+				incr pos
+			}
 			-hard {
 				lappend submitopts -hard [lindex $args $pos]
 				incr pos
@@ -1385,6 +1403,8 @@ proc job_init {args} {
 	set cgjob(removeold) 0
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
+	set cgjob(dmem) {}
+	set cgjob(dtime) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	set cgjob(default_job_logdir) 1
 	interp alias {} job_process {} job_process_direct
@@ -1398,7 +1418,11 @@ proc job_init {args} {
 proc job_curargs {} {
 	global cgjob
 	set temp ""
-	foreach {opt field} {-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup -runcmd runcmd -skipjoberrors skipjoberrors} {
+	foreach {opt field} {
+		-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup 
+		-dmem {} -dtime {}
+		-runcmd runcmd -skipjoberrors skipjoberrors
+	} {
 		if {[info exists cgjob($field)]} {
 			lappend temp $opt $cgjob($field)
 		}
@@ -1417,6 +1441,30 @@ proc job_mempercore {mem threads} {
 		set mem [expr {int(ceil($memnum * $scale /$threads))}]$memunits
 	}
 	return $mem
+}
+
+proc job_memgt {mem mem2} {
+	if {$mem eq ""} {
+		return 0
+	}
+	if {$mem2 eq ""} {
+		return 1
+	}
+	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
+		if {$memunits eq "G" || $memunits eq "g"} {
+			set mem [expr {$memnum*1000.0}]
+		} else {
+			set mem $memnum
+		}
+	}
+	if {[regexp {^([0-9]+)(.*)$} $mem2 temp2 memnum2 memunits2]} {
+		if {$memunits2 eq "G" || $memunits2 eq "g"} {
+			set memnum2 [expr {$memnum2*1000.0}]
+		} else {
+			set mem2 $memnum2
+		}
+	}
+	if {$memnum > $memnum2} {return 1} else {return 0}
 }
 
 proc job_cleanup_ifempty_add {args} {

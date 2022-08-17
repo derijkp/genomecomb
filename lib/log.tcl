@@ -78,9 +78,9 @@ proc logverbose {{num {}}} {
 proc logvars {args} {
         foreach var $args {
                 if {[catch {uplevel [list set $var]} value]} {
-                        log [list unset $var]
+                        putslog [list unset $var]
                 } else {
-                        log [list set $var $value]
+                        putslog [list set $var $value]
                 }
         }
 }

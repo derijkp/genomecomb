@@ -41,6 +41,8 @@ proc var_gatkh_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set mem 15G
+	set time 3:00:00
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -88,6 +90,12 @@ proc var_gatkh_job {args} {
 		}
 		-opts {
 			set opts $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -142,7 +150,7 @@ proc var_gatkh_job {args} {
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
 	set cache [file dir $varallfile]/cache_varall_gatkh_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
+	job $varallfile {*}$skips -mem $mem -time $time -deps $deps -targets {
 		$varallfile $varallfile.tbi
 	} -vars {
 		opts regionfile gatkrefseq refseq root ERC varallfile cache

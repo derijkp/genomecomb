@@ -120,6 +120,8 @@ proc var_gatk_job {args} {
 	set skips {}
 	set resultfile {}
 	set dt {}
+	set mem 5G
+	set time 3:00:00
 	cg_options var_gatk args {
 		-L - -deps {
 			lappend deps $value
@@ -159,6 +161,12 @@ proc var_gatk_job {args} {
 		}
 		-dt {
 			set dt $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -205,8 +213,8 @@ proc var_gatk_job {args} {
 	set target ${pre}varall-$root.vcf
 	set cache [file dir $target]/cache_vcf_gatk_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -deps $deps -targets {
-		${pre}varall-$root.vcf
+	job ${pre}varall-$root {*}$skips -mem $mem -time $time -cores $threads -deps $deps -targets {
+		$destdir/${pre}varall-$root.vcf
 	} -skip {
 		$varallfile
 	} -vars {

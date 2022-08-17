@@ -42,6 +42,7 @@ of the limit to the number of files that can be opened at the same time. (defaul
 ; -keepsams 1/0: (default 0)
 ; -threads number (-t): (default 2)
 ; -mem number: how much memory should be asked/reserved for the mapping (default: decided by method)
+; -time number: how much time should be asked/reserved for the mapping (default: decided by method)
 ; -joinfastqs 1/0: If you have (too) many very small fastq files the fact that fastqs are mapped seperately
 can become a performance problem (e.g. more time spent on loading indexes than actual mapping). use joinfastqs
 to combine fastq files into one (or 2 in case of -paired 1) before processing. (default 0)

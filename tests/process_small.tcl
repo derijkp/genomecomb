@@ -17,6 +17,8 @@ set ::optx {}
 lappend dopts -threads 1
 set runopts {-stack 1}
 
+# set dopts {--stack 1 --verbose 2 -threads 1 -d sge -map-mem 10G}
+
 test process_small {process_project mastr_mx2} {
 	cd $::smalltestdir
 	set basename mastr_mx2

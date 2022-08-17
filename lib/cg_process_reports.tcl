@@ -44,7 +44,7 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 	lappend targets $resultdir/${option}samstats_FFQs-$bamroot.tsv.zst
 	lappend targets $resultdir/${option}samstats_LFQs-$bamroot.tsv.zst
 	if {$option eq ""} {set cores $threads} else {set cores 1}
-	job [job_relfile2name reports_${option}samstats- $bamfile] -cores $cores -deps {
+	job [job_relfile2name reports_${option}samstats- $bamfile] -time 6:00:00 -cores $cores -deps {
 		$dep
 	} -targets $targets -vars {
 		bamroot sections option threads
@@ -260,7 +260,7 @@ proc process_reports_job {args} {
 			set dep $bamfile
 			set target $sampledir/reports/flagstat_alignments-$bamroot.flagstat
 			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
-			job [job_relfile2name reports_flagstat_alignments- $bamfile] -cores $threads -deps {
+			job [job_relfile2name reports_flagstat_alignments- $bamfile] -time 5:00:00 -cores $threads -deps {
 				$dep
 			} -targets {
 				$target $target2
@@ -295,7 +295,11 @@ proc process_reports_job {args} {
 			set dep $bamfile
 			set target $sampledir/reports/flagstat_reads-$bamroot.flagstat
 			set target2 $sampledir/reports/report_flagstat_reads-$bamroot.tsv
-			job [job_relfile2name reports_flagstat_reads- $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+			job [job_relfile2name reports_flagstat_reads- $bamfile] -time 5:00:00 -deps {
+				$dep
+			} -targets {
+				$target $target2
+			} -vars {bamroot} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
 				if {[catch {
 					exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
@@ -350,7 +354,7 @@ proc process_reports_job {args} {
 			set target $sampledir/reports/histodepth-$bamroot.tsv
 			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
 			set indexext [indexext $bamfile]
-			job [job_relfile2name reports_histodepth- $bamfile] -optional 1 -deps {
+			job [job_relfile2name reports_histodepth- $bamfile] -optional 1 -time 5:00:00 -deps {
 				$dep1 ($dep2) $dep1.$indexext
 			} -targets {
 				$target $target2
@@ -438,7 +442,7 @@ proc process_reports_job {args} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
 			if {![llength $deps]} continue
 			set target $sampledir/reports/fastqc_$dir-$sample.fastqc
-			job reports_fastqc-$dir-$sample -deps $deps -targets {
+			job reports_fastqc-$dir-$sample -time 2:00:00 -deps $deps -targets {
 				$target $sampledir/reports/fastqc_$dir-$sample.fastqc/fastqc_data.txt
 			} -code {
 				analysisinfo_write $dep $target fastqc_version [version fastqc]
@@ -461,7 +465,7 @@ proc process_reports_job {args} {
 			set target $sampledir/reports/report_fastq_$dir-$sample.tsv
 			set target2 $sampledir/reports/fastq_stats_$dir-$sample.txt
 			set target3 $sampledir/reports/fastx_$dir-$sample.tsv
-			job reports_fastq-stats-$dir-$sample -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
+			job reports_fastq-stats-$dir-$sample -time 5:00:00 -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
 				analysisinfo_write $dep $target2 fastq_stats_version [version fastq-stats]
 				analysisinfo_write $dep $target3 fastq_stats_version [version fastq-stats]
 				set gzcat [gzcat [lindex $deps 0]]

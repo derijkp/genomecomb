@@ -179,6 +179,7 @@ specifically targetting compression
 If using multiple cores, other requirements on sge are per core!
 For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
 ; -mem memorysize: indication of (maximum) memory needed by the job (on sge: -l mem_free=$value,virtual_free=$value, where value is corrected by the system based on -cores)
+; -time timelimit: indication of (maximum) time needed by the job (on sge: -l s_rt=$time)
 ; -hard hardlimits: on sge: extra options passed on as hard limits
 ; -soft softlimits: on sge: extra options passed on as soft limits
 

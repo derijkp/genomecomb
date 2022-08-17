@@ -26,6 +26,8 @@ proc sv_cuteSV_job {args} {
 	set resultfile {}
 	set region {}
 	set sample {}
+	set mem 1G
+	set time 2:00:00
 	cg_options sv_cuteSV args {
 		-refseq {
 			set refseq $value
@@ -69,6 +71,12 @@ proc sv_cuteSV_job {args} {
 		}
 		-cuteSVopts {
 			lappend opts {*}$value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -cuteSV] {
@@ -127,7 +135,7 @@ proc sv_cuteSV_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_cutesv_$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_cutesv_$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex
@@ -151,7 +159,7 @@ proc sv_cuteSV_job {args} {
 		file rename -force -- $target.temp $target
 	}
 	# 
-	job sv_cutesv_vcf2tsv-$root {*}$skips -deps {
+	job sv_cutesv_vcf2tsv-$root -time 2:00:00 {*}$skips -deps {
 		$vcffile
 	} -targets {
 		$resultfile $resultanalysisinfo

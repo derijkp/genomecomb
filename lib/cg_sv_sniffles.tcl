@@ -50,6 +50,8 @@ proc sv_sniffles_job {args} {
 	set resultfile {}
 	set region {}
 	set sample {}
+	set mem 1G
+	set time 2:00:00
 	cg_options sv_sniffles args {
 		-refseq {
 			set refseq $value
@@ -99,6 +101,12 @@ proc sv_sniffles_job {args} {
 		-regmincoverage {
 			set regmincoverage $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -sniffles] {
 		switch $key {
@@ -142,7 +150,7 @@ proc sv_sniffles_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_sniffles_$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_sniffles_$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-deps {
 		$bamfile $refseq $bamfileindex
 	} -targets {

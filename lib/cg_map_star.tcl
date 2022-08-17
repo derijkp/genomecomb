@@ -59,7 +59,7 @@ cg refseq_star \'$refseq\'"
 	return $starrefseq
 }
 
-proc map_mem_star {mem threads preset} {
+proc map_mem_star {mem threads preset deps} {
 	return 30G
 }
 

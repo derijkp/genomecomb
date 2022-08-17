@@ -15,6 +15,8 @@ proc sv_job {args} {
 	set preset {}
 	set cmdline [list cg sv $args]
 	set resultfile {}
+	set mem {}
+	set time {}
 	cg_options sv args {
 		-method {
 			set method $value
@@ -45,6 +47,12 @@ proc sv_job {args} {
 		}
 		default {
 			lappend opts $key $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
@@ -87,7 +95,9 @@ proc sv_job {args} {
 	}
 	# run
 	if {$distrreg in {0 {}}} {
-		sv_${method}_job {*}$opts	-preset $preset {*}$cmdopts \
+		sv_${method}_job \
+			-mem $mem -time $time \
+			{*}$opts	-preset $preset {*}$cmdopts \
 			-split $split -threads $threads -cleanup $cleanup	\
 			-refseq $refseq $bamfile $resultfile
 	} else {
@@ -144,7 +154,9 @@ proc sv_job {args} {
 		if {$supportsregionfile} {
 			foreach region $regions regfile $regfiles {
 				set target $workdir/sv-$root-$region.tsv.zst
-				lappend todo [sv_${method}_job {*}$opts {*}$skips	\
+				lappend todo [sv_${method}_job \
+					-mem $mem -time $time \
+					{*}$opts {*}$skips	\
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
 					-regionfile $regfile \
@@ -156,7 +168,9 @@ proc sv_job {args} {
 			# run per region
 			foreach region $regions {
 				set target $workdir/sv-$root-$region.tsv.zst
-				lappend todo [sv_${method}_job {*}$opts {*}$skips \
+				lappend todo [sv_${method}_job \
+					-mem $mem -time $time \
+					{*}$opts {*}$skips \
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
 					-region $region \
@@ -176,7 +190,7 @@ proc sv_job {args} {
 			if {$tail eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
-			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {
+			job sv_combineresults-$tail {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list method regfile distrreg sample

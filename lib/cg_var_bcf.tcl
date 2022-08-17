@@ -22,6 +22,8 @@ proc var_bcf_job {args} {
 	set skips {}
 	set callmethod m
 	set resultfile {}
+	set mem 5G
+	set time 2:00:00
 	cg_options var_bcf args {
 		-l - deps {
 			lappend deps $value
@@ -79,6 +81,12 @@ proc var_bcf_job {args} {
 		-opts {
 			set opts $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
@@ -130,7 +138,7 @@ proc var_bcf_job {args} {
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallfile]/cache_varall_bcf_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job bcfvarall_${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem 5G -targets {
+	job bcfvarall_${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem $mem -time $time -targets {
 		$varallfile
 	} -vars {
 		refseq opts BQ BAQ regionfile root threads callmethod split cache

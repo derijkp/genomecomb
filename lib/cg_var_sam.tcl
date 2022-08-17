@@ -40,6 +40,8 @@ proc var_sam_job {args} {
 	set callmethod c
 	set resultfile {}
 	set dt {}
+	set mem {}
+	set time {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -90,6 +92,12 @@ proc var_sam_job {args} {
 		}
 		-dt {
 			set dt $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -144,7 +152,7 @@ proc var_sam_job {args} {
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallvcf]/cache_vcf_sam_[file tail $refseq].temp.zst
 	job_cleanup_add $cache
-	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
+	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem $mem -time $time -targets {
 		$varallvcf
 	} -skip {
 		$varallfile

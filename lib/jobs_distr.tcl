@@ -142,6 +142,11 @@ proc job_process_submit_distr {job runfile args} {
 				set mem $value
 				incr pos 2
 			}
+			-time {
+				# not used yet
+				set time $value
+				incr pos 2
+			}
 			-- {
 				incr pos 1
 				break

@@ -3,6 +3,10 @@
 exec tclsh "$0" "$@"
 
 if {![info exists argv]} {set argv {}}
+
+set testsge 0
+set testslurm 0
+
 set pos [lsearch $argv -d]
 if {$pos != -1} {
 	set distribute [lindex $argv [incr pos]]
@@ -33,12 +37,12 @@ if {$pos != -1} {
 	}
 } else {
 	set tests {
-		"direct" {uplevel job_init -skipjoberrors 1 -d 0 {*}$args}
-		"-d 2" {uplevel job_init -d 2 {*}$args}
-		"-d 4" {uplevel job_init -d 4 {*}$args}
-		"-d 30" {uplevel job_init -d 30 {*}$args}
-		"-d sge" {uplevel job_init -d sge {*}$args}
-		"-d slurm" {uplevel job_init -d slurm {*}$args}
+		"direct" {uplevel job_init -skipjoberrors 1 -d 0 $args}
+		"-d 2" {uplevel job_init -d 2 $args}
+		"-d 4" {uplevel job_init -d 4 $args}
+		"-d 30" {uplevel job_init -d 30 $args}
+		"-d sge" {uplevel job_init -d sge $args}
+		"-d slurm" {uplevel job_init -d slurm $args}
 	}
 }
 
@@ -48,7 +52,7 @@ set keepdir [pwd]
 # use these for trying out individual tests
 set testname "-d direct"
 proc test_job_init {args} {
-	uplevel job_init -skipjoberrors 1 -d 0 {*}$args
+	uplevel job_init -skipjoberrors 1 -d 0 $args
 	uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 }
 proc gridwait {} {}
@@ -56,7 +60,7 @@ proc gridwait {} {}
 if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
-		uplevel job_init -skipjoberrors 1 {*}$args
+		uplevel job_init -skipjoberrors 1 $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_direct
@@ -64,7 +68,7 @@ if 0 {
 
 	set testname "-d 2"
 	proc test_job_init {args} {
-		uplevel job_init -d 2 {*}$args
+		uplevel job_init -d 2 $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
@@ -72,7 +76,7 @@ if 0 {
 
 	set testname "-d 4"
 	proc test_job_init {args} {
-		uplevel job_init -d 4 {*}$args
+		uplevel job_init -d 4 $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
@@ -80,7 +84,7 @@ if 0 {
 
 	set testname "-d 30"
 	proc test_job_init {args} {
-		uplevel job_init -d 30 {*}$args
+		uplevel job_init -d 30 $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
@@ -88,7 +92,7 @@ if 0 {
 
 	set testname "-d sge"
 	proc test_job_init {args} {
-		uplevel job_init -d sge {*}$args
+		uplevel job_init -d sge $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_sge
@@ -103,7 +107,7 @@ if 0 {
 
 	set testname "-d slurm"
 	proc test_job_init {args} {
-		uplevel job_init -d slurm {*}$args
+		uplevel job_init -d slurm $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_slurm
@@ -1679,6 +1683,35 @@ test sge_safename {shorten prefix} {
 	set prefix jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_xxxx_v4.0.11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560
 	sge_safename $name $prefix
 } {jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_..11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560#test}
+
+if {![get testslurm 0]} {
+
+test job "slurm general mem and time setting $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -dmem 2G -dtime {* 2:00:00 job2 4:00:00}
+	logverbose 2
+	file_write test1.txt test1\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [bsort [glob *]] [file_read test3.txt]]
+	cd $::testdir
+	set result
+} {{log.*.finished test1.txt test2.txt test3.txt} {test1
+test2
+test3
+}} match
+
+}
 
 set ::env(PATH) $keeppath
 

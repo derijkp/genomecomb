@@ -39,6 +39,8 @@ proc var_medaka_job {args} {
 	set index 1
 	set resultfile {}
 	set batchsize 40
+	set mem 5G
+	set time 3:00:00
 	cg_options var_medaka args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -84,6 +86,12 @@ proc var_medaka_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	foreach {key value} [specialopts -medaka] {
 		switch $key {
@@ -126,7 +134,7 @@ proc var_medaka_job {args} {
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
 #putsvars deps medakatargets vcffile region refseq root varfile split opts region outbam mincoverage index
 #error stop
-	job [job_relfile2name medaka- $varfile] {*}$skips -mem 5G -cores $threads \
+	job [job_relfile2name medaka- $varfile] {*}$skips -mem $mem -time $time -cores $threads \
 	-deps $deps \
 	-targets $medakatargets -vars {
 		vcffile region refseq root varfile split opts region outbam mincoverage index threads

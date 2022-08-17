@@ -20,6 +20,8 @@ proc sv_lumpy_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set mem {}
+	set time 5:00:00
 	cg_options sv_lumpy args {
 		-refseq {
 			set refseq $value
@@ -45,6 +47,12 @@ proc sv_lumpy_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
@@ -58,6 +66,7 @@ proc sv_lumpy_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$mem eq ""} {set mem [expr {1*$threads}]G}
 	set vcffile [file root [gzroot $resultfile]].vcf
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
@@ -76,7 +85,7 @@ proc sv_lumpy_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce lumpy sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_lumpy-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
+	job sv_lumpy-$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai

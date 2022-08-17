@@ -196,8 +196,8 @@ proc process_project_job {args} {
 		if {$dt eq ""} {set dt NONE}
 		list_addnew dbfiles $amplicons
 		if {$targetfile eq ""} {
-			set targetfile $destdir/reg_${ref}_targets.tsv
-			job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile.zst} -vars {sample dbdir ref} -code {
+			set targetfile $destdir/reg_${ref}_targets.tsv.zst
+			job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile} -vars {sample dbdir ref} -code {
 				cg regcollapse $dep | cg zst > $target
 			}
 		}

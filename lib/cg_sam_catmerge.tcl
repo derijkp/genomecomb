@@ -13,6 +13,8 @@ proc sam_catmerge_job {args} {
 	set refseq ""
 	set mergesort 0
 	set maxopenfiles {}
+	set mem {}
+	set time 6:00:00
 	cg_options sam_catmerge args {
 		-name {
 			set name $value
@@ -54,6 +56,12 @@ proc sam_catmerge_job {args} {
 		}
 		-skip {
 			lappend skips -skip $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {resultfile samfile} 1 ... {
 		merge sam files by concatenating (no problem with max open files) and then sorting them
@@ -103,6 +111,7 @@ proc sam_catmerge_job {args} {
 	if {![llength $regions] && $sort eq "name"} {error "cannot combine distrreg with name sorting"}
 	set deps $samfiles
 	job $name -optional $optional -force $force -cores $threads {*}$skips \
+	-mem $mem -time $time \
 	-deps $samfiles -rmtargets $rmfiles -targets $targets -vars {
 		samfiles rmfiles regresults tempregresults resultfile regions mergesort sort refseq threads maxopenfiles outputformat workdir tempresultfile
 	} -code {
