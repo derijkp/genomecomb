@@ -1772,6 +1772,305 @@ test annotsv {options} {
 > 5	1000	1000	ins	100	
 child process exited abnormally} error
 
+test annotsv {basic} {
+	test_cleantmp
+	cg select -f {
+		chromosome begin end type id
+		strand1 start1 end1 size strand2 chr2 start2 end2
+	} data/cgsv1.tsv tmp/cgsv1.tsv
+	file copy -force data/cgsv3.tsv tmp/sv_testannot.tsv
+	cg annotate tmp/cgsv1.tsv tmp/result.tsv tmp/sv_testannot.tsv
+	exec diff tmp/result.tsv data/expected-annotsv.tsv
+} {} 
+
+test annotsv {trans} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	trans	{}	[chr2:100[
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	name2
+		chr1	10001	10001	trans	{}	[chr2:500[	n1
+		chr1	10021	10021	trans	{}	[chr2:200[	n2
+	}
+	file_write tmp/sv_s2.tsv.opt "fields\tname2\n"
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	s2
+		chr1	10001	10001	trans		[chr2:100[	n2
+	}]\n
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {bnd} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	bnd	{}	[chr2:100[
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	name2
+		chr1	10001	10001	bnd	{}	[chr2:500[	n1
+		chr1	10021	10021	bnd	{}	[chr2:200[	n2
+	}
+	file_write tmp/sv_s2.tsv.opt "fields\tname2\n"
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	s2
+		chr1	10001	10001	bnd		[chr2:100[	n2
+	}]\n
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {trans bnd mix} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	trans	{}	[chr2:100[
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	name2
+		chr1	10001	10001	bnd	{}	[chr2:500[	n1
+		chr1	10021	10021	bnd	{}	[chr2:200[	n2
+	}
+	file_write tmp/sv_s2.tsv.opt "fields\tname2\n"
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	s2
+		chr1	10001	10001	trans		[chr2:100[	n2
+	}]\n
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {trans bnd mix other way} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	bnd	{}	[chr2:100[
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	name2
+		chr1	10001	10001	trans	{}	[chr2:500[	n1
+		chr1	10021	10021	trans	{}	[chr2:200[	n2
+	}
+	file_write tmp/sv_s2.tsv.opt "fields\tname2\n"
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	s2
+		chr1	10001	10001	bnd		[chr2:100[	n2
+	}]\n
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {ins} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	ins	{}	AGCTAGCT
+		chr2	10001	10001	ins	{}	4000
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	id
+		chr1	10001	10001	ins	{}	TGCTAGCTA	i1
+		chr1	10021	10021	ins	{}	20	i2
+		chr1	20021	20021	ins	{}	20	i3
+		chr2	10001	10001	ins	{}	3000	i4
+		chr2	10001	10001	ins	{}	4200	i5
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	s2
+		chr1	10001	10001	ins		AGCTAGCT	i1
+		chr2	10001	10001	ins		4000	i5
+	}]\n
+	file delete tmp/temp.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {cnv} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1720	2721	amp	84.8	1.95	4	9
+		chr1	9650	10000	del	76.5	1.76	4	9
+	}
+	write_tab tmp/sv_s2.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1700	2721	amp	84.8	1.95	3	9
+	}
+	file_write tmp/sv_s2.tsv.opt "fields\tcalledPloidy\n"
+	write_tab tmp/expected.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore	s2
+		chr1	1720	2721	amp	84.8	1.95	4	9	3
+		chr1	9650	10000	del	76.5	1.76	4	9	{}
+	}
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {cnv no outfields} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1720	2721	amp	84.8	1.95	4	9
+		chr1	9650	10000	del	76.5	1.76	4	9
+	}
+	write_tab tmp/sv_s2.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1700	2721	amp	84.8	1.95	3	9
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore	s2
+		chr1	1720	2721	amp	84.8	1.95	4	9	3
+		chr1	9650	10000	del	76.5	1.76	4	9	{}
+	}
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {no outfields found (or specified) for tmp/sv_s2.tsv: cannot annotate sv} error
+
+test annotsv {del 2 (no ref and alt)} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type
+		2	106880171	106886171	del
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	name
+		2	106880000	106886000	del	n1
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	s2
+		2	106880171	106886171	del	n1
+	}]\n
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {sv del duplicated error} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type
+		chr1	5727767	5728301	del
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	name
+		chr1	5727847	5728315	del	n1
+		chr1	5727878	5728315	del	n2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	s2
+		chr1	5727767	5728301	del	n1
+	}
+	file delete tmp/temp.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {sv repeated del} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type
+		chr1	5727767	5728301	del
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	name
+		chr1	5727767	5728301	del	1
+		chr1	5727767	5728301	del	2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	s2
+		chr1	5727767	5728301	del	1
+	}
+	file delete tmp/temp.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {sv trans, diff chr format, different chromosome} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	1000	1000	trans	{}	[1:1000[
+		1	5727760	5727760	trans	{}	[2:1000[
+		1	5727760	5727760	trans	{}	[3:1000[
+	}
+	write_tab tmp/sv_s2.tsv {
+		chromosome	begin	end	type	ref	alt	name
+		1	1000	1000	trans	{}	[chr2:1200[	1
+		1	5727767	5727767	trans	{}	[chr3:1200[	2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	s2
+		1	1000	1000	trans	{}	[1:1000[	{}
+		1	5727760	5727760	trans	{}	[2:1000[	{}
+		1	5727760	5727760	trans	{}	[3:1000[ 2
+	}
+	file delete tmp/temp.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test annotsv {options} {
+	test_cleantmp
+	file_write tmp/s1.tsv [deindent {
+		chromosome	begin	end	type	alt
+		1	1000	1100	del	
+		2	1000	1100	del	
+		3	1000	1100	del	
+		4	1000	1000	ins	100
+		5	1000	1000	ins	100
+		6	1000	1000	ins	100
+	}]\n
+	file_write tmp/sv_s2.tsv [deindent {
+		chromosome	begin	end	type	alt	name
+		1	1005	1105	del		n1
+		2	1010	1110	del		n2
+		3	1010	1220	del		n3
+		4	1005	1005	ins	100	n4
+		5	1010	1010	ins	90	n5
+		6	1005	1005	ins	70	n6
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	alt	s2
+		1	1000	1100	del		n1
+		2	1000	1100	del		n2
+		3	1000	1100	del		
+		4	1000	1000	ins	100	n4
+		5	1000	1000	ins	100	n5
+		6	1000	1000	ins	100	
+	}]\n
+	file delete tmp/temp.tsv
+	cg annotate tmp/s1.tsv tmp/temp.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+	# test options
+	file_write tmp/expected2.tsv [deindent {
+		chromosome	begin	end	type	alt	s2
+		1	1000	1100	del		n1
+		2	1000	1100	del		
+		3	1000	1100	del		
+		4	1000	1000	ins	100	n4
+		5	1000	1000	ins	100	
+		6	1000	1000	ins	100	
+	}]\n
+	file delete tmp/temp2.tsv tmp/temp3.tsv tmp/temp4.tsv
+	cg annotate -lmargin 5 -margin 5 tmp/s1.tsv tmp/temp2.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp2.tsv tmp/expected2.tsv
+	cg annotate -overlap 91 tmp/s1.tsv tmp/temp3.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp3.tsv tmp/expected2.tsv
+	cg annotate -overlap 89 tmp/s1.tsv tmp/temp4.tsv tmp/sv_s2.tsv
+	exec diff tmp/temp4.tsv tmp/expected2.tsv
+} {3c3
+< 2	1000	1100	del		n2
+---
+> 2	1000	1100	del		
+6c6
+< 5	1000	1000	ins	100	n5
+---
+> 5	1000	1000	ins	100	
+child process exited abnormally} error
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 
