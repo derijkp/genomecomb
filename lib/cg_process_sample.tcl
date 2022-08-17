@@ -668,7 +668,7 @@ proc process_sample_job {args} {
 	}
 	# targetfile
 	set temp [targetfile $sampledir $ref]
-	if {$temp ne ""} {
+	if {$temp ne "" && [file exists $temp]} {
 		if {$amplicons ne ""} {puts stderr "Not overwriting existing targetfile $temp"}
 		set targetfile $temp
 		if {$datatype eq ""} {set datatype exome}
