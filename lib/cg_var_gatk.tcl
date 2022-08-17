@@ -210,7 +210,7 @@ proc var_gatk_job {args} {
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
 	if {$dt ne ""} {lappend opts -dt $dt}
-	set target ${pre}varall-$root.vcf
+	set target $destdir/${pre}varall-$root.vcf
 	set cache [file dir $target]/cache_vcf_gatk_[file tail $refseq].temp
 	job_cleanup_add $cache
 	job ${pre}varall-$root {*}$skips -mem $mem -time $time -cores $threads -deps $deps -targets {
@@ -242,7 +242,7 @@ proc var_gatk_job {args} {
 		}
 	}
 	job ${pre}varall-gatk2tsv-$root {*}$skips -deps {
-		${pre}varall-$root.vcf
+		$destdir/${pre}varall-$root.vcf
 	} -targets {
 		$varallfile
 	} -vars {
@@ -259,13 +259,15 @@ proc var_gatk_job {args} {
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	# not using threads, as these cause (sporadic) errors (https://gatkforums.broadinstitute.org/gatk/discussion/3141/unifiedgenotyper-error-somehow-the-requested-coordinate-is-not-covered-by-the-read)
-	set target ${pre}delvar-$root.tsv
+	set target $destdir/${pre}delvar-$root.tsv
 	set cache [file dir $target]/cache_delvar_gatk_[file tail $refseq].temp
 	job_cleanup_add $cache
 	job ${pre}delvar-$root {*}$skips \
 	-deps $deps \
-	-targets {${pre}delvar-$root.vcf} -skip {
-		${pre}delvar-$root.tsv
+	-targets {
+		$destdir/${pre}delvar-$root.vcf
+	} -skip {
+		$destdir/${pre}delvar-$root.tsv
 	} -skip {
 		$varfile
 	} -vars {
@@ -292,9 +294,9 @@ proc var_gatk_job {args} {
 		}
 	}
 	job ${pre}delvar-gatk2tsv-$root {*}$skips -deps {
-		${pre}delvar-$root.vcf
+		$destdir/${pre}delvar-$root.vcf
 	} -targets {
-		${pre}delvar-$root.tsv
+		$destdir/${pre}delvar-$root.tsv
 	} -skip {
 		$varfile
 	} -vars {
@@ -315,9 +317,9 @@ proc var_gatk_job {args} {
 		file rename -force -- $temp $target
 	}
 	job ${pre}uvar-$root {*}$skips -deps {
-		$varallfile ${pre}delvar-$root.tsv
+		$varallfile $destdir/${pre}delvar-$root.tsv
 	} -targets {
-		${pre}uvar-$root.tsv
+		$destdir/${pre}uvar-$root.tsv
 	} -skip {
 		$varfile
 	} -vars {
@@ -338,7 +340,7 @@ proc var_gatk_job {args} {
 		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile
+	annotvar_clusters_job {*}$skips $destdir/${pre}uvar-$root.tsv $varfile
 	# make sreg
 	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile $skips
 	## filter SNPs (according to seqanswers exome guide)
@@ -346,8 +348,8 @@ proc var_gatk_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index/var.tsv ${pre}uvar-$root.tsv.index \
-			${pre}varall-$root.vcf ${pre}delvar-$root.vcf ${pre}delvar-$root.tsv \
+			$destdir/${pre}uvar-$root.tsv $destdir/${pre}uvar-$root.tsv.index/var.tsv $destdir/${pre}uvar-$root.tsv.index \
+			$destdir/${pre}varall-$root.vcf $destdir/${pre}delvar-$root.vcf $destdir/${pre}delvar-$root.tsv \
 		]
 		set cleanupdeps [list $varfile $varallfile]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
