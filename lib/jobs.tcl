@@ -1450,18 +1450,16 @@ proc job_memgt {mem mem2} {
 	if {$mem2 eq ""} {
 		return 1
 	}
+	set memnum $mem
+	set memnum2 $mem2
 	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
 		if {$memunits eq "G" || $memunits eq "g"} {
-			set mem [expr {$memnum*1000.0}]
-		} else {
-			set mem $memnum
+			set memnum [expr {$memnum*1000.0}]
 		}
 	}
 	if {[regexp {^([0-9]+)(.*)$} $mem2 temp2 memnum2 memunits2]} {
 		if {$memunits2 eq "G" || $memunits2 eq "g"} {
 			set memnum2 [expr {$memnum2*1000.0}]
-		} else {
-			set mem2 $memnum2
 		}
 	}
 	if {$memnum > $memnum2} {return 1} else {return 0}
