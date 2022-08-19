@@ -115,6 +115,22 @@ proc job_process_submit_sge {job runfile args} {
 			}
 		}
 	}
+	if {[llength $cgjob(dmem)] == 1} {set cgjob(dmem) [list * $cgjob(dmem)]}
+	foreach {pattern value} $cgjob(dmem) {
+		if {$pattern eq "*" || [regexp $pattern $job]} {
+			if {[job_memgt $value $mem]} {
+				set mem $value
+			}
+		}
+	}
+	if {[llength $cgjob(dtime)] == 1} {set cgjob(dtime) [list * $cgjob(dtime)]}
+	foreach {pattern value} $cgjob(dtime) {
+		if {$pattern eq "*" || [regexp $pattern $job]} {
+			if {[bsort [list $time $value]] eq [list $time $value]} {
+				set time $value
+			}
+		}
+	}
 	if {$mem ne ""} {
 		# mem_free: only start job if the given amount of memory is free on the node
 		#  -> often not sufficient if running jobs increase memory use during run

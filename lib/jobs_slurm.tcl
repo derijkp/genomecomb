@@ -103,7 +103,6 @@ proc job_process_submit_slurm {job runfile args} {
 			}
 		}
 	}
-putsvars job mem time cgjob(dmem) cgjob(dtime)
 	if {[llength $cgjob(dmem)] == 1} {set cgjob(dmem) [list * $cgjob(dmem)]}
 	foreach {pattern value} $cgjob(dmem) {
 		if {$pattern eq "*" || [regexp $pattern $job]} {
