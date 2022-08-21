@@ -478,6 +478,42 @@ test tsv_cat {cg cat -m 1 -c m} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test tsv_cat {cg cat -m 1 -c m} {
+	write_deindent tmp/var1.tsv {
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv {
+		chromosome	begin	end	type
+		chr2	45	55	del
+	}
+	write_deindent tmp/expected.tsv {
+		chromosome	test	begin	end	type
+		chr1	test	15	25	
+		chr2		45	55	del
+	}
+	exec cg cat -m 1 -c m tmp/var1.tsv tmp/var2.tsv > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_cat {cg cat -m 1 -c 1} {
+	write_deindent tmp/var1.tsv {
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv {
+		chromosome	begin	end	type
+		chr2	45	55	del
+	}
+	write_deindent tmp/expected.tsv {
+		chromosome	test	begin	end	type
+		chr1	test	15	25	
+		chr2		45	55	del
+	}
+	exec cg cat -m 1 -c m tmp/var1.tsv tmp/var2.tsv > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test tsv_cat {cg cat -m 1 -c m -sample testsample} {
 	write_deindent tmp/var1.tsv {
 		#filetype	tsv/varfile
