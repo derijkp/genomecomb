@@ -28,9 +28,9 @@ proc cg_multitranscript {args} {
 			lset header $pos $field
 		}
 		set a(h,$file) $header
-		set a(id,$file) [list_cor $header {chromosome begin end exonStarts exonEnds strand}]
+		set a(id,$file) [list_cor $header {chromosome begin end strand exonStarts exonEnds}]
 		if {[inlist $a(id,$file) -1]} {
-			set missing [list_sub {chromosome begin end exonStarts exonEnds strand} [list_find $a(id,$file) -1]]
+			set missing [list_sub {chromosome begin end strand exonStarts exonEnds} [list_find $a(id,$file) -1]]
 			error "file $file is missing essential fields: $missing"
 		}
 		set a(data,$file) [list_find -glob $header *-*]
@@ -52,7 +52,7 @@ proc cg_multitranscript {args} {
 	foreach file $isoformfiles {
 		set a(common,$file) [list_cor $a(h,$file) $common]
 	}
-	set header {chromosome begin end exonStarts exonEnds strand}
+	set header {chromosome begin end strand exonStarts exonEnds}
 	lappend header {*}$common
 	foreach file $isoformfiles {
 		lappend header {*}[list_sub $a(h,$file) $a(data,$file)]
@@ -83,7 +83,7 @@ proc cg_multitranscript {args} {
 				set a(curline,$file) [split $a(curline,$file) \t]
 				set temp [list_sub $a(curline,$file) $a(id,$file)]
 				if {[lindex [bsort [list $curid $temp]] 1] ne $temp} {
-					error "file $file not sorted correctly; should be sorted on: chromosome begin end exonStarts exonEnds strand"
+					error "file $file not sorted correctly; should be sorted on: chromosome begin end strand exonStarts exonEnds"
 				}
 				set a(curid,$file) $temp
 			} else {
