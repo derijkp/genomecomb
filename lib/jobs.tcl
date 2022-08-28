@@ -726,6 +726,7 @@ proc job_checktarget {job target skiptarget time timefile checkcompressed {newid
 				# 	job_backup $file 1
 				# }
 				foreach file $files {
+					file delete -force $file.old
 					file rename -force -- $file $file.old
 				}
 			} else {
