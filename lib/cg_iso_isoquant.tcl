@@ -804,7 +804,9 @@ proc iso_isoquant_job {args} {
 				close $f
 			}
 			close $o
-			file rename -force isoform_counts-isoquant-$sample.tsv.temp isoform_counts-isoquant-$sample.tsv
+			cg select -s - isoform_counts-isoquant-$sample.tsv.temp isoform_counts-isoquant-$sample.tsv.temp2
+			file rename -force isoform_counts-isoquant-$sample.tsv.temp2 isoform_counts-isoquant-$sample.tsv
+			file delete isoform_counts-isoquant-$sample.tsv.temp
 			#
 			cg cat {*}$genefiles > gene_counts-isoquant-$sample.tsv.temp
 			file rename gene_counts-isoquant-$sample.tsv.temp gene_counts-isoquant-$sample.tsv
