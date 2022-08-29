@@ -1,7 +1,16 @@
 proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 	mkdir $dest
 	set lines [lindex [cg select -g all $src] end]
-	if {$lines == 0} {
+	catch {close $f}
+	set f [open $src]
+	while 1 {
+		set read [gets $f line]
+		if {$read == -1} break
+		if {[string index $line 0] ne "#"} break
+	}
+	if {$read == -1} {
+		# gtf is empty
+		close $f
 		file_write $dest/[file tail $dest]_classification.txt "isoform	chrom	strand	length	exons	structural_category	associated_gene	associated_transcript	ref_length	ref_exons	diff_to_TSS	diff_to_TTS	diff_to_gene_TSS	diff_to_gene_TTS	subcategory	RTS_stage	all_canonical	min_sample_cov	min_cov	min_cov_pos	sd_cov	FL	n_indels	n_indels_junc	bite	iso_exp	gene_exp	ratio_exp	FSM_class	coding	ORF_length	CDS_length	CDS_start	CDS_end	CDS_genomic_start	CDS_genomic_end	predicted_NMD	perc_A_downstream_TTS	seq_A_downstream_TTS	dist_to_cage_peak	within_cage_peak	dist_to_polya_site	within_polya_site	polyA_motif	polyA_dist	ORF_seq	ratio_TSS\n"
 		file_write $dest/[file tail $dest]_corrected.genePred {}
 		file_write $dest/[file tail $dest]_corrected.faa {}
@@ -10,6 +19,42 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 		file_write $dest/[file tail $dest]_corrected.gtf.cds.gff {}
 		file_write $dest/[file tail $dest]_junctions.txt {}
 	} else {
+		set ok 1
+		while 1 {
+			if {[lindex [split $line \t] 6] ni "+ -"} {
+				set ok 0
+				break
+			}
+			set read [gets $f line]
+			if {$read == -1} break
+		}
+		close $f
+		if {!$ok} {
+			# sqanti3 gives an error on transcripts with undetermined strand (strand . is not actually correct in gtf)
+			# replace with + to make it work (although not neccesarily correct) anyway
+			set tempfile [tempfile].gtf
+			catch {close $f} ; catch {close $o}
+			set f [open $src]
+			set o [open $tempfile w]
+			while 1 {
+				set read [gets $f line]
+				if {$read == -1} break
+				if {[string index $line 0] ne "#"} break
+				puts $o $line
+			}
+			while 1 {
+				set split [split $line \t]
+				if {[lindex $split 6] ni "+ -"} {
+					lset split 6 +
+					set line [join $split \t]
+				}
+				puts $o $line
+				set read [gets $f line]
+				if {$read == -1} break
+			}
+			close $o ; close $f
+			set src $tempfile
+		}
 		catch_exec sqanti3_qc.py \
 			$src \
 			$gtfannotation \
