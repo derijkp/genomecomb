@@ -241,7 +241,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		#fields	counts	1	Integer	Number of reads mapping to isoform
 		#fields	tpm	1	Float	Transcripts per million (number of reads mapping nomralized to 1m reads total)
 	}]\n
-	cg select -s {chromosome begin end exonStarts exonEnds strand} $target.temp >> $target.temp2
+	cg select -s - $target.temp >> $target.temp2
 	file rename -force $target.temp2 $target
 	file delete -force $target.temp
 }
