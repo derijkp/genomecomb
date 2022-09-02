@@ -1750,6 +1750,169 @@ test tsv2gtf {basic with CDS} {
 	exec diff tmp/test.gtf tmp/expected.gtf
 } {}
 
+test tsv2gtf {basic with CDS bug fix} {
+	file_write tmp/test.tsv [string trim [deindent {
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome name
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
+		#fields	cdsStart	1	Integer	Coding region start
+		#fields	cdsEnd	1	Integer	Coding region end
+		#fields	exonCount	1	Integer	Number of exons
+		#fields	exonStarts	E	Integer	Exon start positions
+		#fields	exonEnds	E	Integer	Exon end positions
+		#fields	source	1	String	Source of data
+		# -- tsv converted from gtf, original comments follow --
+		# ----
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr9	34551431	34589706	test2	CNTFR	-	34552070	34568981	9	34551431,34552160,34552673,34556254,34557525,34557866,34564598,34568896,34589554,	34552071,34552329,34552854,34556418,34557692,34557984,34564832,34568981,34589706,	HAVANA	CNTFR	test2	9
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr9	HAVANA	transcript	34551432	34589706	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34551432	34552071	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552161	34552329	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552164	34552329	.	-	2	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552674	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552674	34552854	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34556255	34556418	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34556255	34556418	.	-	2	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34557526	34557692	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34557526	34557692	.	-	1	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34557867	34557984	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34557867	34557984	.	-	2	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34564599	34564832	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34564599	34564832	.	-	2	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34568897	34568981	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34568897	34568981	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34589555	34589706	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+} {}
+
+test tsv2gtf {basic with CDS bug fix check around} {
+	file_write tmp/test.tsv [string trim [deindent {
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr9	34551431	34552854	test2	CNTFR	-	34552068	34552850	3	34551431,34552160,34552673,	34552071,34552329,34552854,	HAVANA	CNTFR	test2	3
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr9	HAVANA	transcript	34551432	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34551432	34552071	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552161	34552329	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552162	34552329	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552674	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552674	34552850	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+	#
+	file_write tmp/test.tsv [string trim [deindent {
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr9	34551431	34552854	test2	CNTFR	-	34552067	34552850	3	34551431,34552160,34552673,	34552071,34552329,34552854,	HAVANA	CNTFR	test2	3
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr9	HAVANA	transcript	34551432	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34551432	34552071	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552161	34552329	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552161	34552329	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552674	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552674	34552850	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+	#
+	file_write tmp/test.tsv [string trim [deindent {
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr9	34551431	34552854	test2	CNTFR	-	34552066	34552850	3	34551431,34552160,34552673,	34552071,34552329,34552854,	HAVANA	CNTFR	test2	3
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr9	HAVANA	transcript	34551432	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34551432	34552071	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552070	34552071	.	-	2	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552161	34552329	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552161	34552329	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	exon	34552674	34552854	.	-	.	gene_id "CNTFR"; transcript_id "test2";
+		chr9	HAVANA	CDS	34552674	34552850	.	-	0	gene_id "CNTFR"; transcript_id "test2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+	#
+	file_write tmp/test.tsv [string trim [deindent {
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr1	1000	2000	test1	testg	+	1020	1600	3	1000,1500,1800,	1100,1600,2000,	test	testg	test1	3
+		chr1	1000	2000	test2	testg	+	1020	1800	3	1000,1500,1800,	1100,1600,2000,	test	testg	test2	3
+		chr1	1000	2000	test2	testg	+	1020	1801	3	1000,1500,1800,	1100,1600,2000,	test	testg	test2	3
+		chr1	1000	2000	test2	testg	+	1020	1802	3	1000,1500,1800,	1100,1600,2000,	test	testg	test2	3
+		chr1	1000	2000	test2	testg	+	1020	1803	3	1000,1500,1800,	1100,1600,2000,	test	testg	test2	3
+		chr1	1000	2000	test2	testg	+	1020	1804	3	1000,1500,1800,	1100,1600,2000,	test	testg	test2	3
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test1";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test1";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test1";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test1";
+		chr1	test	CDS	1501	1597	.	+	1	gene_id "testg"; transcript_id "test1";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test1";
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1501	1597	.	+	1	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1501	1598	.	+	1	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1501	1599	.	+	1	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1501	1600	.	+	1	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	transcript	1001	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1001	1100	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1021	1100	.	+	0	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1501	1600	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1501	1600	.	+	1	gene_id "testg"; transcript_id "test2";
+		chr1	test	exon	1801	2000	.	+	.	gene_id "testg"; transcript_id "test2";
+		chr1	test	CDS	1801	1801	.	+	0	gene_id "testg"; transcript_id "test2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+} {}
+
+test tsv2gtf {basic with CDS bug fix empty CDS} {
+	file_write tmp/test.tsv [string trim [deindent {
+		chrom	start	end	strand	geneid	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		chr1	3857603	3883741	+	DFFB	ENST00000341385.4	0	614	3857603	3872484	4	3857603,3858717,3872483,3883506,	3857717,3858851,3872572,3883741,	DFFB	cmpl	cmpl	0,0,2,-1,	328
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr1	genepred2tsv	transcript	3857604	3883741	0	+	.	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	exon	3857604	3857717	0	+	.	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	CDS	3857604	3857717	0	+	0	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	exon	3858718	3858851	0	+	.	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	CDS	3858718	3858849	0	+	0	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	exon	3872484	3872572	0	+	.	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+		chr1	genepred2tsv	exon	3883507	3883741	0	+	.	gene_id "DFFB"; transcript_id "ENST00000341385.4";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+} {}
+
 test convert_pipe {convert_pipe various} {
 	set errors {}
 	foreach {test expected} {

@@ -79,15 +79,45 @@ proc cg_tsv2gtf {args} {
 		set list [list_sub $list $poss]
 		set types [list_subindex $list 2]
 		set noexon 0
+		set cdsposs [list_find $types CDS]
+		set remove {}
 		if {$compl} {
-			set adjstartcds [lsearch $types CDS]
+			set adjstartcds [lindex $cdsposs 0]
+			set startfix 3
+			if {$adjstartcds ne ""} {
+				set temp [lindex $list $adjstartcds]
+				foreach {begin end} $temp break
+				set size [expr {$end - $begin}]
+				if {$size <= 3} {
+					set remove $adjstartcds
+					set adjstartcds [lindex $cdsposs 1]
+					set startfix [expr {3-$size}]
+				}
+			}
+			#
 			set adjendcds {}
+			set endfix 0
 		} else {
 			set adjstartcds {}
-			set adjendcds [lindex [list_find $types CDS] end]
+			set startfix 0
+			#
+			set adjendcds [lindex $cdsposs end]
+			set endfix -3
+			if {$adjendcds ne ""} {
+				set temp [lindex $list $adjendcds]
+				foreach {begin end} $temp break
+				set size [expr {$end - $begin + 1}]
+				if {$size <= 3} {
+					set remove $adjendcds
+					set adjendcds [lindex $cdsposs end-1]
+					set endfix [expr {$size - 3}]
+				}
+			}
 		}
 		set num 0
+		set framespos 0
 		foreach dline $list ndline [lrange $list 1 end] {
+			putsvars num dline ndline
 			foreach {begin end type element rna_start rna_end protein_start protein_end} $dline break
 			incr begin
 			incr end
@@ -107,14 +137,16 @@ proc cg_tsv2gtf {args} {
 			}
 			if {$type eq "CDS"} {
 				if {$num == $adjstartcds} {
-					incr begin 3
+					incr begin $startfix
 				}
 				if {$num == $adjendcds} {
-					incr end -3
+					incr end $endfix
 				}
-				set frame [expr {3-$protein_start%3}]
-				if {$frame == 3} {set frame 0}
-				puts $o [join [list $chr $source $type $begin $end $score $strand $frame $attr] \t]
+				if {$num != $remove} {
+					set frame [expr {3-$protein_start%3}]
+					if {$frame == 3} {set frame 0}
+					puts $o [join [list $chr $source $type $begin $end $score $strand $frame $attr] \t]
+				}
 			}
 			incr num
 		}
