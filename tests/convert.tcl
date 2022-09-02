@@ -1682,6 +1682,74 @@ test tsv2gtf {basic} {
 	exec diff tmp/test.gtf tmp/expected.gtf
 } {}
 
+test tsv2gtf {basic with CDS} {
+	file_write tmp/test.tsv [string trim [deindent {
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome name
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
+		#fields	cdsStart	1	Integer	Coding region start
+		#fields	cdsEnd	1	Integer	Coding region end
+		#fields	exonCount	1	Integer	Number of exons
+		#fields	exonStarts	E	Integer	Exon start positions
+		#fields	exonEnds	E	Integer	Exon end positions
+		#fields	source	1	String	Source of data
+		# -- tsv converted from gtf, original comments follow --
+		# ----
+		chromosome	begin	end	name	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
+		chr1	923922	943380	testt	test	+	924431	943380	12	923922,925921,930154,931038,935771,939039,939274,941143,942135,942409,942558,943252,	924948,926013,930336,931089,935896,939129,939412,941306,942251,942488,943058,943380,	HAVANA	test testt	12
+		chr4	999	4000	transcript2-1	gene2	-	1030	2030	2	999,2999	1500,4000	source2	gene2	transcript2-1	1
+		chr4	999	5000	transcript2-2	gene2	+	1030	4800	3	999,2999,4499	1500,4000,5000	source2	gene2	transcript2-2	2
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr1	HAVANA	transcript	923923	943380	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	923923	924948	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	924432	924948	.	+	0	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	925922	926013	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	925922	926013	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	930155	930336	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	930155	930336	.	+	0	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	931039	931089	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	931039	931089	.	+	1	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	935772	935896	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	935772	935896	.	+	1	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	939040	939129	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	939040	939129	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	939275	939412	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	939275	939412	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	941144	941306	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	941144	941306	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	942136	942251	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	942136	942251	.	+	1	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	942410	942488	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	942410	942488	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	942559	943058	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	942559	943058	.	+	1	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	exon	943253	943380	.	+	.	gene_id "test testt"; transcript_id "testt";
+		chr1	HAVANA	CDS	943253	943377	.	+	2	gene_id "test testt"; transcript_id "testt";
+		chr4	source2	transcript	1000	4000	.	-	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	exon	1000	1500	.	-	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	CDS	1034	1500	.	-	1	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	exon	3000	4000	.	-	.	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	CDS	3000	4000	.	-	0	gene_id "gene2"; transcript_id "transcript2-1";
+		chr4	source2	transcript	1000	5000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	1000	1500	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	CDS	1031	1500	.	+	0	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	3000	4000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	CDS	3000	4000	.	+	1	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	exon	4500	5000	.	+	.	gene_id "gene2"; transcript_id "transcript2-2";
+		chr4	source2	CDS	4500	4797	.	+	2	gene_id "gene2"; transcript_id "transcript2-2";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+} {}
+
 test convert_pipe {convert_pipe various} {
 	set errors {}
 	foreach {test expected} {

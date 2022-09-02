@@ -34,7 +34,6 @@ proc cg_tsv2gtf {args} {
 	set gchr {}
 	unset -nocomplain genea
 	while {![eof $f]} {
-		set frame .
 		set attr {}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -67,12 +66,12 @@ proc cg_tsv2gtf {args} {
 			}
 		}
 		#
-		puts $o [join [list $chr $source transcript [expr {$begin+1}] $end $score $strand $frame $attr] \t]
+		puts $o [join [list $chr $source transcript [expr {$begin+1}] $end $score $strand . $attr] \t]
 		if {$upstream} {
 			set dline [lindex $ftlist 0]
 			set begin [expr {[lindex $dline 1]-$upstream+1}]
 			set end [expr {[lindex $dline 1]+1}]
-			puts $o [join [list $chr $source upstream $begin $end $score $strand $frame $attr] \t]
+			puts $o [join [list $chr $source upstream $begin $end $score $strand . $attr] \t]
 		}
 		set list [lrange $ftlist 1 end]
 		set types [list_subindex $list 2]
@@ -98,12 +97,12 @@ proc cg_tsv2gtf {args} {
 				if {$noexon} {
 					set noexon 0
 				} else {
-					puts $o [join [list $chr $source exon $begin $end $score $strand $frame $attr] \t]
+					puts $o [join [list $chr $source exon $begin $end $score $strand . $attr] \t]
 				}
 			} else {
 				set nend [lindex $ndline 1]
 				incr nend
-				puts $o [join [list $chr $source exon $begin $nend $score $strand $frame $attr] \t]
+				puts $o [join [list $chr $source exon $begin $nend $score $strand . $attr] \t]
 				set noexon 1
 			}
 			if {$type eq "CDS"} {
@@ -113,6 +112,8 @@ proc cg_tsv2gtf {args} {
 				if {$num == $adjendcds} {
 					incr end -3
 				}
+				set frame [expr {3-$protein_start%3}]
+				if {$frame == 3} {set frame 0}
 				puts $o [join [list $chr $source $type $begin $end $score $strand $frame $attr] \t]
 			}
 			incr num
@@ -121,7 +122,7 @@ proc cg_tsv2gtf {args} {
 			set dline [lindex $ftlist end]
 			set end [lindex $dline 0]
 			set begin [expr {$end+$upstream+1}]
-			puts $o [join [list $chr $source downstream $begin $end $score $strand $frame $attr] \t]
+			puts $o [join [list $chr $source downstream $begin $end $score $strand . $attr] \t]
 		}
 	}
 	if {$addgene} {
