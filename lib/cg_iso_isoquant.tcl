@@ -1,4 +1,5 @@
-proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
+proc sqanti3 {src dest refseq gtfannotation {rename 0} {geneconvaVar {}}} {
+	if {$geneconvaVar ne ""} {upvar $geneconvaVar geneconva}
 	mkdir $dest
 	set f [gzopen $src]
 	while 1 {
@@ -147,7 +148,7 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 		#fields	tpm	1	Float	Transcripts per million (number of reads mapping nomralized to 1m reads total)
 	}]
 	if {$rename} {
-		set renameposs [list_cor $gheader {chromosome strand begin exonStarts exonEnds}]
+		set renameposs [list_cor $gheader {chromosome strand begin exonStarts exonEnds gene}]
 	}
 	# some checks need to be build in later
 	if {!$rename} {
@@ -166,8 +167,12 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 		if {!$rename} {
 			puts $o $gline\t[join [list_sub $cline -exclude $rmposs] \t]
 		} else {
-			foreach {chromosome strand begin exonStarts exonEnds} [list_sub $splitgline $renameposs] break
+			foreach {chromosome strand begin exonStarts exonEnds gene} [list_sub $splitgline $renameposs] break
 			set newname [iso_name $chromosome $strand $exonStarts $exonEnds size]
+			if {[info exists geneconva($gene)]} {
+				lset splitgline [lindex $renameposs end] $geneconva($gene)
+				set gline [join $splitgline \t]
+			}
 			puts $o $newname\t$size\t$gline\t[join [list_sub $cline -exclude $rmposs] \t]
 		}
 	}
@@ -357,10 +362,20 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 
 	#
 	# model isos to genepred.tsv (+sqanti3 annotation)
-	file delete -force $destdir/sqanti3-isoquant_models-$sample
+	unset -nocomplain geneconva
+	set f [open [gzfile $isodir/*.transcript_models.gtf]]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		foreach {chr src type begin end temp strand temp info} $line break
+		if {$type ne "gene"} continue
+		if {![regexp {gene_id "novel_gene_([^"]+)"} $info temp part]} continue
+		set geneconva(novel_gene_$part) novel_${chr}_${begin}_${end}
+	}
+	close $f
+	file delete -force $destdir/sqanti3-${analysisname}_models-$sample
 	set src [gzfile $isodir/*.transcript_models.gtf]
 	set dest $destdir/sqanti3-isoquant_models-$sample
-	sqanti3 $src $dest $refseq $reggenedb 1
+	sqanti3 $src $dest $refseq $reggenedb 1 geneconva
 	#
 	# get convert data from sqanti3 models file
 	# check if any of the models fully match known transcripts (put in converta)
