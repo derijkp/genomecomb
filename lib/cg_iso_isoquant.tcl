@@ -150,7 +150,11 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 		set renameposs [list_cor $gheader {chromosome strand begin exonStarts exonEnds}]
 	}
 	# some checks need to be build in later
-	puts $o [join [list {*}$gheader {*}[list_sub $cheader -exclude $rmposs]] \t]
+	if {!$rename} {
+		puts $o [join [list {*}$gheader {*}[list_sub $cheader -exclude $rmposs]] \t]
+	} else {
+		puts $o [join [list name size oriname {*}[lrange $gheader 1 end] {*}[list_sub $cheader -exclude $rmposs]] \t]
+	}
 	while 1 {
 		if {[gets $fg gline] == -1} break
 		if {[gets $fc cline] == -1} break
@@ -163,21 +167,46 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0}} {
 			puts $o $gline\t[join [list_sub $cline -exclude $rmposs] \t]
 		} else {
 			foreach {chromosome strand begin exonStarts exonEnds} [list_sub $splitgline $renameposs] break
-			set newname transcript_${chromosome}_${begin}${strand}
-			set pe -1
-			foreach s [split $exonStarts ,] e [split $exonEnds ,] {
-				if {$s eq ""} continue
-				if {$pe != -1} {
-					append newname i[expr {$s-$pe}]
-				}
-				set pe $e
-				append newname e[expr {$e-$s}]
-			}
-			puts $o $newname\t[join [lrange $splitgline 1 end] \t]\t[join [list_sub $cline -exclude $rmposs] \t]
+			set newname [iso_name $chromosome $strand $exonStarts $exonEnds size]
+			puts $o $newname\t$size\t$gline\t[join [list_sub $cline -exclude $rmposs] \t]
 		}
 	}
 	close $o ; close $fg ; close $fc
 	file rename -force $dest/isoforms-[file tail $dest].isoforms.tsv.temp $dest/isoforms-[file tail $dest].isoforms.tsv
+}
+
+proc exons_startsends2list {starts ends {sizeVar {}}} {
+	if {$sizeVar ne ""} {upvar $sizeVar size}
+	set size 0
+	set exons {}
+	foreach begin [split $starts ,] end [split $ends ,] {
+		if {$begin eq ""} continue
+		set size [expr {$size + ($end - $begin)}]
+		lappend exons $begin-$end
+	}
+	return $exons
+}
+
+
+
+proc iso_name {chromosome strand exonStarts exonEnds {sizeVar {}}} {
+	if {$sizeVar ne ""} {upvar $sizeVar size}
+	set size 0
+	set starts [split $exonStarts ,]
+	set begin [lindex $starts 0]
+	set newname transcript_${chromosome}_${begin}${strand}
+	set pe -1
+	foreach s $starts e [split $exonEnds ,] {
+		if {$s eq ""} continue
+		if {$pe != -1} {
+			append newname i[expr {$s-$pe}]
+		}
+		set pe $e
+		set esize [expr {$e-$s}]
+		append newname e$esize
+		set size [expr {$size + $esize}]
+	}
+	return $newname
 }
 
 proc cg_iso_isoquant_genecounts {isoformcounts genecounts {genefield associated_gene}} {
@@ -221,6 +250,14 @@ proc cg_iso_isoquant_genecounts {isoformcounts genecounts {genefield associated_
 	close $f
 }
 
+proc convert_isoquant_ambigcount {ambig} {
+	if {$ambig} {
+		return [expr {1.0/$ambig}]
+	} else {
+		return 1
+	}
+}
+
 proc convert_isoquant_add_ambig {varVar ambig} {
 	upvar $varVar var
 	if {![info exists var]} {
@@ -257,12 +294,12 @@ proc convert_isoquant_reggenedb {genedbtsv samregions refseq reggenedbtsv reggen
 	set tempgenedb [tempfile].db
 }
 
-proc convert_isoquant_add {varVar} {
+proc convert_isoquant_add {varVar {count 1}} {
 	upvar $varVar var
 	if {![info exists var]} {
-		set var 1
+		set var $count
 	} else {
-		incr var
+		set var [expr {$var + $count}]
 	}
 }
 
@@ -306,12 +343,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 		set name [lindex $line $namepos]
 		if {[info exists transcriptidsa($name)]} {
 			foreach {chr strand starts ends} [list_sub $split $poss] break
-			set exons [exons_startsends2list $starts $ends size]
+			set transcript [iso_name $chr $strand $starts $ends size]
 			set sizea($name) $size
-			set transcriptsa([list $chr $strand {*}$exons]) $name
+			set transcriptsa($transcript) $name
 			puts $o $line
 		}
 	}
+	unset -nocomplain transcriptidsa
 	close $o
 	close $f
 	cg tsv2gtf $knownfile [file root $knownfile].gtf
@@ -333,24 +371,18 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 	set f [open [gzfile $destdir/sqanti3-isoquant_models-$sample/isoforms-sqanti3-isoquant_models-$sample.isoforms.tsv]]
 	set header [tsv_open $f]
 	set poss [list_sub [tsv_basicfields $header 9 0] {0 6 7 8}]
-	set poss [list {*}[list_cor $header {name subcategory associated_transcript}] {*}$poss]
+	set poss [list {*}[list_cor $header {name oriname size subcategory associated_transcript}] {*}$poss]
 	set namepos [lindex $poss 0]
-	while {[gets $f line] != -1} {
+	while 1 {
+		if {[gets $f line] == -1} break
 		set line [split $line \t]
-		foreach {name subcategory associated_transcript chr strand starts ends} [list_sub $line $poss] break
-		set exons [exons_startsends2list $starts $ends size]
-		set transcript [list $chr $strand {*}$exons]
-		if {[info exists transcriptsa($transcript)]} {
-			set converta($name) $transcriptsa($transcript)
-			continue
-		}
-		set outputa($name) $line
-		set size 0
-		foreach begin [split $starts ,] end [split $ends ,] {
-			if {$begin eq ""} continue
-			set size [expr {$size + ($end - $begin)}]
-		}
+		foreach {name oriname size subcategory associated_transcript chr strand starts ends} [list_sub $line $poss] break
 		set sizea($name) $size
+		if {[info exists transcriptsa($name)]} {
+			set converta($oriname) $transcriptsa($name)
+		} else {
+			set outputa($oriname) [list $name {*}[lrange $line 3 end]]
+		}
 	}
 	close $f
 
@@ -363,7 +395,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 	gets $f
 	while {[gets $f line] != -1} {
 		foreach {read transcript} $line break
-		if {$transcript ne "*"} {
+		if {$transcript ne "*" && ![info exists converta($transcript)] && [info exists outputa($transcript)]} {
 			lappend read2isoa($read) $transcript
 		}
 	}
@@ -413,12 +445,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 	#
 	# set o [wgzopen $temptarget w {} 4]
 	set o [open $temptarget w]
-	puts $o [join $newheader \t]\tambiguity\tcovered_pct\tpolya\tclassification\tclosest_known	
+	puts $o [join $newheader \t]\tambiguity\tinconsistency\tcovered_pct\tpolya\tclassification\tclosest_known	
 	unset -nocomplain tcounta
 	unset -nocomplain gcounta
 	unset -nocomplain donea
 	for {set p 0} {$p <= 100} {incr p} {set pcta($p) 0}
-	while {[gets $f line] != -1} {
+	while 1 {
 		set line [split $line \t]
 		set exons [lindex $line $exonspos]
 		set line [list_sub $line $poss]
@@ -467,24 +499,40 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 			}
 			lset line $infopos $newinfo
 		}
+# if {$read eq "73186791-75de-4bfb-819d-9905d535c2b8"} {error selread}
+		set assignment_events [lindex $line $assignment_eventspos]
+		if {$assignment_type in "unique"} {
+			set inconsistency 0
+		} elseif {[regexp {major_exon_elongation|extra|alternative_structure|alt_donor_site|alt_acceptor_site|intron_alternation|migration|exclusive|skip|merge|gain|detach|terminal_exon_shift} $assignment_events]} {
+			# significant inconsistencies
+			set inconsistency 3
+		} elseif {[regexp {intron_retention|unspliced_intron_retention|incomplete_intron_retention} $assignment_events]} {
+			# intron retentions
+			set inconsistency 2
+		} elseif {[regexp {fake_terminal|alternative_polya|intron|exon|} $assignment_events]} {
+			# alignment artifacts, alternative transcription start / end
+			set inconsistency 1
+		} else {
+			set inconsistency 0
+		}
 		if {[info exists read2isoa($read)]} {
 			if {$assignment_type in "inconsistent unique_minor_difference"} {
 				set knownmatch 0
 			} else {
-				set assignment_events [lindex $line $assignment_eventspos]
-				if {[regexp {retention|elongation|extra|alt|migration|exclusive|skip|merge|gain|detach|shift} $assignment_events]} {
+				if {$inconsistency > 1} {
 					set knownmatch 0
 				} else {
 					set knownmatch 1
 				}
 			}
-# if {$read eq "4b91aa94-75d7-4ed5-85aa-e786ecef08ee"} {error selread}
 			if {!$knownmatch} {
-				if {[info exists donea($read)]} continue
-				set isos $read2isoa($read)
+				if {[info exists donea($read)]} {
+					if {[gets $f line] == -1} break
+					continue
+				}
 				set modelisos {}
 				set knownisos {}
-				foreach iso $isos {
+				foreach iso $read2isoa($read) {
 					if {![info exists converta($iso)]} {
 						lappend modelisos $iso
 					} else {
@@ -494,9 +542,11 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 				if {![llength $modelisos]} {
 					# known hits only (no new model) -> keep original known hits
 					set isos [list $closest_known]
+					set inconsistencylist [list $inconsistency]
 				} else {
 					# we have hits in models: use those, remove known hits (by setting donea)
 					set isos $modelisos
+					set inconsistencylist [list_fill [llength $modelisos] 0]
 					set ambig [llength $isos]
 					if {$ambig > 1} {
 						set assignment_type ambiguous_$assignment_type
@@ -513,6 +563,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 				if {[info exists donea($read)]} {
 					# new ones have been added already, proceed normally
 					set isos [list $closest_known]
+					set inconsistencylist [list $inconsistency]
 				} else {
 					set modelisos {}
 					set knownisos {}
@@ -529,17 +580,22 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 						set ambiga($read) $ambig
 						lset line $assignment_typepos ambiguous
 						set isos [list $closest_known {*}$modelisos]
+						set inconsistencylist [list $inconsistency]
+						lappend inconsistencylist {*}[list_fill [llength $modelisos] 0]
 					} else {
 						# no model hits -> proceed normally (keep original readassignment)
 						set isos [list $closest_known]
+						set inconsistencylist [list $inconsistency]
 					}
 					set donea($read) 1
 				}
 			}
 		} else {
 			set isos [list $closest_known]
+			set inconsistencylist [list $inconsistency]
 		}
-		foreach iso $isos {
+		set ambigcount [convert_isoquant_ambigcount $ambig]
+		foreach iso $isos inconsistency $inconsistencylist {
 			lset line $isopos $iso
 			if {[info exists sizea($iso)]} {
 				set pct [expr {100*$size/$sizea($iso)}]
@@ -548,35 +604,39 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv} {
 			} else {
 				set pct 0
 			}
-			puts $o [join $line \t]\t$ambig\t$pct\t$polya\t$classification\t$closest_known
-		}
-		# counts
-		convert_isoquant_add_ambig tcounta($iso,t) $ambig
-		if {!$ambig && $assignment_type ne "inconsistent"} {
-			# unique
-			convert_isoquant_add tcounta($iso,u)
-			if {$pct >= $strictpct} {
-				# strict
-				convert_isoquant_add tcounta($iso,s)
-			}
-		}
-		if {$polya eq "True"} {
-			convert_isoquant_add_ambig tcounta($iso,a) $ambig
-			if {!$ambig && $assignment_type ne "inconsistent"} {
-				# unique
-				convert_isoquant_add tcounta($iso,au)
-				if {$pct >= $strictpct} {
-					# strict
-					convert_isoquant_add tcounta($iso,as)
+			puts $o [join $line \t]\t$ambig\t$inconsistency\t$pct\t$polya\t$classification\t$closest_known
+			# counts
+			if {$inconsistency < 2} {
+				convert_isoquant_add tcounta($iso,t) $ambigcount
+				if {!$ambig && $assignment_type ne "inconsistent"} {
+					# unique
+					convert_isoquant_add tcounta($iso,u)
+					if {$pct >= $strictpct} {
+						# strict
+						convert_isoquant_add tcounta($iso,s)
+					}
+				}
+				if {$polya eq "True"} {
+					convert_isoquant_add tcounta($iso,a) $ambigcount
+					if {!$ambig && $assignment_type ne "inconsistent"} {
+						# unique
+						convert_isoquant_add tcounta($iso,au)
+						if {$pct >= $strictpct} {
+							# strict
+							convert_isoquant_add tcounta($iso,as)
+						}
+					}
 				}
 			}
+			if {![info exists gcounta($gene)]} {
+				set gcounta($gene) $ambigcount
+			} else {
+				set gcounta($gene) [expr {$gcounta($gene) + $ambigcount}]
+			}
 		}
-		if {![info exists gcounta($gene)]} {
-			set gcounta($gene) 0
-		} else {
-			incr gcounta($gene)
-		}
+		if {[gets $f line] == -1} break
 	}
+
 	gzclose $o
 	gzclose $f
 	cg select -s - $temptarget ${temptarget}2
@@ -648,7 +708,9 @@ proc iso_isoquant_job {args} {
 	set sqanti 1
 	set compar joint
 	set threads 8
+	set data_type nanopore
 	set quantification all
+	set options {}
 	cg_options iso_isoquant args {
 		-refseq {
 			set refseq $value
@@ -665,6 +727,12 @@ proc iso_isoquant_job {args} {
 		}
 		-quantification {
 			set quantification $value
+		}
+		-data_type {
+			set data_type $value
+		}
+		-model_construction_strategy {
+			lappend options --model_construction_strategy $value
 		}
 		-compar {
 			set compar $value
@@ -731,13 +799,14 @@ proc iso_isoquant_job {args} {
 				set tempgenedb [tempfile].db
 				exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 				exec isoquant3 \
+					{*}$options \
 					--threads $threads \
 					--transcript_quantification $quantification \
 					--gene_quantification $quantification \
 					--reference $refseq \
 					--bam $tempbam \
 					--genedb $tempgenedb \
-					--data_type nanopore \
+					--data_type $data_type \
 					--keep_tmp \
 					-o $regdir.temp 2>@ stderr >@ stdout
 				file rename $regdir.temp $regdir
