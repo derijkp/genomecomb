@@ -117,7 +117,6 @@ proc cg_tsv2gtf {args} {
 		set num 0
 		set framespos 0
 		foreach dline $list ndline [lrange $list 1 end] {
-			putsvars num dline ndline
 			foreach {begin end type element rna_start rna_end protein_start protein_end} $dline break
 			incr begin
 			incr end
