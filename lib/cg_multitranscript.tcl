@@ -19,26 +19,27 @@ proc cg_multitranscript {args} {
 	unset -nocomplain a
 	set header1 {}
 	set common {}
+	set basefields {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid}
 	foreach file $isoformfiles {
 		set a(f,$file) [gzopen $file]
 		set header [tsv_open $a(f,$file) comment]
-		set poss [tsv_basicfields $header 3]
+		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 9 10 11 12 13}]
 		foreach pos $poss field {chromosome begin end} {
 			if {$pos == -1} continue
 			lset header $pos $field
 		}
-		set a(h,$file) $header
-		set a(id,$file) [list_cor $header {chromosome begin end strand exonStarts exonEnds}]
-		if {[inlist $a(id,$file) -1]} {
-			set missing [list_sub {chromosome begin end strand exonStarts exonEnds} [list_find $a(id,$file) -1]]
+		if {[inlist [lrange $poss 0 11] -1]} {
+			set missing [list_sub $basefields [lrange [list_find $poss -1] 0 11]]
 			error "file $file is missing essential fields: $missing"
 		}
+		set a(h,$file) $header
+		set a(id,$file) $poss
 		set a(data,$file) [list_find -glob $header *-*]
 		set a(empty,$file) [list_fill [llength $a(data,$file)] 0.0]
 		set a(status,$file) [gets $a(f,$file) a(curline,$file)]
 		set a(curline,$file) [split $a(curline,$file) \t]
-		set a(curid,$file) [list_sub $a(curline,$file) $a(id,$file)]
-		set other [list_sub $header -exclude [list {*}$a(id,$file) {*}$a(data,$file)]]
+		set a(curid,$file) [list_sub $a(curline,$file) $poss]
+		set other [list_sub $header -exclude [list {*}$poss {*}$a(data,$file)]]
 		if {$header1 eq ""} {
 			set header1 [list_sub $header -exclude $a(data,$file)]
 			set common $other
@@ -52,7 +53,7 @@ proc cg_multitranscript {args} {
 	foreach file $isoformfiles {
 		set a(common,$file) [list_cor $a(h,$file) $common]
 	}
-	set header {chromosome begin end strand exonStarts exonEnds}
+	set header $basefields
 	lappend header {*}$common
 	foreach file $isoformfiles {
 		lappend header {*}[list_sub $a(h,$file) $a(data,$file)]
@@ -63,7 +64,7 @@ proc cg_multitranscript {args} {
 	while 1 {
 		set curids {}
 		foreach file $isoformfiles {
-			lappend curids $a(curid,$file)
+			lappend curids [lrange $a(curid,$file) 0 end-5]
 		}
 		set curid [lindex [bsort $curids] 0]
 		if {$curid eq {{} {} {} {} {} {}}} break
@@ -74,15 +75,16 @@ proc cg_multitranscript {args} {
 #puts [list_subindex $curids 6]
 #if {[lindex $curid 2] eq "32128246"} {error stop}
 		set mfile [lindex $isoformfiles $pos]
-		set line $curid
+		set line $a(curid,$mfile)
 		lappend line {*}[list_sub $a(curline,$mfile) $a(common,$mfile)]
 		foreach file $isoformfiles {
-			if {$a(curid,$file) eq $curid} {
+			if {[lrange $a(curid,$file) 0 end-5] eq $curid} {
 				lappend line {*}[list_sub $a(curline,$file) $a(data,$file)]
 				set a(status,$file) [gets $a(f,$file) a(curline,$file)]
 				set a(curline,$file) [split $a(curline,$file) \t]
 				set temp [list_sub $a(curline,$file) $a(id,$file)]
-				if {[lindex [bsort [list $curid $temp]] 1] ne $temp} {
+				set ctemp [lrange $temp 0 end-5]
+				if {[lindex [bsort [list $curid $ctemp]] 1] ne $ctemp} {
 					error "file $file not sorted correctly; should be sorted on: chromosome begin end strand exonStarts exonEnds"
 				}
 				set a(curid,$file) $temp
