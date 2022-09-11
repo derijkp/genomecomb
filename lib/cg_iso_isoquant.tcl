@@ -141,7 +141,7 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0} {geneconvaVar {}}} {
 		#fields	dist_to_polya_site	1	Integer	if --polyA_motif_list is given, shows the location of the last base of the hexamer. Position 0 is the putative poly(A) site. This distance is hence always negative because it is upstream
 		#fields	within_polya_site	1	String	
 		#fields	polyA_motif	1	String	if --polyA_motif_list is given, shows the top ranking polyA motif found within 50 bp upstream of end
-		#fields	polyA_dist	1	Integer	: if --polyA_motif_list is given, shows the location of the last base of the hexamer. Position 0 is the putative poly(A) site. This distance is hence always negative because it is upstream
+		#fields	polyA_dist	1	Integer	if --polyA_motif_list is given, shows the location of the last base of the hexamer. Position 0 is the putative poly(A) site. This distance is hence always negative because it is upstream
 		#fields	ORF_seq	1	String	ORF sequence
 		#fields	ratio_TSS	1	Float	Using Short-Read data, we measure the mean coverage of the 100bp upstream and downstream a reported TSS.
 		#fields	counts	1	Integer	Number of reads mapping to isoform
@@ -214,45 +214,71 @@ proc iso_name {chromosome strand exonStarts exonEnds {sizeVar {}}} {
 	return $newname
 }
 
-proc cg_iso_isoquant_genecounts {isoformcounts genecounts {genefield associated_gene}} {
-	set tempfile [tempfile]
-	cg select -overwrite 1 \
-		-g $genefield \
-		-gc {distinct(structural_category),distinct(subcategory),sum(counts*)} \
-		$isoformcounts $tempfile
-	catch {close $f} ; catch {close $o}
-	set f [open $tempfile]
-	set header [tsv_open $f]
-	set oheader {gene gene_type}
-	foreach field [lrange $header 3 end] {
-		regsub sum_ $field {} field
-		lappend oheader $field
+proc isoquant_findfield {header tryfields msg fieldnameVar {file {}}} {
+	upvar $fieldnameVar fieldname
+	foreach fieldname $tryfields {
+		set pos [lsearch $header $fieldname]
+		if {$pos != -1} break
+	}
+	if {$pos == -1} {
+		set error "Could not find $msg field (checked for: $tryfields)"
+		if {$file ne ""} {append error " in file $file"}
+		error $error
+	}
+	return $pos
+}
+
+proc cg_iso_isoquant_genecounts {genecounts args} {
+	unset -nocomplain geneinfoa
+	unset -nocomplain gcounta
+	unset -nocomplain dummya
+	set f [gzopen [lindex $args 0]]
+	set header [tsv_open $f comments1]
+	close $f
+	set poss [tsv_basicfields $header 7 0]
+	set poss [list_remove $poss -1]
+	set common [list_sub $header $poss]
+	set newheader $common
+	lappend newheader gene geneid
+	set num -1
+	foreach file $args {
+		incr num
+		set f [gzopen $file]
+		set header [tsv_open $f comment]
+		set poss [list_cor $header $common]
+		set genepos [isoquant_findfield $header {gene_name gene name2 geneid gene_id} gene fieldname $file]
+		set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $file]
+		lappend poss $genepos $geneidpos
+		set restposs [list_find -regexp $header -]
+		set restfields [list_sub $header $restposs]
+		lappend newheader {*}$restfields
+		set dummya($num) {}
+		foreach field $restfields {lappend dummya($num) {}}
+		while {[gets $f line] != -1} {
+			set line [split $line \t]
+			set gene [lindex $line $genepos]
+			set geneinfoa([list_sub $line $poss]) 1
+			set gcounta($num,$gene) [list_sub $line $restposs]
+		}
+		close $f
 	}
 	set o [open $genecounts w]
-	puts $o [join $oheader \t]
-	while {[gets $f line] != -1} {
-		set line [split $line \t]
-		foreach {gene category sub} $line break
-		set novel [regexp {^novel} $gene]
-		if {!$novel && ![regexp _ $gene]} {
-			set genetype known
-		} elseif {[regexp fusion $category]} {
-			set genetype fusion
-		} elseif {!$novel} {
-			set genetype overlap
-		} elseif {[regexp antisense $category]} {
-			set genetype novel_antisense
-		} elseif {[regexp intergenic $category]} {
-			set genetype novel_intergenic
-		} elseif {[regexp genic_intron $category]} {
-			set genetype novel_genic_intron
-		} else {
-			set genetype novel
+	puts $o $comments1[join $newheader \t]
+	foreach line [bsort [array names geneinfoa]] {
+		set gene [lindex $line end]
+		if {$gene in ". dummy"} continue
+		set num -1
+		foreach file $args {
+			incr num
+			if {[info exists gcounta($num,$gene)]} {
+				lappend line {*}$gcounta($num,$gene)
+			} else {
+				lappend line {*}$dummya($num)
+			}
 		}
-		puts $o $gene\t$genetype\t[join [lrange $line 3 end] \t]
+		puts $o [join $line \t]
 	}
 	close $o
-	close $f
 }
 
 proc convert_isoquant_ambigcount {ambig} {
@@ -290,9 +316,26 @@ proc convert_isoquant_reggenedb {genedbtsv samregions refseq reggenedbtsv reggen
 	set read [gets $f line]
 	close $f
 	if {$read == -1} {
+		set header [cg select -h $genedbtsv]
+		catch {close $o}
 		set o [open $reggenedbtsv w]
-		puts $o [join {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source transcript_name gene_id gene_name} \t]
-		puts $o [join {chr1 1 2 dummy1 dummy2 + 1 1 1 1, 2, dummy3 dummy4 dummy5 dummy6} \t]
+		puts $o [join $header \t]
+		set line [list_fill [llength $header] {}]
+		set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
+		foreach pos $poss value {chr1 1 2 + 1, 2,} {
+			if {$pos == -1} continue
+			lset line $pos $value
+		}
+		foreach {field value} {
+			name dummy1 gene dummy2 cdsStart 1 cdsEnd 1 exonCount 1 
+			source dummy3 transcript_name dummy4 gene_id dummy5 gene_name dummy6
+			name2 dummyname2
+		} {
+			set pos [lsearch $header $field]
+			if {$pos == -1} continue
+			lset line $pos $value
+		}
+		puts $o [join $line \t]
 		close $o
 	}
 	cg_tsv2gtf -genecol gene_id -addgene 1 $reggenedbtsv $reggenedb
@@ -320,77 +363,91 @@ proc exons_startsends2list {starts ends {sizeVar {}}} {
 	return $exons
 }
 
-proc isoquant_findfield {header tryfields msg fieldnameVar} {
-	upvar $fieldnameVar fieldname
-	foreach fieldname $tryfields {
-		set pos [lsearch $header $fieldname]
-		if {$pos != -1} break
-	}
-	if {$pos == -1} {error "Could not find $msg field (checked for: $tryfields)"}
-	return $pos
-}
-
 proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {analysisname isoquant}} {
+
 	set strictpct 90
 	set read_assignmentsfile [gzfile $isodir/*.read_assignments.tsv]
 	set targetisoformcountsfile $destdir/isoform_counts-${analysisname}-$sample.tsv
 	set targetgenecountsfile $destdir/gene_counts-${analysisname}-$sample.tsv
 	set targetreadassignmentsfile $destdir/read_assignments-${analysisname}-$sample.tsv
-
 	# info from known isos
 	# --------------------
 	# transcriptidsa gets the transcripts that are actually in the results (from readassignment file)
 	# sizea will contain the size of the known transcripts
-	# transcriptsa will contain the genestructure as key (value is transcriptid)
+	# transcriptidsa: which transcript ids are actually in known file
+	# transcriptsa: transcript (iso_name) to known name (transcript_id)
+	# translate geneid 2 gene
+	# basic gene info (chr begin end strand)
 	unset -nocomplain sizea
 	unset -nocomplain transcriptidsa
 	unset -nocomplain transcriptsa
-	unset -nocomplain geneida
+	unset -nocomplain geneid2genea
+	unset -nocomplain genebasica
+	unset -nocomplain transcript2genea
 	array set transcriptidsa [split [cg select -hc 1 -g isoform_id $read_assignmentsfile] \n\t]
-	set knownfile $destdir/transcripts_known-$sample.genepred.tsv
 	catch {close $f}
 	set f [gzopen $reggenedbtsv]
 	set header [tsv_open $f]
-	set poss [list_sub [tsv_basicfields $header 9 0] {0 6 7 8}]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname]
-	set genepos [isoquant_findfield $header {gene_name gene name2 geneid gene_id} gene fieldname]
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname]
+	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
+	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $reggenedbtsv]
+	set genepos [isoquant_findfield $header {gene_name gene name2 geneid gene_id} gene fieldname $reggenedbtsv]
+	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $reggenedbtsv]
 	lappend poss $genepos $geneidpos
-	# set o [open $knownfile w]
-	# puts $o [join $header \t]
 	while 1 {
 		if {[gets $f line] == -1} break
 		set split [split $line \t]
 		set name [lindex $line $isopos]
-		foreach {chr strand starts ends gene geneid} [list_sub $split $poss] break
-		if {$gene ne $geneid} {set geneida($geneid) $gene}
-		if {[info exists transcriptidsa($name)]} {
-			set transcript [iso_name $chr $strand $starts $ends size]
-			set sizea($name) $size
-			set transcriptsa($transcript) $name
-			# puts $o $line
-		}
+		foreach {chr begin end strand starts ends gene geneid} [list_sub $split $poss] break
+		set genebasica($geneid) [list $chr $begin $end $strand]
+		set transcript2genea($name) $geneid
+		if {$gene ne $geneid} {set geneid2genea($geneid) $gene}
+		set transcript [iso_name $chr $strand $starts $ends size]
+		set sizea($name) $size
+		set transcriptsa($transcript) $name
 	}
-	unset -nocomplain transcriptidsa
 	close $f
 
+	# gene info from extended
+	set f [open [gzfile $isodir/*.extended_annotation.gtf]]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		foreach {chr src type begin end temp strand temp info} $line break
+		if {$type ne "gene"} continue
+		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
+		if {[regexp ^novel_gene $gene]} {
+			set geneconva($gene) novel_${chr}_${begin}_${end}
+			set gene $geneconva($gene)
+		}
+		if {![info exists genebasica($gene)]} {
+			set genebasica($gene) [list $chr $begin $end $strand]
+		}
+	}
+	close $f
 	#
 	# info from model isos
 	# --------------------
+	# geneconva: to convert ori genename (for novel) to new
 	unset -nocomplain geneconva
+	catch {close $f}
 	set f [open [gzfile $isodir/*.transcript_models.gtf]]
 	while {[gets $f line] != -1} {
 		set line [split $line \t]
 		foreach {chr src type begin end temp strand temp info} $line break
 		if {$type ne "gene"} continue
-		if {![regexp {gene_id "novel_gene_([^"]+)"} $info temp part]} continue
-		set geneconva(novel_gene_$part) novel_${chr}_${begin}_${end}
+		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
+		if {[regexp ^novel_gene $gene]} {
+			set geneconva($gene) novel_${chr}_${begin}_${end}
+			set gene $geneconva($gene)
+		}
+		if {![info exists genebasica($gene)]} {
+			set genebasica($gene) [list $chr $begin $end $strand]
+		}
 	}
 	close $f
 	#
-	# get convert data from sqanti3 models file
-	# check if any of the models fully match known transcripts (put in converta)
-	# get convert data from sqanti3 models file
+	# get convert data from models file
+	# converta: models that fully match known transcripts (oriname -> dbname)
+	# outputa: all transcripts that must be output separately from known (oriname -> newname)
 	unset -nocomplain converta
 	unset -nocomplain outputa
 	# set f [open [gzfile $destdir/sqanti3-${analysisname}_models-$sample/isoforms-sqanti3-${analysisname}_models-$sample.isoforms.tsv]]
@@ -400,20 +457,29 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	set header [tsv_open $f comments]
 	set poss [list_sub [tsv_basicfields $header 9 0] {0 6 7 8}]
 	lappend poss {*}[list_cor $header {name}]
+	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $destdir/transcripts_models-$sample.genepred.tsv]
+	lappend poss $geneidpos
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
-		foreach {chr strand starts ends oriname} [list_sub $line $poss] break
+		foreach {chr strand starts ends oriname geneid} [list_sub $line $poss] break
 		set name [iso_name $chr $strand $starts $ends size]
 		set sizea($oriname) $size
+		if {[info exists geneconva($geneid)]} {set geneid $geneconva($geneid)}
 		if {[info exists transcriptsa($name)]} {
 			set converta($oriname) $transcriptsa($name)
+			if {![info exists transcriptidsa($transcriptsa($name))]} {
+				set outputa($oriname) $transcriptsa($name)
+			}
+			set transcript2genea($transcriptsa($name)) $geneid
 		} else {
 			# set outputa($oriname) [list $name {*}[lrange $line 3 end]]
 			set outputa($oriname) $name
+			set transcript2genea($oriname) $geneid
 		}
 	}
 	close $f
+	unset -nocomplain transcriptidsa
 
 	#
 	# read_assignments
@@ -424,7 +490,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	gets $f
 	while {[gets $f line] != -1} {
 		foreach {read transcript} $line break
-		if {$transcript ne "*" && ![info exists converta($transcript)] && [info exists outputa($transcript)]} {
+		if {[info exists outputa($transcript)]} {
 			lappend read2isoa($read) $transcript
 		}
 	}
@@ -528,7 +594,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 			}
 			lset line $infopos $newinfo
 		}
-# if {$read eq "73186791-75de-4bfb-819d-9905d535c2b8"} {error selread}
+# if {$read eq "dd5ac6a9-2c67-4d86-a628-a0c74e8d6619"} {error selread}
 		set assignment_events [lindex $line $assignment_eventspos]
 		if {$assignment_type in "unique"} {
 			set inconsistency 0
@@ -570,7 +636,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 				}
 				if {![llength $modelisos]} {
 					# known hits only (no new model) -> keep original known hits
-					set isos [list $closest_known]
+					# keep original readassignment if model was scrapped from output
+					if {![info exists outputa($iso)]} {
+						set isos [list $closest_known]
+					} else {
+						set isos [list $converta($iso)]
+					}
 					set inconsistencylist [list $inconsistency]
 				} else {
 					# we have hits in models: use those, remove known hits (by setting donea)
@@ -612,8 +683,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 						set inconsistencylist [list $inconsistency]
 						lappend inconsistencylist {*}[list_fill [llength $modelisos] 0]
 					} else {
-						# no model hits -> proceed normally (keep original readassignment)
-						set isos [list $closest_known]
+						# no model hits -> proceed normally
+						# keep original readassignment if model was scrapped from output
+						if {![info exists outputa($iso)]} {
+							set isos [list $closest_known]
+						} else {
+							set isos [list $converta($iso)]
+						}
 						set inconsistencylist [list $inconsistency]
 					}
 					set donea($read) 1
@@ -625,7 +701,22 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		}
 		set ambigcount [convert_isoquant_ambigcount $ambig]
 		foreach iso $isos inconsistency $inconsistencylist {
-			lset line $isopos $iso
+			if {[info exists outputa($iso)]} {
+				lset line $isopos $outputa($iso)
+			} else {
+				lset line $isopos $iso
+			}
+			if {$iso ne "."} {
+				if {[info exists transcript2genea($iso)]} {
+					set geneid $transcript2genea($iso)
+				} else {
+					set geneid [lindex $line $genepos]
+					set transcript2genea($iso) $geneid
+				}
+			} else {
+				set geneid .
+			}
+			lset line $genepos $geneid
 			if {[info exists sizea($iso)]} {
 				set pct [expr {100*$size/$sizea($iso)}]
 				if {$pct > 100} {set pct 100}
@@ -657,10 +748,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 					}
 				}
 			}
-			if {![info exists gcounta($gene)]} {
-				set gcounta($gene) $ambigcount
+			if {![info exists gcounta($geneid)]} {
+				set gcounta($geneid) $ambigcount
 			} else {
-				set gcounta($gene) [expr {$gcounta($gene) + $ambigcount}]
+				set gcounta($geneid) [expr {$gcounta($geneid) + $ambigcount}]
 			}
 		}
 		if {[gets $f line] == -1} break
@@ -668,7 +759,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 
 	gzclose $o
 	gzclose $f
-	cg select -s - $temptarget ${temptarget}2
+	cg select -overwrite 1 -s - $temptarget ${temptarget}2
 	file rename -force ${temptarget}2 $targetreadassignmentsfile
 	file delete $temptarget
 
@@ -690,11 +781,11 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	set header [tsv_open $f comments]
 	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
 	set remove [list_sub $header $poss]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname]
+	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $reggenedbtsv]
 	lappend remove $fieldname
-	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname]
+	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname $reggenedbtsv]
 	lappend remove $fieldname
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname]
+	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $reggenedbtsv]
 	lappend remove $fieldname
 	lappend poss $isopos $genepos $geneidpos
 	set newheader {chromosome begin end strand exonStarts exonEnds name gene geneid}
@@ -740,10 +831,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 			unset outputa($iso)
 		}
 		set t [get tcounta($iso,t) 0]
-		if {[get countsa($iso) 0] < 1 && $t < 1} continue
+		if {[get countsa($iso) 0] == 0 && $t == 0} continue
 		set geneid [lindex $line $geneidpos]
-		if {[info exists geneida($geneid)]} {
-			lset line $genepos $geneida($geneid)
+		if {[info exists geneid2genea($geneid)]} {
+			lset line $genepos $geneid2genea($geneid)
 		}
 		set line [list_sub $line $poss]
 		puts $o [join $line \t]\tknown\t$sizea($iso)\t[get countsa($iso)]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
@@ -755,11 +846,11 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	set header [tsv_open $f comments]
 	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
 	set remove [list_sub $header $poss]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname]
+	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $destdir/transcripts_models-$sample.genepred.tsv]
 	lappend remove $fieldname
-	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname]
+	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname $destdir/transcripts_models-$sample.genepred.tsv]
 	lappend remove $fieldname
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname]
+	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $destdir/transcripts_models-$sample.genepred.tsv]
 	lappend remove $fieldname
 	lappend poss $isopos $genepos $geneidpos
 	lappend poss {*}[list_cor $header [lrange $newheader [llength $poss] end]]
@@ -774,48 +865,55 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		if {[info exists converta($oriname)]} {
 			set iso $converta($oriname)
 			lset line $isopos $iso
-		} 
-		set gene [lindex $line $genepos]
-		if {[regexp {novel} $gene]} {
-			set scat intergenic
-		} elseif {[regexp {.nic$} $oriname]} {
-			set scat novel_in_catalog
-		} elseif {[regexp {.nnic$} $oriname]} {
-			set scat novel_not_in_catalog
+			set scat known
 		} else {
-			set scat novel
+			set gene [lindex $line $genepos]
+			if {[regexp {novel} $gene]} {
+				set scat intergenic
+			} elseif {[regexp {\.nnic$} $oriname]} {
+				set scat novel_not_in_catalog
+			} elseif {[regexp {\.nic$} $oriname]} {
+				set scat novel_in_catalog
+			} else {
+				set scat novel
+			}
 		}
-		if {[info exists outputa($oriname)]} {
-			lset line $isopos $outputa($oriname)
-		}
+		lset line $isopos $outputa($oriname)
 		if {[info exists geneconva($gene)]} {
 			lset line $genepos $geneconva($gene)
 			lset line $geneidpos $geneconva($gene)
 		} else {
-			if {[info exists geneida($geneid)]} {
-				lset line $genepos $geneida($geneid)
+			if {[info exists geneid2genea($geneid)]} {
+				lset line $genepos $geneid2genea($geneid)
 			}
 		}
 		set line [list_sub $line $poss]
+		# set genebasica($geneid) [list_sub $line {0 1 2 3}]
+		if {![info exists genebasica($geneid)]} {
+			set genebasica($geneid) [list_sub $line {0 1 2 3}]
+		}
 		puts $o [join $line \t]\t$scat\t$sizea($oriname)\t[get countsa($oriname)]\t[format %.2f $t]\t[get tcounta($oriname,u) 0]\t[get tcounta($oriname,s) 0]\t[format %.2f [get tcounta($oriname,a) 0]]\t[get tcounta($oriname,au) 0]\t[get tcounta($oriname,as) 0]
 	}
 	close $f
 	close $o
 	cg select -overwrite 1 -s - $targetisoformcountsfile.temp $targetisoformcountsfile.temp2
-	file rename -force $targetisoformcountsfile.temp2 $destdir/isoform_counts-${analysisname}-$sample.tsv
+	file rename -force $targetisoformcountsfile.temp2 $targetisoformcountsfile
 
 	#
 	# make gene_counts file
 	# ---------------------
 	# file delete $targetisoformcountsfile
+	unset -nocomplain gcounta(.)
 	set o [open $targetgenecountsfile.temp w]
-	puts $o [join [list gene count-$sample] \t]
-	foreach gene [array names gcounta] {
-		puts $o $gene\t$gcounta($gene)
+	puts $o [join [list chromosome begin end strand gene geneid count-${analysisname}-$sample] \t]
+	foreach geneid [array names gcounta] {
+		if {[info exists geneconva($geneid)]} {set geneid $geneconva($geneid)}
+		puts $o [join $genebasica($geneid) \t]\t[get geneid2genea($geneid) $geneid]\t$geneid\t$gcounta($geneid)
 	}
 	close $o
-	file rename -force $targetgenecountsfile.temp $targetgenecountsfile
-
+	cg select -s - $targetgenecountsfile.temp $targetgenecountsfile.temp2
+	file rename -force $targetgenecountsfile.temp2 $targetgenecountsfile
+	file delete $targetgenecountsfile.temp
 }
 
 
@@ -1056,10 +1154,10 @@ proc iso_isoquant_job {args} {
 			file delete isoform_counts-${analysisname}-$sample.tsv.temp
 			#
 			cg cat {*}$genefiles > gene_counts-${analysisname}-$sample.tsv.temp
-			file rename gene_counts-${analysisname}-$sample.tsv.temp gene_counts-${analysisname}-$sample.tsv
+			file rename -force gene_counts-${analysisname}-$sample.tsv.temp gene_counts-${analysisname}-$sample.tsv
 			#
 			cg cat {*}$readfiles | cg zst > read_assignments-${analysisname}-$sample.tsv.temp.zst
-			file rename read_assignments-${analysisname}-$sample.tsv.temp.zst read_assignments-${analysisname}-$sample.tsv.zst
+			file rename -force read_assignments-${analysisname}-$sample.tsv.temp.zst read_assignments-${analysisname}-$sample.tsv.zst
 			# 
 			cg select -overwrite 1 -g all -gc {sum(count*-*)} isoform_counts-${analysisname}-$sample.tsv | cg select -rf all > totalcounts-${analysisname}-$sample.tsv.temp
 			file rename -force totalcounts-${analysisname}-$sample.tsv.temp totalcounts-${analysisname}-$sample.tsv
@@ -1133,16 +1231,17 @@ proc iso_isoquant_job {args} {
 	mkdir compar
 	set exproot [file tail $projectdir]
 	set isoformfiles [bsort [jobglob samples/*/isoform_counts-${analysisname}-*.tsv]]
+	set genefiles [bsort [jobglob samples/*/gene_counts-${analysisname}-*.tsv]]
 	set totalcountsfiles [bsort [jobglob samples/*/totalcounts-${analysisname}-*.tsv]]
 	job iso_${analysisname}_compar-$exproot {*}$skips \
 	-cores $threads \
-	-deps [list_concat $isoformfiles $totalcountsfiles] \
+	-deps [list_concat $isoformfiles $genefiles $totalcountsfiles] \
 	-targets {
 		compar/isoform_counts-${analysisname}-$exproot.genepred.tsv
 		compar/gene_counts-${analysisname}-$exproot.tsv
 		compar/totalcounts-${analysisname}-$exproot.tsv
 	} -vars {
-		isoformfiles totalcountsfiles exproot analysisname
+		isoformfiles genefiles totalcountsfiles exproot analysisname
 	} -code {
 		analysisinfo_write [lindex $isoformfiles 0] $target
 		analysisinfo_write [lindex $isoformfiles 0] compar/gene_counts-${analysisname}-$exproot.genepred.tsv
@@ -1150,7 +1249,7 @@ proc iso_isoquant_job {args} {
 		set isoformcounts compar/isoform_counts-${analysisname}-$exproot.genepred.tsv
 		cg multitranscript $isoformcounts {*}$isoformfiles
 		set genecounts compar/gene_counts-${analysisname}-$exproot.tsv
-		cg_iso_isoquant_genecounts $isoformcounts $genecounts
+		cg_iso_isoquant_genecounts $genecounts {*}$genefiles
 		cg paste {*}[bsort $totalcountsfiles] > compar/totalcounts-${analysisname}-$exproot.tsv
 	}
 }
@@ -1160,4 +1259,3 @@ proc cg_iso_isoquant {args} {
 	iso_isoquant_job {*}$args
 	job_wait
 }
-
