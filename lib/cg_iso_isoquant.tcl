@@ -904,6 +904,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	# ---------------------
 	# file delete $targetisoformcountsfile
 	unset -nocomplain gcounta(.)
+	unset -nocomplain gcounta()
 	set o [open $targetgenecountsfile.temp w]
 	puts $o [join [list chromosome begin end strand gene geneid count-${analysisname}-$sample] \t]
 	foreach geneid [array names gcounta] {

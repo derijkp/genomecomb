@@ -146,7 +146,7 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 }
 
 proc tsv_basicfields {header {num 6} {giveerror 1}} {
-	set poss [list_cor $header {chromosome begin end type ref alt strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid}]
+	set poss [list_cor $header {chromosome begin end type ref alt strand exonStarts exonEnds cdsStart cdsEnd transcript gene_name geneid}]
 	set nfposs [list_find $poss -1]
 	foreach nfpos $nfposs {
 		switch $nfpos {
@@ -181,7 +181,7 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 				}
 			}
 			12 {
-				foreach name {gene_name name2 geneid gene_id} {
+				foreach name {gene name2 geneid gene_id} {
 					set v [lsearch $header $name]
 					if {$v != -1} break
 				}
