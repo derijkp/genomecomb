@@ -1516,6 +1516,9 @@ proc cg_select {args} {
 	} else {
 		set header [tsv_open $f keepcomments]
 	}
+	if {[llength [list_remdup $header]] != [llength $header]} {
+		error "duplicate fieldnames: [list_sub $header -exclude [list_cor $header [list_remdup $header]]]"
+	}
 	if {$showheader} {
 		puts $out [join $header \n]
 		if {$f ne "stdin"} {catch {gzclose $f}}

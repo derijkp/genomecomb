@@ -1624,4 +1624,14 @@ test select {empty line} {
 } {not enough fields (1 where at least 5 are needed) for line 1 (without comments): 
 } error
 
+test select {duplicate field error} {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b	a
+		1	CDS	2
+		2	CD	2
+	}]
+	cg select -q {$b regexp "CDS"} tmp/temp.tsv
+} {duplicate fieldnames: a} error
+
 testsummarize
