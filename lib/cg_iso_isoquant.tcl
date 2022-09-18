@@ -265,7 +265,7 @@ proc cg_iso_isoquant_genecounts {genecounts args} {
 	set o [open $genecounts w]
 	puts $o $comments1[join $newheader \t]
 	foreach line [bsort [array names geneinfoa]] {
-		set gene [lindex $line end]
+		set gene [lindex $line end-1]
 		if {$gene in ". dummy"} continue
 		set num -1
 		foreach file $args {
@@ -779,19 +779,21 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	catch {close $f} ; catch {close $o}
 	set f [gzopen $reggenedbtsv]
 	set header [tsv_open $f comments]
-	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
+	set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
 	set remove [list_sub $header $poss]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $reggenedbtsv]
-	lappend remove $fieldname
-	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname $reggenedbtsv]
-	lappend remove $fieldname
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $reggenedbtsv]
-	lappend remove $fieldname
-	lappend poss $isopos $genepos $geneidpos
-	set newheader {chromosome begin end strand exonStarts exonEnds name gene geneid}
+	foreach {isopos genepos geneidpos} [lrange $poss 6 end] break
+	lappend remove {*}[list_sub $header [lrange $poss 6 end]]
+	set basefields {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
+	# lappend remove {*}$basefields
+	set newheader $basefields
 	set left [list_lremove $header $remove]
-	lappend newheader {*}$left
 	lappend poss {*}[list_cor $header $left]
+	set temp [list_common $left $basefields]
+	foreach field $temp {
+		set pos [lsearch $left $field]
+		lset left $pos ${field}_ori
+	}
+	lappend newheader {*}$left
 	#
 	if {$comments eq ""} {
 		set comments [deindent {
@@ -804,10 +806,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 			#fields	strand	1	String	+ or - for strand
 			#fields	begin	1	Integer	Transcription start position
 			#fields	end	1	Integer	Transcription end position
-			#fields	cdsStart	1	Integer	Coding region start
-			#fields	cdsEnd	1	Integer	Coding region end
 			#fields	exonCount	1	Integer	Number of exons
 			#fields	exonStarts	E	Integer	Exon start positions
+			#fields	transcript	1	String	transcript id
+			#fields	gene	1	String	gene name
+			#fields	geneid	1	String	gene id
+			#fields	cdsStart	1	Integer	Coding region start
+			#fields	cdsEnd	1	Integer	Coding region end
 			#fields	exonEnds	E	Integer	Exon end positions
 			#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
 			#fields	score	1	Float	Score
@@ -827,6 +832,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
 		set iso [lindex $line $isopos]
+		if {$iso eq ""} continue
 		if {[info exists outputa($iso)]} {
 			unset outputa($iso)
 		}
@@ -1010,12 +1016,13 @@ proc iso_isoquant_job {args} {
 		set readfiles {}
 		foreach region $regions {
 			set regdir ${analysisname}-$rootname/${analysisname}-$rootname-$region
-			job ${analysisname}-$sample-$region -mem 40G -cores $threads -deps {
+			job ${analysisname}-$sample-$region -mem 15G -cores $threads -deps {
 				$bam $refseq $genedbtsv
 			} -targets {
 				$regdir
 			} -vars {
-				sampledir sample bam refseq regdir region genedbtsv quantification threads analysisname
+				sampledir sample bam refseq regdir region genedbtsv threads
+				options data_type quantification analysisname
 			} -code {
 				mkdir $regdir.temp
 				# region bamfile
