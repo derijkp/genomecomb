@@ -52,6 +52,7 @@ runtests vcf.tcl
 runtests vcf2tsv.tcl
 runtests tsv2vcf.tcl
 runtests compar.tcl
+runtests rna.tcl
 runtests svmulticompar.tcl
 runtests nanopore.tcl
 runtests queries.tcl
