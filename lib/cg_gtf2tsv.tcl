@@ -51,7 +51,7 @@ proc cg_gtf2tsv {args} {
 			#fields	chromosome	1	String	Chromosome name
 			#fields	begin	1	Integer	Transcription start position
 			#fields	end	1	Integer	Transcription end position
-			#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
 			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
 			#fields	strand	1	String	+ or - for strand
 			#fields	cdsStart	1	Integer	Coding region start
@@ -61,7 +61,7 @@ proc cg_gtf2tsv {args} {
 			#fields	exonEnds	E	Integer	Exon end positions
 			#fields	source	1	String	Source of data
 		}]
-		set nheader {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
+		set nheader {chromosome begin end transcript gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 		unset -nocomplain curchromosome
 		set curtranscript {}
 		set curlines {}
