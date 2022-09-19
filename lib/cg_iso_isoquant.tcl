@@ -388,25 +388,20 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	catch {close $f}
 	set f [gzopen $reggenedbtsv]
 	set header [tsv_open $f]
-	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $reggenedbtsv]
-	set genepos [isoquant_findfield $header {gene_name gene name2 geneid gene_id} gene fieldname $reggenedbtsv]
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $reggenedbtsv]
-	lappend poss $genepos $geneidpos
+	set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
+	foreach {isopos genepos geneidpos} [lrange $poss end-2 end] break
 	while 1 {
 		if {[gets $f line] == -1} break
 		set split [split $line \t]
-		set name [lindex $line $isopos]
-		foreach {chr begin end strand starts ends gene geneid} [list_sub $split $poss] break
+		foreach {chr begin end strand starts ends oriname gene geneid} [list_sub $split $poss] break
 		set genebasica($geneid) [list $chr $begin $end $strand]
-		set transcript2genea($name) $geneid
+		set transcript2genea($oriname) $geneid
 		if {$gene ne $geneid} {set geneid2genea($geneid) $gene}
 		set transcript [iso_name $chr $strand $starts $ends size]
-		set sizea($name) $size
-		set transcriptsa($transcript) $name
+		set sizea($oriname) $size
+		set transcriptsa($transcript) $oriname
 	}
 	close $f
-
 	# gene info from extended
 	set f [open [gzfile $isodir/*.extended_annotation.gtf]]
 	while {[gets $f line] != -1} {
@@ -423,6 +418,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		}
 	}
 	close $f
+
 	#
 	# info from model isos
 	# --------------------
@@ -455,17 +451,16 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	catch {close $f}
 	set f [open $destdir/transcripts_models-$sample.genepred.tsv]
 	set header [tsv_open $f comments]
-	set poss [list_sub [tsv_basicfields $header 9 0] {0 6 7 8}]
-	lappend poss {*}[list_cor $header {name}]
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $destdir/transcripts_models-$sample.genepred.tsv]
-	lappend poss $geneidpos
+	set poss [list_sub [tsv_basicfields $header 14 0] {0 6 7 8 11 12 13}]
+	foreach {isopos genepos geneidpos} [lrange $poss end-2 end] break
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
-		foreach {chr strand starts ends oriname geneid} [list_sub $line $poss] break
+		foreach {chr strand starts ends oriname gene geneid} [list_sub $line $poss] break
 		set name [iso_name $chr $strand $starts $ends size]
 		set sizea($oriname) $size
-		if {[info exists geneconva($geneid)]} {set geneid $geneconva($geneid)}
+		if {[info exists geneconva($geneid)]} {set gene $geneconva($geneid)}
+		if {[info exists geneconva($gene)]} {set gene $geneconva($gene)}
 		if {[info exists transcriptsa($name)]} {
 			set converta($oriname) $transcriptsa($name)
 			if {![info exists transcriptidsa($transcriptsa($name))]} {
@@ -845,26 +840,24 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		set line [list_sub $line $poss]
 		puts $o [join $line \t]\tknown\t$sizea($iso)\t[get countsa($iso)]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
 	}
-	catch {close $f}
 	#
 	# models
+	catch {close $f}
 	set f [open $destdir/transcripts_models-$sample.genepred.tsv]
 	set header [tsv_open $f comments]
-	set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
+	set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
 	set remove [list_sub $header $poss]
-	set isopos [isoquant_findfield $header {name transcript_id transcriptid transcript} name/transcript fieldname $destdir/transcripts_models-$sample.genepred.tsv]
-	lappend remove $fieldname
-	set genepos [isoquant_findfield $header {gene name2 geneid gene_id} gene fieldname $destdir/transcripts_models-$sample.genepred.tsv]
-	lappend remove $fieldname
-	set geneidpos [isoquant_findfield $header {gene_id geneid gene} geneid fieldname $destdir/transcripts_models-$sample.genepred.tsv]
-	lappend remove $fieldname
-	lappend poss $isopos $genepos $geneidpos
+	foreach {isopos genepos geneidpos} [lrange $poss 6 end] break
 	lappend poss {*}[list_cor $header [lrange $newheader [llength $poss] end]]
 
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
 		set oriname [lindex $line $isopos]
+		set geneid [lindex $line $geneidpos]
+		if {[info exists geneid2genea($geneid)]} {
+			lset line $genepos $geneid2genea($geneid)
+		}
 		if {![info exists outputa($oriname)]} continue
 		set t [get tcounta($oriname,t) 0]
 		if {[get countsa($oriname) 0] < 1 && $t < 1} continue
@@ -888,10 +881,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		if {[info exists geneconva($gene)]} {
 			lset line $genepos $geneconva($gene)
 			lset line $geneidpos $geneconva($gene)
-		} else {
-			if {[info exists geneid2genea($geneid)]} {
-				lset line $genepos $geneid2genea($geneid)
-			}
 		}
 		set line [list_sub $line $poss]
 		# set genebasica($geneid) [list_sub $line {0 1 2 3}]
@@ -913,9 +902,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	unset -nocomplain gcounta()
 	set o [open $targetgenecountsfile.temp w]
 	puts $o [join [list chromosome begin end strand gene geneid count-${analysisname}-$sample] \t]
-	foreach geneid [array names gcounta] {
-		if {[info exists geneconva($geneid)]} {set geneid $geneconva($geneid)}
-		puts $o [join $genebasica($geneid) \t]\t[get geneid2genea($geneid) $geneid]\t$geneid\t$gcounta($geneid)
+	foreach origeneid [array names gcounta] {
+		if {[info exists geneconva($origeneid)]} {set geneid $geneconva($origeneid)} else {set geneid $origeneid}
+		puts $o [join $genebasica($geneid) \t]\t[get geneid2genea($geneid) $origeneid]\t$geneid\t$gcounta($origeneid)
 	}
 	close $o
 	cg select -s - $targetgenecountsfile.temp $targetgenecountsfile.temp2
