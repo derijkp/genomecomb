@@ -228,6 +228,30 @@ proc isoquant_findfield {header tryfields msg fieldnameVar {file {}}} {
 	return $pos
 }
 
+proc iso_isoquant_genecounts_moutput {merged files} {
+	upvar gcounta gcounta
+	upvar dummya dummya
+	set genes [list_subindex $merged 4]
+	set line [lindex $merged 0]
+	lset line 2 [lindex $merged end 2]
+	set num -1
+	foreach file $files {
+		incr num
+		set found 0
+		foreach gene $genes {
+			if {[info exists gcounta($num,$gene)]} {
+				lappend line {*}$gcounta($num,$gene)
+				set found 1
+				break
+			}
+		}
+		if (!$found) {
+			lappend line {*}$dummya($num)
+		}
+	}
+	return $line
+}
+
 proc cg_iso_isoquant_genecounts {genecounts args} {
 	unset -nocomplain geneinfoa
 	unset -nocomplain gcounta
@@ -262,23 +286,55 @@ proc cg_iso_isoquant_genecounts {genecounts args} {
 		}
 		close $f
 	}
-	set o [open $genecounts w]
+	set o [open $genecounts.temp w]
 	puts $o $comments1[join $newheader \t]
-	foreach line [bsort [array names geneinfoa]] {
+	set merge(+) {}
+	set merge(-) {}
+	set lines [bsort [array names geneinfoa]]
+	foreach line $lines {
 		set gene [lindex $line end-1]
+		set geneid [lindex $line end]
 		if {$gene in ". dummy"} continue
-		set num -1
-		foreach file $args {
-			incr num
-			if {[info exists gcounta($num,$gene)]} {
-				lappend line {*}$gcounta($num,$gene)
+		if {[regexp novel $gene]} {
+			foreach {chr begin end strand} $line break
+			if {![llength $merge($strand)]} {
+				lappend merge($strand) $line
+				continue
 			} else {
-				lappend line {*}$dummya($num)
+				set ready 0
+				foreach {prevchr prevbegin} [lindex $merge($strand) 0] break
+				set prevend [lindex $merge($strand) end 2]
+				if {$chr ne $prevchr || $begin >= $prevend} {
+					set merged $merge($strand)
+					set merge($strand) [list $line]
+					set line [iso_isoquant_genecounts_moutput $merged $args]
+				} else {
+					lappend merge($strand) $line
+					continue
+				}
+			}
+		} else {
+			set num -1
+			foreach file $args {
+				incr num
+				if {[info exists gcounta($num,$gene)]} {
+					lappend line {*}$gcounta($num,$gene)
+				} else {
+					lappend line {*}$dummya($num)
+				}
 			}
 		}
 		puts $o [join $line \t]
 	}
+	if {[llength $merge(+)]} {
+		puts $o [join [iso_isoquant_genecounts_moutput $merge(+) $args] \t]
+	}
+	if {[llength $merge(-)]} {
+		puts $o [join [iso_isoquant_genecounts_moutput $merge(-) $args] \t]
+	}
 	close $o
+	cg select -s - $genecounts.temp $genecounts.temp2
+	file rename $genecounts.temp2 $genecounts
 }
 
 proc convert_isoquant_ambigcount {ambig} {
