@@ -370,6 +370,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	set targetisoformcountsfile $destdir/isoform_counts-${analysisname}-$sample.tsv
 	set targetgenecountsfile $destdir/gene_counts-${analysisname}-$sample.tsv
 	set targetreadassignmentsfile $destdir/read_assignments-${analysisname}-$sample.tsv
+	array set strandnamea {+ p - m . u}
 	# info from known isos
 	# --------------------
 	# transcriptidsa gets the transcripts that are actually in the results (from readassignment file)
@@ -410,7 +411,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		if {$type ne "gene"} continue
 		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 		if {[regexp ^novel_gene $gene]} {
-			set geneconva($gene) novel_${chr}_${begin}_${end}
+			set geneconva($gene) novel_${chr}_$strandnamea($strand)_${begin}_${end}
 			set gene $geneconva($gene)
 		}
 		if {![info exists genebasica($gene)]} {
@@ -432,7 +433,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 		if {$type ne "gene"} continue
 		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 		if {[regexp ^novel_gene $gene]} {
-			set geneconva($gene) novel_${chr}_${begin}_${end}
+			set geneconva($gene) novel_${chr}_$strandnamea($strand)_${begin}_${end}
 			set gene $geneconva($gene)
 		}
 		if {![info exists genebasica($gene)]} {
@@ -903,8 +904,14 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	set o [open $targetgenecountsfile.temp w]
 	puts $o [join [list chromosome begin end strand gene geneid count-${analysisname}-$sample] \t]
 	foreach origeneid [array names gcounta] {
-		if {[info exists geneconva($origeneid)]} {set geneid $geneconva($origeneid)} else {set geneid $origeneid}
-		puts $o [join $genebasica($geneid) \t]\t[get geneid2genea($geneid) $origeneid]\t$geneid\t$gcounta($origeneid)
+		if {[info exists geneconva($origeneid)]} {
+			set geneid $geneconva($origeneid)
+			set gene $geneconva($origeneid)
+		} else {
+			set geneid $origeneid
+			set gene [get geneid2genea($geneid) $origeneid]
+		}
+		puts $o [join $genebasica($geneid) \t]\t$gene\t$geneid\t$gcounta($origeneid)
 	}
 	close $o
 	cg select -s - $targetgenecountsfile.temp $targetgenecountsfile.temp2
