@@ -2298,15 +2298,17 @@ char *naturalcompare_numbercontext_after(char *cur, int curlen, char *start, int
 	if (*context == LOC_E) {
 		if (*cur == '-' || *cur == '+') {
 			cur++; curlen--;
+			*context = LOC_ESIGN;
 		}
 		if (curlen <= 0 || !NATDIGIT(cur)) {
-			*context = LOC_DECIMALNUM; return cur;
+			*context = LOC_DECIMALNUM;
+			if (*context == LOC_ESIGN) {return cur-2;} else {return cur-1;}
 		}
 		*context = LOC_ENUM;
 	}
 	if (*context == LOC_ESIGN) {
 		if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
-			*context = LOC_DECIMALNUM; return cur;
+			*context = LOC_DECIMALNUM; return cur-2;
 		}
 		*context = LOC_ENUM;
 	}
@@ -2600,7 +2602,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				}
 				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
 			} else {
-				if (result == 0) {return startingzero;}
 				return result;
 			}
 		}
@@ -2627,7 +2628,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				if (result == 0) {
 					return 1;
 				} else {
-					if (result == 0) {return startingzero;}
 					return result;
 				}
 			} else if (*right == '+') {
@@ -2637,7 +2637,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				if (result == 0) {
 					return -1;
 				} else {
-					if (result == 0) {return startingzero;}
 					return result;
 				}
 			} else if (*left == '.') {
