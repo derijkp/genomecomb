@@ -245,7 +245,17 @@ proc var_job {args} {
 						-deletesams 1 \
 						$target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
-					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					set empty 1
+					foreach {file} $list {
+						if {[file size $file]} {set empty 0 ; break}
+					}
+					if {$empty} {
+						set tempfile [tempfile]
+						file_write $tempfile chromosome\tbegin\tend\n
+						exec cat $tempfile {*}[compresspipe $target] > $target.temp
+					} else {
+						cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					}
 					file rename -force $target.temp $target
 					cg_zindex $target
 				} else {
