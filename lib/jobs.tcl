@@ -296,12 +296,11 @@ proc jobglob {args} {
 
 proc jobgzfiles {args} {
 	foreach filename $args {
-		if {![catch {jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
-			foreach file $list {
-				set root [gzroot $file]
-				if {[info exists a($root)]} continue
-				set a($root) $file
-			}
+		set list [jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+		foreach file $list {
+			set root [gzroot $file]
+			if {[info exists a($root)]} continue
+			set a($root) $file
 		}
 	}
 	set result {}
