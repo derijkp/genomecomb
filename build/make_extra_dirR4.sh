@@ -264,7 +264,7 @@ sudo make install
 # useful hints in getting it compiled found at https://tdhock.github.io/blog/2017/compiling-R/
 #version=3.5.3
 #majorversion=3
-version=4.1.2
+version=4.2.1
 majorversion=4
 
 cd /build
@@ -339,6 +339,11 @@ regsub {# Shell wrapper for R executable.} $c {# Shell wrapper for R executable.
 script="$(readlink -f "$0")"
 R_BASEDIR="$(dirname "$(dirname "$script")")"} c
 regsub -all $basedir $c {${R_BASEDIR}} c
+regsub {export R_DOC_DIR
+} $c {export R_DOC_DIR
+export TCL_LIBRARY="${R_BASEDIR}/lib64/R/share/tcl8.5"
+export TK_LIBRARY="${R_BASEDIR}/lib64/R/share/tk8.5"
+} c
 if {$locate ne ""} {
 	set pattern {$(dirname "$(dirname "$script")")}
 	set pos [string first $pattern $c]
@@ -374,11 +379,23 @@ tclsh /tmp/convert /build/dirR-$version-$arch/lib64/R/bin/R /build/dirR-$version
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("pheatmap", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("curl", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("plotly", repos="http://cran.us.r-project.org")'
+yuminstall libtiff-devel
+cp -a -f /usr/lib64/libtiff.so* /build/dirR-$version-$arch/lib64/R/lib
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("jpeg", repos="http://cran.us.r-project.org")'
 
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("xml2", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("XML", repos="http://cran.us.r-project.org")'
+
+yuminstall cmake3
+yuminstall NLopt NLopt-devel
+cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$version-$arch/lib64/R/lib
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("nloptr", repos="http://cran.us.r-project.org")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("lme4", repos="http://cran.us.r-project.org")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("pbkrtest", repos="http://cran.us.r-project.org")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("car", repos="http://cran.us.r-project.org")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("rstatix", repos="http://cran.us.r-project.org")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("ggpubr", repos="http://cran.us.r-project.org")'
 
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("BiocManager", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("DESeq2")'
@@ -420,6 +437,5 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$version-$arch/lib64/R/lib
 # /build/dirR-$version-$arch/R --vanilla -e 'install.packages("SRAdb", repos="http://cran.us.r-project.org")'
 # /build/dirR-$version-$arch/R --vanilla -e 'install.packages("factoextra", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
-
 
 echo "Finished building dirR4"
