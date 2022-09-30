@@ -65,7 +65,7 @@ Thus, only variants that match the alleles given in alt will be annotated. If th
 values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
 var databases can also be a (multivalued) bcol formatted ([[bcol]]) file instead of 
 a [[tsv]]; this is indicated by the extension bcol
-; **gene**: gene files (in genepred-like format). Variants will be annotated with the effects they have on 
+; **gene**: gene files (in [[gene]] tsv format). Variants will be annotated with the effects they have on 
 the genes in these files as descibed below.
 ; **sv**: Structural variant file that must at least contain the columns chromosome,start,end,type,ref,alt
 to annotate structural variants that approximately match the given values.

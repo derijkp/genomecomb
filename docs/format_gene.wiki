@@ -1,0 +1,38 @@
+= transcript/gene file =
+A transcript/gene file is a [[tsv]] file containing a list of transcripts.
+Each line contains one transcript. 
+The standard region fields (chromosome, begin and end) indicate the
+location of the transcript (and the transcript file is thus also a region file)
+while other fields indicate the strand, exons etc.
+
+The basic fields for a transcript file are
+; chromosome: chromosome name
+; begin: transcription start position
+; end: transcription end position
+; strand: indication of the strand: + or -, empty or . can be used for unknown
+; cdsStart:	start of the coding region (genomic position)
+; cdsEnd: end of the coding region (genomic position)
+; exonStarts: list of exon start positions
+; exonEnds:	list of	Exon end positions
+; transcript:	Name of transcript (usually transcript_id from GTF)
+; gene:	name of gene (e.g. gene_id from GTF). This field preferentially
+        contains the HGNC name for the gene, but other ids are possible
+
+Most genomecomb tools will accept some (commonly encounterd) alternative
+fieldnames if these are not present:
+; chromosome: "chrom", "chr", "chr1", "genoName", "tName" and "contig"
+; begin: "start", "end1", "chromStart", "genoStart", "tStart", txStart", "pos" and "offset"
+(end1 is recognised as begin because of the structural variant code in genomecomb, where start1,end1
+and start2,end2 regions surround a SV).
+; end: "start2", "chromEnd", "genoEnd", "tEnd" or "txEnd"
+; transcript:	"transcript_id", "transcriptid", "name"
+; gene_name:	"gene","name2", "geneid", "gene_id"
+
+Any other fields can be added, but the following are common:
+; exonCount: number of exons
+; source: source of data
+; geneid: a gene identifier, such as the ensembl id. This field
+  can be used to add a specific id as well as the HGNC name (in gene).
+  Genomecomb also checks the fields "gene_id","gene_name","gene", "name2"
+  for this. Remark that these alternative field names overlap with gene
+  alternatives. This provides for when no specific gene id was provided.
