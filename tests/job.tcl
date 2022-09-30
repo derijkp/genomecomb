@@ -1684,7 +1684,7 @@ test sge_safename {shorten prefix} {
 	sge_safename $name $prefix
 } {jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_..11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560#test}
 
-if {![get testslurm 0]} {
+if {[get testslurm 0]} {
 
 test job "slurm general mem and time setting $testname" {
 	cd $::testdir
