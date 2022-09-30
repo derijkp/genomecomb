@@ -193,8 +193,8 @@ test map_minimap2 {map_minimap2 -paired 0} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
-	set otherfields {AS XS MC MQ YS YT XS s1 s2 cm de rl ms}
-	set removefields {AS XS MC MQ YS YT XS s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
+	set otherfields {AS XS MC MQ YS YT s1 s2 cm de rl ms}
+	set removefields {AS XS MC MQ YS YT s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
 	exec samtools view --no-PG tmp/ali.bam | cg sam2tsv -fields $otherfields \
 		| cg select -f {chromosome	begin	end	strand {qname="[string range $qname 0 end-2]"} *} \
 		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv

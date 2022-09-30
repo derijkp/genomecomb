@@ -11,6 +11,7 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}} {extra {}}} {
 		set a($prekey) $pos
 		incr pos
 	}
+	unset -nocomplain donea
 	set data {}
 	foreach line $lines {
 		set line [string trim $line <>]
@@ -39,6 +40,14 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}} {extra {}}} {
 			set value [string range $line $pos [expr {$npos-1}]]
 			set pos [expr {$npos+1}]
 			set value [string trim $value \"]
+			if {$key eq "ID"} {
+				if {[info exists donea($value)]} {
+					set resultline {}
+					break
+				} else {
+					set donea($value) 1
+				}
+			}
 			if {![info exists a($key)]} {
 				set a($key) [llength $sheader]
 				lappend sheader $key
@@ -54,6 +63,7 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}} {extra {}}} {
 				lset resultline $a($key) $value
 			}
 		}
+		if {![llength $resultline]} continue
 		lappend data $resultline
 	}
 	list $sheader $data $prekeys

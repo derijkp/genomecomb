@@ -1263,7 +1263,7 @@ void process_print_buffer(FILE *fo,OBuffer *obuffer,int limit) {
 }
 
 int main(int argc, char *argv[]) {
-	Hash_table *conv_formata, *donefields, *keepfields = NULL;
+	Hash_table *conv_formata, *donefields, *keepfields = NULL, *doneinfo = NULL;
 	FILE *fd = NULL, *fo = NULL, *fh = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew(),*dsbuffer = DStringNew();
@@ -1428,9 +1428,13 @@ int main(int argc, char *argv[]) {
 		if (line->string[0] == '#') {
 			if (line->string[1] == '#') {
 				if (line->size > 9 && strncmp("FORMAT=",line->string+2,7) == 0) {
-					DStringArrayAppend(format,line->string+9,strlen(line->string+9));
+					if (DStringArraySearch(format,line->string+9,strlen(line->string+9)) == -1) {
+						DStringArrayAppend(format,line->string+9,strlen(line->string+9));
+					}
 				} else if (line->size > 7 && strncmp("INFO=",line->string+2,5) == 0) {
-					DStringArrayAppend(info,line->string+7,strlen(line->string+7));
+					if (DStringArraySearch(info,line->string+7,strlen(line->string+7)) == -1) {
+						DStringArrayAppend(info,line->string+7,strlen(line->string+7));
+					}
 				}
 			} else {
 				header = DStringArrayFromCharM(line->string+1,"\t");
@@ -1480,6 +1484,9 @@ int main(int argc, char *argv[]) {
 				DString *kds = (DString *)dstring_hash_get(keepfields,ds);
 				if (kds == NULL) {continue;}
 			}
+			if ((DString *)dstring_hash_get(donefields,ds) != NULL) {
+				continue;
+			}
 			dstring_hash_set(donefields,DStringDup(ds),(void *)"");
 			DStringArrayAppend(formatfields,id->string,id->size);
 			fieldpos++;
@@ -1517,9 +1524,14 @@ int main(int argc, char *argv[]) {
 	/* infofieldsnumber will contain array of info field number, = "R","A",".", ... */
 	infofieldsnumber = DStringNew();
 	infopos = 0;
+	doneinfo = hash_init();
 	for (i = 0 ; i < info->size ; i ++) {
 		DString *ds;
 		id = extractID(DStringArrayGet(info,i),id);
+		if ((DString *)dstring_hash_get(doneinfo,id) != NULL) {
+			continue;
+		}
+		dstring_hash_set(doneinfo,DStringDup(id),(void *)"");
 		if (id->string[0] == 'D' && id->string[1] == 'P' && id->string[2] == '\0') {
 			fprintf(fo,"\ttotalcoverage");
 		} else {

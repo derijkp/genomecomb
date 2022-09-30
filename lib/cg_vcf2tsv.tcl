@@ -139,9 +139,12 @@ proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {inf
 	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
 	set headerfields {alleleSeq1 alleleSeq2 zyg phased}
+	unset -nocomplain donea
 	foreach temp [get a(FORMAT) ""] {
 		regexp {ID=([^,]+)} $temp temp id
 		if {[inlist {GT} $id]} continue
+		if {[info exists donea($id)]} continue
+		set donea($id) 1
 		lappend formatfields $id
 		lappend headerfields [get conv_formata($id) $id]
 	}
@@ -155,16 +158,17 @@ proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {inf
 		}
 	}
 	set infofields {}
-	set num 0
+	unset -nocomplain donea
 	foreach temp $a(INFO) {
 		regexp {ID=([^,]+)} $temp temp id
+		if {[info exists donea($id)]} continue
+		set donea($id) 1
 		lappend infofields $id
 		if {$id eq "DP"} {
 			lappend nheader totalcoverage
 		} else {
 			lappend nheader [get conv_formata($id) $id]
 		}
-		incr num
 	}
 	return $nheader
 }

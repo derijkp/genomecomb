@@ -1631,7 +1631,11 @@ test select {duplicate field error} {
 		1	CDS	2
 		2	CD	2
 	}]
-	cg select -q {$b regexp "CDS"} tmp/temp.tsv
-} {duplicate fieldnames: a} error
+	cg select -q {$b regexp "CDS"} tmp/temp.tsv > tmp/result.tsv 2> tmp/error
+	list [file_read tmp/error] [file_read tmp/result.tsv]
+} {{duplicate fieldnames: a
+} {a	b	a
+1	CDS	2
+}}
 
 testsummarize
