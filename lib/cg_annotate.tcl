@@ -450,7 +450,15 @@ proc cg_annotate_job {args} {
 			}
 			if {$distrreg == "0"} {
 				# putsvars usefile resultname
-				job annot-$resultname-[file tail $dbfile] -skip {$resultfile $analysisinfofile} -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+				job annot-$resultname-[file tail $dbfile] -skip {
+					$resultfile $analysisinfofile
+				} -deps {
+					$usefile $genomefile $dbfile
+				} -targets {
+					$target
+				} -vars {
+					genomefile dbfile name dbinfo upstreamsize
+				} -code {
 					set genecol [dict_get_default $dbinfo genecol {}]
 					set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
 					# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize

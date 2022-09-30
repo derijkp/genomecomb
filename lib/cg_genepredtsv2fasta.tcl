@@ -33,7 +33,7 @@ proc cg_genepredtsv2fasta {args} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		foreach {chrom start end strand cdsStart cdsEnd exonCount exonStarts exonEnds transcriptname genename} [list_sub $line $dposs] break
+		foreach {chrom start end strand exonStarts exonEnds cdsStart cdsEnd transcriptname genename} [list_sub $line $dposs] break
 		set geneobj [annotatevar_gene_makegeneobj $genomef $line $dposs 2000 1]
 		set seq [annotatevar_gene_rnaseq geneobj]
 		set id [join [list_sub $line $idposs] |]

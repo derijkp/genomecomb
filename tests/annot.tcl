@@ -631,12 +631,12 @@ test gene_annot {gene wrongly sorted database file error} {
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
 } {*Cannot annotate because the database file (data/gene_test-wrong2.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
-test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
-	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	cg select -f {chromosome start end strand name cdsStart cdsEnd exonCount exonStarts exonEnds} data/gene_test.tsv tmp/gene_test.tsv
-	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv
-	lindex [cg select -g all -q {$test_gene ne ""} tmp/temp.sft] end
-} {46} 
+#test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
+#	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+#	cg select -f {chromosome start end strand name cdsStart cdsEnd exonCount exonStarts exonEnds} data/gene_test.tsv tmp/gene_test.tsv
+#	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv
+#	lindex [cg select -g all -q {$test_gene ne ""} tmp/temp.sft] end
+#} {46} 
 
 test gene_annot {gene exon deletion} {
 	write_tab tmp/vars.tsv {
@@ -905,12 +905,12 @@ test gene_annot {end of chromosome} {
 		M	16571	16571	ins	{}	A
 	}
 	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		M	15998	16570	+	x	15998	15998	1	15998,	16570,
+		chrom	start	end	strand	geneid	transcript	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16570	+	x	xt	15998	15998	1	15998,	16570,
 	}
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	16571	16571	ins		A	downstream	x	+:down+1_2:n.573_574insA
+		M	16571	16571	ins		A	downstream	x	+xt:down+1_2:n.573_574insA
 	}]\n
 	file delete tmp/result.tsv
 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
@@ -962,12 +962,12 @@ test gene_annot {near end of chromosome} {
 		M	16570	16570	ins	{}	A
 	}
 	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		M	15998	16569	+	x	15998	15998	1	15998,	16569,
+		chrom	start	end	strand	geneid	transcript	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
 	}
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		M	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+		M	16570	16570	ins		A	downstream	x	+xt:down+1_2:n.572_573insA
 	}]\n
 	file delete tmp/result.tsv
 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
@@ -982,14 +982,14 @@ test gene_annot {-distrreg chr with gene in chr1_gl000191_random} {
 		chr1_gl000191_random	16570	16570	ins	{}	A
 	}
 	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		1	15998	16569	+	x	15998	15998	1	15998,	16569,
-		chr1_gl000191_random	15998	16569	+	x	15998	15998	1	15998,	16569,
+		chrom	start	end	strand	geneid	transcript	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		1	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
+		chr1_gl000191_random	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
 	}
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		1	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
-		chr1_gl000191_random	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+		1	16570	16570	ins		A	downstream	x	+xt:down+1_2:n.572_573insA
+		chr1_gl000191_random	16570	16570	ins		A	downstream	x	+xt:down+1_2:n.572_573insA
 	}]\n
 	file delete -force tmp/result.tsv tmp/result.tsv.index
 	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
@@ -1005,10 +1005,10 @@ test gene_annot {-distrreg chr with variants outside of distrreg regions} {
 		2	16570	16570	ins	{}	A
 	}
 	write_tab tmp/gene_test.tsv {
-		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		1	15998	16569	+	x	15998	15998	1	15998,	16569,
-		1x	15998	16569	+	x	15998	15998	1	15998,	16569,
-		2	15998	16569	+	x	15998	15998	1	15998,	16569,
+		chrom	start	end	strand	geneid	transcript	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		1	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
+		1x	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
+		2	15998	16569	+	x	xt	15998	15998	1	15998,	16569,
 	}
 	file delete -force tmp/result.tsv tmp/result.tsv.index
 	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \

@@ -129,9 +129,10 @@ proc calc_rpos {geneobj rsnppos} {
 	}
 }
 
+# set upstreamsize 2000 ; set nocds 0
 proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000} {nocds 0}} {
 	# splice 8 bases, essentialsplice 2 bases intron, upstream,downstream -> 2k bases
-	foreach {dchrom dstart dend strand cdsStart cdsEnd exonCount exonStarts exonEnds transcriptname genename} [list_sub $dbline $dposs] break
+	foreach {dchrom dstart dend strand exonStarts exonEnds cdsStart cdsEnd transcriptname genename exonCount} [list_sub $dbline $dposs] break
 	if {$nocds} {
 		set cdsStart {}
 		set cdsEnd {}
@@ -1136,23 +1137,26 @@ proc annotategene_one {geneobj loc} {
 proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	upvar $dpossVar dposs
 	set header [tsv_open $df comment]
-	set dposs [tsv_basicfields $header 3]
-	set deffields {strand cdsStart cdsEnd exonCount exonStarts exonEnds}
-	set gfields [list_cor $header $deffields]
-	if {-1 in [list_sub $gfields {0 4 5}]} {
-		error "error: gene file misses the following fields: [list_sub $deffields [list_find $gfields -1]]"
+	set deffields {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene exonCount}
+	set dposs [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 9 10 11 12}]
+	if {$transcriptcol ne ""} {
+		set pos [lsearch $header $transcriptcol]
+		if {$pos == -1} {
+			error "error: given transcriptcol $transcriptcol not found"
+		}
+		lset $dpos end-1 $pos
 	}
-	lappend dposs {*}$gfields
-	if {$transcriptcol eq ""} {
-		set transcriptcol name
-	}
-	foreach genecol [list $genecol geneid gene_name gene_id gene name2 name] {
-		if {$genecol eq ""} continue
+	if {$genecol ne ""} {
 		set pos [lsearch $header $genecol]
-		if {$pos != -1} {break}
+		if {$pos == -1} {
+			error "error: given genecol $genecol not found"
+		}
+		lset $dpos end $pos
 	}
-	lappend deffields $transcriptcol $genecol
-	lappend dposs [lsearch $header $transcriptcol] [lsearch $header $genecol]
+	if {-1 in $dposs} {
+		error "error: gene file misses the following fields: [list_sub $deffields [list_find $dposs -1]]"
+	}
+	lappend dposs [lsearch $header exonCount]
 	return $header
 }
 
@@ -1181,24 +1185,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	set fields [list_sub $header $poss]
 	set df [gzopen $dbfile]
 	set header [open_genefile $df dposs $genecol $transcriptcol]
-#	set header [tsv_open $df]
-#	set deffields {strand cdsStart cdsEnd exonCount exonStarts exonEnds}
-#	lappend deffields $transcriptcol $genecol
-#	set dposs [tsv_basicfields $header 3]
-#	lappend dposs {*}[list_cor $header $deffields]
-#	if {[lindex $dposs end] == -1} {
-#		foreach testfield {gene_name gene_id name} {
-#			set pos [lsearch $header $testfield]
-#			if {$pos != -1} {
-#				lset dposs end $pos
-#				break
-#			}
-#		}
-#	}
-#	set dbposs [lrange $dposs 0 2]
-#	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
-#		error "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
-#	}
 	set dbposs [lrange $dposs 0 2]
 	set o [open $annotfile.temp w]
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]

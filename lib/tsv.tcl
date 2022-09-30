@@ -175,13 +175,13 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 				set v [lsearch $header alternative]
 			}
 			11 {
-				foreach name {transcript transcript_id transcriptid name} {
+				foreach name {transcript_id transcriptid name} {
 					set v [lsearch $header $name]
 					if {$v != -1} break
 				}
 			}
 			12 {
-				foreach name {gene name2 geneid gene_id} {
+				foreach name {gene geneid gene_id name2} {
 					set v [lsearch $header $name]
 					if {$v != -1} break
 				}
