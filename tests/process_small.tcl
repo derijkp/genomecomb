@@ -258,7 +258,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 	} {
 		file mkdir tmp/${basename}/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename}/samples/$sample/reg_hg19_targets.tsv.lz4
 	}
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 \
@@ -296,7 +296,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 	} {
 		file mkdir tmp/${basename}/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename}/samples/$sample/reg_hg19_targets.tsv.lz4
 	}
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 -distrreg 1 \
@@ -333,7 +333,7 @@ test process_small {process_project exomes_yri_mx2} {
 	} {
 		file mkdir tmp/${basename}/samples/$sample/fastq
 		file copy {*}[glob ori/${basename}.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename}/samples/$sample/reg_hg19_targets.tsv.lz4
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
@@ -377,7 +377,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	} {
 		file mkdir tmp/${basename}/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename}/samples/$sample/reg_hg19_targets.tsv.lz4
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk freebayes} \
@@ -421,7 +421,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	} {
 		file mkdir tmp/${basename}/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/${basename}/samples/$sample/fastq
-		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/${basename}/samples/$sample/reg_hg19_targets.tsv
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/${basename}/samples/$sample/reg_hg19_targets.tsv.lz4
 	}
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatkh freebayes} \
