@@ -67,6 +67,12 @@ proc var_freebayes_job {args} {
 		-datatype {
 			# not actually used
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
