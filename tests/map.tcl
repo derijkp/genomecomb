@@ -201,15 +201,18 @@ test map_minimap2 {map_minimap2 -paired 0} {
 	exec samtools view --no-PG data/minimap2-p.sam | cg sam2tsv -fields $otherfields \
 		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
 	# we have one slight difference in alignment for unpaired alignement!
-	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
-} {diff tmp/ali.tsv tmp/expected.tsv
-header
-  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other	XS
-25c25
-< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4	
----
-> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91	
-child process exited abnormally} error
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv >& tmp/diff}
+	file_write tmp/expectdiff [deindent {
+		diff tmp/ali.tsv tmp/expected.tsv
+		header
+		  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
+		25c25
+		< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4
+		---
+		> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91
+	}]\n
+	exec diff tmp/diff tmp/expectdiff
+} {}
 
 test map_minimap2 {error dir as refseq} {
 	test_cleantmp
