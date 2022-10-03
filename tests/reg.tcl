@@ -676,6 +676,11 @@ test regjoin {sort error begin file2} {
 } {file2 is not correctly sorted (sort correctly using "cg select -s -")
 child process exited abnormally} error
 
+test regjoin {empty files} {
+	write_tab tmp/f1.tsv {}
+	exec cg regjoin tmp/f1.tsv > tmp/result.tsv
+} {header error: fields (or alternatives) not found: chromosome begin end} error
+
 test regcollapse {basic} {
 	exec cg regcollapse data/reg1.tsv data/reg2.tsv > tmp/test.tsv
 	write_tab tmp/expected.tsv {
