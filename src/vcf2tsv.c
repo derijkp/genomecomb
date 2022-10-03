@@ -439,6 +439,12 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 						svend = pos;
 					}
 				}
+				if (svtype->size == 3 && strncmp(svtype->string,"INS",3) == 0) {
+					/* some output of sniffles has (incorrectly) END != pos for insertions
+					 -> fix
+					*/
+					svend = pos;
+				}
 				altvar->end = svend;
 				altvar->refsize = svend - pos;
 			} else {
@@ -764,7 +770,9 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 				}
 				/* print out zyg */
 				/* ------------- */
-				if (a1 < 0 || a2 < 0) {
+				if ((a1 < 0 && a2 < 0) || (a1 < 0 && a2 == 0) || (a1 == 0 && a2 < 0)) {
+					zyg = 'u';
+				} else if (a1 < 0 || a2 < 0) {
 					zyg = 'v';
 				} else if (a1 > 0) {
 					if (a2 == a1) {
@@ -1073,7 +1081,9 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 							}
 						}
 					}
-					if (a1 < 0 || a2 < 0) {
+					if ((a1 < 0 && a2 < 0) || (a1 < 0 && a2 == 0) || (a1 == 0 && a2 < 0)) {
+						zyg = "u";
+					} else if (a1 < 0 || a2 < 0) {
 						zyg = "v";
 					} else if (a1 == curallele) {
 						if (a2 == a1) {
