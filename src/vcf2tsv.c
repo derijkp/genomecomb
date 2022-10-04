@@ -439,7 +439,7 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 						svend = pos;
 					}
 				}
-				if (svtype->size == 3 && strncmp(svtype->string,"INS",3) == 0) {
+				if (svtype != NULL && svtype->size == 3 && strncmp(svtype->string,"INS",3) == 0) {
 					/* some output of sniffles has (incorrectly) END != pos for insertions
 					 -> fix
 					*/
