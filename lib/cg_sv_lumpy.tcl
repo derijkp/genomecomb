@@ -111,9 +111,9 @@ proc sv_lumpy_job {args} {
 		vcffile sample split resultfile
 	} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {
+		exec cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} $vcffile $target.temp[gzext $target]
+		} $vcffile | cg select -f {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 zyg="v" *} | cg zst > $target.temp[gzext $target]
 		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup
