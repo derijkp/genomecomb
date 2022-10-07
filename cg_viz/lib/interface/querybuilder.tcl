@@ -94,6 +94,18 @@ invoke {} {
 		sample_aggregates	smedian	saggr	{smedian(?condition?,value)} {returns the median of results of value for each sample for which (if given) **condition** is true}
 		sample_aggregates	smode	saggr	{smode(?condition?,value)} {returns the mode of results of value for each sample for which (if given) **condition** is true}
 		sample_aggregates	spercent	saggr	{spercent(condition1,condition2)} {returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)}
+		analysis_aggregates	acount	aaggr	{acount(condition)} {number of analyses for which **condition** is true}
+		analysis_aggregates	aucount	aaggr	{aucount(condition,value)} {number of unique values for analyses for which (if given) **condition** is true}
+		analysis_aggregates	alist	aaggr	{alist(?condition?,value)} {returns a (comma separated) list with results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	adistinct	aaggr	{adistinct(?condition?,value)} {returns a non-redundant (comma separated) list of the results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	amin	aaggr	{amin(?condition?,value)} {returns the minimum of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	amax	aaggr	{amax(?condition?,value)} {returns the maximum of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	asum	aaggr	{asum(?condition?,value)} {returns the sum of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	aavg	aaggr	{aavg(?condition?,value)} {returns the average of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	astdev	aaggr	{astdev(?condition?,value)} {returns the standard deviation of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	amedian	aaggr	{amedian(?condition?,value)} {returns the median of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	amode	aaggr	{amode(?condition?,value)} {returns the mode of results of value for each analysis for which (if given) **condition** is true}
+		analysis_aggregates	apercent	aaggr	{apercent(condition1,condition2)} {returns 100.0*(number of analyses for which condition1 and condition2 are true)/(number of analyses for which condition1 is true)}
 	}] \n] {
 		lappend select_functions($type) "$name  -  $syntax  -  $descr"
 		set select_functions_insert($name) $insert
@@ -354,6 +366,75 @@ mainw method querybuilder_add {command {data {}} {join and}} {
 		} else {
 			$object querybuilder_insert $insert $command
 		}
+	} elseif {$command in {scount slist sdistinct smin smax ssum savg sstdev smedian smode spercent}} {
+		# sample aggregates
+		set sfields {}
+		set ssamples {}
+		foreach field $fields {
+			set pos [string last - $field]
+			if {$pos == -1} {
+				lappend sfields $field
+			} else {
+				lappend sfields [string range $field 0 [expr {$pos-1}]]
+				lappend ssamples [string range $field [expr {$pos+1}] end]
+			}
+		}
+		set condition [$object querybuilder_makecondition $sfields $operator $values]
+		if {[llength $ssamples] == 1} {
+			set pre "\$sample == \"[list $ssamples]\" and "
+		} elseif {[llength $ssamples]} {
+			set pre "\$sample in \{\"[join $ssamples \" \"]\"\} and "
+		} else {
+			set pre ""
+		}
+		if {[llength $condition] > 1} {
+			set condition "${pre}([join $condition " and "])"
+		} else {
+			set condition "${pre}[lindex $condition 0]"
+		}
+		if {$command eq "scount"} {
+			set insert "${command}($condition)"
+		} else {
+			set insert "${command}($condition, )"
+		}
+		$object querybuilder_insert $insert $join
+		tk::TextSetCursor $queryw insert-1c
+		return
+	} elseif {$command in {acount alist adistinct amin amax asum aavg astdev amedian amode apercent}} {
+		# sample aggregates
+		set afields {}
+		set aanalyses {}
+		foreach field $fields {
+			set pos [string first - $field]
+			if {$pos == -1} {
+				lappend afields $field
+			} else {
+				lappend afields [string range $field 0 [expr {$pos-1}]]
+				lappend aanalyses [string range $field [expr {$pos+1}] end]
+			}
+		}
+		set condition [$object querybuilder_makecondition $afields $operator $values]
+		# putsvars aanalyses command afields operator values
+		if {[llength $aanalyses] == 1} {
+			set pre "\$sample == \"[list $aanalyses]\" and "
+		} elseif {[llength $aanalyses]} {
+			set pre "\$sample in \{\"[join $aanalyses \" \"]\"\} and "
+		} else {
+			set pre ""
+		}
+		if {[llength $condition] > 1} {
+			set condition "${pre}([join $condition " and "])"
+		} else {
+			set condition "${pre}[lindex $condition 0]"
+		}
+		if {$command eq "scount"} {
+			set insert "${command}($condition)"
+		} else {
+			set insert "${command}($condition, )"
+		}
+		$object querybuilder_insert $insert $join
+		tk::TextSetCursor $queryw insert-1c
+		return
 	} elseif {$command in {easyquery}} {
 		$object querybuilder_insert $data $join
 	} else {
@@ -422,40 +503,76 @@ mainw method querybuilder_add {command {data {}} {join and}} {
 			set condition [$object querybuilder_makecondition $fields $operator $values]
 			set insert ${command}()
 		} elseif {$type eq "sample_aggregates" || $command in {scount slist sdistinct smin smax ssum savg sstdev smedian smode spercent}} {
-			# sample aggregates
-			set sfields {}
-			set ssamples {}
-			foreach field $fields {
-				set pos [string first - $field]
-				if {$pos == -1} {
-					lappend sfields $field
-				} else {
-					lappend sfields [string range $field 0 [expr {$pos-1}]]
-					lappend ssamples [string range $field [expr {$pos+1}] end]
-				}
-			}
-			set condition [$object querybuilder_makecondition $sfields $operator $values]
-# putsvars ssamples command sfields operator values
-			if {[llength $ssamples] == 1} {
-				set pre "\$sample == \"[list $ssamples]\" and "
-			} elseif {[llength $ssamples]} {
-				set pre "\$sample in \{\"[join $ssamples \" \"]\"\} and "
-			} else {
-				set pre ""
-			}
-			if {[llength $condition] > 1} {
-				set condition "${pre}([join $condition " and "])"
-			} else {
-				set condition "${pre}[lindex $condition 0]"
-			}
-			if {$command eq "scount"} {
-				set insert "${command}($condition)"
-			} else {
-				set insert "${command}($condition, )"
-			}
-			$object querybuilder_insert $insert $join
-			tk::TextSetCursor $queryw insert-1c
-			return
+error selsewhere
+#			# sample aggregates
+#			set sfields {}
+#			set ssamples {}
+#			foreach field $fields {
+#				set pos [string last - $field]
+#				if {$pos == -1} {
+#					lappend sfields $field
+#				} else {
+#					lappend sfields [string range $field 0 [expr {$pos-1}]]
+#					lappend ssamples [string range $field [expr {$pos+1}] end]
+#				}
+#			}
+#			set condition [$object querybuilder_makecondition $sfields $operator $values]
+#			if {[llength $ssamples] == 1} {
+#				set pre "\$sample == \"[list $ssamples]\" and "
+#			} elseif {[llength $ssamples]} {
+#				set pre "\$sample in \{\"[join $ssamples \" \"]\"\} and "
+#			} else {
+#				set pre ""
+#			}
+#			if {[llength $condition] > 1} {
+#				set condition "${pre}([join $condition " and "])"
+#			} else {
+#				set condition "${pre}[lindex $condition 0]"
+#			}
+#			if {$command eq "scount"} {
+#				set insert "${command}($condition)"
+#			} else {
+#				set insert "${command}($condition, )"
+#			}
+#			$object querybuilder_insert $insert $join
+#			tk::TextSetCursor $queryw insert-1c
+#			return
+		} elseif {$type eq "analysis_aggregates" || $command in {acount alist adistinct amin amax asum aavg astdev amedian amode apercent}} {
+error elsewhere
+#			# sample aggregates
+#			set afields {}
+#			set aanalyses {}
+#			foreach field $fields {
+#				set pos [string first - $field]
+#				if {$pos == -1} {
+#					lappend afields $field
+#				} else {
+#					lappend afields [string range $field 0 [expr {$pos-1}]]
+#					lappend aanalyses [string range $field [expr {$pos+1}] end]
+#				}
+#			}
+#			set condition [$object querybuilder_makecondition $afields $operator $values]
+#			# putsvars aanalyses command afields operator values
+#			if {[llength $aanalyses] == 1} {
+#				set pre "\$sample == \"[list $aanalyses]\" and "
+#			} elseif {[llength $aanalyses]} {
+#				set pre "\$sample in \{\"[join $aanalyses \" \"]\"\} and "
+#			} else {
+#				set pre ""
+#			}
+#			if {[llength $condition] > 1} {
+#				set condition "${pre}([join $condition " and "])"
+#			} else {
+#				set condition "${pre}[lindex $condition 0]"
+#			}
+#			if {$command eq "scount"} {
+#				set insert "${command}($condition)"
+#			} else {
+#				set insert "${command}($condition, )"
+#			}
+#			$object querybuilder_insert $insert $join
+#			tk::TextSetCursor $queryw insert-1c
+#			return
 		} else {
 			# multi field functions (fields)
 			set insert ${command}(\$[join $fields ,\$])
@@ -517,6 +634,14 @@ mainw method querybuilder_fieldsreset {type} {
 	if {$type eq "samplefields"} {
 		set list {sample}
 		foreach field [$object.tb tfields] {
+			if {[regexp {^(.+)-[^-]+$} $field temp field]} {
+				lappend list $field
+			}
+		}
+		set qfields [list_remdup $list]
+	} elseif {$type eq "analysisfields"} {
+		set list {analysis}
+		foreach field [$object.tb tfields] {
 			if {[regexp {^([^-]+)-} $field temp field]} {
 				lappend list $field
 			}
@@ -543,23 +668,26 @@ mainw method querybuilder {args} {
 		set var [privatevar $object fieldcalc]
 		Classy::Entry $object.querybuilder.options.fieldname -label Fieldname -textvariable [privatevar $object fieldname]
 		pack $object.querybuilder.options.fieldname -side top -expand yes -fill x
-		set funcbuttons {_blank condition field value and or _blank if count lmin lmax avg sum compare percent region isnum}
+		set funcbuttons {_blank condition field value and or _blank if scount lmin lmax avg sum compare percent region isnum}
 		set join ""
 	} else {
 		set fieldbuilder 0
 		set var [$object.buttons.query cget -textvariable]
-		set funcbuttons {_blank and or condition field value comp _blank count compare lmin lmax avg sum if isnum percent}
+		set funcbuttons {_blank and or condition field value comp _blank scount compare lmin lmax avg sum if isnum percent}
 		set join and
 	}
-	set w $object.querybuilder.options.paned
-	ttk::panedwindow $w -orient horizontal
-	pack $w -fill both -expand yes
+	set paned $object.querybuilder.options.paned
+	ttk::panedwindow $paned -orient horizontal
+	pack $paned -fill both -expand yes
 	# fields
+	set w $paned
 	frame $w.fields -borderwidth 0 -highlightthickness 0
 	button $w.fields.header -text "Fields" -command "[list $object querybuilder_fieldsreset fields]"
 	pack $w.fields.header -fill x
 	button $w.fields.samplefields -text "Sample fields" -command "[list $object querybuilder_fieldsreset samplefields]"
 	pack $w.fields.samplefields -fill x
+	button $w.fields.analysisfields -text "Analysis fields" -command "[list $object querybuilder_fieldsreset analysisfields]"
+	pack $w.fields.analysisfields -fill x
 	set fieldsw $w.fields.fields
 	Classy::ListBox $w.fields.fields \
 		-listvariable [privatevar $object qfields] \
@@ -569,7 +697,7 @@ mainw method querybuilder {args} {
 		-exportselection 0 -selectmode extended
 	pack $w.fields.fields -fill both -expand yes
 	# operators
-	set w $w.pane2
+	set w $paned.pane2
 	ttk::panedwindow $w -orient horizontal
 	frame $w.operators -borderwidth 0 -highlightthickness 0
 	button $w.operators.header -text "Operator"
@@ -581,7 +709,7 @@ mainw method querybuilder {args} {
 		-width 6 -exportselection 0 -selectmode extended
 	pack $w.operators.operators -fill both -expand yes
 	# values
-	set w $w.pane3
+	set w $paned.pane2.pane3
 	ttk::panedwindow $w -orient horizontal
 	frame $w.values -borderwidth 0 -highlightthickness 0
 	button $w.values.header -text "Values" -command "[list set [privatevar $object valuesfilter] {}]"
@@ -632,16 +760,16 @@ mainw method querybuilder {args} {
 	pack $w.query.buttons -fill x -expand no
 	pack $w.query.query -fill both -expand yes
 	# fill paned
-	set w $object.querybuilder.options.paned
+	set w $paned
 	$w add $w.fields
 	$w add $w.pane2
-	set w $w.pane2
+	set w $paned.pane2
 	$w add $w.operators
 	$w add $w.pane3
-	set w $w.pane3
+	set w $paned.pane2.pane3
 	$w add $w.values
 	$w add $w.query
-	set w $object.querybuilder.options.paned
+	set w $paned
 	if {$fieldbuilder} {
 		$object.querybuilder add query "Insert calc field" "[list $fieldbuilderw] addcalc \"\$\{[privatevar $object fieldname]\}=\$\{$var\}\"; destroy $object.querybuilder"
 	} else {
@@ -655,4 +783,6 @@ mainw method querybuilder {args} {
 		$w.fields.fields set $field
 		Classy::todo $object querybuilder_browsefield
 	}
+	# update
+	bind $paned.pane2.pane3.values.value <Return> [list $object querybuilder_add and {} and]
 }
