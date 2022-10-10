@@ -155,7 +155,7 @@ proc var_clair3_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	if {$time eq ""} {set time ${threads}:00:00}
-	if {$mem eq ""} {set mem {${threads}G}}
+	if {$mem eq ""} {set mem ${threads}G}
 	if {$preset ne ""} {
 		switch $preset {
 			ont {
