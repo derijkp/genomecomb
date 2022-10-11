@@ -62,7 +62,7 @@ proc process_multicompar_job {args} {
 			}
 		}
 		-counters {
-			set values $counters
+			set counters $value
 		}
 		-experiment {
 			set experiment $value
