@@ -1,4 +1,5 @@
 proc process_multicompar_job {args} {
+	upvar job_logdir job_logdir
 	set keepargs $args
 	set dbdir {}
 	set dbfiles {}
@@ -110,7 +111,6 @@ proc process_multicompar_job {args} {
 		}
 	}
 	lappend cmdline $destdir
-	upvar job_logdir job_logdir
 	job_logfile $destdir/process_multicompar_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir gnusort8 zst os]
 	# analysis info
@@ -453,7 +453,7 @@ proc process_multicompar_job {args} {
 	}
 	# counters
 	# --------
-	foreach counter $counters {
+	if {[llength $counters]} {
 		set countfiles [jobglob samples/*/counts-*.tsv]
 		set target compar/counts-${experiment}.tsv
 		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
