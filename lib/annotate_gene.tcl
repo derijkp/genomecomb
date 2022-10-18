@@ -1144,14 +1144,14 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 		if {$pos == -1} {
 			error "error: given transcriptcol $transcriptcol not found"
 		}
-		lset $dpos end-1 $pos
+		lset dpos end-1 $pos
 	}
 	if {$genecol ne ""} {
 		set pos [lsearch $header $genecol]
 		if {$pos == -1} {
 			error "error: given genecol $genecol not found"
 		}
-		lset $dpos end $pos
+		lset dpos end $pos
 	}
 	if {-1 in $dposs} {
 		error "error: gene file misses the following fields: [list_sub $deffields [list_find $dposs -1]]"
