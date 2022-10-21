@@ -171,6 +171,8 @@ proc sv_sniffles_job {args} {
 			if {![catch {glob [file dir $refseq]/extra/sniffles_*.trf.bed} trffile]} {
 				lappend opts --tandem-repeats $trffile
 			}
+			if {[file exists $target.temp.gz]} {file delete $target.temp.gz}
+			if {[file exists $varallfile.temp]} {file delete $varallfile.temp}
 			exec sniffles {*}$opts --threads $threads \
 				--reference $refseq \
 				--snf $varallfile.temp \
