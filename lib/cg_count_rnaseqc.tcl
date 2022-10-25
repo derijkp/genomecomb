@@ -152,7 +152,7 @@ proc count_rnaseqc_job {args} {
 	}
 	if {$resultfile eq ""} {
 		set root [file_rootname $bamtail]
-		set resultfile [file dir $bamfile]/counts-rnaseqc-$root.tsv
+		set resultfile [file dir $bamfile]/gene_counts-rnaseqc-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
@@ -168,7 +168,7 @@ proc count_rnaseqc_job {args} {
 		$refseq
 	} -targets {
 		$resultfile
-		$resultdir/counts_exon-$root.tsv
+		$resultdir/exon_counts-$root.tsv
 		$resultdir/tpm-$root.tsv
 	} -vars {
 		bamfile resultfile extraopts resultdir root rnaseqcdir refseq gtffile
@@ -185,7 +185,7 @@ proc count_rnaseqc_job {args} {
 		gct2tsv $rnaseqcdir/$root.exon_reads.gct $rnaseqcdir/$root.exon_reads.tsv counts Float "exon counts per sample" exon genename
 		gct2tsv $rnaseqcdir/$root.gene_reads.gct $rnaseqcdir/$root.gene_reads.tsv counts Integer "gene counts per sample"
 		gct2tsv $rnaseqcdir/$root.gene_tpm.gct $rnaseqcdir/$root.gene_tpm.tsv tpm Float "transcripts per million"
-		mklink $rnaseqcdir/$root.exon_reads.tsv $resultdir/counts_exon-$root.tsv
+		mklink $rnaseqcdir/$root.exon_reads.tsv $resultdir/exon_counts-$root.tsv
 		mklink $rnaseqcdir/$root.gene_tpm.tsv $resultdir/tpm-$root.tsv
 		mklink $rnaseqcdir/$root.gene_reads.tsv $resultfile
 	}
