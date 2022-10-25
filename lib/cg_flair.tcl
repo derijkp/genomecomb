@@ -602,7 +602,7 @@ proc flair_job {args} {
 			analysisinfo_write [lindex $totalcountsfiles 0] compar/totalcounts-sqanti3-flair-$exproot.tsv
 			cg paste {*}[bsort $totalcountsfiles] > compar/totalcounts-sqanti3-flair-$exproot.tsv
 			set isoformcounts compar/isoform_counts-sqanti3-flair-$exproot.genepred.tsv
-			cg multitranscript $isoformcounts {*}$isoformfiles
+			cg multitranscript -match . $isoformcounts {*}$isoformfiles
 			set genecounts compar/gene_counts-sqanti3-flair-$exproot.genepred.tsv
 			cg_flair_genecounts $isoformcounts $genecounts
 		}
