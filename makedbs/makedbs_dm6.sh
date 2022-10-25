@@ -11,6 +11,8 @@ set dbs_var {}
 set dbs_gene {refGene extra/ensGene extra/genscan}
 set mirbasegenome dme
 set mirbaserelease 21
+set gtfurl https://ftp.ensembl.org/pub/release-108/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.32.108.gtf.gz
+set gtffile gene_dm6_ensGene.gtf.gz
 
 logverbose 2
 
@@ -173,6 +175,27 @@ job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${
 	mklink genome_${build}.ifas.fai genome_${build}.fa.fai
 	mklink genome_${build}.ifas.index genome_${build}.fa.index 
 	mklink genome_${build}.ssa extra/genome_${build}.ssa
+}
+
+job gtf -targets {
+	$gtffile
+} -vars {gtfurl gtffile} -code {
+	wgetfile $gtfurl $gtffile.temp
+	file rename $gtffile.temp $gtffile
+}
+
+# collapse_annotation.py does not work with ensembl gtf
+set target [file dir $gtffile]/collapsed[file tail $gtffile]
+job collapsedgtf -deps {
+	$gtffile
+} -targets {
+	$target
+} -vars {gtffile} -code {
+	set tempdir [tempdir]
+	file delete $tempdir/collapse_annotation.py
+	wgetfile https://github.com/broadinstitute/gtex-pipeline/raw/81bf691f2ae63a12d3c4c3d2da3943111729301a/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
+	exec python3 $tempdir/collapse_annotation.py $gtffile $target.temp
+	file rename -force $target.temp $target
 }
 
 # genome in extra
