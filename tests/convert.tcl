@@ -1937,4 +1937,10 @@ test convert_pipe {convert_pipe various} {
 	join $errors \n
 } {}
 
+test convert {gb2fasta} {
+	file delete tmp/results.fas
+	cg gb2fasta data/plasmids.gb tmp/results.fas
+	exec diff tmp/results.fas data/plasmids.fas
+} {}
+
 testsummarize

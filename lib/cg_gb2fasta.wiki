@@ -1,0 +1,22 @@
+= gb2fasta =
+
+== Format ==
+cg gb2fasta ?options? ?genbankfile? ?fastafile?
+
+== Summary ==
+Comverts a genbank file to a fasta file
+The file may contain multiple sequences. The name of the sequence (in the fasta file)
+is taken from one of the following fields (in order, if not empty or .):
+LOCUS, VERSION, ACCESSION, KEYWORDS, DEFINITION
+
+== Arguments ==
+; genbankfile: input file
+; fastafile: output file
+
+== Options ==
+; -clean_names 0/1: if 1 (default 0) all characters not alpha numerical or
+_ will be replaced with _ in the id
+
+== Category ==
+Format Conversion
+
