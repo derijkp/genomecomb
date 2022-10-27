@@ -24,8 +24,9 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	if (strlen(argv[1]) == 7 && strncmp(argv[1],"-header",7) == 0) {
-		if (strlen(argv[2]) > 0) {
-			fprintf(stdout,"%s\n",argv[2]);
+		f = fopen(argv[2],"r");
+		while ((c=getc_unlocked(f))!=EOF) {
+			putc_unlocked(c,stdout);
 		}
 		pos = 3;
 	} else {

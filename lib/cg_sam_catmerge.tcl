@@ -138,7 +138,9 @@ proc sam_catmerge_job {args} {
 			set pipe {}
 			set opencmd {}
 			if {$outputformat eq "cram"} {
-				set incmd [list samcat -header $header {*}$deps]
+				set tempfile [tempfile]
+				file_write $tempfile $header
+				set incmd [list samcat -header $tempfile {*}$deps]
 			} else {
 				set incmd [list samcat {*}$deps]
 			}
@@ -166,12 +168,16 @@ proc sam_catmerge_job {args} {
 				if {![llength $regions]} {
 					if {$outcmd ne ""} {set outcmd [list | {*}$outcmd]}
 					lappend outcmd >
-					exec samcat -header $header {*}$deps \
+					set tempfile [tempfile]
+					file_write $tempfile $header
+					exec samcat -header $tempfile {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
 						{*}$outcmd $tempresultfile
 				} else {
 					if {[llength $outcmd]} {lappend outcmd >}
-					exec samcat -header $header {*}$deps \
+					set tempfile [tempfile]
+					file_write $tempfile $header
+					exec samcat -header $tempfile {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
 						| distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 				}
