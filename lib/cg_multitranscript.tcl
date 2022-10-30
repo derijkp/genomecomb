@@ -126,6 +126,7 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 		foreach {curchr curbegin curend} $curid break
 		# load all transcripts (from all files) that overlap
 		# loop until no files have overlapping transcripts
+		# seta will contain all known, setma all novel models
 		unset -nocomplain seta
 		unset -nocomplain setma
 		while 1 {

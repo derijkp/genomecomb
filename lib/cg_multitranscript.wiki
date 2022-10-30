@@ -7,7 +7,7 @@ cg multitranscript ?options? multitranscriptfile transcriptfile transcriptfile ?
 Compare multiple transcript files
 
 == Description ==
-This command combines multiple transcrip files into one multitranscrip file; a
+This command combines multiple transcript files into one multitranscript file; a
 tab separated file containing a wide table used to compare transcript (counts)
 between different samples. Each line in the table contains general transcript
 info (chromosome, begin, end, strand, exonStarts, exonEnds, ?cdsStart?,
@@ -27,7 +27,10 @@ When a transcript was not detected in a sample, the value in the table is set to
   More than one can added in one command
 
 == Options ==
-; **-match**: 
+; -match pattern: use approximate matching for (novel) transcripts where the 
+  transcript name matches the given pattern (regexp), e.g. "transcript".
+  If this is given, transcripts with identical junction chain, but different ends will
+  also be matched (the resulting transcript will have the lowest start and highest end position)
 
 == Category ==
 Variants
