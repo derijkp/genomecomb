@@ -132,6 +132,7 @@ proc sam_catmerge_job {args} {
 			set refseq [refseq $refseq]
 			set header [sam_header_addm5 $header $refseq]
 		}
+		if {$header ne ""} {append header \n}
 		set outcmd [convert_pipe -.sam $resultfile -refseq $refseq -threads $threads]
 		if {$sort eq "nosort"} {
 			if {$mergesort} {error "cannot combine -sort nosort with -mergesort 1"}
