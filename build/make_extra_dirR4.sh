@@ -399,6 +399,9 @@ cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$version-$arch/lib64/R/lib
 
 /build/dirR-$version-$arch/R --vanilla -e 'install.packages("BiocManager", repos="http://cran.us.r-project.org")'
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("DESeq2")'
+/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("edgeR")'
+/build/dirR-$version-$arch/R --vanilla -e 'install.packages("http://hartleys.github.io/QoRTs/QoRTs_STABLE.tar.gz",repos=NULL,type="source");'
+# get java part with: wget http://hartleys.github.io/QoRTs/QoRTs.jar
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("PCAtools")'
 /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("pcaExplorer")'
 

@@ -977,7 +977,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	unset -nocomplain gcounta(.)
 	unset -nocomplain gcounta()
 	set o [open $targetgenecountsfile.temp w]
-	puts $o [join [list chromosome begin end strand gene geneid count-${analysisname}-$sample] \t]
+	puts $o [join [list chromosome begin end strand gene geneid counts-${analysisname}-$sample] \t]
 	foreach origeneid [array names gcounta] {
 		if {[info exists geneconva($origeneid)]} {
 			set geneid $geneconva($origeneid)
