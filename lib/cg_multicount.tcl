@@ -9,7 +9,11 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 proc cg_multicount {args} {
+	set idfields {geneid genename gene exon}
 	cg_options multicount args {
+		-idfields {
+			set idfields $value
+		}
 	} compar_file 2
 	set countfiles $args
 
@@ -23,18 +27,18 @@ proc cg_multicount {args} {
 		set a(f,$file) [gzopen $file]
 		set header [tsv_open $a(f,$file) comment]
 		set a(h,$file) $header
-		set poss [list_remove [list_cor $header {geneid genename gene exon}] -1]
+		set poss [list_remove [list_cor $header $idfields] -1]
 		if {![info exists idposs]} {
 			set idposs $poss
 		} else {
 			set idposs [list_common $idposs $poss]
 			if {![llength $idposs]} {
-				error "no id field (geneid genename gene exon) shared between all files"
+				error "no id field ($idfields) shared between all files"
 			}
 		}
 		set a(id,$file) $poss
 		if {![llength $poss]} {
-			error "file $file has no id field, must have at least one of: geneid genename gene exon"
+			error "file $file has no id field, must have at least one of: $idfields"
 		}
 		set a(idfields,$file) [list_sub $header $poss]
 		
