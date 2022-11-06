@@ -127,6 +127,36 @@ proc count_qorts_job {args} {
 		$gtffile
 		$refseq
 	} -targets {
+		$qortsdir
+	} -vars {
+		bamfile resultfile extraopts resultdir root qortsdir rqortsdir refseq
+		gtffile flatgfffile addfunctions
+	} -code {
+		analysisinfo_write $bamfile $resultfile counter qorts counter_version [version qorts] reference [file2refname $refseq]
+		if {[catch {
+			set jar [findjar QoRTs-STABLE]
+		}]} {
+			set jar [findjar QoRTs]
+		}
+		# catch {exec java -jar $jar} c
+		if {[file extension $bamfile] eq ".cram"} {
+			# QoRTs gives an error on cram, make temp bamfile to solve
+			set tempfile [tempdir]/[file root [file tail $bamfile]].bam
+			exec samtools view -b -1 -h $bamfile > $tempfile
+			exec samtools index $tempfile
+			set bamfile $tempfile
+		}
+		catch_exec java -Xmx8G -XX:ParallelGCThreads=1 -jar $jar QC \
+			--generatePlots \
+			--addFunctions $addfunctions \
+			--flatgff $flatgfffile \
+			{*}$extraopts \
+			$bamfile $gtffile $qortsdir.temp >@ stdout 2>@ stderr
+		file rename $qortsdir.temp $qortsdir
+	}
+	job qorts-report-$root -deps {
+		$qortsdir
+	} -targets {
 		$resultfile
 		$resultdir/exon_counts-$root.tsv
 		$resultdir/junction_counts-$root.tsv
@@ -134,22 +164,6 @@ proc count_qorts_job {args} {
 		bamfile resultfile extraopts resultdir root qortsdir rqortsdir refseq
 		gtffile flatgfffile addfunctions
 	} -code {
-		analysisinfo_write $bamfile $resultfile counter qorts counter_version [version qorts] reference [file2refname $refseq]
-		putslog "making $resultfile"
-		if {[catch {
-			set jar [findjar QoRTs-STABLE]
-		}]} {
-			set jar [findjar QoRTs]
-		}
-		# catch {exec java -jar $jar} c
-
-		catch_exec java -Xmx8G -XX:ParallelGCThreads=1 -jar $jar QC \
-			--generatePlots \
-			--addFunctions $addfunctions \
-			--flatgff $flatgfffile \
-			{*}$extraopts \
-			$bamfile $gtffile $qortsdir >@ stdout 2>@ stderr
-
 		mkdir $rqortsdir
 		file_write $rqortsdir/decoder.txt "unique.ID\n$root\n" 
 		set cmd [string_change {
