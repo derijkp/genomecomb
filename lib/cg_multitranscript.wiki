@@ -1,4 +1,4 @@
-= Multicompar =
+= Multitranscript =
 
 == Format ==
 cg multitranscript ?options? multitranscriptfile transcriptfile transcriptfile ?transcriptfile? ...
