@@ -9,7 +9,7 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 proc cg_multicount {args} {
-	set idfields {geneid genename gene exon}
+	set idfields {geneid genename gene exon exonid id name spliceName chromosome strand start begin end}
 	cg_options multicount args {
 		-idfields {
 			set idfields $value
@@ -64,7 +64,7 @@ proc cg_multicount {args} {
 			lappend curids $a(curid,$file)
 		}
 		if {[llength [list_remdup $curids]] > 1} {
-			error "eror: some files have different ids"
+			error "eror: some files have different ids: $curids"
 		}
 		set curid [lindex $curids 0]
 		if {$curid eq $empty} break

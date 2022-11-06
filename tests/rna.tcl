@@ -64,4 +64,31 @@ test multitranscript {approx match (for novel)} {
 	exec diff tmp/test.tsv tmp/expected.tsv
 } {}
 
+test multicount {basic} {
+	file_write tmp/gene_count-t1.tsv [string trim [deindent {
+		gene	count-t1
+		g1	11
+		g2	12
+		g3	13
+		g4	14
+	}]]\n
+	file_write tmp/gene_count-t2.tsv [string trim [deindent {
+		gene	count-t2
+		g1	21
+		g2	22
+		g3	23
+		g4	24
+	}]]\n
+	file_write tmp/gene_count-expected.tsv [string trim [deindent {
+		gene	count-t1	count-t2
+		g1	11	21
+		g2	12	22
+		g3	13	23
+		g4	14	24
+	}]]\n
+	file delete tmp/gene_count-test.tsv
+	cg multicount tmp/gene_count-test.tsv tmp/gene_count-t1.tsv tmp/gene_count-t2.tsv
+	exec diff tmp/gene_count-test.tsv tmp/gene_count-expected.tsv
+} {}
+
 testsummarize
