@@ -38,10 +38,14 @@ proc cg_giab_gettruth {args} {
 	set ref hg38
 	set basedir {}
 	set d sge
+	set refbase {}
 	cg_options giab_gettruth args {
 		-r - -ref {
 			if {$value ne "hg38"} {error "Only hg38 supported for now"}
 			set ref $value
+		}
+		-refbase {
+			set refbase $value
 		}
 		-d {
 			set d $value
@@ -74,11 +78,15 @@ proc cg_giab_gettruth {args} {
 			error "only sv0.6 supported"
 		}
 		if {$basedir eq ""} {
+			set basedir19 ~/public/giab/truth/truth_hg19_sv$svversion
 			set basedir ~/public/giab/truth/truth_hg38_sv$svversion
+		} else {
+			set basedir19 [file dir $basedir]/truth_hg19_sv$svversion
 		}
-		puts stderr "Making $basedir"
-		mkdir $basedir
-		cd $basedir
+		puts stderr "Making $basedir19"
+		mkdir $basedir19
+		cd $basedir19
+		# readme v0.6: wget ftp://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/analysis/NIST_SVs_Integration_v0.6/README_SV_v0.6.txt
 		set baseurl ftp://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/AshkenazimTrio/analysis/NIST_SVs_Integration_v$svversion/
 		foreach file {
 			*.vcf.gz
@@ -88,10 +96,20 @@ proc cg_giab_gettruth {args} {
 			exec wget -c $baseurl/$file 2>@ stderr >@ stdout
 		}
 		foreach vcf [glob *.vcf.gz] {
-			cg vcf2tsv $vcf | cg select -s - | cg zst > sv_hg38_[file root [gzroot $vcf]].tsv.zst
+			cg vcf2tsv $vcf | cg select -s - | cg zst > sv_hg19_[file root [gzroot $vcf]].tsv.zst
 		}
 		foreach bed [glob *.bed] {
-			cg bed2tsv $bed | cg select -s - | cg zst > reg_hg38_[file root [gzroot $bed]].tsv.zst
+			cg bed2tsv $bed | cg select -s - | cg zst > reg_hg19_[file root [gzroot $bed]].tsv.zst
+		}
+		puts stderr "Making $basedir"
+		mkdir $basedir
+		cd $basedir
+		if {$refbase eq {}} {
+			set refbase [file dir [file dir [refseq]]]
+		}
+		foreach file [glob $basedir19/*_hg19_*] {
+			regsub -all _hg19_ $file _hg38_ file38
+			cg liftover $file $file38 $refbase/liftover/hg19ToHg38.over.tsv
 		}
 		return
 	}

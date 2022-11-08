@@ -10,7 +10,7 @@ exec tclsh "$0" "$@"
 # human-pangenomics NHGRI_UCSC_panel and giab data sets
 # You can give the option -d sge to distribute the processing of the data on a grid engine based cluster,
 # or -d <nrthreads> to distribute over different cores/threads on a single machine. (Only processing, 
-such as alignment is distributed, not the actual downloading itself)
+# such as alignment is distributed, not the actual downloading itself)
 
 # The original public data used will be downloaded to the directory
 # "public" in your homedir (~/public) by default.
@@ -81,6 +81,7 @@ mkdir $publicdir/giab
 # this is the same for SRS
 cg_giab_gettruth -ref hg38 3.3.2 $publicdir/giab/truth/truth_hg38_v3.3.2
 cg_giab_gettruth -ref hg38 4.2.1 $publicdir/giab/truth/truth_hg38_v4.2.1
+cg_giab_gettruth -ref hg38 sv0.6 $publicdir/giab/truth/truthsv_hg38_v0.6
 cg_giab_gettruth -ref hg38 hybrid $publicdir/platinum_genomes/truthset/2017-1.0/hg38/hybrid
 
 # Download ont genomic data
