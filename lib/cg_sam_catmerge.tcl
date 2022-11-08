@@ -132,7 +132,6 @@ proc sam_catmerge_job {args} {
 			set refseq [refseq $refseq]
 			set header [sam_header_addm5 $header $refseq]
 		}
-		if {$header ne ""} {append header \n}
 		set outcmd [convert_pipe -.sam $resultfile -refseq $refseq -threads $threads]
 		if {$sort eq "nosort"} {
 			if {$mergesort} {error "cannot combine -sort nosort with -mergesort 1"}
@@ -140,7 +139,11 @@ proc sam_catmerge_job {args} {
 			set opencmd {}
 			if {$outputformat eq "cram"} {
 				set tempfile [tempfile]
-				file_write $tempfile $header
+				if {[string length $header] && [string index $header end] ne "\n"} {
+					file_write $tempfile $header\n
+				} else {
+					file_write $tempfile $header
+				}
 				set incmd [list samcat -header $tempfile {*}$deps]
 			} else {
 				set incmd [list samcat {*}$deps]
@@ -170,17 +173,25 @@ proc sam_catmerge_job {args} {
 					if {$outcmd ne ""} {set outcmd [list | {*}$outcmd]}
 					lappend outcmd >
 					set tempfile [tempfile]
-					file_write $tempfile $header
+					if {[string length $header] && [string index $header end] ne "\n"} {
+						file_write $tempfile $header\n
+					} else {
+						file_write $tempfile $header
+					}
 					exec samcat -header $tempfile {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
 						{*}$outcmd $tempresultfile
 				} else {
 					if {[llength $outcmd]} {lappend outcmd >}
 					set tempfile [tempfile]
-					file_write $tempfile $header
+					if {[string length $header] && [string index $header end] ne "\n"} {
+						file_write $tempfile $header\n
+					} else {
+						file_write $tempfile $header
+					}
 					exec samcat -header $tempfile {*}$deps \
 						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
-						| distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
+						| distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ {*}$outcmd 2>@ stderr
 				}
 			} else {
 				if {$sort eq "coordinate"} {
