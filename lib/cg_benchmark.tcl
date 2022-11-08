@@ -5,7 +5,7 @@ proc cg_benchmarkvars {args} {
 	set seqcode {\$sequenced-$analysis}
 	set curvecode {if(lmaxd(\$genoqual-$analysis,0)>100,100,round(lmaxd(\$genoqual-$analysis,0)))}
 	set refcurve_cutoffs {{} 20 30 40 50 80}
-	cg_options benchmark args {
+	cg_options benchmarkvars args {
 		-a - -analyses {
 			set analyses $value
 		}
@@ -17,6 +17,12 @@ proc cg_benchmarkvars {args} {
 		}
 		-refcurve_cutoffs {
 			set refcurve_cutoffs $value
+		}
+		-seqcode {
+			set seqcode $value
+		}
+		-curvecode {
+			set curvecode $value
 		}
 	} {comparfile refanalysis resultfile} 3 3
 	set resultfileall [file root [gzroot $resultfile]]-all.tsv
