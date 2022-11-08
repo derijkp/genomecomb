@@ -327,6 +327,7 @@ cp -a -f /usr/lib64/liblzma* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicuuc.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$version-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicudata.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpcre2-8.so* /build/dirR-$version-$arch/lib64/R/lib
 
 echo '
 puts [list set argv $argv]
