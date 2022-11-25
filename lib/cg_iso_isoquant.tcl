@@ -395,7 +395,8 @@ proc convert_isoquant_reggenedb {genedbtsv samregions refseq reggenedbtsv reggen
 		puts $o [join $line \t]
 		close $o
 	}
-	cg_tsv2gtf -genecol gene_id -addgene 1 $reggenedbtsv $reggenedb
+	set genecol [lindex [list_common {gene_id geneid gene} [cg select -h $reggenedbtsv]] 0]
+	cg_tsv2gtf -genecol $genecol -addgene 1 $reggenedbtsv $reggenedb
 	set tempgenedb [tempfile].db
 }
 
