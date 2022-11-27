@@ -73,6 +73,7 @@ proc var_clair3_job {args} {
 	set split 1
 	set deps {}
 	set region {}
+	set phasing 1
 	set threads 2
 	set mincoverage 8
 	set mingenoqual 6
@@ -132,6 +133,9 @@ proc var_clair3_job {args} {
 			if {$value ni "ont pacbio"} {error "-tech $value not supported, must be one of: ont pacbio"}
 			set tech $value
 		}
+		-phasing {
+			set phasing [true $phasing]
+		}
 		-index {
 			set index [true $value]
 		}
@@ -156,6 +160,7 @@ proc var_clair3_job {args} {
 	set refseq [refseq $refseq]
 	if {$time eq ""} {set time ${threads}:00:00}
 	if {$mem eq ""} {set mem ${threads}G}
+	if {$phasing} {lappend opt	--enable_phasing --longphase_for_phasing}
 	if {$preset ne ""} {
 		switch $preset {
 			ont {
