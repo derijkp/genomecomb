@@ -291,6 +291,7 @@ proc flair_job {args} {
 		putsvars sample
 		cd $projectdir/$sample
 		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
+		if {$bam eq ""} continue
 		set rootname [file_rootname $bam]
 		mkdir flair-$rootname
 		job flair_correct-[file tail $sample] {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
