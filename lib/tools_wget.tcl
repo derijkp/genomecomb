@@ -19,7 +19,7 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 		}
 	} else {
 		if {[catch {
-			exec wget -c --tries=45 -O $resultfile.temp $url 2>@ stderr
+			exec wget -c --no-check-certificate --tries=45 -O $resultfile.temp $url 2>@ stderr
 		} errmsg]} {
 			if {[file size $resultfile.temp] == 0} {
 				file delete $resultfile.temp
@@ -62,7 +62,7 @@ proc wgetfiles {url resultdir {force 0}} {
 		}
 	} else {
 		if {[catch {
-			exec wget -c --tries=45 -P $resultdir.temp $url 2>@ stderr
+			exec wget -c --no-check-certificate --tries=45 -P $resultdir.temp $url 2>@ stderr
 		} errmsg]} {
 			return {}
 		}
