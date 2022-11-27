@@ -279,6 +279,7 @@ proc distrreg_regs {regfile refseq {addunaligned 1}} {
 		set fullgenomefile [gzfile [file dir $refseq]/extra/reg_*_fullgenome.tsv]
 		if {![file exists $nolowgenefile]} {
 			set temp [tempfile]
+			set genedbtsv [gzfile [file dir $refseq]/extra/gene_*_gencode.tsv.zst [file dir $refseq]/extra/gene_*.tsv.zst]
 			cg regjoin $genedbtsv > $temp
 			set temp2 [tempfile]
 			cg regsubtract $fullgenomefile $temp > $temp2
