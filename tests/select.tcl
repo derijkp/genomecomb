@@ -227,6 +227,26 @@ test select "-f calculated if$dboptt" {
 chr1	4000	4001	<4
 chr2	4000	4001	>=4}
 
+test select "-f calculated with division $dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	2
+	}]
+	exec cg select {*}$dbopt -f {a b {c=$a/$b}} tmp/temp.tsv
+} {a	b	c
+1	2	0.5}
+
+test select "-q with division $dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	2
+	}]
+	exec cg select {*}$dbopt -q {$a/$b > 0} tmp/temp.tsv
+} {a	b
+1	2}
+
 test select "-hc 1$dboptt" {
 	global dbopt
 	file_write tmp/temp.tsv [deindent {
