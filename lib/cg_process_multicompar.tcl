@@ -454,24 +454,20 @@ proc process_multicompar_job {args} {
 	# counters
 	# --------
 	if {[llength $counters]} {
-		set countfiles [jobglob samples/*/counts-*.tsv]
-		set target compar/counts-${experiment}.tsv
+		set countfiles [jobglob samples/*/gene_counts-*.tsv]
+		set target compar/gene_counts-${experiment}.tsv
 		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
 			cg multicount $target.temp {*}$countfiles
 			file rename -force -- $target.temp $target
 		}
 		# exons
-		set countfiles [jobglob samples/*/counts_exon-*.tsv]
-		set target compar/counts_exon-${experiment}.tsv
-		job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-			cg multicount $target.temp {*}$countfiles
-			file rename -force -- $target.temp $target
-		}
-		set countfiles [jobglob samples/*/tpm-*.tsv]
-		set target compar/tpm-${experiment}.tsv
-		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-			cg multicount $target.temp {*}$countfiles
-			file rename -force -- $target.temp $target
+		foreach prefix {exon_counts tpm gene_fpkm} {
+			set countfiles [jobglob samples/*/${prefix}-*.tsv]
+			set target compar/${prefix}-${experiment}.tsv
+			job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
+				cg multicount $target.temp {*}$countfiles
+				file rename -force -- $target.temp $target
+			}
 		}
 	}
 	# reports
