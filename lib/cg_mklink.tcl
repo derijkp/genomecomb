@@ -2,9 +2,13 @@
 # allow links to non-existing files
 proc mklink {args} {
 	set absolute 0
+	set matchtime 1
 	cg_options mklink args {
 		-absolute {
 			set absolute $value
+		}
+		-matchtime {
+			set matchtime $value
 		}
 	} {src dest absolute} 2 3 {
 		make a soflink (dest points to src)
@@ -44,7 +48,7 @@ proc mklink {args} {
 			cd $keeppwd
 		}
 	}
-	if {[file exists $keepsrc]} {
+	if {[file exists $keepsrc] && $matchtime} {
 		exec touch -h -d [clock format [file mtime $keepsrc]] $dest
 	}
 }
