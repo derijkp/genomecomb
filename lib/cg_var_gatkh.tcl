@@ -24,6 +24,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 
 proc var_gatkh_job {args} {
 	# putslog [list var_gatkh_job {*}$args]
+	set cmdline [clean_cmdline cg var_gatkh {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
 	set pre ""
@@ -131,15 +132,6 @@ proc var_gatkh_job {args} {
 	}
 	lappend deps $regionfile
 	# logfile
-	set cmdline [list cg var_gatkh]
-	foreach option {
-		split deps bed pre regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatkh_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start

@@ -6,7 +6,7 @@ proc version_gridss {} {
 
 proc sv_gridss_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_gridss {*}$args]"
+	set cmdline [clean_cmdline cg sv_gridss {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1

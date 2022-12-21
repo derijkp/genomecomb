@@ -10,7 +10,7 @@ proc version_npinv {} {
 
 proc sv_npinv_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_npinv {*}$args]"
+	set cmdline [clean_cmdline cg sv_npinv {*}$args]
 	set refseq {}
 	set opts {}
 	set min 50

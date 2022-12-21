@@ -8,7 +8,7 @@ proc version_manta {} {
 
 proc sv_manta_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_manta {*}$args]"
+	set cmdline [clean_cmdline cg sv_manta {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1

@@ -1,7 +1,7 @@
 proc sam_catmerge_job {args} {
 	# job_logdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var {*}$args]"
+	set cmdline [clean_cmdline cg var {*}$args]
 	set threads 1
 	set force 0
 	set deletesams 0

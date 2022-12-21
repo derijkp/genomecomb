@@ -91,7 +91,7 @@ proc gct2tsv {gct tsv datafield datatype datadescr {idfield geneid} {namefield g
 
 proc count_rnaseqc_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg count_rnaseqc_job {*}$args]"
+	set cmdline [clean_cmdline cg count_rnaseqc {*}$args]
 	set extraopts {}
 	set stranded 1
 	set keepargs $args

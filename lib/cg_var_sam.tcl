@@ -25,6 +25,7 @@ proc sreg_sam_job {job varallfile resultfile {mincoverage 5} {minqual 30} {skips
 
 proc var_sam_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg var_sam {*}$args]
 	set pre ""
 	set opts {}
 	set split 1
@@ -133,15 +134,6 @@ proc var_sam_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_sam]
-	foreach option {
-		split deps bed pre BQ regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_sam_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
 	# start

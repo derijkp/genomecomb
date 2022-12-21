@@ -13,7 +13,7 @@ proc sv_job {args} {
 	set regmincoverage 3
 	set opts {}
 	set preset {}
-	set cmdline [list cg sv $args]
+	set cmdline [clean_cmdline cg sv {*}$args]
 	set resultfile {}
 	set mem {}
 	set time {}

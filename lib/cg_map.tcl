@@ -45,7 +45,7 @@ proc map_time {method {time {}} {threads 1} {preset {}} {deps {}}} {
 
 proc map_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg map {*}$args]"
+	set cmdline [clean_cmdline cg map {*}$args]
 	set paired 1
 	set preset {}
 	set readgroupdata {}

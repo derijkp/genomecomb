@@ -35,7 +35,7 @@ proc sv_sniffles_job {args} {
 	upvar job_logdir job_logdir
 	set version [version sniffles]
 	set version2 [minversion $version 2]
-	set cmdline "[list cd [pwd]] \; [list cg sv_sniffles {*}$args]"
+	set cmdline [clean_cmdline cg sv_sniffles {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1

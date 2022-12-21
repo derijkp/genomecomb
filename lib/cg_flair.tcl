@@ -248,7 +248,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 
 proc flair_job {args} {
 	# putslog [list flair_job {*}$args]
-	set cmdline "[list cd [pwd]] \; [list cg flair {*}$args]"
+	set cmdline [clean_cmdline cg flair {*}$args]
 	global appdir
 	set refseq {}
 	set skips {}

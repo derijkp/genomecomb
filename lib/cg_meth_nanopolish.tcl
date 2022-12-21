@@ -269,7 +269,7 @@ proc meth_nanopolish_job {args} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg meth_nanopolish {*}$args]"
+	set cmdline [clean_cmdline cg meth_nanopolish {*}$args]
 	set refseq {}
 	set skips {}
 	set resultfile {}

@@ -366,7 +366,7 @@ proc version_hap.py {} {
 
 proc giab_benchmark_job {args} {
 	set refseq {}
-	set cmdline "[list cd [pwd]] \; [list cg giab_benchmark {*}$args]"
+	set cmdline [clean_cmdline cg giab_benchmark {*}$args]
 	cg_options giab_benchmark args {
 		-r - -refseq {
 			set refseq $value

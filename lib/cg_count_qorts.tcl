@@ -33,7 +33,7 @@ proc version_qorts {} {
 
 proc count_qorts_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg count_qorts_job {*}$args]"
+	set cmdline [clean_cmdline cg count_qorts_job {*}$args]
 	set extraopts {}
 	set stranded {}
 	set paired 1
@@ -105,6 +105,7 @@ proc count_qorts_job {args} {
 	}
 	set flatgfffile [file dir $gtffile]/flat[file root [file tail $gtffile]].gff
 	if {![file exists $flatgfffile]} {
+		putslog "QoRTs: Making flat gfffile $flatgfffile needed"
 		set jar [findjar QoRTs]
 		catch_exec java -Xmx8G -XX:ParallelGCThreads=1 -jar $jar makeFlatGff \
 			$gtffile $flatgfffile

@@ -5,6 +5,7 @@ proc var_bcf_tools {} {
 # identical to var_sam, but
 proc var_bcf_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg var_bcf {*}$args]
 	set pre ""
 	set opts {}
 	set split 1
@@ -119,15 +120,6 @@ proc var_bcf_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_bcf]
-	foreach option {
-		split deps bed pre BQ regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_bcf_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
 	# start

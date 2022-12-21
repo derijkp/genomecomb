@@ -1531,6 +1531,12 @@ proc shorten_filename {filename {maxsize 251}} {
 	return $dir$prefix[string range $post $start end]
 }
 
+proc clean_cmdline {args} {
+	set cmdline "[list cd [pwd]] \; [list {*}$args]"
+	regsub -all \n $cmdline " " cmdline
+	return $cmdline
+}
+
 if {![info exists cgjob(distribute)]} {
 	job_init
 }

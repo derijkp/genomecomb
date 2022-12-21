@@ -162,6 +162,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 
 proc cg_process_rnaseq {args} {
 	set args [job_init {*}$args]
+	set cmdline [clean_cmdline cg process_rnaseq {*}$args]
 	#set default values for optional args
 	set adapterfile {}
 	set fastqc 0
@@ -179,15 +180,6 @@ proc cg_process_rnaseq {args} {
 		}
 	} {destdir libtype bowtie_index gff} 4 4
 	# logfile
-	set cmdline [list cg process_rnaseq]
-	foreach option {
-		adapterfile fastqc paired
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $destdir $libtype $bowtie_index $gff
 	upvar job_logdir job_logdir
 	job_logfile $destdir/process_rnaseq_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir fastqc bowtie2 samtools gatk picard java gnusort8 zst os]

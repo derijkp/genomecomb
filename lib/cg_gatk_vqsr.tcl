@@ -5,7 +5,7 @@ proc gatk_vqsr_job args {
 	set batchsize 50
 	set maxmem 10
 	set newqual true
-	set cmdline [list cg gatk_vqsr {*}$args]
+	set cmdline [clean_cmdline cg gatk_vqsr {*}$args]
 	cg_options gatkbp_combine args {
 		-dbdir {
 			set dbdir $value

@@ -183,6 +183,7 @@ proc reports_expand {reports} {
 }
 
 proc process_reports_job {args} {
+	set cmdline [clean_cmdline cg process_reports {*}$args]
 	set reports basic
 	set dbdir {}
 	set resultbamfile {}
@@ -220,15 +221,6 @@ proc process_reports_job {args} {
 	# find regionfile indicating target of sequencing (used by hsmetrics, histodepth, vars, so needs to be here)
 	set targetfile [targetfile_job $sampledir $dbdir]
 	# logfile
-	set cmdline [list cg process_reports]
-	foreach option {
-		dbdir reports
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $sampledir $dbdir
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start

@@ -1109,7 +1109,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 proc iso_isoquant_job {args} {
 	# putslog [list iso_isoquant_job {*}$args]
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg iso_isoquant {*}$args]"
+	set cmdline [clean_cmdline cg iso_isoquant {*}$args]
 	global appdir
 	set preset nanopore
 	set distrreg chr

@@ -23,7 +23,7 @@ proc var_medaka_job {args} {
 	# putslog [list var_medaka_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_medaka {*}$args]"
+	set cmdline [clean_cmdline cg var_medaka {*}$args]
 	set pre ""
 	set split 1
 	set deps {}

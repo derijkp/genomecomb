@@ -460,7 +460,7 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 
 proc pmulticompar_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline [list cg pmulticompar {*}$args]
+	set cmdline [clean_cmdline cg pmulticompar {*}$args]
 	set regonly 0
 	set split 1
 	set erroronduplicates 0

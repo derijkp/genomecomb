@@ -36,7 +36,7 @@ proc main args {
 	# first argument is the base name of the logfile
 	# second is the base directory
 	# next is the commandline (to record in the logfile)
-	set cmdline [list job_example.tcl -num $num -max $max $dir]
+	set cmdline [clean_cmdline job_example.tcl -num $num -max $max $dir]
 	job_logfile $dir/example_[file tail $dir] $dir $cmdline
 	#
 	# set the job log directory

@@ -1,5 +1,6 @@
 proc process_multicompar_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg multicompar {*}$args]
 	set keepargs $args
 	set dbdir {}
 	set dbfiles {}
@@ -102,15 +103,6 @@ proc process_multicompar_job {args} {
 	set refseq [glob $dbdir/genome_*.ifas]
 	# logfile
 	# -------
-	set cmdline [list cg process_multicompar]
-	foreach option {
-		dbdir split dbfile dbfiles skipincomplete targetvarsfile varfiles experiment cleanup maxopenfiles
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $destdir
 	job_logfile $destdir/process_multicompar_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir gnusort8 zst os]
 	# analysis info

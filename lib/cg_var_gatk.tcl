@@ -106,7 +106,7 @@ proc sreg_gatk_job {job varallfile resultfile {skips {}}} {
 
 proc var_gatk_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_gatk {*}$args]"
+	set cmdline [clean_cmdline cg var_gatk {*}$args]
 	set pre ""
 	set opts {}
 	set split 1

@@ -65,7 +65,7 @@ proc var_clair3_job {args} {
 	# putslog [list var_clair3_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_clair3 {*}$args]"
+	set cmdline [clean_cmdline cg var_clair3 {*}$args]
 	set preset {}
 	set platform {}
 	set model {}

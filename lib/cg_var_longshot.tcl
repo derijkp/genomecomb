@@ -67,7 +67,7 @@ proc var_longshot_job {args} {
 	# putslog [list var_longshot_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_longshot {*}$args]"
+	set cmdline [clean_cmdline cg var_longshot {*}$args]
 	set pre ""
 	set split 1
 	set deps {}

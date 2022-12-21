@@ -1,6 +1,6 @@
 proc makerefdb_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg makerefdb {*}$args]"
+	set cmdline [clean_cmdline cg makerefdb {*}$args]
 
 	# default settings
 	# ----------------

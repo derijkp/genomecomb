@@ -9,7 +9,7 @@ proc version_lumpy {} {
 
 proc sv_lumpy_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_lumpy {*}$args]"
+	set cmdline [clean_cmdline cg sv_lumpy {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1
