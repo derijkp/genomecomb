@@ -46,7 +46,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 	} else {
 		set default [subst {
 			if {\[string index \$key 0\] eq "-"} {
-				error "unknown option \\"\$key\\", must be one of: $options"
+				error "error calling cg $cmd: unknown option \\"\$key\\", must be one of: $options"
 			}
 			break
 		}]
