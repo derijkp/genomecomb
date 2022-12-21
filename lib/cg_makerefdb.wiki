@@ -1,0 +1,70 @@
+= makerefdb =
+
+== Format ==
+cg makerefdb ?options? dbdir
+
+== Summary ==
+Create a reference sequence and annotation databases directory
+
+== Description ==
+The reference directory contains the reference genome sequence with
+various indexes and the accompanying annotation databases. The cg
+makerefdb command creates such a basic reference directory for a given
+genome based on data in the UCSC genome browser (https://genome.ucsc.edu/)
+(except for the miRNA genes which are obtained from mirbase).  
+
+The name of the directory indicates which genome data has to be
+downloaded: It should match the UCSC Genome Browser assembly ID of the
+desired genome.
+
+By default the reference sequence and some annotation databases will be
+downloaded. Using the options you can adjust which annotations are added.
+For some genomes genomecomb includes a script (e.g.
+makedbs/makedbs_hg38.sh for human)with extended preset options and adding
+(much) more annotations not coming from UCSC.
+
+== Arguments ==
+; dbdir: name/path of result directory
+
+== Options ==
+; -genesdb: 
+; -mirbase: 
+; -regionsdb_collapse: 
+; -regionsdb_join: 
+; -dbsnp: 
+; -refSeqFuncElemsurl: 
+; -genomeurl: 
+; -pseudoautosomal: 
+; -transcriptsurl: 
+; -transcriptsgtf: 
+; -webcache: 
+
+This command can be distributed on a cluster or using multiple with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+== Example ==
+The following example downloads the C. elegans ce11 reference sequence
+and some annotation databases. It will distribute processing of the data
+over 4 cores (-d 4).
+
+{{{
+
+devcg makerefdb -d 4 -v 2 \
+    -regionsdb_collapse '
+        simpleRepeat rmsk phastConsElements26way phyloP135way
+    ' \
+    -regionsdb_join '' \
+    -genesdb '
+        {refGene int reg}
+        {ws245Genes extra int reg} 
+        {ensGene extra int reg}
+        {genscan extra}
+        {augustusGene extra}
+    ' \
+    -mirbase cel-22.1:ce11 \
+    /complgen/refseqnew/ce11
+
+}}}
+
+== Category ==
+Process

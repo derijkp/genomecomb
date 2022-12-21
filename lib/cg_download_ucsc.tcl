@@ -1,6 +1,6 @@
 proc cg_check_ucsc {build dbname} {
 	set tempdir [tempdir]
-	wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $tempdir/$dbname.html
+	wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $tempdir/$dbname.html 0 0
 	set tempfile [tempfile]
 	exec wget -c --tries=4 -O $tempfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname > /dev/null 2> /dev/null
 	set temp [file_read $tempfile]
@@ -77,8 +77,10 @@ Annotation
 
 proc cg_download_ucsc {args} {
 	set continue 1
+	set compressionlevel 12
 	cg_options download_ucsc args {
 		-c {set continue $value}
+		-cl {set compressionlevel $value}
 	} {resultfile build dbname dbnameinfo} 3 4 {
 		download data from UCSC table dbname as a tsv file
 	}
@@ -160,15 +162,16 @@ proc cg_download_ucsc {args} {
 	set file_outid [open $temp/u_$dbname.tsv w]
 	puts $file_outid [join $header \t]
 	close $file_outid
+	cg zst $temp/u_$dbname.tsv
 	if {$single} {
 		putslog "Gunzipping $dbname.txt.gz ...."
-		if {[catch "exec zcat -f $temp/$dbname.txt.gz >> $temp/u_$dbname.tsv" errmsg]} {
+		if {[catch "exec zcat -f $temp/$dbname.txt.gz [compresspipe temp.zst 1] >> $temp/u_$dbname.tsv.zst" errmsg]} {
 			error "Gunzip failed - $errmsg"
 		}
 	} else {
 		foreach file $files {
 			putslog "Gunzipping $file ...."
-			if {[catch "exec zcat -f $file >> $temp/u_$dbname.tsv" errmsg]} {
+			if {[catch "exec zcat -f $file [compresspipe temp.zst 1] >> $temp/u_$dbname.tsv.zst" errmsg]} {
 				error "Gunzip failed - $errmsg"
 			}
 		}
@@ -177,9 +180,9 @@ proc cg_download_ucsc {args} {
 	set fields [list_common {chrom chromosome begin start end stop name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
 	lappend fields {*}[list_lremove $header $fields]
 	putslog "Writing $temp/$resulttail"
-	exec cg select -s - -f $fields $temp/u_$dbname.tsv {*}[compresspipe $resulttail 12] > $temp/$resulttail
+	exec cg select -s - -f $fields $temp/u_$dbname.tsv.zst {*}[compresspipe $resulttail $compressionlevel] > $temp/$resulttail
 	# move to result
-	putslog "move results to $resultfile and $resultfile.info"
-	compress $temp/$resulttail $resultfile
+	putslog "move results to $resultfile"
+	file rename -force $temp/$resulttail $resultfile
 	file delete -force $temp
 }

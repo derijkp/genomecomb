@@ -2,9 +2,24 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
+# Script to download and prepare all reference databases (including genome) for hg38
+# call using
+# makedbs_hg38.sh ?options? ?dest? ?webcache?
+# where 
+# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/hg38)
+# * webcache: directory that will be used to cache downloads (default /complgen/refseqnew/webcache)
+# options:
+# -d distr: allow distributed processing on 
+#           e.g. a grid engine cluster with -d sge, 
+#           or locally on multiple cores with e.g. -d 8 for 8 cores
+# If the command is interrupted, you can just restart using the same
+# command, and it will continue from where it was stopped.
+
 # settings
 # ========
 
+# basic settings (for makerefdb_job)
+# --------------
 set build hg38
 set defaultdest /complgen/refseqnew
 
@@ -15,14 +30,42 @@ X	155701383	156030895	PAR2
 Y	10001	2781479	PAR1
 Y	56887903	57217415	PAR2
 }
-set dbsnpversion 153
+set dbsnpversion 151
+# set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
+set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
 set mirbase hsa-22.1:hg38
-set gencodeversion 38
-set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
-set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
+set regionsdb_collapse {
+	cytoBand microsat oreganno rmsk simpleRepeat 
+	tRNAs wgRna
+	phastConsElements100way phastConsElements30way
+}
+set regionsdb_join {
+	chainSelf dgvMerged genomicSuperDups
+}
+
+set gencodeversion 42
+# list with geneset name (first word) and one or more of the following keywords
+# int : include in intGene
+# extra : place in the extra dir instead of in base annotation dir
+# reg : make a region file from it (in extra)
+set genesdb [list \
+	{refGene int reg} \
+	{ncbiRefSeq extra int reg} \
+	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
+	{knownGene extra int reg} \
+	[list wgEncodeGencodeCompV${gencodeversion} cgencode extra] \
+	{genscan extra} \
+	{augustusGene extra} \
+	{lincRNAsTranscripts lincRNA} \
+]
+
+# extra settings
+# --------------
+set 1000g3url http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+set 1000g3readmeurl http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
-set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20200602.vcf.gz
-set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20200602_papu.vcf.gz
+set clinvarurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20221119.vcf.gz
+set clinvarpapuurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20221119_papu.vcf.gz
 #set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-${build}-trim.vcf.tar
 #set kaviarbuild hg19
 set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
@@ -34,58 +77,47 @@ set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/
 set caddbuild hg38
 set gnomadbuild hg38
 set gnomadversion 3.1.2
-set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
+set gnomadbaseurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadversion/vcf
 set gnomadexbuild hg19
 set gnomadexversion 2.1.1
-set gnomadexurl https://storage.googleapis.com/gnomad-public/release/$gnomadexversion/vcf/exomes/gnomad.exomes.r$gnomadexversion.sites.vcf.bgz
+set gnomadexurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadexversion/vcf/exomes/gnomad.exomes.r$gnomadexversion.sites.vcf.bgz
 set gnomadlofbuild hg19
 set gnomadlofversion 2.1.1
-set gnomadlof https://storage.googleapis.com/gnomad-public/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.lof_metrics.by_gene.txt.bgz
+set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.lof_metrics.by_gene.txt.bgz
 set gnomadsvbuild hg19
 set gnomadsvversion 2.1
 set gnomadsv https://storage.googleapis.com/gcp-public-data--gnomad/papers/2019-sv/gnomad_v2.1_sv.sites.vcf.gz
 set ccrversion 2.20180420
 set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
 set ccrbuild hg19
-set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFP4.0a.zip
+# set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFP4.3a.zip
+set dbnsfpurl https://dbnsfp.s3.amazonaws.com/dbNSFP4.3a.zip
 set dbnsfpbuild hg38
-set regionsdb_collapse {
-	cytoBand microsat oreganno rmsk simpleRepeat 
-	tRNAs wgRna
-	phastConsElements100way phastConsElements30way
-}
-set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
-set regionsdb_join {
-	chainSelf dgvMerged genomicSuperDups
-}
-set genesdb [list \
-	{refGene int reg} \
-	{ncbiRefSeq extra int reg} \
-	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
-	{knownGene extra int reg} \
-	[list wgEncodeGencodeCompV${gencodeversion} cgencode extra] \
-	{genscan extra} \
-	{augustusGene extra} \
-	{lincRNAsTranscripts lincRNA} \
-]
-set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz
-set gtffile genes_hg38_ensGene.gtf.gz
-set gencodegtfurl ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
-set gencodegtffile extra/gene_hg38_gencode.v39.gtf
+#set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.ensGene.gtf.gz
+#set gtffile genes_hg38_ensGene.gtf.gz
+#set gencodegtfurl ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
+#set gencodegtffile extra/gene_hg38_gencode.v39.gtf
+set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_42/gencode.v42.annotation.gtf.gz
+set transcriptsgtf extra/gene_hg38_gencode.v42.gtf
 
 # prepare
 # =======
 
+if {![info exists argv]} {set argv {}}
+
 # keep actual command line used for log
-set cmdline "[list cd [pwd]] \; [list [info script] {*}$argv]"
+set cmdline [clean_cmdline cg [info script] {*}$args]
 
 # arguments, start job system
-if {![info exists argv]} {set argv {}}
+logverbose 2
 set argv [job_init {*}$argv]
-foreach {dest webcache} $argv break
+cg_options makedbs_hg38.sh argv {
+} {dest webcache} 0 2
 
-if {![info exists dest]} {set dest $defaultdest}
-if {![info exists webcache]} {set webcache $dest/webcache}
+# foreach {dest webcache} $argv break
+
+if {![info exists dest] || $dest eq ""} {set dest $defaultdest}
+if {![info exists webcache] || $webcache eq ""} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 
@@ -96,7 +128,6 @@ cd ${dest}/${build}
 file mkdir extra
 
 # set 
-logverbose 2
 set_job_logdir log_jobs
 job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 
@@ -109,32 +140,27 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 # first part is done with the more generic cg makerefdb, but we call it with makerefdb_job to run its jobs under the already started job manager
 makerefdb_job \
 	-genomeurl $genomeurl \
+	-pseudoautosomal $par \
+	-regionsdb_collapse $regionsdb_collapse \
+	-regionsdb_join $regionsdb_join \
+	-dbsnp $dbsnpversion \
 	-refSeqFuncElemsurl $refSeqFuncElemsurl \
 	-genesdb $genesdb \
-	-pseudoautosomal $par \
-	-dbsnp $dbsnpversion \
 	-mirbase $mirbase \
+	-transcriptsurl $transcriptsurl \
+	-transcriptsgtf $transcriptsgtf \
 	-webcache $webcache \
 	$dest/$build
 
-# rest after this is human specific
-# ---------------------------------
+# rest after this is hg38 specific code
+# -------------------------------------
 
-job gtf -targets {
-	$gtffile
-} -vars {gtfurl gtffile} -code {
-	wgetfile $gtfurl $gtffile.temp
-	file rename $gtffile.temp $gtffile
-}
-
-job gencodegtf -targets {
-	$gencodegtffile
-} -vars {gencodegtfurl gencodegtffile} -code {
-	set ext [file exts $gencodegtfurl]
-	wgetfile $gencodegtfurl $gencodegtffile.temp$ext
-	cg unzip $gencodegtffile.temp$ext
-	file rename $gencodegtffile.temp $gencodegtffile
-}
+#job gtf -targets {
+#	$gtffile
+#} -vars {gtfurl gtffile} -code {
+#	wgetfile $gtfurl $gtffile.temp
+#	file rename $gtffile.temp $gtffile
+#}
 
 job sniffles_trf -optional 1 -targets {
 	extra/sniffles_hg38.trf.bed
@@ -148,17 +174,17 @@ job sniffles_trf -optional 1 -targets {
 	file delete extra/sniffles_hg38.trf.bed.temp
 }
 
+set target extra/collapsed[file tail $transcriptsgtf]
 job collapsedgencodegtf -deps {
-	$gencodegtffile
+	$transcriptsgtf
 } -targets {
-	extra/collapsedgene_hg38_gencode.v39.gtf
-} -vars {gencodegtffile} -code {
+	$target
+} -vars {transcriptsgtf} -code {
 	set tempdir [tempdir]
 	wgetfile https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/TOPMed_RNAseq_v2/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
 	set gtf /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf
-	set collapsedgtf /complgen/refseq/hg38/extra/collapsedgene_hg38_gencode.v39.gtf
-	exec python3 $tempdir/collapse_annotation.py $gtf $collapsedgtf.temp
-	file rename -force $collapsedgtf.temp $collapsedgtf
+	exec [findpython3] $tempdir/collapse_annotation.py $transcriptsgtf $target.temp
+	file rename -force $target.temp $target
 }
 
 job reg_${build}_gwasCatalog -targets {
@@ -369,13 +395,13 @@ job enc_RegDnaseClustered -targets {
 
 # todo : wgEncodeRegDnaseWig wgEncodeRegDnase
 
-# link local data in dir
-foreach file [glob -nocomplain ../${build}-local/*] {
-	catch {
-		file delete extra/[file tail $file]
-		cplinked $file [file tail $file]
-	}
-}
+## link local data in dir
+#foreach file [glob -nocomplain ../${build}-local/*] {
+#	catch {
+#		file delete extra/[file tail $file]
+#		cplinked $file [file tail $file]
+#	}
+#}
 
 # dbNSFP
 job var_${build}_dbnsfp -targets {
@@ -533,7 +559,13 @@ proc gnomadfields {file} {
 		male female
 	} {
 		if {![inlist $header AN_$population]} continue
-		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$${population}_AC)/\$AN_$population))"
+		if {[lsearch $header AC_${population}] == -1} {
+			error "field AC_${population} not found in $file"
+		}
+		if {[lsearch $header nhomalt_${population}] == -1} {
+			error "field AC_${population} not found in $file"
+		}
+		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_${population})/\$AN_$population))"
 		lappend fields "${population}_homfreqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$nhomalt_$population)/\$AN_$population))"
 		if {[inlist $header controls_AN_$population]} {
 			lappend fields "controls_${population}_homfreqp=if(def(\$controls_AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$controls_nhomalt_$population)/\$controls_AN_$population))"
@@ -580,7 +612,7 @@ foreach chromosome {
 	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
 } {
 	puts chr$chromosome
-	set vcf gnomad.genomes.r$gnomadversion.sites.$chromosome.vcf.bgz
+	set vcf gnomad.genomes.v$gnomadversion.sites.chr$chromosome.vcf.bgz
 	set target $tempdir/result$chromosome.tsv.zst
 	lappend deps $target
 	job var_${build}_gnomad-$chromosome -targets {
@@ -974,11 +1006,15 @@ job reg_exome_twistfull -deps {
 foreach file [glob -nocomplain $defaultdest/downloads/reg_*_exome_*.zst] {
 	puts "Transfering $file"
 	set tail [file tail $file]
+	set newtail [join [lreplace [split $tail _] 1 1 $build] _]
+	if {[file exists extra/$newtail]} {
+		puts "skipping extra/$newtail: already exists"
+		continue
+	}
 	set filebuild [lindex [split $tail _] 1]
 	hardcopy $file extra/
 	catch {hardcopy $file.zsti extra/}
 	if {$filebuild ne $build} {
-		set newtail [join [lreplace [split $tail _] 1 1 $build] _]
 		file delete extra/$newtail
 		liftover_refdb extra/$tail extra/$newtail $dest $filebuild $build
 	}

@@ -2,11 +2,11 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
-# Script to download and prepare all reference databases (including genome) for mm10
+# Script to download and prepare all reference databases (including genome) for sacCer3
 # call using
-# makedbs_mm10.sh ?options? ?dest? ?webcache?
+# makedbs_sacCer3.sh ?options? ?dest? ?webcache?
 # where 
-# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/mm10)
+# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/sacCer3)
 # * webcache: directory that will be used to cache downloads (default /complgen/refseqnew/webcache)
 # options:
 # -d distr: allow distributed processing on 
@@ -20,46 +20,37 @@ exec cg source "$0" "$@"
 
 # basic settings (for makerefdb_job)
 # --------------
-
-set build mm10
+set build sacCer3
 set defaultdest /complgen/refseqnew
 
-# basic settings
-# use default (ucsc goldenPath) genome source
 set genomeurl {}
-set par {chromosome	begin	end	name
-X	169969759	170931299	PAR1
-Y	90745845	91644698	PAR1
-}
-set dbsnpversion 142
-set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/108.20200622/GCF_000001635.26_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gff.gz
-set mirbase mmu-22.1:mm10
+set par {}
+set dbsnpversion {}
+# set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
+set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
+set mirbase {}
 set regionsdb_collapse {
-	cytoBand oreganno cpgIslandExt tRNAs
-	microsat rmsk simpleRepeat 
-	multiz60way phastConsElements60way phastConsElements60wayPlacental phastConsElements60wayEuarchontoGlires
+	cytoBand microsat rmsk simpleRepeat oreganno
+	sgdOther
+	phastConsElements7way
 }
 set regionsdb_join {
-	genomicSuperDups
 }
 
-set gencodeversion 25
 # list with geneset name (first word) and one or more of the following keywords
 # int : include in intGene
 # extra : place in the extra dir instead of in base annotation dir
 # reg : make a region file from it (in extra)
 set genesdb [list \
 	{refGene int reg} \
-	[list wgEncodeGencodeBasicVM${gencodeversion} gencode extra int reg] \
-	{knownGene extra int reg} \
-	[list wgEncodeGencodeCompVM${gencodeversion} cgencode extra] \
-	{genscan extra} \
+	{ncbiRefSeq extra int reg} \
+	{sgdGene extra reg} \
+	{ensGene extra int reg} \
+	{augustusGene extra} \
 ]
 
 # extra settings
 # --------------
-set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M31/gencode.vM31.annotation.gtf.gz
-set transcriptsgtf extra/gene_mm10_gencode.vM31.gtf
 
 # prepare
 # =======
@@ -72,7 +63,7 @@ set cmdline [clean_cmdline cg [info script] {*}$args]
 # arguments, start job system
 logverbose 2
 set argv [job_init {*}$argv]
-cg_options makedbs_mm10.sh argv {
+cg_options makedbs_sacCer3.sh argv {
 } {dest webcache} 0 2
 
 if {![info exists dest] || $dest eq ""} {set dest $defaultdest}
@@ -100,18 +91,17 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 makerefdb_job \
 	-genomeurl $genomeurl \
 	-pseudoautosomal $par \
-	-dbsnp $dbsnpversion \
 	-regionsdb_collapse $regionsdb_collapse \
 	-regionsdb_join $regionsdb_join \
+	-dbsnp $dbsnpversion \
 	-refSeqFuncElemsurl $refSeqFuncElemsurl \
 	-genesdb $genesdb \
 	-mirbase $mirbase \
-	-transcriptsurl $transcriptsurl \
-	-transcriptsgtf $transcriptsgtf \
 	-webcache $webcache \
 	$dest/$build
 
-# rest after this is mm10 specific code
+# rest after this is sacCer3 specific code
 # -------------------------------------
 
 job_wait
+

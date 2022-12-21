@@ -54,7 +54,7 @@ proc download_dbsnp_convline {line} {
 }
 
 proc cg_download_dbsnp {resultfile build dbname} {
-	set ufilename $resultfile.ucsc
+	set ufilename $resultfile.ucsc.zst
 	puts "Making $resultfile"
 	if {[file exists $resultfile]} {
 		puts "file $resultfile exists: skipping"
@@ -63,11 +63,11 @@ proc cg_download_dbsnp {resultfile build dbname} {
 	catch {file mkdir [file dir $resultfile]}
 	if {![file exists $ufilename]} {
 		puts "Downloading $ufilename"
-		cg_download_ucsc $ufilename $build $dbname
+		cg_download_ucsc -cl 1 $ufilename $build $dbname
 	}
 	puts "Converting $ufilename"
 	catch {close $f} ; catch {close $o}
-	set f [open $ufilename]
+	set f [gzopen $ufilename]
 	set o [open $resultfile.temp w]
 	set header [split [gets $f] \t]
 	set poss [list_cor $header {chrom start end class refNCBI observed name alleleFreqs avHet avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs bitfields}]
