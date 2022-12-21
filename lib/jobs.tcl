@@ -310,6 +310,15 @@ proc jobgzfiles {args} {
 	return $result
 }
 
+proc jobgzfile {args} {
+	set list [jobgzfiles {*}$args]
+	if {[llength $list]} {
+		return [lindex $list 0]
+	} else {
+		return [lindex $args 0]
+	}
+}
+
 proc jobglob1 {args} {
 	lindex [jobglob {*}$args] 0
 }
