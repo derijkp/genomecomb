@@ -15,6 +15,7 @@ are recompressed.
 supports options:
 ; -m method (--method): method used to compress: zst, lz4, gz, bgz, rz (default is zst)
 ; -k 0/1 (--keep): keep the original uncompressed file if 1 (default 0)
+; -t number (-threads): Use **number** of threads to do the compression
 ; -c number (--compressionlevel): number indicating compression level, where smaller numbers indicates faster compression (default and meaningfull values depends on method)
 ; -b number (--blocksize): number indicating the blocksize in Kb (default depends on the method)
 ; -i 0/1 (--index): also create an index file (if applicable)
