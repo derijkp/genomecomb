@@ -49,6 +49,23 @@ proc job_status_distr {job {jobloginfo {}}} {
 	}
 }
 
+
+proc job_process_distr_progress {running} {
+	global cgjob
+	if {[get cgjob(distr_count) 0] >= 79} {
+		global cgjob_distr_running
+		puts .
+		foreach job $running {
+			puts "   -=- Running $cgjob_distr_running($job)"
+		}
+		puts "   -=- in queue: [llength $::cgjob_distr(queue)] jobs"
+		set cgjob(distr_count) 0
+	} else {
+		incr cgjob(distr_count)
+		puts -nonewline stderr .
+	}
+}
+
 proc job_process_distr_jobmanager {} {
 	global cgjob cgjob_distr cgjob_distr_running cgjob_exit cgjob_distr_queue
 	after cancel job_process_distr_jobmanager
@@ -61,7 +78,9 @@ proc job_process_distr_jobmanager {} {
 	set countrunning [llength $running]
 	set maxrunning [get cgjob(distribute) 4]
 	if {$countrunning >= $maxrunning} {
-		if {!$cgjob(silent)} {puts -nonewline stderr .}
+		if {!$cgjob(silent)} {
+			job_process_distr_progress $running
+		}
 		after 1000 job_process_distr_jobmanager
 		return
 	}
@@ -98,7 +117,9 @@ proc job_process_distr_jobmanager {} {
 			set cgjob_exit 1
 			return
 		}
-		if {!$cgjob(silent)} {puts -nonewline stderr .}
+		if {!$cgjob(silent)} {
+			job_process_distr_progress $running
+		}
 		after 1000 job_process_distr_jobmanager
 	}
 }
