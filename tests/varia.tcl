@@ -144,7 +144,7 @@ test cg_options {option error} {
 			set opt $value
 		}
 	} {p1 p2} 0 4
-} {unknown option "-unknown", must be one of: -opt} error
+} {error calling cg test: unknown option "-unknown", must be one of: -opt} error
 
 test cg_options {args error (not enough)} {
 	set args {-opt o}
