@@ -161,9 +161,8 @@ test map_minimap2 {map_minimap2 paired} {
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
-	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
-	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam \
-		| cg select -s - -rf {de rl ROW} > tmp/alis.tsv
+	exec samtools sort tmp/ali.bam | samtools view --no-PG -h > tmp/ali.sam
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} tmp/ali.sam > tmp/alis.tsv
 	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} data/minimap2-p.sam tmp/expected.tsv
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
@@ -181,12 +180,12 @@ test map_minimap2 {map_minimap2 paired -.sam} {
 		error "$result file was made"
 	}
 	# chr21:42730799-42762826
-	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
-	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam \
-		| cg select -s - -rf {de rl ROW} > tmp/alis.tsv
+	exec samtools sort tmp/ali.bam | samtools view --no-PG -h > tmp/ali.sam
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} tmp/ali.sam > tmp/alis.tsv
 	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} data/minimap2-p.sam tmp/expected.tsv
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
+
 cd $::testdir
 
 test map_minimap2 {map_minimap2 -paired 0} {
