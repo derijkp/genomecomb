@@ -4,7 +4,7 @@ exec cg source "$0" "$@"
 
 set script [info script] ; if {$script eq ""} {set script ./t}
 set appdir [file dir [file dir [file normalize $script]]]
-# set script [pwd]/all.tcl ; set appdir [pwd] ; set argv {}
+# set script [pwd]/all.tcl ; set appdir [file dir [pwd]] ; set argv {}
 puts "running all tests with script=$script appdir=$appdir argv=$argv"
 if {[inlist $argv testsge]} {
 	puts stderr "testing sge"
