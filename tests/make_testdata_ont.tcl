@@ -391,3 +391,108 @@ foreach sample {HG001_NA12878_directRNA HG001_NA12878_cDNA HG001_NA12878_ivtRNA}
 		cg fastq_split -parts 8 $regionsfastq $dir/$sample/splitfastq/regions_${sample}_hg38.fastq.gz
 	}
 }
+
+# Download methylation test data
+# ==============================
+
+job methylation_testdata -cores 6 -vars {
+	smalltestdir
+} -code {
+	cd $::smalltestdir/ori
+	wget https://f5c.page.link/f5c_na12878_test
+	mv f5c_na12878_test f5c_na12878_test.tar.gz
+	tar xvzf f5c_na12878_test.tar.gz
+	mv chr22_meth_example ont_f5c_chr22_meth_example
+	cd ont_f5c_chr22_meth_example
+	mkdir fast5
+	mv fast5_files single_fast5_files
+	single_to_multi_fast5 -i single_fast5_files -s fast5 -n 4000
+	single_to_multi_fast5 -i single_fast5_files -s fast5 -n 4000
+	#
+	unset -nocomplain fast5file2batcha
+	unset -nocomplain readid2batcha
+	set f [open fast5/filename_mapping.txt]
+	while {[gets $f line] != -1} {
+		foreach {file batch} [split $line \t] break
+		set fast5file2batcha($file) $batch
+	}
+	close $f
+	set f [open reads.fastq.index.readdb]
+	while {[gets $f line] != -1} {
+		foreach {readid file} [split $line \t] break
+		if {$file eq ""} continue
+		set file [file tail $file]
+		set readid2batcha($readid) $fast5file2batcha($file)
+	}
+	close $f
+	file mkdir fastq
+	unset -nocomplain fa
+	set f [open reads.fastq]
+	while {[gets $f line] != -1} {
+		set readid [string range [lindex $line 0] 1 end]
+		putsvars readid
+		if {![info exists readid2batcha($readid)]} {
+			puts "skipping $readid: not found"
+			gets $f
+			gets $f
+			gets $f
+			continue
+		}
+		set batch $readid2batcha($readid)
+		if {![info exists fa($batch)]} {
+			set fastqfile [file root [file tail $batch]].fastq
+			puts "Creating $fastqfile"
+			set fa($batch) [open fastq/$fastqfile w]
+		}
+		puts $fa($batch) $line
+		puts $fa($batch) [gets $f]
+		puts $fa($batch) [gets $f]
+		puts $fa($batch) [gets $f]
+	}
+	close $f
+	foreach batch [array names fa] {
+		close $fa($batch)
+	}
+	foreach file [glob fastq/*.fastq] {
+		exec bgzip $file
+	}
+	#
+	# run experiment to make haplotyped bam
+	cd $::smalltestdir
+	file delete -force tmp/meth
+	file mkdir tmp/meth/samples/methtest/fast5
+	file mkdir tmp/meth/samples/methtest/fastq
+	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fast5/*] {
+		mklink $file tmp/meth/samples/methtest/fast5/[file tail $file]
+	}
+	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fastq/*] {
+		mklink $file tmp/meth/samples/methtest/fastq/[file tail $file]
+	}
+	file mkdir tmp/meth/samples/methtest2/fast5
+	file mkdir tmp/meth/samples/methtest2/fastq
+	foreach file {ori/ont_f5c_chr22_meth_example/fast5/batch_0.fast5 ori/ont_f5c_chr22_meth_example/fast5/batch_1.fast5} {
+		mklink $file tmp/meth/samples/methtest2/fast5/[file tail $file]
+	}
+	foreach file {ori/ont_f5c_chr22_meth_example/fastq/batch_0.fastq.gz ori/ont_f5c_chr22_meth_example/fastq/batch_1.fastq.gz} {
+		mklink $file tmp/meth/samples/methtest2/fastq/[file tail $file]
+	}
+	exec cg process_project -d 6 -split 1 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-distrreg chr \
+		-svcallers {} \
+		-varcallers longshot \
+		-methcallers {} \
+		-hap_bam 1 \
+		-threads 6 \
+		-reports {} \
+		tmp/meth $::refseqdir/hg19 >& tmp/meth.log
+	# after analysis put haplotytyped bam back in ori
+	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam ori/ont_f5c_chr22_meth_example/
+	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam.bai ori/ont_f5c_chr22_meth_example/
+}
+
+job_wait

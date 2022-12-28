@@ -67,16 +67,14 @@ runtests job.tcl
 runtests map.tcl
 runtests sv.tcl
 runtests var.tcl
-# not yet updated
-# runtests meth.tcl
 
 puts "all tests finished"
 puts "times (seconds):\n[join $::keeptimes \n]"
 testsummarize
 
 # take long time, run separately
+# ./meth.tcl
 # ./process_small.tcl
-# ./process_ont.tcl
 
 # take longer still, run separately on cluster (will be run in ~/genomecomb_giab_testdata)
 # without parameter, the code will only check previous runs (should be run after analysis is finished on the cluster)
