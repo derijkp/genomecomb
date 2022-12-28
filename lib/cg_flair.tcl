@@ -246,6 +246,11 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	file delete -force $target.temp
 }
 
+proc iso_flair_job {args} {
+	upvar job_logdir job_logdir
+	flair_job {*}$args
+}
+
 proc flair_job {args} {
 	# putslog [list flair_job {*}$args]
 	set cmdline [clean_cmdline cg flair {*}$args]
@@ -254,7 +259,7 @@ proc flair_job {args} {
 	set skips {}
 	set genes {}
 	set sqanti 1
-	set compar joint
+	set compar multitranscript
 	set threads 8
 	upvar job_logdir job_logdir
 	cg_options flair args {
@@ -265,7 +270,14 @@ proc flair_job {args} {
 			set genes $value
 		}
 		-compar {
+			if {$value ni "joint multitranscript"} {
+				error "unknown value $value for flair -compar, must be one of: 0 joint multitranscript"
+			}
 			set compar $value
+		}
+		-distrreg {
+			# this option is not actually supported by flair, 
+			# but present for compatibilty with generic call from process_*
 		}
 		-threads {
 			set threads $value
@@ -282,19 +294,24 @@ proc flair_job {args} {
 	}
 	set flairdir [findflair]
 	cd $projectdir
-	set samples [glob samples/*]
+	set sampledirs [glob $projectdir/samples/*]
+	if {[llength $sampledirs] == 0} {
+		set sampledirs [list $projectdir]
+		set compar 0
+	}
 	job_logfile $projectdir/flair_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions flair dbdir zstd os]
 	# analysis per sample
 	set allseq_fasqfiles {}
-	foreach sample $samples {
-		putsvars sample
-		cd $projectdir/$sample
+	foreach sampledir $sampledirs {
+		putsvars sampledir
+		cd $sampledir
+		set sample [file tail $sampledir]
 		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
 		if {$bam eq ""} continue
 		set rootname [file_rootname $bam]
 		mkdir flair-$rootname
-		job flair_correct-[file tail $sample] {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
+		job flair_correct-$sample {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 		-cores $threads \
 		-deps {
 			$bam $refseq $gtfannotation
@@ -319,7 +336,7 @@ proc flair_job {args} {
 		set fastqfiles [jobglob fastq/*.fastq.gz]
 		set allseq_fasqfile flair-$rootname/allseq-$rootname.fastq.gz
 		lappend allseq_fasqfiles [file_absolute $allseq_fasqfile]
-		job flair_allseq-[file tail $sample] {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
+		job flair_allseq-$sample {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 		-deps $fastqfiles -targets {
 			flair-$rootname/allseq-$rootname.fastq.gz
 		} -vars {
@@ -333,7 +350,7 @@ proc flair_job {args} {
 				file rename $tempfastq.temp $tempfastq
 			}
 		}
-		job flair_collapse-[file tail $sample] {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
+		job flair_collapse-$sample {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 		-cores $threads \
 		-deps {
 			flair-$rootname/allseq-$rootname.fastq.gz
@@ -360,7 +377,7 @@ proc flair_job {args} {
 				file rename -force $file flair-$rootname/[string range [file tail $file] 4 end]
 			}
 		}
-		job flair_quantify-[file tail $sample] {*}$skips -cores $threads -deps {
+		job flair_quantify-$sample {*}$skips -cores $threads -deps {
 			flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 			flair-$rootname/allseq-$rootname.fastq.gz
 		} -targets {
@@ -370,7 +387,7 @@ proc flair_job {args} {
 		} -code {
 			analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.fa $target flair [version flair]
 			set manifestdata {}
-			lappend manifestdata [join [list [file tail $sample] conditionA batch1 flair-$rootname/allseq-$rootname.fastq.gz] \t]
+			lappend manifestdata [join [list $sample conditionA batch1 flair-$rootname/allseq-$rootname.fastq.gz] \t]
 			file_write reads_manifest.tsv [join $manifestdata \n]\n
 			puts "quantify -> flair-$rootname/counts_matrix-flair-$rootname.tsv"
 			catch_exec flair.py quantify \
@@ -419,13 +436,13 @@ proc flair_job {args} {
 				totalcounts-sqanti3-flair-$rootname.tsv
 		}
 		foreach genename $genes {
-			job flair_plotisoforms-[file tail $sample]-$genename {*}$skips -deps {
+			job flair_plotisoforms-$sample-$genename {*}$skips -deps {
 				flair-$rootname/transcripts-flair-$rootname.isoforms.bed 
 				flair-$rootname/counts_matrix-flair-$rootname.tsv
 			} -targets {
 				flair_results/${genename}_isoforms.png
 			} -vars {
-				rootname sample
+				rootname
 			} -code {
 				mkdir flair_results
 				puts "plot $rootname"
@@ -436,6 +453,7 @@ proc flair_job {args} {
 			}
 		}
 	}
+putsvars compar
 	if {$compar eq "0"} return
 	# combined analysis
 	if {$compar eq "joint"} {
@@ -656,3 +674,8 @@ proc cg_flair {args} {
 	job_wait
 }
 
+proc cg_iso_flair {args} {
+	set args [job_init {*}$args]
+	flair_job {*}$args
+	job_wait
+}

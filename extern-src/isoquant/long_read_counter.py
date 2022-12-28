@@ -137,6 +137,10 @@ class AssignedFeatureCounter(AbstractCounter):
         if read_assignment.assignment_type in [ReadAssignmentType.noninformative, ReadAssignmentType.intergenic] or \
                 not read_assignment.isoform_matches:
             self.not_assigned_reads += 1
+        elif read_assignment.isoform_matches and read_assignment.isoform_matches[0].assigned_transcript is None:
+            self.not_assigned_reads += 1
+            logger.warning("Assigned feature for read %s is None, will be skipped. "
+                           "This message may be reported to the developers." % read_assignment.read_id)
         elif read_assignment.assignment_type == ReadAssignmentType.ambiguous:
             feature_ids = set([self.get_feature_id(m) for m in read_assignment.isoform_matches])
             group_id = AbstractReadGrouper.default_group_id if self.ignore_read_groups else read_assignment.read_group
@@ -162,7 +166,9 @@ class AssignedFeatureCounter(AbstractCounter):
                 for feature_id in feature_ids:
                     if feature_id:
                         self.feature_counter[group_id][feature_id] += count_value
-                        self.all_features.add(feature_id)
+                        if feature_id is not None:
+                            self.all_features.add(feature_id)
+                        self.confirmed_features.add((group_id, feature_id))
         elif read_assignment.assignment_type == ReadAssignmentType.unique or\
                 read_assignment.assignment_type == ReadAssignmentType.unique_minor_difference:
             feature_id = self.get_feature_id(read_assignment.isoform_matches[0])
@@ -214,7 +220,7 @@ class AssignedFeatureCounter(AbstractCounter):
 
     def dump(self):
         total_counts = defaultdict(float)
-        all_features = sorted(self.all_features)
+        all_features = sorted(filter(lambda x: x is not None, self.all_features))
         all_groups = sorted(self.all_groups) if self.all_groups else sorted(self.feature_counter.keys())
 
         for group_id in all_groups:

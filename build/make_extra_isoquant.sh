@@ -55,12 +55,10 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-11
-# yuminstall rh-python36
+yuminstall devtoolset-9
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-11 bash
-source /opt/rh/devtoolset-11/enable
-# source /opt/rh/rh-python36/enable
+# scl enable devtoolset-9 bash
+source /opt/rh/devtoolset-9/enable
 
 
 for dir in lib include bin share ; do
@@ -115,7 +113,7 @@ conda init bash
 # --------
 cd /build
 
-isoquantversion=2.3.0
+isoquantversion=3.0.3
 
 conda create -y -n isoquant
 conda activate isoquant
@@ -141,6 +139,9 @@ mkdir /build/isoquant-$isoquantversion-$arch
 cd /build/isoquant-$isoquantversion-$arch
 tar xvzf ../isoquant.tar.gz
 
+# patch
+cp /io/extern-src/isoquant/long_read_counter.py share/isoquant-$isoquantversion-0/src/long_read_counter.py
+
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
@@ -164,7 +165,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-2.3.0-0/src/gtf2db.py ${1+"$@"}
+$dir/share/isoquant-*-0/src/gtf2db.py ${1+"$@"}
 ' > gtf2db
 chmod ugo+x gtf2db
 
@@ -173,19 +174,21 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-2.3.0-0/src/gtf2db.py ${1+"$@"}
+$dir/share/isoquant-*-0/src/gtf2db.py ${1+"$@"}
 ' > isoquant_gtf2db
 chmod ugo+x isoquant_gtf2db
 
 rm ../isoquant-$isoquantversion-$arch.tar.gz || true
 cd /build
-tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant-$isoquantversion-$arch
+ln -s isoquant-$isoquantversion-$arch/isoquant .
+ln -s isoquant-$isoquantversion-$arch/isoquant isoquant3
+ln -s isoquant-$isoquantversion-$arch/isoquant isoquant-$isoquantversion
+ln -s isoquant-$isoquantversion-$arch/isoquant.py .
+ln -s isoquant-$isoquantversion-$arch/gtf2db .
+ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db .
+tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant-$isoquantversion-$arch isoquant isoquant.py gtf2db isoquant_gtf2db
 cp -ra isoquant-$isoquantversion-$arch /io/extra$ARCH
 cd /io/extra$ARCH/
 rm isoquant || true
-ln -s isoquant-$isoquantversion-$arch/isoquant .
-ln -s isoquant-$isoquantversion-$arch/isoquant.py .
-ln -s isoquant-$isoquantversion-$arch/isoquant isoquant-$isoquantversion
-ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db isoquant_gtf2db
 
 echo "Finished building isoquant"

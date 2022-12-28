@@ -36,7 +36,7 @@ set keepdir [pwd]
 
 # default settings
 # chr6:32000000-33000000 (includes hla -> too big for small test)
-set rnaregions {chr1:2500000-3000000 chr2:1500000-2500000 chr6:32000000-32300000 chr10:1100000-1800000}
+set rnaregions {chr1:2600000-3000000 chr2:1500000-2500000 chr6:32000000-32300000 chr10:1100000-1800000}
 set wgsregions {chr1:2543891-2598871 chr2:1386718-1759764 chr6:32145542-32185752 chr10:975157-1170215}
 set fullori $bigtestdir/ori/ont
 set smallori $smalltestdir/ori/ont
@@ -320,9 +320,9 @@ job_wait
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7791882/
 # DDBJ accession DRA009852
 
+# RNA and cDNA
+# ============
 
-RNA and cDNA
-============
 # https://github.com/nanopore-wgs-consortium/NA12878/blob/master/RNA.md
 # https://s3.amazonaws.com/nanopore-human-wgs/rna/fastq/NA12878-DirectRNA_All_Guppy_4.2.2.fastq.gz
 

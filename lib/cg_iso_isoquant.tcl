@@ -813,16 +813,25 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 
 proc iso_isoquant_mergeresults_old_monmerge {isofiles genefiles readfiles strictpct sample {analysisname isoquant}} {
 	set o [open isoform_counts-${analysisname}-$sample.tsv.temp w]
-	set f [open [lindex $isofiles 0]]
-	set header [tsv_open $f comments]
-	close $f
+	foreach refisofile $isofiles {
+		set f [open $refisofile]
+		set header [tsv_open $f comments]
+		if {[gets $f line] == -1} {
+			close $f
+		} else {
+			close $f
+			break
+		}
+	}
 	puts $o $comments[join $header \t]
 	unset -nocomplain donea
 	foreach isofile $isofiles {
 		set f [open $isofile]
 		set cheader [tsv_open $f comments]
 		if {$cheader ne $header} {
-			error "header of $isofile differs from header of [lindex $isofiles 0]"
+			# if file is empty, diff header does not matter -> skip
+			if {[gets $f line] == -1} continue
+			error "header of $isofile differs from header of $refisofile"
 		}
 		set pos [lsearch $cheader name]
 		while {[gets $f line] != -1} {
@@ -875,7 +884,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set tempreads2 [tempfile]
 	set tempreads tempreads.tsv
 	set tempreads2 tempreads2.tsv
-	cg cat {*}$readfiles | cg select -s read_id > $tempreads
+	cg cat -m 1 {*}$readfiles | cg select -s read_id > $tempreads
 
 	unset -nocomplain tcounta
 	unset -nocomplain gcounta
@@ -979,16 +988,27 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	close $o
 
 	set o [open isoform_counts-${analysisname}-$sample.tsv.temp w]
-	set f [open [lindex $isofiles 0]]
-	set header [tsv_open $f comments]
-	close $f
+	foreach refisofile $isofiles {
+		set f [open $refisofile]
+		set header [tsv_open $f comments]
+		if {[gets $f line] == -1} {
+			close $f
+		} else {
+			close $f
+			break
+		}
+	}
 	puts $o $comments[join $header \t]
 	unset -nocomplain donea
 	foreach isofile $isofiles {
 		set f [open $isofile]
 		set cheader [tsv_open $f comments]
 		if {$cheader ne $header} {
-			error "header of $isofile differs from header of [lindex $isofiles 0]"
+			if {[gets $f line] == -1} {
+				# different header because empty file -> just skip
+				continue
+			}
+			error "header of $isofile differs from header of $refisofile"
 		}
 		set isopos [lsearch $cheader transcript]
 		while {[gets $f line] != -1} {
@@ -1182,16 +1202,20 @@ proc iso_isoquant_job {args} {
 	}
 	# set iso_isoquantdir [findiso_isoquant]
 	cd $projectdir
-	set sampledirs [glob samples/*]
+	set sampledirs [glob -nocomplain $projectdir/samples/*]
+	if {[llength $sampledirs] == 0} {
+		set sampledirs [list $projectdir]
+		set compar 0
+	}
 	job_logfile $projectdir/iso_${analysisname}_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions iso_isoquant dbdir zstd os]
 
 	# analysis per sample
 	set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 	foreach sampledir $sampledirs {
-		putsvars sample
-		cd $projectdir/$sampledir
+		cd $sampledir
 		set sample [file tail $sampledir]
+		putsvars sample
 		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
 		set rootname [file_rootname $bam]
 		set isofiles {}
@@ -1213,24 +1237,31 @@ proc iso_isoquant_job {args} {
 				set tempbam $regdir.temp/regali.bam
 				set samregions [samregions $region $refseq]
 				exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
-				exec samtools index $tempbam
-				# region gene file
-				set reggenedbtsv [tempfile].tsv
-				set reggenedb [tempfile].gtf
-				convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
-				set tempgenedb [tempfile].db
-				exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
-				exec isoquant3 \
-					{*}$options \
-					--threads $threads \
-					--transcript_quantification $quantification \
-					--gene_quantification $quantification \
-					--reference $refseq \
-					--bam $tempbam \
-					--genedb $tempgenedb \
-					--data_type $data_type \
-					--keep_tmp \
-					-o $regdir.temp 2>@ stderr >@ stdout
+				if {![catch {exec samtools view $tempbam | head -1} out]} {
+					# only one read aligned -> skip running isoquant
+					file mkdir $regdir.temp
+					file mkdir $regdir.temp/00_regali
+					file_write $regdir.temp/not_enough_reads ""
+				} else {
+					exec samtools index $tempbam
+					# region gene file
+					set reggenedbtsv [tempfile].tsv
+					set reggenedb [tempfile].gtf
+					convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
+					set tempgenedb [tempfile].db
+					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
+					exec isoquant3 \
+						{*}$options \
+						--threads $threads \
+						--transcript_quantification $quantification \
+						--gene_quantification $quantification \
+						--reference $refseq \
+						--bam $tempbam \
+						--genedb $tempgenedb \
+						--data_type $data_type \
+						--keep_tmp \
+						-o $regdir.temp 2>@ stderr >@ stdout
+				}
 				file rename $regdir.temp $regdir
 			}
 			lappend isofiles $regdir/isoform_counts-${analysisname}-$sample.tsv
@@ -1247,17 +1278,27 @@ proc iso_isoquant_job {args} {
 			} -code {
 				set isodir $regdir/00_regali
 				set destdir $regdir
-				set reggenedbtsv [tempfile].tsv
-				set reggenedb [tempfile].gtf
-				set samregions [samregions $region $refseq]
-				convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
-				convert_isoquant $isodir $destdir $sample $refseq $reggenedb $reggenedbtsv $analysisname
+				if {[file exists $regdir/not_enough_reads]} {
+					set header {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
+					lappend header structural_category size \
+						counts_iqall-$sample counts_weighed-${analysisname}-$sample counts_unique-${analysisname}-$sample counts_strict-${analysisname}-$sample \
+						counts_aweighed-${analysisname}-$sample counts_aunique-${analysisname}-$sample counts_astrict-${analysisname}-$sample
+					file_write $regdir/isoform_counts-${analysisname}-$sample.tsv [join $header \t]\n
+					file_write $regdir/gene_counts-${analysisname}-$sample.tsv \
+						[join [list chromosome begin end strand gene geneid counts-${analysisname}-$sample] \t]\n
+					file_write $regdir/read_assignments-${analysisname}-$sample.tsv [join {
+						read_id chromosome begin end strand exonStarts exonEnds aligned_size
+						ambiguity inconsistency covered_pct polya classification closest_known
+					} \t]\n
+				} else {
+					set reggenedbtsv [tempfile].tsv
+					set reggenedb [tempfile].gtf
+					set samregions [samregions $region $refseq]
+					convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
+					convert_isoquant $isodir $destdir $sample $refseq $reggenedb $reggenedbtsv $analysisname
+				}
 			}
 		}
-		cd $projectdir/$sampledir
-		set sample [file tail $sampledir]
-		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
-		set rootname [file_rootname $bam]
 		#
 		# combine
 		set isofiles {}

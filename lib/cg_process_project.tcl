@@ -9,6 +9,7 @@ proc process_project_job {args} {
 	set removeskew {}
 	set aligner bwa
 	set varcallers {gatkh strelka}
+	set isocallers {}
 	set counters {}
 	set svcallers {}
 	set methcallers {}
@@ -84,6 +85,9 @@ proc process_project_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-isocallers {
+			set isocallers $value
 		}
 		-counters {
 			set counters $value
@@ -347,6 +351,9 @@ proc process_project_job {args} {
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
+	}
+	foreach isocaller $isocallers {
+		iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
 	}
 	if {$flair} {
 		flair_job -refseq [refseq $dbdir] $destdir
