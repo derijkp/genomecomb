@@ -17,7 +17,7 @@ exec tclsh "$0" "$@"
 # you can change this by setting the variable publicdir to a different location here, or
 # by making another storage area first and making ~/public a link to it
 
-# The genomecomb testdata is made in ~/genomecomb.smalltestdata
+# The genomecomb testdata is made in ~/genomecomb.smalltestdata ($smalltestdir)
 # again, here you can use a softlink to use another storage location
 
 # Initialise
@@ -38,8 +38,6 @@ set keepdir [pwd]
 # chr6:32000000-33000000 (includes hla -> too big for small test)
 set rnaregions {chr1:2600000-3000000 chr2:1500000-2500000 chr6:32000000-32300000 chr10:1100000-1800000}
 set wgsregions {chr1:2543891-2598871 chr2:1386718-1759764 chr6:32145542-32185752 chr10:975157-1170215}
-set fullori $bigtestdir/ori/ont
-set smallori $smalltestdir/ori/ont
 
 if {![info exists argv]} {set argv {}}
 
@@ -71,8 +69,8 @@ job_logfile $publicdir/make_testdata_ont $publicdir make_testdata_ont.sh
 # HG003_NA24149_father father HG003 (NA24149)
 # HG004_NA24143_mother mother HG004 (NA24143)
 
-# Download basic public data
-# ==========================
+# Download basic public giab data
+# ===============================
 
 mkdir $publicdir/giab
 
@@ -95,42 +93,42 @@ if {$full} {
 # ---------------------------------
 
 if {$full} {
-# download data
-giab_getdata_job giab_ont_ultralong $publicdir/giab/fastqs/giab_ont_ultralong
-
-# align
-cd $publicdir/giab/giab_ont_ultralong
-foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
-	set bam $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-	if {[file exists $bam]} continue
-	map_job -method minimap2 \
-		$bam \
-		$::refseqdir/hg38 \
-		$sample {*}[glob $publicdir/giab/giab_ont_ultralong/$sample/fastqsplit/*.fastq.gz]
-	bam_index_job $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-}
-
-# extract regions
-foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
-	job smallfastq-$sample -deps {
-		$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-	} -targets {
-		$smalltestdir/ori/giab_ont_ultralong_regions/map-sminimap2-regions_${sample}_hg38.bam
-	} -vars {
-		publicdir smalltestdir sample regions
-	} -code {
-		set dir $smalltestdir/ori/giab_ont_ultralong_regions
-		set regionsbam $dir/map-sminimap2-regions_${sample}_hg38.bam
-		set regionsfastq $dir/regions_${sample}_hg38.fastq.gz
-		exec samtools view -b -1 -h \
-			$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam \
-			{*}$regions \
-			> $regionsbam
-		cg bam2fastq -threads 8 $regionsbam $regionsfastq
-		mkdir $dir/split
-		cg fastq_split -d sge -parts 20 $file $dir/split/regions_${sample}_hg38.fastq.gz
+	# download data
+	giab_getdata_job giab_ont_ultralong $publicdir/giab/fastqs/giab_ont_ultralong
+	
+	# align
+	cd $publicdir/giab/giab_ont_ultralong
+	foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
+		set bam $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
+		if {[file exists $bam]} continue
+		map_job -method minimap2 \
+			$bam \
+			$::refseqdir/hg38 \
+			$sample {*}[glob $publicdir/giab/giab_ont_ultralong/$sample/fastqsplit/*.fastq.gz]
+		bam_index_job $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
 	}
-}
+	
+	# extract regions
+	foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
+		job smallfastq-$sample -deps {
+			$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
+		} -targets {
+			$smalltestdir/ori/giab_ont_ultralong_regions/map-sminimap2-regions_${sample}_hg38.bam
+		} -vars {
+			publicdir smalltestdir sample regions
+		} -code {
+			set dir $smalltestdir/ori/giab_ont_ultralong_regions
+			set regionsbam $dir/map-sminimap2-regions_${sample}_hg38.bam
+			set regionsfastq $dir/regions_${sample}_hg38.fastq.gz
+			exec samtools view -b -1 -h \
+				$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam \
+				{*}$regions \
+				> $regionsbam
+			cg bam2fastq -threads 8 $regionsbam $regionsfastq
+			mkdir $dir/split
+			cg fastq_split -d sge -parts 20 $file $dir/split/regions_${sample}_hg38.fastq.gz
+		}
+	}
 }
 
 # nanopore-human-pangenomics
@@ -252,7 +250,6 @@ foreach sample {HG002 HG003 HG004} {
 	}
 }
 
-
 # tandem-genotypes paper repeat test data
 # ---------------------------------------
 # Tandem-genotypes: robust detection of tandem repeat expansions from long DNA reads
@@ -286,15 +283,10 @@ foreach run $runs experiment $experiments {
 	cg gzip $run.fastq.bz2
 }
 
-SCA10-subjectA	SRR2080459
-SCA10-subjectB	SRR2081063
-SCA10-subjectC-	SRR2082412
-SCA10-subjectC-	SRR2082428
-
-
-
-job_wait
-
+#SCA10-subjectA	SRR2080459
+#SCA10-subjectB	SRR2081063
+#SCA10-subjectC-	SRR2082412
+#SCA10-subjectC-	SRR2082428
 
 # https://www.biorxiv.org/content/biorxiv/early/2018/07/24/356931.full.pdf
 #
