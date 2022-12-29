@@ -29,9 +29,7 @@ test counters {count_rnaseqc basic} {
 geneid	genename	counts-rnaseqc-ali_star
 ENSG00000183486.8	MX2	38
 ENSG00000100412.11	ACO2	1
-ENSG00000100413.12	POLR3H	8
-
-}
+ENSG00000100413.12	POLR3H	8}
 
 test counters {count_qorts basic} {
 	test_cleantmp
@@ -48,4 +46,3 @@ _total_no_feature	5	0	0	0
 _total_ambiguous	14	0	0	0}
 
 testsummarize
-

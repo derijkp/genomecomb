@@ -67,6 +67,7 @@ runtests job.tcl
 runtests map.tcl
 runtests sv.tcl
 runtests var.tcl
+runtests counts.tcl
 
 puts "all tests finished"
 puts "times (seconds):\n[join $::keeptimes \n]"
