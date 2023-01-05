@@ -6,20 +6,6 @@
 
 package require Extral
 
-if 0 {
-	cd /complgen/tests/sequenom
-	set dbdir /complgen/refseq/hg18
-	set compar_file test.csv
-	set resultfile sequenom.tsv
-	cg makesequenom test.csv sequenom.tsv /complgen/refseq/hg18
-
-	cd /complgen/tests/sequenom
-	set dbdir /complgen/refseq/hg19
-	set compar_file data/testvars.tsv
-	cg makesequenom data/testvars.tsv sequenom.tsv /complgen/refseq/hg19
-}
-
-
 proc cg_makesequenom {args} {
 	set extraseq 124
 	set freql 0

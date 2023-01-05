@@ -122,7 +122,7 @@ proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {inf
 		H2 Hapmap2
 	}
 	unset -nocomplain a
-	set comment {# -- sft converted from vcf, original comments follow --}
+	set comment {# -- tsv converted from vcf, original comments follow --}
 	while {![eof $f]} {
 		set line [gets $f]
 		append comment \n$line

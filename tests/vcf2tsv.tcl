@@ -13,7 +13,7 @@ test vcf2tsv {vcf2tsv} {
 	file copy -force data/vars1.vcf tmp/vars1.vcf
 	exec cg vcf2tsv -split 1 tmp/vars1.vcf tmp/temp.tsv
 	exec cg checktsv tmp/temp.tsv
-	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.tsv
+	cg splitalleles data/expected-vars1-var_annot.tsv tmp/expected.tsv
 	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
 } {diff tmp/temp.tsv tmp/expected.tsv
 header diff

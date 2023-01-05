@@ -8,7 +8,7 @@ Convert the Complete Genomics CNV files to the cg format
 
 == Arguments ==
 ; **srcfile**: Complete Genomics CNV file
-; **dstfile**: resulting sft cnv file
+; **dstfile**: resulting tsv cnv file
 
 == Category ==
 Format Conversion

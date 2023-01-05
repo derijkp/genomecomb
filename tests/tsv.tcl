@@ -36,7 +36,7 @@ proc makepastetest {num} {
 	return $files
 }
 
-test tsv_open {sft} {
+test tsv_open {tsv} {
 	catch {close $f}
 	set f [open data/reg1.tsv]
 	set header [tsv_open $f keepheader]
@@ -593,28 +593,28 @@ test tsv_cat {cg cat -m 1 -c m -sample testsample} {
 } {}
 
 test check_sort {sort error 1 in vars} {
-	exec cg checksort data/vars_sorterror1.sft
-} {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+	exec cg checksort data/vars_sorterror1.tsv
+} {error in file data/vars_sorterror1.tsv: file is not correctly sorted (sort correctly using "cg select -s -")
 chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:} error
 
 test check_sort {sort error 2 in vars} {
-	exec cg checksort data/vars_sorterror2.sft
-} {error in file data/vars_sorterror2.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+	exec cg checksort data/vars_sorterror2.tsv
+} {error in file data/vars_sorterror2.tsv: file is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:} error
 
 test check_sort {sort error 3 in vars} {
-	exec cg checksort data/vars_sorterror3.sft
-} {error in file data/vars_sorterror3.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+	exec cg checksort data/vars_sorterror3.tsv
+} {error in file data/vars_sorterror3.tsv: file is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847310:del: came before chr3:52847303-52847304:snp:G} error
 
 test check_sort {sort error 4 in vars} {
-	exec cg checksort data/vars_sorterror4.sft
-} {error in file data/vars_sorterror4.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+	exec cg checksort data/vars_sorterror4.tsv
+} {error in file data/vars_sorterror4.tsv: file is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847303-52847304:ins:G} error
 
 test check_sort {sort error 5 in vars} {
-	cg checksort data/vars_sorterror5.sft
-} {error in file data/vars_sorterror5.sft: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+	cg checksort data/vars_sorterror5.tsv
+} {error in file data/vars_sorterror5.tsv: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test check_sort {sort error alt} {
 	write_tab tmp/vars.tsv {
@@ -653,7 +653,7 @@ chr1:204434325-204434326:sub:G came before chr1:204434325-204434326:sub:CTA} err
 
 test indexdir {basic same name different dirs} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	file mkdir tmp/tmp
 	write_tab tmp/tmp/vars1.tsv {
 		chromosome begin end type ref alt
@@ -669,7 +669,7 @@ test indexdir {basic same name different dirs} {
 
 test indexdir {basic same name different dirs compressed} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	file mkdir tmp/tmp
 	write_tab tmp/tmp/vars1.tsv {
 		chromosome begin end type ref alt
@@ -686,27 +686,27 @@ test indexdir {basic same name different dirs compressed} {
 
 test indexdir_cache {tsv_varsfile} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	set varsfile [tsv_varsfile tmp/vars1.tsv]
-	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	cg select -f {chromosome begin end type ref alt} data/vars1.tsv tmp/test
 	exec diff $varsfile tmp/test
 } {}
 
 test indexdir_cache {tsv_varsfile compressed} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg razip tmp/vars1.tsv
 	set varsfile [tsv_varsfile tmp/vars1.tsv.rz]
-	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	cg select -f {chromosome begin end type ref alt} data/vars1.tsv tmp/test
 	exec diff $varsfile tmp/test
 } {}
 
 test indexdir_cache {tsv_varsfile compressed use plain filename} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg razip tmp/vars1.tsv
 	set varsfile [tsv_varsfile tmp/vars1.tsv]
-	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	cg select -f {chromosome begin end type ref alt} data/vars1.tsv tmp/test
 	exec diff $varsfile tmp/test
 } {}
 
@@ -728,27 +728,27 @@ test indexdir_cache {varsfile fix hang compressed but empty} {
 
 test indexdir_cache {tsv_count} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	tsv_count tmp/vars1.tsv
 } 14
 
 test indexdir_cache {tsv_count compressed} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg razip tmp/vars1.tsv
 	tsv_count tmp/vars1.tsv.rz
 } 14
 
 test indexdir_cache {tsv_count compressed gzfile} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg razip tmp/vars1.tsv
 	tsv_count tmp/vars1.tsv
 } 14
 
 test indexdir_cache {tsv_count invalid cache} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	file mkdir tmp/vars1.tsv.index
 	file_write tmp/vars1.tsv.index/vars.tsv.count 10
 	after 1000
@@ -758,7 +758,7 @@ test indexdir_cache {tsv_count invalid cache} {
 
 test indexdir_cache {tsv_count invalid cache that cannot be overwritten in sib indexdir} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	file mkdir tmp/vars1.tsv.index
 	file_write tmp/vars1.tsv.index/vars.tsv.count 10
 	file mtime tmp/vars1.tsv [clock seconds]

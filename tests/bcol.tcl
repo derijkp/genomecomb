@@ -6,27 +6,28 @@ source tools.tcl
 
 test bcol_index {basic} {
 	test_cleantmp
-	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
-	exec cg size tmp/temp.sft
-} {47}
+	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.tsv
+	exec cg size tmp/temp.tsv
+} {49}
 
 test bcol_index {basic} {
 	test_cleantmp
-	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
-	exec cg index tmp/temp.sft
-	exec cg bcol get tmp/temp.sft.index/lines.bcol 0 3
-} {76 103 228} 
+	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.tsv
+	exec cg index tmp/temp.tsv
+	exec cg bcol get tmp/temp.tsv.index/lines.bcol 0 3
+} {76 102 183} 
 
 test bcol_index {basic sib index not writable} {
 	test_cleantmp
-	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
-	file mkdir tmp/temp.sft.index
-	file_write tmp/temp.sft.index/lines.bcol error
-	file attributes tmp/temp.sft.index -permissions ugo-xw
-	exec cg index tmp/temp.sft
-	set bcolfile [indexdir_file tmp/temp.sft lines.bcol]
+	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.tsv
+	file mkdir tmp/temp.tsv.index
+	file_write tmp/temp.tsv.index/lines.bcol error
+	file attributes tmp/temp.tsv.index -permissions ugo-xw
+	exec cg index tmp/temp.tsv
+	set bcolfile [indexdir_file tmp/temp.tsv lines.bcol]
+	file attributes tmp/temp.tsv.index -permissions ug+xw
 	exec cg bcol get $bcolfile 0 3
-} {76 103 228} 
+} {76 102 183} 
 
 test bcol_make {basic} {
 	test_cleantmp

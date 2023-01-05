@@ -84,28 +84,28 @@ exec cg mselect -s num  -f "num mixed" -q {
 2	a2}
 
 test mselect {-f *} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	exec cg mselect -f {chromosome begin end alleleSeq1_*} -q {$begin == 4000} test test
 } {chromosome	begin	end	alleleSeq1_sample1	alleleSeq1_sample2
 chr1	4000	4001	A	A
 chr2	4000	4001	G	G}
 
 test mselect {-f calculated} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	exec cg mselect -f {chromosome begin end {geno1="alleleSeq1_sample1" || '/' || "alleleSeq2_sample1"}} -q {"begin" = 4000} test test
 } {chromosome	begin	end	geno1
 chr1	4000	4001	A/G
 chr2	4000	4001	G/G}
 
 test mselect {-f calculated functions} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	exec cg mselect -f {chromosome begin end {countG=count($alleleSeq*, = "G")}} -q {$begin = 4000} test test
 } {chromosome	begin	end	countG
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
 test select {-f calculated if} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	exec cg mselect -f {chromosome begin end {countG=if(count($alleleSeq*, == "G")<4,"<4",">=4")}} -q {$begin == 4000} test test
 } {chromosome	begin	end	countG
 chr1	4000	4001	<4
@@ -135,7 +135,7 @@ chr2	4000	4001	>=4}
 
 # cannot sort on calculated fields (yet)
 #test mselect {-f calculated functions + sort} {
-#	exec cg mselect -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} -s countG [gzfile data/vars1.sft]
+#	exec cg mselect -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} -s countG [gzfile data/vars1.tsv]
 #} {chromosome	begin	end	countG
 #chr1	4000	4001	2
 #chr2	4000	4001	4}
@@ -207,22 +207,22 @@ chr2	4000	4001	>=4}
 #vx	2	u	u}
 
 test mselect {sm} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	split [exec cg mselect -f {chromosome begin} -q {sm("sample1","sample2")} test test] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5010}}
 
 test mselect {df} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	split [exec cg mselect -f {chromosome begin} -q {df(sample1,sample2)} test test] \n
 } {{chromosome	begin} {chr1	5020} {chr2	5000} {chr2	5011} {chr2	8000}}
 
 test mselect {mm} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	split [exec cg mselect -f {chromosome begin} -q {mm(sample1,sample2)} test test] \n
 } {{chromosome	begin} {chr2	5005}}
 
 test mselect {-q count with wildcard} {
-	mselect_load data/vars1.sft
+	mselect_load data/vars1.tsv
 	exec cg mselect -f {chromosome begin end alleleSeq*} -q {count(alleleSeq*, = 'G') > 3} test test
 } {chromosome	begin	end	alleleSeq1_sample1	alleleSeq2_sample1	alleleSeq1_sample2	alleleSeq2_sample2
 chr1	4001	4002	G	G	G	G
@@ -230,15 +230,15 @@ chr2	4000	4001	G	G	G	G
 chr2	4001	4002	G	G	G	G}
 
 test mselect {lmin column} {
-	split [exec cg mselect -f {chromosome begin {lmin=lmin($list,10)}} < data/vars1.sft] \n
+	split [exec cg mselect -f {chromosome begin {lmin=lmin($list,10)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	} {chr2	5011	} {chr2	8000	}}
 
 test mselect {lmin select} {
-	split [exec cg mselect -f {chromosome begin} -q {lmin($list,10) == 2} < data/vars1.sft] \n
+	split [exec cg mselect -f {chromosome begin} -q {lmin($list,10) == 2} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5000}}
 
 test mselect {counthasone column} {
-	split [exec cg mselect -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.sft] \n
+	split [exec cg mselect -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmin} {chr1	4000	0} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	0} {chr2	4000	1} {chr2	4001	1} {chr2	4099	1} {chr2	5000	1} {chr2	5000	0} {chr2	5005	0} {chr2	5010	0} {chr2	5011	0} {chr2	8000	0}}
 
 testsummarize

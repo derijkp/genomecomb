@@ -1,0 +1,18 @@
+# analysed file: /home/peter/dev/genomecomb/tests/tmp/homwes_vcfmulti/annot_compar-yri_exome_part_test.vcf (converted to /home/peter/dev/genomecomb/tests/tmp/homwes_vcfmulti/homwes-out.work/annot_compar-yri_exome_part_test.tsv)
+# samples: NA19238 NA19239 NA19240
+# filterrepeats: 1
+# quality: 50
+# genoqual: 40
+# variantsonly: 1
+# snpsonly: 0
+# query used for filtering variants: (chr_clip($chromosome) ni {X Y M MT}) && $gfilter-NA19240 in {. PASS Pass pass} && def($genoqual-NA19240,100) > 40 && $microsat=="" && $simpleRepeat=="" && $zyg-NA19240 ni "u r"
+# callers_used: 
+# callers_param: 
+# allowedheterozygous: 1
+# homozygdensity: 200
+# homozyggap: 4000
+# homozygwindowsnp: 20
+# dbdir: /home/peter/genomecomb.smalltestdata/refseqtest/hg19
+chromosome	begin	end	DENSITY	PHOM	PHET	FID	IID	PHE	SNP1	SNP2	KB	NSNP
+3	33866553	38648061	79.692	0.950	0.050	fam	NA19240	2.000	3-33866553-33866554-snp-A-G	3-38648061-38648062-snp-C-T	4781.508	60
+5	121726713	122950910	61.210	0.950	0.050	fam	NA19240	2.000	5-121726713-121726714-snp-G-A	5-122950910-122950911-snp-G-A	1224.197	20

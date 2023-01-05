@@ -1,0 +1,20 @@
+# analysed file: /home/peter/dev/genomecomb/tests/data/annot_compar-yri_exome_part_test.tsv
+# samples: NA19238 NA19239 NA19240
+# filterrepeats: 1
+# quality: 50
+# genoqual: 40
+# variantsonly: 1
+# snpsonly: 0
+# query used for filtering variants: (chr_clip($chromosome) ni {X Y M MT}) && $filter-gatk-rdsbwa-NA19238 in {. PASS Pass pass} && def($quality-gatk-rdsbwa-NA19238,10000) > 50 && def($genoqual-gatk-rdsbwa-NA19238,100) > 40 && $microsat=="" && $simpleRepeat=="" && same("gatk-rdsbwa-NA19238","sam-rdsbwa-NA19238") && $sequenced-gatk-rdsbwa-NA19238 eq "v"
+# callers_used: gatk-rdsbwa- sam-rdsbwa-
+# callers_param: gatk-rdsbwa- sam-rdsbwa-
+# allowedheterozygous: 1
+# homozygdensity: 200
+# homozyggap: 4000
+# homozygwindowsnp: 20
+# dbdir: /home/peter/genomecomb.smalltestdata/refseqtest/hg19
+chromosome	begin	end	DENSITY	PHOM	PHET	FID	IID	PHE	SNP1	SNP2	KB	NSNP
+3	47447902	48625265	45.283	0.923	0.077	fam	NA19238	2.000	3-47447902-47447903-snp-C-T	3-48625265-48625266-snp-T-C	1177.363	26
+3	164714531	166579856	74.613	0.920	0.080	fam	NA19238	2.000	3-164714531-164714532-snp-C-T	3-166579856-166579857-snp-C-T	1865.325	25
+6	40399445	41557414	39.930	0.931	0.069	fam	NA19238	2.000	6-40399445-40399446-snp-T-C	6-41557414-41557415-snp-C-T	1157.969	29
+11	85422429	86525544	32.445	0.941	0.059	fam	NA19238	2.000	11-85422429-85422430-snp-T-G	11-86525544-86525545-snp-G-A	1103.115	34

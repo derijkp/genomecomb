@@ -26,8 +26,8 @@ test meth {meth_nanopolish} {
 	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fastq/*] {
 		mklink $file tmp/meth_nanopolish/fastq/[file tail $file]
 	}
-	mklink  ori/ont_f5c_chr22_meth_example/map-hlongshot-sminimap2-methtest.bam tmp/meth_nanopolish/map-hlongshot-sminimap2-methtest.bam
-	mklink  ori/ont_f5c_chr22_meth_example/map-hlongshot-sminimap2-methtest.bam.bai tmp/meth_nanopolish/map-hlongshot-sminimap2-methtest.bam.bai
+	mklink ori/ont_f5c_chr22_meth_example/map-hlongshot-sminimap2-methtest.bam tmp/meth_nanopolish/map-hlongshot-sminimap2-methtest.bam
+	mklink ori/ont_f5c_chr22_meth_example/map-hlongshot-sminimap2-methtest.bam.bai tmp/meth_nanopolish/map-hlongshot-sminimap2-methtest.bam.bai
 
 	puts time:[time {
 		exec cg meth_nanopolish {*}$::dopts \
@@ -90,7 +90,7 @@ test meth {meth_nanopolish with gz results} {
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
-		-x *sniffles*.vcf \
+		-x *sniffles*.vcf -x *.snf \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
 		-x *.html \

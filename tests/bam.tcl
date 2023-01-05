@@ -4,25 +4,27 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+# samtools view -b data/test-map-rdsbwa-NA19240chr2122.bam chr21:9480000-9970000 chr21:18880000-18965573 chr21:48050000-48111223 chr22:16084562-16101518 chr22:41642531-51237655 > data/test-map-rdsbwa-NA19240part2.bam
+
 test bam_histo {bam_histo} {
 	test_cleantmp
 	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set namecol info
 	set regionfile tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg bam_histo -n $namecol $regionfile $bamfile $intervals > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/bam_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test bam_histo {bam_histo chr_clipped} {
 	test_cleantmp
 	cg select -f {chromosome=chr_clip($chromosome) begin end info} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg bam_histo -n info $regionfile $bamfile $intervals > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/bam_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test bam_histo {bam_histo different order regfile} {
@@ -30,40 +32,40 @@ test bam_histo {bam_histo different order regfile} {
 	cg select -f {info chromosome begin end} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set namecol info
 	set regionfile tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg bam_histo -n $namecol $regionfile $bamfile $intervals > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/bam_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test depth_histo {depth_histo} {
 	test_cleantmp
 	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set max 1000
 	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/depth_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/depth_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test depth_histo {depth_histo -Q -max} {
 	test_cleantmp
 	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set max 200
 	cg depth_histo -max $max -Q 20 $bamfile $regionfile > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/depth_histo_Q20-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/depth_histo_Q20-NA19240_smallpartchr2122.tsv
 } {}
 
 test depth_histo {depth_histo no regfile} {
 	test_cleantmp
 	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile {}
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set max 1000
 	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
-	cg select -f {depth {ontarget=0} {offtarget=$ontarget + $offtarget}} $::smalltestdir/expected/depth_histo-NA19240_smallpartchr2122.tsv tmp/expected.tsv
+	cg select -f {depth {ontarget=0} {offtarget=$ontarget + $offtarget}} data/depth_histo-NA19240_smallpartchr2122.tsv tmp/expected.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
@@ -71,18 +73,18 @@ test depth_histo {depth_histo compressed regfile} {
 	test_cleantmp
 	compress data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv.zst
 	set regionfile tmp/regfile.tsv.zst
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	set max 1000
 	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
-	exec diff tmp/result.tsv $::smalltestdir/expected/depth_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/result.tsv data/depth_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test bam2fastq {bam2fastq} {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg bam2fastq $bamfile tmp/out_1.fq tmp/out_2.fq
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
+	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
+	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
 	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
 	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
@@ -91,11 +93,11 @@ test bam2fastq {bam2fastq} {
 
 test bam2fastq {bam2fastq gz} {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg bam2fastq $bamfile tmp/out_1.fq.gz tmp/out_2.fq.gz
 	exec gunzip tmp/out_1.fq.gz tmp/out_2.fq.gz
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
+	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
+	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
 	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
 	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
@@ -104,11 +106,11 @@ test bam2fastq {bam2fastq gz} {
 
 test bam2fastq {bam2fastq -sortmethod collate gz} {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg bam2fastq -sortmethod collate $bamfile tmp/out_1.fq.gz tmp/out_2.fq.gz
 	exec gunzip tmp/out_1.fq.gz tmp/out_2.fq.gz
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
-	cg zcat $::smalltestdir/expected/bam/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
+	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
+	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
 	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
 	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
@@ -160,37 +162,37 @@ total	4393}
 
 test cg_regextract {regextract} {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg regextract -min 20 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
 	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
 } {chromosome	bases
-chr21	495709
-chr22	1168356
-total	1664065}
+chr21	19726
+chr22	264646
+total	284372}
 
 test cg_regextract {regextract -region 2} {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg regextract -min 20 -region chr21 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
 	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
 } {chromosome	bases
-chr21	495709
-total	495709}
+chr21	19726
+total	19726}
 
 test cg_regextract {regextract -filtered 1 } {
 	test_cleantmp
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	cg regextract --filtered 1 -min 20 $bamfile > tmp/reg-cov20.tsv
 	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
 } {chromosome	bases
-chr21	464015
-chr22	1004396
-total	1468411}
+chr21	13280
+chr22	249784
+total	263064}
 
 test cg_regextract {--filtered 1 -q 1 -Q 0} {
 	test_cleantmp
 	cg select -q {$chromosome in "chr21 chr22"} [gzfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv] tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393
 	# reg: 1199228.72508
@@ -203,12 +205,12 @@ test cg_regextract {--filtered 1 -q 1 -Q 0} {
 	set total [lindex [cg covered tmp/selmultireg.tsv] end]
 	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
 	format %.4f [expr 100.0*$cov20/$total]
-} {56.1521}
+} {10.1379}
 
 test cg_regextract {-q 20 -Q 20} {
 	test_cleantmp
 	cg select -q {$chromosome in "chr21 chr22"} [gzfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv] tmp/regfile.tsv
-	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile data/test-map-rdsbwa-NA19240part.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393
 	# reg: 1199228.72508
@@ -221,7 +223,7 @@ test cg_regextract {-q 20 -Q 20} {
 	set total [lindex [cg covered tmp/selmultireg.tsv] end]
 	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
 	format %.4f [expr 100.0*$cov20/$total]
-} {54.9979}
+} {9.9390}
 
 test cg_regextract {small sam -min 1} {
 	write_sam tmp/temp.sam {
@@ -322,17 +324,17 @@ chr2	59	69
 chr2	99	149}
 
 test cg_bam2reg {basic} {
-	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
+	mklink data/test-map-rdsbwa-NA19240part.bam tmp/test.bam
 	cg bam2reg -stack 1 -mincoverage 20 tmp/test.bam tmp/result.tsv
 	catch {exec cg zcat tmp/result.tsv | head -4} temp
 	append temp \n[exec cg zcat tmp/result.tsv | tail -3]
 } {chromosome	begin	end
-chr21	9439337	9439639
-chr21	9439640	9439747
-chr21	9444036	9444482
+chr21	9483243	9483510
+chr21	9492449	9492450
+chr21	9492489	9492493
 chr22	51229714	51229749
 chr22	51229752	51229787
-chr22	51237064	51237741}
+chr22	51237064	51237706}
 
 test cg_bamreorder {basic genomecomb} {
 	file_write tmp/ref.fai [deindent {

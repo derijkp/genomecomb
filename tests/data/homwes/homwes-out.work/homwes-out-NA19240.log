@@ -1,0 +1,67 @@
+
+@----------------------------------------------------------@
+|        PLINK!       |     v1.07      |   10/Aug/2009     |
+|----------------------------------------------------------|
+|  (C) 2009 Shaun Purcell, GNU General Public License, v2  |
+|----------------------------------------------------------|
+|  For documentation, citation & bug-report instructions:  |
+|        http://pngu.mgh.harvard.edu/purcell/plink/        |
+@----------------------------------------------------------@
+
+Web-based version check ( --noweb to skip )
+Recent cached web-check found...Problem connecting to web
+
+Writing this text to log file [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.log ]
+Analysis started: Tue Jan  3 21:27:55 2023
+
+Options in effect:
+	--bfile /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240
+	--out /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240
+	--homozyg-window-snp 20
+	--homozyg-window-het 1
+	--homozyg-window-threshold 0.05
+	--homozyg-window-missing 10
+	--homozyg-snp 10
+	--homozyg-density 200
+	--homozyg-gap 4000
+	--homozyg-group
+
+** For gPLINK compatibility, do not use '.' in --out **
+Reading map (extended format) from [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.bim ] 
+4757 markers to be included from [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.bim ]
+Reading pedigree information from [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.fam ] 
+1 individuals read from [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.fam ] 
+1 individuals with nonmissing phenotypes
+Assuming a disease phenotype (1=unaff, 2=aff, 0=miss)
+Missing phenotype value is also -9
+1 cases, 0 controls and 0 missing
+1 males, 0 females, and 0 of unspecified sex
+Reading genotype bitfile from [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.bed ] 
+Detected that binary PED file is v1.00 SNP-major mode
+Before frequency and genotyping pruning, there are 4757 SNPs
+1 founders and 0 non-founders found
+Total genotyping rate in remaining individuals is 1
+0 SNPs failed missingness test ( GENO > 1 )
+0 SNPs failed frequency test ( MAF < 0 )
+After frequency and genotyping pruning, there are 4757 SNPs
+After filtering, 1 cases, 0 controls and 0 missing
+After filtering, 1 males, 0 females, and 0 of unspecified sex
+Converting data to Individual-major format
+
+Writing homozygosity-run information to [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.hom ] 
+Run defined as: 10 SNPs
+Homozygous segment criteria:
+  length (kb)       = 1000
+  # SNPs (N)        = 10
+  density (kb/SNP)  = 200
+  largest gap (kb)  = 4000
+Writing segment summary to [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.hom.indiv ]
+Writing segment summary to [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.hom.summary ]
+
+Writing homozygosity-run summary to [ /home/peter/dev/genomecomb/tests/tmp/homwes/homwes-out.work/homwes-out-NA19240.hom.overlap ] 
+Requiring allelic match, threshold 0.95 identity
+Requiring at least 20 informative SNPs to match segments
+Found 0 unique overlapping sets of segments
+
+Analysis finished: Tue Jan  3 21:27:55 2023
+

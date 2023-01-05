@@ -132,85 +132,85 @@ test loc_compare {distr_chr_compare} {
 
 test multicompar {basic} {
 	test_cleantmp
-	cg multicompar -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
-	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft
+	cg multicompar -split 0 tmp/temp.tsv data/var_annot.tsv data/var_annot2.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot2.tsv
 } {} 
 
 test multicompar {basic with 3} {
 	test_cleantmp
 	foreach sample {annot annot2 annot3} {
-		file copy data/var_$sample.sft tmp/var-$sample.tsv
+		file copy data/var_$sample.tsv tmp/var-$sample.tsv
 	}
 	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv
-	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot3.sft
+	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot3.tsv
 } {} 
 
 test multicompar {basic split} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	exec diff tmp/temp.sft data/expected-multicompar-split.sft
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot3.tsv > tmp/var-sample3.tsv
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-split.tsv
 } {} 
 
 test multicompar {basic reannot} {
 	test_cleantmp
-	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/var-annot1.tsv
-	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot.tsv tmp/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-multicompar_reannot-var_annotvar_annot2.sft
+	exec diff tmp/temp.tsv data/expected-multicompar_reannot-var_annotvar_annot2.tsv
 } {} 
 
 test multicompar {basic split reannot} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg multicompar_reannot tmp/temp.sft
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.tsv
 } {} 
 
 test multicompar {basic split reannot paged} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg multicompar_reannot -paged 2 tmp/temp.sft
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg multicompar_reannot -paged 2 tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.tsv
 } {} 
 
 test multicompar {basic split reannot paged with pagedstart} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg multicompar_reannot -paged 2 -pagedstart 1 tmp/temp.sft
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot-pagedstart1.sft
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg multicompar_reannot -paged 2 -pagedstart 1 tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot-pagedstart1.tsv
 } {} 
 
 test multicompar {basic, sequenced already present} {
 	test_cleantmp
-	cg multicompar -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
-	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
+	cg multicompar -split 0 tmp/temp.tsv data/var_annot.tsv data/var_annot2seq.tsv
+	catch {exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot2.tsv} e
 	set e
 } {1c1
 < chromosome	begin	end	type	ref	alt	sequenced-var_annot	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot2seq	alleleSeq1-var_annot2seq	alleleSeq2-var_annot2seq	name-var_annot2seq	freq-var_annot2seq
@@ -228,13 +228,13 @@ child process exited abnormally}
 
 #test multicompar {noalt} {
 #	test_cleantmp
-#	cg multicompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
-#	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
+#	cg multicompar tmp/temp.tsv data/var_annotnoalt.tsv data/var_annot2noalt.tsv
+#	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot2noalt.tsv
 #} {} 
 
 test makepvt {basic} {
-	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft tmp/temp.sft
-	file_read tmp/temp.sft
+	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.tsv tmp/temp.tsv
+	file_read tmp/temp.tsv
 } {reg1	reg4	numbases	numlines
 0	1	195	7
 1	0	300	8
@@ -242,8 +242,8 @@ test makepvt {basic} {
 }
 
 test makepvt {fields} {
-	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft tmp/temp.sft {chromosome reg1}
-	file_read tmp/temp.sft
+	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.tsv tmp/temp.tsv {chromosome reg1}
+	file_read tmp/temp.tsv
 } {chromosome	reg1	numbases	numlines
 1	0	10	2
 1	1	20	4
@@ -259,11 +259,11 @@ Y	1	1000	3
 
 test multicompar {var and mapper naming convention} {
 	test_cleantmp
-	catch {file link tmp/var-varcaller1-mapper1-sample1.sft ../data/var_annot.sft}
-	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
-	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
-	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
-	cg multicompar -split 0 tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	catch {file link tmp/var-varcaller1-mapper1-sample1.tsv ../data/var_annot.tsv}
+	catch {file link tmp/var-varcaller2-mapper2-sample1.tsv ../data/var_annot.tsv}
+	catch {file link tmp/var-varcaller1-mapper1-sample2.tsv ../data/var_annot2.tsv}
+	catch {file link tmp/var-varcaller2-mapper2-sample2.tsv ../data/var_annot2.tsv}
+	cg multicompar -split 0 tmp/temp.tsv tmp/var-varcaller1-mapper1-sample1.tsv tmp/var-varcaller2-mapper2-sample1.tsv tmp/var-varcaller1-mapper1-sample2.tsv tmp/var-varcaller2-mapper2-sample2.tsv
 	set fields {chromosome	begin	end	type	ref	alt}
 	foreach {from to} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
@@ -273,19 +273,19 @@ test multicompar {var and mapper naming convention} {
 			lappend fields $field-$to=\$$field-$from
 		}
 	}
-	cg select -f $fields data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.sft
-	exec diff tmp/temp.sft tmp/expected.sft
+	cg select -f $fields data/expected-multicompar-var_annotvar_annot2.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test multicompar {basic reannot varall} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	file copy data/var_annot.tsv tmp/var-annot1.tsv
+	file copy data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	cg select -f {* sequenced="v"} data/var_annot.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 r} \t]
@@ -293,7 +293,7 @@ test multicompar {basic reannot varall} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
 	catch {file delete tmp/temp.tsv}
-	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -f {* sequenced="v"} data/var_annot2.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
@@ -301,18 +301,18 @@ test multicompar {basic reannot varall} {
 	catch {file delete tmp/temp.tsv}
 	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
+	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.tsv
 } {} 
 
 test multicompar {basic reannot varall split} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
-	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg splitalleles data/var_annot.tsv tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
@@ -321,13 +321,13 @@ test multicompar {basic reannot varall split} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
 	catch {file delete tmp/temp1.tsv}
-	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg select -f {* sequenced="v"} data/var_annot2.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
-	cg splitalleles data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
+	cg splitalleles data/expected-multicompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	file delete tmp/temp.tsv
 	cg multicompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
@@ -351,15 +351,15 @@ test multicompar {error on split files without split option} {
 test multicompar {error on badly sorted files} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars3.sft
-} {File (*vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")
+	cg multicompar tmp/temp.tsv data/vars_sorterror1.tsv data/vars3.tsv
+} {File (*vars_sorterror1.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match error
 
 test multicompar {error on badly sorted files 2} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
-} {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
+	cg multicompar tmp/temp.tsv data/vars_sorterror1.tsv data/vars_sorterror2.tsv
+} {File (*vars_sorterror2.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
 test multicompar {split reannot split multiallelic varall,no sreg,zyg} {

@@ -44,7 +44,7 @@ test primercheck {freqp} {
 	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv
 } {} 
 
-file delete -force tmp/temp.sft
+file delete -force tmp/temp.tsv
 
 set ::env(PATH) $keeppath
 

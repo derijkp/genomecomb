@@ -4,7 +4,7 @@
 cg clc2tsv ?options? ?infile? ?outfile?
 
 == Summary ==
-Converts output from the clc bio assembly cell snp caller to sft (simple feature table) format
+Converts output from the clc bio assembly cell snp caller to tsv format
 
 == Arguments ==
 ; **infile**: file to be converted, if not given, uses stdin. File may be compressed.

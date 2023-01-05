@@ -250,6 +250,30 @@ foreach sample {HG002 HG003 HG004} {
 	}
 }
 
+job smallgiabonttest -deps {
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/HG002/map-sminimap2-regions_HG002_hg38.bam
+} -targets {
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest/map-sminimap2-pHG002_hg38.bam
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest/var-truth_HG002_hg38.tsv
+} -vars {
+	smalltestdir
+} -code {
+	set dir $smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest
+	file delete -force $dir
+	file mkdir $dir
+	set regions {chr1:2547867-2568902 chr6:32152328-32167543 chr10:975157-1000215}
+	set oridir $smalltestdir/ori/nanopore-human-pangenomics_regions/HG002
+	exec samtools view -b \
+		$oridir/map-sminimap2-regions_HG002_hg38.bam \
+		{*}$regions \
+		> $dir/map-sminimap2-pHG002_hg38.bam
+	exec samtools index $dir/map-sminimap2-pHG002_hg38.bam
+	file_write $dir/regions.tsv chromosome\tbegin\tend\n[string_change [join $regions \n] [list : \t - \t]]\n
+	cg regcommon $dir/regions.tsv $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed.tsv.zst > $dir/sreg-truth_HG002_hg38.tsv
+	cg regselect $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark.tsv.zst \
+		$dir/sreg-truth_HG002_hg38.tsv > $dir/var-truth_HG002_hg38.tsv
+}
+
 # tandem-genotypes paper repeat test data
 # ---------------------------------------
 # Tandem-genotypes: robust detection of tandem repeat expansions from long DNA reads
@@ -485,6 +509,9 @@ job methylation_testdata -cores 6 -vars {
 	# after analysis put haplotytyped bam back in ori
 	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam ori/ont_f5c_chr22_meth_example/
 	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam.bai ori/ont_f5c_chr22_meth_example/
+	# remove no longer needed
+	cd $::smalltestdir/ori/ont_f5c_chr22_meth_example
+	file delete -force single_fast5_files reads.fastq reads.fastq.index reads.fastq.index.readdb reads.fastq.index.gzi reads.fastq.index.fai reads.sorted.bam reads.sorted.bam.bai humangenome.fa humangenome.fai humangenome.fa.fai 
 }
 
 job_wait

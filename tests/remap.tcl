@@ -5,7 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test remap {basic} {
-	cg remap data/vars1.sft data/remap.tsv tmp/temp.tsv
+	cg remap data/vars1.tsv data/remap.tsv tmp/temp.tsv
 	list [cg select -f {chromosome begin end} tmp/temp.tsv] [cg select -f {chromosome begin end} tmp/temp.tsv.unmapped]
 } {{chromosome	begin	end
 chr2	1001	1002

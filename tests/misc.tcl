@@ -169,7 +169,7 @@ test mklink {nklink time} {
 
 test distr2chr {basic} {
 	test_cleantmp
-	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
+	exec distr2chr tmp/distrvars1- 0 < data/vars1.tsv
 	list [bsort [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
@@ -201,7 +201,7 @@ chr2	2-2
 
 test distr2chr {reglist} {
 	test_cleantmp
-	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
+	exec distr2chr tmp/distrvars1- 0 < data/vars1.tsv
 	list [bsort [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
@@ -214,7 +214,7 @@ test distrreg {basic} {
 	test_cleantmp
 	exec distrreg tmp/distrvars1- {} 1 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
-		0 1 2 1 \# < data/vars1.sft
+		0 1 2 1 \# < data/vars1.tsv
 	list [bsort [glob tmp/*]] \
 		[file_read tmp/distrvars1-chr1-1000-5000] \
 		[file_read tmp/distrvars1-chr1-5000-10000] \
@@ -231,17 +231,17 @@ chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 
 test distrreg {basic with compression} {
 	test_cleantmp
-	set temp [file_read data/vars1.sft]
-	file_write tmp/vars1.sft \#test\ comment\n$temp
+	set temp [file_read data/vars1.tsv]
+	file_write tmp/vars1.tsv \#test\ comment\n$temp
 	exec distrreg tmp/distrvars1- .zst 1 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
-		0 1 2 1 \# {zstd-mt -k -q -8 -b 0.5 -T 1 -c > } < tmp/vars1.sft
+		0 1 2 1 \# {zstd-mt -k -q -8 -b 0.5 -T 1 -c > } < tmp/vars1.tsv
 	list [bsort [glob tmp/*]] \
 		[exec cg zcat tmp/distrvars1-chr1-1000-5000.zst] \
 		[exec cg zcat tmp/distrvars1-chr1-5000-10000.zst] \
 		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000.zst] end] \
 		[lindex [cg select -g all tmp/distrvars1-chr2.zst] end]
-} {{tmp/distrvars1-chr1-1000-5000.zst tmp/distrvars1-chr1-5000-10000.zst tmp/distrvars1-chr1-10000-20000.zst tmp/distrvars1-chr2.zst tmp/vars1.sft} {#test comment
+} {{tmp/distrvars1-chr1-1000-5000.zst tmp/distrvars1-chr1-5000-10000.zst tmp/distrvars1-chr1-10000-20000.zst tmp/distrvars1-chr2.zst tmp/vars1.tsv} {#test comment
 chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
 chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
@@ -334,7 +334,7 @@ test distrreg {no header} {
 	test_cleantmp
 	exec distrreg tmp/distrvars1- .bed 0 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
-		0 1 2 1 \# < data/vars1.sft
+		0 1 2 1 \# < data/vars1.tsv
 	list [bsort [glob tmp/*]] \
 		[file_read tmp/distrvars1-chr1-1000-5000.bed] \
 		[file_read tmp/distrvars1-chr1-5000-10000.bed] \
@@ -349,7 +349,7 @@ chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 
 test distrreg {cg distrreg} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2}
 	list [bsort [glob tmp/*]] \
 		[file_read tmp/distrvars1-chr1-1000-5000.tsv] \
@@ -367,7 +367,7 @@ chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 
 test distrreg {cg distrreg from compressed} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	cg zst tmp/vars1.tsv
 	cg distrreg -stack 1 tmp/vars1.tsv.zst tmp/distrvars1- .tsv {chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2}
 	list [bsort [glob tmp/*]] \
@@ -386,7 +386,7 @@ chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 
 test distrreg {distrreg_job} {
 	test_cleantmp
-	file copy data/vars1.sft tmp/vars1.tsv
+	file copy data/vars1.tsv tmp/vars1.tsv
 	job_init
 	set results [distrreg_job tmp/vars1.tsv tmp/distrvars1- .tsv {chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2}]
 	job_wait

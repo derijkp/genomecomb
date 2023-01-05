@@ -122,7 +122,7 @@ ctccagaggcNgaggcaggagaatggtgtgaacctgggaggaggagcttgcagtgagccgggatcatgccactgcattcc
 	exec diff tmp/result.fas tmp/expected.fas
 } {}
 
-file delete -force tmp/temp.sft
+file delete -force tmp/temp.tsv
 
 set ::env(PATH) $keeppath
 

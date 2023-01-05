@@ -608,12 +608,12 @@ test gene2reg {gene2reg -upstream 100} {
 	cg gene2reg -upstream 100 tmp/genetmp.tsv tmp/result.tsv
 	exec diff tmp/result.tsv data/expected-gene2reg.tsv
 } {2d1
-< chr1	924104	924204	-	downstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	934243	934343	-	downstream	-1	-1	-1	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
 12,13d10
-< chr1	925415	925515	-	upstream	-1	-1	-1	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-< chr1	924106	924206	-	downstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	935477	935577	-	upstream	-1	-1	-1	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
+< chr1	934243	934343	-	downstream	-1	-1	-1	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 21d17
-< chr1	925415	925515	-	upstream	-1	-1	-1	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	935477	935577	-	upstream	-1	-1	-1	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 child process exited abnormally} error
 
 test gene2reg {gene2reg nocds} {
@@ -628,23 +628,23 @@ test gene2reg {gene2reg nocds} {
 	} data/expected-gene2reg.tsv tmp/expected-gene2reg.tsv
 	exec diff tmp/result.tsv tmp/expected-gene2reg.tsv
 } {2c2,3
-< chr1	924204	924675	-	RNA	exon4	491	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+< chr1	934343	934812	-	RNA	exon4	416	884	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
 ---
-> chr1	924204	924301	-	RNA	exon4	865	961	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	924301	924675	-	RNA	exon4	491	864	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
+> chr1	934343	934438	-	RNA	exon4	790	884	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
+> chr1	934438	934812	-	RNA	exon4	416	789	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
 8,9c9,12
-< chr1	925108	925415	-	RNA	exon1	0	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-< chr1	924206	924675	-	RNA	exon3	569	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	935245	935477	-	RNA	exon1	0	231	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
+< chr1	934343	934812	-	RNA	exon3	494	962	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 ---
-> chr1	925108	925216	-	RNA	exon1	199	306	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	925216	925415	-	RNA	exon1	0	198	-1	-1	HES4	NM_021170	592	0	cmpl	cmpl	1,0,0,0,
-> chr1	924206	924301	-	RNA	exon3	943	1037	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
-> chr1	924301	924675	-	RNA	exon3	569	942	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	935245	935353	-	RNA	exon1	124	231	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
+> chr1	935353	935477	-	RNA	exon1	0	123	-1	-1	HES4	NM_021170	0	592	HES4	cmpl	cmpl	1,0,0,0,	49
+> chr1	934343	934438	-	RNA	exon3	868	962	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
+> chr1	934438	934812	-	RNA	exon3	494	867	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 13c16,17
-< chr1	924934	925415	-	RNA	exon1	0	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+< chr1	935071	935477	-	RNA	exon1	0	405	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 ---
-> chr1	924934	925216	-	RNA	exon1	199	480	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
-> chr1	925216	925415	-	RNA	exon1	0	198	-1	-1	HES4	NM_001142467	592	0	cmpl	cmpl	1,0,0,
+> chr1	935071	935353	-	RNA	exon1	124	405	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
+> chr1	935353	935477	-	RNA	exon1	0	123	-1	-1	HES4	NM_001142467	0	592	HES4	cmpl	cmpl	1,0,0,	50
 child process exited abnormally} error
 
 test correctvariants {basic} {
@@ -746,14 +746,14 @@ test correctvariants {basic multicompar doubles} {
 
 test correctvariants {-c 1} {
 	test_cleantmp
-	exec cg correctvariants -split 0 -c 1 data/updatavartest.tsv tmp/temp.tsv $::refseqdir/hg18
+	exec cg correctvariants -split 0 -c 1 data/updatavartest.tsv tmp/temp.tsv $::refseqdir/hg19
 	exec diff tmp/temp.tsv data/expected-updatavartest.tsv
 } {}
 
 test correctvariants {-f} {
 	test_cleantmp
 	exec cg select -f {chromosome begin end type ref alt} data/updatavartest.tsv tmp/temp.tsv
-	exec cg correctvariants -split 0 -c 1 tmp/temp.tsv tmp/temp2.tsv $::refseqdir/hg18
+	exec cg correctvariants -split 0 -c 1 tmp/temp.tsv tmp/temp2.tsv $::refseqdir/hg19
 	exec diff tmp/temp2.tsv data/expected-updatavartest2.tsv
 } {}
 
@@ -1527,7 +1527,7 @@ test gff2tsv {basic} {
 		chr2	source1	type2	11874	14409	.	+	.	ID=test2;Name=test2;description=descr
 	}]]\n
 	file_write tmp/expected.tsv [string trim [deindent {
-		# -- sft converted from gff, original comments follow --
+		# -- tsv converted from gff, original comments follow --
 		##gff-version 3
 		# ----
 		chromosome	type	begin	end	score	strand	source	phase	ID	Name	description

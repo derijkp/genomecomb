@@ -16,7 +16,7 @@ cg makeregions selvariantlist.tsv 200 > regionfile.tsv
 }}}
 
 == Arguments ==
-; **regionfile**: sft that has at least the columns chromosome, begin, end; must be sorted by chromosome, then begin
+; **regionfile**: tsv that has at least the columns chromosome, begin, end; must be sorted by chromosome, then begin
 ; **maxsize**: the maximum amplicon size
 ; **prefsize**: the prefered amplicon size
 ; **dbdir**: directory containing reference genomes, region and variation data

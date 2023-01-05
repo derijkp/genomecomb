@@ -4,15 +4,6 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-if 0 {
-	# testdata
-	mkdir $smalltestdir/ori/rnaseqc
-	cd $smalltestdir/ori/rnaseqc
-	exec wget https://storage.googleapis.com/agraubert/broadinstitute/rnaseqc/test_inputs.tar.gz
-	exec tar xzf test_inputs.tar.gz
-	file delete test_inputs.tar.gz
-}
-
 test counters {count_rnaseqc basic} {
 	test_cleantmp
 	cg_bam_sort data/star-p.sam tmp/ali_star.bam

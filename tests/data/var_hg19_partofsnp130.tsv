@@ -1,0 +1,575 @@
+#liftover_source	data/var_hg18_partofsnp130.tsv
+#liftover	/home/peter/genomecomb.smalltestdata/refseqtest/liftover/hg18ToHg19.over.tsv
+#split	1
+#oldref	hg18
+#ref	hg19
+chrom	start	end	type	ref	alt	strand	name	freq	avHetSE	molType	valid	func	weight	exceptions	submitterCount	submitters	alleleFreqCount	alleles	alleleNs	alleleFreqs	bitfields	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+1	77586	77587	snp	T	C	+	rs2316051	0	0	genomic	unknown	unknown	3									chr1	67449	67450	T
+1	77587	77588	snp	A	T	+	rs2316052	0	0	genomic	unknown	unknown	3									chr1	67450	67451	A
+1	77646	77647	snp	A	T	-	rs2462496	0	0	genomic	unknown	unknown	3									chr1	67509	67510	A
+1	77849	77849	ins		CA	-	rs4030295	0	0	genomic	unknown	unknown	3									chr1	67712	67712	
+1	77873	77874	snp	G	A	+	rs62641297	0	0	genomic	unknown	unknown	3									chr1	67736	67737	G
+1	77918	77919	snp	T	G	+	rs2531299	0	0	genomic	unknown	unknown	3									chr1	67781	67782	T
+1	77956	77957	snp	T	C	+	rs2260613	0	0	genomic	unknown	unknown	3									chr1	67819	67820	T
+1	78034	78035	snp	G	A	-	rs2691297	0	0	genomic	unknown	unknown	3									chr1	67897	67898	G
+1	78124	78125	snp	T	C	+	rs3906299	0	0	genomic	unknown	unknown	3									chr1	67987	67988	T
+1	78124	78126	sub	TG	CA	+	rs71247112	0	0	genomic	unknown	unknown	3									chr1	67987	67989	TG
+1	78125	78126	snp	G	A	+	rs3906300	0	0	genomic	unknown	unknown	3									chr1	67988	67989	G
+1	78206	78207	snp	A	T	+	rs3878913;rs71254719	0	0	genomic	unknown	unknown	3									chr1	68069	68070	A
+1	78215	78216	snp	C	T	+	rs2482383	0	0	genomic	unknown	unknown	3									chr1	68078	68079	C
+1	78390	78391	snp	A	G	+	rs2548854	0	0	genomic	unknown	unknown	3									chr1	68253	68254	A
+1	78390	78401	sub	AACCCTATCTC	GACCCTATCTG	+	rs71247113	0	0	genomic	unknown	unknown	3									chr1	68253	68264	AACCCTATCTC
+1	78400	78401	snp	C	G	+	rs2548855	0	0	genomic	unknown	unknown	3									chr1	68263	68264	C
+1	78509	78510	snp	T	C	+	rs2531240	0	0	genomic	unknown	unknown	3									chr1	68372	68373	T
+1	78619	78620	snp	A	G	-	rs62026878	0	0	genomic	unknown	unknown	3									chr1	68482	68483	A
+1	78632	78633	snp	C	A	+	rs71254720	0	0	genomic	unknown	unknown	3									chr1	68495	68496	C
+1	78796	78797	snp	A	G	+	rs2531274	0	0	genomic	unknown	unknown	3									chr1	68659	68660	A
+1	78922	78923	snp	T	G	+	rs2482384	0	0	genomic	unknown	unknown	3									chr1	68785	68786	T
+1	78967	78968	snp	A	G	+	rs2531275	0	0	genomic	unknown	unknown	3									chr1	68830	68831	A
+1	79024	79025	snp	G	A	+	rs2531276	0	0	genomic	by-2hit-2allele	unknown	3									chr1	68887	68888	G
+1	79027	79028	snp	G	C	+	rs3868391;rs4030291	0	0	genomic	unknown	unknown	3									chr1	68890	68891	G
+1	79032	79033	snp	A	G	-	rs2462495;rs62641298	0	0	genomic	unknown	unknown	3									chr1	68895	68896	A
+1	79049	79050	snp	G	T	+	rs2949413;rs62641299	0	0	genomic	unknown	unknown	3									chr1	68912	68913	G
+1	79069	79070	snp	C	G	+	rs2777631	0	0	genomic	unknown	unknown	3									chr1	68932	68933	C
+1	79077	79078	snp	G	C	+	rs2949414	0	0	genomic	unknown	unknown	3									chr1	68940	68941	G
+1	79150	79151	snp	C	T	+	rs2531277	0	0	genomic	unknown	unknown	3									chr1	69013	69014	C
+1	79417	79418	snp	G	C	-	rs2691296	0	0	genomic	unknown	unknown	1									chr1	69280	69281	G
+1	79537	79538	snp	C	T	-	rs2691295	0	0	genomic	unknown	unknown	1									chr1	69400	69401	C
+1	79805	79806	snp	C	A	+	rs2531280	0	0	genomic	unknown	unknown	3									chr1	69668	69669	C
+1	79852	79853	snp	G	A	+	rs2531281	0	0	genomic	unknown	unknown	3									chr1	69715	69716	G
+1	80000	80001	snp	T	C	+	rs2531282	0	0	genomic	unknown	unknown	3									chr1	69863	69864	T
+1	80140	80141	snp	A	G	+	rs2531283;rs4030287	0	0	genomic	unknown	unknown	3									chr1	70003	70004	A
+1	80322	80323	snp	G	C	-	rs3942603	0	0	genomic	unknown	unknown	1									chr1	70185	70186	G
+1	80385	80386	snp	C	A	+	rs2531284;rs3878915	0	0	genomic	unknown	unknown	3									chr1	70248	70249	C
+1	80449	80450	del	C	,TGTTT	-	rs4030314,rs4030314	0,0	0	genomic	unknown	unknown	3									chr1	70312	70313	C
+1	80699	80700	snp	C	T	+	rs4577841	0	0	genomic	unknown	unknown	3									chr1	70562	70563	C
+1	81076	81077	snp	T	G	+	rs2531285	0	0	genomic	unknown	unknown	3									chr1	70939	70940	T
+1	81099	81100	snp	T	G	+	rs2548857	0	0	genomic	unknown	unknown	3									chr1	70962	70963	T
+1	81179	81180	snp	G	A	+	rs2777632	0	0	genomic	unknown	unknown	3									chr1	71042	71043	G
+1	81203	81204	snp	T	C	+	rs2531303	0	0	genomic	unknown	unknown	3									chr1	71066	71067	T
+1	81373	81374	snp	T	C	+	rs2531305	0	0	genomic	unknown	unknown	3									chr1	71236	71237	T
+1	81436	81437	snp	G	A	-	rs2691294	0	0	genomic	unknown	unknown	3									chr1	71299	71300	G
+1	81529	81530	snp	A	G	+	rs2548858	0	0	genomic	unknown	unknown	3									chr1	71392	71393	A
+1	81546	81547	snp	T	C	+	rs2531286	0	0	genomic	unknown	unknown	3									chr1	71409	71410	T
+1	81587	81588	snp	C	T	+	rs2482371	0	0	genomic	unknown	unknown	3									chr1	71450	71451	C
+1	81601	81602	snp	C	T	+	rs2482372	0	0	genomic	unknown	unknown	3									chr1	71464	71465	C
+1	81657	81658	snp	A	G	+	rs2482373;rs3905042	0	0	genomic	unknown	unknown	3									chr1	71520	71521	A
+1	81662	81663	snp	T	A	+	rs2531287	0	0	genomic	unknown	unknown	3									chr1	71525	71526	T
+1	233761866	233761867	snp	G	A	+	rs71638473	0	0	genomic	unknown	intron	1									chr1	231828489	231828490	G
+1	233761905	233761906	snp	T	C	-	rs701217	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	intron	1									chr1	231828528	231828529	T
+1	233762618	233762619	snp	A	G	-	rs601864	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	intron	1									chr1	231829241	231829242	A
+1	233762634	233762635	snp	A	G	-	rs485755	0	0	genomic	by-2hit-2allele	intron	1									chr1	231829257	231829258	A
+1	233762900	233762901	snp	A	G	-	rs681828	0.481784	0.093681	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr1	231829523	231829524	A
+1	233763019	233763020	snp	C	T	+	rs28663093	0	0	genomic	unknown	intron	1									chr1	231829642	231829643	C
+1	233763215	233763229	del	CTGACTCAGAAATT		+	rs72237773	0	0	genomic	unknown	intron	1									chr1	231829838	231829852	CTGACTCAGAAATT
+1	233763233	233763247	del	CTCAGAAATTCTGA		+	rs56284046	0	0	genomic	unknown	intron	1									chr1	231829856	231829870	CTCAGAAATTCTGA
+1	233763538	233763539	snp	A	C	-	rs566722	0.32	0.24	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-1000genomes	intron,near-gene-5	1									chr1	231830161	231830162	A
+1	233764450	233764451	snp	A	G	-	rs664292	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	intron,near-gene-5	1									chr1	231831073	231831074	A
+1	233764507	233764507	ins		AATAATAATAATAATAATAATAAT	+	rs71799726	0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831130	231831130	
+1	233764529	233764529	ins		TAATAATAATAATAATAA	+	rs58722587	0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831152	231831152	
+1	233764530	233764530	ins		TAA	+	rs67012666	0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831153	231831153	
+1	233764542	233764543	snp	A	G	+	rs12407694	0.207292	0.246325	genomic	by-cluster,by-frequency,by-hapmap	intron,near-gene-5	1									chr1	231831165	231831166	A
+1	233764642	233764643	snp	G	A	+	rs12408832	0.195057	0.243888	genomic	by-frequency,by-hapmap	intron,near-gene-5	1									chr1	231831265	231831266	G
+1	233764661	233764662	snp	G	A	+	rs73105508	0	0	genomic	by-1000genomes	intron,near-gene-5	1									chr1	231831284	231831285	G
+1	233764680	233764681	del	G	,TGG	+	rs72038056,rs72038056	0,0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831303	231831304	G
+1	233765070	233765071	snp	C	T	+	rs16859314	0.013985	0.082444	genomic	unknown	intron,near-gene-5	1									chr1	231831693	231831694	C
+1	233765127	233765127	ins		C	+	rs35209990	0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831750	231831750	
+1	233765160	233765161	snp	C	A	-	rs701218	0.499456	0.016486	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap,by-1000genomes	intron,near-gene-5	1									chr1	231831783	231831784	C
+1	233765267	233765268	del	G		+	rs35078726	0	0	genomic	unknown	intron,near-gene-5	1									chr1	231831890	231831891	G
+1	233765331	233765332	snp	G	A	-	rs701219	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	intron,near-gene-5	1									chr1	231831954	231831955	G
+1	233765396	233765397	snp	G	A	+	rs6695627	0.291883	0.246467	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron,untranslated-5	1									chr1	231832019	231832020	G
+1	233765503	233765504	snp	A	T	+	rs16859323	0.013985	0.082444	genomic	unknown	intron,untranslated-5	1									chr1	231832126	231832127	A
+1	233765526	233765527	snp	G	A	+	rs17227790	0.045509	0.143818	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron,missense	1									chr1	231832149	231832150	G
+1	233765597	233765598	snp	G	A	+	rs10910229	0.287233	0.247212	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	coding-synon,intron	1									chr1	231832220	231832221	G
+1	233765688	233765688	ins		G	+	rs34224953	0	0	genomic	unknown	intron	1									chr1	231832311	231832311	
+1	233765690	233765690	ins		G	+	rs58853204	0	0	genomic	unknown	intron	1									chr1	231832313	231832313	
+1	233765690	233765691	snp	A	G	-	rs701220	0.479459	0.099239	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr1	231832313	231832314	A
+1	233765848	233765849	snp	T	C	+	rs701221	0.499942	0.005395	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr1	231832471	231832472	T
+2	145707034	145707035	snp	T	C	+	rs786237	0.078608	0.182002	genomic	by-cluster,by-frequency,by-submitter,by-hapmap	unknown	1									chr2	145423504	145423505	T
+2	145707051	145707052	snp	T	C	+	rs16824266	0.155857	0.231597	genomic	by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	145423521	145423522	T
+2	145707196	145707197	snp	T	C	+	rs6707062	0.346627	0.230571	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	145423666	145423667	T
+2	145707302	145707302	ins		A	+	rs36073111	0	0	genomic	unknown	unknown	1									chr2	145423772	145423772	
+2	145707476	145707477	del	T	,GT	+	rs56913112,rs56913112	0,0	0	genomic	unknown	unknown	1									chr2	145423946	145423947	T
+2	145707482	145707483	snp	G	A	+	rs786238	0.26919	0.249262	genomic	by-frequency,by-2hit-2allele,by-hapmap	unknown	1									chr2	145423952	145423953	G
+2	145708393	145708394	snp	C	T	+	rs72854455	0	0	genomic	by-1000genomes	unknown	1									chr2	145424863	145424864	C
+2	145708584	145708585	snp	A	G	+	rs786239	0	0	genomic	by-2hit-2allele,by-1000genomes	unknown	1									chr2	145425054	145425055	A
+2	145709208	145709209	snp	C	T	+	rs73007444	0	0	genomic	by-1000genomes	unknown	1									chr2	145425678	145425679	C
+2	145709718	145709719	snp	G	T	+	rs786240	0.246998	0.249982	genomic	by-cluster,by-frequency,by-hapmap	unknown	1									chr2	145426188	145426189	G
+2	145710035	145710039	del	CACA		+	rs72370717	0	0	genomic	unknown	unknown	1									chr2	145426505	145426509	CACA
+2	145710035	145710083	sub	CACACACACACACACACACACACACACACACACACACACACACACACA	lengthTooLong	+	rs3223609	0.843164	0.080897	genomic	by-frequency	unknown	1									chr2	145426505	145426553	CACACACACACACACACACACACACACACACACACACACACACACACA
+2	145710045	145710045	ins		ACAC	+	rs72271590	0	0	genomic	unknown	unknown	1									chr2	145426515	145426515	
+2	145710046	145710046	ins		CACA	+	rs67116048	0	0	genomic	unknown	unknown	1									chr2	145426516	145426516	
+2	145710047	145710047	ins		AC	+	rs72401561	0	0	genomic	unknown	unknown	1									chr2	145426517	145426517	
+2	145710074	145710074	ins		CA	+	rs72441597	0	0	genomic	unknown	unknown	1									chr2	145426544	145426544	
+2	145710079	145710083	del	CACA		+	rs56062409	0	0	genomic	unknown	unknown	1									chr2	145426549	145426553	CACA
+2	145710083	145710083	ins		CACA	+	rs10665892	0	0	genomic	unknown	unknown	1									chr2	145426553	145426553	
+2	145710084	145710084	ins		CACA	+	rs34501989	0	0	genomic	unknown	unknown	1									chr2	145426554	145426554	
+2	145710190	145710191	snp	A	C	+	rs56769655	0	0	genomic	unknown	unknown	1									chr2	145426660	145426661	A
+2	145710233	145710234	snp	A	G	+	rs11689317	0.457856	0.138909	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap	unknown	1									chr2	145426703	145426704	A
+2	145710691	145710691	ins		G	+	rs36116236	0	0	genomic	unknown	unknown	1									chr2	145427161	145427161	
+2	145710937	145710938	snp	T	G	+	rs28428619	0	0	genomic	unknown	unknown	1									chr2	145427407	145427408	T
+2	145711094	145711094	ins		T	+	rs34963443	0	0	genomic	unknown	unknown	1									chr2	145427564	145427564	
+2	145711161	145711162	snp	A	G	+	rs73964001	0	0	genomic	unknown	unknown	1									chr2	145427631	145427632	A
+2	145711600	145711601	snp	G	A	-	rs1528187	0	0	genomic	by-cluster,by-2hit-2allele	unknown	1									chr2	145428070	145428071	G
+2	145711741	145711742	snp	G	A	-	rs1852654	0.258251	0.249864	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap	unknown	1									chr2	145428211	145428212	G
+2	145712138	145712139	del	T		+	rs72033010	0	0	genomic	unknown	unknown	1									chr2	145428608	145428609	T
+2	145712375	145712376	snp	C	G	+	rs9646682	0.3453	0.231123	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	145428845	145428846	C
+2	145712882	145712883	snp	T	C	+	rs73964002	0	0	genomic	unknown	unknown	1									chr2	145429352	145429353	T
+2	145713022	145713023	snp	G	A	+	rs786216	0.220533	0.248257	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	145429492	145429493	G
+2	145952930	145952933	del	GAA	,AAG	+	rs66561720,rs66561720	0,0	0	genomic	unknown	unknown	1									chr2	145669400	145669403	GAA
+2	145952931	145952934	del	AAG		+	rs35492892	0	0	genomic	unknown	unknown	1									chr2	145669401	145669404	AAG
+2	145953361	145953362	snp	A	G	-	rs274848	0.447971	0.152668	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	145669831	145669832	A
+2	145953746	145953747	snp	A	G	-	rs274847	0	0	genomic	by-cluster,by-hapmap,by-1000genomes	unknown	1									chr2	145670216	145670217	A
+2	145953808	145953808	ins		(LARGEINSERTION)	+	rs67546809	0	0	genomic	unknown	unknown	1									chr2	145670278	145670278	
+2	145953809	145953809	ins		lengthTooLong	+	rs58395559	0	0	genomic	unknown	unknown	1									chr2	145670279	145670279	
+2	145953810	145953810	ins		(LARGEINSERTION)	+	rs71932763	0	0	genomic	unknown	unknown	1									chr2	145670280	145670280	
+2	145955174	145955175	snp	A	G	+	rs13032601	0.367755	0.220531	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	145671644	145671645	A
+2	145955182	145955183	snp	T	C	+	rs16824607	0.007273	0.059862	genomic	by-frequency,by-hapmap	unknown	1									chr2	145671652	145671653	T
+2	145955365	145955366	snp	A	T	+	rs60596862	0	0	genomic	unknown	unknown	1									chr2	145671835	145671836	A
+2	145955447	145955448	snp	T	C	+	rs73962275	0	0	genomic	unknown	unknown	1									chr2	145671917	145671918	T
+2	145955642	145955643	snp	A	C	-	rs2697325	0.452832	0.146148	genomic	by-cluster,by-frequency,by-submitter,by-hapmap	unknown	1									chr2	145672112	145672113	A
+2	145955647	145955648	del	A		+	rs11284351	0	0	genomic	unknown	unknown	1									chr2	145672117	145672118	A
+2	145955648	145955649	del	A		-	rs70985894	0	0	genomic	unknown	unknown	1									chr2	145672118	145672119	A
+2	145955649	145955650	del	A		+	rs61259774	0	0	genomic	unknown	unknown	1									chr2	145672119	145672120	A
+2	145955849	145955849	ins		G	+	rs34002658	0	0	genomic	unknown	unknown	1									chr2	145672319	145672319	
+2	145955894	145955898	del	TTAT		+	rs67161771	0	0	genomic	unknown	unknown	1									chr2	145672364	145672368	TTAT
+2	145955896	145955900	del	ATTT		-	rs70985895	0	0	genomic	unknown	unknown	1									chr2	145672366	145672370	ATTT
+2	145955899	145955900	del	T	,ATTT	+	rs59246776,rs59246776	0,0	0	genomic	unknown	unknown	1									chr2	145672369	145672370	T
+2	145955962	145955964	del	AG		+	rs71951717	0	0	genomic	unknown	unknown	1									chr2	145672432	145672434	AG
+2	145955963	145955965	del	GA		+	rs35222692	0	0	genomic	unknown	unknown	1									chr2	145672433	145672435	GA
+2	145956223	145956223	ins		A	+	rs66625744	0	0	genomic	unknown	unknown	1									chr2	145672693	145672693	
+2	145956228	145956228	ins		A	+	rs72541951	0	0	genomic	unknown	unknown	1									chr2	145672698	145672698	
+2	145956229	145956229	ins		A	+	rs35455803	0	0	genomic	unknown	unknown	1									chr2	145672699	145672699	
+2	145956230	145956230	ins		A	+	rs67762239	0	0	genomic	unknown	unknown	1									chr2	145672700	145672700	
+2	145956714	145956715	snp	G	T	-	rs2697324	0	0	genomic	by-hapmap	unknown	1									chr2	145673184	145673185	G
+2	177787811	177787812	snp	A	T	+	rs56031140	0	0	genomic	by-1000genomes	unknown	1									chr2	177496057	177496058	A
+2	177787844	177787845	snp	C	T	+	rs7564166	0.498352	0.028661	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	177496090	177496091	C
+2	177787947	177787947	ins		A	+	rs35074494	0	0	genomic	unknown	unknown	1									chr2	177496193	177496193	
+2	177788042	177788043	del	C		+	rs10708733	0	0	genomic	unknown	unknown	1									chr2	177496288	177496289	C
+2	177788634	177788635	snp	G	C	+	rs59784805	0	0	genomic	unknown	unknown	1									chr2	177496880	177496881	G
+2	177789320	177789321	snp	T	C	+	rs16864721	0.013985	0.082444	genomic	unknown	unknown	1									chr2	177497566	177497567	T
+2	177789345	177789346	snp	T	G	+	rs16864726	0.028064	0.115085	genomic	by-frequency,by-hapmap	unknown	1									chr2	177497591	177497592	T
+2	177789457	177789458	snp	G	A	+	rs11676030	0.099274	0.199454	genomic	by-cluster,by-frequency,by-hapmap	unknown	1									chr2	177497703	177497704	G
+2	177789484	177789485	snp	T	C	+	rs16864728	0.128203	0.218324	genomic	by-cluster,by-frequency,by-hapmap	unknown	1									chr2	177497730	177497731	T
+2	177789537	177789538	snp	A	G	-	rs10497471	0.127429	0.217891	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	177497783	177497784	A
+2	177789756	177789757	snp	A	G	+	rs13415518	0.073288	0.176841	genomic	by-frequency,by-hapmap	unknown	1									chr2	177498002	177498003	A
+2	177789943	177789944	del	T		+	rs34933025	0	0	genomic	unknown	unknown	1									chr2	177498189	177498190	T
+2	177789950	177789951	snp	T	G	+	rs11892660	0.26919	0.249262	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	177498196	177498197	T
+2	177790004	177790005	snp	G	A	+	rs11887083	0.124444	0.216185	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	177498250	177498251	G
+2	177790094	177790095	del	A		+	rs66848853	0	0	genomic	unknown	unknown	1									chr2	177498340	177498341	A
+2	177790096	177790097	del	A		+	rs35399242	0	0	genomic	unknown	unknown	1									chr2	177498342	177498343	A
+2	177790260	177790261	snp	A	C	+	rs28714150	0	0	genomic	unknown	unknown	1									chr2	177498506	177498507	A
+2	177790291	177790292	snp	C	G	+	rs11887154	0.288283	0.247051	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	177498537	177498538	C
+2	177790448	177790449	snp	C	T	+	rs4894218	0	0	genomic	by-cluster,by-1000genomes	unknown	1									chr2	177498694	177498695	C
+2	177790904	177790905	snp	C	T	+	rs13432593	0.073288	0.176841	genomic	by-cluster,by-frequency,by-hapmap	unknown	1									chr2	177499150	177499151	C
+2	177791152	177791152	ins		T	+	rs34033504	0	0	genomic	unknown	unknown	1									chr2	177499398	177499398	
+2	177791159	177791159	ins		C	+	rs34142279	0	0	genomic	unknown	unknown	1									chr2	177499405	177499405	
+2	177791466	177791467	snp	T	C	+	rs6433622	0.004751	0.048505	genomic	by-cluster,by-2hit-2allele,by-hapmap	unknown	1									chr2	177499712	177499713	T
+2	177791474	177791475	snp	T	A	+	rs17270770	0.02843	0.115788	genomic	by-frequency,by-hapmap,by-1000genomes	unknown	1									chr2	177499720	177499721	T
+2	177791483	177791484	snp	C	T	+	rs4894219	0.332853	0.235872	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr2	177499729	177499730	C
+2	177791521	177791522	snp	C	A	+	rs73035076	0	0	genomic	by-1000genomes	unknown	1									chr2	177499767	177499768	C
+2	178377132	178377133	snp	C	G	+	rs6710109	0.204322	0.245792	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178085378	178085379	C
+2	178377310	178377311	snp	G	A	+	rs6710575	0.448342	0.152186	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178085556	178085557	G
+2	178377792	178377793	snp	A	G	+	rs60642012	0	0	genomic	unknown	intron	1									chr2	178086038	178086039	A
+2	178377813	178377816	del	ATT		+	rs10528684	0	0	genomic	unknown	intron	1									chr2	178086059	178086062	ATT
+2	178377824	178377827	del	TAT		+	rs66721586	0	0	genomic	unknown	intron	1									chr2	178086070	178086073	TAT
+2	178377831	178377832	del	A	,ATT	+	rs61391538,rs61391538	0,0	0	genomic	unknown	intron	1									chr2	178086077	178086078	A
+2	178378174	178378175	snp	C	A	+	rs6433672	0.167112	0.235859	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178086420	178086421	C
+2	178378362	178378362	ins		T	+	rs35236691	0	0	genomic	unknown	intron	1									chr2	178086608	178086608	
+2	178378451	178378452	snp	T	A	+	rs2364854	0.498574	0.026661	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178086697	178086698	T
+2	178379010	178379011	snp	G	A	+	rs62182677	0	0	genomic	unknown	intron	1									chr2	178087256	178087257	G
+2	178379406	178379407	snp	T	G	+	rs71421601	0	0	genomic	unknown	intron	1									chr2	178087652	178087653	T
+2	178379782	178379783	snp	G	C	+	rs4243389	0.188514	0.242321	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178088028	178088029	G
+2	178380072	178380073	snp	A	C	+	rs71421602	0	0	genomic	unknown	intron	1									chr2	178088318	178088319	A
+2	178380408	178380409	snp	A	G	+	rs4893957	0.441751	0.16041	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	intron	1									chr2	178088654	178088655	A
+2	178380644	178380645	snp	T	C	-	rs10497502	0.3499	0.229172	genomic	by-cluster,by-frequency,by-hapmap	intron	1									chr2	178088890	178088891	T
+2	178380678	178380679	del	G		+	rs67997986	0	0	genomic	unknown	intron	1									chr2	178088924	178088925	G
+2	178380679	178380680	del	G		+	rs11334084	0	0	genomic	unknown	intron	1									chr2	178088925	178088926	G
+2	178380712	178380712	ins		C	+	rs34317909	0	0	genomic	unknown	intron	1									chr2	178088958	178088958	
+4	2098422	2098422	ins		AG	+	rs72227134	0	0	genomic	unknown	intron	1									chr4	2068220	2068220	
+4	2098423	2098425	del	AG		+	rs71946374	0	0	genomic	unknown	intron	1									chr4	2068221	2068223	AG
+4	2098449	2098449	ins		GA	+	rs72413051	0	0	genomic	unknown	intron	1									chr4	2068247	2068247	
+4	2098456	2098457	del	G	,C	+	rs7657115,rs7657115	0,0	0	genomic	by-cluster	intron	1									chr4	2068254	2068255	G
+4	2098457	2098458	del	A		+	rs34971916	0	0	genomic	unknown	intron	1									chr4	2068255	2068256	A
+4	2098458	2098458	ins		GA	+	rs60528241	0	0	genomic	unknown	intron	1									chr4	2068256	2068256	
+4	2098458	2098459	snp	C	G	+	rs57253956	0	0	genomic	unknown	intron	1									chr4	2068256	2068257	C
+4	2098523	2098524	snp	C	G	+	rs7438216	0	0	genomic	by-hapmap	intron	1									chr4	2068321	2068322	C
+4	2099196	2099197	snp	C	A	+	rs6839021	0	0	genomic	by-1000genomes	intron	1									chr4	2068994	2068995	C
+4	2099536	2099537	snp	T	G	+	rs62288001	0	0	genomic	unknown	intron	1									chr4	2069334	2069335	T
+4	2099653	2099654	snp	C	G	+	rs6840015	0.21491	0.247525	genomic	by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	2069451	2069452	C
+4	2099666	2099667	snp	C	T	+	rs6840023	0.207829	0.246418	genomic	by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	2069464	2069465	C
+4	2100362	2100363	snp	T	G	-	rs3135058	0.461494	0.133306	genomic	by-frequency,by-hapmap	intron	1									chr4	2070160	2070161	T
+4	2100527	2100528	snp	T	C	-	rs627283	0.448284	0.152261	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	2070325	2070326	T
+4	2100645	2100647	del	CA		-	rs4031130	0	0	genomic	unknown	intron	1									chr4	2070443	2070445	CA
+4	2100670	2100672	del	AC		+	rs34507536	0	0	genomic	unknown	intron	1									chr4	2070468	2070470	AC
+4	2100746	2100747	snp	G	A	+	rs408850	0.463583	0.129933	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	2070544	2070545	G
+4	2100990	2100991	snp	C	T	+	rs73071300	0	0	genomic	by-1000genomes	intron	1									chr4	2070788	2070789	C
+4	2101074	2101074	ins		G	+	rs36049877	0	0	genomic	unknown	intron	1									chr4	2070872	2070872	
+4	2101199	2101200	snp	A	G	-	rs613848	0.442298	0.159755	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	2070997	2070998	A
+4	2101266	2101267	del	G		+	rs36018137	0	0	genomic	unknown	intron	1									chr4	2071064	2071065	G
+4	2101801	2101802	snp	A	G	+	rs4974652	0	0	genomic	unknown	intron	1									chr4	2071599	2071600	A
+4	2101802	2101803	snp	G	A	+	rs4974653	0	0	genomic	by-cluster,by-2hit-2allele	intron	1									chr4	2071600	2071601	G
+4	2101804	2101804	ins		A	+	rs34515865	0	0	genomic	unknown	intron	1									chr4	2071602	2071602	
+4	2101812	2101813	del	G	,T	-	rs67860608,rs67860608	0,0	0	genomic	unknown	intron	1									chr4	2071610	2071611	G
+4	2101812	2101813	snp	G	A	+	rs2883214	0	0	genomic	by-cluster,by-1000genomes	intron	1									chr4	2071610	2071611	G
+4	2101812	2101813	snp	G	A	+	rs67860609	0	0	genomic	unknown	intron	1									chr4	2071610	2071611	G
+4	2101818	2101819	snp	G	A	+	rs28621721	0	0	genomic	unknown	intron	1									chr4	2071616	2071617	G
+4	2101819	2101819	ins		A	+	rs67788150	0	0	genomic	unknown	intron	1									chr4	2071617	2071617	
+4	2101819	2101820	snp	A	G	+	rs28464876	0	0	genomic	unknown	intron	1									chr4	2071617	2071618	A
+4	2101888	2101888	ins		T	+	rs36101790	0	0	genomic	unknown	intron	1									chr4	2071686	2071686	
+4	5474385	5474386	snp	T	G	+	rs16837336	0.038564	0.133397	genomic	by-cluster,by-frequency,by-hapmap	intron	1									chr4	5525286	5525287	T
+4	5474498	5474498	ins		A	+	rs35556307	0	0	genomic	unknown	intron	1									chr4	5525399	5525399	
+4	5474736	5474737	snp	G	A	+	rs73068452	0	0	genomic	by-1000genomes	intron	1									chr4	5525637	5525638	G
+4	5475355	5475355	ins		G	+	rs34539475	0	0	genomic	unknown	intron	1									chr4	5526256	5526256	
+4	5475526	5475527	snp	C	A	+	rs62299783	0	0	genomic	unknown	intron	1									chr4	5526427	5526428	C
+4	5475606	5475607	snp	C	T	+	rs57959143	0	0	genomic	by-1000genomes	intron	1									chr4	5526507	5526508	C
+4	5475914	5475915	snp	G	A	+	rs13353790	0	0	genomic	unknown	intron	1									chr4	5526815	5526816	G
+4	5476003	5476004	snp	C	G	+	rs16837339	0.043144	0.140395	genomic	by-frequency	intron	1									chr4	5526904	5526905	C
+4	5476134	5476135	snp	G	A	+	rs28759010	0	0	genomic	by-1000genomes	intron	1									chr4	5527035	5527036	G
+4	5476175	5476176	snp	G	A	+	rs28607918	0.241967	0.249871	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	intron	1									chr4	5527076	5527077	G
+4	5476290	5476291	snp	C	T	+	rs4688937	0	0	genomic	unknown	intron	1									chr4	5527191	5527192	C
+4	5476933	5476934	snp	G	A	+	rs61489067	0	0	genomic	unknown	intron	1									chr4	5527834	5527835	G
+4	5477151	5477151	ins		A	+	rs34219344	0	0	genomic	unknown	intron	1									chr4	5528052	5528052	
+4	5477170	5477170	ins		A	+	rs57677282	0	0	genomic	unknown	intron	1									chr4	5528071	5528071	
+4	5477413	5477414	snp	T	G	+	rs13435635	0	0	genomic	unknown	intron	1									chr4	5528314	5528315	T
+4	5477418	5477419	snp	C	T	+	rs57153938	0	0	genomic	unknown	intron	1									chr4	5528319	5528320	C
+4	5477470	5477471	snp	A	G	+	rs12648905	0	0	genomic	by-cluster	intron	1									chr4	5528371	5528372	A
+4	25370588	25370589	snp	C	T	-	rs396393	0.1302	0.219426	genomic	by-frequency	intron	1									chr4	24979686	24979687	C
+4	25370590	25370591	snp	A	G	-	rs414879	0	0	genomic	unknown	intron	1									chr4	24979688	24979689	A
+4	25370626	25370627	snp	A	G	-	rs315690	0.454064	0.144422	genomic	by-cluster,by-frequency,by-submitter,by-hapmap,by-1000genomes	intron	1									chr4	24979724	24979725	A
+4	25370668	25370669	snp	G	T	+	rs61744830	0	0	genomic	unknown	missense	1									chr4	24979766	24979767	G
+4	25370787	25370787	ins		A	+	rs35504495	0	0	genomic	unknown	untranslated-3	1									chr4	24979885	24979885	
+4	25370889	25370890	snp	C	T	+	rs57480153	0	0	genomic	by-1000genomes	untranslated-3	1									chr4	24979987	24979988	C
+4	25370961	25370962	snp	A	T	-	rs315689	0.057641	0.159681	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	untranslated-3	1									chr4	24980059	24980060	A
+4	25371398	25371399	snp	C	T	+	rs13102709	0	0	genomic	unknown	untranslated-3	1									chr4	24980496	24980497	C
+4	25371459	25371460	snp	C	T	+	rs13102920	0.095865	0.196831	genomic	by-cluster,by-frequency,by-hapmap	untranslated-3	1									chr4	24980557	24980558	C
+4	25371814	25371815	snp	A	G	-	rs315688	0.440861	0.161468	genomic	by-cluster,by-frequency,by-submitter,by-hapmap,by-1000genomes	untranslated-3	1									chr4	24980912	24980913	A
+4	25372159	25372160	snp	G	C	-	rs315687	0.491026	0.066382	genomic	by-cluster,by-frequency,by-submitter,by-2hit-2allele,by-hapmap,by-1000genomes	near-gene-3	1									chr4	24981257	24981258	G
+4	25372681	25372682	snp	A	G	+	rs13115805	0	0	genomic	by-hapmap	unknown	1									chr4	24981779	24981780	A
+4	25372868	25372870	del	AA		+	rs59926626	0	0	genomic	unknown	unknown	1									chr4	24981966	24981968	AA
+4	25372981	25372982	snp	G	A	+	rs6824789	0	0	genomic	unknown	unknown	1									chr4	24982079	24982080	G
+4	25373076	25373077	snp	A	G	-	rs315686	0	0	genomic	by-cluster,by-1000genomes	unknown	1									chr4	24982174	24982175	A
+4	25373100	25373101	snp	G	A	-	rs315685	0	0	genomic	unknown	unknown	1									chr4	24982198	24982199	G
+4	25373286	25373287	snp	A	C	+	rs11723853	0	0	genomic	by-cluster	unknown	1									chr4	24982384	24982385	A
+4	25373355	25373355	ins		A	+	rs35367299	0	0	genomic	unknown	unknown	1									chr4	24982453	24982453	
+4	25374098	25374099	snp	G	A	+	rs11733330	0.382315	0.212115	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr4	24983196	24983197	G
+4	25374145	25374145	ins		C	+	rs35169593	0	0	genomic	unknown	unknown	1									chr4	24983243	24983243	
+4	25374196	25374197	snp	A	G	-	rs315684	0.269064	0.249272	genomic	by-cluster,by-frequency,by-hapmap,by-1000genomes	unknown	1									chr4	24983294	24983295	A
+4	25374289	25374289	ins		C	+	rs34966319	0	0	genomic	unknown	unknown	1									chr4	24983387	24983387	
+4	25374289	25374290	snp	G	A	+	rs62409205	0	0	genomic	unknown	unknown	1									chr4	24983387	24983388	G
+4	25374370	25374371	snp	T	G	+	rs2090116	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	unknown	1									chr4	24983468	24983469	T
+4	25374575	25374576	del	G		+	rs11324523	0	0	genomic	unknown	unknown	1									chr4	24983673	24983674	G
+4	25374582	25374583	del	G		+	rs60688409	0	0	genomic	unknown	unknown	1									chr4	24983680	24983681	G
+7	26447948	26447948	ins		A	+	rs34943809	0	0	genomic	unknown	unknown	1									chr7	26414473	26414473	
+7	26448034	26448035	snp	A	G	+	rs73072212	0	0	genomic	by-1000genomes	unknown	1									chr7	26414559	26414560	A
+7	26448122	26448123	snp	T	A	+	rs73286955	0	0	genomic	by-1000genomes	unknown	1									chr7	26414647	26414648	T
+7	26448165	26448166	snp	C	T	+	rs1236948	0	0	genomic	by-2hit-2allele	unknown	1									chr7	26414690	26414691	C
+7	26448422	26448423	del	A		+	rs34627521	0	0	genomic	unknown	unknown	1									chr7	26414947	26414948	A
+7	26448431	26448432	del	A		+	rs71854424	0	0	genomic	unknown	unknown	1									chr7	26414956	26414957	A
+7	26448447	26448447	ins		TA	+	rs36026862	0	0	genomic	unknown	unknown	1									chr7	26414972	26414972	
+7	26448455	26448455	ins		AT	+	rs66520855	0	0	genomic	unknown	unknown	1									chr7	26414980	26414980	
+7	26448460	26448460	ins		AT	+	rs4000685	0	0	genomic	unknown	unknown	1									chr7	26414985	26414985	
+7	26448766	26448767	snp	C	T	+	rs73286957	0	0	genomic	by-1000genomes	unknown	1									chr7	26415291	26415292	C
+7	26448905	26448906	snp	C	T	+	rs55765847	0	0	genomic	by-1000genomes	unknown	1									chr7	26415430	26415431	C
+7	26449213	26449213	ins		C	+	rs35970533	0	0	genomic	unknown	unknown	1									chr7	26415738	26415738	
+7	26449318	26449319	snp	A	T	+	rs62448391	0	0	genomic	unknown	unknown	1									chr7	26415843	26415844	A
+7	26449336	26449336	ins		CTCT	+	rs5883026	0	0	genomic	unknown	unknown	1									chr7	26415861	26415861	
+7	26449337	26449337	ins		CTCT	+	rs35915740	0	0	genomic	unknown	unknown	1									chr7	26415862	26415862	
+7	26449338	26449338	ins		TCTC	+	rs72270678	0	0	genomic	unknown	unknown	1									chr7	26415863	26415863	
+7	26449339	26449339	ins		CTCT	+	rs68045843	0	0	genomic	unknown	unknown	1									chr7	26415864	26415864	
+7	26449340	26449341	snp	C	G	+	rs5027858	0	0	genomic	unknown	unknown	1									chr7	26415865	26415866	C
+7	26449342	26449343	snp	C	G	+	rs28711056	0	0	genomic	unknown	unknown	1									chr7	26415867	26415868	C
+7	26449343	26449343	ins		C,G,T,TGTG	+	rs1406594,rs1406594,rs1406594,rs1406594	0,0,0,0	0	genomic	by-cluster	unknown	1									chr7	26415868	26415868	
+7	26449344	26449344	ins		G,TGTG	+	rs33963658,rs33963658	0,0	0	genomic	unknown	unknown	1									chr7	26415869	26415869	
+7	26449344	26449345	snp	G	C	+	rs73685208	0	0	genomic	unknown	unknown	1									chr7	26415869	26415870	G
+7	26449369	26449369	ins		TGTG	+	rs3067718	0	0	genomic	unknown	unknown	1									chr7	26415894	26415894	
+7	26449456	26449457	snp	C	A	+	rs57559482	0	0	genomic	unknown	unknown	1									chr7	26415981	26415982	C
+7	26449730	26449731	snp	G	C	+	rs12674232	0.051247	0.151648	genomic	by-frequency,by-hapmap	unknown	1									chr7	26416255	26416256	G
+7	26449972	26449973	snp	A	G	+	rs73072216	0	0	genomic	by-1000genomes	unknown	1									chr7	26416497	26416498	A
+7	26450218	26450219	snp	T	G	+	rs2699818	0.16871	0.236415	genomic	by-cluster,by-frequency,by-submitter,by-hapmap,by-1000genomes	unknown	1									chr7	26416743	26416744	T
+7	26450676	26450678	del	TT	,T	+	rs34590011,rs34590011	0,0	0	genomic	unknown	unknown	1									chr7	26417201	26417203	TT
+7	26450676	26450680	del	TTTT		+	rs10558824	0	0	genomic	unknown	unknown	1									chr7	26417201	26417205	TTTT
+7	26450677	26450678	del	T		+	rs34881975	0	0	genomic	unknown	unknown	1									chr7	26417202	26417203	T
+7	26450690	26450691	del	T	,TT	+	rs5883027,rs5883027	0,0	0	genomic	unknown	unknown	1									chr7	26417215	26417216	T
+7	26450701	26450702	del	T	,TT	+	rs3067719,rs3067719	0,0	0	genomic	unknown	unknown	1									chr7	26417226	26417227	T
+7	26450701	26450703	del	TT		+	rs67115430	0	0	genomic	unknown	unknown	1									chr7	26417226	26417228	TT
+7	26450901	26450902	snp	T	A	+	rs10242087	0	0	genomic	unknown	unknown	1									chr7	26417426	26417427	T
+7	26451030	26451031	snp	C	T	+	rs11520767	0	0	genomic	by-hapmap	unknown	1									chr7	26417555	26417556	C
+7	26451216	26451217	snp	A	G	+	rs10256161	0	0	genomic	unknown	unknown	1									chr7	26417741	26417742	A
+8	1959815	1959816	snp	C	T	+	rs60489115	0	0	genomic	unknown	unknown	1									chr8	1947222	1947223	C
+8	1959923	1959923	ins		G	+	rs34408718	0	0	genomic	unknown	unknown	1									chr8	1947330	1947330	
+8	1959991	1959991	ins		A	+	rs35710968	0	0	genomic	unknown	unknown	1									chr8	1947398	1947398	
+8	1960001	1960001	ins		AA	+	rs34501628	0	0	genomic	unknown	unknown	1									chr8	1947408	1947408	
+8	1960003	1960003	ins		AA	+	rs72442022	0	0	genomic	unknown	unknown	1									chr8	1947410	1947410	
+8	1960005	1960005	ins		AA	+	rs57233473	0	0	genomic	unknown	unknown	1									chr8	1947412	1947412	
+8	1960006	1960006	ins		AA	+	rs67601829	0	0	genomic	unknown	unknown	1									chr8	1947413	1947413	
+8	1960146	1960147	snp	G	A	+	rs6988137	0.059281	0.161637	genomic	by-cluster,by-frequency,by-hapmap	unknown	1									chr8	1947553	1947554	G
+8	1960199	1960200	snp	A	G	-	rs4876257	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	unknown	1									chr8	1947606	1947607	A
+8	1960723	1960724	snp	C	T	+	rs55777813	0	0	genomic	unknown	unknown	1									chr8	1948130	1948131	C
+8	1960742	1960743	snp	A	C	+	rs34515943	0	0	genomic	by-1000genomes	unknown	1									chr8	1948149	1948150	A
+8	1960751	1960752	snp	G	C	+	rs6558576	0.069515	0.172989	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap	unknown	1									chr8	1948158	1948159	G
+8	1961282	1961283	snp	C	G	+	rs7825441	0	0	genomic	unknown	unknown	1									chr8	1948689	1948690	C
+8	1961411	1961411	ins		ATATGGTAC	+	rs56291431	0	0	genomic	unknown	unknown	1									chr8	1948818	1948818	
+8	1961412	1961412	ins		AAC	+	rs55697217	0	0	genomic	unknown	unknown	1									chr8	1948819	1948819	
+8	1961417	1961417	ins		G	+	rs55639622	0	0	genomic	unknown	unknown	1									chr8	1948824	1948824	
+8	1961419	1961419	ins		TGT	+	rs56144719	0	0	genomic	unknown	unknown	1									chr8	1948826	1948826	
+8	1961421	1961421	ins		TCTATGG	+	rs56114645	0	0	genomic	unknown	unknown	1									chr8	1948828	1948828	
+8	1961482	1961483	snp	G	A	+	rs36132163	0	0	genomic	unknown	unknown	1									chr8	1948889	1948890	G
+8	1962728	1962729	snp	T	G	+	rs34874548	0	0	genomic	unknown	unknown	1									chr8	1950135	1950136	T
+8	1962793	1962794	snp	T	A	+	rs55946705	0	0	genomic	by-1000genomes	unknown	1									chr8	1950200	1950201	T
+8	1963161	1963162	snp	T	C	+	rs59095866	0	0	genomic	unknown	unknown	1									chr8	1950568	1950569	T
+8	1963331	1963332	snp	C	T	+	rs60227148	0	0	genomic	unknown	unknown	1									chr8	1950738	1950739	C
+8	1963420	1963421	snp	G	C	-	rs4538929	0	0	genomic	by-cluster,by-1000genomes	unknown	1									chr8	1950827	1950828	G
+18	112002	112003	snp	C	T	+	rs10459989	0	0	genomic	unknown	unknown	1									chr18	102002	102003	C
+18	112011	112012	snp	T	C	+	rs10459990	0	0	genomic	unknown	unknown	1									chr18	102011	102012	T
+18	112105	112106	snp	G	C	+	rs11080395	0	0	genomic	unknown	unknown	1									chr18	102105	102106	G
+18	112106	112107	snp	C	T	+	rs9989627	0	0	genomic	by-cluster	unknown	1									chr18	102106	102107	C
+18	112118	112119	snp	G	A	+	rs9989577	0	0	genomic	by-cluster,by-2hit-2allele	unknown	1									chr18	102118	102119	G
+18	112130	112131	snp	T	C	+	rs9303701	0	0	genomic	by-cluster	unknown	1									chr18	102130	102131	T
+18	112133	112134	snp	C	G	+	rs9284387	0	0	genomic	by-cluster	unknown	1									chr18	102133	102134	C
+18	112227	112228	snp	G	A	+	rs36147402	0	0	genomic	unknown	unknown	1									chr18	102227	102228	G
+18	112259	112260	snp	T	G	+	rs9303702	0	0	genomic	by-cluster,by-2hit-2allele	unknown	1									chr18	102259	102260	T
+18	112261	112262	snp	T	C	+	rs12326520	0	0	genomic	unknown	unknown	1									chr18	102261	102262	T
+18	112268	112269	snp	T	C	+	rs4278826	0	0	genomic	unknown	unknown	1									chr18	102268	102269	T
+18	112285	112286	snp	A	G	+	rs9284388;rs71245785	0	0	genomic	by-cluster,by-2hit-2allele	unknown	1									chr18	102285	102286	A
+18	112365	112366	snp	T	C	+	rs4490076	0	0	genomic	by-cluster	unknown	1									chr18	102365	102366	T
+18	112401	112402	snp	A	C	+	rs11080396	0	0	genomic	unknown	unknown	1									chr18	102401	102402	A
+18	112501	112502	snp	G	A	+	rs73362362	0	0	genomic	by-1000genomes	unknown	1									chr18	102501	102502	G
+18	112534	112535	snp	G	A	+	rs9284390	0.304501	0.243987	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr18	102534	102535	G
+18	112550	112551	snp	C	T	+	rs28380248	0	0	genomic	unknown	unknown	1									chr18	102550	102551	C
+18	112932	112933	snp	A	G	+	rs28636010	0	0	genomic	unknown	unknown	1									chr18	102932	102933	A
+18	112974	112975	snp	G	A	+	rs28607664	0	0	genomic	unknown	unknown	1									chr18	102974	102975	G
+18	112993	112994	snp	G	A	+	rs28591349	0	0	genomic	unknown	unknown	1									chr18	102993	102994	G
+18	113113	113114	snp	G	T	+	rs28568424	0	0	genomic	unknown	unknown	1									chr18	103113	103114	G
+18	113134	113135	snp	G	A	+	rs28569131	0	0	genomic	unknown	unknown	1									chr18	103134	103135	G
+18	113179	113179	ins		A	+	rs57827168	0	0	genomic	unknown	unknown	1									chr18	103179	103179	
+18	113184	113184	ins		T	+	rs56153514	0	0	genomic	unknown	unknown	1									chr18	103184	103184	
+18	113196	113197	snp	A	T	+	rs56397421	0	0	genomic	unknown	unknown	1									chr18	103196	103197	A
+18	113197	113197	ins		TTATATATATAT	+	rs61133322	0	0	genomic	unknown	unknown	1									chr18	103197	103197	
+18	113197	113198	snp	A	T	+	rs62073481	0	0	genomic	unknown	unknown	1									chr18	103197	103198	A
+18	113198	113198	ins		T	+	rs58663012	0	0	genomic	unknown	unknown	1									chr18	103198	103198	
+18	113198	113199	snp	A	T	+	rs56283580	0	0	genomic	unknown	unknown	1									chr18	103198	103199	A
+18	113203	113203	ins		A	+	rs56195834	0	0	genomic	unknown	unknown	1									chr18	103203	103203	
+18	113206	113206	ins		T	+	rs56154918	0	0	genomic	unknown	unknown	1									chr18	103206	103206	
+18	113212	113212	ins		TATAT	+	rs60718975	0	0	genomic	unknown	unknown	1									chr18	103212	103212	
+18	113216	113216	ins		GT	+	rs59958832	0	0	genomic	unknown	unknown	1									chr18	103216	103216	
+18	113232	113232	ins		ATA	+	rs55751881	0	0	genomic	unknown	unknown	1									chr18	103232	103232	
+18	113233	113233	ins		ATA	+	rs71801956	0	0	genomic	unknown	unknown	1									chr18	103233	103233	
+18	113243	113244	snp	A	T	+	rs11874144	0	0	genomic	unknown	unknown	1									chr18	103243	103244	A
+18	113254	113255	snp	T	A	+	rs56231939	0	0	genomic	unknown	unknown	1									chr18	103254	103255	T
+18	113264	113265	snp	G	C	+	rs11876561	0	0	genomic	unknown	unknown	1									chr18	103264	103265	G
+18	113300	113301	snp	G	A	+	rs56300502	0	0	genomic	unknown	unknown	1									chr18	103300	103301	G
+18	113306	113307	snp	C	T	+	rs55885746	0	0	genomic	by-1000genomes	unknown	1									chr18	103306	103307	C
+18	113307	113308	snp	A	G	+	rs28459541	0	0	genomic	unknown	unknown	1									chr18	103307	103308	A
+18	113310	113311	snp	C	G	+	rs11872956	0	0	genomic	unknown	unknown	1									chr18	103310	103311	C
+18	113536	113537	snp	G	A	+	rs8091390	0	0	genomic	unknown	unknown	1									chr18	103536	103537	G
+18	113581	113582	snp	C	T	+	rs28526113	0	0	genomic	unknown	unknown	1									chr18	103581	103582	C
+18	113597	113598	snp	A	G	+	rs28476664	0	0	genomic	unknown	unknown	1									chr18	103597	103598	A
+18	113612	113613	snp	T	C	+	rs8098887	0	0	genomic	unknown	unknown	1									chr18	103612	103613	T
+18	113670	113671	snp	G	A	+	rs8091568;rs72634352	0	0	genomic	unknown	unknown	1									chr18	103670	103671	G
+18	113728	113729	snp	A	C	+	rs8094825	0	0	genomic	unknown	unknown	1									chr18	103728	103729	A
+18	113764	113765	snp	A	G	+	rs8094852	0	0	genomic	unknown	unknown	1									chr18	103764	103765	A
+18	113899	113900	snp	T	C	+	rs8099355	0	0	genomic	unknown	unknown	1									chr18	103899	103900	T
+18	114084	114085	snp	G	T	+	rs8095486	0	0	genomic	by-cluster	unknown	1									chr18	104084	104085	G
+18	114130	114131	snp	C	T	+	rs8092020	0	0	genomic	unknown	unknown	1									chr18	104130	104131	C
+18	114278	114279	snp	G	A	+	rs73362366	0	0	genomic	by-1000genomes	unknown	2									chr18	104278	104279	G
+18	114531	114532	snp	A	G	-	rs35077728	0	0	genomic	unknown	unknown	2									chr18	104531	104532	A
+18	114574	114575	del	A		-	rs60294950	0	0	genomic	unknown	unknown	2									chr18	104574	104575	A
+18	114574	114578	del	AAAA		-	rs71369888	0	0	genomic	unknown	unknown	2									chr18	104574	104578	AAAA
+18	114612	114613	snp	A	G	-	rs71369887	0	0	genomic	unknown	unknown	2									chr18	104612	104613	A
+18	114746	114747	snp	A	C	-	rs2847100;rs3914053	0	0	genomic	by-2hit-2allele	near-gene-5	1									chr18	104746	104747	A
+18	114861	114862	snp	G	A	-	rs2847099	0	0	genomic	unknown	unknown	2									chr18	104861	104862	G
+18	114984	114985	snp	C	G	+	rs4095320	0.369846	0.219401	genomic	by-frequency	unknown	2									chr18	104984	104985	C
+18	115107	115108	snp	C	T	-	rs2847098	0	0	genomic	unknown	unknown	2									chr18	105107	105108	C
+18	115172	115173	snp	G	A	-	rs3907851	0	0	genomic	unknown	unknown	2									chr18	105172	105173	G
+18	115217	115218	snp	A	G	-	rs2847097	0	0	genomic	unknown	unknown	2									chr18	105217	105218	A
+18	115407	115408	snp	G	T	+	rs4530213	0	0	genomic	by-1000genomes	unknown	2									chr18	105407	105408	G
+18	115425	115426	snp	G	A	+	rs4007699	0	0	genomic	unknown	unknown	2									chr18	105425	105426	G
+18	115430	115431	snp	A	G	+	rs2663689	0	0	genomic	by-2hit-2allele	near-gene-5	1									chr18	105430	105431	A
+18	115432	115433	snp	T	A	+	rs2663690	0	0	genomic	by-2hit-2allele,by-hapmap	near-gene-5	1									chr18	105432	105433	T
+18	115573	115574	snp	G	A	-	rs2847096	0.447071	0.153828	genomic	by-frequency,by-2hit-2allele,by-hapmap	near-gene-5	1									chr18	105573	105574	G
+18	115644	115645	snp	C	A	+	rs2663691	0	0	genomic	by-2hit-2allele	near-gene-5	1									chr18	105644	105645	C
+18	115889	115890	snp	A	T	+	rs9959344	0	0	genomic	unknown	near-gene-5	1									chr18	105889	105890	A
+18	116022	116023	snp	C	T	+	rs16964161	0	0	genomic	unknown	unknown	2									chr18	106022	106023	C
+18	116023	116024	snp	G	A	-	rs2847095	0	0	genomic	unknown	near-gene-5	1									chr18	106023	106024	G
+22	17727124	17727125	snp	A	G	+	rs12483926	0.47637	0.106096	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr22	16107124	16107125	A
+22	17727647	17727648	snp	C	T	+	rs4819982	0.340452	0.233063	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap	unknown	1									chr22	16107647	16107648	C
+22	17727970	17727971	snp	C	T	+	rs5748986	0	0	genomic	unknown	unknown	1									chr22	16107970	16107971	C
+22	17728037	17728038	snp	C	T	+	rs62236468	0	0	genomic	unknown	unknown	1									chr22	16108037	16108038	C
+22	17728071	17728071	ins		A	+	rs11435298	0	0	genomic	unknown	unknown	1									chr22	16108071	16108071	
+22	17728072	17728072	ins		A	+	rs35623111	0	0	genomic	unknown	unknown	1									chr22	16108072	16108072	
+22	17728086	17728087	snp	G	A	+	rs4819983	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	unknown	1									chr22	16108086	16108087	G
+22	17728091	17728092	snp	A	G	+	rs5994220	0	0	genomic	unknown	unknown	1									chr22	16108091	16108092	A
+22	17728097	17728117	del	GAAAAAAAAGAAAAAGAAAA		+	rs11271507	0	0	genomic	unknown	unknown	1									chr22	16108097	16108117	GAAAAAAAAGAAAAAGAAAA
+22	17728100	17728101	snp	A	G	+	rs5994221	0	0	genomic	unknown	unknown	1									chr22	16108100	16108101	A
+22	17728113	17728114	snp	A	C	+	rs5994222	0	0	genomic	unknown	unknown	1									chr22	16108113	16108114	A
+22	17728119	17728120	snp	C	A	+	rs5747040	0	0	genomic	unknown	unknown	1									chr22	16108119	16108120	C
+22	17728245	17728246	snp	G	A	+	rs62236469	0	0	genomic	unknown	unknown	1									chr22	16108245	16108246	G
+22	17728289	17728290	snp	A	G	+	rs59441031	0	0	genomic	unknown	unknown	1									chr22	16108289	16108290	A
+22	17728522	17728523	snp	A	G	+	rs5748987	0	0	genomic	by-cluster,by-2hit-2allele,by-1000genomes	unknown	1									chr22	16108522	16108523	A
+22	17728565	17728566	snp	G	C	+	rs73876677	0	0	genomic	unknown	unknown	1									chr22	16108565	16108566	G
+22	17728655	17728656	snp	G	A	+	rs9606665	0	0	genomic	unknown	unknown	1									chr22	16108655	16108656	G
+22	17728831	17728832	snp	T	G	+	rs8138422	0.113995	0.209768	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap,by-1000genomes	unknown	1									chr22	16108831	16108832	T
+22	17728895	17728896	snp	C	T	+	rs62236470	0	0	genomic	unknown	unknown	1									chr22	16108895	16108896	C
+22	17728899	17728900	snp	G	C	+	rs62236471	0	0	genomic	unknown	unknown	1									chr22	16108899	16108900	G
+22	17728936	17728937	snp	C	G	+	rs62236472	0	0	genomic	unknown	unknown	1									chr22	16108936	16108937	C
+22	17728947	17728948	snp	C	A	+	rs62236473	0	0	genomic	unknown	unknown	1									chr22	16108947	16108948	C
+22	17728984	17728985	snp	A	C	+	rs62236474	0	0	genomic	unknown	unknown	1									chr22	16108984	16108985	A
+22	17728990	17728991	snp	C	A	+	rs62236475	0	0	genomic	unknown	unknown	1									chr22	16108990	16108991	C
+22	17728997	17728998	snp	T	C	+	rs62236476	0	0	genomic	unknown	unknown	1									chr22	16108997	16108998	T
+22	17729043	17729044	snp	T	G	+	rs8141904	0.232046	0.249354	genomic	by-cluster,by-frequency,by-2hit-2allele,by-hapmap	unknown	1									chr22	16109043	16109044	T
+22	17729047	17729048	snp	C	A	+	rs8139589	0	0	genomic	unknown	unknown	1									chr22	16109047	16109048	C
+22	17729315	17729316	snp	C	G	+	rs5748988	0	0	genomic	by-cluster,by-2hit-2allele	unknown	1									chr22	16109315	16109316	C
+22	17729346	17729346	ins		A	-	rs71284925	0	0	genomic	unknown	unknown	1									chr22	16109346	16109346	
+22	17729695	17729696	snp	A	T	+	rs8138822	0	0	genomic	unknown	unknown	1									chr22	16109695	16109696	A
+22	17729705	17729706	snp	G	A	+	rs62236477	0	0	genomic	by-1000genomes	unknown	1									chr22	16109705	16109706	G
+22	17730680	17730681	snp	G	C	+	rs5994223	0	0	genomic	unknown	unknown	1									chr22	16110680	16110681	G
+22	17730702	17730703	snp	C	T	+	rs5994224	0	0	genomic	unknown	unknown	1									chr22	16110702	16110703	C
+22	17730716	17731035	del	ATTGAGACTCTGTCTCAATAAAAAATAAAAATATTGGCCGGGTGGCTCACGCTTGTAATCCCAGCACTTTGGGAGGCTGAGGCAAGTGGATCACCTAAGGTCAGGAGTTCAAGACCAGCCTGGCCAATATGGTGAAATCCCATCTCTATTAAAAATACAAAAATTAGCCGGGCATGGTGGTGCGTGCCTGTAGTCTCAGCTACTTGGGAGGCTGAGGCAGGAGAATCACTTGAACCTGGAAGGTAGAGGTTGCAGTGAGCCGAGATGGCACCACTGCACTCCAGCCTGGGCAACAGTGCGACACTCCGTCTCAAAAAAT	,(LARGEDELETION)	+	rs10525985,rs10525985	0,0	0	genomic	unknown	unknown	1									chr22	16110716	16111035	ATTGAGACTCTGTCTCAATAAAAAATAAAAATATTGGCCGGGTGGCTCACGCTTGTAATCCCAGCACTTTGGGAGGCTGAGGCAAGTGGATCACCTAAGGTCAGGAGTTCAAGACCAGCCTGGCCAATATGGTGAAATCCCATCTCTATTAAAAATACAAAAATTAGCCGGGCATGGTGGTGCGTGCCTGTAGTCTCAGCTACTTGGGAGGCTGAGGCAGGAGAATCACTTGAACCTGGAAGGTAGAGGTTGCAGTGAGCCGAGATGGCACCACTGCACTCCAGCCTGGGCAACAGTGCGACACTCCGTCTCAAAAAAT
+22	17730753	17730753	ins		C	+	rs35158257	0	0	genomic	unknown	unknown	1									chr22	16110753	16110753	
+22	17730884	17730885	snp	C	T	+	rs13055060	0	0	genomic	unknown	unknown	1									chr22	16110884	16110885	C
+M	14152	14153	snp	A	G	+	rs28357669	0	0	genomic	by-cluster	unknown	1									chrM	14152	14153	A
+M	14167	14168	snp	C	T	+	rs28357670	0.018866	0.095274	genomic	by-cluster,by-frequency	unknown	1									chrM	14167	14168	C
+M	14178	14179	snp	T	C	+	rs28357671	0.099274	0.199454	genomic	by-cluster,by-frequency	unknown	1									chrM	14178	14179	T
+M	14199	14200	snp	T	G	+	rs2857288	0	0	genomic	unknown	unknown	1									chrM	14199	14200	T
+M	14203	14204	snp	A	G	+	rs34657896	0	0	genomic	unknown	unknown	1									chrM	14203	14204	A
+M	14212	14213	snp	C	T	+	rs28357672	0	0	genomic	by-cluster	unknown	1									chrM	14212	14213	C
+M	14218	14219	snp	T	C	+	rs28553869	0	0	genomic	unknown	unknown	1									chrM	14218	14219	T
+M	14233	14234	snp	A	G	+	rs3915611	0	0	genomic	by-cluster	unknown	1									chrM	14233	14234	A
+M	14272	14273	snp	C	G	+	rs2853814	0	0	genomic	unknown	unknown	1									chrM	14272	14273	C
+M	14284	14285	snp	C	T	+	rs28357673	0.018866	0.095274	genomic	by-cluster,by-frequency	unknown	1									chrM	14284	14285	C
+M	14308	14309	snp	T	C	+	rs28357674	0.046485	0.145196	genomic	by-cluster,by-frequency	unknown	1									chrM	14308	14309	T
+M	14318	14319	snp	T	C	+	rs28357675	0	0	genomic	unknown	unknown	1									chrM	14318	14319	T
+M	14365	14366	snp	C	G	+	rs2853815	0	0	genomic	unknown	unknown	1									chrM	14365	14366	C
+M	14368	14369	snp	C	G	+	rs2853816	0	0	genomic	unknown	unknown	1									chrM	14368	14369	C
+M	14377	14378	snp	C	A	+	rs56407536	0	0	genomic	unknown	unknown	1									chrM	14377	14378	C
+M	14470	14471	snp	T	C	+	rs3135030	0	0	genomic	by-cluster	unknown	1									chrM	14470	14471	T
+M	14560	14561	snp	G	A	+	rs28357676	0.499717	0.011901	genomic	by-cluster,by-frequency	unknown	1									chrM	14560	14561	G
+M	14566	14567	snp	A	G	+	rs28357677	0.124444	0.216185	genomic	by-cluster,by-frequency	unknown	1									chrM	14566	14567	A
+M	14580	14581	snp	G	A	+	rs28496897	0	0	genomic	by-cluster	unknown	1									chrM	14580	14581	G
+M	14582	14583	snp	A	G	+	rs41354845	0	0	genomic	by-cluster	unknown	1									chrM	14582	14583	A
+M	14668	14669	snp	C	T	+	rs28357678	0.18	0.24	genomic	by-cluster,by-frequency	unknown	1									chrM	14668	14669	C
+M	14766	14767	snp	T	C	+	rs3135031	0	0	genomic	by-cluster	unknown	1									chrM	14766	14767	T
+M	14769	14770	snp	A	G	+	rs28357679	0	0	genomic	unknown	unknown	1									chrM	14769	14770	A
+M	14783	14784	snp	T	C	+	rs28357680	0	0	genomic	by-cluster	unknown	1									chrM	14783	14784	T
+M	14793	14794	snp	A	G	+	rs2853504	0	0	genomic	unknown	unknown	1									chrM	14793	14794	A
+M	14798	14799	snp	T	C	+	rs28357681	0	0	genomic	by-cluster	unknown	1									chrM	14798	14799	T
+M	14861	14862	snp	G	A	+	rs2853505	0	0	genomic	by-cluster	unknown	1									chrM	14861	14862	G
+M	14871	14872	snp	T	C	+	rs28660155	0	0	genomic	unknown	unknown	1									chrM	14871	14872	T
+M	14905	14906	snp	A	G	+	rs28357682	0.234592	0.249525	genomic	by-cluster,by-frequency	unknown	1									chrM	14905	14906	A
+M	14911	14912	snp	C	T	+	rs28357683	0.014184	0.08301	genomic	by-cluster,by-frequency	unknown	1									chrM	14911	14912	C
+M	14916	14917	snp	C	A	+	rs56787243	0	0	genomic	unknown	unknown	1									chrM	14916	14917	C
+M	15043	15044	snp	G	A	+	rs28357684;rs56038008	0.391111	0.206368	genomic	by-cluster,by-frequency	unknown	1									chrM	15043	15044	G
+M	15110	15111	snp	G	A	+	rs28357685	0.05551	0.157079	genomic	by-cluster,by-frequency	unknown	1									chrM	15110	15111	G
+M	15115	15116	snp	T	C	+	rs28357686	0.099274	0.199454	genomic	by-cluster,by-frequency	unknown	1									chrM	15115	15116	T
+M	15136	15137	snp	C	T	+	rs2854124	0	0	genomic	by-cluster	unknown	1									chrM	15136	15137	C
+M	15204	15205	snp	T	C	+	rs28357687	0	0	genomic	by-cluster	unknown	1									chrM	15204	15205	T
+M	15217	15218	snp	G	A	+	rs28357368	0.064444	0.167538	genomic	by-cluster,by-frequency	unknown	1									chrM	15217	15218	G
+M	15218	15219	snp	A	G	+	rs2853506	0	0	genomic	by-cluster	unknown	1									chrM	15218	15219	A
+M	15223	15224	snp	C	T	+	rs3134742	0	0	genomic	unknown	unknown	1									chrM	15223	15224	C
+M	15244	15245	snp	A	G	+	rs28357369	0.028163	0.115276	genomic	by-cluster,by-frequency	unknown	1									chrM	15244	15245	A
+M	15257	15258	snp	G	A	+	rs41518645	0	0	genomic	by-cluster	unknown	1									chrM	15257	15258	G
+M	15301	15302	snp	A	G	+	rs28573847	0	0	genomic	by-cluster	unknown	1									chrM	15301	15302	A
+M	15311	15312	snp	A	G	+	rs35070048	0	0	genomic	unknown	unknown	1									chrM	15311	15312	A
+M	15317	15318	snp	G	A	+	rs2853507	0	0	genomic	unknown	unknown	1									chrM	15317	15318	G
+M	15326	15327	snp	G	A	+	rs2853508	0.3318	0.236239	cDNA	by-frequency	unknown	1									chrM	15326	15327	G
+M	15431	15432	snp	G	A	+	rs2853509	0	0	genomic	by-cluster	unknown	1									chrM	15431	15432	G
+M	15452	15453	snp	C	A	+	rs3088309	0.3078	0.243227	cDNA	by-cluster,by-frequency	unknown	1									chrM	15452	15453	C
+M	15487	15488	snp	A	T	+	rs28357370	0.059989	0.162468	genomic	by-cluster,by-frequency	unknown	1									chrM	15487	15488	A
+M	15508	15509	snp	C	T	+	rs3134743	0	0	genomic	unknown	unknown	1									chrM	15508	15509	C
+M	15535	15536	snp	C	T	+	rs28357371	0	0	genomic	by-cluster	unknown	1									chrM	15535	15536	C
+M	15607	15608	snp	A	G	+	rs28357372	0	0	genomic	unknown	unknown	1									chrM	15607	15608	A
+M	15629	15630	snp	T	C	+	rs28357373	0.009478	0.068186	genomic	by-cluster,by-frequency	unknown	1									chrM	15629	15630	T
+M	15662	15663	snp	A	G	+	rs3094280	0	0	genomic	unknown	unknown	1									chrM	15662	15663	A
+M	15670	15671	snp	T	C	+	rs28357374	0.032778	0.123752	genomic	by-cluster,by-frequency	unknown	1									chrM	15670	15671	T
+M	15758	15759	snp	A	G	+	rs41337244	0	0	genomic	by-cluster	unknown	1									chrM	15758	15759	A
+M	15784	15785	snp	T	C	+	rs28357375	0.152778	0.230321	genomic	by-cluster,by-frequency	unknown	1									chrM	15784	15785	T
+M	15824	15825	snp	A	G	+	rs28357376	0.073288	0.176841	genomic	by-cluster,by-frequency	unknown	1									chrM	15824	15825	A
+M	15833	15834	snp	C	T	+	rs41504845	0	0	genomic	by-cluster	unknown	1									chrM	15833	15834	C
+M	15851	15852	snp	A	G	+	rs3094281	0	0	genomic	unknown	unknown	1									chrM	15851	15852	A
+M	15884	15885	snp	G	A	+	rs28617642	0	0	genomic	unknown	unknown	1									chrM	15884	15885	G
+M	15891	15892	snp	C	T	+	rs72619365	0	0	genomic	unknown	unknown	1									chrM	15891	15892	C
+M	15904	15905	snp	C	T	+	rs35788393	0	0	genomic	by-cluster	unknown	1									chrM	15904	15905	C
+M	15907	15908	snp	A	G	+	rs41383248	0	0	genomic	by-cluster	unknown	1									chrM	15907	15908	A
+M	15924	15925	snp	A	G	+	rs2853510	0	0	genomic	by-cluster	unknown	1									chrM	15924	15925	A
+M	15927	15928	snp	G	A	+	rs3094282	0	0	genomic	unknown	unknown	1									chrM	15927	15928	G
+M	15928	15929	snp	G	A	+	rs28357377	0.068878	0.172321	genomic	by-cluster,by-frequency	unknown	1									chrM	15928	15929	G
+M	15930	15931	snp	G	A	+	rs41441949	0	0	genomic	by-cluster	unknown	1									chrM	15930	15931	G
+M	15932	15933	snp	C	T	+	rs28601282	0	0	genomic	unknown	unknown	1									chrM	15932	15933	C
+M	15942	15943	snp	T	C	+	rs28535186	0	0	genomic	by-cluster	unknown	1									chrM	15942	15943	T
+M	15954	15955	snp	A	G	+	rs28561372	0	0	genomic	by-cluster	unknown	1									chrM	15954	15955	A
+M	16023	16024	snp	G	A	+	rs55934780	0	0	genomic	unknown	unknown	1									chrM	16023	16024	G
+M	16093	16094	snp	T	C	+	rs2853511	0	0	genomic	by-cluster	unknown	1									chrM	16093	16094	T
+M	16111	16112	snp	C	T	+	rs35315169	0	0	genomic	unknown	unknown	1									chrM	16111	16112	C
+M	16129	16130	snp	G	A	+	rs41534744	0	0	genomic	by-cluster	unknown	1									chrM	16129	16130	G
+M	16140	16141	snp	T	C	+	rs3134562	0	0	genomic	unknown	unknown	1									chrM	16140	16141	T
+M	16144	16145	snp	T	C	+	rs41505649	0	0	genomic	by-cluster	unknown	1									chrM	16144	16145	T
+M	16145	16146	snp	G	A	+	rs41419246	0	0	genomic	by-cluster	unknown	1									chrM	16145	16146	G
+M	16148	16149	snp	C	T	+	rs2854125	0	0	genomic	by-cluster	unknown	1									chrM	16148	16149	C
+M	16153	16154	snp	G	A	+	rs2853512	0	0	genomic	unknown	unknown	1									chrM	16153	16154	G
+M	16162	16163	snp	A	G	+	rs41466049	0	0	genomic	by-cluster	unknown	1									chrM	16162	16163	A
+M	16163	16164	snp	A	G	+	rs41479950	0	0	genomic	by-cluster	unknown	1									chrM	16163	16164	A
+M	16172	16173	snp	C	T	+	rs2853817	0	0	genomic	by-cluster	unknown	1									chrM	16172	16173	C
+M	16179	16180	snp	C	T	+	rs28509370	0	0	genomic	unknown	unknown	1									chrM	16179	16180	C
+M	16183	16184	del	C		+	rs66928323	0	0	genomic	unknown	unknown	1									chrM	16183	16184	C
+M	16183	16184	snp	C	A	+	rs41521448	0	0	genomic	by-cluster	unknown	1									chrM	16183	16184	C
+M	16183	16185	sub	CC	A,C	+	rs28671493,rs28671493	0,0	0	genomic	by-cluster	unknown	1									chrM	16183	16185	CC
+M	16185	16186	snp	C	T	+	rs34100702	0	0	genomic	unknown	unknown	1									chrM	16185	16186	C
+M	16189	16190	snp	C	T	+	rs55749223	0	0	genomic	unknown	unknown	1									chrM	16189	16190	C
+M	16190	16191	snp	C	T	+	rs28693675	0	0	genomic	unknown	unknown	1									chrM	16190	16191	C
+M	16194	16195	del	C		+	rs11476271	0	0	genomic	unknown	unknown	1									chrM	16194	16195	C
+M	16218	16219	snp	T	C	+	rs35134837	0	0	genomic	unknown	unknown	1									chrM	16218	16219	T
+M	16224	16225	snp	T	C	+	rs2853513	0	0	genomic	by-cluster	unknown	1									chrM	16224	16225	T
+M	16231	16232	snp	A	G	+	rs2853514	0	0	genomic	unknown	unknown	1									chrM	16231	16232	A
+M	16257	16258	snp	C	T	+	rs2857289	0	0	genomic	by-cluster	unknown	1									chrM	16257	16258	C
+M	16271	16272	snp	C	T	+	rs2857290	0	0	genomic	by-cluster	unknown	1									chrM	16271	16272	C
+M	16279	16280	snp	C	T	+	rs41458645	0	0	genomic	by-cluster	unknown	1									chrM	16279	16280	C
+M	16291	16292	snp	C	T	+	rs34524463	0	0	genomic	unknown	unknown	1									chrM	16291	16292	C
+M	16292	16293	snp	C	T	+	rs35302802	0	0	genomic	unknown	unknown	1									chrM	16292	16293	C
+M	16296	16297	snp	C	T	+	rs72619366	0	0	genomic	unknown	unknown	1									chrM	16296	16297	C
+M	16312	16313	snp	T	C	+	rs34799580	0	0	genomic	unknown	unknown	1									chrM	16312	16313	T
+M	16320	16321	snp	G	A	+	rs35105996	0	0	genomic	unknown	unknown	1									chrM	16320	16321	G
+M	16321	16322	snp	T	C	+	rs62581338	0	0	genomic	unknown	unknown	1									chrM	16321	16322	T
+M	16326	16327	snp	T	C	+	rs35452858	0	0	genomic	unknown	unknown	1									chrM	16326	16327	T
+M	16328	16329	snp	C	T	+	rs41355449	0	0	genomic	by-cluster	unknown	1									chrM	16328	16329	C
+M	16357	16358	snp	T	C	+	rs62581340	0	0	genomic	unknown	unknown	1									chrM	16357	16358	T
+M	16363	16364	snp	T	C	+	rs62581341	0	0	genomic	unknown	unknown	1									chrM	16363	16364	T
+M	16391	16392	snp	G	A	+	rs41378955	0	0	genomic	by-cluster	unknown	1									chrM	16391	16392	G
+M	16392	16393	snp	G	A	+	rs34301918	0	0	genomic	by-cluster	unknown	1									chrM	16392	16393	G
+M	16520	16521	snp	C	T	+	rs3937033	0	0	genomic	by-cluster	unknown	1									chrM	16520	16521	C
+X	380477	380478	snp	A	G	+	rs7059338	0	0	genomic	unknown	unknown	3									chrX	300477	300478	A
+X	380868	380869	snp	G	A	+	rs73180008	0	0	genomic	by-1000genomes	unknown	3									chrX	300868	300869	G
+X	380951	380952	snp	T	C	+	rs7473898	0	0	genomic	unknown	unknown	3									chrX	300951	300952	T
+X	380975	380976	snp	C	T	+	rs28429222	0	0	genomic	unknown	unknown	3									chrX	300975	300976	C
+X	381298	381299	snp	C	T	+	rs73180009	0	0	genomic	by-1000genomes	unknown	3									chrX	301298	301299	C
+X	381479	381480	snp	C	G	+	rs66923619	0	0	genomic	by-1000genomes	unknown	3									chrX	301479	301480	C
+X	381524	381525	snp	T	C	+	rs4986490;rs67692535	0	0	genomic	by-cluster	unknown	3									chrX	301524	301525	T
+X	381610	381611	snp	C	G	+	rs4986491;rs67779246	0	0	genomic	unknown	unknown	3									chrX	301610	301611	C
+X	381726	381727	snp	T	A	+	rs73617731	0	0	genomic	unknown	unknown	3									chrX	301726	301727	T
+X	381771	381772	snp	G	A	+	rs4986492	0.492262	0.061718	genomic	by-frequency,by-2hit-2allele,by-hapmap	unknown	3									chrX	301771	301772	G
+X	381791	381792	snp	G	T	+	rs55659047	0	0	genomic	unknown	unknown	3									chrX	301791	301792	G
+X	382110	382111	snp	G	T	+	rs28548210	0	0	genomic	unknown	unknown	3									chrX	302110	302111	G
+X	382124	382125	snp	A	C	+	rs5950821	0	0	genomic	unknown	unknown	3									chrX	302124	302125	A
+X	382275	382276	del	G		-	rs35720102	0	0	genomic	unknown	unknown	3									chrX	302275	302276	G
+X	382287	382288	snp	C	T	+	rs28512270	0	0	genomic	unknown	unknown	3									chrX	302287	302288	C
+X	382358	382358	ins		AAT	+	rs72462146	0	0	genomic	unknown	unknown	3									chrX	302358	302358	
+X	382359	382359	ins		ATA	+	rs72208091	0	0	genomic	unknown	unknown	3									chrX	302359	302359	
+X	382368	382369	del	T	,TAATAATAATAATAA	+	rs72007530,rs72007530	0,0	0	genomic	unknown	unknown	3									chrX	302368	302369	T
+X	382368	382383	del	TAATAATAATAATAA		+	rs60180778	0	0	genomic	unknown	unknown	3									chrX	302368	302383	TAATAATAATAATAA
+X	382375	382375	ins		TAATAATAATAA	+	rs72287130	0	0	genomic	unknown	unknown	3									chrX	302375	302375	
+X	382376	382376	ins		AATAATAATAAT	+	rs72071536	0	0	genomic	unknown	unknown	3									chrX	302376	302376	
+X	382383	382383	ins		TAATAATAA	+	rs5901131	0	0	genomic	unknown	unknown	3									chrX	302383	302383	
+X	382384	382384	ins		TAA	+	rs67319779	0	0	genomic	unknown	unknown	3									chrX	302384	302384	
+X	382518	382519	snp	C	A	+	rs28479146;rs71189054	0	0	genomic	by-cluster	unknown	3									chrX	302518	302519	C
+X	382582	382583	snp	G	A	-	rs34081149;rs71189055	0	0	genomic	unknown	unknown	3									chrX	302582	302583	G
+X	382602	382603	snp	G	C	+	rs28417401;rs71189056	0	0	genomic	unknown	unknown	3									chrX	302602	302603	G
+X	383119	383120	snp	G	A	+	rs73617732	0	0	genomic	unknown	unknown	3									chrX	303119	303120	G
+X	383209	383210	del	T		+	rs71276232	0	0	genomic	unknown	unknown	3									chrX	303209	303210	T
+X	383228	383229	del	T		-	rs34628174	0	0	genomic	unknown	unknown	3									chrX	303228	303229	T
+X	383255	383256	snp	A	G	+	rs5950822;rs71189057	0	0	genomic	unknown	unknown	3									chrX	303255	303256	A
+X	383350	383351	snp	A	G	+	rs58657802	0	0	genomic	unknown	unknown	3									chrX	303350	303351	A
+X	383515	383516	snp	C	T	+	rs59036550;rs71189058	0	0	genomic	unknown	unknown	3									chrX	303515	303516	C
+X	383608	383609	snp	C	T	+	rs5991332	0	0	genomic	unknown	unknown	3									chrX	303608	303609	C
+X	383815	383816	del	T		+	rs71276233	0	0	genomic	unknown	unknown	3									chrX	303815	303816	T
+X	384112	384112	ins		T	+	rs71276234	0	0	genomic	unknown	unknown	3									chrX	304112	304112	
+X	384197	384198	snp	A	G	+	rs73617733	0	0	genomic	unknown	unknown	3									chrX	304197	304198	A

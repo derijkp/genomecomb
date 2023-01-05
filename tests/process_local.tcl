@@ -1,6 +1,7 @@
 #!/bin/sh
 # the next line restarts using wish \
 exec tclsh "$0" "$@"
+# small (limited) process_sample and process_project tests using only data directly distributed with genomecomb
 
 source tools.tcl
 
@@ -150,12 +151,10 @@ test process_project {process_project bwa distrreg multiple fastq -maxfastqdistr
 
 test process_project {process_project include msamples directory (analyse, but not include in compar)} {
 	test_cleantmp
-	file mkdir tmp/samples/NA19240m/fastq
-	mklink data/seq_R1.fq.gz tmp/samples/NA19240m/fastq/seq_R1.fq.gz
-	mklink data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq_R2.fq.gz
-	file mkdir tmp/msamples/msample/fastq
-	mklink data/seq_R1.fq.gz tmp/msamples/msample/fastq/seq_R1.fq.gz
-	mklink data/seq_R2.fq.gz tmp/msamples/msample/fastq/seq_R2.fq.gz
+	cg project_addsample -transfer rel tmp NA19240m data/seq_R1.fq.gz data/seq_R2.fq.gz
+	cg project_addsample -transfer rel tmp msample data/seq_R1.fq.gz data/seq_R2.fq.gz
+	mkdir tmp/msamples
+	file rename tmp/samples/msample tmp/msamples/msample
 	cg process_project -stack 1 \
 		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
 		-distrreg chr -dbdir $::refseqdir/hg19 \
