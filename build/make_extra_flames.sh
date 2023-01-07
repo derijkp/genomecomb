@@ -156,6 +156,11 @@ cd /build/flames-$flamesversion
 wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred
 wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gff3ToGenePred
 
+chmod ugo+x gtfToGenePred
+chmod ugo+x gff3ToGenePred
+mv gtfToGenePred bin
+mv gff3ToGenePred bin
+
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"

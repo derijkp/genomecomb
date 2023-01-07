@@ -19,8 +19,12 @@ proc version {item {minversion {}}} {
 			dbdir {
 				if {![catch {dbdir} dbdir] && [gzfile $dbdir/README*.txt] ne ""} {
 					set readme [gzfile $dbdir/README*.txt]
-					set temp [file_read $readme]
-					regexp {version: ([^\n]+)} $temp temp _versions($item)
+					if {[file exists $readme]} {
+						set temp [file_read $readme]
+						regexp {version: ([^\n]+)} $temp temp _versions($item)
+					} else {
+						set _versions($item) ?
+					}
 				}
 			}
 			samtools {

@@ -56,6 +56,19 @@ proc refseq {{refseq {}} {dbdir {}}} {
 	return [file_absolute $refseq]
 }
 
+proc refdir {{refseq {}} {dbdir {}}} {
+	file dir [refseq $refseq $dbdir]]
+}
+
+proc ref_gtftranscripts refseq {
+	set refdir [refdir $refseq]
+	set reftranscripts [lindex [bsort [glob -nocomplain [file dir $refseq]/extra/*gencode*.gtf]] end]
+	if {$reftranscripts eq ""} {
+		set reftranscripts [lindex [bsort [glob -nocomplain [file dir $refseq]/*.gtf]] end]
+	}
+	return $reftranscripts
+}
+
 proc ref_chrsize {refseq chr} {
 	global genomecomb_chrsizea
 	if {![info exists genomecomb_chrsizea]} {
