@@ -1,61 +1,3 @@
-#proc rnaseqc_getref {} {
-#	set tempdir [tempdir]
-#	wgetfile https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/TOPMed_RNAseq_v2/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
-#	exec gunzip /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf.gz
-#	set gtf /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf
-#	set collapsedgtf /complgen/refseq/hg38/extra/collapsedgene_hg38_gencode.v39.gtf
-#	exec python3 $tempdir/collapse_annotation.py $gtf $collapsedgtf
-#}
-
-#proc rnaseqc_gtf_job {refseq {gtffile {}} {threads 4}} {
-#	upvar job_logdir job_logdir
-#	set refseq [refseq $refseq]
-#	set gtffile [file_absolute $gtffile]
-#	set rnaseqcrefseq $refseq.rnaseqc
-#	if {[file exists $rnaseqcrefseq]} {return $rnaseqcrefseq}
-#	if {[jobtargetexists [list $rnaseqcrefseq] $refseq]} return
-#	job [job_relfile2name rnaseqc_2refseq- $refseq] -deps {
-#		$refseq
-#	} -targets {
-#		$rnaseqcrefseq
-#	} -vars {
-#		refseq rnaseqcrefseq gtffile threads
-#	} -code {
-#		if {[gziscompressed $gtffile]} {
-#			set tempfile [tempfile].gtf
-#			exec cg zcat $gtffile > $tempfile
-#			set gtffile $tempfile
-#		}
-#		file delete -force $rnaseqcrefseq.temp
-#		file mkdir $rnaseqcrefseq.temp
-#		set tail [file tail $refseq]
-#		mklink $refseq $rnaseqcrefseq.temp/$tail
-#		set extraopts {}
-#		if {$gtffile ne ""} {
-#			lappend extraopts --sjdbGTFfile $gtffile
-#		}
-#		set temp [catch_exec rnaseqc \
-#			--runMode genomeGenerate \
-#			--genomeFastaFiles $refseq \
-#			--genomeDir $rnaseqcrefseq.temp \
-#			--runThreadN $threads \
-#			{*}$extraopts \
-#		]
-#		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
-#			error "could not properly index $dep: contains no sequences"
-#		}
-#		file rename -- $target.temp $target
-#	}
-#	return $rnaseqcrefseq
-#}
-#
-#proc cg_rnaseqc_gtf args {
-#	set args [job_init {*}$args]
-#	set return [refseq_rnaseqc_job {*}$args]
-#	job_wait
-#	return $return
-#}
-
 proc count_mem_rnaseqc {mem threads preset} {
 	return 1G
 }
@@ -91,7 +33,7 @@ proc gct2tsv {gct tsv datafield datatype datadescr {idfield geneid} {namefield g
 
 proc count_rnaseqc_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg count_rnaseqc_job {*}$args]"
+	set cmdline [clean_cmdline cg count_rnaseqc {*}$args]
 	set extraopts {}
 	set stranded 1
 	set keepargs $args
@@ -152,7 +94,7 @@ proc count_rnaseqc_job {args} {
 	}
 	if {$resultfile eq ""} {
 		set root [file_rootname $bamtail]
-		set resultfile [file dir $bamfile]/counts-rnaseqc-$root.tsv
+		set resultfile [file dir $bamfile]/gene_counts-rnaseqc-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
@@ -168,7 +110,7 @@ proc count_rnaseqc_job {args} {
 		$refseq
 	} -targets {
 		$resultfile
-		$resultdir/counts_exon-$root.tsv
+		$resultdir/exon_counts-$root.tsv
 		$resultdir/tpm-$root.tsv
 	} -vars {
 		bamfile resultfile extraopts resultdir root rnaseqcdir refseq gtffile
@@ -185,7 +127,7 @@ proc count_rnaseqc_job {args} {
 		gct2tsv $rnaseqcdir/$root.exon_reads.gct $rnaseqcdir/$root.exon_reads.tsv counts Float "exon counts per sample" exon genename
 		gct2tsv $rnaseqcdir/$root.gene_reads.gct $rnaseqcdir/$root.gene_reads.tsv counts Integer "gene counts per sample"
 		gct2tsv $rnaseqcdir/$root.gene_tpm.gct $rnaseqcdir/$root.gene_tpm.tsv tpm Float "transcripts per million"
-		mklink $rnaseqcdir/$root.exon_reads.tsv $resultdir/counts_exon-$root.tsv
+		mklink $rnaseqcdir/$root.exon_reads.tsv $resultdir/exon_counts-$root.tsv
 		mklink $rnaseqcdir/$root.gene_tpm.tsv $resultdir/tpm-$root.tsv
 		mklink $rnaseqcdir/$root.gene_reads.tsv $resultfile
 	}

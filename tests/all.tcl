@@ -2,9 +2,9 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
-# set script [pwd]/all.tcl ; set argv {}
 set script [info script] ; if {$script eq ""} {set script ./t}
 set appdir [file dir [file dir [file normalize $script]]]
+# set script [pwd]/all.tcl ; set appdir [file dir [pwd]] ; set argv {}
 puts "running all tests with script=$script appdir=$appdir argv=$argv"
 if {[inlist $argv testsge]} {
 	puts stderr "testing sge"
@@ -52,6 +52,7 @@ runtests vcf.tcl
 runtests vcf2tsv.tcl
 runtests tsv2vcf.tcl
 runtests compar.tcl
+runtests rna.tcl
 runtests svmulticompar.tcl
 runtests nanopore.tcl
 runtests queries.tcl
@@ -66,16 +67,17 @@ runtests job.tcl
 runtests map.tcl
 runtests sv.tcl
 runtests var.tcl
-# not yet updated
-# runtests meth.tcl
+runtests count.tcl
 
 puts "all tests finished"
 puts "times (seconds):\n[join $::keeptimes \n]"
 testsummarize
 
 # take long time, run separately
+# ./meth.tcl
 # ./process_small.tcl
-# ./process_ont.tcl
+
+# ./process_sv.tcl
 
 # take longer still, run separately on cluster (will be run in ~/genomecomb_giab_testdata)
 # without parameter, the code will only check previous runs (should be run after analysis is finished on the cluster)

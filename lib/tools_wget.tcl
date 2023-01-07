@@ -1,4 +1,4 @@
-proc wgetfile {url {resultfile {}} {force 0}} {
+proc wgetfile {url {resultfile {}} {force 0} {verbose 1}} {
 	if {$resultfile eq ""} {
 		set resultfile [file tail $url]
 	}
@@ -18,8 +18,9 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 			file copy $webcachename $resultfile.temp
 		}
 	} else {
+		if {$verbose} {set out {2>@ stderr}} else {set out {}}
 		if {[catch {
-			exec wget -c --tries=45 -O $resultfile.temp $url 2>@ stderr
+			exec wget -c --no-check-certificate --tries=45 -O $resultfile.temp $url {*}$out
 		} errmsg]} {
 			if {[file size $resultfile.temp] == 0} {
 				file delete $resultfile.temp
@@ -62,7 +63,7 @@ proc wgetfiles {url resultdir {force 0}} {
 		}
 	} else {
 		if {[catch {
-			exec wget -c --tries=45 -P $resultdir.temp $url 2>@ stderr
+			exec wget -c --no-check-certificate --tries=45 -P $resultdir.temp $url 2>@ stderr
 		} errmsg]} {
 			return {}
 		}

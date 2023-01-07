@@ -29,13 +29,14 @@ proc benchmarkvars {args} {
 
 # Download database
 # =================
-if {[get download 0]} {
-	mkdir a directory ~/public/giab and download publically available giab data to it
-	cg_giab_getdata -d sge precisionfda_v2016_04 ~/public/giab/precisionfda_v2016_04
+if {[get download 0] != 0} {
+	# mkdir a directory ~/public/giab and download publically available giab data to it
+	if {[isont $download] || $download in "sge slurm"} {set d $download} else {set d 1}
+	cg_giab_getdata -d $d precisionfda_v2016_04 ~/public/giab/precisionfda_v2016_04
 	cg_giab_gettruth -ref hg38 3.3.2 ~/public/giab/truth/truth_hg38_v3.3.2
 	cg_giab_gettruth -ref hg38 4.2.1 ~/public/giab/truth/truth_hg38_v4.2.1
 
-	cg_giab_getdata -d sge platinum_genomes ~/public/platinum_genomes
+	cg_giab_getdata -d $d platinum_genomes ~/public/platinum_genomes
 	cg_giab_gettruth -ref hg38 hybrid ~/public/platinum_genomes/truthset/2017-1.0/hg38/hybrid
 }
 

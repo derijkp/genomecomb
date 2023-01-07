@@ -1516,6 +1516,9 @@ proc cg_select {args} {
 	} else {
 		set header [tsv_open $f keepcomments]
 	}
+	if {[llength [list_remdup $header]] != [llength $header]} {
+		puts stderr "duplicate fieldnames: [list_sub $header -exclude [list_cor $header [list_remdup $header]]]"
+	}
 	if {$showheader} {
 		puts $out [join $header \n]
 		if {$f ne "stdin"} {catch {gzclose $f}}
@@ -1532,7 +1535,7 @@ proc cg_select {args} {
 		lappend header $::rowfield
 		set index {}
 		if {$sortfields eq "-"} {
-			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
+			set poss [list_sub [tsv_basicfields $header 11 0] -exclude 4]
 			set poss [list_remove $poss -1]
 			set reverse [list_fill [llength $poss] 0]
 		} else {

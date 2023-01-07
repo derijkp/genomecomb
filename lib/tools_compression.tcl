@@ -108,7 +108,7 @@ proc wgzopen {file {compressionlevel -1} {threads {}} {pipe {}}} {
 				return [open [list {*}$pipe >@ stdout" w]
 			}
 		} else {
-			return [open [list {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
+			return [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
 		}
 	} elseif {![gziscompressed $file]} {
 		if {$pipe eq ""} {
@@ -293,12 +293,11 @@ proc gzfile_multi {filelist} {
 
 proc gzfiles {args} {
 	foreach filename $args {
-		if {![catch {glob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
-			foreach file $list {
-				set root [gzroot $file]
-				if {[info exists a($root)]} continue
-				set a($root) $file
-			}
+		set list [glob -nocomplain $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+		foreach file $list {
+			set root [gzroot $file]
+			if {[info exists a($root)]} continue
+			set a($root) $file
 		}
 	}
 	set result {}

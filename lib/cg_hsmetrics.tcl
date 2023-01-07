@@ -67,17 +67,17 @@ proc cg_hsmetrics {args} {
 		-refseq {
 			set refseq $value
 		}
-	} {bamfile targetfile resultfile} 3 3
+	} {bamfile targetsfile resultfile} 3 3
 	if {![info exists sample]} {
 		set sample [file tail [file root $bamfile]]
 		regsub ^map- $sample {} sample
 	}
-	set num [lindex [cg select -g all $targetfile] end]
+	set num [lindex [cg select -g all $targetsfile] end]
 	if {$num == 0} {
 		# no regions -> write "dummy" with all 0
 		set f [open $resultfile.temp w]
 		puts $f [join {sample	BAIT_SET	GENOME_SIZE	BAIT_TERRITORY	TARGET_TERRITORY	BAIT_DESIGN_EFFICIENCY	TOTAL_READS	PF_READS	PF_UNIQUE_READS	PCT_PF_READS	PCT_PF_UQ_READS	PF_UQ_READS_ALIGNED	PCT_PF_UQ_READS_ALIGNED	PF_UQ_BASES_ALIGNED	ON_BAIT_BASES	NEAR_BAIT_BASES	OFF_BAIT_BASES	ON_TARGET_BASES	PCT_SELECTED_BASES	PCT_OFF_BAIT	ON_BAIT_VS_SELECTED	MEAN_BAIT_COVERAGE	MEAN_TARGET_COVERAGE	PCT_USABLE_BASES_ON_BAIT	PCT_USABLE_BASES_ON_TARGET	FOLD_ENRICHMENT	ZERO_CVG_TARGETS_PCT	FOLD_80_BASE_PENALTY	PCT_TARGET_BASES_2X	PCT_TARGET_BASES_10X	PCT_TARGET_BASES_20X	PCT_TARGET_BASES_30X	HS_LIBRARY_SIZE	HS_PENALTY_10X	HS_PENALTY_20X	HS_PENALTY_30X	AT_DROPOUT	GC_DROPOUT	SAMPLE	LIBRARY	READ_GROUP} \t]
-		set bait [file tail [file root $targetfile]]
+		set bait [file tail [file root $targetsfile]]
 		set temp [list_fill 39 {}]
 		foreach i {27 28 29 30} {
 			lset temp $i 0
@@ -87,8 +87,8 @@ proc cg_hsmetrics {args} {
 		file rename -force -- $resultfile.temp $resultfile
 		return
 	}
-	set target_intervals [tempdir]/[file root [file tail [gzroot $targetfile]]].intervals
-	hsmetrics_tsv2interval $targetfile $bamfile $target_intervals
+	set target_intervals [tempdir]/[file root [file tail [gzroot $targetsfile]]].intervals
+	hsmetrics_tsv2interval $targetsfile $bamfile $target_intervals
 	if {![info exists baitfile]} {
 		# We have to give a bait interval file, or CalculateHsMetrics wont run
 		# if we do not have actual bait regions, use target regions.

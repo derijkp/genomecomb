@@ -9,6 +9,7 @@ proc job_process_init_distr {} {
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	set ::job_method_info [list pid [pid]]
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_runall {} job_runall_par
 	interp alias {} job_running {} job_running_distr
 	interp alias {} job_wait {} job_wait_distr
 	interp alias {} job_process_submit_par {} job_process_submit_distr
@@ -48,6 +49,23 @@ proc job_status_distr {job {jobloginfo {}}} {
 	}
 }
 
+
+proc job_process_distr_progress {running} {
+	global cgjob
+	if {[get cgjob(distr_count) 0] >= 79} {
+		global cgjob_distr_running
+		puts .
+		foreach job $running {
+			puts "   -=- Running $cgjob_distr_running($job)"
+		}
+		puts "   -=- in queue: [llength $::cgjob_distr(queue)] jobs"
+		set cgjob(distr_count) 0
+	} else {
+		incr cgjob(distr_count)
+		puts -nonewline stderr .
+	}
+}
+
 proc job_process_distr_jobmanager {} {
 	global cgjob cgjob_distr cgjob_distr_running cgjob_exit cgjob_distr_queue
 	after cancel job_process_distr_jobmanager
@@ -60,7 +78,9 @@ proc job_process_distr_jobmanager {} {
 	set countrunning [llength $running]
 	set maxrunning [get cgjob(distribute) 4]
 	if {$countrunning >= $maxrunning} {
-		if {!$cgjob(silent)} {puts -nonewline stderr .}
+		if {!$cgjob(silent)} {
+			job_process_distr_progress $running
+		}
 		after 1000 job_process_distr_jobmanager
 		return
 	}
@@ -97,7 +117,9 @@ proc job_process_distr_jobmanager {} {
 			set cgjob_exit 1
 			return
 		}
-		if {!$cgjob(silent)} {puts -nonewline stderr .}
+		if {!$cgjob(silent)} {
+			job_process_distr_progress $running
+		}
 		after 1000 job_process_distr_jobmanager
 	}
 }
@@ -141,6 +163,11 @@ proc job_process_submit_distr {job runfile args} {
 				set mem $value
 				incr pos 2
 			}
+			-time {
+				# not used yet
+				set time $value
+				incr pos 2
+			}
 			-- {
 				incr pos 1
 				break
@@ -182,7 +209,7 @@ proc job_logfile_distr_close {} {
 }
 
 proc job_wait_distr {} {
-	global cgjob cgjob_exit cgjob_running
+	global cgjob cgjob_exit
 	update
 	job_logfile_par_close
 	unset -nocomplain cgjob_exit

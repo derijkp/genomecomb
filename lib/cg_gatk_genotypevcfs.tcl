@@ -7,7 +7,7 @@ proc cg_gatk_genotypevcfs args {
 	set vqsr {}
 	set newqual true
 	set gatkres {}
-	set cmdline [list cg gatk_genotypevcfs {*}$args]
+	set cmdline [clean_cmdline cg gatk_genotypevcfs {*}$args]
 	set opts {}
 	cg_options gatk_genotypevcfs args {
 		-dbdir {

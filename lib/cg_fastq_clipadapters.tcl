@@ -6,6 +6,8 @@ proc fastq_clipadapters_job {args} {
 	set paired 1
 	set removeskew 1
 	set compress gz
+	set mem 1G
+	set time 5:00:00
 	cg_options fastq_clipadapters args {
 		-adapterfile {
 			set adapterfile $value
@@ -27,6 +29,12 @@ proc fastq_clipadapters_job {args} {
 		}
 		-compress {
 			set compress $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {fastqfile} 1 ... {
 		Use fastq-mcf to clip adaptors from fastqs, results are in a dir
@@ -58,7 +66,7 @@ proc fastq_clipadapters_job {args} {
 	if {[llength $fastqfiles] == 1 || !$paired} {
 		foreach {dep} $fastqfiles {target} $resultfastqs a1 $resultanalysisinfo {
 			set name [file tail [file dir [file dir $target]]]__[file tail $target]
-			job clip-$name {*}$skips -deps {
+			job clip-$name {*}$skips -mem $mem -time $time -deps {
 				$dep
 			} -targets {
 				$target $a1
@@ -82,7 +90,7 @@ proc fastq_clipadapters_job {args} {
 	} else {
 		foreach {dep dep2} $fastqfiles {target target2} $resultfastqs {a1 a2} $resultanalysisinfo {
 			set name [file tail [file dir $target]]__[file tail $target]
-			job clip-$name {*}$skips -deps {
+			job clip-$name {*}$skips -mem $mem -time $time -deps {
 				$dep $dep2
 			} -targets {
 				$target $target2 $a1 $a2

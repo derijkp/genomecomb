@@ -88,7 +88,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set smethfile [file dir $resultfile]/smeth-$tail
 	}
 	# start
-	set fastqfiles [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]
+	set fastqfiles [bsort [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]]
 	if {![llength $fastqfiles]} {error "no fastq files found in $fastqdir"}
 	if {[file exists $smethfile] && ![jobtargetexists $smethfile $fastqfiles]} {
 		putslog "$smethfile older than one of fastqfiles (renaming to .old)"
@@ -269,7 +269,7 @@ proc meth_nanopolish_job {args} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg meth_nanopolish {*}$args]"
+	set cmdline [clean_cmdline cg meth_nanopolish {*}$args]
 	set refseq {}
 	set skips {}
 	set resultfile {}

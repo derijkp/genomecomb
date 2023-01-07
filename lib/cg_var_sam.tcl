@@ -25,6 +25,7 @@ proc sreg_sam_job {job varallfile resultfile {mincoverage 5} {minqual 30} {skips
 
 proc var_sam_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg var_sam {*}$args]
 	set pre ""
 	set opts {}
 	set split 1
@@ -40,6 +41,8 @@ proc var_sam_job {args} {
 	set callmethod c
 	set resultfile {}
 	set dt {}
+	set mem {}
+	set time {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -91,6 +94,12 @@ proc var_sam_job {args} {
 		-dt {
 			set dt $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
@@ -125,15 +134,6 @@ proc var_sam_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_sam]
-	foreach option {
-		split deps bed pre BQ regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_sam_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
 	# start
@@ -144,7 +144,7 @@ proc var_sam_job {args} {
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallvcf]/cache_vcf_sam_[file tail $refseq].temp.zst
 	job_cleanup_add $cache
-	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
+	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem $mem -time $time -targets {
 		$varallvcf
 	} -skip {
 		$varallfile

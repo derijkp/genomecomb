@@ -575,18 +575,7 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3
-	file mkdir tmp/clair3
-	set regions {chr1:2547867-2568902 chr6:32152328-32167543 chr10:975157-1000215}
-	set oridir ori/nanopore-human-pangenomics_regions/HG002
-	exec samtools view -b \
-		$oridir/map-sminimap2-regions_HG002_hg38.bam \
-		{*}$regions \
-		> tmp/clair3/map-sminimap2-pHG002_hg38.bam
-	exec samtools index tmp/clair3/map-sminimap2-pHG002_hg38.bam
-	file_write tmp/clair3/regions.tsv chromosome\tbegin\tend\n[string_change [join $regions \n] [list : \t - \t]]\n
-	cg regcommon tmp/clair3/regions.tsv $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed.tsv.zst > tmp/clair3/sreg-truth_HG002_hg38.tsv
-	cg regselect $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark.tsv.zst \
-		tmp/clair3/sreg-truth_HG002_hg38.tsv > tmp/clair3/var-truth_HG002_hg38.tsv
+	make_smallgiabonttest $::smalltestdir/tmp/clair3
 	cg var_clair3 {*}$::dopts -platform ont -model ont \
 		tmp/clair3/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3/compar.tsv

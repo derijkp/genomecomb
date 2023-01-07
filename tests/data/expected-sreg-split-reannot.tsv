@@ -1,0 +1,8 @@
+chromosome	begin	end	sreg-sample1	sreg-sample2	sreg-sample3
+chr1	240	4006	1	1	1
+chr1	4006	4100	1	0	0
+chr1	4100	5021	1	1	1
+chr2	4000	4005	1	1	1
+chr2	4005	5000	0	1	1
+chr2	5000	10001	1	1	1
+chr3	876	877	1	1	1

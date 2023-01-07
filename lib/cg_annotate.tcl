@@ -224,6 +224,7 @@ proc cg_annotatedb_info {args} {
 
 proc cg_annotate_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg annotate {*}$args]
 	set near -1
 	set dbdir {}
 	set replace e
@@ -380,15 +381,6 @@ proc cg_annotate_job {args} {
 		error "Error: field(s) [join $errors ,] already in file"
 	}
 	# logfile
-	set cmdline [list cg annotate]
-	foreach option {
-		dbdir near name replace multidb upstreamsize
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $orifile $resultfile
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
 		{*}[versions dbdir zstd os]
@@ -450,7 +442,15 @@ proc cg_annotate_job {args} {
 			}
 			if {$distrreg == "0"} {
 				# putsvars usefile resultname
-				job annot-$resultname-[file tail $dbfile] -skip {$resultfile $analysisinfofile} -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+				job annot-$resultname-[file tail $dbfile] -skip {
+					$resultfile $analysisinfofile
+				} -deps {
+					$usefile $genomefile $dbfile
+				} -targets {
+					$target
+				} -vars {
+					genomefile dbfile name dbinfo upstreamsize
+				} -code {
 					set genecol [dict_get_default $dbinfo genecol {}]
 					set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
 					# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize

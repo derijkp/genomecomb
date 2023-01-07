@@ -9,7 +9,7 @@ proc gatk_compar_job args {
 	set newqual true
 	set gatkres {}
 	set threads 1
-	set cmdline [list cg gatk_compar {*}$args]
+	set cmdline [clean_cmdline cg gatk_compar {*}$args]
 	cg_options gatk_compar args {
 		-dbdir {
 			set dbdir $value

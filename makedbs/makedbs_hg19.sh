@@ -15,7 +15,6 @@ Y	59034050	59363566	PAR2
 }
 set mirbasegenome hsa-20:hg19
 set dbsnpversion 151
-set gencodeversion 34
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
@@ -54,6 +53,7 @@ set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_ma
 set regionsdb_join {
 	chainSelf dgvMerged genomicSuperDups
 }
+set gencodeversion 34
 set genesdb [list \
 	{refGene int reg} \
 	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
@@ -69,7 +69,7 @@ set gtfurl https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/genes/hg19.en
 set gtffile genes_hg19_ensGene.gtf.gz
 
 # keep actual command line used for log
-set cmdline "[list cd [pwd]] \; [list [info script] {*}$argv]"
+set cmdline [clean_cmdline cg [info script] {*}$args]
 
 # arguments
 if {![info exists argv]} {set argv {}}
@@ -106,6 +106,9 @@ makerefdb_job \
 	-mirbase $mirbase \
 	/complgen/refseqnew/$build >@ stdout 2>@ stderr
 
+# rest after this is human specific
+# ---------------------------------
+
 job gtf -targets {
 	$gtffile
 } -vars {gtfurl gtffile} -code {
@@ -127,6 +130,18 @@ job reg_${build}_gwasCatalog -targets {
 	file delete $target.ucsc
 	file rename -force -- $target.ucsc.info [gzroot $target].info
 	compress $target.temp2 $target
+}
+
+job sniffles_trf -optional 1 -targets {
+	extra/sniffles_hg19.trf.bed
+} -vars {} -code {
+	wgetfile https://github.com/fritzsedlazeck/Sniffles/raw/master/annotations/human_hs37d5.trf.bed extra/sniffles_hg19.trf.bed.temp
+	exec cg bed2tsv extra/sniffles_hg19.trf.bed.temp \
+		| cg select -f {chromosome="chr$chromosome" begin end} \
+		| cg select -s chromosome \
+		| cg tsv2bed > extra/sniffles_hg19.trf.bed.temp2
+	file rename extra/sniffles_hg19.trf.bed.temp2 extra/sniffles_hg19.trf.bed
+	file delete extra/sniffles_hg19.trf.bed.temp
 }
 
 ## 1000 genomes
@@ -832,13 +847,17 @@ job reg_exome_twistfull -deps {
 
 # copy exome target regions collected in $defaultdest/downloads to extra, or lift if needed
 foreach file [glob -nocomplain $defaultdest/downloads/reg_*_exome_*.zst] {
-	puts "Transfering $file"
 	set tail [file tail $file]
+	set newtail [join [lreplace [split $tail _] 1 1 $build] _]
+	if {[file exists extra/$newtail]} {
+		puts "skipping extra/$newtail: already exists"
+		continue
+	}
+	puts "Transfering $file"
 	set filebuild [lindex [split $tail _] 1]
 	hardcopy $file extra/
 	catch {hardcopy $file.zsti extra/}
 	if {$filebuild ne $build} {
-		set newtail [join [lreplace [split $tail _] 1 1 $build] _]
 		file delete extra/$newtail
 		liftover_refdb extra/$tail extra/$newtail $dest $filebuild $build
 	}

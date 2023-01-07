@@ -2298,15 +2298,17 @@ char *naturalcompare_numbercontext_after(char *cur, int curlen, char *start, int
 	if (*context == LOC_E) {
 		if (*cur == '-' || *cur == '+') {
 			cur++; curlen--;
+			*context = LOC_ESIGN;
 		}
 		if (curlen <= 0 || !NATDIGIT(cur)) {
-			*context = LOC_DECIMALNUM; return cur;
+			*context = LOC_DECIMALNUM;
+			if (*context == LOC_ESIGN) {return cur-2;} else {return cur-1;}
 		}
 		*context = LOC_ENUM;
 	}
 	if (*context == LOC_ESIGN) {
 		if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
-			*context = LOC_DECIMALNUM; return cur;
+			*context = LOC_DECIMALNUM; return cur-2;
 		}
 		*context = LOC_ENUM;
 	}
@@ -2500,6 +2502,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	leftzeros = sort_skipszeros(start,left,alen);
 	rightzeros = sort_skipszeros(rstart,right,blen);
 	if ((leftzeros || rightzeros) && (leftzeros != rightzeros)) {
+		char *endleft,*endright;
 		int leftplus = (*start == '+'),rightplus = (*rstart == '+');
 		if (!leftplus && rightplus) {
 			startingzero = -1;
@@ -2521,22 +2524,29 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		blen += (right - rstart);
 		right = rstart + rightzeros;
 	 	DPRINT("zero check: start: %s rstart: %s leftzeros: %d rightzeros: %d left: %s right: %s",start,rstart,leftzeros,rightzeros,left,right);
+		contextleft = context;
+		contextright = context;
+		endleft = naturalcompare_numbercontext_after(left, alen, start, nmleft, &contextleft);
+		endright = naturalcompare_numbercontext_after(right, blen, rstart, nmright, &contextright);
 		while (1) {
 			nmleft = ISNUMBER(left);
 			nmright = ISNUMBER(right);
-			if (!nmleft && !nmright) {
+			if (left == endleft && right == endright) {
 				/* diff after number, so is the same (0) */
 				return startingzero;
 			}
+			if (left == endleft || right == endright) {
+				break;
+			}
 			diff = naturalcompare_diff(*left,*right);
 			if (diff != 0) break;
-			if (!alen || !nmleft) {
-				if (!blen || !nmright) {return startingzero;} else {break;}
-			}
-			if (!blen || !nmright) {break;}
 			left++; alen--;
 			right++; blen--;
 		}
+		start = left;
+		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
+	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+		if (context <= LOC_SIMPLE) {simplenum = 1;}
 	 	DPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
 	}
 	if (simplenum) {
@@ -2592,7 +2602,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				}
 				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
 			} else {
-				if (result == 0) {return startingzero;}
 				return result;
 			}
 		}
@@ -2619,7 +2628,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				if (result == 0) {
 					return 1;
 				} else {
-					if (result == 0) {return startingzero;}
 					return result;
 				}
 			} else if (*right == '+') {
@@ -2629,7 +2637,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				if (result == 0) {
 					return -1;
 				} else {
-					if (result == 0) {return startingzero;}
 					return result;
 				}
 			} else if (*left == '.') {

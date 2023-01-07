@@ -36,7 +36,6 @@
 #fields	AS_BaseQRankSum	A	Float	allele specific Z-score from Wilcoxon rank sum test of each Alt Vs. Ref base qualities	info
 #fields	AS_FS	A	Float	allele specific phred-scaled p-value using Fisher's exact test to detect strand bias of each alt allele	info
 #fields	AS_InbreedingCoeff	A	Float	Allele-specific inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation	info
-#fields	AS_InbreedingCoeff	A	Float	allele specific heterozygosity as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation; relate to inbreeding coefficient	info
 #fields	AS_MQ	A	Float	Allele-specific RMS Mapping Quality	info
 #fields	AS_MQRankSum	A	Float	Allele-specific Mapping Quality Rank Sum	info
 #fields	AS_QD	A	Float	Allele-specific Variant Confidence/Quality by Depth	info
@@ -104,17 +103,17 @@
 #FILTER	ID	Description
 #FILTER	LowQual	Low quality
 # ----
-chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	RGQ	SB	allelecount	frequency	totalallelecount	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	ClippingRankSum	totalcoverage	DS	ExcessHet	FS	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	QD	RAW_MQ	ReadPosRankSum	SOR
-chr21	42735718	42735719	snp	G	A	.	125.64	.	G	A	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000			60.00	0.000	15.75					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70	28800.00	-3.660e-01	0.693
-chr21	42775179	42775180	snp	C	T	.	155.96	.	T	T	m	0	1;1	0	5	5	15			170,15,0			2	1.00	2	.	0.000			60.00	.	31.20					.		1.981			5		3.0103	0.000		2	1.00	60.00		2	31.19	18000.00		1.981
-chr21	42775200	42775201	snp	C	T	.	157.96	.	T	T	m	0	1;1	1	7	5	17			172,17,0			2	1.00	2	.	0.000			50.71	.	19.75					.		1.981			5		3.0103	0.000		2	1.00	60.00		2	19.75	18000.00		1.981
-chr21	42775231	42775232	snp	C	T	.	383.06	.	T	C	t	0	1;0	7	25	53	99			400,100,918,102,0,1238			1	0.500	2	-0.200	0.000			46.48	0.000	2.88					-0.900		0.702	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
-chr21	42775232	42775232	ins		GCT	.	383.06	.		GCT	t	0	0;1	7	21	53	99			400,100,918,102,0,1238			1	0.500	2	0.200	5.411			43.42	0.000	3.21					-0.300		1.118	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
-chr21	42775249	42775250	snp	A	C	.	482.10	.	C	T	c	0	1;2	0	6	12	99			499,249,231,251,0,271			1	0.500	2	.	0.000			50.99	.	25.36					.		1.329			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
-chr21	42775249	42775250	snp	A	T	.	482.10	.	C	T	c	0	2;1	0	6	12	99			499,249,231,251,0,271			1	0.500	2	.	0.000			48.16	.	28.73					.		2.303			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
-chr21	42775289	42775290	snp	T	C	.	31.64	.	T	C	t	0	0;1	15	2	17	39			39,0,684			1	0.500	2	-1.900	0.000			50.99	-0.100	1.88					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.86	46039.00	0.522	0.260
-chr21	42775303	42775304	snp	G	C	.	32.64	.	G	C	t	0	0;1	15	2	17	40			40,0,684			1	0.500	2	-1.900	0.000			50.99	-0.100	1.94					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.92	46039.00	0.522	0.260
-chr21	42775359	42775360	snp	T	C	.	91.84	.	C	C	m	0	1;1	0	3	3	9			105,9,0			2	1.00	2	.	0.000			29.14	.	30.67					.		1.179			3		3.0103	0.000		1	0.500	29.14		2	30.61	2547.00		1.179
-chr21	42775374	42775375	snp	A	C	.	1537.06	.	C	C	m	0	1;1	0	38	38	99			1551,114,0			2	1.00	2	.	0.000			39.31	.	27.24					.		2.303			38		3.0103	0.000		2	1.00	39.31		2	28.20	58717.00		2.303
-chr21	42775437	42775437	ins		G	.	1096.60	.		G	t	0	0;1	32	34	66	99			1104,0,932			1	0.500	2	-0.100	1.262			62.19	2.700	16.62					-0.200		0.986	-9.800e-02		66		3.0103	1.262		1	0.500	61.14	2.71	2	16.62	246700.00	-1.730e-01	0.986
-chr21	42775554	42775555	snp	A	G	.	73.32	.	G	G	m	0	1;1	0	2	2	6			85,6,0			2	1.00	2	.	0.000			60.00	.	25.00					.		0.693			2		3.0103	0.000		1	0.500	60.00		2	29.56	7200.00		2.303
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	RGQ	SB	allelecount	frequency	totalallelecount	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	ClippingRankSum	totalcoverage	DS	ExcessHet	FS	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	QD	RAW_MQ	ReadPosRankSum	SOR
+chr21	42735718	42735719	snp	G	A	.	125.64	.	G	A	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.75					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70	28800.00	-3.660e-01	0.693
+chr21	42775179	42775180	snp	C	T	.	155.96	.	T	T	m	0	1;1	0	5	5	15			170,15,0			2	1.00	2	.	0.000		60.00	.	31.20					.		1.981			5		3.0103	0.000		2	1.00	60.00		2	31.19	18000.00		1.981
+chr21	42775200	42775201	snp	C	T	.	157.96	.	T	T	m	0	1;1	1	7	5	17			172,17,0			2	1.00	2	.	0.000		50.71	.	19.75					.		1.981			5		3.0103	0.000		2	1.00	60.00		2	19.75	18000.00		1.981
+chr21	42775231	42775232	snp	C	T	.	383.06	.	T	C	t	0	1;0	7	25	53	99			400,100,918,102,0,1238			1	0.500	2	-0.200	0.000		46.48	0.000	2.88					-0.900		0.702	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
+chr21	42775232	42775232	ins		GCT	.	383.06	.		GCT	t	0	0;1	7	21	53	99			400,100,918,102,0,1238			1	0.500	2	0.200	5.411		43.42	0.000	3.21					-0.300		1.118	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
+chr21	42775249	42775250	snp	A	C	.	482.10	.	C	T	c	0	1;2	0	6	12	99			499,249,231,251,0,271			1	0.500	2	.	0.000		50.99	.	25.36					.		1.329			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
+chr21	42775249	42775250	snp	A	T	.	482.10	.	C	T	c	0	2;1	0	6	12	99			499,249,231,251,0,271			1	0.500	2	.	0.000		48.16	.	28.73					.		2.303			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
+chr21	42775289	42775290	snp	T	C	.	31.64	.	T	C	t	0	0;1	15	2	17	39			39,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.88					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.86	46039.00	0.522	0.260
+chr21	42775303	42775304	snp	G	C	.	32.64	.	G	C	t	0	0;1	15	2	17	40			40,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.94					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.92	46039.00	0.522	0.260
+chr21	42775359	42775360	snp	T	C	.	91.84	.	C	C	m	0	1;1	0	3	3	9			105,9,0			2	1.00	2	.	0.000		29.14	.	30.67					.		1.179			3		3.0103	0.000		1	0.500	29.14		2	30.61	2547.00		1.179
+chr21	42775374	42775375	snp	A	C	.	1537.06	.	C	C	m	0	1;1	0	38	38	99			1551,114,0			2	1.00	2	.	0.000		39.31	.	27.24					.		2.303			38		3.0103	0.000		2	1.00	39.31		2	28.20	58717.00		2.303
+chr21	42775437	42775437	ins		G	.	1096.60	.		G	t	0	0;1	32	34	66	99			1104,0,932			1	0.500	2	-0.100	1.262		62.19	2.700	16.62					-0.200		0.986	-9.800e-02		66		3.0103	1.262		1	0.500	61.14	2.71	2	16.62	246700.00	-1.730e-01	0.986
+chr21	42775554	42775555	snp	A	G	.	73.32	.	G	G	m	0	1;1	0	2	2	6			85,6,0			2	1.00	2	.	0.000		60.00	.	25.00					.		0.693			2		3.0103	0.000		1	0.500	60.00		2	29.56	7200.00		2.303

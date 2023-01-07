@@ -35,7 +35,7 @@ proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25
 
 proc var_strelka_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_strelka {*}$args]"
+	set cmdline [clean_cmdline cg var_strelka {*}$args]
 	set pre ""
 	set opts {}
 	set split 1
@@ -51,6 +51,8 @@ proc var_strelka_job {args} {
 	set datatype {}
 	set skips {}
 	set resultfile {}
+	set mem 5G
+	set time 3:00:00
 	cg_options var_strelka args {
 		-L - -deps {
 			lappend deps $value
@@ -93,6 +95,12 @@ proc var_strelka_job {args} {
 		}
 		-opts {
 			set opts $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
@@ -150,7 +158,7 @@ proc var_strelka_job {args} {
 	set resultname $varallfile
 	set resultvcf $vcffile
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -skip {
+	job ${pre}varall-$root {*}$skips -mem $mem -time $time -cores $threads -skip {
 		$varallfile $varfile $varfile.analysisinfo
 	} -deps [list \
 		$bamfile $refseq $bamfileindex {*}$deps \

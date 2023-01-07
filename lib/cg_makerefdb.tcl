@@ -1,6 +1,6 @@
 proc makerefdb_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg makerefdb {*}$args]"
+	set cmdline [clean_cmdline cg makerefdb {*}$args]
 
 	# default settings
 	# ----------------
@@ -26,6 +26,8 @@ proc makerefdb_job {args} {
 	set refSeqFuncElemsurl {}
 	set mirbase {}
 	set pseudoautosomal {}
+	set transcriptsurl {}
+	set transcriptsgtf {}
 
 	# options
 	# -------
@@ -53,6 +55,12 @@ proc makerefdb_job {args} {
 		}
 		-regionsdb_join {
 			set regionsdb_join $value
+		}
+		-transcriptsurl {
+			set transcriptsurl $value
+		}
+		-transcriptsgtf {
+			set transcriptsgtf $value
 		}
 		-webcache {
 			set webcache [file_absolute $value]
@@ -85,6 +93,8 @@ proc makerefdb_job {args} {
 	set c [file_read $::appdir/docs/dbdir_README.txt]
 	regsub {version: [0-9.]+} $c "version: [lindex [timestamp] 0]\ntime: [lindex [timestamp] 0]" c
 	file_write README_dbdir.txt $c
+
+	set refseq genome_${build}.ifas
 
 	# download genome
 	job genome_${build} -targets {
@@ -145,20 +155,29 @@ proc makerefdb_job {args} {
 		genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
 		extra/genome_${build}.ssa
 	} -code {
-		mklink genome_${build}.ifas extra/genome_${build}.ifas
-		mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
-		mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-		mklink genome_${build}.ifas genome_${build}.fa
-		mklink genome_${build}.ifas.fai genome_${build}.fa.fai
-		mklink genome_${build}.ifas.index genome_${build}.fa.index 
-		mklink genome_${build}.ssa extra/genome_${build}.ssa
+		mklink -matchtime 0 genome_${build}.ifas extra/genome_${build}.ifas
+		mklink -matchtime 0 genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
+		mklink -matchtime 0 genome_${build}.ifas.index extra/genome_${build}.ifas.index 
+		mklink -matchtime 0 genome_${build}.ifas genome_${build}.fa
+		mklink -matchtime 0 genome_${build}.ifas.fai genome_${build}.fa.fai
+		mklink -matchtime 0 genome_${build}.ifas.index genome_${build}.fa.index 
+		mklink -matchtime 0 genome_${build}.ssa extra/genome_${build}.ssa
 	}
+
+	job genome_${build}_dict -deps {
+		genome_${build}.fa
+	} -targets {
+		genome_${build}.dict
+	} -code {
+		exec samtools dict -o $target.temp $dep
+		file rename $target.temp $target
+	}
+
 	# genome in extra
 	foreach file [jobglob genome_*] {
-		catch {
-			file delete extra/[file tail $file]
-			mklink $file extra/[file tail $file]
-		}
+		set target extra/[file tail $file]
+		file delete $target
+		mklink $file $target
 	}
 
 	# homopolymer
@@ -185,7 +204,7 @@ proc makerefdb_job {args} {
 
 	# collapse regions
 	foreach db $regionsdb_collapse {
-		if {![cg_check_ucsc $build $db]} {
+		if {![file exists [gzfile reg_${build}_${db}.tsv]] && ![cg_check_ucsc $build $db]} {
 			putslog "skipping $db, track not found for $build"
 			continue
 		}
@@ -216,7 +235,7 @@ proc makerefdb_job {args} {
 
 	# join regions
 	foreach db $regionsdb_join {
-		if {![cg_check_ucsc $build $db]} {
+		if {![file exists [gzfile reg_${build}_${db}.tsv]] && ![cg_check_ucsc $build $db]} {
 			putslog "skipping $db, track not found for $build"
 			continue
 		}
@@ -229,17 +248,6 @@ proc makerefdb_job {args} {
 			file delete $target.ucsc
 			file rename -force -- $target.ucsc.info [gzroot $target].info
 			compress $target.temp $target
-		}
-	}
-
-	# other databases
-	foreach db {refLink} {
-		if {![cg_check_ucsc $build $db]} {
-			putslog "skipping $db, track not found for $build"
-			continue
-		}
-		job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv} -code {
-			cg download_ucsc $target ${build} $db
 		}
 	}
 
@@ -302,10 +310,6 @@ proc makerefdb_job {args} {
 	set regdeps {}
 	foreach line $genesdb {
 		set db [lindex $line 0]
-		if {![cg_check_ucsc $build $db]} {
-			putslog "skipping $db, track not found for $build"
-			continue
-		}
 		set dbname $db
 		set extra 0; set int 0 ; set reg 0
 		foreach el [lrange $line 1 end] {
@@ -323,6 +327,10 @@ proc makerefdb_job {args} {
 			set target extra/gene_${build}_${dbname}.tsv
 		} else {
 			set target gene_${build}_${dbname}.tsv
+		}
+		if {![file exists [gzfile $target]] && ![cg_check_ucsc $build $db]} {
+			putslog "skipping $db, track not found for $build"
+			continue
 		}
 		if {$int} {
 			lappend intdeps $target.zst
@@ -366,8 +374,15 @@ proc makerefdb_job {args} {
 		cg zindex $target
 	}
 
+	set dep gene_${build}_refGene.tsv
+	if {![jobfileexists $dep]} {
+		set dep gene_${build}_ncbiRefSeq.tsv
+	}
+	if {![jobfileexists $dep]} {
+		set dep extra/gene_${build}_ncbiRefSeq.tsv
+	}
 	job reg_refcoding -deps {
-		gene_${build}_refGene.tsv
+		$dep
 	} -targets {
 		extra/reg_${build}_refcoding.tsv
 	} -vars {
@@ -383,7 +398,7 @@ proc makerefdb_job {args} {
 	}
 
 	job reg_exome_refGene -deps {
-		gene_${build}_refGene.tsv
+		$dep
 	} -targets {
 		extra/reg_${build}_exome_refGene.tsv
 	} -vars {
@@ -453,7 +468,7 @@ proc makerefdb_job {args} {
 			var_${build}_dbsnp.tsv.zst
 			var_${build}_dbsnp.tsv.opt
 			var_${build}_dbsnp.tsv.gz
-			var_${build}_dbsnp.tsv.tbi
+			var_${build}_dbsnp.tsv.gz.tbi
 		} -vars {dest build dbsnp} -code {
 			set target [gzroot $target].zst
 			file_write [gzroot $target].opt "fields\t{name}\n"
@@ -474,16 +489,65 @@ proc makerefdb_job {args} {
 			cg maketabix $target
 		}
 	}
+
+	set fullgenome [list [jobgzfile $dbdir/extra/reg_*_fullgenome.tsv]]
+	set rmskfile [jobgzfile $dbdir/reg_*_rmsk.tsv]
+	job norep100000file -optional 1 -deps {
+		$fullgenome
+		$rmskfile
+	} -targets {
+		$dbdir/extra/reg_${build}_norep100000.tsv.zst
+	} -vars {
+		dbdir
+	} -code {
+		distrreg_norep100000file $dbdir
+	}
+
+	set genefile [jobgzfile \
+		$dbdir/gene_*_intGene.tsv.zst \
+		$dbdir/extra/gene_*_gencode.tsv.zst \
+		$dbdir/extra/gene_*.tsv.zst \
+		$dbdir/gene_*_refGene.tsv.zst \
+	]
+	job nolowgene250k -optional 1 -deps {
+		$fullgenome
+		$genefile
+	} -targets {
+		$dbdir/extra/reg_${build}_nolowgene250k.tsv.zst
+	} -vars {
+		dbdir
+	} -code {
+		distrreg_nolowgene250k $dbdir
+	}
+
+	if {$transcriptsgtf ne ""} {
+		if {$transcriptsurl eq ""} {error "-transcriptsurl empty"}
+		job gtf -targets {
+			$transcriptsgtf
+		} -vars {transcriptsurl transcriptsgtf} -code {
+			set ext [file ext $transcriptsurl]
+			wgetfile $transcriptsurl $transcriptsgtf.temp$ext
+			if {[gziscompressed $transcriptsgtf.temp$ext] && ![gziscompressed $transcriptsgtf]} {
+				cg unzip $transcriptsgtf.temp$ext
+				file rename $transcriptsgtf.temp $transcriptsgtf
+			} else {
+				file rename $transcriptsgtf.temp$ext $transcriptsgtf
+			}
+		}
+	
+		# make star versions of the genome
+		refseq_star_job $refseq $transcriptsgtf 2
+	}
 }
 
 proc cg_makerefdb {args} {
 	set args [job_init {*}$args]
-	putslog pwd:\ [pwd]
-	putslog cmd:\ [list cg makerefdb {*}$args]
-	putslog jobargs:\ [job_curargs]
-	if {[llength $args] < 1} {
-		errorformat makerefdb
-	}
+#	putslog pwd:\ [pwd]
+#	putslog cmd:\ [list cg makerefdb {*}$args]
+#	putslog jobargs:\ [job_curargs]
+#	if {[llength $args] < 1} {
+#		errorformat makerefdb
+#	}
 	makerefdb_job {*}$args
 	job_wait
 }

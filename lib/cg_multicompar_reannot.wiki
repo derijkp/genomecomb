@@ -25,7 +25,7 @@ of these regions it will be annotated as u (unsequenced).
 Coverage (and other) information can be obtained from several sources (if found)
 * coverage/coverage-*-<chromosome>.bcol: a binary format containing the coverage data for the entire 
 genome (organised per chromosome). This format can be created using genomecomb tools, e.g from bam files using cg bam2coverage
-* varall-<source>.tsv: an sft file made by returning "variant" calling results for all positions. This will normally
+* varall-<source>.tsv: a tsv file made by returning "variant" calling results for all positions. This will normally
 contain the same columns as the variant file.
 * coverage/coverageRefScore-<chromosome>-*.tsv (Complete Genomics): files provided in a Complete Genomics run 
 containing the coverage and refscore for each position of the genome.

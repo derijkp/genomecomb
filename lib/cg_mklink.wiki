@@ -23,7 +23,8 @@ no matter where your pwd is, no matter if src is given as an absolute path, or a
 ; dest: destination
 
 == Options ==
-; -absolute 0/1 (-a): softlinks will use absolute paths if 1, relative paths if 0 (default)
+; -absolute 0/1 (-a): softlinks will use absolute paths if 1, relative paths if 0 (default 0)
+; -matchtime 1/0: 0 turns off setting link (dest) to the same time as **src** (default 1)
 
 == Category ==
 Tools

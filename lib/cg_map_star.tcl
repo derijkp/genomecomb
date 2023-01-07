@@ -59,7 +59,7 @@ cg refseq_star \'$refseq\'"
 	return $starrefseq
 }
 
-proc map_mem_star {mem threads preset} {
+proc map_mem_star {mem threads preset deps} {
 	return 30G
 }
 
@@ -92,12 +92,16 @@ proc cg_map_star {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-extraopts {
+			set extraopts $value
+		}
 		-mem {
 			set mem $value
 		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using star
 	}
+	set opts {}
 	foreach {key value} [specialopts -star] {
 		switch $key {
 			default {
@@ -139,7 +143,7 @@ proc cg_map_star {args} {
 		mkdir $scratch
 		cd $scratch
 		if {[catch {
-			exec STAR {*}$extraopts \
+			exec STAR \
 				--outTmpDir $scratch/STARTMP \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
@@ -148,6 +152,7 @@ proc cg_map_star {args} {
 				--outSAMattrRGline {*}[join $rgids " , "] \
 				--outSAMunmapped Within \
 				--outStd SAM \
+				{*}$extraopts \
 				{*}$outpipe
 		} msg]} {
 			cd $keepdir
@@ -181,7 +186,7 @@ proc cg_map_star {args} {
 		mkdir $scratch
 		cd $scratch
 		if {[catch {
-			exec STAR {*}$extraopts \
+			exec STAR \
 				--outTmpDir $scratch/STARTMP \
 				--runThreadN $threads \
 				--genomeDir $starrefseq \
@@ -190,6 +195,7 @@ proc cg_map_star {args} {
 				--outSAMattrRGline {*}[join $rgids " , "] \
 				--outSAMunmapped Within \
 				--outStd SAM \
+				{*}$extraopts \
 				{*}$outpipe
 		} msg]} {
 			cd $keepdir

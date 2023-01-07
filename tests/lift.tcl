@@ -7,11 +7,14 @@ source tools.tcl
 test liftover {basic no correctvariants} {
 	test_cleantmp
 	cg select -rf {test} data/expected-var_lift-hg18tohg19.tsv tmp/expected.tsv
-	exec cg liftover -correctvariants 0 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -correctvariants 0 data/var_lift.tsv tmp/temp.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	cg select -rf {test} tmp/temp.tsv tmp/temp2.tsv
-	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
-	exec diff tmp/temp2.tsv tmp/expected.tsv
-} {12,13c12,13
+	cg tsvdiff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
+	cg tsvdiff tmp/temp2.tsv tmp/expected.tsv
+} {diff tmp/temp2.tsv tmp/expected.tsv
+header
+  chromosome	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+5,6c5,6
 < 1	2492275	2492276	snp	C	A	B2	r	o	19	G	G	v	t	18	A	C	1	2482141	2482142	C
 < 1	2492275	2492276	snp	C	G	B1	v	m	18	G	G	r	o	18	A	C	1	2482141	2482142	C
 ---
@@ -21,43 +24,35 @@ test liftover {basic no correctvariants} {
 
 test liftover {basic liftover with correctvariants} {
 	test_cleantmp
-	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
-	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
-	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
+	cg tsvdiff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+	cg tsvdiff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
 test liftover {basic liftover with correctvariants, chr prefix} {
 	test_cleantmp
-	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv $::refseqdir/liftover/chr_hg18ToHg19.over.tsv
 	cg select -f {{chromosome="chr$chromosome"} *} data/expected-var_lift-hg18tohg19.tsv tmp/expected-var_lift-hg18tohg19.tsv
-	exec diff tmp/temp.tsv tmp/expected-var_lift-hg18tohg19.tsv
-} {6c6
-< #liftover	/complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
----
-> #liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
-child process exited abnormally} error
+	cg tsvdiff tmp/temp.tsv tmp/expected-var_lift-hg18tohg19.tsv
+} {}
 
 test liftover {half pipe} {
 	test_cleantmp
-	exec cg liftover --stack 1 data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv > tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+	exec cg liftover --stack 1 data/var_lift.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv > tmp/temp.tsv
+	cg tsvdiff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
 } {}
 
 test liftover {pipe} {
 	test_cleantmp
-	exec cg liftover --stack 1 /complgen/refseq/liftover/hg18ToHg19.over.tsv < data/var_lift.tsv > tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
-} {5c5
-< #liftover_source	-
----
-> #liftover_source	data/var_lift.tsv
-child process exited abnormally} error
+	exec cg liftover --stack 1 $::refseqdir/liftover/hg18ToHg19.over.tsv < data/var_lift.tsv > tmp/temp.tsv
+	cg tsvdiff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+} {}
 
 test liftregion {basic} {
 	test_cleantmp
-	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
-	exec diff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
-	exec diff tmp/temp.tsv.unmapped data/expected-reg_lift-hg18tohg19.tsv.unmapped
+	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
+	cg tsvdiff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
+	cg tsvdiff tmp/temp.tsv.unmapped data/expected-reg_lift-hg18tohg19.tsv.unmapped
 } {}
 
 test liftregion {changed refseq} {
@@ -87,9 +82,9 @@ test liftregion {changed refseq} {
 		2	110577444	110577445	snp	C	T	v	c	6	T	A	v	m	10	T	T	2	110743803	110743804	A
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftregion {changed refseq, unsplit} {
@@ -115,9 +110,9 @@ test liftregion {changed refseq, unsplit} {
 		2	110577444	110577445	snp	C	A,T	v	c	6	T	A	v	m	10	T	T	2	110743803	110743804	A
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {variants with different ref ending up in same spot -s 1} {
@@ -131,10 +126,10 @@ test liftover {variants with different ref ending up in same spot -s 1} {
 		chromosome	begin	end	type	ref	alt	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
 		2       110463287       110463288       snp     G       T	2	109820576       109820577	G
 	}
-	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
-	exec cg correctvariants -f 1 -s 1 tmp/lifted.tsv tmp/result.tsv.temp /complgen/refseq/hg19
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
+	exec cg correctvariants -f 1 -s 1 tmp/lifted.tsv tmp/result.tsv.temp $::refseqdir/hg19
 	cg select -rc 1 tmp/result.tsv.temp tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {variants with different alt ending up in same spot -s 0} {
@@ -148,11 +143,11 @@ test liftover {variants with different alt ending up in same spot -s 0} {
 		chromosome	begin	end	type	ref	alt	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
 		2       110463287       110463288       snp     G       A,C,T	2	110858379	110858380	A
 	}
-	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	file delete tmp/result.tsv.temp
-	exec cg correctvariants -f 1 -s 0 tmp/lifted.tsv tmp/result.tsv.temp /complgen/refseq/hg19
+	exec cg correctvariants -f 1 -s 0 tmp/lifted.tsv tmp/result.tsv.temp $::refseqdir/hg19
 	cg select -rc 1 tmp/result.tsv.temp tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {changed refseq, regionsfile} {
@@ -172,9 +167,9 @@ test liftover {changed refseq, regionsfile} {
 		1	1620884	1620885	snp	T	C	1	1610744	1610745	C
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -regionfile tmp/reg.tsv tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -regionfile tmp/reg.tsv tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {changed refseq, regionsfile with multiple samples} {
@@ -194,10 +189,10 @@ test liftover {changed refseq, regionsfile with multiple samples} {
 		1	1620884	1620885	snp	T	C	v	m	C	C	u	u	?	?	1	1610744	1610745	C
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -regionfile tmp/reg.tsv tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -regionfile tmp/reg.tsv tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {no alt} {
@@ -211,10 +206,10 @@ test liftover {no alt} {
 		1	1620224	1620225	snp	G	A	r	r	G	G	1	1610084	1610085	A
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {no alt split} {
@@ -229,10 +224,10 @@ test liftover {no alt split} {
 		1	1620224	1620225	snp	G	C	v	c	C	A	1	1610084	1610085	A
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {no alt split, t} {
@@ -246,10 +241,10 @@ test liftover {no alt split, t} {
 		1	1620224	1620225	snp	G	A	v	t	G	A	1	1610084	1610085	A
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {bugcheck} {
@@ -265,10 +260,10 @@ test liftover {bugcheck} {
 		9	35060127	35060129	del	AA	{}	8930452	t	{}	AA	118	162	dbsnp.126:rs35042918	7415	NM_007126.2	NP_009057.1	VCP	-	INTRON	12	Y	NO-CALL	1906	564	{}	{}	{}	{}	{}	{}	84	-674	chr9	35050127	35050129	AA
 	}
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {tab at end of ori file (1 line)} {
@@ -277,7 +272,7 @@ test liftover {tab at end of ori file (1 line)} {
 		8	39000000	43000000	del	4000000	
 	}]
 	file delete tmp/lifted.tsv
-	cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	cg liftover tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	file_read tmp/lifted.tsv
 } {file (tmp/temp.tsv) has empty fieldname} error
 
@@ -292,10 +287,10 @@ test liftover {chr prefix} {
 		chr9	199398	199399	snp	C	T	r	C	C	45	45	dbsnp.83:rs478887																		5	-316	chr9	189398	189399	T
 	}]\n
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/chr_hg18ToHg19.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {strand change with special refs or alts} {
@@ -313,10 +308,10 @@ test liftover {strand change with special refs or alts} {
 		1	436886	443336	del	6450		1	376000	382450	6450
 	}]\n
 	file delete tmp/lifted.tsv
-	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg19ToHg38.over.tsv
+	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv $::refseqdir/liftover/hg19ToHg38.over.tsv
 	# remove comments to compare
 	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
-	exec diff tmp/result.tsv tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftsample {basic} {
@@ -327,9 +322,9 @@ test liftsample {basic} {
 		chromosome	begin	end	type	ref	alt
 		1	1610084	1610085	snp	A	G
 	}
-	write_tab tmp/esample/fannotvar-liftedsample.tsv {
+	write_tab tmp/esample/fannotvar-liftedsample.tsv [subst {
 		#liftover_source	tmp/sample/fannotvar-sample.tsv
-		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#liftover	$::refseqdir/liftover/hg18ToHg19.over.tsv
 		#split	1
 		#oldref	hg18
 		#ref	hg19
@@ -337,7 +332,7 @@ test liftsample {basic} {
 		1	1619766	1619767	snp	C	T	1	1609629	1609630	T
 		1	1620224	1620225	snp	G	A	1	1610084	1610085	A
 		1	1620884	1620885	snp	T	C	1	1610744	1610745	C
-	}
+	}]
 	mklink tmp/sample/fannotvar-sample.tsv tmp/sample/var-cg-cg-sample.tsv
 	mklink tmp/esample/fannotvar-liftedsample.tsv tmp/esample/var-cg-cg-liftedsample.tsv
 	mklink tmp/sample/doesnotexist.tsv tmp/sample/var-wronglink-sample.tsv
@@ -345,9 +340,9 @@ test liftsample {basic} {
 		chromosome	begin	end
 		1	609620	2474628
 	}
-	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv {
+	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv [subst {
 		#liftover_source	tmp/sample/sreg-cg-cg-sample.tsv
-		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#liftover	$::refseqdir/liftover/hg18ToHg19.over.tsv
 		#oldref	hg18
 		#ref	hg19
 		chromosome	begin	end	hg18_chromosome	hg18_begin	hg18_end
@@ -355,32 +350,32 @@ test liftsample {basic} {
 		1	1620086	1620859	1	609620	2474628
 		1	1620860	1620903	1	609620	2474628
 		1	1620904	2484768	1	609620	2474628
-	}
-	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv.unmapped {
+	}]
+	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv.unmapped [subst {
 		#liftover_source	tmp/sample/sreg-cg-cg-sample.tsv
-		#liftover_unmapped	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#liftover_unmapped	$::refseqdir/liftover/hg18ToHg19.over.tsv
 		chromosome	begin	end	old_begin	old_end
 		1	1609677	1609759	609620	2474628
 		1	1609849	1609946	609620	2474628
 		1	1610719	1610720	609620	2474628
 		1	1610763	1610764	609620	2474628
-	}
+	}]
 	write_tab tmp/sample/reg_cluster-cg-cg-sample.tsv {
 		chromosome	begin	end
 		1	609620	609720
 		1	609820	609930
 	}
-	write_tab tmp/esample/reg_cluster-cg-cg-liftedsample.tsv {
+	write_tab tmp/esample/reg_cluster-cg-cg-liftedsample.tsv [subst {
 		#liftover_source	tmp/sample/reg_cluster-cg-cg-sample.tsv
-		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#liftover	$::refseqdir/liftover/hg18ToHg19.over.tsv
 		#oldref	hg18
 		#ref	hg19
 		chromosome	begin	end	hg18_chromosome	hg18_begin	hg18_end
 		1	619757	619857	1	609620	609720	
 		1	619957	620067	1	609820	609930
-	}
+	}]
 	# test
-	exec cg liftsample tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftsample tmp/sample tmp/liftedsample $::refseqdir/liftover/hg18ToHg19.over.tsv
 	file delete tmp/liftedsample/fannotvar-liftedsample.tsv.unmapped
 	file delete tmp/liftedsample/reg_cluster-cg-cg-liftedsample.tsv.unmapped
 	file delete tmp/liftedsample/sampleinfo.tsv
@@ -389,7 +384,7 @@ test liftsample {basic} {
 		error "(dangling) links not correctly done"
 	}
 	file delete -force tmp/liftedsample/var-wronglink-liftedsample.tsv
-	exec diff -r tmp/liftedsample tmp/esample
+	cg tsvdiff tmp/liftedsample tmp/esample
 } {}
 
 test liftover {liftchain2tsv} {
@@ -426,7 +421,7 @@ test liftover {liftchain2tsv} {
 		1	206287230	206289128	+	1	206052241	206054139	-
 		1	206289128	206332221	+	1	206009146	206052239	-
 	}]\n
-	exec diff tmp/xx1Toxx2.over.tsv tmp/expected.tsv
+	cg tsvdiff tmp/xx1Toxx2.over.tsv tmp/expected.tsv
 } {}
 
 test sort {problem gottenafter liftover} {
@@ -436,7 +431,7 @@ test sort {problem gottenafter liftover} {
 		1	42233666	42233669	del	TTT	
 	}]\n
 	file delete tmp/lift.tsv
-	cg liftover tmp/test.tsv tmp/lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	cg liftover tmp/test.tsv tmp/lift.tsv $::refseqdir/liftover/hg18ToHg19.over.tsv
 	cg checksort tmp/lift.tsv
 } {}
 

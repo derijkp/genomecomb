@@ -1,0 +1,20 @@
+# analysed file: /home/peter/dev/genomecomb/tests/tmp/homwes_vcfmulti/annot_compar-yri_exome_part_test.vcf (converted to /home/peter/dev/genomecomb/tests/tmp/homwes_vcfmulti/homwes-out.work/annot_compar-yri_exome_part_test.tsv)
+# samples: NA19238 NA19239 NA19240
+# filterrepeats: 1
+# quality: 50
+# genoqual: 40
+# variantsonly: 1
+# snpsonly: 0
+# query used for filtering variants: (chr_clip($chromosome) ni {X Y M MT}) && $gfilter-NA19238 in {. PASS Pass pass} && def($genoqual-NA19238,100) > 40 && $microsat=="" && $simpleRepeat=="" && $zyg-NA19238 ni "u r"
+# callers_used: 
+# callers_param: 
+# allowedheterozygous: 1
+# homozygdensity: 200
+# homozyggap: 4000
+# homozygwindowsnp: 20
+# dbdir: /home/peter/genomecomb.smalltestdata/refseqtest/hg19
+chromosome	begin	end	DENSITY	PHOM	PHET	FID	IID	PHE	SNP1	SNP2	KB	NSNP
+3	47447902	48491366	40.133	0.923	0.077	fam	NA19238	2.000	3-47447902-47447903-snp-C-T	3-48491366-48491367-snp-T-G	1043.464	26
+3	164714531	166579856	81.101	0.913	0.087	fam	NA19238	2.000	3-164714531-164714532-snp-C-T	3-166579856-166579857-snp-C-T	1865.325	23
+6	40399445	41557414	39.930	0.931	0.069	fam	NA19238	2.000	6-40399445-40399446-snp-T-C	6-41557414-41557415-snp-C-T	1157.969	29
+11	85422429	86525544	32.445	0.941	0.059	fam	NA19238	2.000	11-85422429-85422430-snp-T-G	11-86525544-86525545-snp-G-A	1103.115	34

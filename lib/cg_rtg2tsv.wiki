@@ -4,7 +4,7 @@
 cg rtg2tsv infile outfile
 
 == Summary ==
-Converts data in rtg format to sft (simple feature table) format
+Converts data in rtg format to tsv format
 
 == Arguments ==
 ; **infile**: file to be converted. File may be compressed.

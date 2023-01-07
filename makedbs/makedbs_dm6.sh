@@ -2,185 +2,108 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
+# Script to download and prepare all reference databases (including genome) for dm6
+# call using
+# makedbs_dm6.sh ?options? ?dest? ?webcache?
+# where 
+# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/dm6)
+# * webcache: directory that will be used to cache downloads (default /complgen/refseqnew/webcache)
+# options:
+# -d distr: allow distributed processing on 
+#           e.g. a grid engine cluster with -d sge, 
+#           or locally on multiple cores with e.g. -d 8 for 8 cores
+# If the command is interrupted, you can just restart using the same
+# command, and it will continue from where it was stopped.
+
+# settings
+# ========
+
+# basic settings (for makerefdb_job)
+# --------------
 set build dm6
-set dbs_reg_collapse {cytoBand rmsk simpleRepeat microsat}
-set dbs_reg_join {}
-set dbs_other {}
-set dbs_tabix {rmsk simpleRepeat}
-set dbs_var {}
-set dbs_gene {refGene extra/ensGene extra/genscan}
-set mirbasegenome dme
-set mirbaserelease 21
+set defaultdest /complgen/refseqnew
+set par {}
+set genomeurl {}
+set dbsnpversion {}
+set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Drosophila_melanogaster/all_assembly_versions/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.gff.gz
+set mirbase dme-22.1:dm6
+set regionsdb_collapse {
+	cytoBand rmsk simpleRepeat microsat
+}
+set regionsdb_join {}
 
+# list with geneset name (first word) and one or more of the following keywords
+# int : include in intGene
+# extra : place in the extra dir instead of in base annotation dir
+# reg : make a region file from it (in extra)
+set genesdb [list \
+	{refGene int reg} \
+	{ncbiRefSeq extra int reg} \
+	{ensGene extra int reg} \
+	{genscan extra} \
+	{augustusGene extra} \
+]
+set downloads {
+	https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips/genes/dm6.ensGene.gtf.gz gene_dm6_ensGene.gtf.gz
+}
+set transcriptsurl https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips/genes/dm6.ensGene.gtf.gz
+set transcriptsgtf extra/gene_dm6_ensGene.gtf
+
+# extra settings
+# --------------
+
+# prepare
+# =======
+
+if {![info exists argv]} {set argv {}}
+
+# keep actual command line used for log
+set cmdline [clean_cmdline cg [info script] {*}$args]
+
+# arguments, start job system
 logverbose 2
+set argv [job_init {*}$argv]
 
-if {![info exists argv]} {
-	set argv /complgen/refseqnew
-} else {
-	set argv [job_init {*}$argv]
-}
-cg_options makedbs_dm6 argv {
-	-webcache {set webcache $value}
-} {dest webcache} 1 2 {
-	Downloads and creates the dm6 reference genome and annotation databases
-}
+cg_options makedbs_mm10.sh argv {
+} {dest webcache} 0 2
 
-if {![info exists dest]} {set dest /complgen/refseqnew}
-if {![info exists webcache]} {set webcache $dest/webcache}
+if {![info exists dest] || $dest eq ""} {set dest $defaultdest}
+if {![info exists webcache] || $webcache eq ""} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 
-putslog "Creating dir $dest/$build"
-
-# download genome
-# ===============
-#
+# prepare
+putslog "Installing in $dest/$build"
 file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
 
+# set 
 set_job_logdir log_jobs
+job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 
-# download genome
-job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
-	cg download_genome --stack 1 --verbose 2 genome_${build}.ifas ${build}
-	file rename -force -- reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
-}
-
-set ifasfile genome_${build}.ifas
-job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -code {
-	cg make_genomecindex $dep
-}
-
-# make bwa version of genome
-refseq_bwa_job genome_${build}.ifas
-
-## make ngmlr version of genome
-#refseq_ngmlr_job genome_${build}.ifas ont
+# download
+# ========
 #
-## make minimap2 versions of genome
-#refseq_minimap2_job genome_${build}.ifas sr
-#refseq_minimap2_job genome_${build}.ifas map-ont
-#refseq_minimap2_job genome_${build}.ifas splice:hq
 
-job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.zst} -code {
-	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-}
+# makerefdb
+# ---------
+# first part is done with the more generic cg makerefdb, but we call it with makerefdb_job to run its jobs under the already started job manager
+makerefdb_job \
+	-genomeurl $genomeurl \
+	-pseudoautosomal $par \
+	-dbsnp $dbsnpversion \
+	-regionsdb_collapse $regionsdb_collapse \
+	-regionsdb_join $regionsdb_join \
+	-refSeqFuncElemsurl $refSeqFuncElemsurl \
+	-genesdb $genesdb \
+	-mirbase $mirbase \
+	-transcriptsurl $transcriptsurl \
+	-transcriptsgtf $transcriptsgtf \
+	-webcache $webcache \
+	$dest/$build
 
-# region databases (ucsc)
-# you can explicitely download info on the databases using:
-# cg download_ucscinfo resultfile ${build} dbname
-
-# collapse regions
-foreach db $dbs_reg_collapse {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.zst} -vars {dest build db} -code {
-		cg download_ucsc $target.ucsc ${build} $db
-		cg regcollapse $target.ucsc {*}[compresspipe $target 12] > $target.temp
-		file rename -force -- $target.ucsc.info [file root $target].info
-		file rename -force -- $target.temp $target
-		file delete $target.ucsc
-	}
-}
-
-# join regions
-foreach db $dbs_reg_join {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.zst} -vars {dest build db} -code {
-		cg download_ucsc $target.ucsc ${build} $db
-		cg regjoin $target.ucsc {*}[compresspipe $target 12] > $target.temp
-		file delete $target.ucsc
-		file rename -force -- $target.ucsc.info [file root $target].info
-		file rename -force -- $target.temp $target
-	}
-}
-
-# other databases
-foreach db $dbs_other {
-	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv.zst} -code {
-		cg download_ucsc other_${build}_${db}.tsv.zst ${build} $db
-	}
-}
-
-foreach db $dbs_tabix {
-	job maketabix_${build}_$db -deps {reg_${build}_${db}.tsv} -targets {reg_${build}_${db}.tsv.gz.tbi reg_${build}_${db}.tsv.gz} -vars {build db} -code {
-		cg maketabix $dep
-	}
-}
-
-# var dbs
-foreach db $dbs_var {
-	job $db -targets {var_${build}_${db}.tsv.zst} -vars {dest build db} -code {
-		cg download_ucsc $target.temp $build $db
-		exec cg select -f {chrom start end type ref alt name freq} $target.temp {*}[compresspipe $target 12] > $target.temp2
-		file rename -force -- $target.temp2 $target
-		file delete $target.tmp
-	}
-	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
-		cg maketabix $dep
-	}
-}
-
-# genes
-set genesets {}
-foreach db $dbs_gene {
-	set dbname [file tail $db]
-	set dir [file dir $db]
-	set target $dir/gene_${build}_${dbname}.tsv
-	lappend genesets $target.zst
-	job gene_${build}_$dbname -targets {$target.zst $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
-		file delete $target
-		cg download_genes $target $build $dbname
-		cg maketabix $target
-		cg index $target
-	}
-}
-
-set target gene_${build}_intGene.tsv
-job gene_${build}_intGene \
--deps $genesets \
--targets {$target.zst $target.gz $target.gz.tbi} -vars {dest build db} -code {
-	cg intgene --stack 1 --verbose 2 {*}$deps {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg maketabix $target
-	cg index $target
-}
-
-# homopolymer
-job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.zst reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
-	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
-	file rename -force -- $target.temp $target
-	cg maketabix $target
-	file_write $target2 "fields\t{base size}\n"
-}
-
-# mirbase
-job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv.zst mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
-	set resultfile mir_${build}_mirbase$mirbaserelease.tsv
-	cg download_mirbase $resultfile.temp $mirbasegenome $mirbaserelease
-	compress $resultfile.temp $resultfile.zst
-}
-
-job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
--targets {
-	extra/genome_${build}.ifas extra/genome_${build}.ifas.fai extra/genome_${build}.ifas.index
-	genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
-	extra/genome_${build}.ssa
-} -code {
-	mklink genome_${build}.ifas extra/genome_${build}.ifas
-	mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
-	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-	mklink genome_${build}.ifas genome_${build}.fa
-	mklink genome_${build}.ifas.fai genome_${build}.fa.fai
-	mklink genome_${build}.ifas.index genome_${build}.fa.index 
-	mklink genome_${build}.ssa extra/genome_${build}.ssa
-}
-
-# genome in extra
-catch {
-	foreach file [glob genome_*] {
-		file delete extra/[file tail $file]
-		mklink $file extra/[file tail $file]
-	}
-}
+# rest after this is dm6 specific code
+# ------------------------------------
 
 job_wait

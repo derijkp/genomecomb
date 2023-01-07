@@ -161,9 +161,8 @@ test map_minimap2 {map_minimap2 paired} {
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
-	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
-	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam \
-		| cg select -s - -rf {de rl ROW} > tmp/alis.tsv
+	exec samtools sort tmp/ali.bam | samtools view --no-PG -h > tmp/ali.sam
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} tmp/ali.sam > tmp/alis.tsv
 	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} data/minimap2-p.sam tmp/expected.tsv
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
@@ -181,35 +180,38 @@ test map_minimap2 {map_minimap2 paired -.sam} {
 		error "$result file was made"
 	}
 	# chr21:42730799-42762826
-	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
-	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam \
-		| cg select -s - -rf {de rl ROW} > tmp/alis.tsv
+	exec samtools sort tmp/ali.bam | samtools view --no-PG -h > tmp/ali.sam
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} tmp/ali.sam > tmp/alis.tsv
 	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} data/minimap2-p.sam tmp/expected.tsv
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
+
 cd $::testdir
 
 test map_minimap2 {map_minimap2 -paired 0} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
-	set otherfields {AS XS MC MQ YS YT XS s1 s2 cm de rl ms}
-	set removefields {AS XS MC MQ YS YT XS s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
+	set otherfields {AS XS MC MQ YS YT s1 s2 cm de rl ms}
+	set removefields {AS XS MC MQ YS YT s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
 	exec samtools view --no-PG tmp/ali.bam | cg sam2tsv -fields $otherfields \
 		| cg select -f {chromosome	begin	end	strand {qname="[string range $qname 0 end-2]"} *} \
 		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
 	exec samtools view --no-PG data/minimap2-p.sam | cg sam2tsv -fields $otherfields \
 		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
 	# we have one slight difference in alignment for unpaired alignement!
-	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
-} {diff tmp/ali.tsv tmp/expected.tsv
-header
-  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other	XS
-25c25
-< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4	
----
-> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91	
-child process exited abnormally} error
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv >& tmp/diff}
+	file_write tmp/expectdiff [deindent {
+		diff tmp/ali.tsv tmp/expected.tsv
+		header
+		  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
+		25c25
+		< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4
+		---
+		> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91
+	}]\n
+	exec diff tmp/diff tmp/expectdiff
+} {}
 
 test map_minimap2 {error dir as refseq} {
 	test_cleantmp

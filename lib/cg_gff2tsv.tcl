@@ -28,7 +28,7 @@ proc cg_gff2tsv {args} {
 		set o stdout
 	}
 
-	set comment {# -- sft converted from gff, original comments follow --}
+	set comment {# -- tsv converted from gff, original comments follow --}
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break

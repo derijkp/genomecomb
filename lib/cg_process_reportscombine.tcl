@@ -382,7 +382,7 @@ proc reportscombine_table_alignment {alignments dataVar dbdir} {
 		lappend line [pget data "$alignment,flagstat_reads,in total"]
 		set numreads [pget data "$alignment,flagstat_reads,primary" "$alignment,samstats_summary,raw_total_sequences"]
 		lappend line $numreads
-		set mapped_reads [pget data $alignment,flagstat_reads,primary "$alignment,samstats_summary,reads_mapped"]
+		set mapped_reads [pget data "$alignment,flagstat_reads,primary mapped" "$alignment,samstats_summary,reads_mapped"]
 		lappend line $mapped_reads
 		lappend line [ppercent $mapped_reads $numreads]
 		lappend line [pget data $alignment,flagstat_reads,duplicates]
@@ -933,7 +933,7 @@ proc reportscombine_samstats_uareadlength {uastatsrlfiles} {
 	}
 	#
 	# make chart
-	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "number of sequences" "readlength" $xmax
+	plotly uareadlength $chartdata "Readlength distribution (aligned and unaligned)" "readlength" "number of sequences" $xmax
 }
 
 proc reportscombine_remove_hlongshot {files} {
@@ -1134,14 +1134,22 @@ proc process_reportscombine_job {args} {
 				lappend resultline $numreads
 				set data($sample,numreads) $numreads
 				# bam based stats
-				set pf_reads [expr {
-					[get "data($bamname,flagstat_reads,in total)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
-				}]
-				if {$pf_reads < 0} {set pf_reads {}}
+				if {[info exists "data($bamname,flagstat_reads,primary)"]} {
+					set pf_reads [get "data($bamname,flagstat_reads,primary)"]
+				}  else {
+					set pf_reads [expr {
+						[get "data($bamname,flagstat_reads,in total)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
+					}]
+					if {$pf_reads < 0} {set pf_reads {}}
+				}
 				set pf_duplicates [get "data($bamname,flagstat_reads,duplicates)" {}]
-				set pf_mapped [expr {
-					[get "data($bamname,flagstat_reads,mapped)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
-				}]
+				if {[info exists "data($bamname,flagstat_reads,primary mapped)"]} {
+					set pf_mapped [get "data($bamname,flagstat_reads,primary mapped)"]
+				}  else {
+					set pf_mapped [expr {
+						[get "data($bamname,flagstat_reads,mapped)" -1] - [get "data($bamname,flagstat_reads,secondary)" 0] - [get "data($bamname,flagstat_reads,supplementary)" 0]
+					}]
+				}
 				if {$pf_mapped < 0} {set pf_mapped {}}
 				set pf_properlypaired [get "data($bamname,flagstat_reads,properly paired)" {}]
 				if {[isint $numreads] && [isint $pf_reads]} {
@@ -1157,12 +1165,12 @@ proc process_reportscombine_job {args} {
 				}
 				lappend resultline $pf_reads $pct_pf_reads $pf_unique_reads $pct_pf_unique_reads $pf_mapped $pct_pf_aligned_reads
 				# keep for further use
-				set data($sample,pf_reads) $pf_reads
-				set data($sample,pct_pf_reads) $pct_pf_reads
-				set data($sample,pf_unique_reads) $pf_unique_reads
-				set data($sample,pct_pf_unique_reads) $pct_pf_unique_reads
-				set data($sample,pf_mapped) $pf_mapped
-				set data($sample,pct_pf_aligned_reads) $pct_pf_aligned_reads
+				if {$pf_reads ne ""} {set data($sample,pf_reads) $pf_reads}
+				if {$pct_pf_reads ne ""} {set data($sample,pct_pf_reads) $pct_pf_reads}
+				if {$pf_unique_reads ne ""} {set data($sample,pf_unique_reads) $pf_unique_reads}
+				if {$pct_pf_unique_reads ne ""} {set data($sample,pct_pf_unique_reads) $pct_pf_unique_reads}
+				if {$pf_mapped ne ""} {set data$sample,pf_mapped) $pf_mapped}
+				if {$pct_pf_aligned_reads ne ""} {set data$sample,pct_pf_aligned_reads) $pct_pf_aligned_reads}
 				# rest
 				lappend resultline [get data($bamname,histodepth,targetbases) {}]
 				lappend resultline [get data($bamname,histodepth,pct_target_bases_2X) {}]
@@ -1230,7 +1238,6 @@ proc process_reportscombine_job {args} {
 				set expa($expname) 1
 			}
 			set experiments [list_remove [array names expa] ""]
-
 			set samples [list_regsub -all {.*-} $analyses {}]
 			set samples [bsort [list_remdup $samples]]
 			set alignments {}

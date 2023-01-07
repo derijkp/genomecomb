@@ -194,7 +194,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
-			if {$status in "error skipped" && [job_file_exists $job.log]} {
+			if {$status in "error skipped" && [job_file_or_link_exists $job.log]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 			}
@@ -205,8 +205,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_exists $job.log])} {
-			if {[job_file_exists $job.log]} {
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists $job.log])} {
+			if {[job_file_or_link_exists $job.log]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {($starttime eq "" || $endtime eq "") && [info exists joblogcachea($job)]} {
@@ -235,7 +235,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
 				if {$status eq "error"} {
 					if {[catch {set msg [file_read $job.err]}]} {
-						set msg "job no longer running, but no error message found"
+						set msg "job $job no longer running, but no error message found"
 					}
 				}
 			}

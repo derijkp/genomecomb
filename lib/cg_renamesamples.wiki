@@ -12,6 +12,14 @@ other names. This includes changing the header in multicompar files (tsv
 or sft extension), or renaming the files or directories that contain the
 sample name in the file name.
 
+As a backup, the process will create a subdirectory rename.old with the
+original (named) data in it. The files in rename.old are hardlinks to the
+renamed files, so this backup does not take a lot of storage space. You
+might still want to remove it when you are sure the rename went ok: It
+does cause double the number of files, and when moving or backing up the
+experiment directory the hardlinks may be broken (failing to take into
+account hardlinks), causing duplication of storage.
+
 == Arguments ==
 ; **dir/file**: file or directory to be converted.
 ; **samplename**: current name of sample

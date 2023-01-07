@@ -1,6 +1,6 @@
 proc tsv_paste_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg paste {*}$args]"
+	set cmdline [clean_cmdline cg paste {*}$args]
 	set forcepaste 0
 	set endcommand {}
 	set optional 0

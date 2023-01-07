@@ -98,10 +98,10 @@ proc cg_download_genome {args} {
 	#
 	set rfile [file dir $result]/reg_[file root $tail].tsv
 	putslog "Making $rfile"
-	set data [file_read $result.index]
+	set data [file_read $result.fai]
 	set o [open $rfile.temp w]
 	puts $o chromosome\tbegin\tend
-	list_foreach {chromosome begin len} [lrange [split [string trim $data] \n] 0 end-1] {
+	list_foreach {chromosome len} [lrange [split [string trim $data] \n] 0 end-1] {
 		puts $o $chromosome\t0\t$len
 	}
 	close $o

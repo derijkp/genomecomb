@@ -165,67 +165,87 @@ test select "default -s -$dboptt" {
 
 test select "-f *$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end alleleSeq1-*} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end alleleSeq1-*} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	alleleSeq1-sample1	alleleSeq1-sample2
 chr1	4000	4001	A	A
 chr2	4000	4001	G	G}
 
 test select "-f calculated$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {geno1="$alleleSeq1-sample1/$alleleSeq2-sample1"}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {geno1="$alleleSeq1-sample1/$alleleSeq2-sample1"}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	geno1
 chr1	4000	4001	A/G
 chr2	4000	4001	G/G}
 
 test select "-f calculated functions$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
 test select "-f calculated functions error unknown function$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {error=blabla($alt)}} [gzfile data/vars1.sft] tmp/temp.tsv
+	exec cg select {*}$dbopt -f {chromosome begin end {error=blabla($alt)}} [gzfile data/vars1.tsv] tmp/temp.tsv
 } {unknown function blabla} error
 
 test select "-f calculated functions error catch$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {error=catch(blabla($alt),"error")}} -q {$ROW < 2} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {error=catch(blabla($alt),"error")}} -q {$ROW < 2} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	error
 chr1	4000	4001	error
 chr1	4001	4002	error}
 
 test select "-rowfield R -f calculated functions error catch$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -rowfield R -f {chromosome begin end {error=catch(blabla($alt),"error")}} -q {$R < 2} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -rowfield R -f {chromosome begin end {error=catch(blabla($alt),"error")}} -q {$R < 2} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	error
 chr1	4000	4001	error
 chr1	4001	4002	error}
 
 test select "-f calculated functions error not a number$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {error=($list<1)}} [gzfile data/vars1.sft] tmp/temp.tsv
+	exec cg select {*}$dbopt -f {chromosome begin end {error=($list<1)}} [gzfile data/vars1.tsv] tmp/temp.tsv
 } {1;2,3;4 is not a number} error
 
 test select "-f wildcard error$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {field alleleSeq-* not present in file (or sampleinfo)} error
 
 test select "-f calculated if$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	hasA
 chr2	4000	4001	noA}
 
 test select "-f calculated if$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=if(count($alleleSeq*, == "G")<4,"<4",">=4")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=if(count($alleleSeq*, == "G")<4,"<4",">=4")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	<4
 chr2	4000	4001	>=4}
+
+test select "-f calculated with division $dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	2
+	}]
+	exec cg select {*}$dbopt -f {a b {c=$a/$b}} tmp/temp.tsv
+} {a	b	c
+1	2	0.5}
+
+test select "-q with division $dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b
+		1	2
+	}]
+	exec cg select {*}$dbopt -q {$a/$b > 0} tmp/temp.tsv
+} {a	b
+1	2}
 
 test select "-hc 1$dboptt" {
 	global dbopt
@@ -331,7 +351,7 @@ test select "keep header info and format vcf$dboptt" {
 if 0 {
 test select "-f calculated functions + sort$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} -s countG [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} -s countG [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	2
 chr2	4000	4001	4}
@@ -419,22 +439,22 @@ xx	u	xx	4000000000	4000000000	1	4000000000}
 
 test select "sm$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {sm(sample1,sample2)} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {sm(sample1,sample2)} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5010}}
 
 test select "df$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {df(sample1,sample2)} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {df(sample1,sample2)} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr1	5020} {chr2	5000} {chr2	5011} {chr2	8000}}
 
 test select "mm$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {mm(sample1,sample2)} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {mm(sample1,sample2)} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr2	5005}}
 
 test select "-q count with wildcard$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end alleleSeq*} -q {count($alleleSeq*, == "G") > 3} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end alleleSeq*} -q {count($alleleSeq*, == "G") > 3} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	alleleSeq1-sample1	alleleSeq2-sample1	alleleSeq1-sample2	alleleSeq2-sample2
 chr1	4001	4002	G	G	G	G
 chr2	4000	4001	G	G	G	G
@@ -442,77 +462,77 @@ chr2	4001	4002	G	G	G	G}
 
 test select "lmin column$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmin($list)}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmin($list)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select "lmind column$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmind($list,10)}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmind($list,10)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	10}}
 
 test select "lmind select$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {lmind($list,10) == 2} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {lmind($list,10) == 2} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5000}}
 
 test select "lmax column$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmax($list)}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmax($list)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select "lmaxd column$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmaxd($list,0)}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmaxd($list,0)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	0}}
 
 test select "lmaxd select$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {lmaxd($list,10) == 2} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {lmaxd($list,10) == 2} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr1	4099} {chr1	5000} {chr2	4000} {chr2	5000}}
 
 test select "counthasone column$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.tsv] \n
 } {{chromosome	begin	lmin} {chr1	4000	0} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	0} {chr2	4000	1} {chr2	4001	1} {chr2	4099	1} {chr2	5000	0} {chr2	5000	1} {chr2	5005	0} {chr2	5010	0} {chr2	5011	0} {chr2	8000	0}}
 
 test select "ROW$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end} -q {$ROW == 2} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin end} -q {$ROW == 2} < data/vars1.tsv] \n
 } {{chromosome	begin	end} {chr1	4099	4100}}
 
 test select "-rowfield R ROW$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -rowfield R -f {chromosome begin end} -q {$R == 2} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -rowfield R -f {chromosome begin end} -q {$R == 2} < data/vars1.tsv] \n
 } {{chromosome	begin	end} {chr1	4099	4100}}
 
 test select "ROW$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin end ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.tsv] \n
 } {{chromosome	begin	end	ROW} {chr1	4099	4100	2} {chr1	5000	5010	3}}
 
 test select "shared objects bugcheck$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end {test=[set ::keep $begin]}} -q {$ROW between {2 3}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin end {test=[set ::keep $begin]}} -q {$ROW between {2 3}} < data/vars1.tsv] \n
 } {{chromosome	begin	end	test} {chr1	4099	4100	4099} {chr1	5000	5010	5000}}
 
 test select "shared objects bugcheck$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end {test="[get ::keep 1]-[set ::keep $begin]"}} -q {$ROW between {2 3}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin end {test="[get ::keep 1]-[set ::keep $begin]"}} -q {$ROW between {2 3}} < data/vars1.tsv] \n
 } {{chromosome	begin	end	test} {chr1	4099	4100	1-4099} {chr1	5000	5010	4099-5000}}
 
 test select "start brace bugcheck$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 8 10}} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 8 10}} < data/vars1.tsv] \n
 } {{chromosome	begin	end	type} {chr1	4099	4100	Snp} {chr1	5000	5010	Deletion} {chr2	5000	5000	ins} {chr2	5005	5006	Snp}}
 
 test select "list @-$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,0.5,0.0} {4001	-0.9,0.8} {4099	0.2,0.4}}
 
 test select "list @- @-$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0) @- vdef($freq-sample2,0)}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0) @- vdef($freq-sample2,0)}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	-0.30000000000000004} {4001	-0.30000000000000004,-0.30000000000000004} {4099	0.09999999999999998,-1.1} {5020	-0.30000000000000004,0.5,-0.2} {4001	-1.8,0.8} {4099	0.2,0.4}}
 
 test select "list @- @<$dboptt" {
@@ -520,37 +540,37 @@ test select "list @- @<$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} \
 		-q {lone((vdef($freq-sample1,0) @- vdef($freq-sample2,0)) @< 0)} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{begin	diff} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,0.5,0.0} {4001	-0.9,0.8}}
 
 test select "list @- NaN$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=$freq-sample1 @- $freq-sample2}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=$freq-sample1 @- $freq-sample2}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,NaN,0.0} {4001	NaN,NaN} {4099	NaN,NaN}}
 
 test select "list vabs$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @- vdef($freq-sample2,0))}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @- vdef($freq-sample2,0))}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,0.1} {4099	0.3,0.5} {5020	0.1,0.5,0.0} {4001	0.9,0.8} {4099	0.2,0.4}}
 
 test select "list vabs NaN$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vabs($freq-sample1 @- $freq-sample2)}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vabs($freq-sample1 @- $freq-sample2)}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,0.1} {4099	0.3,0.5} {5020	0.1,NaN,0.0} {4001	NaN,NaN} {4099	NaN,NaN}}
 
 test select "list @+$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @+ vdef($freq-sample2,0))}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @+ vdef($freq-sample2,0))}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.9} {4001	0.9,0.30000000000000004} {4099	0.7,0.7} {5020	0.30000000000000004,0.5,0.4} {4001	0.9,0.8} {4099	0.2,0.4}}
 
 test select "list @*$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @* vdef($freq-sample2,0))}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @* vdef($freq-sample2,0))}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	0.2} {4001	0.2,0.020000000000000004} {4099	0.1,0.06} {5020	0.020000000000000004,0.0,0.04000000000000001} {4001	0.0,0.0} {4099	0.0,0.0}}
 
 test select "list @/$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @/ vdef($freq-sample2,0))}} < data/vars3.sft] \n
+	split [exec cg select {*}$dbopt -f {begin {diff=vabs(vdef($freq-sample1,0) @/ vdef($freq-sample2,0))}} < data/vars3.tsv] \n
 } {{begin	diff} {4000	1.25} {4001	1.25,0.5} {4099	2.5,0.16666666666666669} {5020	0.5,Inf,1.0} {4001	0.0,Inf} {4099	Inf,Inf}}
 
 test tokenize {@newop precedence} {
@@ -572,7 +592,7 @@ test select "lindex$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {lindex($freq-sample1,1) == 0.1} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4001} {chr1	4099}}
 
 test select "and$dboptt" {
@@ -580,7 +600,7 @@ test select "and$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {$freq-sample1 contains 0.5 and $freq-sample2 contains 0.2} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4001} {chr1	4099} {chr1	5020}}
 
 test select "or$dboptt" {
@@ -588,7 +608,7 @@ test select "or$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {$freq-sample1 contains 0.5 or $freq-sample2 contains 0.2} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
 
 test select "vand$dboptt" {
@@ -596,7 +616,7 @@ test select "vand$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {lone($freq-sample1 @== 0.5 vand $freq-sample2 @== 0.2)} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4099}}
 
 test select "@&&$dboptt" {
@@ -604,7 +624,7 @@ test select "@&&$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {lone($freq-sample1 @== 0.5 @&& $freq-sample2 @== 0.2)} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4099}}
 
 test select "vor$dboptt" {
@@ -612,7 +632,7 @@ test select "vor$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {lone($freq-sample1 @== 0.5 vor $freq-sample2 @== 0.2)} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
 
 test select "@||$dboptt" {
@@ -620,17 +640,17 @@ test select "@||$dboptt" {
 	split [exec cg select {*}$dbopt \
 		-f {chromosome begin} \
 		-q {lone($freq-sample1 @== 0.5 @|| $freq-sample2 @== 0.2)} \
-		< data/vars3.sft] \n
+		< data/vars3.tsv] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
 
 test select "region$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {region("chr2:4099-5020")} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {region("chr2:4099-5020")} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr2	4099} {chr2	5000} {chr2	5000} {chr2	5005} {chr2	5010} {chr2	5011}}
 
 test select "region, only chr$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin} -q {region("chr1")} < data/vars1.sft] \n
+	split [exec cg select {*}$dbopt -f {chromosome begin} -q {region("chr1")} < data/vars1.tsv] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5000} {chr1	5020}}
 
 
@@ -675,12 +695,12 @@ test select "-q no error on non number with gt operator$dboptt" {
 
 test select "error missing quote$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec cg select {*}$dbopt -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.tsv tmp/tempexpected.tsv
 } {error: incomplete quoted expression: "aa} error
 
 test select "error missing quote empty$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec cg select {*}$dbopt -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.tsv tmp/tempexpected.tsv
 } {error: incomplete quoted expression: "} error
 
 test select "brokentable$dboptt" {
@@ -719,7 +739,7 @@ test select "-q use calculated column from -f without it being in the output (us
 
 test select "calculated column with wildcard$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {test-*="$alleleSeq1-*/$alleleSeq2-*"} -q {$ROW <= 4} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+	exec cg select {*}$dbopt -f {test-*="$alleleSeq1-*/$alleleSeq2-*"} -q {$ROW <= 4} data/expected-multicompar_reannot-var_annotvar_annot2.tsv
 } {test-annot1	test-annot2
 T/C	T/C
 A/C	A/C
@@ -729,14 +749,14 @@ A/A	G/C}
 
 test select "calculated column with wildcard also outside var$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {{test-*="*: $alleleSeq1-*/$alleleSeq2-*"}} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+	exec cg select {*}$dbopt -f {{test-*="*: $alleleSeq1-*/$alleleSeq2-*"}} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.tsv
 } {test-annot1	test-annot2
 annot1: T/C	annot2: T/C
 annot1: A/C	annot2: A/C}
 
 test select "calculated column with multiple wildcards$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {a*-**="$alleleSeq*-**"} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+	exec cg select {*}$dbopt -f {a*-**="$alleleSeq*-**"} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.tsv
 } {a1-annot1	a1-annot2	a2-annot1	a2-annot2
 T	T	C	C
 A	A	C	C}
@@ -969,28 +989,28 @@ test select "do not make index on select only$dboptt" {
 
 test select "catch$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror)}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror)}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	1
 chr2	4000	4001	1}
 
 test select "catch$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin)}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin)}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	0
 chr2	4000	4001	0}
 
 test select "catch with errorvalue $dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror,"e")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror,"e")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	e
 chr2	4000	4001	e}
 
 test select "catch with errorvalue $dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin,"e")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin,"e")}} -q {$begin == 4000} [gzfile data/vars1.tsv]
 } {chromosome	begin	end	countG
 chr1	4000	4001	4000
 chr2	4000	4001	4000}
@@ -1623,5 +1643,19 @@ test select {empty line} {
 	exec cg select -g ref tmp/vars.tsv
 } {not enough fields (1 where at least 5 are needed) for line 1 (without comments): 
 } error
+
+test select {duplicate field error} {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		a	b	a
+		1	CDS	2
+		2	CD	2
+	}]
+	cg select -q {$b regexp "CDS"} tmp/temp.tsv > tmp/result.tsv 2> tmp/error
+	list [file_read tmp/error] [file_read tmp/result.tsv]
+} {{duplicate fieldnames: a
+} {a	b	a
+1	CDS	2
+}}
 
 testsummarize

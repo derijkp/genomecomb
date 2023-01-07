@@ -7,7 +7,7 @@ proc gatk_bqsr_job args {
 	set dbdir {}
 	set maxmem 4
 	set distrreg 0
-	set cmdline [list cg gatk_bqsr {*}$args]
+	set cmdline [clean_cmdline cg gatk_bqsr {*}$args]
 	cg_options gatkbp_combine args {
 		-dbdir {
 			set dbdir $value

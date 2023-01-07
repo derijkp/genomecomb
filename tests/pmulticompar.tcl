@@ -169,108 +169,108 @@ foreach {testname jobopts} $tests {
 
 test pmulticompar$testname {basic} {
 	test_cleantmp
-	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2.sft
-	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
-	exec diff tmp/temp.sft tmp/expected.tsv
+	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv data/var_annot.tsv data/var_annot2.tsv
+	reorder data/expected-multicompar-var_annotvar_annot2.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {no sreg error} {
 	test_cleantmp
-	cg pmulticompar {*}$::jobopts -split 0 -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
-	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
-	exec diff tmp/temp.sft tmp/expected.tsv
+	cg pmulticompar {*}$::jobopts -split 0 -i 0 tmp/temp.tsv data/var_annot.tsv data/var_annot2.tsv
+	reorder data/expected-multicompar-var_annotvar_annot2.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {*no sorted region file (*/sreg-var_annot.tsv) or varallfile (*/varall-var_annot.tsv) found: not properly processed sample*} error match
 
 test pmulticompar$testname {basic with 3} {
 	test_cleantmp
 	foreach sample {annot annot2 annot3} {
-		file copy data/var_$sample.sft tmp/var-$sample.tsv
+		file copy data/var_$sample.tsv tmp/var-$sample.tsv
 	}
 	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
-	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
+	reorder data/expected-multicompar-var_annotvar_annot3.tsv tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {add to existing} {
 	test_cleantmp
 	foreach sample {annot annot2 annot3} {
-		file copy data/var_$sample.sft tmp/var-$sample.tsv
+		file copy data/var_$sample.tsv tmp/var-$sample.tsv
 	}
 	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
 	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot3.tsv
-	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
+	reorder data/expected-multicompar-var_annotvar_annot3.tsv tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {basic split} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
-	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot3.tsv > tmp/var-sample3.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
+	exec diff tmp/temp.tsv data/expected-multicompar-reannot-split.tsv
 } {} 
 
 test pmulticompar$testname {add to existing split} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv 2> tmp/warnings.log
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample3.tsv 2> tmp/warnings.log
-	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot3.tsv > tmp/var-sample3.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv 2> tmp/warnings.log
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
+	exec diff tmp/temp.tsv data/expected-multicompar-reannot-split.tsv
 } {} 
 
 test pmulticompar$testname {basic reannot} {
 	test_cleantmp
-	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/var-annot1.tsv
-	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot.tsv tmp/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
-	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.tsv tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {basic split reannot} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.tsv
 } {} 
 
 test pmulticompar$testname {basic split reannot zst} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
 	cg zst {*}[glob tmp/*]
 	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.zst tmp/var-sample2.tsv.zst tmp/var-sample3.tsv.zst
-	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.tsv
 } {} 
 
 test pmulticompar$testname {basic split reannot rz} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg splitalleles data/var_annot.tsv > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.tsv > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.tsv > tmp/prevar-sample3.tsv
 	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-sample3.tsv
 	cg razip {*}[glob tmp/*]
 	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.rz tmp/var-sample2.tsv.rz tmp/var-sample3.tsv.rz
-	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.tsv
 } {} 
 
 test pmulticompar$testname {split reannot test diff alleles} {
@@ -290,7 +290,7 @@ test pmulticompar$testname {split reannot test diff alleles} {
 		chromosome	begin	end
 		1	0	20
 	}
-	write_tab tmp/expected.sft {
+	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1 alleleSeq1-sample1	alleleSeq2-sample1	name-sample1	sequenced-sample2	zyg-sample2 alleleSeq1-sample2	alleleSeq2-sample2	name-sample2
 		1	10	11	snp	G	A	r	o	G	C	1A10	r	o	C	C	?
 		1	10	11	snp	G	C	v	t	G	C	1C10	v	m	C	C	2C10
@@ -298,14 +298,14 @@ test pmulticompar$testname {split reannot test diff alleles} {
 		1	11	12	snp	T	A	v	m	A	A	1A11	r	r	T	T	?
 	}
 	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv
-	exec diff tmp/temp.sft tmp/expected.sft
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {basic, sequenced already present} {
 	test_cleantmp
-	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
-	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/var_annot.tsv data/var_annot2seq.tsv
+	catch {exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot2.tsv} e
 	set e
 } {1c1
 < chromosome	begin	end	type	ref	alt	sequenced-var_annot	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot2seq	alleleSeq1-var_annot2seq	alleleSeq2-var_annot2seq	name-var_annot2seq	freq-var_annot2seq
@@ -323,11 +323,11 @@ child process exited abnormally}
 
 test pmulticompar$testname {var and mapper naming convention} {
 	test_cleantmp
-	catch {file link tmp/var-varcaller1-mapper1-sample1.sft ../data/var_annot.sft}
-	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
-	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
-	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
-	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	catch {file link tmp/var-varcaller1-mapper1-sample1.tsv ../data/var_annot.tsv}
+	catch {file link tmp/var-varcaller2-mapper2-sample1.tsv ../data/var_annot.tsv}
+	catch {file link tmp/var-varcaller1-mapper1-sample2.tsv ../data/var_annot2.tsv}
+	catch {file link tmp/var-varcaller2-mapper2-sample2.tsv ../data/var_annot2.tsv}
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-varcaller1-mapper1-sample1.tsv tmp/var-varcaller2-mapper2-sample1.tsv tmp/var-varcaller1-mapper1-sample2.tsv tmp/var-varcaller2-mapper2-sample2.tsv
 	set fields {chromosome	begin	end	type	ref	alt}
 	foreach {from to} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
@@ -337,26 +337,26 @@ test pmulticompar$testname {var and mapper naming convention} {
 			lappend fields $field-$to=\$$field-$from
 		}
 	}
-	cg select -f $fields data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.sft
-	exec diff tmp/temp.sft tmp/expected.sft
+	cg select -f $fields data/expected-multicompar-var_annotvar_annot2.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {basic reannot varall} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	file copy data/var_annot.tsv tmp/var-annot1.tsv
+	file copy data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	cg select -f {* sequenced="v"} data/var_annot.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
@@ -369,20 +369,20 @@ test pmulticompar$testname {basic reannot varall} {
 
 test pmulticompar$testname {basic reannot varall zst compressed} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	file copy data/var_annot.tsv tmp/var-annot1.tsv
+	file copy data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
@@ -396,20 +396,20 @@ test pmulticompar$testname {basic reannot varall zst compressed} {
 
 test pmulticompar$testname {basic reannot varall rz compressed} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	file copy data/var_annot.tsv tmp/var-annot1.tsv
+	file copy data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	cg select -f {* sequenced="v"} data/var_annot.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
@@ -423,12 +423,12 @@ test pmulticompar$testname {basic reannot varall rz compressed} {
 
 test pmulticompar$testname {basic reannot varall split} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
-	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg splitalleles data/var_annot.tsv tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	# make tmp/varall-annot1.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
@@ -437,7 +437,7 @@ test pmulticompar$testname {basic reannot varall split} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
 	catch {file delete tmp/temp.tsv}
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
@@ -452,12 +452,12 @@ test pmulticompar$testname {basic reannot varall split} {
 
 test pmulticompar$testname {basic reannot varall split zst} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
-	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg splitalleles data/var_annot.tsv tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	# make tmp/varall-annot1.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
@@ -465,7 +465,7 @@ test pmulticompar$testname {basic reannot varall split zst} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
@@ -481,12 +481,12 @@ test pmulticompar$testname {basic reannot varall split zst} {
 
 test pmulticompar$testname {basic reannot varall split rz} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
-	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg splitalleles data/var_annot.tsv tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	# make tmp/varall-annot1.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
@@ -494,7 +494,7 @@ test pmulticompar$testname {basic reannot varall split rz} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
@@ -510,12 +510,12 @@ test pmulticompar$testname {basic reannot varall split rz} {
 
 test pmulticompar$testname {basic reannot varall split gz} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
-	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg splitalleles data/var_annot.tsv tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	# make tmp/varall-annot1.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
@@ -523,7 +523,7 @@ test pmulticompar$testname {basic reannot varall split gz} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
@@ -597,7 +597,7 @@ test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
 header diff
 <extrafields: 
 ---
->extrafields: name-gatkh-bwa-sample1 filter-gatkh-bwa-sample1 phased-gatkh-bwa-sample1 genotypes-gatkh-bwa-sample1 PGT-gatkh-bwa-sample1 PID-gatkh-bwa-sample1 RGQ-gatkh-bwa-sample1 SB-gatkh-bwa-sample1 allelecount-gatkh-bwa-sample1 frequency-gatkh-bwa-sample1 totalallelecount-gatkh-bwa-sample1 AS_BaseQRankSum-gatkh-bwa-sample1 AS_FS-gatkh-bwa-sample1 AS_InbreedingCoeff-gatkh-bwa-sample1 AS_InbreedingCoeff-gatkh-bwa-sample1 AS_MQ-gatkh-bwa-sample1 AS_MQRankSum-gatkh-bwa-sample1 AS_QD-gatkh-bwa-sample1 AS_RAW_BaseQRankSum-gatkh-bwa-sample1 AS_RAW_MQ-gatkh-bwa-sample1 AS_RAW_MQRankSum-gatkh-bwa-sample1 AS_RAW_ReadPosRankSum-gatkh-bwa-sample1 AS_ReadPosRankSum-gatkh-bwa-sample1 AS_SB_TABLE-gatkh-bwa-sample1 AS_SOR-gatkh-bwa-sample1 BaseQRankSum-gatkh-bwa-sample1 ClippingRankSum-gatkh-bwa-sample1 totalcoverage-gatkh-bwa-sample1 DS-gatkh-bwa-sample1 ExcessHet-gatkh-bwa-sample1 FS-gatkh-bwa-sample1 InbreedingCoeff-gatkh-bwa-sample1 MLEAC-gatkh-bwa-sample1 MLEAF-gatkh-bwa-sample1 MQ-gatkh-bwa-sample1 MQRankSum-gatkh-bwa-sample1 NDA-gatkh-bwa-sample1 QD-gatkh-bwa-sample1 RAW_MQ-gatkh-bwa-sample1 ReadPosRankSum-gatkh-bwa-sample1 SOR-gatkh-bwa-sample1 name-gatkh-bwa-sample2 filter-gatkh-bwa-sample2 phased-gatkh-bwa-sample2 genotypes-gatkh-bwa-sample2 PGT-gatkh-bwa-sample2 PID-gatkh-bwa-sample2 RGQ-gatkh-bwa-sample2 SB-gatkh-bwa-sample2 allelecount-gatkh-bwa-sample2 frequency-gatkh-bwa-sample2 totalallelecount-gatkh-bwa-sample2 AS_BaseQRankSum-gatkh-bwa-sample2 AS_FS-gatkh-bwa-sample2 AS_InbreedingCoeff-gatkh-bwa-sample2 AS_InbreedingCoeff-gatkh-bwa-sample2 AS_MQ-gatkh-bwa-sample2 AS_MQRankSum-gatkh-bwa-sample2 AS_QD-gatkh-bwa-sample2 AS_RAW_BaseQRankSum-gatkh-bwa-sample2 AS_RAW_MQ-gatkh-bwa-sample2 AS_RAW_MQRankSum-gatkh-bwa-sample2 AS_RAW_ReadPosRankSum-gatkh-bwa-sample2 AS_ReadPosRankSum-gatkh-bwa-sample2 AS_SB_TABLE-gatkh-bwa-sample2 AS_SOR-gatkh-bwa-sample2 BaseQRankSum-gatkh-bwa-sample2 ClippingRankSum-gatkh-bwa-sample2 totalcoverage-gatkh-bwa-sample2 DS-gatkh-bwa-sample2 ExcessHet-gatkh-bwa-sample2 FS-gatkh-bwa-sample2 InbreedingCoeff-gatkh-bwa-sample2 MLEAC-gatkh-bwa-sample2 MLEAF-gatkh-bwa-sample2 MQ-gatkh-bwa-sample2 MQRankSum-gatkh-bwa-sample2 NDA-gatkh-bwa-sample2 QD-gatkh-bwa-sample2 RAW_MQ-gatkh-bwa-sample2 ReadPosRankSum-gatkh-bwa-sample2 SOR-gatkh-bwa-sample2
+>extrafields: name-gatkh-bwa-sample1 filter-gatkh-bwa-sample1 phased-gatkh-bwa-sample1 genotypes-gatkh-bwa-sample1 PGT-gatkh-bwa-sample1 PID-gatkh-bwa-sample1 RGQ-gatkh-bwa-sample1 SB-gatkh-bwa-sample1 allelecount-gatkh-bwa-sample1 frequency-gatkh-bwa-sample1 totalallelecount-gatkh-bwa-sample1 AS_BaseQRankSum-gatkh-bwa-sample1 AS_FS-gatkh-bwa-sample1 AS_InbreedingCoeff-gatkh-bwa-sample1 AS_MQ-gatkh-bwa-sample1 AS_MQRankSum-gatkh-bwa-sample1 AS_QD-gatkh-bwa-sample1 AS_RAW_BaseQRankSum-gatkh-bwa-sample1 AS_RAW_MQ-gatkh-bwa-sample1 AS_RAW_MQRankSum-gatkh-bwa-sample1 AS_RAW_ReadPosRankSum-gatkh-bwa-sample1 AS_ReadPosRankSum-gatkh-bwa-sample1 AS_SB_TABLE-gatkh-bwa-sample1 AS_SOR-gatkh-bwa-sample1 BaseQRankSum-gatkh-bwa-sample1 ClippingRankSum-gatkh-bwa-sample1 totalcoverage-gatkh-bwa-sample1 DS-gatkh-bwa-sample1 ExcessHet-gatkh-bwa-sample1 FS-gatkh-bwa-sample1 InbreedingCoeff-gatkh-bwa-sample1 MLEAC-gatkh-bwa-sample1 MLEAF-gatkh-bwa-sample1 MQ-gatkh-bwa-sample1 MQRankSum-gatkh-bwa-sample1 NDA-gatkh-bwa-sample1 QD-gatkh-bwa-sample1 RAW_MQ-gatkh-bwa-sample1 ReadPosRankSum-gatkh-bwa-sample1 SOR-gatkh-bwa-sample1 name-gatkh-bwa-sample2 filter-gatkh-bwa-sample2 phased-gatkh-bwa-sample2 genotypes-gatkh-bwa-sample2 PGT-gatkh-bwa-sample2 PID-gatkh-bwa-sample2 RGQ-gatkh-bwa-sample2 SB-gatkh-bwa-sample2 allelecount-gatkh-bwa-sample2 frequency-gatkh-bwa-sample2 totalallelecount-gatkh-bwa-sample2 AS_BaseQRankSum-gatkh-bwa-sample2 AS_FS-gatkh-bwa-sample2 AS_InbreedingCoeff-gatkh-bwa-sample2 AS_MQ-gatkh-bwa-sample2 AS_MQRankSum-gatkh-bwa-sample2 AS_QD-gatkh-bwa-sample2 AS_RAW_BaseQRankSum-gatkh-bwa-sample2 AS_RAW_MQ-gatkh-bwa-sample2 AS_RAW_MQRankSum-gatkh-bwa-sample2 AS_RAW_ReadPosRankSum-gatkh-bwa-sample2 AS_ReadPosRankSum-gatkh-bwa-sample2 AS_SB_TABLE-gatkh-bwa-sample2 AS_SOR-gatkh-bwa-sample2 BaseQRankSum-gatkh-bwa-sample2 ClippingRankSum-gatkh-bwa-sample2 totalcoverage-gatkh-bwa-sample2 DS-gatkh-bwa-sample2 ExcessHet-gatkh-bwa-sample2 FS-gatkh-bwa-sample2 InbreedingCoeff-gatkh-bwa-sample2 MLEAC-gatkh-bwa-sample2 MLEAF-gatkh-bwa-sample2 MQ-gatkh-bwa-sample2 MQRankSum-gatkh-bwa-sample2 NDA-gatkh-bwa-sample2 QD-gatkh-bwa-sample2 RAW_MQ-gatkh-bwa-sample2 ReadPosRankSum-gatkh-bwa-sample2 SOR-gatkh-bwa-sample2
 *} error match
 
 test pmulticompar$testname {sort empty bug split} {
@@ -619,21 +619,21 @@ test pmulticompar$testname {error on split files without split option} {
 test pmulticompar$testname {error on badly sorted files} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.tsv data/var_annot2.tsv
 	# no error on command for -d num, check error file
 	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv.err]
 	error $temp
-} {File (*vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")
+} {File (*vars_sorterror1.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match error
 
 test pmulticompar$testname {error on badly sorted files 2} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.tsv data/vars_sorterror2.tsv
 	# no error on command for -d num, check error file
 	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv.err]
 	error $temp
-} {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
+} {File (*vars_sorterror2.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
 test pmulticompar$testname {split reannot split multiallelic varall,no sreg,zyg} {
@@ -1547,20 +1547,20 @@ test pmulticompar$testname {unsplit, target with alt .} {
 
 test pmulticompar$testname {basic -limitreg} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	file copy data/var_annot.tsv tmp/var-annot1.tsv
+	file copy data/var_annot2.tsv tmp/var-annot2.tsv
+	file copy data/sreg-annot1.tsv tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.tsv tmp/sreg-annot2.tsv
 	catch {file delete tmp/temp.tsv}
 	# make tmp/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	cg select -f {* sequenced="v"} data/var_annot.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
@@ -1666,7 +1666,7 @@ test pmulticompar$testname {meth} {
 		2	10214	10215	0	0	0.000	6	6	1.000
 	}
 	catch {file delete tmp/meth-temp.tsv}
-	cg pmulticompar {*}$::jobopts tmp/meth-temp.tsv tmp/meth-sample1.tsv tmp/meth-sample2.tsv
+	cg pmulticompar {*}$::jobopts -type meth tmp/meth-temp.tsv tmp/meth-sample1.tsv tmp/meth-sample2.tsv
 	exec diff tmp/meth-temp.tsv tmp/expected.tsv
 } {} 
 

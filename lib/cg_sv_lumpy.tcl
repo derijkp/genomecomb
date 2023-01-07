@@ -9,7 +9,7 @@ proc version_lumpy {} {
 
 proc sv_lumpy_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_lumpy {*}$args]"
+	set cmdline [clean_cmdline cg sv_lumpy {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1
@@ -20,6 +20,8 @@ proc sv_lumpy_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set mem {}
+	set time 5:00:00
 	cg_options sv_lumpy args {
 		-refseq {
 			set refseq $value
@@ -45,6 +47,12 @@ proc sv_lumpy_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
@@ -58,13 +66,14 @@ proc sv_lumpy_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$mem eq ""} {set mem [expr {1*$threads}]G}
 	set vcffile [file root [gzroot $resultfile]].vcf
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	# check dependencies (and adapt config if needed)
 	
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -76,7 +85,7 @@ proc sv_lumpy_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce lumpy sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_lumpy-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
+	job sv_lumpy-$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai
@@ -102,9 +111,9 @@ proc sv_lumpy_job {args} {
 		vcffile sample split resultfile
 	} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {
+		exec cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} $vcffile $target.temp[gzext $target]
+		} $vcffile | cg select -f {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 zyg="v" *} | cg zst > $target.temp[gzext $target]
 		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup

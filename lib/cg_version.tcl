@@ -135,6 +135,7 @@ proc version {item {minversion {}}} {
 						catch {exec $item} temp
 					}
 					set line1 [lindex [split $temp \n] 0]
+					if {[regexp dir= $line1]} {set line1 [lindex [split $temp \n] 1]}
 					if {[regexp {^couldn't execute} $line1 temp]} {
 						set _versions($item) ?
 					} elseif {[regexp {[0-9.]+-?[abr][0-9]+$} $line1 temp]} {
@@ -168,6 +169,14 @@ proc version {item {minversion {}}} {
 		}
 	}
 	return $_versions($item)
+}
+
+proc minversion {version minversion} {
+	if {[lindex [bsort [list $minversion $version]] 0] ne "$minversion"} {
+		return 0
+	} else {
+		return 1
+	}
 }
 
 proc versions {args} {

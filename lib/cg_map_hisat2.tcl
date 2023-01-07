@@ -42,7 +42,7 @@ cg refseq_hisat2 \'$refseq\'"
 	return $hisat2refseq
 }
 
-proc map_mem_hisat2 {mem threads preset} {
+proc map_mem_hisat2 {mem threads preset deps} {
 	return 5G
 }
 
@@ -92,9 +92,11 @@ proc cg_map_hisat2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec hisat2 {*}$extraopts -t $threads \
+			exec hisat2 -t $threads \
 				--rg-id @RG\\tID:$sample\\t[join $rg \\t] \
-				-x $hisat2refseq -U [join $files ,] {*}$outpipe
+				-x $hisat2refseq -U [join $files ,] \
+				{*}$extraopts \
+				{*}$outpipe
 		} msg]} {
 			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {
 				puts stderr $msg
@@ -121,10 +123,11 @@ proc cg_map_hisat2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec hisat2 {*}$extraopts --threads $threads \
+			exec hisat2 --threads $threads \
 				--rg-id @RG\\tID:$sample\\t[join $rg \\t] \
 				-x $hisat2refseq \
 				-1 [join $files1 ,] -2 [join $files2 ,] \
+				{*}$extraopts \
 				{*}$fixmate {*}$outpipe
 		} msg]} {
 			if {[regexp ERROR: $msg] || $::errorCode ne "NONE"} {

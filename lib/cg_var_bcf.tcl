@@ -5,6 +5,7 @@ proc var_bcf_tools {} {
 # identical to var_sam, but
 proc var_bcf_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg var_bcf {*}$args]
 	set pre ""
 	set opts {}
 	set split 1
@@ -22,6 +23,8 @@ proc var_bcf_job {args} {
 	set skips {}
 	set callmethod m
 	set resultfile {}
+	set mem 5G
+	set time 2:00:00
 	cg_options var_bcf args {
 		-l - deps {
 			lappend deps $value
@@ -79,6 +82,12 @@ proc var_bcf_job {args} {
 		-opts {
 			set opts $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
@@ -111,15 +120,6 @@ proc var_bcf_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_bcf]
-	foreach option {
-		split deps bed pre BQ regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_bcf_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
 	# start
@@ -130,7 +130,7 @@ proc var_bcf_job {args} {
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallfile]/cache_varall_bcf_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job bcfvarall_${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem 5G -targets {
+	job bcfvarall_${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem $mem -time $time -targets {
 		$varallfile
 	} -vars {
 		refseq opts BQ BAQ regionfile root threads callmethod split cache

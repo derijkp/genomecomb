@@ -134,16 +134,18 @@ proc cg_cat {args} {
 	}
 	if {$addcomment eq "m"} {
 		if {!$diffcomments} {
-			puts $firstcomment
+			set comments [get firstcomment ""]
 		} else {
 			if {$catfiles} {
 				set commenta(catfiles) $files
 			}
-			set temp [tsv_var2comment commenta]
-			if {$temp ne ""} {puts $temp}
+			set comments [tsv_var2comment commenta]
 		}
-	} elseif {[llength $comments]} {
-		puts [join $comments \n]
+	} else {
+		set comments [join $comments \n]
+	}
+	if {$comments ne ""}	{
+		puts $comments
 	}
 	set defcor [list_cor $header $header]
 	set lh [llength $header]

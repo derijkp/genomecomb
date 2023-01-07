@@ -10,7 +10,7 @@ proc version_npinv {} {
 
 proc sv_npinv_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_npinv {*}$args]"
+	set cmdline [clean_cmdline cg sv_npinv {*}$args]
 	set refseq {}
 	set opts {}
 	set min 50
@@ -24,6 +24,8 @@ proc sv_npinv_job {args} {
 	set resultfile {}
 	set region {}
 	set sample {}
+	set mem 5G
+	set time 1:00:00
 	cg_options sv_npinv args {
 		-refseq {
 			set refseq $value
@@ -61,6 +63,12 @@ proc sv_npinv_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
@@ -78,7 +86,7 @@ proc sv_npinv_job {args} {
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -89,7 +97,7 @@ proc sv_npinv_job {args} {
 	# start
 	## Produce npinv sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_npinv-$root.vcf {*}$skips -mem 5G \
+	job sv_npinv-$root.vcf {*}$skips -mem $mem -time $time \
 	-deps {
 		$bamfile $bamfileindex
 	} -targets {

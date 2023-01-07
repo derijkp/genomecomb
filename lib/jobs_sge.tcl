@@ -4,6 +4,7 @@ proc job_process_init_sge {} {
 	set ::cgjob(endjobids) {}
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_runall {} job_runall_par
 	interp alias {} job_running {} job_running_sge
 	interp alias {} job_wait {} job_wait_sge
 	interp alias {} job_process_submit_par {} job_process_submit_sge
@@ -37,6 +38,7 @@ proc job_process_submit_sge {job runfile args} {
 	set priority [get cgjob(priority) 0]
 	set cores 1
 	set mem {}
+	set time {}
 	set pos 0
 	set dqueue [get cgjob(dqueue) all.q]
 	foreach {opt value} $args {
@@ -97,6 +99,10 @@ proc job_process_submit_sge {job runfile args} {
 				set mem $value
 				incr pos 2
 			}
+			-time {
+				set time $value
+				incr pos 2
+			}
 			-dqueue {
 				set dqueue $value
 			}
@@ -109,6 +115,22 @@ proc job_process_submit_sge {job runfile args} {
 			}
 		}
 	}
+	if {[llength $cgjob(dmem)] == 1} {set cgjob(dmem) [list * $cgjob(dmem)]}
+	foreach {pattern value} $cgjob(dmem) {
+		if {$pattern eq "*" || [regexp $pattern $job]} {
+			if {[job_memgt $value $mem]} {
+				set mem $value
+			}
+		}
+	}
+	if {[llength $cgjob(dtime)] == 1} {set cgjob(dtime) [list * $cgjob(dtime)]}
+	foreach {pattern value} $cgjob(dtime) {
+		if {$pattern eq "*" || [regexp $pattern $job]} {
+			if {[bsort [list $time $value]] eq [list $time $value]} {
+				set time $value
+			}
+		}
+	}
 	if {$mem ne ""} {
 		# mem_free: only start job if the given amount of memory is free on the node
 		#  -> often not sufficient if running jobs increase memory use during run
@@ -117,6 +139,10 @@ proc job_process_submit_sge {job runfile args} {
 		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
 		set temp [job_mempercore $mem $cores]
 		lappend hard -l mem_free=$temp,virtual_free=$temp
+	}
+	if {$time ne ""} {
+		# (time format is hh:mm:ss)
+		lappend soft -l s_rt=$time
 	}
 	if {[llength $soft]} {
 		lappend options -soft {*}$soft
@@ -176,12 +202,11 @@ proc job_logfile_sge_close {} {
 	set runfile $logfile.update
 	set outfile $logfile.update.out
 	set errfile $logfile.update.err
-	job_init
 	job_update $logfile $cgjob(cleanup) 1
 	set statusok [file exists $cgjob(logfile).finished]
 	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $statusok)} {
-		job_cleanup
 		set result [glob $cgjob(logfile).finished $cgjob(logfile).running $cgjob(logfile).error]
+		job_cleanup
 		job_cleanlogs $result
 		# only keep result logfile if -d option was given explicitely
 		if {!$cgjob(hasargs)} {file delete $result}
@@ -208,6 +233,7 @@ proc job_wait_sge {} {
 	append cmd {#$ -cwd} \n
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 	append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
+	append cmd "job_init -d sge\n"
 	append cmd [list array set cgjob [array get cgjob]]\n
 	append cmd job_logfile_sge_close\n
 	file_write $runfile $cmd

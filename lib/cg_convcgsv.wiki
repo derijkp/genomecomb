@@ -8,7 +8,7 @@ Convert the Complete Genomics SV files to the cg format
 
 == Arguments ==
 ; **srcfile**: Complete Genomics SV file
-; **dstfile**: resulting sft sv file
+; **dstfile**: resulting tsv sv file
 
 == Category ==
 Format Conversion

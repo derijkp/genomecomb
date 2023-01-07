@@ -1,6 +1,7 @@
 #!/bin/sh
 # the next line restarts using wish \
 exec tclsh "$0" "$@"
+# small (limited) process_sample and process_project tests using only data directly distributed with genomecomb
 
 source tools.tcl
 
@@ -34,7 +35,7 @@ test process_sample {bwa distrreg} {
 	# chr21:42730799-42762826
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.103.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.103.0	coordinate	1	genomecomb	0.103.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.103.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.106.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.106.0	coordinate	1	genomecomb	0.106.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.106.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x projectinfo.tsv -x *.analysisinfo -x *.stats.zst \
@@ -52,7 +53,7 @@ test process_sample {bwa distrreg cram} {
 	# chr21:42730799-42762826
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.103.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.103.0	coordinate	1	genomecomb	0.103.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.103.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.106.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.106.0	coordinate	1	genomecomb	0.106.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk	3.8-1-0-gf15c1c3ef	0.106.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	set result {}
 	lappend result [tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
@@ -150,12 +151,10 @@ test process_project {process_project bwa distrreg multiple fastq -maxfastqdistr
 
 test process_project {process_project include msamples directory (analyse, but not include in compar)} {
 	test_cleantmp
-	file mkdir tmp/samples/NA19240m/fastq
-	mklink data/seq_R1.fq.gz tmp/samples/NA19240m/fastq/seq_R1.fq.gz
-	mklink data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq_R2.fq.gz
-	file mkdir tmp/msamples/msample/fastq
-	mklink data/seq_R1.fq.gz tmp/msamples/msample/fastq/seq_R1.fq.gz
-	mklink data/seq_R2.fq.gz tmp/msamples/msample/fastq/seq_R2.fq.gz
+	cg project_addsample -transfer rel tmp NA19240m data/seq_R1.fq.gz data/seq_R2.fq.gz
+	cg project_addsample -transfer rel tmp msample data/seq_R1.fq.gz data/seq_R2.fq.gz
+	mkdir tmp/msamples
+	file rename tmp/samples/msample tmp/msamples/msample
 	cg process_project -stack 1 \
 		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
 		-distrreg chr -dbdir $::refseqdir/hg19 \

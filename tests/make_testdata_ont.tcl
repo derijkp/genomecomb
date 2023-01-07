@@ -10,14 +10,14 @@ exec tclsh "$0" "$@"
 # human-pangenomics NHGRI_UCSC_panel and giab data sets
 # You can give the option -d sge to distribute the processing of the data on a grid engine based cluster,
 # or -d <nrthreads> to distribute over different cores/threads on a single machine. (Only processing, 
-such as alignment is distributed, not the actual downloading itself)
+# such as alignment is distributed, not the actual downloading itself)
 
 # The original public data used will be downloaded to the directory
 # "public" in your homedir (~/public) by default.
 # you can change this by setting the variable publicdir to a different location here, or
 # by making another storage area first and making ~/public a link to it
 
-# The genomecomb testdata is made in ~/genomecomb.smalltestdata
+# The genomecomb testdata is made in ~/genomecomb.smalltestdata ($smalltestdir)
 # again, here you can use a softlink to use another storage location
 
 # Initialise
@@ -36,10 +36,8 @@ set keepdir [pwd]
 
 # default settings
 # chr6:32000000-33000000 (includes hla -> too big for small test)
-set rnaregions {chr1:2500000-3000000 chr2:1500000-2500000 chr6:32000000-32300000 chr10:1100000-1800000}
+set rnaregions {chr1:2600000-3000000 chr2:1500000-2500000 chr6:32000000-32300000 chr10:1100000-1800000}
 set wgsregions {chr1:2543891-2598871 chr2:1386718-1759764 chr6:32145542-32185752 chr10:975157-1170215}
-set fullori $bigtestdir/ori/ont
-set smallori $smalltestdir/ori/ont
 
 if {![info exists argv]} {set argv {}}
 
@@ -71,8 +69,8 @@ job_logfile $publicdir/make_testdata_ont $publicdir make_testdata_ont.sh
 # HG003_NA24149_father father HG003 (NA24149)
 # HG004_NA24143_mother mother HG004 (NA24143)
 
-# Download basic public data
-# ==========================
+# Download basic public giab data
+# ===============================
 
 mkdir $publicdir/giab
 
@@ -81,6 +79,7 @@ mkdir $publicdir/giab
 # this is the same for SRS
 cg_giab_gettruth -ref hg38 3.3.2 $publicdir/giab/truth/truth_hg38_v3.3.2
 cg_giab_gettruth -ref hg38 4.2.1 $publicdir/giab/truth/truth_hg38_v4.2.1
+cg_giab_gettruth -ref hg38 sv0.6 $publicdir/giab/truth/truthsv_hg38_v0.6
 cg_giab_gettruth -ref hg38 hybrid $publicdir/platinum_genomes/truthset/2017-1.0/hg38/hybrid
 
 # Download ont genomic data
@@ -94,42 +93,42 @@ if {$full} {
 # ---------------------------------
 
 if {$full} {
-# download data
-giab_getdata_job giab_ont_ultralong $publicdir/giab/fastqs/giab_ont_ultralong
-
-# align
-cd $publicdir/giab/giab_ont_ultralong
-foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
-	set bam $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-	if {[file exists $bam]} continue
-	map_job -method minimap2 \
-		$bam \
-		$::refseqdir/hg38 \
-		$sample {*}[glob $publicdir/giab/giab_ont_ultralong/$sample/fastqsplit/*.fastq.gz]
-	bam_index_job $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-}
-
-# extract regions
-foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
-	job smallfastq-$sample -deps {
-		$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
-	} -targets {
-		$smalltestdir/ori/giab_ont_ultralong_regions/map-sminimap2-regions_${sample}_hg38.bam
-	} -vars {
-		publicdir smalltestdir sample regions
-	} -code {
-		set dir $smalltestdir/ori/giab_ont_ultralong_regions
-		set regionsbam $dir/map-sminimap2-regions_${sample}_hg38.bam
-		set regionsfastq $dir/regions_${sample}_hg38.fastq.gz
-		exec samtools view -b -1 -h \
-			$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam \
-			{*}$regions \
-			> $regionsbam
-		cg bam2fastq -threads 8 $regionsbam $regionsfastq
-		mkdir $dir/split
-		cg fastq_split -d sge -parts 20 $file $dir/split/regions_${sample}_hg38.fastq.gz
+	# download data
+	giab_getdata_job giab_ont_ultralong $publicdir/giab/fastqs/giab_ont_ultralong
+	
+	# align
+	cd $publicdir/giab/giab_ont_ultralong
+	foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
+		set bam $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
+		if {[file exists $bam]} continue
+		map_job -method minimap2 \
+			$bam \
+			$::refseqdir/hg38 \
+			$sample {*}[glob $publicdir/giab/giab_ont_ultralong/$sample/fastqsplit/*.fastq.gz]
+		bam_index_job $publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
 	}
-}
+	
+	# extract regions
+	foreach sample {HG002_NA24385_son HG003_NA24149_father HG004_NA24143_mother} {
+		job smallfastq-$sample -deps {
+			$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam
+		} -targets {
+			$smalltestdir/ori/giab_ont_ultralong_regions/map-sminimap2-regions_${sample}_hg38.bam
+		} -vars {
+			publicdir smalltestdir sample regions
+		} -code {
+			set dir $smalltestdir/ori/giab_ont_ultralong_regions
+			set regionsbam $dir/map-sminimap2-regions_${sample}_hg38.bam
+			set regionsfastq $dir/regions_${sample}_hg38.fastq.gz
+			exec samtools view -b -1 -h \
+				$publicdir/giab/giab_ont_ultralong/$sample/map-sminimap2-${sample}_hg38.bam \
+				{*}$regions \
+				> $regionsbam
+			cg bam2fastq -threads 8 $regionsbam $regionsfastq
+			mkdir $dir/split
+			cg fastq_split -d sge -parts 20 $file $dir/split/regions_${sample}_hg38.fastq.gz
+		}
+	}
 }
 
 # nanopore-human-pangenomics
@@ -251,6 +250,29 @@ foreach sample {HG002 HG003 HG004} {
 	}
 }
 
+job smallgiabonttest -deps {
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/HG002/map-sminimap2-regions_HG002_hg38.bam
+} -targets {
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest/map-sminimap2-pHG002_hg38.bam
+	$smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest/var-truth_HG002_hg38.tsv
+} -vars {
+	smalltestdir
+} -code {
+	set dir $smalltestdir/ori/nanopore-human-pangenomics_regions/smallgiabonttest
+	file delete -force $dir
+	file mkdir $dir
+	set regions {chr1:2547867-2568902 chr6:32152328-32167543 chr10:975157-1000215}
+	set oridir $smalltestdir/ori/nanopore-human-pangenomics_regions/HG002
+	exec samtools view -b \
+		$oridir/map-sminimap2-regions_HG002_hg38.bam \
+		{*}$regions \
+		> $dir/map-sminimap2-pHG002_hg38.bam
+	exec samtools index $dir/map-sminimap2-pHG002_hg38.bam
+	file_write $dir/regions.tsv chromosome\tbegin\tend\n[string_change [join $regions \n] [list : \t - \t]]\n
+	cg regcommon $dir/regions.tsv $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed.tsv.zst > $dir/sreg-truth_HG002_hg38.tsv
+	cg regselect $oridir/regions_HG002_GRCh38_1_22_v4.2.1_benchmark.tsv.zst \
+		$dir/sreg-truth_HG002_hg38.tsv > $dir/var-truth_HG002_hg38.tsv
+}
 
 # tandem-genotypes paper repeat test data
 # ---------------------------------------
@@ -285,15 +307,10 @@ foreach run $runs experiment $experiments {
 	cg gzip $run.fastq.bz2
 }
 
-SCA10-subjectA	SRR2080459
-SCA10-subjectB	SRR2081063
-SCA10-subjectC-	SRR2082412
-SCA10-subjectC-	SRR2082428
-
-
-
-job_wait
-
+#SCA10-subjectA	SRR2080459
+#SCA10-subjectB	SRR2081063
+#SCA10-subjectC-	SRR2082412
+#SCA10-subjectC-	SRR2082428
 
 # https://www.biorxiv.org/content/biorxiv/early/2018/07/24/356931.full.pdf
 #
@@ -319,9 +336,9 @@ job_wait
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7791882/
 # DDBJ accession DRA009852
 
+# RNA and cDNA
+# ============
 
-RNA and cDNA
-============
 # https://github.com/nanopore-wgs-consortium/NA12878/blob/master/RNA.md
 # https://s3.amazonaws.com/nanopore-human-wgs/rna/fastq/NA12878-DirectRNA_All_Guppy_4.2.2.fastq.gz
 
@@ -390,3 +407,111 @@ foreach sample {HG001_NA12878_directRNA HG001_NA12878_cDNA HG001_NA12878_ivtRNA}
 		cg fastq_split -parts 8 $regionsfastq $dir/$sample/splitfastq/regions_${sample}_hg38.fastq.gz
 	}
 }
+
+# Download methylation test data
+# ==============================
+
+job methylation_testdata -cores 6 -vars {
+	smalltestdir
+} -code {
+	cd $::smalltestdir/ori
+	wget https://f5c.page.link/f5c_na12878_test
+	mv f5c_na12878_test f5c_na12878_test.tar.gz
+	tar xvzf f5c_na12878_test.tar.gz
+	mv chr22_meth_example ont_f5c_chr22_meth_example
+	cd ont_f5c_chr22_meth_example
+	mkdir fast5
+	mv fast5_files single_fast5_files
+	single_to_multi_fast5 -i single_fast5_files -s fast5 -n 4000
+	single_to_multi_fast5 -i single_fast5_files -s fast5 -n 4000
+	#
+	unset -nocomplain fast5file2batcha
+	unset -nocomplain readid2batcha
+	set f [open fast5/filename_mapping.txt]
+	while {[gets $f line] != -1} {
+		foreach {file batch} [split $line \t] break
+		set fast5file2batcha($file) $batch
+	}
+	close $f
+	set f [open reads.fastq.index.readdb]
+	while {[gets $f line] != -1} {
+		foreach {readid file} [split $line \t] break
+		if {$file eq ""} continue
+		set file [file tail $file]
+		set readid2batcha($readid) $fast5file2batcha($file)
+	}
+	close $f
+	file mkdir fastq
+	unset -nocomplain fa
+	set f [open reads.fastq]
+	while {[gets $f line] != -1} {
+		set readid [string range [lindex $line 0] 1 end]
+		putsvars readid
+		if {![info exists readid2batcha($readid)]} {
+			puts "skipping $readid: not found"
+			gets $f
+			gets $f
+			gets $f
+			continue
+		}
+		set batch $readid2batcha($readid)
+		if {![info exists fa($batch)]} {
+			set fastqfile [file root [file tail $batch]].fastq
+			puts "Creating $fastqfile"
+			set fa($batch) [open fastq/$fastqfile w]
+		}
+		puts $fa($batch) $line
+		puts $fa($batch) [gets $f]
+		puts $fa($batch) [gets $f]
+		puts $fa($batch) [gets $f]
+	}
+	close $f
+	foreach batch [array names fa] {
+		close $fa($batch)
+	}
+	foreach file [glob fastq/*.fastq] {
+		exec bgzip $file
+	}
+	#
+	# run experiment to make haplotyped bam
+	cd $::smalltestdir
+	file delete -force tmp/meth
+	file mkdir tmp/meth/samples/methtest/fast5
+	file mkdir tmp/meth/samples/methtest/fastq
+	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fast5/*] {
+		mklink $file tmp/meth/samples/methtest/fast5/[file tail $file]
+	}
+	foreach file [glob -nocomplain ori/ont_f5c_chr22_meth_example/fastq/*] {
+		mklink $file tmp/meth/samples/methtest/fastq/[file tail $file]
+	}
+	file mkdir tmp/meth/samples/methtest2/fast5
+	file mkdir tmp/meth/samples/methtest2/fastq
+	foreach file {ori/ont_f5c_chr22_meth_example/fast5/batch_0.fast5 ori/ont_f5c_chr22_meth_example/fast5/batch_1.fast5} {
+		mklink $file tmp/meth/samples/methtest2/fast5/[file tail $file]
+	}
+	foreach file {ori/ont_f5c_chr22_meth_example/fastq/batch_0.fastq.gz ori/ont_f5c_chr22_meth_example/fastq/batch_1.fastq.gz} {
+		mklink $file tmp/meth/samples/methtest2/fastq/[file tail $file]
+	}
+	exec cg process_project -d 6 -split 1 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-distrreg chr \
+		-svcallers {} \
+		-varcallers longshot \
+		-methcallers {} \
+		-hap_bam 1 \
+		-threads 6 \
+		-reports {} \
+		tmp/meth $::refseqdir/hg19 >& tmp/meth.log
+	# after analysis put haplotytyped bam back in ori
+	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam ori/ont_f5c_chr22_meth_example/
+	cp -alf tmp/meth/samples/methtest/map-hlongshot-sminimap2-methtest.bam.bai ori/ont_f5c_chr22_meth_example/
+	# remove no longer needed
+	cd $::smalltestdir/ori/ont_f5c_chr22_meth_example
+	file delete -force single_fast5_files reads.fastq reads.fastq.index reads.fastq.index.readdb reads.fastq.index.gzi reads.fastq.index.fai reads.sorted.bam reads.sorted.bam.bai humangenome.fa humangenome.fai humangenome.fa.fai 
+}
+
+job_wait

@@ -13,7 +13,7 @@ test vcf2tsv {vcf2tsv} {
 	file copy -force data/vars1.vcf tmp/vars1.vcf
 	exec cg vcf2tsv -split 1 tmp/vars1.vcf tmp/temp.tsv
 	exec cg checktsv tmp/temp.tsv
-	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.tsv
+	cg splitalleles data/expected-vars1-var_annot.tsv tmp/expected.tsv
 	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
 } {diff tmp/temp.tsv tmp/expected.tsv
 header diff
@@ -592,7 +592,7 @@ test vcf2tsv {sv with end < begin} {
 	set result
 } {1 {END position 184156710 < begin 184156712
 error converting vcf file: child process exited abnormally} 0 {} {begin	end
-184156712	184156710} {begin	end
+184156712	184156712} {begin	end
 184156712	184156712}}
 
 test vcf2tsv {vcfheader2tsv vs vcf2tsv} {
@@ -633,7 +633,7 @@ test vcf2tsv {genotype not specified} {
 	}
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
-		chrtest	10	12	del	TG		.	10	.	?	?	v	0	?;?.												
+		chrtest	10	12	del	TG		.	10	.	?	?	u	0	?;?.												
 	}]\n
 	cg vcf2tsv tmp/test.vcf tmp/result.tsv
 	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
@@ -757,8 +757,63 @@ test vcf2tsv {bug fix check} {
 	}
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
-		19	11071527	11071527	unk		<CGA_NOCALL>	.	.	.	?	?	v	0	?;?.							1					
+		19	11071527	11071527	unk		<CGA_NOCALL>	.	.	.	?	?	u	0	?;?.							1					
 		19	11071528	11071528	unk		<CGA_NOCALL>	.	.	.	<CGA_NOCALL>		t	0	1;0							1					
+	}]\n
+	cg vcf2tsv tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {correct sniffles ins END error} {
+	file_write tmp/test.vcf [deindent {
+		##fileformat=VCFv4.2
+		##source=Sniffles2_2.0.3
+		##fileDate="2022/08/07 22:39:29"
+		##contig=<ID=chr1,length=248956422>
+		##ALT=<ID=INS,Description="Insertion">
+		##ALT=<ID=DEL,Description="Deletion">
+		##ALT=<ID=DUP,Description="Duplication">
+		##ALT=<ID=INV,Description="Inversion">
+		##ALT=<ID=BND,Description="Breakend; Translocation">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">
+		##FORMAT=<ID=DR,Number=1,Type=Integer,Description="Number of reference reads">
+		##FORMAT=<ID=DV,Number=1,Type=Integer,Description="Number of variant reads">
+		##FORMAT=<ID=ID,Number=1,Type=String,Description="Individual sample SV ID for multi-sample output">
+		##FILTER=<ID=PASS,Description="All filters passed">
+		##FILTER=<ID=GT,Description="Genotype filter">
+		##FILTER=<ID=CONS,Description="Low support for insertion consensus sequence">
+		##INFO=<ID=PRECISE,Number=0,Type=Flag,Description="Structural variation with precise breakpoints">
+		##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Structural variation with imprecise breakpoints">
+		##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of structural variation">
+		##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variation">
+		##INFO=<ID=CHR2,Number=1,Type=String,Description="Mate chromsome for BND SVs">
+		##INFO=<ID=SUPPORT,Number=1,Type=Integer,Description="Number of reads supporting the structural variation">
+		##INFO=<ID=SUPPORT_INLINE,Number=1,Type=Integer,Description="Number of reads supporting an INS/DEL SV (non-split events only)">
+		##INFO=<ID=SUPPORT_LONG,Number=1,Type=Integer,Description="Number of soft-clipped reads putatively supporting the long insertion SV">
+		##INFO=<ID=END,Number=1,Type=Integer,Description="End position of structural variation">
+		##INFO=<ID=STDEV_POS,Number=1,Type=Float,Description="Standard deviation of structural variation start position">
+		##INFO=<ID=STDEV_LEN,Number=1,Type=Float,Description="Standard deviation of structural variation length">
+		##INFO=<ID=COVERAGE,Number=.,Type=Float,Description="Coverages near upstream, start, center, end, downstream of structural variation">
+		##INFO=<ID=STRAND,Number=1,Type=String,Description="Strands of supporting reads for structural variant">
+		##INFO=<ID=AC,Number=.,Type=Integer,Description="Allele count, summed up over all samples">
+		##INFO=<ID=SUPP_VEC,Number=1,Type=String,Description="List of read support for all samples">
+		##INFO=<ID=CONSENSUS_SUPPORT,Number=1,Type=Integer,Description="Number of reads that support the generated insertion (INS) consensus sequence">
+		##INFO=<ID=RNAMES,Number=.,Type=String,Description="Names of supporting reads (if enabled with --output-rnames)">
+		##INFO=<ID=AF,Number=1,Type=Float,Description="Allele Frequency">
+		##INFO=<ID=NM,Number=.,Type=Float,Description="Mean number of query alignment length adjusted mismatches of supporting reads">
+		##INFO=<ID=PHASE,Number=.,Type=String,Description="Phasing information derived from supporting reads, represented as list of: HAPLOTYPE,PHASESET,HAPLOTYPE_SUPPORT,PHASESET_SUPPORT,HAPLOTYPE_FILTER,PHASESET_FILTER">
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample
+		chr1	12642	Sniffles2.INS.0M0	N	TGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTAT	35	PASS	PRECISE;SVTYPE=INS;SVLEN=69;END=12711;SUPPORT=3;COVERAGE=3,9,11,12,15;STRAND=+-;AC=374;STDEV_LEN=109.153;STDEV_POS=285.244	GT:GQ:DR:DV:ID	1/1:2:0:1:Sniffles2.INS.0S0,Sniffles2.INS.1S0
+	}]\n
+	write_vcf tmp/test.vcf {
+		CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample
+		chr1	12642	Sniffles2.INS.0M0	N	TGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTAT	35	PASS	PRECISE;SVTYPE=INS;SVLEN=69;END=12711;SUPPORT=3;COVERAGE=3,9,11,12,15;STRAND=+-;AC=374;STDEV_LEN=109.153;STDEV_POS=285.244	GT:GQ:DR:DV:ID	1/1:2:0:1:Sniffles2.INS.0S0,Sniffles2.INS.1S0
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chr1	12642	12642	ins		GTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTAT	Sniffles2.INS.0M0	35	PASS	GTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTAT	GTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTATGTTCGTGAAAGTCGTAT	m	0	1;1				2								
 	}]\n
 	cg vcf2tsv tmp/test.vcf tmp/result.tsv
 	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv

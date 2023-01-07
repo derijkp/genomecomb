@@ -23,17 +23,29 @@ proc methods_map {args} {
 	}
 }
 
-proc map_mem {method {mem {}} {threads 1} {preset {}}} {
+proc map_mem {method {mem {}} {threads 1} {preset {}} {deps {}}} {
+	if {$mem ne ""} {return $mem}
 	if {[auto_load map_mem_$method]} {
-		return [map_mem_$method $mem $threads $preset]
+		return [map_mem_$method $mem $threads $preset $deps]
 	}
-	if {$mem eq ""} {set mem 5G}
+	if {$mem eq ""} {set mem 6G}
 	return $mem
+}
+
+# sge: -l s_rt=hh:mm:ss specify the soft run time limit (hours, minutes and seconds) - Remember to set both s_rt and h_rt.
+#PBS -l walltime=<hours:minutes:seconds>
+proc map_time {method {time {}} {threads 1} {preset {}} {deps {}}} {
+	if {$time ne ""} {return $time}
+	if {[auto_load map_time_$method]} {
+		return [map_time_$method $time $threads $preset $deps]
+	}
+	if {$time eq ""} {set time 4:00:00}
+	return $time
 }
 
 proc map_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg map {*}$args]"
+	set cmdline [clean_cmdline cg map {*}$args]
 	set paired 1
 	set preset {}
 	set readgroupdata {}
@@ -46,8 +58,10 @@ proc map_job {args} {
 	set fixmate 1
 	set method bwa
 	set mem {}
+	set time {}
 	set compressionlevel {}
 	set joinfastqs 0
+	set extraopts {}
 	cg_options map args {
 		-method {
 			set method [methods_map $value]
@@ -90,11 +104,17 @@ proc map_job {args} {
 		-mem {
 			set mem $value
 		}
+		-time {
+			set time $value
+		}
 		-joinfastqs {
 			set joinfastqs [true $value]
 		}
 		-compressionlevel {
 			set compressionlevel $value
+		}
+		-extraopts {
+			set extraopts $value
 		}
 		-*-* {
 			set ::specialopt($key) $value
@@ -127,12 +147,15 @@ proc map_job {args} {
 	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
+		set deps [list $refseq {*}$fastqfiles]
 		job [job_relfile2name map_${method}- $result] {*}$skips \
-			-mem [map_mem $method $mem $threads $preset] -cores $threads \
-		-deps [list {*}$fastqfiles $refseq] -targets {
+		-mem [map_mem $method $mem $threads $preset $deps] \
+		-time [map_time $method $time $threads $preset $deps] \
+		-cores $threads \
+		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts
 		} -code {
 			set cleanupfiles {}
 			if {$joinfastqs} {
@@ -164,14 +187,14 @@ proc map_job {args} {
 			}
 			set tempfile [filetemp_ext $result]
 			if {$sort eq "nosort"} {
-				catch_exec cg map_${method} -paired $paired	-preset $preset \
+				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
 				analysisinfo_write [lindex $fastqfiles 0] $result aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
-				catch_exec cg map_${method} -paired $paired	-preset $preset \
+				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-threads $threads \
 					-.sam $refseq $sample {*}$fastqfiles \
@@ -194,24 +217,27 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
+			job map_${method}-$sample-$name \
+			-mem [map_mem $method $mem $threads $preset [list $refseq $file]] \
+			-time [map_time $method $time $threads $preset [list $refseq $file]] \
+			-cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file
+				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts
 			} -code {
 				set tempfile [filetemp $target 1 1]
 				if {!$mergesort || $sort eq "nosort"} {
-					cg map_${method} -paired $paired	-preset $preset \
+					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
-					exec cg map_${method} -paired $paired	-preset $preset \
+					exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file \
@@ -230,24 +256,27 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
+			job map_${method}-$sample-$name \
+			-mem [map_mem $method $mem $threads $preset [list $refseq $file1 $file2]] \
+			-time [map_time $method $time $threads $preset [list $refseq $file1 $file2]] \
+			-cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file1 $file2
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2
+				method mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts
 			} -code {
 				set tempfile [filetemp_ext $target]
 				if {!$mergesort || $sort eq "nosort"} {
-					cg map_${method} -paired $paired	-preset $preset	\
+					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file1 $file2
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
-					cg map_${method} -paired $paired	-preset $preset	\
+					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file1 $file2 \

@@ -24,6 +24,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 
 proc var_gatkh_job {args} {
 	# putslog [list var_gatkh_job {*}$args]
+	set cmdline [clean_cmdline cg var_gatkh {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
 	set pre ""
@@ -41,6 +42,8 @@ proc var_gatkh_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set mem 15G
+	set time 3:00:00
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -89,6 +92,12 @@ proc var_gatkh_job {args} {
 		-opts {
 			set opts $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
@@ -123,15 +132,6 @@ proc var_gatkh_job {args} {
 	}
 	lappend deps $regionfile
 	# logfile
-	set cmdline [list cg var_gatkh]
-	foreach option {
-		split deps bed pre regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatkh_$resulttail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
@@ -142,7 +142,7 @@ proc var_gatkh_job {args} {
 	set deps [list $bamfile $gatkrefseq $bamindex {*}$deps]
 	set cache [file dir $varallfile]/cache_varall_gatkh_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
+	job $varallfile {*}$skips -mem $mem -time $time -deps $deps -targets {
 		$varallfile $varallfile.tbi
 	} -vars {
 		opts regionfile gatkrefseq refseq root ERC varallfile cache

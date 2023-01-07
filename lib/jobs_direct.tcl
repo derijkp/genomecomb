@@ -1,6 +1,7 @@
 proc job_process_init_direct {} {
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_direct
+	interp alias {} job_runall {} job_runall_direct
 	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_wait_direct
 }
@@ -64,7 +65,7 @@ proc job_process_direct {} {
 	while {[llength $cgjob(queue)]} {
 		set joberror {}
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
+		foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set timefile {}
 		set job [job_logname $job_logdir $jobname]
@@ -121,8 +122,7 @@ proc job_process_direct {} {
 			set running {}
 			set run 1
 		}
-		set ptargets [job_targetsreplace $fptargets $targetvars]
-		if {$jobforce || ([llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]])} {
+		if {$jobforce} {
 			set run 1
 		}
 		if {$cgjob(force)} {
@@ -151,7 +151,7 @@ proc job_process_direct {} {
 		# run code
 		# ========
 		set cmd "proc job_run {} \{\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]
 		append cmd \}
 		set ok 1
 		if {[catch {eval $cmd} result]} {
@@ -176,7 +176,7 @@ proc job_process_direct {} {
 		set endtime [timestamp]
 		# log results
 		# ===========
-		if {![job_file_exists $job.finished] && ![job_file_exists $job.ok]} {
+		if {![job_file_or_link_exists $job.finished] && ![job_file_or_link_exists $job.ok]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 			job_logfile_add $job . error $targets $cores "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {
@@ -212,6 +212,10 @@ proc job_logfile_direct_close {} {
 			if {!$cgjob(hasargs)} {file delete $result}
 		}
 	}
+}
+
+proc job_runall_direct {} {
+	# nothing to do for direct
 }
 
 proc job_wait_direct {} {

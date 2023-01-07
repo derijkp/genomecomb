@@ -6,7 +6,7 @@ proc version_gridss {} {
 
 proc sv_gridss_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_gridss {*}$args]"
+	set cmdline [clean_cmdline cg sv_gridss {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1
@@ -16,6 +16,8 @@ proc sv_gridss_job {args} {
 	set resultfiles 0
 	set skips {}
 	set resultfile {}
+	set mem {}
+	set time {}
 	cg_options sv_gridss args {
 		-refseq {
 			set refseq $value
@@ -41,6 +43,12 @@ proc sv_gridss_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
@@ -54,11 +62,12 @@ proc sv_gridss_job {args} {
 	} else {
 		set root [file_rootname $resultfile]
 	}
+	if {$mem eq ""} {set mem [expr {8+1*$threads}]G}
 	set resultanalysisinfo [analysisinfo_file $resultfile]
 	set destdir [file dir $resultfile]
 	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -76,7 +85,7 @@ proc sv_gridss_job {args} {
 	if {[llength $blacklist]} {
 		lappend opts BLACKLIST=\"[lindex $blacklist 0]\"
 	}
-	job sv_gridss-$root.vcf {*}$skips -mem [expr {8+1*$threads}]G -cores $threads \
+	job sv_gridss-$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-skip [list $resultfile [analysisinfo_file $resultfile]] \
 	-deps {
 		$bamfile $bwarefseq $bamfileindex $bwarefseq.fai

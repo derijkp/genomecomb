@@ -45,9 +45,13 @@ proc cg_project_addsample {args} {
 		project_transfer $dir $projectdir/samples/$samplename/ori $transfertype $force
 	} else {
 		file mkdir $projectdir/samples/$samplename/ori
+		file mkdir $projectdir/samples/$samplename/fastq
 		foreach file $args {
 			if {![file exists $file]} {error "file $file does not exist"}
 			project_transfer $file $projectdir/samples/$samplename/ori/[file tail $file] $transfertype $force
+			if {[file extension [gzroot $file]] in ".fastq .fq"} {
+				project_transfer $file $projectdir/samples/$samplename/fastq/[file tail $file] $transfertype $force
+			}
 		}
 	}
 	if {$amplicons ne ""} {

@@ -4,7 +4,7 @@
 cg gff2tsv ?infile? ?outfile?
 
 == Summary ==
-Converts data in gff format to gene sft (simple feature table) format
+Converts data in gff format to gene tsv format
 
 == Arguments ==
 ; **infile**: file to be converted, if not given, uses stdin. File may be compressed.

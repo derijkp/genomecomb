@@ -67,7 +67,7 @@ proc var_longshot_job {args} {
 	# putslog [list var_longshot_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_longshot {*}$args]"
+	set cmdline [clean_cmdline cg var_longshot {*}$args]
 	set pre ""
 	set split 1
 	set deps {}
@@ -85,6 +85,8 @@ proc var_longshot_job {args} {
 	set hap_bam 0
 	set index 1
 	set resultfile {}
+	set mem 8G
+	set time 3:00:00
 	cg_options var_longshot args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -136,6 +138,12 @@ proc var_longshot_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
@@ -176,7 +184,7 @@ proc var_longshot_job {args} {
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
 #putsvars deps longshottargets vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index
 #error stop
-	job [job_relfile2name longshot- $varfile] {*}$skips -mem 8G \
+	job [job_relfile2name longshot- $varfile] {*}$skips -mem $mem -time $time \
 	-deps $deps \
 	-targets $longshottargets -vars {
 		vcffile region refseq root varfile split tech opts region hap_bam outbam maxcov mincoverage index

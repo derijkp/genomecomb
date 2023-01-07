@@ -1,4 +1,4 @@
-proc job_file_exists {file} {
+proc job_file_or_link_exists {file} {
 	if {[file exists $file]} {return 1}
 	if {[catch {file link $file}]} {return 0} else {return 1}
 }
@@ -69,9 +69,15 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(priority)]} {
 		set cgjob(priority) 0
 	}
-	if {![info exists cgjob(dqueue)]} {
-		set cgjob(dqueue) all.q
+	if {![info exists cgjob(dmem)]} {
+		set cgjob(dmem) {}
 	}
+	if {![info exists cgjob(dtime)]} {
+		set cgjob(dtime) {}
+	}
+#	if {![info exists cgjob(dqueue)]} {
+#		set cgjob(dqueue) all.q
+#	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -95,6 +101,14 @@ proc job_args {jobargs} {
 			}
 			-dqueue {
 				set cgjob(dqueue) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dmem {
+				set cgjob(dmem) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dtime {
+				set cgjob(dtime) [lindex $jobargs $pos]
 				incr pos
 			}
 			-dcleanup {
@@ -143,6 +157,21 @@ proc job_args {jobargs} {
 				incr pos
 				job_logfile $logfile
 				set_job_logdir [file_absolute [file dir $logfile]/log_jobs]
+			}
+			-v - -verbose - --verbose {
+				set value [lindex $jobargs $pos]
+				incr pos
+				if {![isint $value]} {error "$value is not a number, only numbers are accepted as value for -v (--verbose)"}
+				logverbose $value
+			}
+			-stack - --stack {
+				set value [lindex $jobargs $pos]
+				incr pos
+				if {$value in {0 1}} {
+					set ::stacktraceonerror $value
+				} else {
+					error "$value is not 0 or 1, the only accepted values for --stack"
+				}
 			}
 			-- {
 				lappend newargs --
@@ -267,12 +296,11 @@ proc jobglob {args} {
 
 proc jobgzfiles {args} {
 	foreach filename $args {
-		if {![catch {jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
-			foreach file $list {
-				set root [gzroot $file]
-				if {[info exists a($root)]} continue
-				set a($root) $file
-			}
+		set list [jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+		foreach file $list {
+			set root [gzroot $file]
+			if {[info exists a($root)]} continue
+			set a($root) $file
 		}
 	}
 	set result {}
@@ -280,6 +308,15 @@ proc jobgzfiles {args} {
 		lappend result $a($file)
 	}
 	return $result
+}
+
+proc jobgzfile {args} {
+	set list [jobgzfiles {*}$args]
+	if {[llength $list]} {
+		return [lindex $list 0]
+	} else {
+		return [lindex $args 0]
+	}
 }
 
 proc jobglob1 {args} {
@@ -439,7 +476,7 @@ proc cgjob_files {cgjob_idVar pattern {checkcompressed 0}} {
 }
 
 proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatternVar {}}} {
-	global cgjob_id cgjob_ptargets cgjob_rm
+	global cgjob_id cgjob_rm
 #puts *****************
 #putsvars pattern checkcompressed
 #puts cgjob_id:[array names cgjob_id]
@@ -456,10 +493,6 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 		return [job_findregexpdep $pattern ids time timefile $checkcompressed]
 	}
 	set pattern [file_absolute $pattern]
-	set ptargethits [array names cgjob_ptargets $pattern]
-	if {[llength $ptargethits]} {
-		error "ptargets hit $pattern: wait till ptarget deps have finished"
-	}
 	unset -nocomplain filesa
 	if {$checkcompressed} {
 		set list [bsort [gzfiles $pattern]]
@@ -510,15 +543,12 @@ proc maxfiletime {file timeVar timefileVar} {
 }
 
 proc job_findregexpdep {pattern idsVar timeVar timefileVar checkcompressed} {
-	global cgjob_id cgjob_ptargets cgjob_rm
+	global cgjob_id cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
 	upvar $timefileVar timefile
 	set pattern [file_absolute $pattern]
 	set glob [regexp2glob $pattern]
-	if {[llength [array names cgjob_ptargets $glob]]} {
-		error "ptargets hit $pattern: wait till ptarget deps have finished"
-	}
 	unset -nocomplain filesa
 	# check file system
 	if {$checkcompressed} {
@@ -704,6 +734,7 @@ proc job_checktarget {job target skiptarget time timefile checkcompressed {newid
 				# 	job_backup $file 1
 				# }
 				foreach file $files {
+					file delete -force $file.old
 					file rename -force -- $file $file.old
 				}
 			} else {
@@ -745,38 +776,6 @@ proc job_checktargets {job targets skiptarget time timefile checkcompressed {run
 		}
 	}
 	return $ok
-}
-
-proc job_findptargets {ptargets checkcompressed} {
-	global cgjob_id
-	set targets {}
-	set ok 1
-	foreach pattern $ptargets {
-		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
-			set pattern [string range $pattern 1 end-1]
-			set glob [regexp2glob $pattern]
-			set files {}
-			if {$checkcompressed} {
-				set list [gzfiles $glob]
-			} else {
-				set list [checkfiles $glob]
-			}
-			foreach file [bsort $list] {
-				if {[regexp ^$pattern\$ $file]} {
-					lappend files $file
-					lappend ids {}
-				}
-			}
-		} else {
-			if {$checkcompressed} {
-				set files [bsort [gzfiles $pattern]]
-			} else {
-				set files [bsort [checkfiles $pattern]]
-			}
-		}
-		lappend targets {*}$files
-	}
-	return $targets
 }
 
 proc job_logdir {{logdir {}}} {
@@ -1118,10 +1117,10 @@ proc job_logfile_add {job jobid status {targets {}} {cores 1} {msg {}} {submitti
 }
 
 proc job_backup {file {rename 0}} {
-	if {![job_file_exists $file]} return
+	if {![job_file_or_link_exists $file]} return
 	set num 1
 	while 1 {
-		if {![job_file_exists $file.old$num]} break
+		if {![job_file_or_link_exists $file.old$num]} break
 		incr num
 	}
 	if {$rename} {
@@ -1131,7 +1130,7 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
-proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompressed code} {
+proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 	set cmd ""
 	set jobname [file tail $job]
 	append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tstarting $jobname on \[exec hostname\]\"\n"
@@ -1139,7 +1138,6 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 	append cmd "[list set rootdir $pwd]\n"
 	append cmd "[list set job $job]\n"
 	append cmd "[list set jobname $jobname]\n"
-	append cmd "[list set ptargets $ptargets]\n"
 	append cmd "[list set deps $adeps]\n"
 	append cmd "[list set dep [lindex $adeps 0]]\n"
 	append cmd "[list set checkcompressed $checkcompressed]\n"
@@ -1150,7 +1148,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		}
 		incr num
 		if {$dep ne ""} {
-			append cmd "if \{!\[[list job_file_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
+			append cmd "if \{!\[[list job_file_or_link_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
 		}
 	}
 	set num 1
@@ -1187,16 +1185,6 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 				set ok 0
 			}
 		}
-		if {[llength @PTARGETS@]} {
-			if {[llength [job_findptargets @PTARGETS@ $checkcompressed]]} {
-				file_add $job.log "[job_timestamp]\tptargets ok"
-			} else {
-				set ok 0
-				file_add $job.log "[job_timestamp]\tmissing ptargets"
-				putslog missing ptargets
-				lappend errormsg "missing ptargets"
-			}
-		}
 		if {$ok} {
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
 			catch {file delete $job.pid}
@@ -1209,7 +1197,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 			error $errormsg
 		}
-	} [list @PWD@ $pwd @PTARGETS@ [list $ptargets]]]
+	} [list @PWD@ $pwd]]
 	return $cmd
 }
 
@@ -1238,7 +1226,6 @@ proc job {jobname args} {
 	set procs {}
 	set precode {}
 	set skiplist {}
-	set ptargets {}
 	set submitopts {}
 	set checkcompressed 1
 	set jobforce 0
@@ -1269,10 +1256,6 @@ proc job {jobname args} {
 				lappend skiplist [lindex $args $pos]
 				incr pos
 			}
-			-ptargets {
-				set ptargets [lindex $args $pos]
-				incr pos
-			}
 			-code {
 				set code [lindex $args $pos]
 				incr pos
@@ -1300,6 +1283,10 @@ proc job {jobname args} {
 			}
 			-mem {
 				lappend submitopts -mem [lindex $args $pos]
+				incr pos
+			}
+			-time {
+				lappend submitopts -time [lindex $args $pos]
 				incr pos
 			}
 			-hard {
@@ -1333,7 +1320,7 @@ proc job {jobname args} {
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
-					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -procs, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
+					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -procs, -rmtargets, -skip, -direct, -io, -cores, -precode, -checkcompressed"
 				}
 				break
 			}
@@ -1366,7 +1353,6 @@ proc job {jobname args} {
 	foreach skip $skiplist {
 		lappend eskip [job_expandvarslist $skip $level]
 	}
-	set eptargets [job_expandvarslist $ptargets $level]
 	set newcode {}
 	if {[info exists ::defcompressionlevel]} {
 		append newcode [list ::defcompressionlevel $::defcompressionlevel]\n
@@ -1380,16 +1366,16 @@ proc job {jobname args} {
 	append newcode $code
 	if {[get ::job_getinfo 0]} {
 		# do not actually run if just gathering info
-		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
+		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
 		return
 	}
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores]
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores]
 	incr cgjob(id)
 	if {!$cgjob(debug)} {job_process}
 }
 
 proc job_init {args} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info cgjob_rm
+	global cgjob cgjob_id cgjob_running job_logdir_submit cgjob_info cgjob_rm
 	upvar job_logdir job_logdir
 ## job_init debugging code
 #if {![info exists ::cgjob_initnum]} {
@@ -1405,7 +1391,6 @@ proc job_init {args} {
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_rm
 	unset -nocomplain cgjob_running
-	unset -nocomplain cgjob_ptargets
 	unset -nocomplain cgjob_info
 	unset -nocomplain job_logdir_submit
 	set ::job_method_info {}
@@ -1427,9 +1412,12 @@ proc job_init {args} {
 	set cgjob(removeold) 0
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
+	set cgjob(dmem) {}
+	set cgjob(dtime) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	set cgjob(default_job_logdir) 1
 	interp alias {} job_process {} job_process_direct
+	interp alias {} job_runall {} job_runall_direct
 	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_wait_direct
 	set ::job_getinfo 0
@@ -1439,8 +1427,14 @@ proc job_init {args} {
 proc job_curargs {} {
 	global cgjob
 	set temp ""
-	foreach {opt field} {-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup -runcmd runcmd -skipjoberrors skipjoberrors} {
-		lappend temp $opt $cgjob($field)
+	foreach {opt field} {
+		-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup 
+		-dmem {} -dtime {}
+		-runcmd runcmd -skipjoberrors skipjoberrors
+	} {
+		if {[info exists cgjob($field)]} {
+			lappend temp $opt $cgjob($field)
+		}
 	}
 	return $temp
 }
@@ -1456,6 +1450,28 @@ proc job_mempercore {mem threads} {
 		set mem [expr {int(ceil($memnum * $scale /$threads))}]$memunits
 	}
 	return $mem
+}
+
+proc job_memgt {mem mem2} {
+	if {$mem eq ""} {
+		return 0
+	}
+	if {$mem2 eq ""} {
+		return 1
+	}
+	set memnum $mem
+	set memnum2 $mem2
+	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
+		if {$memunits eq "G" || $memunits eq "g"} {
+			set memnum [expr {$memnum*1000.0}]
+		}
+	}
+	if {[regexp {^([0-9]+)(.*)$} $mem2 temp2 memnum2 memunits2]} {
+		if {$memunits2 eq "G" || $memunits2 eq "g"} {
+			set memnum2 [expr {$memnum2*1000.0}]
+		}
+	}
+	if {$memnum > $memnum2} {return 1} else {return 0}
 }
 
 proc job_cleanup_ifempty_add {args} {
@@ -1524,5 +1540,12 @@ proc shorten_filename {filename {maxsize 251}} {
 	return $dir$prefix[string range $post $start end]
 }
 
-job_init
+proc clean_cmdline {args} {
+	set cmdline "[list cd [pwd]] \; [list {*}$args]"
+	regsub -all \n $cmdline " " cmdline
+	return $cmdline
+}
 
+if {![info exists cgjob(distribute)]} {
+	job_init
+}

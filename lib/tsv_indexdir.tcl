@@ -1,7 +1,13 @@
 proc indexdirfind {mainfile} {
 	global configdata
 	set file [file_absolute [gzroot $mainfile]]
-	if {[info exists configdata(indexdir,$file)]} {return $configdata(indexdir,$file)}
+	if {[info exists configdata(indexdir,$file)]} {
+		 if {[file exists $configdata(indexdir,$file)]} {
+			return $configdata(indexdir,$file)
+		} else {
+			unset configdata(indexdir,$file)
+		}
+	}
 	set configdir [configdir]
 	set tail [file tail $file]
 	set dirs [glob -nocomplain $configdir/indexdirs/${tail}/*]

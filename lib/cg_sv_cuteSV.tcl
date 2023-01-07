@@ -9,7 +9,7 @@ proc sv_cuteSV_sortdistrreg {} {
 
 proc sv_cuteSV_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_cuteSV {*}$args]"
+	set cmdline [clean_cmdline cg sv_cuteSV {*}$args]
 	set refseq {}
 	set opts {}
 	set split 1
@@ -26,6 +26,8 @@ proc sv_cuteSV_job {args} {
 	set resultfile {}
 	set region {}
 	set sample {}
+	set mem 1G
+	set time 2:00:00
 	cg_options sv_cuteSV args {
 		-refseq {
 			set refseq $value
@@ -69,6 +71,12 @@ proc sv_cuteSV_job {args} {
 		}
 		-cuteSVopts {
 			lappend opts {*}$value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -cuteSV] {
@@ -114,7 +122,7 @@ proc sv_cuteSV_job {args} {
 		lappend opts --max_cluster_bias_DEL $max_cluster_bias_DEL --diff_ratio_merging_DEL	$max_cluster_bias_DEL
 	}
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
+	set resultlist [list $resultfile {} {} $vcffile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -127,7 +135,7 @@ proc sv_cuteSV_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_cutesv_$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_cutesv_$root.vcf {*}$skips -mem $mem -time $time -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex
@@ -151,7 +159,7 @@ proc sv_cuteSV_job {args} {
 		file rename -force -- $target.temp $target
 	}
 	# 
-	job sv_cutesv_vcf2tsv-$root {*}$skips -deps {
+	job sv_cutesv_vcf2tsv-$root -time 2:00:00 {*}$skips -deps {
 		$vcffile
 	} -targets {
 		$resultfile $resultanalysisinfo

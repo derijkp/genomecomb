@@ -1,5 +1,5 @@
 proc mergesamples_job {result args} {
-	set cmdline "[list cd [pwd]] \; [list cg mergesamples {*}$args]"
+	set cmdline [clean_cmdline cg mergesamples {*}$args]
 	cg_options multidb args {
 	} result 1 ... {
 		merge different samples into one sample. some files, like bams, are actually merged, some, like variant calls, have to be recalled on the merged samples

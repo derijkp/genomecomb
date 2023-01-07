@@ -13,10 +13,13 @@ regselect selects all regions or variants in file that overlap with regions in
 region_select_file. The resulting regions files is written to stdout.
 
 == Arguments ==
-; file: regions file
+; file: regions file, if - is given, data will be piped from stdin
 ; region_select_file: selection regions file
 ; near: if present, must be a number. Selection regions will be extended (to both sides)
 with the given amount of bases.
+
+You can also run the command from stdin by only giving one parameter (dropping the file parameter, the
+remaining parameter will be used as region_select_file)
 
 == Options ==
 ; -o outputfile: write to outputfile instead of stdout

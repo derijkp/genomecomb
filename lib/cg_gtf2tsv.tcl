@@ -51,7 +51,7 @@ proc cg_gtf2tsv {args} {
 			#fields	chromosome	1	String	Chromosome name
 			#fields	begin	1	Integer	Transcription start position
 			#fields	end	1	Integer	Transcription end position
-			#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
 			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
 			#fields	strand	1	String	+ or - for strand
 			#fields	cdsStart	1	Integer	Coding region start
@@ -61,7 +61,7 @@ proc cg_gtf2tsv {args} {
 			#fields	exonEnds	E	Integer	Exon end positions
 			#fields	source	1	String	Source of data
 		}]
-		set nheader {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
+		set nheader {chromosome begin end transcript gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 		unset -nocomplain curchromosome
 		set curtranscript {}
 		set curlines {}
@@ -69,14 +69,15 @@ proc cg_gtf2tsv {args} {
 		set line [split $line \t]
 		while 1 {
 			while 1 {
+				if {[eof $f] && $line eq ""} break
 				foreach {chrom source type start end score strand phase attributes comments} $line break
 				if {$type in "exon CDS start_codon stop_codon"} break
 				if {[gets $f line] == -1} break
 				set line [split $line \t]
 			}
+			if {[eof $f] && $line eq ""} break
 			set a [dict create {*}[string_change $attributes {; " "}]]
 			set curtranscript [dict get $a transcript_id]
-			if {[eof $f] && $line eq ""} break
 			set curlines [list $line]
 			while {[gets $f line] != -1} {
 				if {[string index $line 0] eq "#"} continue
@@ -243,17 +244,20 @@ proc cg_gtf2tsv {args} {
 	puts $o $cheader
 	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
-	set fb [open $tempbase]
-	set fa [open $tempattr]
-	set len [llength $attrlist]
-	while {![eof $fa]} {
-		set linea [gets $fb]
-		if {![string length $linea]} break
-		set lineb [gets $fa]
-		if {[llength $lineb] < $len} {
-			lappend lineb {*}[list_fill [expr {$len-[llength $lineb]}] {}]
+	if {[info exists attrlist]} {
+		set len [llength $attrlist]
+		set fb [open $tempbase]
+		set fa [open $tempattr]
+		set len [llength $attrlist]
+		while {![eof $fa]} {
+			set linea [gets $fb]
+			if {![string length $linea]} break
+			set lineb [gets $fa]
+			if {[llength $lineb] < $len} {
+				lappend lineb {*}[list_fill [expr {$len-[llength $lineb]}] {}]
+			}
+			puts $o $linea\t[join $lineb \t]
 		}
-		puts $o $linea\t[join $lineb \t]
 	}
 	catch {close $fb} ; catch {close $fa}
 	file delete $tempbase ; file delete $tempattr

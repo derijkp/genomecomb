@@ -83,7 +83,6 @@ job_is_first_task  TRUE
 urgency_slots      min
 accounting_summary FALSE
 
-
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)
@@ -100,6 +99,22 @@ If it is > 0, they will output a lot of info (to stder) on dependencies, jobs st
 use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
 dependent on the the job with an error) (also -skipjoberrors)
 ; -logfile filename: use filename as base for logfile instead of the default.
+
+When run on a cluster, it can be important to request enough memory/time. Genomecomb will by default
+request a larger memory or timeslot for larger jobs. It is however very difficult to get the right amount for
+all occasions (as it can be highly dependent on data). Many genomcomb tools have the options -mem and -time
+to increase the amount requested (vs the default). However not all, so the following two generic job options
+can change these requested amounts for any job:
+; -dmem: memory value (given as e.g. 2G for 2 gigbyte or 4M for 4 megabyte) or requested memory adjustment list
+; -dtime: time value (given as 2:00:00 for 2 hours) or time adjustment list
+If a single value is given it will be the default value for all jobs
+(unless a specific higher default would already be used).
+Using an adjustment list for these options allows changing the values for
+any job(s). The list consists of, alternatingly, a pattern and a value. If
+the name of a job matches the pattern, the value is applied to that job.
+The pattern * matches any job name, and can thus be used to set a default
+at the start of the list (The last match in the list determines the actual value).
+The other patterns are used as regular expressions.
 
 == Category ==
 Format Conversion

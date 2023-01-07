@@ -456,7 +456,7 @@ proc process_sample_cgi_job {workdir split} {
 
 proc process_sample_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline [list cg process_sample {*}$args]
+	set cmdline [clean_cmdline cg process_sample {*}$args]
 	set keepargs $args
 	set dbdir {}
 	set minfastqreads 0
@@ -668,7 +668,7 @@ proc process_sample_job {args} {
 	}
 	# targetfile
 	set temp [targetfile $sampledir $ref]
-	if {$temp ne ""} {
+	if {$temp ne "" && [file exists $temp]} {
 		if {$amplicons ne ""} {puts stderr "Not overwriting existing targetfile $temp"}
 		set targetfile $temp
 		if {$datatype eq ""} {set datatype exome}

@@ -120,7 +120,7 @@ conda init bash
 # -----
 cd /build
 
-clair3version=0.1.5
+clair3version=0.1.12
 
 conda create -y -n clair3
 conda activate clair3

@@ -1,0 +1,4 @@
+chrom	start	end	type	ref	alt	name	freq
+chr1	972133	972134	snp	C	T	rs3121575	0
+chr1	972179	972180	snp	G	A	rs4970350	0.375
+chr1	972185	972186	snp	C	T	rs78759328	0

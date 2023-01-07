@@ -1,4 +1,6 @@
 proc process_multicompar_job {args} {
+	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg multicompar {*}$args]
 	set keepargs $args
 	set dbdir {}
 	set dbfiles {}
@@ -61,7 +63,7 @@ proc process_multicompar_job {args} {
 			}
 		}
 		-counters {
-			set values $counters
+			set counters $value
 		}
 		-experiment {
 			set experiment $value
@@ -101,16 +103,6 @@ proc process_multicompar_job {args} {
 	set refseq [glob $dbdir/genome_*.ifas]
 	# logfile
 	# -------
-	set cmdline [list cg process_multicompar]
-	foreach option {
-		dbdir split dbfile dbfiles skipincomplete targetvarsfile varfiles experiment cleanup maxopenfiles
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $destdir
-	upvar job_logdir job_logdir
 	job_logfile $destdir/process_multicompar_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir gnusort8 zst os]
 	# analysis info
@@ -311,45 +303,57 @@ proc process_multicompar_job {args} {
 		putslog "Starting meth"
 		putslog "Making/updating multicompar in $destdir/compar/meth-$experiment.tsv"
 		putslog "Finding samples"
-		set methcompar_file compar/meth-${experiment}.tsv.zst
-		if {[catch {cg select -a $methcompar_file} done]} {set done {}} else {set done [split $done \n]}
-		if {[file exists $methcompar_file]} {set mtime [file mtime $methcompar_file]} else {set mtime 0}
-		set stilltodo {}
-		foreach methfile $methfiles {
-			if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
-				putslog "redo all: $methfile is newer than $methcompar_file"
-				set stilltodo $methfiles
-				if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
-				break
-			}
-			set analysis [file_analysis $methfile]
-			if {![inlist $done $analysis]} {
-				putslog "Still todo: $analysis"
-				lappend stilltodo $methfile
-			}
+		# separate special types of methylation calling
+		unset -nocomplain typesa
+		foreach file $methfiles {
+			set type {}
+			regexp {(_[^_]+)$} [lindex [split [file tail $file] -] 1] temp type
+			lappend typesa($type) $file
 		}
-		putslog "methcompar Samples: [llength $methfiles] todo, [llength $done] already done, [llength $stilltodo] to add"
-		if {[llength $stilltodo]} {
-			putslog "Samples to add: $stilltodo"
-			putslog "Starting multicompar"
-			set methcompar_file [gzroot $methcompar_file].zst
-			# pmulticompar_job $methcompar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
-			pmulticompar_job -reannotregonly 0 -split 1 -limitreg $limitreg -erroronduplicates 0 \
-				-skipincomplete $skipincomplete \
-				$methcompar_file {*}$stilltodo
-		} else {
-			putslog "skipping meth multicompar (no update needed)"
-		}
-		# annotate methmulticompar
-		# --------------------
-		putslog "Starting annotation"
-		cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth-$experiment.tsv.zst $dbdir {*}$dbfiles
-		job indexannotcompar-$experiment -deps {
-			compar/annot_meth-$experiment.tsv
-		} -targets {
-			compar/annot_meth-$experiment.tsv.index/info.tsv
-		} -vars dbdir -code {
-			cg index -colinfo $dep
+		foreach type [array names typesa] {
+			set methcompar_file compar/meth${type}-${experiment}.tsv.zst
+			set umethfiles $typesa($type)
+			if {[catch {cg select -a $methcompar_file} done]} {set done {}} else {set done [split $done \n]}
+			if {[file exists $methcompar_file]} {set mtime [file mtime $methcompar_file]} else {set mtime 0}
+			set stilltodo {}
+			foreach methfile $umethfiles {
+				if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
+					putslog "redo all: $methfile is newer than $methcompar_file"
+					set stilltodo $umethfiles
+					if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
+					break
+				}
+				set analysis [file_analysis $methfile]
+				if {![inlist $done $analysis]} {
+					putslog "Still todo: $analysis"
+					lappend stilltodo $methfile
+				}
+			}
+			putslog "methcompar$type Samples: [llength $stilltodo] todo, [llength $done] already done, [llength $stilltodo] to add"
+			if {[llength $stilltodo]} {
+				putslog "Samples to add: $stilltodo"
+				putslog "Starting multicompar"
+				set methcompar_file [gzroot $methcompar_file].zst
+				# pmulticompar_job $methcompar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+				pmulticompar_job -reannotregonly 0 -split 1 -erroronduplicates 0 \
+					-type meth \
+					-limitreg $limitreg \
+					-skipincomplete $skipincomplete \
+					$methcompar_file {*}$stilltodo
+			} else {
+				putslog "skipping meth multicompar (no update needed)"
+			}
+			# annotate methmulticompar
+			# --------------------
+			putslog "Starting annotation"
+			cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth${type}-$experiment.tsv.zst $dbdir {*}$dbfiles
+			job indexannotcompar-$experiment -deps {
+				compar/annot_meth${type}-$experiment.tsv
+			} -targets {
+				compar/annot_meth${type}-$experiment.tsv.index/info.tsv
+			} -vars dbdir -code {
+				cg index -colinfo $dep
+			}
 		}
 	}
 	#
@@ -441,25 +445,21 @@ proc process_multicompar_job {args} {
 	}
 	# counters
 	# --------
-	foreach counter $counters {
-		set countfiles [jobglob samples/*/counts-*.tsv]
-		set target compar/counts-${experiment}.tsv
+	if {[llength $counters]} {
+		set countfiles [jobglob samples/*/gene_counts-*.tsv]
+		set target compar/gene_counts-${experiment}.tsv
 		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
 			cg multicount $target.temp {*}$countfiles
 			file rename -force -- $target.temp $target
 		}
 		# exons
-		set countfiles [jobglob samples/*/counts_exon-*.tsv]
-		set target compar/counts_exon-${experiment}.tsv
-		job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-			cg multicount $target.temp {*}$countfiles
-			file rename -force -- $target.temp $target
-		}
-		set countfiles [jobglob samples/*/tpm-*.tsv]
-		set target compar/tpm-${experiment}.tsv
-		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-			cg multicount $target.temp {*}$countfiles
-			file rename -force -- $target.temp $target
+		foreach prefix {exon_counts tpm gene_fpkm} {
+			set countfiles [jobglob samples/*/${prefix}-*.tsv]
+			set target compar/${prefix}-${experiment}.tsv
+			job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
+				cg multicount $target.temp {*}$countfiles
+				file rename -force -- $target.temp $target
+			}
 		}
 	}
 	# reports

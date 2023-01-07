@@ -5,9 +5,11 @@ proc cg_download_mirbase {resultfile species {release 21}} {
 	set gff3file $workdir/$species.gff3
 	set structfile $workdir/miRNA.str
 	set genomefile [glob [file dir $resultfile]/genome_*.ifas]
-	wgetfile ftp://mirbase.org/pub/mirbase/$release/genomes/$species.gff3 $gff3file
-	wgetfile ftp://mirbase.org/pub/mirbase/$release/miRNA.str.gz $structfile.gz
-	wgetfile ftp://mirbase.org/pub/mirbase/$release/README $resultfile.info.temp
+	# set base ftp://mirbase.org/pub/mirbase
+	set base https://www.mirbase.org/ftp
+	wgetfile $base/$release/genomes/$species.gff3 $gff3file
+	wgetfile $base/$release/miRNA.str.gz $structfile.gz
+	wgetfile $base/$release/README $resultfile.info.temp
 file_write [gzroot $resultfile].info [subst [string trimleft {
 = miRBase =
 

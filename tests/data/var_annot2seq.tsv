@@ -1,0 +1,10 @@
+chrom	start	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	name	freq
+chr1	259	260	snp	N	T	v	T	C	test1	0.1
+chr1	4001	4002	snp	A	C	r	A	C	test2	0.2
+chr1	5000	5010	del	AGCGTGGCAA		r	AGCGTGGCAA		test4	0.4
+chr1	5020	5021	snp	G	C	v	G	C	test5	0.5
+chr2	4000	4001	snp	G	A	v	A	A	test6	0.6
+chr2	4010	4011	snp	A	G,C	v	G	C	test7,test8	0.7,0.8
+chr2	5010	5012	del	NN		v		N	test9	0.9
+chr2	10000	10001	snp	N	C	v	C	N	test9b	0.9
+chr3	876	877	snp	N	A	v	A	A	test10	1

@@ -144,7 +144,7 @@ test cg_options {option error} {
 			set opt $value
 		}
 	} {p1 p2} 0 4
-} {unknown option "-unknown", must be one of: -opt} error
+} {error calling cg test: unknown option "-unknown", must be one of: -opt} error
 
 test cg_options {args error (not enough)} {
 	set args {-opt o}
@@ -499,12 +499,12 @@ test2
 test analysisinfo_write {analysisinfo_write add} {
 	file_write tmp/src.analysisinfo [deindent {
 		annotate_cg_version
-		0.102.0
+		0.106.0
 	}]\n
 	analysisinfo_write tmp/src tmp/dest.zst sample cg-cg-tmp
 	file_read tmp/dest.analysisinfo
 } {sample	annotate_cg_version
-cg-cg-tmp	0.102.0
+cg-cg-tmp	0.106.0
 }
 
 test analysisinfo_write {analysisinfo_write from empty} {

@@ -1,6 +1,6 @@
 proc process_project_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg process_project {*}$args]"
+	set cmdline [clean_cmdline cg process_project {*}$args]
 	unset -nocomplain split
 	set dbdir {}
 	set dbfiles {}
@@ -9,6 +9,7 @@ proc process_project_job {args} {
 	set removeskew {}
 	set aligner bwa
 	set varcallers {gatkh strelka}
+	set isocallers {}
 	set counters {}
 	set svcallers {}
 	set methcallers {}
@@ -84,6 +85,9 @@ proc process_project_job {args} {
 		}
 		-methcallers {
 			set methcallers $value
+		}
+		-isocallers {
+			set isocallers $value
 		}
 		-counters {
 			set counters $value
@@ -196,8 +200,8 @@ proc process_project_job {args} {
 		if {$dt eq ""} {set dt NONE}
 		list_addnew dbfiles $amplicons
 		if {$targetfile eq ""} {
-			set targetfile $destdir/reg_${ref}_targets.tsv
-			job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile.zst} -vars {sample dbdir ref} -code {
+			set targetfile $destdir/reg_${ref}_targets.tsv.zst
+			job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile} -vars {sample dbdir ref} -code {
 				cg regcollapse $dep | cg zst > $target
 			}
 		}
@@ -347,6 +351,9 @@ proc process_project_job {args} {
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
+	}
+	foreach isocaller $isocallers {
+		iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
 	}
 	if {$flair} {
 		flair_job -refseq [refseq $dbdir] $destdir

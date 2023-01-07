@@ -65,7 +65,7 @@ proc var_clair3_job {args} {
 	# putslog [list var_clair3_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg var_clair3 {*}$args]"
+	set cmdline [clean_cmdline cg var_clair3 {*}$args]
 	set preset {}
 	set platform {}
 	set model {}
@@ -73,6 +73,7 @@ proc var_clair3_job {args} {
 	set split 1
 	set deps {}
 	set region {}
+	set phasing 1
 	set threads 2
 	set mincoverage 8
 	set mingenoqual 6
@@ -83,6 +84,8 @@ proc var_clair3_job {args} {
 	set index 1
 	set resultfile {}
 	set cleanup 1
+	set mem {}
+	set time {}
 	cg_options var_clair3 args {
 		-preset {
 			set preset $value
@@ -130,6 +133,9 @@ proc var_clair3_job {args} {
 			if {$value ni "ont pacbio"} {error "-tech $value not supported, must be one of: ont pacbio"}
 			set tech $value
 		}
+		-phasing {
+			set phasing [true $phasing]
+		}
 		-index {
 			set index [true $value]
 		}
@@ -143,9 +149,18 @@ proc var_clair3_job {args} {
 			# not actually used here, but must be an option
 			set cleanup $value
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
+	if {$time eq ""} {set time ${threads}:00:00}
+	if {$mem eq ""} {set mem ${threads}G}
+	if {$phasing} {lappend opt	--enable_phasing --longphase_for_phasing}
 	if {$preset ne ""} {
 		switch $preset {
 			ont {
@@ -225,7 +240,7 @@ proc var_clair3_job {args} {
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
 #putsvars deps vcffile region refseq root varfile split tech opts region index
 #error stop
-	job [job_relfile2name clair3- $varfile] {*}$skips -mem ${threads}G -cores $threads \
+	job [job_relfile2name clair3- $varfile] {*}$skips -mem $mem -time $time -cores $threads \
 	-deps $deps -targets {
 		$varfile $vcffile $varallfile
 	} -vars {

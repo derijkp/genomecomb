@@ -244,9 +244,23 @@ proc findjar {program {envvar {}}} {
 proc findR {} {
 	global R
 	if {![info exists R]} {
-		set R [searchpath RCG dirR-4.1.2 Rcg dirR R]
+		set R [searchpath RCG dirR-4.2.1 dirR-4.1.2 Rcg dirR R]
 	}
 	return $R
+}
+
+proc findpython3 {} {
+	global python3
+	if {![info exists python3]} {
+		if {![catch {exec which python3} temp]} {
+			set python3 $temp
+		} elseif {![catch {exec which python} temp]} {
+			set python3 $temp
+		} else {
+			error "python3 not found (not even python)"
+		}
+	}
+	return $python3
 }
 
 proc bcl2fastq {} {

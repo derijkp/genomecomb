@@ -1,17 +1,23 @@
 = Job system =
 
-The job system in genomecomb allows to write distributed code in a
-seemingly sequential way, by indicating subtasks (jobs) and their
-dependencies. Subtasks can be run sequentially, locally distributed
-(using a number of worker processes) or distributed on a cluster (using
-sun grid engine). On a cluster the program will run briefly, submitting
-all jobs with the correct dependencies and then finishing (while the jobs
-still run). Dependencies and targets are file based.
+The genomecomb job system allows you to create workflows by writing and
+debugging (easy) sequential code, which you can (optionally) make
+distributed by indicating subtasks (jobs) and their dependencies in the
+code using the "job" commmand.
+
+Subtasks can be run sequentially, locally distributed (using a number of
+worker processes) or distributed on a cluster (using sun grid engine). On
+a cluster the program will run briefly, submitting all jobs with the
+correct dependencies and then finishing (while the jobs still run).
+Dependencies and targets are file based.
 
 It also shares some features with make. It will not (re)run subtasks for
 which the target (file) is already completed, and none of the dependencies
 are newer. If the program is interupted, rerunning with the same
 parameters will continue the analysis where it left off.
+To avoid continuing on unfinished (interupted) files, write results to
+temporary files during processing, and rename to the final target when
+(successfully) finished
 
 The job system is used by including the following commands (example in job_example.tcl):
 
@@ -159,41 +165,35 @@ dependencies. Set -optional to 1 to indicate that this job is optional, and can 
 if not all dependencies are available.
 ; -skip skiplist: If all files in skiplist exist, the job will be skipped, 
 even if some of the targets are not present. This can be used to avoid (re)running substeps
-to a final goal.
+to a final goal  (where the files resulting from this substep are removed after the final result is made).
+The -skip option can be given multiple times. The job is skipped if any of the given skiplists is complete.
 ; -force 0/1: If 1, this job will be run even if the target files already exist. This is usefull
 if e.g. an existing files needs to be adapted.
 ; -checkcompressed 0/1: dependencies (and targets) are normally
 searched regardless of compression status (e.g. either test.tsv as
 test.tsv.zst will match test.tsv). Use this option for the job 
 specifically targetting compression
-; -foreach pattern: A separate job will be started for each dependency matching the pattern.
-This can also be handled (more flexibly) using jobglob and a foreach loop
-{{{
-foreach file [jobglob test*.tsv] {
-	job test-$file -deps {$file} -targets {[file root $file]-result.tsv} -code {
-	}
-}
-}}}
 ; -rmtargets rmtargets: This job will have the removal of given files as target
-; -ptargets patterntargets: avoid the use of this option; it only works on local distribution.
-Here it can be used when a job will make targets that cannot (easily) be determined when
-the (submission) program is run. The (p)targets can be given using a wildcard pattern matching all output.
-On local distribution, all jobs with dependencies matching the pattern are postponed until
-this job is done. Distribution on a cluster is not compatible with this model as there all jobs 
-are submitted in one go with dependencies between them given to the cluster managment system.
-(You could run a program using this option on a cluster by rerunning the submission program
-after the ptargets job is finished.)
 ; -io io: give value > 1 if job is heavy on io (in sge, translates to (soft) job options: -l io=$value) 
 ; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)
 If using multiple cores, other requirements on sge are per core!
 For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
-; -mem memorysize: indication of memory needed (on sge (hard): -l mem_free=$value,virtual_free=$value, where value is corrected based on -cores)
+; -mem memorysize: indication of (maximum) memory needed by the job (on sge: -l mem_free=$value,virtual_free=$value, where value is corrected by the system based on -cores)
+; -time timelimit: indication of (maximum) time needed by the job (on sge: -l s_rt=$time)
 ; -hard hardlimits: on sge: extra options passed on as hard limits
 ; -soft softlimits: on sge: extra options passed on as soft limits
 
 == tools ==
 jobglob: same as glob, but takes into account files that will be available
 at that stage of the program (targets of previous jobs)
+You can use this command to start a separate job for each file/dependency matching a pattern, e.g.
+{{{
+foreach file [jobglob test*.tsv] {
+	job test-$file -deps {$file} -targets {[file root $file]-result.tsv} -code {
+		# do something
+	}
+}
+}}}
 
 jobglob1: returns the first file in a jobglob
 
@@ -206,6 +206,30 @@ of the files/patterns in deps is newer than target or is in the queue or
 being made. By default if a dep does not exist and is not being made, it
 will not be considered "newer". You can use the -checkdepexists 1 option
 to also return 0 if a dep does not exist.
+
+job_cleanup_add file ?file? ..: add files to list of files that will be cleaned 
+up after the run. Deletion will be done using -force, so if **file** is a directory,
+it will be deleted even if there are still files in it
+
+job_cleanup_ifempty_add file ?file? ..: add files to list of files that will be cleaned 
+up after the run. Deletion will be done without -force, so if **file** is a directory,
+it will only be deleted if empty. These are deleted after regular cleanup
+(which should delete all files in the directory)
+
+== job_runall ==
+Jobs that will make targets that cannot (easily) be determined beforehand,
+e.g. a number of output files with file names based on calculation, are
+best avoided if these results must be processed further in the workflow:
+Because you cannot specify the resulting files as targets, commands like
+jobglob will not see them untill they are actually made, making this incompatible
+with distributed jobs (which rely on dependencies to know when and which jobs can be run).
+
+If you really cannot avoid this type of job, you can use the command
+job_runall after it. job_runall will wait untill all jobs started up till
+there are finished, and then continue the submission script. This works
+because the targets are then actually made and can be (job)globbed. (This
+does severily limits parallelisation.) For direct runs (-d direct), the
+command has no effect (not needed, as all jobs are allways directly run).
 
 == job_wait ==
 job_wait must be added at the end of the program. It will wait (if needed) for all jobs to finish.

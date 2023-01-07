@@ -5,6 +5,7 @@ The general tsv format is described in [[format_tsv]]. Some tsv formats for spec
 (or often have) specific fields:
 ; region file format: for storing genomic region information, explained in [[format_tsv]]
 ; variant file format: for storing variants, explained in [[format_tsv]]
+; transcript/gene file format: for storing transcripts, explained in [[format_gene]]
 ; GATK variant data: [[format_gatk_vars]] explains the fields typically found in GATK called variants
 ; samtools variant data: [[format_sam_vars]] explains the fields typically found in samtools called variants
 

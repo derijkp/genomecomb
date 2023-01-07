@@ -1,7 +1,7 @@
 proc var_job {args} {
 	upvar job_logdir job_logdir
 	global appdir
-	set cmdline "[list cd [pwd]] \; [list cg var {*}$args]"
+	set cmdline [clean_cmdline cg var {*}$args]
 	set method gatk
 	set distrreg chr
 	set pre ""
@@ -17,6 +17,8 @@ proc var_job {args} {
 	set var_opts {}
 	set resultfile {}
 	set hap_bam 0
+	set mem {}
+	set time {}
 	cg_options var args {
 		-method {
 			set method $value
@@ -54,6 +56,12 @@ proc var_job {args} {
 		}
 		-hap_bam {
 			set hap_bam [true $value]
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 		default {
 			lappend var_opts $key $value
@@ -184,6 +192,7 @@ proc var_job {args} {
 		if {$supportsregionfile && !$hap_bam} {
 			foreach region $regions regfile $regfiles {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
+					-mem $mem -time $time \
 					-datatype $datatype \
 					-regionfile $regfile \
 					-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $workdir/var-$root-$region.tsv.zst]
@@ -196,6 +205,7 @@ proc var_job {args} {
 			# run per region
 			foreach region $regions {
 				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
+					-mem $mem -time $time \
 					-datatype $datatype \
 					-region $region \
 					-split $split -threads $threads -cleanup $cleanup \
@@ -235,7 +245,17 @@ proc var_job {args} {
 						-deletesams 1 \
 						$target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
-					cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					set empty 1
+					foreach {file} $list {
+						if {[file size $file]} {set empty 0 ; break}
+					}
+					if {$empty} {
+						set tempfile [tempfile]
+						file_write $tempfile chromosome\tbegin\tend\n
+						exec cat $tempfile {*}[compresspipe $target] > $target.temp
+					} else {
+						cg cat -m 1 -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					}
 					file rename -force $target.temp $target
 					cg_zindex $target
 				} else {

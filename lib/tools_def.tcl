@@ -12,14 +12,14 @@ proc ampliconsfile {sampledir {ref {}}} {
 	if {$ref ne {}} {
 		append ref _
 	}
-	lindex [gzfiles $sampledir/reg_${ref}amplicons*.tsv $sampledir/reg_amplicons*.tsv $sampledir/reg_*_amplicons*.tsv] 0
+	lindex [jobglob $sampledir/reg_${ref}amplicons*.tsv $sampledir/reg_amplicons*.tsv $sampledir/reg_*_amplicons*.tsv] 0
 }
 
 proc targetfile {sampledir {ref {}}} {
 	if {$ref ne {}} {
 		append ref _
 	}
-	lindex [gzfiles $sampledir/reg_${ref}targets*.tsv $sampledir/reg_targets*.tsv $sampledir/reg_*_targets*.tsv] 0
+	lindex [jobglob $sampledir/reg_${ref}targets*.tsv $sampledir/reg_targets*.tsv $sampledir/reg_*_targets*.tsv] 0
 }
 
 proc targetfile_job {sampledir {dbdir {}}} {
@@ -27,33 +27,30 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	set dbdir [dbdir $dbdir]
 	set ref [dbdir_ref $dbdir]
 	set targetfile [targetfile $sampledir]
-	if {[file exists $targetfile]} {
+	if {[jobfileexists $targetfile]} {
+		if {[job_file_or_link_exists $targetfile]} {
+			set link [getlink $targetfile]
+			if {[file exists $link] && [gzext $link] ne [gzext $targetfile]} {
+				# correct if linking to uncompressed where actual regfile is compressed
+				file delete [gzfile $targetfile]
+				gzmklink $link $targetfile
+				return [gzfile $targetfile]
+			}
+		}
 		return $targetfile
-	}
-	if {$targetfile ne ""} {
-		set link [gzlink $targetfile]
-		if {[file exists $link]} {
-			# correct if linking to uncompressed where actual regfile is compressed
-			file delete $targetfile
-			gzmklink $link $targetfile
-			return [gzfile $targetfile]
-		}
-		if {[jobfileexists $targetfile]} {
-			return $targetfile
-		}
 	}
 	# get targetfile (if possible) based on info_capture.tsv file (old system)
 	set capturefile $sampledir/info_capture.txt
 	if {![file exists $capturefile]} {
-		set targetfile $sampledir/reg_${ref}_targets.tsv
 		if {[file tail [file dir $sampledir]] eq "samples"} {
-			set take2 [file dir [file dir $sampledir]]/reg_${ref}_targets.tsv
-			set capture [file dir [file dir $sampledir]]/info_capture.tsv
+			set take2 [gzfile [file dir [file dir $sampledir]]/reg_${ref}_targets.tsv]
+			set capturefile [gzfile [file dir [file dir $sampledir]]/info_capture.tsv]
 		} else {
-			set take2 [file dir $sampledir]/reg_${ref}_targets.tsv
-			set capture [file dir $sampledir]/info_capture.tsv
+			set take2 [gzfile [file dir $sampledir]/reg_${ref}_targets.tsv]
+			set capturefile [gzfile [file dir $sampledir]/info_capture.tsv]
 		}
 		if {[jobfileexists $take2]} {
+			set targetfile $sampledir/reg_${ref}_targets.tsv[gzext $take2]
 			set take2 [find_link $take2 1]
 			mklink_asjob $take2 $targetfile
 			return $targetfile
@@ -69,7 +66,7 @@ proc targetfile_job {sampledir {dbdir {}}} {
 			set oritargetfile [gzfile $dbdir/extra/reg_${ref}_exome_$capture.tsv]
 		}
 		if {[file exists $oritargetfile]} {
-			mklink $oritargetfile $targetfile[gzext $oritargetfile] 1
+			mklink_asjob $oritargetfile $targetfile[gzext $oritargetfile] 1
 			return $targetfile[gzext $oritargetfile]
 		}
 	}

@@ -253,12 +253,6 @@ proc getlink {file} {
 	file_absolute [file join [file dir $file] [file link $file]]
 }
 
-proc gzlink {file} {
-	if {[file exists $file]} {return $file}
-	if {[catch {glob $file}]} {return ""}
-	gzfile [getlink $file]
-}
-
 # set pattern (a|(bc|de))X(c|d)
 # set pattern adfg(ab)
 proc regexp2glob {pattern} {

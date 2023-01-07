@@ -13,8 +13,10 @@ proc sv_job {args} {
 	set regmincoverage 3
 	set opts {}
 	set preset {}
-	set cmdline [list cg sv $args]
+	set cmdline [clean_cmdline cg sv {*}$args]
 	set resultfile {}
+	set mem {}
+	set time {}
 	cg_options sv args {
 		-method {
 			set method $value
@@ -45,6 +47,12 @@ proc sv_job {args} {
 		}
 		default {
 			lappend opts $key $value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
@@ -87,7 +95,9 @@ proc sv_job {args} {
 	}
 	# run
 	if {$distrreg in {0 {}}} {
-		sv_${method}_job {*}$opts	-preset $preset {*}$cmdopts \
+		sv_${method}_job \
+			-mem $mem -time $time \
+			{*}$opts	-preset $preset {*}$cmdopts \
 			-split $split -threads $threads -cleanup $cleanup	\
 			-refseq $refseq $bamfile $resultfile
 	} else {
@@ -95,7 +105,8 @@ proc sv_job {args} {
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts	-preset $preset \
 			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
-		foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
+		# foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
+		foreach {resultfile resultsregfile resultvarallfile resultvcffile resultanalysisfile} $resultfiles break
 		set file [file tail $bamfile]
 		set root [file_rootname $resultfile]
 		# start
@@ -143,7 +154,9 @@ proc sv_job {args} {
 		if {$supportsregionfile} {
 			foreach region $regions regfile $regfiles {
 				set target $workdir/sv-$root-$region.tsv.zst
-				lappend todo [sv_${method}_job {*}$opts {*}$skips	\
+				lappend todo [sv_${method}_job \
+					-mem $mem -time $time \
+					{*}$opts {*}$skips	\
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
 					-regionfile $regfile \
@@ -155,7 +168,9 @@ proc sv_job {args} {
 			# run per region
 			foreach region $regions {
 				set target $workdir/sv-$root-$region.tsv.zst
-				lappend todo [sv_${method}_job {*}$opts {*}$skips \
+				lappend todo [sv_${method}_job \
+					-mem $mem -time $time \
+					{*}$opts {*}$skips \
 					-split $split -threads $threads -cleanup $cleanup \
 					-preset $preset \
 					-region $region \
@@ -167,12 +182,15 @@ proc sv_job {args} {
 		}
 		defcompressionlevel 9
 		# concatenate results
-		set pos 0
+		set pos -1
 		set cleanupfiles $regfiles
 		foreach resultfile $resultfiles {
+			incr pos
+			set tail [file tail $resultfile]
+			if {$tail eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
-			job sv_combineresults-[file tail $resultfile] {*}$skips -deps $list -rmtargets $list -targets {
+			job sv_combineresults-$tail {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list method regfile distrreg sample
@@ -214,7 +232,6 @@ proc sv_job {args} {
 				lappend cleanupfiles [gzroot $file].temp
 				lappend cleanupfiles [analysisinfo_file $file]
 			}
-			incr pos
 		}
 		if {[llength $regfiles]} {
 			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles

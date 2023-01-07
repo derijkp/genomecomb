@@ -3,6 +3,10 @@
 exec tclsh "$0" "$@"
 
 if {![info exists argv]} {set argv {}}
+
+set testsge 0
+set testslurm 0
+
 set pos [lsearch $argv -d]
 if {$pos != -1} {
 	set distribute [lindex $argv [incr pos]]
@@ -22,16 +26,23 @@ if {$pos != -1} {
 		set tests [subst {
 			"-d sge" {uplevel job_init -d sge {*}\$args}
 		}]
+	} elseif {$distribute eq "slurm"} {
+		puts "testing -d slurm only"
+		set testslurm 1
+		set tests [subst {
+			"-d slurm" {uplevel job_init -d slurm {*}\$args}
+		}]
 	} else {
 		error "unknown option -d $distribute"
 	}
 } else {
 	set tests {
-		"direct" {uplevel job_init -skipjoberrors 1 -d 0 {*}$args}
-		"-d 2" {uplevel job_init -d 2 {*}$args}
-		"-d 4" {uplevel job_init -d 4 {*}$args}
-		"-d 30" {uplevel job_init -d 30 {*}$args}
-		"-d sge" {uplevel job_init -d sge {*}$args}
+		"direct" {uplevel job_init -skipjoberrors 1 -d 0 $args}
+		"-d 2" {uplevel job_init -d 2 $args}
+		"-d 4" {uplevel job_init -d 4 $args}
+		"-d 30" {uplevel job_init -d 30 $args}
+		"-d sge" {uplevel job_init -d sge $args}
+		"-d slurm" {uplevel job_init -d slurm $args}
 	}
 }
 
@@ -41,48 +52,48 @@ set keepdir [pwd]
 # use these for trying out individual tests
 set testname "-d direct"
 proc test_job_init {args} {
-	uplevel job_init -skipjoberrors 1 -d 0 {*}$args
-	job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	uplevel job_init -skipjoberrors 1 -d 0 $args
+	uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 }
 proc gridwait {} {}
 
 if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
-		uplevel job_init -skipjoberrors 1 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_init -skipjoberrors 1 $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_direct
 	proc gridwait {} {}
 
 	set testname "-d 2"
 	proc test_job_init {args} {
-		uplevel job_init -d 2 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_init -d 2 $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
 
 	set testname "-d 4"
 	proc test_job_init {args} {
-		uplevel job_init -d 4 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_init -d 4 $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
 
 	set testname "-d 30"
 	proc test_job_init {args} {
-		uplevel job_init -d 30 {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_init -d 30 $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_distr
 	proc gridwait {} {}
 
 	set testname "-d sge"
 	proc test_job_init {args} {
-		uplevel job_init -d sge {*}$args
-		job_logfile_set $::testdir/tmp/log $::testdir/tmp
+		uplevel job_init -d sge $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_sge
 	proc gridwait {} {
@@ -91,6 +102,21 @@ if 0 {
 			puts -nonewline .
 			flush stdout
 			if {[exec qstat] eq ""} break
+		}
+	}
+
+	set testname "-d slurm"
+	proc test_job_init {args} {
+		uplevel job_init -d slurm $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	}
+	interp alias {} job_wait {} job_wait_slurm
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[llength [split [string trim [exec squeue]] \n]] == 1} break
 		}
 	}
 }
@@ -105,7 +131,8 @@ proc writetestfiles {args} {
 
 proc jobtest {args} {
 	set args [job_args $args]
-	foreach {srcdir destdir header ptargets} $args break
+	foreach {srcdir destdir header unknowntargets} $args break
+	if {$unknowntargets eq "nounknowntargets"} {set unknowntargets 0} else {set unknowntargets 1}
 	set srcdir [file_absolute $srcdir]
 	set destdir [file_absolute $destdir]
 	set job_logdir $destdir/log_jobs
@@ -146,16 +173,13 @@ proc jobtest {args} {
 		}
 		close $f
 	}
-	if {$ptargets eq "noptargets"} {
+	if {!$unknowntargets} {
 		set targets {$destdir/sumpattern.log $destdir/sumpattern-test1.txt $destdir/sumpattern-test2.txt $destdir/sumpattern-test3.txt}
-		set ptargets {}
 	} else {
 		set targets {$destdir/sumpattern.log}
-		set ptargets {$destdir/sumpattern-*.txt}
 	}
 	job sumpattern -deps {$srcdir/cgdat*.tsv} \
 	-targets $targets \
-	-ptargets $ptargets \
 	-vars destdir -code {
 		# var target contains target
 		# var target1 contains first braced part of target (= destdir)
@@ -184,7 +208,11 @@ proc jobtest {args} {
 		close $f
 		file_write $destdir/sumpattern.log [join $targets \n]
 	}
-	foreach file [jobglob $destdir/sumpattern-*.txt] {
+	if {$unknowntargets} {
+		job_runall
+	}
+	set files [jobglob $destdir/sumpattern-*.txt]
+	foreach file $files {
 		regexp {sumpattern-(.*).txt$} [file tail $file] temp base
 		set target $destdir/sumpattern2-$base.txt
 		job sumpattern2-$base -cores 2 -skip {
@@ -352,6 +380,24 @@ if {$testname eq "-d sge"} {
 			if {[exec qstat] eq ""} break
 		}
 	}
+} elseif {$testname eq "-d slurm"} {
+	if {![get testslurm 0]} {
+		puts "skipping slurm tests because testslurm is not set (default), set testslurm 1 or give testslurm as a parameter to all.tcl to run"
+		continue
+	}
+	if {[catch {exec squeue}]} {
+		puts "Cannot test slurm option (missing squeue; slurm not installed?)"
+		continue
+	}
+	interp alias {} job_wait {} job_wait_slurm
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[llength [split [string trim [exec squeue]] \n]] == 1} break
+		}
+	}
 } elseif {[regexp -- {-d [0-9]} $testname]} {
 	interp alias {} job_wait {} job_wait_distr
 } else {
@@ -359,7 +405,9 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {args} "$initcode\njob_logfile_set \$::testdir/tmp/log \$::testdir/tmp"
+# putsvars testname initcode
+
+proc test_job_init {args} "$initcode\nuplevel job_logfile_set \$::testdir/tmp/log \$::testdir/tmp"
 
 test job "basic chain $testname" {
 	cd $::testdir
@@ -693,12 +741,37 @@ test job "basic jobtest $testname" {
 2
 } {Intentional job error}}
 
+test job "basic jobtest nounknowntargets $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 1
+	jobtest ../data test testh nounknowntargets
+	job_wait
+	gridwait
+	set result [list \
+		[bsort [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
+	]
+	cd $::testdir
+	set result
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt.log {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+} {Intentional job error}}
+
 test job "basic status $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
-	jobtest ../data test testh noptargets
+	jobtest ../data test testh nounknowntargets
 	job_wait
 	gridwait
 	set result [list \
@@ -713,7 +786,7 @@ test job "basic status $testname" {
 	# status
 	cd $::testdir/tmp
 	job_init -d status
-	jobtest ../data test testh noptargets
+	jobtest ../data test testh nounknowntargets
 	job_wait
 	glob jobdeps.dot jobdeps.ps
 } {jobdeps.dot jobdeps.ps}
@@ -1610,6 +1683,35 @@ test sge_safename {shorten prefix} {
 	set prefix jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_xxxx_v4.0.11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560
 	sge_safename $name $prefix
 } {jvar_longshot_map-sminimap2-xxxxx_xxxxx_xx_xxxx_..11__f1071ce_xxxxxx_hg38s.bam.2020-07-25_04-44_560#test}
+
+if {[get testslurm 0]} {
+
+test job "slurm general mem and time setting $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -dmem 2G -dtime {* 2:00:00 job2 4:00:00}
+	logverbose 2
+	file_write test1.txt test1\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [bsort [glob *]] [file_read test3.txt]]
+	cd $::testdir
+	set result
+} {{log.*.finished test1.txt test2.txt test3.txt} {test1
+test2
+test3
+}} match
+
+}
 
 set ::env(PATH) $keeppath
 

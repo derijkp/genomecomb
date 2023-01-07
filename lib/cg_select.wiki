@@ -28,7 +28,7 @@ All non-sample related fields (those without a -) will be included. The sample n
 ; -ssamples samples: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
 ; -s sortfields: sort on given fields using [[natural_sort|natural sort]], so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 If a sort field is prepended with an -, the sort will be reversed for that field.
-If **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
+If **sortfields** is "-", the default sort fields will be used (based on following fields, if present: chromosome,begin,end,type,alt,strand,exonStarts,exonEnds,cdsStart,cdsEnd).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
 ; -sr sortfields: sort on given fields in reverse order
 ; -si sampleinfofile: a file in which extra information about the samples can be found (see further).

@@ -21,6 +21,7 @@ proc sreg_freebayes_job {job varallfile resultfile {skips {}}} {
 
 proc var_freebayes_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg var_freebayes {*}$args]
 	set pre ""
 	set opts {}
 	set split 0
@@ -33,6 +34,8 @@ proc var_freebayes_job {args} {
 	set resultfiles 0
 	set skips {}
 	set resultfile {}
+	set mem 5G
+	set time 3:00:00
 	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
@@ -65,6 +68,12 @@ proc var_freebayes_job {args} {
 		-datatype {
 			# not actually used
 		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
@@ -94,7 +103,7 @@ proc var_freebayes_job {args} {
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
 	set varallfile $destdir/${pre}varall-$root.tsv.zst
 	set regclusterfile $destdir/reg_cluster-$root.tsv
-	set resultlist [list $varfile $sregfile $varallfile $regclusterfile]
+	set resultlist [list $varfile $sregfile $varallfile {} $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -105,15 +114,6 @@ proc var_freebayes_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_freebayes]
-	foreach option {
-		split deps bed pre regionfile regmincoverage
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_freebayes_$resulttail $destdir $cmdline \
 		{*}[versions bwa samtools freebayes picard java gnusort8 zst os]
 	# start
@@ -123,7 +123,7 @@ proc var_freebayes_job {args} {
 	set target ${pre}varall-$root.vcf
 	set cache [file dir $target]/cache_varall_freebayes_[file tail $refseq].temp
 	job_cleanup_add $cache
-	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
+	job ${pre}varall-$root {*}$skips -mem $mem -time $time -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {
 		$varallfile
