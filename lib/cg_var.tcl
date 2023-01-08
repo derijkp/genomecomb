@@ -266,9 +266,6 @@ proc var_job {args} {
 			}
 			lappend cleanupfiles {*}$list
 		}
-		foreach bam $bams {
-			bam_index_job $bam
-		}
 		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
 		return $resultfiles
 	}
