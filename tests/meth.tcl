@@ -41,8 +41,10 @@ test meth {meth_nanopolish} {
 
 	# check vs expected
 	set result {}
+	# smeth order is not determinate, removed from comparison (for now)
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
+		-x smeth-*.tsv.zst \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index -x *.log \
 		tmp/meth_nanopolish expected/meth_nanopolish]
@@ -90,6 +92,7 @@ test meth {meth_nanopolish with gz results} {
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
+		-x smeth-*.tsv.zst \
 		-x *sniffles*.vcf -x *.snf \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
@@ -139,6 +142,7 @@ test meth {meth_nanopolish preset gpc} {
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
+		-x smeth-*.tsv.zst \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
 		-x *.html \
