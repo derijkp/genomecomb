@@ -1,0 +1,26 @@
+#filetype	tsv/genecountsfile
+#fileversion	0.99
+#fields	table
+#fields	field	number	type	description
+#fields	gene	1	String	gene id (usually gene_id from GTF)
+#fields	genetype	1	String	type of gene
+#fields	chromosome	1	String	Chromosome name
+#fields	strand	1	String	+ or - for strand
+#fields	begin	1	Integer	Transcription start position
+#fields	end	1	Integer	Transcription end position
+#fields	nrtranscripts	1	Integer	number of transcripts found
+#fields	counts	1	Integer	Number of reads mapping to gene
+#fields	tpm	1	Float	Number of gene transcripts per million total transcripts
+gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-sirv	tpm-flair-sirv
+novelGene_1	novel_intergenic	SIRV6	1889	2120	+	0	79.0	30751.265083690152
+novelGene_2	novel_intergenic	SIRV3	1533	1744	-	0	36.0	14013.234721681589
+novelGene_3	novel_intergenic	SIRV3	9651	9899	-	0	17.0	6617.360840794084
+novelGene_4	novel_intergenic	SIRV5	11568	11849	+	0	43.0	16738.030362008565
+novelGene_5	novel_intergenic	SIRV5	13284	13606	+	0	5.0	1946.282600233554
+novelGene_6	novel_intergenic	SIRV4	2502	3403	+	0	123.0	47878.55196574543
+novelGene_7	novel_intergenic	SIRV4	3639	4104	-	0	161.0	62670.29972752043
+SIRV2	known	SIRV2	994	5884	-	0	230.0	89528.99961074349
+SIRV3	known	SIRV3	1960	8940	+	0	279.0	108602.5690930323
+SIRV4	known	SIRV4	8322	15107	-	0	125.0	48657.06500583885
+SIRV5	known	SIRV5	1022	10981	+	0	233.0	90696.76917088362
+SIRV6	known	SIRV6	1014	11810	+	0	756.0	294277.9291553134

@@ -62,11 +62,48 @@ proc refdir {{refseq {}} {dbdir {}}} {
 
 proc ref_gtftranscripts refseq {
 	set refdir [refdir $refseq]
-	set reftranscripts [lindex [bsort [glob -nocomplain [file dir $refseq]/extra/*gencode*.gtf]] end]
-	if {$reftranscripts eq ""} {
-		set reftranscripts [lindex [bsort [glob -nocomplain [file dir $refseq]/*.gtf]] end]
+	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*gencode*.gtf]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
 	}
-	return $reftranscripts
+	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*.gtf]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
+	}
+	set reftranscripts [lindex [bsort [gzfiles $refdir/*.gtf]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
+	}
+	error "no gtf reference transcripts found in $refdir"
+}
+
+proc ref_tsvtranscripts refseq {
+	set refdir [refdir $refseq]
+	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*gencode*.tsv]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
+	}
+	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*gencode*.gtf]] end]
+	if {[file exists $reftranscripts]} {
+		set reftranscriptstsv [tempfile].tsv
+		cg_gtf2tsv $genedb $reftranscriptstsv
+		return $reftranscriptstsv
+	}
+	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*.tsv]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
+	}
+	set reftranscripts [lindex [bsort [gzfiles $refdir/*.tsv]] end]
+	if {[file exists $reftranscripts]} {
+		return $reftranscripts
+	}
+	set reftranscripts [lindex [bsort [gzfiles $refdir/*.gtf]] end]
+	if {[file exists $reftranscripts]} {
+		set reftranscriptstsv [tempfile].tsv
+		cg_gtf2tsv $genedb $reftranscriptstsv
+		return $reftranscriptstsv
+	}
+	error "no tsv (or gtf) reference transcripts found in $refdir"
 }
 
 proc ref_chrsize {refseq chr} {

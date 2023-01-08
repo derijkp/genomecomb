@@ -36,17 +36,32 @@ proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} 
 	set tempfile [tempfile]
 	cg select -overwrite 1 \
 		-g $genefield \
-		-gc {distinct(structural_category),distinct(subcategory),sum(counts-*),sum(tpm-*)} \
+		-gc {distinct(structural_category),distinct(subcategory),distinct(chromosome),min(begin),max(end),distinct(strand),ucount(transcript),sum(counts-*),sum(tpm-*)} \
 		$isoformcounts $tempfile
 	catch {close $f} ; catch {close $o}
 	set f [open $tempfile]
 	set header [tsv_open $f]
-	set oheader {gene gene_type}
-	foreach field [lrange $header 3 end] {
+	set oheader {gene gene_type chromosome begin end strand nrtranscripts}
+	foreach field [lrange $header 8 end] {
 		regsub sum_ $field {} field
 		lappend oheader $field
 	}
 	set o [open $genecounts w]
+	puts $o [deindent {
+		#filetype	tsv/genecountsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	gene	1	String	gene id (usually gene_id from GTF)
+		#fields	genetype	1	String	type of gene
+		#fields	chromosome	1	String	Chromosome name
+		#fields	strand	1	String	+ or - for strand
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	nrtranscripts	1	Integer	number of transcripts found
+		#fields	counts	1	Integer	Number of reads mapping to gene
+		#fields	tpm	1	Float	Number of gene transcripts per million total transcripts
+	}]
 	puts $o [join $oheader \t]
 	while {[gets $f line] != -1} {
 		set line [split $line \t]
@@ -82,27 +97,23 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	set tempgenepred [tempfile].genepred
 	set tempcount [tempfile].count
 	# class
-	set tempfile [tempfile]
-	cg select -overwrite 1 -f {id="a$isoform" *} $transcript_classification_file $tempfile
-	cg select -s id $tempfile $tempclassification
+	cg select -f {id="$isoform" *} $transcript_classification_file | cg select -s id > $tempclassification
 	# genepred
-	cg select -overwrite 1 -f {id="a$name" *} $transcripts_genepred_file $tempfile
-	cg select -s id $tempfile $tempgenepred
+	cg select -f {id="$name" *} $transcripts_genepred_file | cg select -s id > $tempgenepred
 	# remake ids in countfile
 	set tempfile [tempfile]
-	catch {close $f} ; catch {close $o}
+	catch {close $f}
 	set f [gzopen $counts_matrix_file]
-	set o [open $tempfile w]
+	unset -nocomplain counta
 	set cntheader [tsv_open $f]
 	set cntheader [list_regsub {_conditionA_batch1$} $cntheader {}]
-	puts $o id\t[join $cntheader \t]
 	set numsamples [expr {[llength $cntheader] -1}]
 	set totalcounts [list_fill $numsamples 0]
 	while {[gets $f line] != -1} {
 		set line [split $line \t]
 		set cntid [lindex $line 0]
 		set cntid [lindex [split $cntid _] 0]
-		puts $o a$cntid\t[join $line \t]
+		set counta($cntid) [lrange $line 1 end]
 		set temp {}
 		foreach tcnt $totalcounts cnt [lrange $line 1 end] {
 			set tcnt [expr {$tcnt + $cnt}]
@@ -110,9 +121,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		}
 		set totalcounts $temp
 	}
-	close $o
 	close $f
-	cg select -s id $tempfile $tempcount
 	set exproot [file_rootname $target]
 	regsub \\.genepred $exproot {} exproot
 	if {$totalcountsfile eq ""} {
@@ -121,13 +130,11 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	file_write $totalcountsfile [join [lrange $cntheader 1 end] \t]\n[join $totalcounts \t]\n
 	#
 	# write combi file
- 	catch {close $fg} ; catch {close $fclass} ; catch {close $fcnt} ; catch {close $o} ; 
+	catch {close $fg} ; catch {close $fclass} ; catch {close $o} ; 
 	set fg [gzopen $tempgenepred]
 	set gheader [lrange [tsv_open $fg] 1 end]
  	set fclass [gzopen $tempclassification]
 	set classheader [lrange [tsv_open $fclass] 1 end]
- 	set fcnt [gzopen $tempcount]
-	set cntheader [lrange [tsv_open $fcnt] 1 end]
 	set o [open $target.temp w]
 	set newheader $gheader
 	set newheader [list_replace $newheader {chrom chromosome txStart begin txEnd end}]
@@ -135,17 +142,14 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	set poss [list_cor $classheader $pclassheader]
 	lappend newheader {*}$pclassheader
 	foreach sample [lrange $cntheader 1 end] {
-		lappend newheader counts-$sample
+		lappend newheader counts-flair-$sample
 	}
 	foreach sample [lrange $cntheader 1 end] {
-		lappend newheader tpm-$sample
+		lappend newheader tpm-flair-$sample
 	}
 	puts $o [join $newheader \t]
 	set emptycntresult [list_fill [expr {2*[llength $totalcounts]}] 0]
 	set nr 1
-	if {[gets $fcnt cntline] == -1} break
-	set cntline [split $cntline \t]
-	set cntid [list_shift cntline]
 	set gr 0
 	while 1 {
 		if {[gets $fg gline] == -1} break
@@ -164,24 +168,21 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		}
 		set result [join $gline \t]
 		append result \t[join [list_sub $classline $poss] \t]
-		if {$cntid eq $gid} {
-			append result \t[join [lrange $cntline 1 end] \t]
-			foreach cnt [lrange $cntline 1 end] tcnt $totalcounts {
+		if {[info exists counta($gid)]} {
+			append result \t[join $counta($gid) \t]
+			foreach cnt $counta($gid) tcnt $totalcounts {
 				append result \t[expr {1000000.0*$cnt/$tcnt}]
 			}
 			puts $o $result
-			set gr [gets $fcnt cntline]
-			set cntline [split $cntline \t]
-			set cntid [list_shift cntline]
 		} else {
-			puts stderr "count not found for $gid at line $nr ($transcripts_genepred_file and $counts_matrix_file)"
+			puts stderr "count not find count for $gid at line $nr ($transcripts_genepred_file and $counts_matrix_file)"
 			append result \t[join $emptycntresult \t]
 			puts $o $result
 		}
 		incr nr
 	}
 	close $o
-	close $fg ; close $fclass ; close $fcnt
+	close $fg ; close $fclass
 	# write final target
 	file_write $target.temp2 [deindent {
 		#filetype	tsv/transcriptsfile
@@ -261,22 +262,26 @@ proc iso_flair_job {args} {
 }
 
 proc flair_job {args} {
+	upvar job_logdir job_logdir
+	global appdir
 	# putslog [list flair_job {*}$args]
 	set cmdline [clean_cmdline cg flair {*}$args]
-	global appdir
 	set refseq {}
 	set skips {}
-	set genes {}
+	set plotgenes {}
 	set sqanti 1
 	set compar multitranscript
+	set reftranscripts {}
 	set threads 8
-	upvar job_logdir job_logdir
 	cg_options flair args {
 		-refseq {
 			set refseq $value
 		}
-		-genes {
-			set genes $value
+		-plotgenes {
+			set plotgenes $value
+		}
+		-reftranscripts {
+			set reftranscripts $value
 		}
 		-compar {
 			if {$value ni "joint multitranscript"} {
@@ -296,18 +301,29 @@ proc flair_job {args} {
 		}
 	} {projectdir}
 	set projectdir [file_absolute $projectdir]
-	set refseq [refseq $refseq]
-	set gtfannotation [lindex [bsort [glob [file dir $refseq]/extra/*gencode*.gtf]] end]
-	if {$gtfannotation eq ""} {
-		set gtfannotation [lindex [bsort [glob [file dir $refseq]/*.gtf]] end]
-	}
-	set flairdir [findflair]
-	cd $projectdir
-	set sampledirs [glob $projectdir/samples/*]
-	if {[llength $sampledirs] == 0} {
-		set sampledirs [list $projectdir]
+	if {[file isdir $projectdir]} {
+		set sampledirs [glob -nocomplain $projectdir/samples/*]
+		if {[llength $sampledirs] == 0} {
+			set sampledirs [list $projectdir]
+			set compar 0
+		}
+		# select bam later
+		set bam {}
+	} else {
+		# not a dir, so should be a bamfile
+		set bam $projectdir
+		set sampledirs [list [file dir $bam]]
+		set projectdir [file dir $bam]
 		set compar 0
 	}
+	# cd $projectdir
+	set refseq [refseq $refseq]
+	if {$reftranscripts eq ""} {
+		set reftranscripts [ref_gtftranscripts $refseq]
+	} else {
+		set reftranscripts [file_absolute $reftranscripts]
+	}
+	set flairdir [findflair]
 	job_logfile $projectdir/flair_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions flair dbdir zstd os]
 	# analysis per sample
@@ -316,18 +332,20 @@ proc flair_job {args} {
 		putsvars sampledir
 		cd $sampledir
 		set sample [file tail $sampledir]
-		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
+		if {$bam eq ""} {
+			set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
+		}
 		if {$bam eq ""} continue
 		set rootname [file_rootname $bam]
 		mkdir flair-$rootname
 		job flair_correct-$sample {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 		-cores $threads \
 		-deps {
-			$bam $refseq $gtfannotation
+			$bam $refseq $reftranscripts
 		} -targets {
 			flair-$rootname/all_corrected-flair-$rootname.bed
 		} -vars {
-			bam rootname flairdir refseq gtfannotation threads
+			bam rootname flairdir refseq reftranscripts threads
 		} -code {
 			analysisinfo_write $bam $target flair [version flair]
 			set bed12 [file root $bam].bed12
@@ -335,7 +353,7 @@ proc flair_job {args} {
 			file rename -force $bed12.temp $bed12
 			catch_exec flair.py correct -t $threads \
 				-g $refseq \
-				--gtf $gtfannotation \
+				--gtf $reftranscripts \
 				-q $bed12 \
 				-o flair-$rootname/transcripts-flair-$rootname.temp >@ stdout 2>@ stderr
 			file rename flair-$rootname/transcripts-flair-$rootname.temp_all_corrected.bed flair-$rootname/all_corrected-flair-$rootname.bed
@@ -364,13 +382,13 @@ proc flair_job {args} {
 		-deps {
 			flair-$rootname/allseq-$rootname.fastq.gz
 			flair-$rootname/all_corrected-flair-$rootname.bed
-			$refseq $gtfannotation
+			$refseq $reftranscripts
 		} -targets {
 			flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
 			flair-$rootname/transcripts-flair-$rootname.isoforms.bed
 			flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 		} -vars {
-			rootname refseq gtfannotation threads
+			rootname refseq reftranscripts threads
 		} -code {
 			analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed $target flair [version flair]
 			analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed flair-$rootname/transcripts-flair-$rootname.isoforms.fa flair [version flair]
@@ -378,7 +396,7 @@ proc flair_job {args} {
 			catch_exec flair.py collapse \
 				-t $threads \
 				-g $refseq \
-				--gtf $gtfannotation \
+				--gtf $reftranscripts \
 				-r flair-$rootname/allseq-$rootname.fastq.gz \
 				-q flair-$rootname/all_corrected-flair-$rootname.bed \
 				-o flair-$rootname/temptranscripts-flair-$rootname >@ stdout 2>@ stderr
@@ -409,10 +427,11 @@ proc flair_job {args} {
 		job flair_sqanti-$rootname {*}$skips -deps {
 			flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
 			flair-$rootname/counts_matrix-flair-$rootname.tsv
-			$gtfannotation
+			$reftranscripts
 			$refseq
 		} -targets {
 			isoform_counts-sqanti3-flair-$rootname.genepred.tsv
+			gene_counts-sqanti3-flair-$rootname.tsv
 			totalcounts-sqanti3-flair-$rootname.tsv
 			sqanti3-flair-$rootname/sqanti3-flair-${rootname}_classification.txt
 			sqanti3-flair-$rootname/sqanti3-flair-${rootname}_junctions.txt
@@ -421,14 +440,14 @@ proc flair_job {args} {
 			sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv
 			sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.fasta
 		} -vars {
-			rootname sample refseq gtfannotation gtfannotation
+			rootname sample refseq reftranscripts
 		} -code {
 			mkdir sqanti3-flair-$rootname
 			analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf isoform_counts-sqanti3-flair-$rootname.genepred.tsv sqanti3 [version sqanti3_qc.py]
 			analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf sqanti3-flair-$rootname/sqanti3-${rootname}_classification.txt sqanti3 [version sqanti3_qc.py]
 			catch_exec sqanti3_qc.py \
 				flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
-				$gtfannotation \
+				$reftranscripts \
 				$refseq \
 				-d sqanti3-flair-$rootname \
 				-o sqanti3-flair-$rootname \
@@ -443,8 +462,9 @@ proc flair_job {args} {
 				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv \
 				flair-$rootname/counts_matrix-flair-$rootname.tsv \
 				totalcounts-sqanti3-flair-$rootname.tsv
+			cg_flair_genecounts isoform_counts-sqanti3-flair-$rootname.genepred.tsv gene_counts-sqanti3-flair-$rootname.tsv
 		}
-		foreach genename $genes {
+		foreach genename $plotgenes {
 			job flair_plotisoforms-$sample-$genename {*}$skips -deps {
 				flair-$rootname/transcripts-flair-$rootname.isoforms.bed 
 				flair-$rootname/counts_matrix-flair-$rootname.tsv
@@ -462,7 +482,6 @@ proc flair_job {args} {
 			}
 		}
 	}
-putsvars compar
 	if {$compar eq "0"} return
 	# combined analysis
 	if {$compar eq "joint"} {
@@ -479,7 +498,7 @@ putsvars compar
 			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
 			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.bed
 		} -vars {
-			bedfiles allseq_fasqfiles exproot sample refseq gtfannotation threads
+			bedfiles allseq_fasqfiles exproot sample refseq reftranscripts threads
 		} -code {
 			analysisinfo_write [lindex $bedfiles 0] $target flair [version flair]
 			analysisinfo_write [lindex $bedfiles 0] compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf flair [version flair]
@@ -491,7 +510,7 @@ putsvars compar
 			catch_exec flair.py collapse \
 				-t $threads \
 				-g $refseq \
-				--gtf $gtfannotation \
+				--gtf $reftranscripts \
 				-r [join $allseq_fasqfiles ,] \
 				-q compar/flair-$exproot/all_corrected-flair-$exproot.bed \
 				-o compar/flair-$exproot/transcripts-flair-$exproot >@ stdout 2>@ stderr
@@ -552,7 +571,7 @@ putsvars compar
 			set counts_matrix_file compar/flair-$exproot/counts_matrix-flair-$exproot.tsv
 			job flair_sqanti_compar-$exproot {*}$skips -deps {
 				compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
-				$gtfannotation
+				$reftranscripts
 				$refseq
 				$counts_matrix_file
 			} -targets {
@@ -570,7 +589,7 @@ putsvars compar
 				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.fasta
 			} -vars {
 				transcript_classification_file transcripts_genepred_file counts_matrix_file
-				exproot sample refseq gtfannotation gtfannotation
+				exproot sample refseq reftranscripts
 			} -code {
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/isoform_counts-sqanti3-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/gene_counts-sqanti3-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
@@ -579,7 +598,7 @@ putsvars compar
 				if {[catch {
 					catch_exec sqanti3_qc.py \
 						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$gtfannotation \
+						$reftranscripts \
 						$refseq \
 						-d compar/sqanti3-flair-$exproot \
 						-o sqanti3-flair-$exproot \
@@ -588,7 +607,7 @@ putsvars compar
 				}]} {
 					catch_exec sqanti3_qc.py \
 						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$gtfannotation \
+						$reftranscripts \
 						$refseq \
 						-d compar/sqanti3-flair-$exproot \
 						-o sqanti3-flair-$exproot \

@@ -179,19 +179,19 @@ proc convert_isoquant_add_ambig {varVar ambig} {
 	}
 }
 
-proc convert_isoquant_reggenedb {genedbtsv samregions refseq reggenedbtsv reggenedb} {
+proc convert_isoquant_reggenedb {reftranscripts samregions refseq regreftranscripts reggenedb} {
 	set regfile [tempfile].tsv
 	distrreg_reg2tsv $regfile $samregions $refseq
-	cg regselect $genedbtsv $regfile > $reggenedbtsv
+	cg regselect $reftranscripts $regfile > $regreftranscripts
 	# if empty
-	set f [open $reggenedbtsv]
+	set f [open $regreftranscripts]
 	tsv_open $f
 	set read [gets $f line]
 	close $f
 	if {$read == -1} {
-		set header [cg select -h $genedbtsv]
+		set header [cg select -h $reftranscripts]
 		catch {close $o}
-		set o [open $reggenedbtsv w]
+		set o [open $regreftranscripts w]
 		puts $o [join $header \t]
 		set line [list_fill [llength $header] {}]
 		set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
@@ -211,8 +211,8 @@ proc convert_isoquant_reggenedb {genedbtsv samregions refseq reggenedbtsv reggen
 		puts $o [join $line \t]
 		close $o
 	}
-	set genecol [lindex [list_common {gene_id geneid gene} [cg select -h $reggenedbtsv]] 0]
-	cg_tsv2gtf -genecol $genecol -addgene 1 $reggenedbtsv $reggenedb
+	set genecol [lindex [list_common {gene_id geneid gene} [cg select -h $regreftranscripts]] 0]
+	cg_tsv2gtf -genecol $genecol -addgene 1 $regreftranscripts $reggenedb
 	set tempgenedb [tempfile].db
 }
 
@@ -238,7 +238,7 @@ proc exons_startsends2list {starts ends {sizeVar {}}} {
 }
 
 
-proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {analysisname isoquant}} {
+proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts {analysisname isoquant}} {
 
 	set strictpct 90
 	set read_assignmentsfile [gzfile $isodir/*.read_assignments.tsv]
@@ -263,7 +263,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	unset -nocomplain geneconva
 	array set transcriptidsa [split [cg select -hc 1 -g isoform_id $read_assignmentsfile] \n\t]
 	catch {close $f}
-	set f [gzopen $reggenedbtsv]
+	set f [gzopen $regreftranscripts]
 	set header [tsv_open $f]
 	set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
 	foreach {isopos genepos geneidpos} [lrange $poss end-2 end] break
@@ -663,7 +663,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb reggenedbtsv {anal
 	}
 
 	catch {close $f} ; catch {close $o}
-	set f [gzopen $reggenedbtsv]
+	set f [gzopen $regreftranscripts]
 	set header [tsv_open $f comments]
 	set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
 	set remove [list_sub $header $poss]
@@ -1135,7 +1135,7 @@ proc iso_isoquant_job {args} {
 	set distrreg chr
 	set refseq {}
 	set skips {}
-	set genedbtsv {}
+	set reftranscripts {}
 	set sqanti 1
 	set compar joint
 	set threads 8
@@ -1151,8 +1151,8 @@ proc iso_isoquant_job {args} {
 		-refseq {
 			set refseq $value
 		}
-		-genedb {
-			set genedbtsv $value
+		-reftranscripts {
+			set reftranscripts $value
 		}
 		-distrreg {
 			if {$value eq "regionfile"} {
@@ -1180,6 +1180,33 @@ proc iso_isoquant_job {args} {
 			lappend skips -skip $value
 		}
 	} {projectdir}
+	set projectdir [file_absolute $projectdir]
+	if {[file isdir $projectdir]} {
+		set sampledirs [glob -nocomplain $projectdir/samples/*]
+		if {[llength $sampledirs] == 0} {
+			set sampledirs [list $projectdir]
+			set compar 0
+		}
+		# select bam later
+		set bam {}
+	} else {
+		# not a dir, so should be a bamfile
+		set bam $projectdir
+		set sampledirs [list [file dir $bam]]
+		set projectdir [file dir $bam]
+		set compar 0
+	}
+	# cd $projectdir
+	set refseq [refseq $refseq]
+	if {$reftranscripts eq ""} {
+		set reftranscripts [ref_tsvtranscripts $refseq]
+	} elseif {[file extension $reftranscripts] eq ".gtf"} {
+		cg_gtf2tsv $reftranscripts $reftranscripts.tsv.temp
+		cg select -overwrite 1 -s - $reftranscripts.tsv.temp $reftranscripts.tsv
+		set reftranscripts [file_absolute $reftranscripts.tsv]
+	} else {
+		set reftranscripts [file_absolute $reftranscripts]
+	}
 	if {$preset eq "nanopore"} {
 		set analysisname isoquant
 	} else {
@@ -1188,25 +1215,7 @@ proc iso_isoquant_job {args} {
 	# hanging problems with threads, run single
 	set threads 1
 	set projectdir [file_absolute $projectdir]
-	set refseq [refseq $refseq]
-	if {$genedbtsv eq ""} {
-		set genedbtsv [lindex [bsort [gzfiles [file dir $refseq]/extra/*gencode*.tsv]] end]
-		if {![file exists $genedbtsv]} {
-			set genedb [lindex [bsort [glob [file dir $refseq]/extra/*gencode*.gtf]] end]
-			if {$genedb eq ""} {
-				set genedb [lindex [bsort [glob [file dir $refseq]/*.gtf]] end]
-			}
-			set genedbtsv [tempfile].tsv
-			cg_gtf2tsv $genedb $genedbtsv
-		}
-	}
 	# set iso_isoquantdir [findiso_isoquant]
-	cd $projectdir
-	set sampledirs [glob -nocomplain $projectdir/samples/*]
-	if {[llength $sampledirs] == 0} {
-		set sampledirs [list $projectdir]
-		set compar 0
-	}
 	job_logfile $projectdir/iso_${analysisname}_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions iso_isoquant dbdir zstd os]
 
@@ -1224,11 +1233,11 @@ proc iso_isoquant_job {args} {
 		foreach region $regions {
 			set regdir ${analysisname}-$rootname/${analysisname}-$rootname-$region
 			job ${analysisname}-$sample-$region -mem 15G -cores $threads -deps {
-				$bam $refseq $genedbtsv
+				$bam $refseq $reftranscripts
 			} -targets {
 				$regdir/00_regali
 			} -vars {
-				sampledir sample bam refseq regdir region genedbtsv threads
+				sampledir sample bam refseq regdir region reftranscripts threads
 				options data_type quantification analysisname
 			} -code {
 				mkdir $regdir.temp
@@ -1245,9 +1254,9 @@ proc iso_isoquant_job {args} {
 				} else {
 					exec samtools index $tempbam
 					# region gene file
-					set reggenedbtsv [tempfile].tsv
+					set regreftranscripts [tempfile].tsv
 					set reggenedb [tempfile].gtf
-					convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
+					convert_isoquant_reggenedb $reftranscripts $samregions $refseq $regreftranscripts $reggenedb
 					set tempgenedb [tempfile].db
 					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 					exec isoquant3 \
@@ -1262,19 +1271,20 @@ proc iso_isoquant_job {args} {
 						--keep_tmp \
 						-o $regdir.temp 2>@ stderr >@ stdout
 				}
+				file delete -force $regdir
 				file rename $regdir.temp $regdir
 			}
 			lappend isofiles $regdir/isoform_counts-${analysisname}-$sample.tsv
 			lappend genefiles $regdir/gene_counts-${analysisname}-$sample.tsv
 			lappend readfiles $regdir/read_assignments-${analysisname}-$sample.tsv
 			job ${analysisname}-convert-$sample-$region -cores 1 -mem 10g -deps {
-				$regdir/00_regali $refseq $genedbtsv
+				$regdir/00_regali $refseq $reftranscripts
 			} -targets {
 				$regdir/isoform_counts-${analysisname}-$sample.tsv
 				$regdir/gene_counts-${analysisname}-$sample.tsv
 				$regdir/read_assignments-${analysisname}-$sample.tsv
 			} -vars {
-				sampledir sample refseq regdir region genedbtsv analysisname
+				sampledir sample refseq regdir region reftranscripts analysisname
 			} -code {
 				set isodir $regdir/00_regali
 				set destdir $regdir
@@ -1291,11 +1301,11 @@ proc iso_isoquant_job {args} {
 						ambiguity inconsistency covered_pct polya classification closest_known
 					} \t]\n
 				} else {
-					set reggenedbtsv [tempfile].tsv
+					set regreftranscripts [tempfile].tsv
 					set reggenedb [tempfile].gtf
 					set samregions [samregions $region $refseq]
-					convert_isoquant_reggenedb $genedbtsv $samregions $refseq $reggenedbtsv $reggenedb
-					convert_isoquant $isodir $destdir $sample $refseq $reggenedb $reggenedbtsv $analysisname
+					convert_isoquant_reggenedb $reftranscripts $samregions $refseq $regreftranscripts $reggenedb
+					convert_isoquant $isodir $destdir $sample $refseq $reggenedb $regreftranscripts $analysisname
 				}
 			}
 		}
@@ -1332,7 +1342,7 @@ proc iso_isoquant_job {args} {
 			read_assignments-${analysisname}-$sample.tsv
 			totalcounts-${analysisname}-$sample.tsv
 		} -vars {
-			isofiles genefiles readfiles sampledir sample refseq regdir region genedbtsv genedb rootname analysisname
+			isofiles genefiles readfiles sampledir sample refseq regdir region reftranscripts genedb rootname analysisname
 			strictpct
 		} -code {
 			iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $rootname $analysisname

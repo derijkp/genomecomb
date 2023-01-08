@@ -73,10 +73,13 @@ proc iso_flames_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-	} {fastqdir resultfile} 1 2
-	set fastqdir [file_absolute $fastqdir]
-	if {![file isdir $fastqdir]} {
-		set bam $fastqdir
+	} {bam resultfile} 1 2
+	set bam [file_absolute $bam]
+	if {[file isdir $bam]} {
+		# parameter given is a dir, suppose it is the fastqdir directly
+		set fastqdir $bam
+	} else {
+		# flames needs the fastqs, find them for the given bam file
 		set fastqdir [file dir $bam]/fastq
 		if {![file exists $fastqdir]} {
 			error "could not find fastq dir for $bam ($fastqdir)"
@@ -97,6 +100,8 @@ proc iso_flames_job {args} {
 	set refseq [refseq $refseq]
 	if {$reftranscripts eq ""} {
 		set reftranscripts [ref_gtftranscripts $refseq]
+	} else {
+		set reftranscripts [file_absolute $reftranscripts]
 	}
 	# 
 	job_logfile $destdir/flames_[file tail $destdir] $destdir $cmdline \
@@ -216,7 +221,7 @@ proc iso_flames_job {args} {
 			#fields	counts	1	Integer	Number of reads mapping to isoform
 		}]
 		puts $o [join [list \
-			transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames counts-$root
+			transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames counts-flames-$root
 		] \t]
 		set f [open flames-$root/isoform_annotated.filtered.genepred]
 		while {[gets $f line] != -1} {
@@ -236,7 +241,8 @@ proc iso_flames_job {args} {
 		}
 		close $f
 		close $o
-		file rename -force flames-$root/isoform_counts-flames-$root.tsv isoform_counts-flames-$root.tsv
+		cg select -s - flames-$root/isoform_counts-flames-$root.tsv flames-$root/isoform_counts-flames-$root.stsv
+		file rename -force flames-$root/isoform_counts-flames-$root.stsv isoform_counts-flames-$root.tsv
 		cg_iso_flames_genecounts isoform_counts-flames-$root.tsv gene_counts-flames-$root.tsv.temp
 		file rename -force gene_counts-flames-$root.tsv.temp gene_counts-flames-$root.tsv
 	}

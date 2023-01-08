@@ -9,11 +9,11 @@
 #fields	end	1	Integer	Transcription end position
 #fields	nrtranscripts	1	Integer	number of transcripts found
 #fields	counts	1	Integer	Number of reads mapping to gene
-gene	chromosome	begin	end	strand	nrtranscripts	counts-sirv_flames
-SIRV1	SIRV1	1000	11643	-,+	9	354
-SIRV2	SIRV2	1000	5911	-,+	5	142
-SIRV3	SIRV3	1000	8940	-,+	7	295
-SIRV4	SIRV4	1000	15122	-,+	8	450
-SIRV5	SIRV5	1000	11866	+	8	308
-SIRV6	SIRV6	1000	11837	-,+	16	883
-SIRV7	SIRV7	1003	147957	-	4	112
+gene	chromosome	begin	end	strand	nrtranscripts	counts-flames-sirv
+SIRV1	SIRV1	1000	10786	-	3	142
+SIRV2	SIRV2	1000	5907	-	4	212
+SIRV3	SIRV3	1944	8940	+	4	196
+SIRV4	SIRV4	8322	15122	-	2	120
+SIRV5	SIRV5	1056	11866	+	7	317
+SIRV6	SIRV6	1000	11826	+	13	880
+SIRV7	SIRV7	1003	147923	-	2	109
