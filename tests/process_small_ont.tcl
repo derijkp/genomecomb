@@ -100,8 +100,3 @@ if {$run} {
 } else {
 	testsummarize
 }
-
-
-
-
-
