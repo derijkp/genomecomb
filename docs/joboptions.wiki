@@ -110,11 +110,16 @@ can change these requested amounts for any job:
 If a single value is given it will be the default value for all jobs
 (unless a specific higher default would already be used).
 Using an adjustment list for these options allows changing the values for
-any job(s). The list consists of, alternatingly, a pattern and a value. If
+specific job(s). The list consists of, alternatingly, a pattern and a value. If
 the name of a job matches the pattern, the value is applied to that job.
 The pattern * matches any job name, and can thus be used to set a default
 at the start of the list (The last match in the list determines the actual value).
-The other patterns are used as regular expressions.
+The other patterns are used as regular expressions. for example, the following options
+{{{
+-dmem '* 2G map_bwa 10G' -dtime '*2:00:00 map_bwa 10:00:00'
+}}}
+will set the default requested memory to 2G and time to 2h, but for
+mapping with bwa 10G of memory will be re	quested and 10h.
 
 == Category ==
 Format Conversion
