@@ -821,7 +821,7 @@ proc process_sample_job {args} {
 		set skips {}
 		set skipsresult {}
 		# make skips for clipping (do not do any of preliminaries if end product is already there)
-		# clipped fastqs are used for all aligners for all aligners!
+		# clipped fastqs are used for all aligners!
 		foreach aligner $aligners {
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
@@ -1038,7 +1038,7 @@ proc process_sample_job {args} {
 			if {![auto_load count_${counter}_job]} {
 				error "counter $counter not supported"
 			}
-			lappend cleanupdeps {*}[count_${counter}_job -threads $threads {*}$extraopts \
+			lappend cleanupdeps {*}[count_${counter}_job -threads $threads \
 				-refseq $refseq $cleanedbam]
 		}
 	}

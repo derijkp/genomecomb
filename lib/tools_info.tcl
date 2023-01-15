@@ -2,6 +2,31 @@ proc analysisinfo_file {file} {
 	return [gzroot $file].analysisinfo
 }
 
+proc job_analysisinfo_files args {
+	set result {}
+	foreach file [bsort $args] {
+		set afile [analysisinfo_file $file]
+		if {[jobfileexists $afile]} {
+			lappend result $afile
+		}
+	}
+	return $result
+}
+
+proc analysisinfo_combine {target deps} {
+	set adeps {}
+	foreach file [bsort $deps] {
+		lappend adeps [analysisinfo_file $file]
+	}
+	set targetanalysisinfo [analysisinfo_file $target]
+	if {[llength $adeps]} {
+		cg cat -c 0 -m 1 {*}$adeps > $targetanalysisinfo.temp
+		file rename -force -- $targetanalysisinfo.temp $targetanalysisinfo
+	} else {
+		file_write $target ""
+	}
+}
+
 proc analysisinfo_write {dep target args} {
 	global env
 	if {[ispipe $dep] || [ispipe $target]} {

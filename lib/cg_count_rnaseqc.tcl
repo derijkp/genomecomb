@@ -34,7 +34,6 @@ proc gct2tsv {gct tsv datafield datatype datadescr {idfield geneid} {namefield g
 proc count_rnaseqc_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg count_rnaseqc {*}$args]
-	set extraopts {}
 	set stranded 1
 	set keepargs $args
 	set threads 2
@@ -112,10 +111,24 @@ proc count_rnaseqc_job {args} {
 		$resultfile
 		$resultdir/exon_counts-$root.tsv
 		$resultdir/tpm-$root.tsv
+		$resultfile.analysisinfo
+		$resultdir/exon_counts-$root.tsv.analysisinfo
+		$resultdir/tpm-$root.tsv.analysisinfo
 	} -vars {
 		bamfile resultfile extraopts resultdir root rnaseqcdir refseq gtffile
 	} -code {
-		analysisinfo_write $bamfile $resultfile counter rnaseqc counter_version [version rnaseqc] reference [file2refname $refseq]
+		analysisinfo_write $bamfile $resultfile \
+			counter rnaseqc counter_version [version rnaseqc] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $gtffile]
+		analysisinfo_write $bamfile $resultdir/exon_counts-$root.tsv \
+			counter rnaseqc counter_version [version rnaseqc] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $gtffile]
+		analysisinfo_write $bamfile $resultdir/tpm-$root.tsv \
+			counter rnaseqc counter_version [version rnaseqc] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $gtffile]
 		putslog "making $resultfile"
 		catch_exec rnaseqc $gtffile $bamfile $rnaseqcdir \
 			--sample=$root \

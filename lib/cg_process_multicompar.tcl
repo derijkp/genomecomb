@@ -446,19 +446,44 @@ proc process_multicompar_job {args} {
 	# counters
 	# --------
 	if {[llength $counters]} {
-		set countfiles [jobglob samples/*/gene_counts-*.tsv]
-		set target compar/gene_counts-${experiment}.tsv
-		job multicount -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-			cg multicount $target.temp {*}$countfiles
-			file rename -force -- $target.temp $target
-		}
-		# exons
-		foreach prefix {exon_counts tpm gene_fpkm} {
+		foreach prefix {gene_counts exon_counts tpm gene_fpkm} {
 			set countfiles [jobglob samples/*/${prefix}-*.tsv]
+			if {![llength $countfiles]} continue
+			# per analysis
+			unset -nocomplain a
+			foreach file $countfiles {
+				set analysis [join [lrange [split [file_rootname $file] -] 0 end-1] -]
+				lappend a($analysis) $file
+			}
+			foreach analysis [array names a] {
+				set acountfiles $a($analysis)
+				set target compar/${prefix}-${analysis}-${experiment}.tsv
+				job multicount-${prefix}-${analysis}-${experiment} -optional 1 \
+				-deps [list {*}$acountfiles {*}[job_analysisinfo_files $acountfiles]] \
+				-targets {$target} -vars {acountfiles} -code {
+					analysisinfo_combine $target $acountfiles
+					cg multicount $target.temp {*}$acountfiles
+					result_rename $target.temp $target
+				}
+			}
+			# next will error if different refs were used
+			# allow error -> make empty file and error file (not ideal, but for now ..)
 			set target compar/${prefix}-${experiment}.tsv
-			job multicount_exon -optional 1 -deps $countfiles -targets {$target} -vars {countfiles} -code {
-				cg multicount $target.temp {*}$countfiles
-				file rename -force -- $target.temp $target
+			job multicount-${prefix}-${experiment} -optional 1 \
+			-deps [list {*}$countfiles {*}[job_analysisinfo_files $countfiles]] \
+			-targets {
+				$target
+			} -vars {
+				countfiles
+			} -code {
+				analysisinfo_combine $target $countfiles
+				if {[catch {
+					cg multicount $target.temp {*}$countfiles
+				} msg]} {
+					file_write $target.error "multi-method count file could not be made because: $msg"
+					file_write $target.temp ""
+				}
+				result_rename $target.temp $target
 			}
 		}
 	}

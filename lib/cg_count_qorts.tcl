@@ -34,7 +34,6 @@ proc version_qorts {} {
 proc count_qorts_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg count_qorts_job {*}$args]
-	set extraopts {}
 	set stranded {}
 	set paired 1
 	set keepargs $args
@@ -129,11 +128,32 @@ proc count_qorts_job {args} {
 		$refseq
 	} -targets {
 		$qortsdir
+		$resultfile
+		$resultdir/exon_counts-$root.tsv
+		$resultdir/junction_counts-$root.tsv
+		$resultfile.analysisinfo
+		$resultdir/exon_counts-$root.tsv.analysisinfo
+		$resultdir/junction_counts-$root.tsv.analysisinfo
 	} -vars {
-		bamfile resultfile extraopts resultdir root qortsdir rqortsdir refseq
+		bamfile resultfile extraopts resultdir root qortsdir refseq
 		gtffile flatgfffile addfunctions
 	} -code {
-		analysisinfo_write $bamfile $resultfile counter qorts counter_version [version qorts] reference [file2refname $refseq]
+		analysisinfo_write $bamfile $resultfile \
+			counter qorts counter_version [version qorts] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $flatgfffile]
+		analysisinfo_write $bamfile $resultdir/exon_counts-$root.tsv \
+			counter qorts counter_version [version qorts] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $flatgfffile]
+		analysisinfo_write $bamfile $resultdir/junction_counts-$root.tsv \
+			counter qorts counter_version [version qorts] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $flatgfffile]
+		analysisinfo_write $bamfile $resultdir/gene_fpkm-$root.tsv \
+			counter qorts counter_version [version qorts] \
+			reference [file2refname $refseq] \
+			transcriptsfile [file tail $flatgfffile]
 		if {[catch {
 			set jar [findjar QoRTs-STABLE]
 		}]} {
@@ -147,26 +167,82 @@ proc count_qorts_job {args} {
 			exec samtools index $tempfile
 			set bamfile $tempfile
 		}
+		file delete -force $qortsdir.temp
 		catch_exec java -Xmx8G -XX:ParallelGCThreads=1 -jar $jar QC \
 			--generatePlots \
 			--addFunctions $addfunctions \
 			--flatgff $flatgfffile \
 			{*}$extraopts \
 			$bamfile $gtffile $qortsdir.temp >@ stdout 2>@ stderr
+		file delete -force $qortsdir
 		file rename $qortsdir.temp $qortsdir
+		#
+		file_write $resultdir/gene_counts-$root.tsv.temp [deindent {
+			#filetype tsv/countfile
+			#fileversion    0.99
+			#fields field	number	type	description
+			#fields geneid	1	String	id field
+			#fields counts	1	Integer	gene counts per sample
+			#fields count_cds	1	Integer	gene counts per sample
+			#fields count_utr	1	Integer	gene counts per sample
+			#fields count_ambig_gene	1	Integer	gene counts per sample
+		}]\n
+		cg select -f "geneid=\$GENEID counts-$root=\$COUNT count_cds-$root=\$COUNT_CDS count_utr-$root=\$COUNT_UTR count_ambig_gene-$root=\$COUNT_AMBIG_GENE" \
+			$qortsdir/QC.geneCounts.txt.gz >> $resultdir/gene_counts-$root.tsv.temp
+		result_rename $resultdir/gene_counts-$root.tsv.temp $resultdir/gene_counts-$root.tsv
+		#
+		file_write $resultdir/gene_fpkm-$root.tsv.temp [deindent {
+			#filetype tsv/countfile
+			#fileversion    0.99
+			#fields field	number	type	description
+			#fields geneid	1	String	id field
+			#fields fpkm	1	Integer	fpkm adjusted count per sample
+		}]\n
+		cg select -f "geneid=\$GENEID fpkm-$root=\$FPKM" \
+			$qortsdir/QC.FPKM.txt.gz >> $resultdir/gene_fpkm-$root.tsv.temp
+		result_rename $resultdir/gene_fpkm-$root.tsv.temp $resultdir/gene_fpkm-$root.tsv
+		# exon_counts
+		file_write $resultdir/exon_counts-$root.tsv.temp [deindent {
+			#filetype tsv/countfile
+			#fileversion    0.99
+			#fields field	number	type	description
+			#fields exonid	1	String	id field
+			#fields count	Integer	exon counts per sample
+			exonid	count
+		}]\n
+		set f [gzopen $qortsdir/QC.exonCounts.formatted.for.DEXSeq.txt.gz]
+		set o [open $resultdir/exon_counts-$root.tsv.temp a]
+		fcopy $f $o
+		close $o
+		close $f
+		result_rename $resultdir/exon_counts-$root.tsv.temp $resultdir/exon_counts-$root.tsv
+		# junction_counts
+		file_write $resultdir/junction_counts-$root.tsv.temp [deindent {
+			#filetype tsv/countfile
+			#fileversion    0.99
+			#fields field	number	type	description
+			#fields spliceName	1	String	id field
+			#fields chromosome      1       String  Chromosome/Contig
+			#fields strand   1       String strand (+/-)
+			#fields begin   1       Integer Begin of feature (0 based - half open)
+			#fields end     1       Integer End of feature (0 based - half open)
+			#fields count	Integer	junction counts per sample
+		}]\n
+		cg select -f "spliceName chromosome=\$chrom strand begin=\$start end counts-$root=\$CT" \
+			$qortsdir/QC.spliceJunctionCounts.knownSplices.txt.gz >> $resultdir/junction_counts-$root.tsv.temp
+		result_rename $resultdir/junction_counts-$root.tsv.temp $resultdir/junction_counts-$root.tsv
 	}
 	job qorts-report-$root -deps {
 		$qortsdir
 	} -targets {
-		$resultfile
-		$resultdir/exon_counts-$root.tsv
-		$resultdir/junction_counts-$root.tsv
+		$rqortsdir
 	} -vars {
-		bamfile resultfile extraopts resultdir root qortsdir rqortsdir refseq
+		bamfile resultfile resultdir root qortsdir rqortsdir refseq
 		gtffile flatgfffile addfunctions
 	} -code {
-		mkdir $rqortsdir
-		file_write $rqortsdir/decoder.txt "unique.ID\n$root\n" 
+		file delete -force $rqortsdir.temp
+		mkdir $rqortsdir.temp
+		file_write $rqortsdir.temp/decoder.txt "unique.ID\n$root\n" 
 		set cmd [string_change {
 			library(QoRTs)
 			res <- read.qc.results.data("@base.dir@", decoder.files = "@decoder@", calc.DESeq2 = FALSE, calc.edgeR = FALSE)
@@ -175,29 +251,15 @@ proc count_qorts_job {args} {
 			makeMultiPlot.all(res, outfile.dir = "@output.template@", plot.device.name = "pdf");
 		} [list \
 			@base.dir@ [file dir $qortsdir]/ \
-			@decoder@ $rqortsdir/decoder.txt \
-			@output.dir@ $rqortsdir \
-			@output.template@ $rqortsdir/qorts-$root- \
+			@decoder@ $rqortsdir.temp/decoder.txt \
+			@output.dir@ $rqortsdir.temp \
+			@output.template@ $rqortsdir.temp/qorts-$root- \
 		]]
 		set cmd [string trim $cmd]
 		regsub -all {\n[\t ]*} $cmd " ; " cmd
 		exec [findR] -e $cmd >@ stdout 2>@ stderr
-		cg select -f "geneid=\$GENEID counts-$root=\$COUNT count_cds-$root=\$COUNT_CDS count_utr-$root=\$COUNT_UTR count_ambig_gene-$root=\$COUNT_AMBIG_GENE" \
-			$qortsdir/QC.geneCounts.txt.gz $resultdir/gene_counts-$root.tsv.temp
-		file rename $resultdir/gene_counts-$root.tsv.temp $resultdir/gene_counts-$root.tsv
-		cg select -f "geneid=\$GENEID fpkm-$root=\$FPKM" \
-			$qortsdir/QC.FPKM.txt.gz $resultdir/gene_fpkm-$root.tsv.temp
-		file rename $resultdir/gene_fpkm-$root.tsv.temp $resultdir/gene_fpkm-$root.tsv
-		file_write $resultdir/exon_counts-$root.tsv.temp "exonid\tcount\n"
-		set f [gzopen $qortsdir/QC.exonCounts.formatted.for.DEXSeq.txt.gz]
-		set o [open $resultdir/exon_counts-$root.tsv.temp a]
-		fcopy $f $o
-		close $o
-		close $f
-		file rename $resultdir/exon_counts-$root.tsv.temp $resultdir/exon_counts-$root.tsv
-		cg select -f "spliceName chromosome=\$chrom strand start end counts-$root=\$CT" \
-			$qortsdir/QC.spliceJunctionCounts.knownSplices.txt.gz > $resultdir/junction_counts-$root.tsv.temp
-		file rename $resultdir/junction_counts-$root.tsv.temp $resultdir/junction_counts-$root.tsv
+		file delete -force $rqortsdir
+		file rename $rqortsdir.temp $rqortsdir
 	}
 	return {}
 }
