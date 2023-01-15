@@ -181,8 +181,12 @@ proc convert_isoquant_add_ambig {varVar ambig} {
 
 proc convert_isoquant_reggenedb {reftranscripts samregions refseq regreftranscripts reggenedb} {
 	set regfile [tempfile].tsv
-	distrreg_reg2tsv $regfile $samregions $refseq
-	cg regselect $reftranscripts $regfile > $regreftranscripts
+	if {$samregions eq ""} {
+		mklink $reftranscripts $regreftranscripts
+	} else {
+		distrreg_reg2tsv $regfile $samregions $refseq
+		cg regselect $reftranscripts $regfile > $regreftranscripts
+	}
 	# if empty
 	set f [open $regreftranscripts]
 	tsv_open $f
@@ -1227,9 +1231,9 @@ proc iso_isoquant_job {args} {
 		putsvars sample
 		set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
 		set rootname [file_rootname $bam]
-		set isofiles {}
-		set genefiles {}
-		set readfiles {}
+		if {![llength $regions]} {
+			set regions {{}}
+		}
 		foreach region $regions {
 			set regdir ${analysisname}-$rootname/${analysisname}-$rootname-$region
 			job ${analysisname}-$sample-$region -mem 15G -cores $threads -deps {
@@ -1244,8 +1248,13 @@ proc iso_isoquant_job {args} {
 				# region bamfile
 				# set tempbam [tempfile].bam
 				set tempbam $regdir.temp/regali.bam
-				set samregions [samregions $region $refseq]
-				exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
+				if {$region ne ""} {
+					set samregions [samregions $region $refseq]
+					exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
+				} else {
+					set samregions {}
+					mklink $bam $tempbam
+				}
 				if {![catch {exec samtools view $tempbam | head -1} out]} {
 					# only one read aligned -> skip running isoquant
 					file mkdir $regdir.temp
@@ -1274,9 +1283,6 @@ proc iso_isoquant_job {args} {
 				file delete -force $regdir
 				file rename $regdir.temp $regdir
 			}
-			lappend isofiles $regdir/isoform_counts-${analysisname}-$sample.tsv
-			lappend genefiles $regdir/gene_counts-${analysisname}-$sample.tsv
-			lappend readfiles $regdir/read_assignments-${analysisname}-$sample.tsv
 			job ${analysisname}-convert-$sample-$region -cores 1 -mem 10g -deps {
 				$regdir/00_regali $refseq $reftranscripts
 			} -targets {

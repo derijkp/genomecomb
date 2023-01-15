@@ -354,6 +354,9 @@ proc process_project_job {args} {
 	}
 	foreach isocaller $isocallers {
 		iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
+		set options [cmd_getoptions [list cg iso_${isocaller}]]
+		if {"-compar" ni $options} {
+		}
 	}
 	if {$flair} {
 		flair_job -refseq [refseq $dbdir] $destdir

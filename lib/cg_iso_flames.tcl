@@ -50,16 +50,12 @@ proc iso_flames_job {args} {
 	set genes {}
 	set extraopts {}
 	set sqanti 1
-	set compar joint
 	set threads 8
 	set resultfile {}
 	set reftranscripts {}
 	cg_options flames args {
 		-refseq {
 			set refseq $value
-		}
-		-compar {
-			set compar $value
 		}
 		-threads {
 			set threads $value

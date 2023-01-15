@@ -5,7 +5,6 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test ont_rna {flames basic SIRV test} {
-	cd $::testdir
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -35,7 +34,6 @@ test ont_rna {flames basic SIRV test} {
 } {}
 
 test ont_rna {flair basic SIRV test} {
-	cd $::testdir
 	file delete -force tmp/sirv_flair
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -63,7 +61,6 @@ test ont_rna {flair basic SIRV test} {
 } {}
 
 test ont_rna {isoquant basic SIRV test} {
-	cd $::testdir
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -92,7 +89,6 @@ test ont_rna {isoquant basic SIRV test} {
 } {}
 
 test ont_rna {flames SIRV test no ref} {
-	cd $::testdir
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -129,7 +125,6 @@ test ont_rna {flames SIRV test no ref} {
 } {}
 
 test ont_rna {flair SIRV test no ref} {
-	cd $::testdir
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -165,7 +160,6 @@ test ont_rna {flair SIRV test no ref} {
 } {}
 
 test ont_rna {isoquant SIRV test no ref} {
-	cd $::testdir
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
 	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
@@ -199,5 +193,49 @@ test ont_rna {isoquant SIRV test no ref} {
 	exec diff tmp/sirv/gene_counts-isoquant-sirv.tsv data/gene_counts-isoquant-noref_sirv.tsv
 } {}
 
-testsummarize
+test ont_rna {process_project multi methods} {
+	file delete -force tmp/sirv tmp/sirv2 tmp/ref
+	file mkdir tmp/samples/sirv/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
+	exec samtools faidx tmp/ref/sirv/SIRV_isoforms_multi-fasta_170612a.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	exec cg process_project -stack 1 -v 2 -split 1 \
+		-threads 2 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2_splice} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-distrreg 0 \
+		-svcallers {} \
+		-varcallers {} \
+		-isocallers {isoquant flair flames} \
+		-reports {} \
+		-dbdir tmp/ref/sirv \
+		tmp >& tmp/ontrna.log
 
+
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/sirv/map-sirv.bam \
+		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		tmp/sirv/sirv \
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+	exec samtools index tmp/sirv/map-sirv.bam
+	cg iso_isoquant -stack 1 \
+		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		tmp/sirv/map-sirv.bam
+	# check vs expected
+	exec diff tmp/sirv/isoform_counts-isoquant-sirv.tsv data/isoform_counts-isoquant-sirv.tsv
+	exec diff tmp/sirv/gene_counts-isoquant-sirv.tsv data/gene_counts-isoquant-sirv.tsv
+} {}
+
+testsummarize

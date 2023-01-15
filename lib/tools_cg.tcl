@@ -151,3 +151,13 @@ proc bgcg {progresscommand channelvar cmd args} {
 		if {$::bgerror ne ""} {error $::bgerror}
 	}
 }
+
+proc cmd_getoptions {cmd} {
+	if {![catch $cmd temp]} {
+		error "Cannot get available options for \"$args\", does not give an error"
+	}
+	if {![regexp {with options: *([^\n]*)} $temp temp methodoptions]} {
+		error "Cannot get available options for \"$args\", error does not contain \"with options: \" followed by available options"
+	}
+	split $methodoptions ,
+}
