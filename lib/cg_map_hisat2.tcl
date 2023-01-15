@@ -84,7 +84,7 @@ proc cg_map_hisat2 {args} {
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
 	set hisat2refseq [refseq_hisat2 $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
-	analysisinfo_write $fastqfile1 $result aligner hisat2 aligner_version [version hisat2] reference [file2refname $hisat2refseq] aligner_paired $paired
+	analysisinfo_write $fastqfile1 $result sample $sample aligner hisat2 aligner_version [version hisat2] reference [file2refname $hisat2refseq] aligner_paired $paired
 	if {!$paired} {
 		putslog "making $result"
 		set rg {}

@@ -177,9 +177,9 @@ proc map_job {args} {
 					}
 					set compresspipe "| gzip --fast"
 					file mkdir [file dir $target]
-					analysisinfo_write $dep1 $tempfastq1
+					analysisinfo_write $dep1 $tempfastq1 sample $sample
 					exec cg zcat {*}$deps1 {*}$compresspipe > $tempfastq1 2>@ stderr
-					analysisinfo_write $dep2 $tempfastq2
+					analysisinfo_write $dep2 $tempfastq2 sample $sample
 					exec cg zcat {*}$deps2 {*}$compresspipe > $tempfastq2 2>@ stderr
 					set fastqfiles [list $tempfastq1 $tempfastq2]
 					lappend cleanupfiles $tempfastq1 $tempfastq2
@@ -192,7 +192,7 @@ proc map_job {args} {
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
-				analysisinfo_write [lindex $fastqfiles 0] $result aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
+				analysisinfo_write [lindex $fastqfiles 0] $result sample $sample aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \

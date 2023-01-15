@@ -107,7 +107,7 @@ proc cg_map_minimap2 {args} {
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
 	set minimap2refseq [refseq_minimap2 $refseq $preset]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
-	analysisinfo_write $fastqfile1 $result aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired $paired
+	analysisinfo_write $fastqfile1 $result sample $sample aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {
 		putslog "making $result"
 		set rg {}

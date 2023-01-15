@@ -107,7 +107,7 @@ proc cg_map_bwa {args} {
 	set bwarefseq [refseq_bwa $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	putslog "making $result"
-	analysisinfo_write $fastqfile1 $result aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired $paired
+	analysisinfo_write $fastqfile1 $result sample $sample aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired $paired
 	if {!$paired} {
 		set rg {}
 		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
