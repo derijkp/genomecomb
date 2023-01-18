@@ -63,19 +63,35 @@ proc bam_clean_job {args} {
 	if {$resultfile eq ""} {
 		set resultfile $dir/$pre$temproot.$outputformat
 	}
+	if {!$keep} {
+		set cleanuplist [list $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]]
+	} else {
+		set cleanuplist {}
+	}
 	if {$steps == 0} {
 		if {$outputformat eq $inputformat} {
 			if {$resultfile eq $sourcefile} {
 				return $resultfile
 			} else {
-				job bamclean-$root {*}$skips -deps {$sourcefile} -targets {$resultfile} -code {
+				job bamclean-$root {*}$skips -rmtargets $cleanuplist -deps {
+					$sourcefile
+				} -targets {
+					$resultfile
+				} -vars {
+					cleanuplist
+				} -code {
 					analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 					hardcopy $dep $target
+					if {[llength $cleanuplist]} {file delete {*}$cleanuplist}
 				}
 			}
 		} else {
-			job bamclean-$root {*}$skips -deps {$sourcefile} -targets {$resultfile} -vars {
-				inputformat outputformat refseq
+			job bamclean-$root {*}$skips -rmtargets $cleanuplist -deps {
+				$sourcefile
+			} -targets {
+				$resultfile
+			} -vars {
+				inputformat outputformat refseq cleanuplist
 			} -code {
 				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 				if {[file size $dep] > 0} {
@@ -83,6 +99,7 @@ proc bam_clean_job {args} {
 				} else {
 					file_write $target ""
 				}
+				if {[llength $cleanuplist]} {file delete {*}$cleanuplist}
 			}
 		}
 		return $resultfile
@@ -136,7 +153,6 @@ proc bam_clean_job {args} {
 			-inputformat $inputformat -outputformat $curoutputformat \
 			-compressionlevel $compressionlevel -threads $threads -refseq $refseq
 	}
-	set cleanuplist {}
 	if {$realign ne "0"} {
 		if {$regionfile eq ""} {set regionfile 3}
 		if {[isint $regionfile]} {
@@ -180,15 +196,10 @@ proc bam_clean_job {args} {
 			$clipamplicons
 	}
 	lappend pipe {*}$optsio
-	if {!$keep} {
-		set rmtargets [list {*}$cleanuplist $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]]
-	} else {
-		set rmtargets $cleanuplist
-	}
 	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
-	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq rmtargets
+	} -rmtargets $cleanuplist -vars {
+		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq cleanuplist
 	} -code {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		set tempresult [filetemp $resultfile]
@@ -204,7 +215,7 @@ proc bam_clean_job {args} {
 				result_rename $tempresult $resultfile
 			}
 		}
-		if {[llength $rmtargets]} {file delete {*}$rmtargets}
+		if {[llength $cleanuplist]} {file delete {*}$cleanuplist}
 	}
 	bam_index_job {*}$skips -threads $threads $resultfile
 	return $resultfile
