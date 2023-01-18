@@ -14,17 +14,26 @@ proc cg_gtf2sft {args} {
 proc cg_gtf2tsv {args} {
 	set filename -
 	set outfile -
-	set separate 0
+	set transcripts 1
 	set ignorecodon 1
 	cg_options gtf2tsv args {
 		-separate {
-			set separate $value
+			if {[true $value]} {set transcripts 0} else {set transcripts 1}
+		}
+		-transcripts {
+			set transcripts $value
 		}
 		-ignorecodon {
 			set ignorecodon $value
 		}
 	} {filename outfile} 0 2
+	proc gtf2tsv_parse_attr {attributes} {
+		set a [dict create {*}[string_change $attributes {; " "}]]
+	}
+	gtf2tsv $filename $outfile $transcripts $ignorecodon
+}
 
+proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 	catch {close $f} ;	catch {close $fb} ; catch {close $fa}
 	set f [gzopen $filename]
 	set comment {# -- tsv converted from gtf, original comments follow --}
@@ -42,7 +51,8 @@ proc cg_gtf2tsv {args} {
 	set attrheader {}
 	set attrtemplate {}
 	unset -nocomplain attra
-	if {!$separate} {
+	unset -nocomplain genea
+	if {$transcripts} {
 		set cheader [deindent {
 			#filetype	tsv/transcriptsfile
 			#fileversion	0.99
@@ -51,6 +61,7 @@ proc cg_gtf2tsv {args} {
 			#fields	chromosome	1	String	Chromosome name
 			#fields	begin	1	Integer	Transcription start position
 			#fields	end	1	Integer	Transcription end position
+			#fields	type	1	Integer	Type of element (transcript typically)
 			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
 			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
 			#fields	strand	1	String	+ or - for strand
@@ -61,7 +72,7 @@ proc cg_gtf2tsv {args} {
 			#fields	exonEnds	E	Integer	Exon end positions
 			#fields	source	1	String	Source of data
 		}]
-		set nheader {chromosome begin end transcript gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
+		set nheader {chromosome begin end type transcript gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 		unset -nocomplain curchromosome
 		set curtranscript {}
 		set curlines {}
@@ -71,33 +82,53 @@ proc cg_gtf2tsv {args} {
 			while 1 {
 				if {[eof $f] && $line eq ""} break
 				foreach {chrom source type start end score strand phase attributes comments} $line break
-				if {$type in "exon CDS start_codon stop_codon"} break
+				if {$type eq "transcript"} {
+					set a [gtf2tsv_parse_attr $attributes]
+					if {[dict exists $a Parent] && [dict exists $a transcript_id]} {
+						set gene [dict get $a Parent]
+						regsub ^gene: $gene {} gene
+						set genea([dict get $a transcript_id]) $gene
+					}
+				} elseif {$type in "exon CDS start_codon stop_codon"} break
 				if {[gets $f line] == -1} break
 				set line [split $line \t]
 			}
 			if {[eof $f] && $line eq ""} break
-			set a [dict create {*}[string_change $attributes {; " "}]]
-			set curtranscript [dict get $a transcript_id]
+			set a [gtf2tsv_parse_attr $attributes]
+			if {[dict exists $a transcript_id]} {
+				set curtranscript [dict get $a transcript_id]
+			} else {
+				set curtranscript [dict get $a Parent]
+			}
 			set curlines [list $line]
 			while {[gets $f line] != -1} {
 				if {[string index $line 0] eq "#"} continue
 				set line [split $line \t]
 				if {![llength $line]} continue
 				foreach {chrom source type start end score strand phase attributes comments} $line break
-				if {![inlist {exon CDS start_codon stop_codon} $type]} {
+				if {$type eq "transcript"} {
+					set a [gtf2tsv_parse_attr $attributes]
+					if {[dict exists $a Parent] && [dict exists $a transcript_id]} {
+						set gene [dict get $a Parent]
+						regsub ^gene: $gene {} gene
+						set genea([dict get $a transcript_id]) $gene
+					}
+				} elseif {![inlist {exon CDS start_codon stop_codon} $type]} {
 					continue
 				}
-				set a [dict create {*}[string_change $attributes {; " "}]]
-				set transcript [dict get $a transcript_id]
+				set a [gtf2tsv_parse_attr $attributes]
+				if {[dict exists $a transcript_id]} {
+					set transcript [dict get $a transcript_id]
+				} else {
+					set transcript [dict get $a Parent]
+				}
 				if {$transcript ne $curtranscript} break
 				lappend curlines $line
 			}
 			if {![llength $curlines]} break
 			# join $curlines \n
-
 			if {$num >= $next} {putsprogress $curchromosome:$curbegin-$curend; incr next 100000}
 			incr num
-
 			# 
 			set curlines [lsort -dict -index 3 $curlines]
 			# start next
@@ -113,7 +144,7 @@ proc cg_gtf2tsv {args} {
 			set curscore {}
 			foreach iline $curlines {
 				foreach {chrom source type start end score strand phase attributes comments} $iline break
-				foreach {key value}  [string_change $attributes {; " "}] {
+				foreach {key value} [gtf2tsv_parse_attr $attributes] {
 					lappend curattra($key) $value
 				}
 				incr start -1
@@ -159,15 +190,22 @@ proc cg_gtf2tsv {args} {
 					}
 				}
 			}
-			if {![info exists curattra(gene_id)]} {
-				error "field gene_id not found in attributes"
-			}
-			set curgene [list_remdup $curattra(gene_id)]
-			if {![info exists curattra(transcript_id)]} {
+			if {[info exists curattra(transcript_id)]} {
+				set curtranscript [list_remdup $curattra(transcript_id)]
+			} elseif {[info exists curattra(Parent)]} {
+				set curtranscript [list_remdup $curattra(Parent)]
+			} else {
 				error "field transcript_id not found in attributes"
 			}
-			set curtranscript [list_remdup $curattra(transcript_id)]
-			puts $fb [join [list $chrom $curbegin $curend $curtranscript $curgene $curstrand \
+			regsub ^transcript: $curtranscript {} curtranscript
+			if {[info exists curattra(gene_id)]} {
+				set curgene [list_remdup $curattra(gene_id)]
+			} elseif {[info exists genea($curtranscript)]} {
+				set curgene $genea($curtranscript)
+			} else {
+				error "field gene_id not found in attributes"
+			}
+			puts $fb [join [list $chrom $curbegin $curend transcript $curtranscript $curgene $curstrand \
 				$curcdsStart $curcdsEnd $curexonCount \
 				[join $curexonStarts ,], [join $curexonEnds ,], [join [list_remdup $cursource] ,]] \t]
 			set attrlist $attrtemplate
@@ -199,30 +237,50 @@ proc cg_gtf2tsv {args} {
 			#fields	source	1	String	Source of data
 			#fields	comments	1	String	extra info on element
 		}]
-		set nheader {chromosome begin end type transcript gene strand source comments}
+		set nheader {chromosome begin end type strand transcript gene score source phase comments}
 		set num 0
 		set curattr [dict create]
+		foreach key {chromosome type begin end score strand source phase transcript gene} {
+			set transa($key) attr_$key
+		}
 		while 1 {
 			if {[string index $line 0] eq "#"} continue
 			set line [split $line \t]
 			if {![llength $line]} continue
 			foreach {chrom source type start end score strand phase attributes comments} $line break
+			if {$type eq "transcript"} {
+				set a [gtf2tsv_parse_attr $attributes]
+				if {[dict exists $a Parent] && [dict exists $a transcript_id]} {
+					set gene [dict get $a Parent]
+					regsub ^gene: $gene {} gene
+					set genea([dict get $a transcript_id]) $gene
+				}
+			}
 			incr start -1
 			unset -nocomplain curattra
-			foreach {key value}  [string_change $attributes {; " "}] {
+			foreach {key value} [gtf2tsv_parse_attr $attributes] {
 				lappend curattra($key) $value
 			}
-			if {![info exists curattra(gene_id)]} {
-				error "field gene_id not found in attributes"
+			if {[info exists curattra(transcript_id)]} {
+				set transcript [list_remdup $curattra(transcript_id)]
+				regsub ^transcript: $transcript {} transcript
+			} else {
+				set transcript .
 			}
-			set gene [list_remdup $curattra(gene_id)]
-			if {![info exists curattra(transcript_id)]} {
-				error "field transcript_id not found in attributes"
+			if {[info exists curattra(gene_id)]} {
+				set gene [list_remdup $curattra(gene_id)]
+				regsub ^gene: $gene {} gene
+			} elseif {[info exists genea($transcript)]} {
+				set gene $genea($transcript)
+			} else {
+				set gene .
 			}
-			set transcript [list_remdup $curattra(transcript_id)]
-			puts $fb [join [list $chrom $start $end $type $transcript $gene $strand $source $comments] \t]
+			puts $fb [join [list $chrom $start $end $type $strand $transcript $gene $score $source $phase $comments] \t]
 			set attrlist $attrtemplate
 			foreach {key value} [array get curattra] {
+				if {[info exists transa($key)]} {
+					set key $transa($key)
+				}
 				if {![info exists attra($key)]} {
 					set attra($key) [llength $attrtemplate]
 					lappend attrheader $key
@@ -244,20 +302,24 @@ proc cg_gtf2tsv {args} {
 	puts $o $cheader
 	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
-	if {[info exists attrlist]} {
-		set len [llength $attrlist]
-		set fb [open $tempbase]
-		set fa [open $tempattr]
-		set len [llength $attrlist]
-		while {![eof $fa]} {
-			set linea [gets $fb]
-			if {![string length $linea]} break
-			set lineb [gets $fa]
-			if {[llength $lineb] < $len} {
-				lappend lineb {*}[list_fill [expr {$len-[llength $lineb]}] {}]
+	set atrrsize [llength $attrheader]
+	set fb [open $tempbase]
+	set fa [open $tempattr]
+	unset -nocomplain atemplate
+	while {![eof $fa]} {
+		if {[gets $fb lineb] == -1} break
+		set linea [gets $fa]
+		set len [llength $linea]
+		if {$len < $atrrsize} {
+			if {![info exists atemplate($len)]} {
+				set atemplate($len) [string_fill \t [expr {$atrrsize-$len}]]
 			}
-			puts $o $linea\t[join $lineb \t]
+			set linea [join $linea \t]$atemplate($len)
+		} else {
+			set linea [join $linea \t]
 		}
+		if {[eof $fa]} break
+		puts $o $lineb\t$linea
 	}
 	catch {close $fb} ; catch {close $fa}
 	file delete $tempbase ; file delete $tempattr
