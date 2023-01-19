@@ -207,7 +207,7 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 			}
 			puts $fb [join [list $chrom $curbegin $curend transcript $curtranscript $curgene $curstrand \
 				$curcdsStart $curcdsEnd $curexonCount \
-				[join $curexonStarts ,], [join $curexonEnds ,], [join [list_remdup $cursource] ,]] \t]
+				[join $curexonStarts ,] [join $curexonEnds ,] [join [list_remdup $cursource] ,]] \t]
 			set attrlist $attrtemplate
 			foreach {key value} [array get curattra] {
 				if {![info exists attra($key)]} {

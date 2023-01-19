@@ -155,8 +155,8 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000} {noc
 		set cds 1
 	}
 	set adata(cds) $cds
-	set exonStarts [split [string trim $exonStarts ,] ,]
-	set exonEnds [split [string trim $exonEnds ,] ,]
+	set exonStarts [split [string trimright $exonStarts ,] ,]
+	set exonEnds [split [string trimright $exonEnds ,] ,]
 	set adata(nrexons) [llength $exonStarts]
 	# use code coming from novoSNP:
 	# transform to ft addressing used in novoSNP previously (ft endpos is included, so -1)

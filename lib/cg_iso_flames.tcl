@@ -8,13 +8,13 @@ proc cg_iso_flames_genecounts {isoformcounts genecounts} {
 	set tempfile [tempfile]
 	cg select -overwrite 1 \
 		-g {geneid} \
-		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),ucount(transcript),sum(counts-*)} \
+		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),distinct(structural_category),ucount(transcript),sum(counts-*)} \
 		$isoformcounts $tempfile
 	catch {close $f} ; catch {close $o}
 	set f [open $tempfile]
 	set header [tsv_open $f]
-	set oheader {gene chromosome begin end strand nrtranscripts}
-	foreach field [lrange $header 6 end] {
+	set oheader {gene chromosome begin end strand type category nrtranscripts}
+	foreach field [lrange $header 7 end] {
 		regsub sum_ $field {} field
 		lappend oheader $field
 	}
@@ -29,22 +29,28 @@ proc cg_iso_flames_genecounts {isoformcounts genecounts} {
 		#fields	strand	1	String	+ or - for strand
 		#fields	begin	1	Integer	Transcription start position
 		#fields	end	1	Integer	Transcription end position
+		#fields	category	1	String	gene category (known or novel)
 		#fields	nrtranscripts	1	Integer	number of transcripts found
 		#fields	counts	1	Integer	Number of reads mapping to gene
+		#fields	type	1	String	Type of element
 	}]
 	puts $o [join $oheader \t]
 	while {[gets $f line] != -1} {
-		puts $o $line
+		set line [split $line \t]
+		set line [linsert $line 5 gene]
+		if {[regexp intergenic [lindex $line 6]]} {set category novel} else {set category known}
+		lset line 6 $category
+		puts $o [join $line \t]
 	}
 	close $o
 	close $f
 }
 
 proc iso_flames_job {args} {
-	# putslog [list flames_job {*}$args]
+# putslog [list flames_job {*}$args]
 	upvar job_logdir job_logdir
-	set cmdline [clean_cmdline cg flames {*}$args]
 	global appdir
+	set cmdline [clean_cmdline cg flames {*}$args]
 	set refseq {}
 	set skips {}
 	set genes {}
@@ -62,6 +68,9 @@ proc iso_flames_job {args} {
 		}
 		-reftranscripts {
 			set reftranscripts $value
+		}
+		-distrreg {
+			# not used
 		}
 		-extraopts {
 			set extraopts $value
@@ -82,7 +91,7 @@ proc iso_flames_job {args} {
 		}
 	}
 	if {$resultfile eq ""} {
-		set root [file_rootname [file dir $fastqdir]]
+		set root fastqs-[file tail [file dir $fastqdir]]
 		set resultfile [file dir $fastqdir]/isoform_counts-flames-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
@@ -105,6 +114,9 @@ proc iso_flames_job {args} {
 	# analysis per sample
 	set flamesdir $destdir/flames-$root
 	set fastqfiles [bsort [jobgzfiles $fastqdir/*.fq $fastqdir/*.fastq]]
+	if {[llength $fastqfiles] == 0} {
+		error "could not run flames: no fastq files found (tried in $fastqdir)"
+	}
 	mkdir $flamesdir
 	job flames-[file tail $resultfile] {*}$skips -skip flames-$root/counts_matrix-flames-$root.tsv \
 	-cores $threads \
@@ -112,7 +124,7 @@ proc iso_flames_job {args} {
 		$resultfile
 		$destdir/gene_counts-flames-$root.tsv
 	} -vars {
-		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq reftranscripts threads extraopts
+		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq threads extraopts
 	} -code {
 		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile flames [version flames]
 		set keeppwd [pwd]
@@ -204,6 +216,7 @@ proc iso_flames_job {args} {
 			#fields	strand	1	String	+ or - for strand
 			#fields	begin	1	Integer	Transcription start position
 			#fields	end	1	Integer	Transcription end position
+			#fields	type	1	String	type of element
 			#fields	cdsStart	1	Integer	Coding region start
 			#fields	cdsEnd	1	Integer	Coding region end
 			#fields	exonCount	1	Integer	Number of exons
@@ -214,12 +227,19 @@ proc iso_flames_job {args} {
 			#fields	cdsStartStat	1	String	Status of CDS start annotation (none, unknown, incomplete, or complete)
 			#fields	cdsEndStat	1	String	Status of CDS end annotation (none, unknown, incomplete, or complete)
 			#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
+			#fields	category	1	String	one of the isoform categories (known, novel, intergenic)
 			#fields	counts	1	Integer	Number of reads mapping to isoform
 		}]
 		puts $o [join [list \
-			transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames counts-flames-$root
+			transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames \
+			type category counts-flames-$root
 		] \t]
 		set f [open flames-$root/isoform_annotated.filtered.genepred]
+		unset -nocomplain genea ; unset -nocomplain transcriptsa
+		foreach {gene transcript count} [lrange [exec cg gtf2tsv $reftranscripts | cg select -g {gene * transcript *}] 3 end] {
+			set genea($gene) 1
+			set transcripta($transcript) 1
+		}
 		while {[gets $f line] != -1} {
 			set line [split $line \t]
 			set transcript [lindex $line 0]
@@ -228,12 +248,21 @@ proc iso_flames_job {args} {
 			set gene [lindex $line 11]
 			regsub ^gene: $gene {} gene
 			lset line 11 $gene
+			lset line 8 [string trimright [lindex $line 8] ,]
+			lset line 9 [string trimright [lindex $line 9] ,]
 			if {[info exists a([list $transcript $gene])]} {
 				set count $a([list $transcript $gene])
 			} else {
 				set count 0
 			}
-			puts $o [join $line \t]\t$count
+			if {![info exists genea($gene)]} {
+				set category intergenic
+			} elseif {![info exists transcripta($transcript)]} {
+				set category novel
+			} else {
+				set category known
+			}
+			puts $o [join $line \t]\ttranscript\t$category\t$count
 		}
 		close $f
 		close $o

@@ -106,7 +106,7 @@ proc sqanti3 {src dest refseq gtfannotation {rename 0} {geneconvaVar {}}} {
 		#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
 		#fields	length	1	Integer	isoform length
 		#fields	exons	1	Integer	Number of exons
-		#fields	structural_category	1	String	one of the isoform categories absed on the best matching reference transcript (https://github.com/ConesaLab/SQANTI3/wiki/SQANTI3-output-explanation)
+		#fields	structural_category	1	String	one of the isoform categories based on the best matching reference transcript (https://github.com/ConesaLab/SQANTI3/wiki/SQANTI3-output-explanation)
 		#fields	associated_gene	1	String	the reference gene name
 		#fields	associated_transcript	1	String	the reference transcript name
 		#fields	ref_length	1	Integer	reference transcript length

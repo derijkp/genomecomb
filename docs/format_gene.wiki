@@ -29,6 +29,8 @@ and start2,end2 regions surround a SV).
 ; gene_name:	"gene","name2", "geneid", "gene_id"
 
 Any other fields can be added, but the following are common:
+; category: field indicating if the transcript is known, novel or intergenic (transcript of a novel gene); 
+for novel transcripts how they differ from (the closest) known transcipt can be added after novel (, e.g. novl_in_catalog)
 ; exonCount: number of exons
 ; source: source of data
 ; geneid: a gene identifier, such as the ensembl id. This field

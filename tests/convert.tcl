@@ -1573,9 +1573,9 @@ test gtf2tsv {basic} {
 		# -- tsv converted from gtf, original comments follow --
 		# ----
 		chromosome	begin	end	type	transcript	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_id	transcript_id	exon_number
-		chr3	999	2000	transcript	transcript1	gene1	-			1	999,	2000,	source2	gene1	transcript1	0
-		chr4	999	4000	transcript	transcript2-1	gene2	+			2	999,2999,	1500,4000,	source2	gene2	transcript2-1	0,1
-		chr4	999	5000	transcript	transcript2-2	gene2	+			3	999,2999,4499,	1500,4000,5000,	source2	gene2	transcript2-2	0,1,2
+		chr3	999	2000	transcript	transcript1	gene1	-			1	999	2000	source2	gene1	transcript1	0
+		chr4	999	4000	transcript	transcript2-1	gene2	+			2	999,2999	1500,4000	source2	gene2	transcript2-1	0,1
+		chr4	999	5000	transcript	transcript2-2	gene2	+			3	999,2999,4499	1500,4000,5000	source2	gene2	transcript2-2	0,1,2
 	}]]\n
 	cg gtf2tsv tmp/test.gtf tmp/test.tsv
 	cg checktsv tmp/test.tsv
@@ -1645,7 +1645,7 @@ test gtf2tsv {ENSG00000187583} {
 test tsv2gtf {back and forth} {
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	transcript	gene	source	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
-		chr9	27535639	27573494	ENST00000673600.1	C9orf72	intgene	-	27548381	27567120	12	27535639,27548114,27548556,27550649,27556560,27558490,27560226,27561584,27562380,27565530,27566676,27573430,	27536286,27548418,27548666,27550707,27556796,27558607,27560299,27561649,27562476,27565590,27567164,27573494,
+		chr9	27535639	27573494	ENST00000673600.1	C9orf72	intgene	-	27548381	27567120	12	27535639,27548114,27548556,27550649,27556560,27558490,27560226,27561584,27562380,27565530,27566676,27573430	27536286,27548418,27548666,27550707,27556796,27558607,27560299,27561649,27562476,27565590,27567164,27573494
 	}]\n
 	cg tsv2gtf tmp/expected.tsv tmp/test.gtf
 	cg gtf2tsv -stack 1 tmp/test.gtf tmp/result.tsv

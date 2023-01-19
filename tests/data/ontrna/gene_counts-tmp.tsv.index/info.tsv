@@ -1,0 +1,5 @@
+key	value
+file	/home/peter/dev/genomecomb/tests/data/ontrna/gene_counts-tmp.tsv
+lineindexfile	lines.bcol
+header	chromosome begin end strand gene geneid counts-flames-fastqs-sirv1 counts-isoquant-sirv1 counts-flair-sirv1 tpm-flair-sirv1 counts-flames-fastqs-sirv2 counts-isoquant-sirv2 counts-flair-sirv2 tpm-flair-sirv2
+size	9

@@ -85,8 +85,9 @@ proc ref_tsvtranscripts refseq {
 	}
 	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*gencode*.gtf]] end]
 	if {[file exists $reftranscripts]} {
-		set reftranscriptstsv [tempfile].tsv
-		cg_gtf2tsv $reftranscripts $reftranscriptstsv
+		set reftranscriptstsv [file root $reftranscripts].tsv
+		cg_gtf2tsv $reftranscripts $reftranscriptstsv.temp
+		file rename -force $reftranscriptstsv.temp $reftranscriptstsv
 		return $reftranscriptstsv
 	}
 	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*.tsv]] end]
@@ -99,8 +100,9 @@ proc ref_tsvtranscripts refseq {
 	}
 	set reftranscripts [lindex [bsort [gzfiles $refdir/*.gtf]] end]
 	if {[file exists $reftranscripts]} {
-		set reftranscriptstsv [tempfile].tsv
-		cg_gtf2tsv $reftranscripts $reftranscriptstsv
+		set reftranscriptstsv [file root $reftranscripts].tsv
+		cg_gtf2tsv $reftranscripts $reftranscriptstsv.temp
+		file rename -force $reftranscriptstsv.temp $reftranscriptstsv
 		return $reftranscriptstsv
 	}
 	error "no tsv (or gtf) reference transcripts found in $refdir"

@@ -86,7 +86,7 @@ test process_ontrna {ontrna} {
 		lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 			-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
 			-x *.analysisinfo -x *.png -x *.submitting \
-			-x GMST -x sqanti3-flair-* -x gene_counts-sqanti3-flair-* \
+			-x GMST -x sqanti3-flair-* -x gene_counts-flair-* \
 			-ignorefields {
 				associated_gene
 			} \

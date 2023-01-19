@@ -38,8 +38,13 @@ proc cg_genepred2tsv {args} {
 	}]\n[join {
 		name chromosome strand begin end cdsStart cdsEnd 
 		exonCount exonStarts exonEnds score gene cdsStartStat cdsEndStat exonFrames
-	} \t]	
-	fcopy $f $o
+	} \t]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		lset line 8 [string trimright [lindex $line 8] ,]
+		lset line 9 [string trimright [lindex $line 9] ,]
+		puts $o [join $line \t]
+	}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 }

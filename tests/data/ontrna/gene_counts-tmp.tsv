@@ -1,0 +1,29 @@
+#filetype	tsv/genecountsfile
+#fileversion	0.99
+#fields	table
+#fields	field	number	type	description
+#fields	gene	1	String	gene id (usually gene_id from GTF)
+#fields	genetype	1	String	type of gene
+#fields	chromosome	1	String	Chromosome name
+#fields	strand	1	String	+ or - for strand
+#fields	begin	1	Integer	Transcription start position
+#fields	end	1	Integer	Transcription end position
+#fields	nrtranscripts	1	Integer	number of transcripts found
+#fields	counts	1	Integer	Number of reads mapping to gene
+#fields	tpm	1	Float	Number of gene transcripts per million total transcripts
+#fields	type	1	String	type of element
+chromosome	begin	end	strand	gene	geneid	counts-flair-sirv1	tpm-flair-sirv1	counts-flames-fastqs-sirv1	counts-isoquant-sirv1	counts-flair-sirv2	tpm-flair-sirv2	counts-flames-fastqs-sirv2	counts-isoquant-sirv2
+SIRV1	995	11643	-	SIRV1N	SIRV1N	279.0	118120.23708721422	309	380.50	107.0	109856.26283367556	106	141.00
+SIRV1	10582	11643	+	SIRV1P	SIRV1P	38.0	16088.060965283657	52	59.50	16.0	16427.104722792606	0	24.00
+SIRV2	994	5911	-	SIRV2N	SIRV2N	166.0	70279.42421676544	124	205.00	67.0	68788.50102669405	0	92.50
+SIRV2	1108	4457	+	SIRV2P	SIRV2P	0	0	18	37.00	0	0	77	13.50
+SIRV3	998	9899	-	SIRV3N	SIRV3N	94.0	39796.78238780694	69	109.00	36.0	36960.985626283364	27	44.50
+SIRV3	1944	8940	+	SIRV3P	SIRV3P	148.0	62658.76375952582	208	282.00	88.0	90349.07597535934	91	110.50
+SIRV4	1000	3403	+	SIRV4P	SIRV4P	157.0	66469.09398814564	162	174.00	67.0	68788.50102669405	59	74.00
+SIRV4	3635	15122	-	SIRV4N	SIRV4N	269.0	113886.53683319222	277	125.00	102.0	104722.79260780287	94	48.00
+SIRV4	3636	5160	-	novel_SIRV4_m_3636_5149	novel_SIRV4_m_3636_5149	0	0	0	83.50	0	0	0	32.50
+SIRV5	1000	13606	+	SIRV5P	SIRV5P	262.0	110922.94665537681	309	402.00	114.0	117043.12114989734	89	167.00
+SIRV5	2177	2406	-	SIRV5N	SIRV5N	0	0	0	13.00	0	0	0	6.00
+SIRV6	1000	11837	+	SIRV6P	SIRV6P	810.0	342929.7205757832	860	994.00	330.0	338809.0349075976	298	387.00
+SIRV6	1544	2547	-	SIRV6N	SIRV6N	0	0	20	45.00	0	0	0	20.00
+SIRV7	1000	147957	-	SIRV7N	SIRV7N	139.0	58848.43353090601	110	162.00	47.0	48254.62012320328	0	49.00

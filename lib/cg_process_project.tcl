@@ -44,6 +44,7 @@ proc process_project_job {args} {
 		}
 		-dbdir - -refdir {
 			set dbdir $value
+#			set refseq [refseq $dbdir]
 		}
 		-minfastqreads {
 			set minfastqreads $value
@@ -353,11 +354,18 @@ proc process_project_job {args} {
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
 	}
 	foreach isocaller $isocallers {
-		iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
 		set options [cmd_getoptions [list cg iso_${isocaller}]]
-		if {"-compar" ni $options} {
+		if {"-compar" in $options} {
+			iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
+		} else {
+			foreach bam [jobglob $destdir/samples/*/map-*.bam] {
+				iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $bam
+			}
+			iso_combine_job $destdir $isocaller
 		}
 	}
+	# combine all
+	iso_combine_job $destdir *
 	if {$flair} {
 		flair_job -refseq [refseq $dbdir] $destdir
 	}

@@ -1,0 +1,26 @@
+#filetype	tsv/genecountsfile
+#fileversion	0.99
+#fields	table
+#fields	field	number	type	description
+#fields	gene	1	String	gene id (usually gene_id from GTF)
+#fields	chromosome	1	String	Chromosome name
+#fields	strand	1	String	+ or - for strand
+#fields	begin	1	Integer	Transcription start position
+#fields	end	1	Integer	Transcription end position
+#fields	category	1	String	gene category (known or novel)
+#fields	nrtranscripts	1	Integer	number of transcripts found
+#fields	counts	1	Integer	Number of reads mapping to gene
+#fields	type	1	String	Type of element
+gene	chromosome	begin	end	strand	type	category	nrtranscripts	counts-flames-fastqs-sirv
+SIRV1N	SIRV1	1000	11643	-	gene	known	7	309
+SIRV1P	SIRV1	10582	11643	+	gene	known	2	52
+SIRV2N	SIRV2	1000	5911	-	gene	known	4	124
+SIRV2P	SIRV2	4033	4457	+	gene	known	1	18
+SIRV3N	SIRV3	1000	1982	-	gene	known	1	69
+SIRV3P	SIRV3	1944	8939	+	gene	known	5	208
+SIRV4N	SIRV4	3637	15122	-	gene	known	5	277
+SIRV4P	SIRV4	1000	3403	+	gene	known	2	162
+SIRV5P	SIRV5	1000	11866	+	gene	known	8	309
+SIRV6N	SIRV6	1544	1820	-	gene	known	1	20
+SIRV6P	SIRV6	1000	11837	+	gene	known	15	860
+SIRV7N	SIRV7	1005	147957	-	gene	known	4	110

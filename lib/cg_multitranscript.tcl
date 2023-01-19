@@ -41,6 +41,7 @@ proc multitranscript_open {isoformfiles aVar} {
 				lset poss 9 $pos
 			}
 		}
+		lappend poss [lsearch $header category]
 		set a(h,$fnum) $header
 		set a(id,$fnum) $poss
 		set a(data,$fnum) [list_find -glob $header *-*]
@@ -58,6 +59,7 @@ proc multitranscript_open {isoformfiles aVar} {
 			set common [list_common $common $other]
 		}
 	}
+	lappend basefields category
 	# find what fields need to go in the header
 	set fnum -1
 	foreach file $isoformfiles {
@@ -74,45 +76,32 @@ proc multitranscript_open {isoformfiles aVar} {
 	return $header
 }
 
-proc multitranscript_directmatch {aVar o isoformfiles} {
-	upvar $aVar a
-	while 1 {
-		set curids {}
-		set fnum -1
-		foreach file $isoformfiles {
-			incr fnum
-			lappend curids [lrange $a(curid,$fnum) 0 end-5]
+proc cg_multitranscript {args} {
+	set match {}
+	set exact 0
+	cg_options multitranscript args {
+		-exact {
+			set exact 1
+			set match {}
 		}
-		set curid [lindex [bsort $curids] 0]
-		if {$curid eq {{} {} {} {} {} {}}} break
-		set pos [lsearch $curids $curid]
-		set mfile [lindex $isoformfiles $pos]
-		set line $a(curid,$pos)
-		lappend line {*}[list_sub $a(curline,$pos) $a(common,$pos)]
-		set fnum -1
-		foreach file $isoformfiles {
-			incr fnum
-			if {[lrange $a(curid,$fnum) 0 end-5] eq $curid} {
-				lappend line {*}[list_sub $a(curline,$fnum) $a(data,$fnum)]
-				set a(status,$fnum) [gets $a(f,$fnum) a(curline,$fnum)]
-				set a(curline,$fnum) [split $a(curline,$fnum) \t]
-				set temp [list_sub $a(curline,$fnum) $a(id,$fnum)]
-				set ctemp [lrange $temp 0 end-5]
-				if {[lindex [bsort [list $curid $ctemp]] 1] ne $ctemp} {
-					error "file $file not sorted correctly; should be sorted on: chromosome begin end strand exonStarts exonEnds"
-				}
-				set a(curid,$fnum) $temp
-			} else {
-				lappend line {*}$a(empty,$fnum)
-			}
+		-match {
+			set match $value
 		}
-		puts $o [join $line \t]
-	}
-}
+	} compar_file 2
+	set isoformfiles $args
 
-proc multitranscript_approxmatch {aVar o isoformfiles match} {
-	upvar $aVar a
+	foreach file $isoformfiles {
+		catch {close $a(f,$file)}
+	}
+	set header [multitranscript_open $isoformfiles a]
+	# open result file
+	catch {close $o}
+	set o [open $compar_file.temp w]
+	if {$a(comment,0) ne ""} {puts -nonewline $o $a(comment,0)}
+	puts $o [join $header \t]
+
 	while 1 {
+
 		# find earliest transcript to start region
 		set curids {}
 		set fnum -1
@@ -138,6 +127,14 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 				while 1 {
 					set line $a(curid,$fnum)
 					foreach {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene_name geneid} $line break
+					if {[string index $exonStarts end] eq ","} {
+						set exonStarts [string range $exonStarts 0 end-1]
+						lset line 4 $exonStarts
+					}
+					if {[string index $exonEnds end] eq ","} {
+						set exonEnds [string range $exonEnds 0 end-1]
+						lset line 5 $exonEnds
+					}
 					if {$chromosome ne $curchr} break
 					if {$begin >= $curend} break
 					incr num
@@ -145,26 +142,32 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 					set common [list_sub $a(curline,$fnum) $a(common,$fnum)]
 					set data [list_sub $a(curline,$fnum) $a(data,$fnum)]
 					lappend line $common $data $fnum
-#putsvars line transcript
-##if {[regexp transcript $transcript]} error
-#if {$transcript eq "transcript_chr9_27560423-e1226i731e96i3054e60i1086e488i6266e56"} {error tr}
-#if {$exonStarts eq "27560423,27562380,27565530,27566676,27573430,"} {error starts}
-#
-					if {[regexp $match $transcript]} {
+					set cat [lindex $line 11]
+					if {$exact} {
+						set amatch 0
+					} elseif {$match eq {}} {
+						if {$cat eq "known"} {set amatch 0} else {set amatch 1}
+					} elseif {[regexp $match $transcript]} {
+						set amatch 1
+					} else {
+						set amatch 0
+					}
+					if {!$amatch} {
+						set id [list $begin $end $strand $exonStarts $exonEnds]
+						lappend seta($id) $line
+					} else {
 						set id [list $strand]
-						set starts [split [string trim $exonStarts ,] ,]
+						set starts [split $exonStarts ,]
+						set ends [split $exonEnds ,]
 						if {[llength $starts] == 1} {
 							set id single
 						} else {
 							foreach s [lrange $starts 1 end] \
-								e [lrange [split [string trim $exonEnds ,] ,] 0 end-1] {
+								e [lrange $ends 0 end-1] {
 								lappend id $e $s
 							}
 						}
 						lappend setma($id) $line
-					} else {
-						set id [list $begin $end $strand $exonStarts $exonEnds]
-						lappend seta($id) $line
 					}
 					set a(status,$fnum) [gets $a(f,$fnum) a(curline,$fnum)]
 					set a(curline,$fnum) [split $a(curline,$fnum) \t]
@@ -179,11 +182,36 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 			}
 			if {!$num} break
 		}
-#set sid "- 27561649 27562380 27562476 27565530 27565590 27566676 27567164 27573430"
-#if {[info exists setma($sid)]} {puts "in setma"}
+
 		if {[info exists setma(single)]} {
-			set list [bsort $setma(single)]
-			if {[llength $list] == 1} {
+			# join $setma(single) \n
+			# check for matches to known
+			set knowns [array names seta]
+			if {[llength $knowns]} {
+				set list {}
+				foreach line [bsort $setma(single)] {
+					foreach {chromosome begin end strand exonStarts exonEnds} $line break
+					set matched 0
+					foreach kline $knowns {
+						foreach {kbegin kend kstrand kexonStarts kexonEnds} $kline break
+						if {[llength $kexonStarts] > 1} continue
+						if {$begin >= $kbegin && $end <= $kend} {
+							lappend seta($kline) $line
+							set matched 1
+							break
+						}
+					}
+					if {!$matched} {
+						lappend list $line
+					}
+				}
+			} else {
+				set list [bsort $setma(single)]
+			}
+			# merge
+			if {[llength $list] == 0} {
+				#everything from setma(single) moved to known -> do nothing
+			} elseif {[llength $list] == 1} {
 				set line [lindex $list 0]
 				foreach {chromosome begin end strand exonStarts exonEnds} $line break
 				set id [list $begin $end $strand $exonStarts $exonEnds]
@@ -197,12 +225,12 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 				foreach line $todo {
 					foreach {chr begin end} $line break
 					if {$begin >= $curend || ![llength $line]} {
-						set id [list $curbegin $curend $strand $curbegin, $curend,]
+						set id [list $curbegin $curend $strand $curbegin $curend]
 						foreach l $result {
 							lset l 1 $curbegin
 							lset l 2 $curend
-							lset l 4 $curbegin,
-							lset l 5 $curend,
+							lset l 4 $curbegin
+							lset l 5 $curend
 							lappend seta($id) $l
 						}
 						set result [list $line]
@@ -222,7 +250,7 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 				set end [lmath_max [list_subindex $list 2]]
 				foreach {strand starts ends} [list_sub [lindex $list 0] {3 4 5}] break
 				set starts [join [lreplace [split $starts ,] 0 0 $begin] ,]
-				set ends [join [lreplace [split $ends ,] end-1 end-1 $end] ,]
+				set ends [join [lreplace [split $ends ,] end end $end] ,]
 				lset list 0 4 $starts
 				lset list 0 5 $ends
 				set id [list $begin $end $strand $starts $ends]
@@ -237,16 +265,33 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 		if {![llength $ids]} break
 		foreach id [bsort $ids] {
 			foreach {begin end strand starts ends} $id break
-#set sid {27560423 27573766 - 27560423,27562380,27565530,27566676,27573430, 27561649,27562476,27565590,27567164,27573766,}
-#if {$id eq $sid} {error seta}
-			# if {$starts eq "1253911,1256044,1256991,1257207,1263345,1267861,1273665,"} {error error2}
 			set ts $seta($id)
 			unset -nocomplain va
 			foreach line $ts {
 				foreach {common data fnum} [lrange $line end-2 end] break
 				set va($fnum) $data
 			}
-			set line [lindex $ts 0]
+			if {[llength $ts] > 1} {
+				set cats [list_subindex $ts 11]
+				set p [lsearch $cats known]
+				if {$p == -1} {
+					set p [lsearch $cats {}]
+				}
+				if {$p == -1} {
+					set line [lindex $ts 0]
+					set name [iso_name [lindex $line 0] $strand $starts $ends]
+					lset line 8 $name
+				} else {
+					set line [lindex $ts $p]
+				}
+			} else {
+				set line [lindex $ts 0]
+				set cat [lindex $line 11]
+				if {$cat ni {known {}}} {
+					set name [iso_name [lindex $line 0] $strand $starts $ends]
+					lset line 8 $name
+				}
+			}
 			set common [lindex $line end-2]
 			set line [lrange $line 0 end-3]
 			lset line 1 $begin
@@ -266,36 +311,10 @@ proc multitranscript_approxmatch {aVar o isoformfiles match} {
 			puts $o [join $line \t]
 		}
 	}
-}
 
-proc cg_multitranscript {args} {
-	set match {}
-	cg_options multitranscript args {
-		-match {
-			set match $value
-		}
-	} compar_file 2
-	set isoformfiles $args
-
-	set header [multitranscript_open $isoformfiles a]
-	# open result file
-	catch {close $o}
-	set o [open $compar_file.temp w]
-	if {$a(comment,0) ne ""} {puts -nonewline $o $a(comment,0)}
-	puts $o [join $header \t]
-	if {$match eq ""} {
-		# plain, direct matching (transcripts have to be identical)
-		multitranscript_directmatch a $o $isoformfiles
-	} else {
-		# use approximate matching (where applicable)
-		# for multi-exon transcripts with the same introns will be merged
-		# for mono-exon transcripts overlapping will be merged
-		multitranscript_approxmatch a $o $isoformfiles $match
-	}
 	close $o
 	foreach file $isoformfiles {
 		catch {close $a(f,$file)}
 	}
 	file rename -force $compar_file.temp $compar_file
-
 }

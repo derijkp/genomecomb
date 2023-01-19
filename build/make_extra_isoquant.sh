@@ -113,7 +113,7 @@ conda init bash
 # --------
 cd /build
 
-isoquantversion=3.0.3
+isoquantversion=3.1.0
 
 conda create -y -n isoquant
 conda activate isoquant

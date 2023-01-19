@@ -9,11 +9,13 @@ analysis information (variant calls, multicompar, reports, ...) starting
 from raw sample data from various sources.
 
 == Description ==
-The [[cg_process_project]] command performs the entire secondary analysis (clipping,
-alignment, variant calling, reports, ...) and part of the tertiary
-analysis (combining samples, annotation, ...) on a number of samples
-that may come from various sources. A practical example of the workflow
-can be found in [[howto_process_project]].
+The [[cg_process_project]] command performs the entire secondary analysis
+(clipping, alignment, variant calling, reports, ...) and part of the
+tertiary analysis (combining samples, annotation, ...) on a number of
+samples that may come from various sources. You can specify which analyses
+should be run using the options. The default settings/options are for
+analysing Illumina genomic sequencing data. A practical example of the
+workflow can be found in [[howto_process_project]].
 
 The command expects a basic genomecomb project directory (as
 described extensively in [[projectdir]]) containing a number of
@@ -90,10 +92,12 @@ that do not have a sample specific amplicon file yet.
 Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, 
 ; -svcallers svcallers: (space separated) list of structural variant callers to be used (default empty).
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
-; -methcallers svcallers: (space separated) list of methylation callers to be used (default empty).
+; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
 Currently supported are: nanopolish
+; -isocallers isocallers: (space separated) list of isofrom calling (and counting) programs to be used for rna-seq data.
+Currently supported are: flair, isoquant, flames
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.
-Currently supported are: rnaseqc
+Currently supported are: rnaseqc, qorts
 ; -split 1/0: split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use basic (default) for creating most reports, or all for all reports. If you only

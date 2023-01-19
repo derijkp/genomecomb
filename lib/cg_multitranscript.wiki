@@ -19,7 +19,17 @@ column heading of the form field-<sample>.
 about e.g. the sequencing or analysis method in the form method-samplename, e.g.
 count_weighed-isoquant-sample1.tsv.
 
-When a transcript was not detected in a sample, the value in the table is set to 0.0
+When a transcript was not detected in a sample, the value in the table is set to 0.0.
+
+By default multitranscript will use approximate matching for novel
+transcripts (based on the content of the field "category"): Novel
+transcripts will be matched if they have identical junction chains, even
+if the (predicted) ends differ.  The resulting transcript will have the
+lowest start and highest end position of these matches. The id of these
+result transcripts will be changed to one unique for that transcript and
+consistent over different experiments (based on location and intron/exon
+sizes)
+
 
 == Arguments ==
 ; multitranscriptfile: resultfile, will be created if it does not exist
@@ -27,10 +37,11 @@ When a transcript was not detected in a sample, the value in the table is set to
   More than one can added in one command
 
 == Options ==
-; -match pattern: use approximate matching for (novel) transcripts where the 
-  transcript name matches the given pattern (regexp), e.g. "transcript".
-  If this is given, transcripts with identical junction chain, but different ends will
-  also be matched (the resulting transcript will have the lowest start and highest end position)
+; -exact 0/1: use exact matching
+; -match pattern: For all transcripts whose id/name matches
+**pattern** approximate matching will be used. (overruling the value in
+category, though this will still be used to see which name will be given
+to the result; known preferred)
 
 == Category ==
-Variants
+RNA
