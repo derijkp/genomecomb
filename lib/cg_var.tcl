@@ -231,7 +231,7 @@ proc var_job {args} {
 					set root $method-[file_rootname [file tail $bamfile]]
 					analysisinfo_copy $analysisinfo [analysisinfo_file $target] \
 						[list varcaller_region [file tail $regionfile] \
-						sample $root]
+						analysis $root sample $root]
 					exec touch [analysisinfo_file $target]
 				}
 				# using bsort because

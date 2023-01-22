@@ -220,7 +220,7 @@ proc var_gatk_job {args} {
 	} -vars {
 		gatk opts regionfile gatkrefseq refseq threads root cache
 	} -code {
-		analysisinfo_write $dep $target sample $root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target analysis $root sample $root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
 			file_copy $cache $target

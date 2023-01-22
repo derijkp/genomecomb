@@ -130,7 +130,7 @@ proc var_freebayes_job {args} {
 	} -vars {
 		opts regionfile refseq root cache
 	} -code {
-		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target analysis $root sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
 			file_copy $cache $target

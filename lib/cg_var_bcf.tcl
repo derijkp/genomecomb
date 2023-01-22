@@ -135,7 +135,7 @@ proc var_bcf_job {args} {
 	} -vars {
 		refseq opts BQ BAQ regionfile root threads callmethod split cache
 	} -code {
-		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target analysis $root sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
 			file_copy $cache $target
@@ -184,7 +184,7 @@ proc var_bcf_job {args} {
 	} -vars {
 		root pre
 	} -code {
-		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
+		analysisinfo_write $dep $target analysis $root sample $root varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
 		set tempfile [filetemp_ext $target]
 		cg select -overwrite 1 -q {
 			$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4

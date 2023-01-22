@@ -249,7 +249,7 @@ proc var_clair3_job {args} {
 		mincoverage mingenoqual split platform model
 	} -code {
 		analysisinfo_write $dep $varfile \
-			sample $root \
+			analysis $root sample $root \
 			varcaller clair3 varcaller_version [version clair3] \
 			varcaller_cg_version [version genomecomb] varcaller_region $region \
 			varcaller_platform $platform varcaller_model $model \
