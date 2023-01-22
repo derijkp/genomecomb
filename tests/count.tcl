@@ -29,7 +29,15 @@ test counters {count_qorts basic} {
 	set refseq $::refseqdir/hg19
 	cg count_qorts -refseq $::refseqdir/hg19 tmp/ali_star.bam
 	cg select -q {$counts-qorts-ali_star > 0} tmp/gene_counts-qorts-ali_star.tsv
-} {geneid	counts-qorts-ali_star	count_cds-qorts-ali_star	count_utr-qorts-ali_star	count_ambig_gene-qorts-ali_star
+} {#filetype tsv/countfile
+#fileversion	0.99
+#fields	field	number	type	description
+#fields	geneid	1	String	id	field
+#fields	counts	1	Integer	gene	counts per sample
+#fields	count	cds	1	Integer	gene counts per sample
+#fields	count	utr	1	Integer	gene counts per sample
+#fields	count	ambig	gene	1	Integer gene counts per sample
+geneid	counts-qorts-ali_star	count_cds-qorts-ali_star	count_utr-qorts-ali_star	count_ambig_gene-qorts-ali_star
 ENSG00000100412.11	2	2	0	14
 ENSG00000100413.12	1	0	1	14
 ENSG00000183486.8	78	61	17	0
