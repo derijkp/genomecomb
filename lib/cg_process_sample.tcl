@@ -942,6 +942,7 @@ proc process_sample_job {args} {
 					 $bamfile]
 				lappend cleanedbams $cleanbam
 			} else {
+				# distributed cleaning
 				set cleanbams {}
 				set compressionlevel [defcompressionlevel 5]
 				setdefcompressionlevel 1
@@ -973,6 +974,10 @@ proc process_sample_job {args} {
 				putslog "no fastqs for $sample and file $resultbamfile does not exist"
 			}
 		}
+	}
+	# make sure the bams are indexed
+	foreach bam $cleanedbams {
+		bam_index_job $bam
 	}
 	# varcaller from bams
 	foreach cleanedbam $cleanedbams {

@@ -286,8 +286,12 @@ proc map_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job {*}$skips -sort $sort -mergesort $mergesort -maxopenfiles $maxopenfiles -name map_${method}2bam-$sample -refseq $refseq \
-		-deletesams [string is false $keepsams] -threads $threads -- $result {*}$samfiles
+	sam_catmerge_job {*}$skips -threads $threads -maxopenfiles $maxopenfiles \
+		-sort $sort -mergesort $mergesort \
+		-name map_${method}2bam-$sample \
+		-refseq $refseq \
+		-deletesams [string is false $keepsams] \
+		-- $result {*}$samfiles
 	return $result
 }
 
