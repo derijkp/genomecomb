@@ -91,7 +91,7 @@ test meth {meth_nanopolish with gz results} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
-		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
+		-x colinfo -x meth.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
 		-x smeth-*.tsv.gz \
 		-x *sniffles*.vcf -x *.snf \
 		-x *.analysisinfo -x *.png -x *.submitting \
