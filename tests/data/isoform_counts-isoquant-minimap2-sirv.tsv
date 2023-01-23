@@ -25,7 +25,7 @@
 #fields	associated_gene	1	String	the reference gene name
 #fields	associated_transcript	1	String	the reference transcript name
 #fields	counts	1	Integer	Number of reads mapping to isoform
-chromosome	begin	end	strand	exonStarts	exonEnds	transcript	gene	geneid	type	gene_ori	cdsStart	cdsEnd	exonCount	source	exon_assignment	transcript_id	category	size	counts_iqall-sirv	counts_weighed-isoquant-sirv	counts_unique-isoquant-sirv	counts_strict-isoquant-sirv	counts_aweighed-isoquant-sirv	counts_aunique-isoquant-sirv	counts_astrict-isoquant-sirv
+chromosome	begin	end	strand	exonStarts	exonEnds	transcript	gene	geneid	type	gene_ori	cdsStart	cdsEnd	exonCount	source	exon_assignment	transcript_id	category	size	counts_iqall-sirv	counts_weighed-isoquant-minimap2-sirv	counts_unique-isoquant-minimap2-sirv	counts_strict-isoquant-minimap2-sirv	counts_aweighed-isoquant-minimap2-sirv	counts_aunique-isoquant-minimap2-sirv	counts_astrict-isoquant-minimap2-sirv
 SIRV1	1000	10786	-	1000,6337,6560,7552,10282,10444	1484,6473,6813,7814,10366,10786	SIRV101N	SIRV1N	SIRV1N	transcript	SIRV1N			6	LexogenSIRVData	SIRV101_0N,SIRV101_1N,SIRV101_2N,SIRV101_3N,SIRV101_4N,SIRV101_5N	SIRV101N	known	1561	54.00	53.92	10	8	1.00	1	1
 SIRV1	1000	10786	-	1000,7552,10553	1484,7808,10786	SIRV106N	SIRV1N	SIRV1N	transcript	SIRV1N			3	LexogenSIRVData	SIRV106_0N,SIRV106_1N,SIRV106_2N	SIRV106N	known	973	37.00	42.17	37	25	1.33	1	1
 SIRV1	1000	10791	-	1000,6337,6560,7552,10282,10647	1484,6473,6813,7814,10366,10791	SIRV103N	SIRV1N	SIRV1N	transcript	SIRV1N			6	LexogenSIRVData	SIRV103_0N,SIRV103_1N,SIRV103_2N,SIRV103_3N,SIRV103_4N,SIRV103_5N	SIRV103N	known	1363	66.00	64.58	16	14	0.33	0	0

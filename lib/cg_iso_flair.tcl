@@ -27,6 +27,8 @@ proc findflair {} {
 		if {$flair eq ""} {
 			set flair [searchpath FLAIR flair flair*]
 		}
+		set flair [file_resolve $flair]
+		if {![file isdir $flair]} {set flair [file dir $flair]}
 		set ::env(PATH) $flair:$::env(PATH)
 	}
 	return $flair
@@ -349,7 +351,7 @@ proc flair_job {args} {
 		if {$bam eq ""} {
 			set bams [jobglob $sampledir/map-*.bam]
 		} else {
-			set bams [lindex $bam]
+			set bams [list $bam]
 		}
 		if {![llength $bams]} continue
 		foreach bam $bams {
@@ -362,9 +364,13 @@ proc flair_job {args} {
 			} -targets {
 				flair-$rootname/all_corrected-flair-$rootname.bed
 			} -vars {
-				bam rootname flairdir refseq reftranscripts threads
+				bam rootname flairdir refseq reftranscripts threads sample
 			} -code {
-				analysisinfo_write $bam $target flair [version flair]
+				analysisinfo_write $bam $target \
+					analysis flair-$rootname sample $sample \
+					isocaller_reftranscripts [file tail $reftranscripts] \
+					isocaller_distrreg 0 \
+					isocaller flair isocaller_version [version flair]
 				set bed12 [file root $bam].bed12
 				exec bam2Bed12.py -i $bam > $bed12.temp
 				file rename -force $bed12.temp $bed12
@@ -407,8 +413,8 @@ proc flair_job {args} {
 			} -vars {
 				rootname refseq reftranscripts threads
 			} -code {
-				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed $target flair [version flair]
-				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed flair-$rootname/transcripts-flair-$rootname.isoforms.fa flair [version flair]
+				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed $target
+				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 				puts "collapse -> flair-$rootname-collapse"
 				catch_exec flair.py collapse \
 					-t $threads \
@@ -429,7 +435,9 @@ proc flair_job {args} {
 			} -vars {
 				rootname sample threads
 			} -code {
-				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.fa $target flair [version flair]
+				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.fa $target \
+					analysis flair-$rootname sample $sample \
+					isocaller flair isocaller_version [version flair]
 				set manifestdata {}
 				lappend manifestdata [join [list $sample conditionA batch1 flair-$rootname/allseq-$rootname.fastq.gz] \t]
 				file_write reads_manifest.tsv [join $manifestdata \n]\n
@@ -460,8 +468,17 @@ proc flair_job {args} {
 				rootname sample refseq reftranscripts
 			} -code {
 				mkdir sqanti3-flair-$rootname
-				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf isoform_counts-flair-$rootname.tsv sqanti3 [version sqanti3_qc.py]
-				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf sqanti3-flair-$rootname/sqanti3-${rootname}_classification.txt sqanti3 [version sqanti3_qc.py]
+				set extrainfo [list \
+					analysis flair-$rootname sample $sample \
+					isocaller flair isocaller_version [version flair] \
+					isocaller_flair_sqanti3 [version sqanti3_qc.py]
+				]
+				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
+					isoform_counts-flair-$rootname.tsv \
+					{*}$extrainfo
+				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
+					gene_counts-flair-$rootname.tsv \
+					{*}$extrainfo
 				catch_exec sqanti3_qc.py \
 					flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
 					$reftranscripts \

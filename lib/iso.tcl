@@ -69,6 +69,7 @@ proc iso_combine_genecounts_moutput {merged files} {
 }
 
 proc cg_iso_combine_genecounts {genecounts args} {
+	analysisinfo_combine $genecounts $args
 	unset -nocomplain geneinfoa
 	unset -nocomplain gcounta
 	unset -nocomplain dummya
@@ -170,7 +171,7 @@ proc cg_iso_combine_genecounts {genecounts args} {
 	file rename -force $genecounts.temp2 $genecounts
 }
 
-proc iso_combine_job {projectdir isocaller} {
+proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 	upvar job_logdir job_logdir
 	# combined analysis
 	cd $projectdir
@@ -188,11 +189,10 @@ proc iso_combine_job {projectdir isocaller} {
 		-targets {
 			compar/isoform_counts-$root.tsv
 		} -vars {
-			isoformfiles exproot root isocaller
+			isoformfiles exproot root isocaller iso_match
 		} -code {
-			analysisinfo_write [lindex $isoformfiles 0] $target
 			set isoformcounts compar/isoform_counts-$root.tsv
-			cg multitranscript -match . $isoformcounts {*}$isoformfiles
+			cg multitranscript -match $iso_match $isoformcounts {*}$isoformfiles
 		}
 	}
 	set genefiles [bsort [jobglob samples/*/gene_counts-${isocaller}-*.tsv]]
@@ -204,7 +204,6 @@ proc iso_combine_job {projectdir isocaller} {
 		} -vars {
 			genefiles exproot root isocaller
 		} -code {
-			analysisinfo_write [lindex $genefiles 0] compar/gene_counts-$root.tsv
 			set genecounts compar/gene_counts-$root.tsv
 			cg_iso_combine_genecounts $genecounts {*}$genefiles
 		}
@@ -218,8 +217,8 @@ proc iso_combine_job {projectdir isocaller} {
 		} -vars {
 			totalcountsfiles exproot root isocaller
 		} -code {
-			analysisinfo_write [lindex $totalcountsfiles 0] compar/totalcounts-$root.tsv
-			cg paste {*}[bsort $totalcountsfiles] > compar/totalcounts-$root.tsv
+			analysisinfo_combine compar/totalcounts-$root.tsv $totalcountsfiles
+			cg paste {*}$totalcountsfiles > compar/totalcounts-$root.tsv
 		}
 	}
 }

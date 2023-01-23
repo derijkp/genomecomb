@@ -91,11 +91,13 @@ proc iso_flames_job {args} {
 		}
 	}
 	if {$resultfile eq ""} {
-		set root fastqs-[file tail [file dir $fastqdir]]
+		set sample [file tail [file dir $fastqdir]]
+		set root fastqs-$sample
 		set resultfile [file dir $fastqdir]/isoform_counts-flames-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
 		set root [file_rootname $resultfile]
+		set sample [lindex [split $root -] end]
 	}
 	set resultfile [file_absolute $resultfile]
 	set reftranscripts [file_absolute $reftranscripts]
@@ -124,9 +126,18 @@ proc iso_flames_job {args} {
 		$resultfile
 		$destdir/gene_counts-flames-$root.tsv
 	} -vars {
-		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq threads extraopts
+		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq threads extraopts sample
 	} -code {
-		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile flames [version flames]
+		set extrainfo [list \
+			analysis flames-$root sample $sample \
+			isocaller_reftranscripts [file tail $reftranscripts] \
+			isocaller_distrreg 0 \
+			isocaller flames isocaller_version [version flames]
+		]
+		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile \
+			{*}$extrainfo
+		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $destdir/gene_counts-flames-$root.tsv \
+			{*}$extrainfo
 		set keeppwd [pwd]
 		cd $flamesdir
 		file_write config.json [deindent {

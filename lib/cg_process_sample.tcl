@@ -466,6 +466,7 @@ proc process_sample_job {args} {
 	set svcallers {}
 	set methcallers {}
 	set counters {}
+	set isocallers {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -526,6 +527,9 @@ proc process_sample_job {args} {
 		}
 		-counters {
 			set counters $value
+		}
+		-isocallers {
+			set isocallers $value
 		}
 		-s - -split {
 			set split $value
@@ -715,7 +719,7 @@ proc process_sample_job {args} {
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers svcallers methcallers counters realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers methcallers counters isocallers realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -1045,6 +1049,15 @@ proc process_sample_job {args} {
 			}
 			lappend cleanupdeps {*}[count_${counter}_job -threads $threads \
 				-refseq $refseq $cleanedbam]
+		}
+		foreach isocaller $isocallers {
+			if {![auto_load iso_${isocaller}_job]} {
+				error "iscaller $isocaller not supported"
+			}
+			iso_${isocaller}_job \
+				-distrreg $distrreg -threads $threads \
+				-refseq $refseq \
+				$cleanedbam
 		}
 	}
 	#calculate reports

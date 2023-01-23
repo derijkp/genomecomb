@@ -17,6 +17,8 @@ proc process_multicompar_job {args} {
 	set limitreg {}
 	set reports 1
 	set counters {}
+	set isocallers {}
+	set iso_match {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -64,6 +66,12 @@ proc process_multicompar_job {args} {
 		}
 		-counters {
 			set counters $value
+		}
+		-isocallers {
+			set isocallers $value
+		}
+		-iso_match {
+			set iso_match $value
 		}
 		-experiment {
 			set experiment $value
@@ -486,6 +494,14 @@ proc process_multicompar_job {args} {
 				result_rename $target.temp $target
 			}
 		}
+	}
+	# isocallers
+	# ----------
+	if {[llength $isocallers]} {
+		foreach isocaller $isocallers {
+			iso_combine_job $destdir $isocaller $iso_match
+		}
+		iso_combine_job $destdir * $iso_match
 	}
 	# reports
 	# -------

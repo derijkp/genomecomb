@@ -16,7 +16,10 @@ proc job_analysisinfo_files args {
 proc analysisinfo_combine {target deps} {
 	set adeps {}
 	foreach file [bsort $deps] {
-		lappend adeps [analysisinfo_file $file]
+		set analysisinfo_file [analysisinfo_file $file]
+		if {[file exists $analysisinfo_file]} {
+			lappend adeps $analysisinfo_file
+		}
 	}
 	set targetanalysisinfo [analysisinfo_file $target]
 	if {[llength $adeps]} {

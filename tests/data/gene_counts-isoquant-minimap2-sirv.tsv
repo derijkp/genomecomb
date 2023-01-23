@@ -1,4 +1,4 @@
-chromosome	begin	end	strand	gene	geneid	counts-isoquant-sirv
+chromosome	begin	end	strand	gene	geneid	counts-isoquant-minimap2-sirv
 SIRV1	10647	11643	-	SIRV1N	SIRV1N	380.50
 SIRV1	10711	11643	+	SIRV1P	SIRV1P	59.50
 SIRV2	3665	5895	-	SIRV2N	SIRV2N	205.00

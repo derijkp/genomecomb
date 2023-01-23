@@ -10,6 +10,7 @@ proc process_project_job {args} {
 	set aligner bwa
 	set varcallers {gatkh strelka}
 	set isocallers {}
+	set iso_match {}
 	set counters {}
 	set svcallers {}
 	set methcallers {}
@@ -37,7 +38,6 @@ proc process_project_job {args} {
 	set maxfastqdistr {}
 	set hap_bam 0
 	set depth_histo_max 1000
-	set flair 0
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -87,14 +87,17 @@ proc process_project_job {args} {
 		-methcallers {
 			set methcallers $value
 		}
-		-isocallers {
-			set isocallers $value
-		}
 		-counters {
 			set counters $value
 		}
+		-isocallers {
+			set isocallers $value
+		}
+		-iso_match {
+			set iso_match $value
+		}
 		-flair {
-			set flair $value
+			if {[true $value]} {list_addnew isocallers flair}
 		}
 		-s - -split {
 			set split $value
@@ -267,6 +270,7 @@ proc process_project_job {args} {
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
+				-isocallers $isocallers \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -283,6 +287,7 @@ proc process_project_job {args} {
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
+				-isocallers $isocallers \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -296,12 +301,13 @@ proc process_project_job {args} {
 				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
-				counters
+				counters isocallers
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 					-counters $counters \
+					-isocallers $isocallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -318,6 +324,7 @@ proc process_project_job {args} {
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 			-counters $counters \
+			-isocallers $isocallers \
 			-hap_bam $hap_bam \
 			-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -337,6 +344,8 @@ proc process_project_job {args} {
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
 		-counters $counters \
+		-isocallers $isocallers \
+		-iso_match $iso_match \
 		-threads $threads -distrreg $distrreg \
 		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup \
@@ -352,22 +361,6 @@ proc process_project_job {args} {
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
-	}
-	foreach isocaller $isocallers {
-		set options [cmd_getoptions [list cg iso_${isocaller}]]
-		if {"-compar" in $options} {
-			iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $destdir
-		} else {
-			foreach bam [jobglob $destdir/samples/*/map-*.bam] {
-				iso_${isocaller}_job -distrreg $distrreg -refseq [refseq $dbdir] $bam
-			}
-			iso_combine_job $destdir $isocaller
-		}
-	}
-	# combine all
-	iso_combine_job $destdir *
-	if {$flair} {
-		flair_job -refseq [refseq $dbdir] $destdir
 	}
 	list $todo(var)
 }

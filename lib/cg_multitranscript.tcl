@@ -90,6 +90,7 @@ proc cg_multitranscript {args} {
 	} compar_file 2
 	set isoformfiles $args
 
+	analysisinfo_combine $compar_file $isoformfiles
 	foreach file $isoformfiles {
 		catch {close $a(f,$file)}
 	}
@@ -99,9 +100,7 @@ proc cg_multitranscript {args} {
 	set o [open $compar_file.temp w]
 	if {$a(comment,0) ne ""} {puts -nonewline $o $a(comment,0)}
 	puts $o [join $header \t]
-
 	while 1 {
-
 		# find earliest transcript to start region
 		set curids {}
 		set fnum -1
@@ -182,7 +181,6 @@ proc cg_multitranscript {args} {
 			}
 			if {!$num} break
 		}
-
 		if {[info exists setma(single)]} {
 			# join $setma(single) \n
 			# check for matches to known
