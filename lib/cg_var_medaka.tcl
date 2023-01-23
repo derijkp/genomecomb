@@ -139,7 +139,7 @@ proc var_medaka_job {args} {
 	-targets $medakatargets -vars {
 		vcffile region refseq root varfile split opts region outbam mincoverage index threads
 	} -code {
-		analysisinfo_write $dep $varfile sample $root varcaller medaka varcaller_version [version medaka] varcaller_cg_version [version genomecomb] varcaller_region $region
+		analysisinfo_write $dep $varfile analysis $root sample $root varcaller medaka varcaller_version [version medaka] varcaller_cg_version [version genomecomb] varcaller_region $region
 		set regions [samregions $region $refseq]
 		# set tempdir [gzroot $vcffile].temp
 		set tempdir [filetemp $vcffile]

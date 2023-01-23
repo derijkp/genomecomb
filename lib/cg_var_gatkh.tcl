@@ -147,7 +147,7 @@ proc var_gatkh_job {args} {
 	} -vars {
 		opts regionfile gatkrefseq refseq root ERC varallfile cache
 	} -code {
-		analysisinfo_write $dep $varallfile sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $varallfile analysis $root sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
 			copywithindex $cache $target $cache.tbi.temp $target.tbi

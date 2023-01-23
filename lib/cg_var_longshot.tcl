@@ -195,7 +195,7 @@ proc var_longshot_job {args} {
 		if {$maxcov ne ""} {
 			lappend opts --max_cov $maxcov
 		}
-		analysisinfo_write $dep $varfile sample $root varcaller longshot varcaller_version [version longshot] varcaller_cg_version [version genomecomb] varcaller_region $region
+		analysisinfo_write $dep $varfile analysis $root sample $root varcaller longshot varcaller_version [version longshot] varcaller_cg_version [version genomecomb] varcaller_region $region
 		set regions [samregions $region $refseq]
 		set tempvcf [gzroot $vcffile].temp
 		if {$region eq "unmapped"} {

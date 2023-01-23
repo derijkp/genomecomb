@@ -168,7 +168,7 @@ proc var_strelka_job {args} {
 	} -vars {
 		bamfile resultgvcf resultvcf opts regionfile refseq threads root refseq varfile
 	} -code {
-		analysisinfo_write $bamfile $resultgvcf sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $bamfile $resultgvcf analysis $root sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set zerosize 0
 		if {$regionfile ne ""} {
 			set regionfile [gzfile $regionfile]
@@ -213,7 +213,7 @@ proc var_strelka_job {args} {
 			file_write $resultvcf.tbi ""
 			file_write [analysisinfo_file $resultvcf] ""
 		}
-		analysisinfo_write $bamfile $resultvcf sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $bamfile $resultvcf analysis $root sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 	}
 	job ${pre}vcf2tsv-$root {*}$skips -deps {
 		$resultvcf

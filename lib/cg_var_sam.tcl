@@ -151,7 +151,7 @@ proc var_sam_job {args} {
 	} -vars {
 		refseq opts BQ regionfile root threads callmethod dt cache
 	} -code {
-		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target analysis $root sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
 		if {$emptyreg && [file exists $cache]} {
 			copywithindex $cache $target $cache.tbi.temp $target.tbi
