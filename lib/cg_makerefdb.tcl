@@ -90,7 +90,7 @@ proc makerefdb_job {args} {
 	#
 
 	# readme
-	set c [file_read $::appdir/docs/dbdir_README.txt]
+	set c [file_read $::appdir/help/dbdir_README.txt]
 	regsub {version: [0-9.]+} $c "version: [lindex [timestamp] 0]\ntime: [lindex [timestamp] 0]" c
 	file_write README_dbdir.txt $c
 

@@ -13,8 +13,8 @@ proc help_get {action} {
 		set help [file_read $::appdir/lib-exp/cg_$action.wiki]
 	} elseif {[file exists $::appdir/plugins/cg_$action.wiki]} {
 		set help [file_read $::appdir/plugins/cg_$action.wiki]
-	} elseif {[file exists $::appdir/docs/$action.wiki]} {
-		set help [file_read $::appdir/docs/$action.wiki]
+	} elseif {[file exists $::appdir/help/$action.wiki]} {
+		set help [file_read $::appdir/help/$action.wiki]
 	} elseif {[auto_load helptext_$action]} {
 		set help [helptext_$action]
 	} elseif {[auto_load ${action}_job]} {
@@ -24,7 +24,7 @@ proc help_get {action} {
 	}
 	if {![info exists help]} {
 		set msg "Unknown help topic \"$action\", known topics are:\n\n"
-		append msg "Docs:\n[help_docs]\n\n"
+		append msg "Help:\n[help_help]\n\n"
 		append msg "Commands:\n[help_actions]\n\n"
 		append msg "Use help without arguments for overview"
 		error $msg
@@ -44,9 +44,9 @@ proc help_actions {} {
 	return $list
 }
 
-proc help_docs {} {
+proc help_help {} {
 	global appdir
-	set files [bsort [dirglob $appdir/docs/ *.wiki]]
+	set files [bsort [dirglob $appdir/help/ *.wiki]]
 	set list {}
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 0 end]
