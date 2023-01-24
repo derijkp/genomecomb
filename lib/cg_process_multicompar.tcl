@@ -510,6 +510,7 @@ proc process_multicompar_job {args} {
 	}
 	if {[llength $reports]} {
 		process_reportscombine_job -dbdir $dbdir $destdir/reports {*}$reports
+		mkdir $destdir/reports
 		foreach file [jobglob $destdir/reports/report_hsmetrics-*.tsv] {
 			if {![regexp {report_hsmetrics-(.*)\.tsv} [file tail $file] temp experimentname]} continue
 			set destfile $destdir/${experimentname}_hsmetrics_report.tsv
