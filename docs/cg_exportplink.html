@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_exportplink</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">exportplink</h1>
+<h2 id="h19">Format</h2>
+<p>cg exportplink ?options? varfile resultfilebase</p>
+<h2 id="h81">Summary</h2>
+<p>make a plink &quot;Transposed fileset&quot; from the genome data</p>
+<h2 id="h151">Description</h2>
+<p>This command makes two files that can be used as a transposed
+fileset in plink (--tfile option).</p>
+
+<dl>
+  <dt>resultfilebase.tfam.pre</dt>
+  <dd>This file must be edited and renamed to resultfilebase.tfam:
+  Only the names are correct. The other fields (father, mother, sex,
+  phenotype) are set to missing (0 or -9) and must be corrected.</dd>
+  <dt>resultfilebase.tped</dt>
+  <dd>This file contains the variant and the genotype information.
+  Variants with more than two alleles (which are not supported by
+  plink) are skipped with a warning message. The genetic location is
+  (very roughly) estimated by dividing the base position by 1M.</dd>
+</dl>
+<p>Variant genotypes for samples that have a &quot;u&quot;
+(unsequenced) in the sequenced field (or in the zyg field if no
+sequenced filed is present) are set to 0 (unknown genotype) in the
+plink file.</p>
+<h2 id="h957">Use with plink</h2>
+<p>Edit <b>resultfilebase.tfam.pre</b> to the correct settings, and
+rename to resultfilebase.tfam You can use the files with the -tfile
+option, e.g. plink --tfile resultfilebase --recode12</p>
+<p>You can use plink to recode to the default plink format
+(non-tansposed) plink --tfile resultfilebase --recode</p>
+<h2 id="h1285">Arguments</h2>
+
+<dl>
+  <dt>varfile</dt>
+  <dd>variant file</dd>
+  <dt>resultfilebase</dt>
+  <dd>result file</dd>
+</dl>
+<h2 id="h1356">Options</h2>
+
+<dl>
+  <dt>-q query</dt>
+  <dd>query (as can be given to cg_select). Only variants matching
+  the query are included in the result.</dd>
+  <dt>-c 1/0</dt>
+  <dd>code genotypes to numbers (reference = 1, alternative allele
+  = 2).</dd>
+  <dt>-samples samples</dt>
+  <dd>Only write data for the given samples to the file, if a
+  sample is not present in the varfile, all genotypes will be set to
+  0</dd>
+  <dt>-all 0/1</dt>
+  <dd>Also include genotypes of samples that have a &quot;u&quot;
+  in the sequenced or zyg field. Default is 0, but if no sequenced or
+  zyg field is present in the file, it is 1 (i.e. all genotypes are
+  included)</dd>
+</dl>
+<h2 id="h1911">Category</h2>
+<p>Analysis</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

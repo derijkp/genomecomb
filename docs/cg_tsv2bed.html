@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_tsv2bed</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">tsv2bed</h1>
+<h2 id="h15">Format</h2>
+<p>cg tsv2bed ?infile? ?outfile?</p>
+<h2 id="h59">Summary</h2>
+<p>Converts data in tab-separated format (<a href="tsv.html">tsv</a>)
+format to bed format. By default it will create a minimal bed file by
+extracting chromosome,begin and end from the input using the default
+fields.</p>
+<h2 id="h269">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given (or -), uses stdin. File
+  may be compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h446">Options</h2>
+
+<dl>
+  <dt><b>-f fields</b> (--fields)</dt>
+  <dd>list of fields in the tsv used for creating the bed file. You
+  can use this option to add more than the three minimal fields
+  and/or use other field names. If a field is empty (enclosed in {}),
+  the default field name will be used. e.g.</dd>
+</dl>
+<pre>
+cg tsv2bed --fields '{} {} {} name score' tsvfile bedfile
+</pre>
+<p>will add the name and score fields, taking the default columns for
+chromosome,begin,end</p>
+<p>If the first (chromosome) field is not found in the header, it
+will be put as a value in the output, e.g.</p>
+<pre>
+cg tsv2bed --fields 'contig1 {} {} name score' tsvfile bedfile
+</pre>
+<p>will contain the value &quot;contig1&quot; for the first
+(chromosome) field in all output</p>
+<h2 id="h1135">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

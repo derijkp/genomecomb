@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/gatk_vars</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">gatk based variant file</h1>
+<p>Variant files created by genomecomb using the GATK variant caller
+are in the usual genomecomb tab-separated variant file format (<a
+href="tsv.html">tsv</a>). besides the usual fields of a variant tsv
+file, they (can) also contain the following fields:</p>
+
+<dl>
+  <dt>totalcoverage</dt>
+  <dd>Total Depth, counting all reads (DP in vcf INFO)</dd>
+  <dt>coverage</dt>
+  <dd>Read Depth, counting only filtered reads used for calling,
+  and only from one samples (DP in vcf FORMAT)</dd>
+  <dt>genoqual</dt>
+  <dd>genotype quality, encoded as a phred quality
+  -10log_10p(genotype call is wrong)</dd>
+  <dt>haploqual</dt>
+  <dd>haplotype qualities, two phred qualities comma separated</dd>
+  <dt>phased</dt>
+  <dd>1 if genotype is phased, 0 otherwise</dd>
+  <dt>genotypes</dt>
+  <dd>list of allele numbers (0 for ref, 1 for first alt, ...) (GT
+  in vcf) The alleles are comma (,) separated for phased genotypes (|
+  in vcf), and &quot;;&quot; separated for unphased (/ in vcf). In
+  contrast to alleleSeq1 and alleleSe2, this field allows for
+  ploidies other than 2</dd>
+  <dt>alleledepth</dt>
+  <dd>Allelic depths for the ref and alt alleles in the order
+  listed</dd>
+  <dt>PL</dt>
+  <dd>Normalized, Phred-scaled likelihoods for AA,AB,BB genotypes
+  where A=ref and B=alt; not applicable if site is not biallelic</dd>
+  <dt>allelecount</dt>
+  <dd>predicted allele count in genotypes, for each alt allele, in
+  the same order as listed</dd>
+  <dt>frequency</dt>
+  <dd>predicted allele frequency for each alt allele in the same
+  order as listed</dd>
+  <dt>totalallelecount</dt>
+  <dd>predicted total number of alleles in called genotypes</dd>
+  <dt>BaseQRankSum</dt>
+  <dd>Phred-scaled p-value From Wilcoxon Rank Sum Test of Alt Vs.
+  Ref base qualities</dd>
+  <dt>DS</dt>
+  <dd>Were any of the samples downsampled?</dd>
+  <dt>Dels</dt>
+  <dd>Fraction of Reads Containing Spanning Deletions</dd>
+  <dt>FS</dt>
+  <dd>Phred-scaled p-value using Fisher's exact test to detect
+  strand bias</dd>
+  <dt>HaplotypeScore</dt>
+  <dd>Consistency of the site with at most two segregating
+  haplotypes</dd>
+  <dt>InbreedingCoeff</dt>
+  <dd>Inbreeding coefficient as estimated from the genotype
+  likelihoods per-sample when compared against the Hardy-Weinberg
+  expectation</dd>
+  <dt>MLEAC</dt>
+  <dd>Maximum likelihood expectation (MLE) for the allele counts
+  (not necessarily the same as the AC), for each ALT allele, in the
+  same order as listed</dd>
+  <dt>MLEAF</dt>
+  <dd>Maximum likelihood expectation (MLE) for the allele frequency
+  (not necessarily the same as the AF), for each ALT allele, in the
+  same order as listed</dd>
+  <dt>MQ</dt>
+  <dd>RMS Mapping Quality</dd>
+  <dt>MQ0</dt>
+  <dd>Total Mapping Quality Zero Reads</dd>
+  <dt>MQRankSum</dt>
+  <dd>Z-score From Wilcoxon rank sum test of Alt vs. Ref read
+  mapping qualities</dd>
+  <dt>NDA</dt>
+  <dd>Number of alternate alleles discovered (but not necessarily
+  genotyped) at this site</dd>
+  <dt>QD</dt>
+  <dd>Variant Confidence/Quality by Depth</dd>
+  <dt>RPA</dt>
+  <dd>Number of times tandem repeat unit is repeated, for each
+  allele (including reference)</dd>
+  <dt>RU</dt>
+  <dd>Tandem repeat unit (bases)</dd>
+  <dt>ReadPosRankSum</dt>
+  <dd>Z-score from Wilcoxon rank sum test of Alt vs. Ref read
+  position bias</dd>
+  <dt>STR</dt>
+  <dd>Variant is a short tandem repeat</dd>
+  <dt>cluster</dt>
+  <dd>variant is in a region containing many closeby variant calls</dd>
+</dl>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

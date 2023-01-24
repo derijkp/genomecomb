@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_compound</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">compound</h1>
+<h2 id="h16">Format</h2>
+<p>cg compound ?options? variantfile ?resultfile?</p>
+<h2 id="h77">Summary</h2>
+<p>finds potential compound heterozygosity in a variantfile</p>
+<h2 id="h149">Description</h2>
+<p>This command helps in finding potential compound heterozygosity in
+a variantfile: It searches for 2 (or more) variants (limited by given
+criteria) affecting the same trasncript/gene in one sample or
+analysis. The command does not take into account phasing (yet): Even
+if both variants are in cis they will be reported.</p>
+<p>The input is a <a href="format_tsv.html">variant file</a> <a
+href="cg_annotate.html">annotated</a> with gene information. First a
+secundary result file (named &lt;resultfile_base&gt;-genelist.tsv) is
+generated that contains a list of all genes/transcripts affected by
+multiple variants and the samples in which multiple variants affect
+the gene.</p>
+<p>The final result file is a variant file containing only variants
+involved in a compound interaction. The following extra fields are
+added:</p>
+
+<dl>
+  <dt>transcripts</dt>
+  <dd>shows the transcripts that are affected by multiple variants
+  (including this one)</dd>
+  <dt>compound-&lt;sample&gt;</dt>
+  <dd>is given for each analysis/sample: If the variant is in a
+  compound in this sample, the field gives the number of variants
+  affecting the same transcript in this sample. It is empty if the
+  variant is not in a compound with other variants in this sample.</dd>
+</dl>
+<h3 id="h1310">impact</h3>
+<p>By default, only variants causing a coding missense (CDSMIS) or
+higher in the transcript are counted. Higher here means further down
+in the gene impacts list given in <a
+href="cg_annotate.html">annotated</a>).</p>
+<p>The required impact on the transcript can be changed using the
+-impact option. It accepts a (comma separated) list of impacts. You
+can also use wildcards (e.g. CDS*) or &gt; to select multiple
+impacts, e.g. &quot;&gt;=CDSMIS&quot;</p>
+<h3 id="h1737">Criteria</h3>
+<p>Not all variants are counted towards a compound hit in a sample.
+variants must fulfill a number of quality criteria (in the analysis).
+By default the criteria used are simply that a variant genotype must
+be called in the sample:</p>
+<pre>
+$sequenced == &quot;v&quot;
+</pre>
+<p>You can change these criteria using the <b>-criteria</b> option to
+e.g. only count high(er) quality variants:</p>
+<pre>
+$sequenced == &quot;v&quot; and $quality &gt;= 50 and $coverage &gt;= 20
+</pre>
+<p>Notice that field names can be used witout the analysis suffix,
+e.g. $sequenced instead of $sequenced-gatkh-bwa-sample1. For these
+the analysis specific fields will be used.</p>
+<p>Using the -per option, you can select to search for compound
+variants per sample instead of per analysis. In that case, the field
+names without the sample suffix should be used, e.g.</p>
+<pre>
+$sequenced-gatkh-bwa == &quot;v&quot;
+</pre>
+<p>This allows you to use different analyses of the same sample in
+the criteria, e.g. only select variants called in both gatkh and
+strelka</p>
+<pre>
+$sequenced-gatkh-bwa == &quot;v&quot; and $sequenced-strelka-bwa == &quot;v&quot;
+</pre>
+<p>When doing per sample analysis, the -criteria argument must be
+provided.</p>
+<h2 id="h2860">Arguments</h2>
+
+<dl>
+  <dt><b>variantfile</b></dt>
+  <dd>tab separated or vcf file containing variants</dd>
+  <dt><b>resultfile</b></dt>
+  <dd>file to which the results will be saved</dd>
+</dl>
+<h2 id="h3000">Options</h2>
+
+<dl>
+  <dt>-geneset geneset</dt>
+  <dd>A variantfile can have annotations of different gene sets.
+  <b>geneset</b> is the base name of the gene annotation, e.g. when
+  it is &quot;refGene&quot;, the field &quot;refGene_descr&quot; will
+  be used to extract the transcipt names, &quot;refGene_gene&quot;
+  for the gene name and &quot;refGene_impact&quot; for the filtering.</dd>
+  <dt>-impact impacts</dt>
+  <dd><b>impacts</b> defines which impact a variant must have omn
+  the transcripts to count. Possible values are described in the
+  impact section of the description. default: &quot;&gt;=CDSMIS&quot;</dd>
+  <dt>-criteria variantcriteria</dt>
+  <dd>criteria used to select variants Possible values are
+  described in the criteria section of the description. default:
+  &quot;$sequenced == &quot;v&quot;&quot;</dd>
+  <dt>-per analysis/sample</dt>
+  <dd>By default the compound variants are searched per analysis,
+  meaning you will get e.g. compound-gatkh-bwa-sample1,
+  compound-strelka-bwa-sample1, compound-gatkh-bwa-sample2, ... If
+  set to <b>sample</b>, compounds will be search per sample.</dd>
+  <dt>-samples samples</dt>
+  <dd>a space-separated list of samples, only look in samples given
+  by this parameter If given, -per sample analysis is used. if you
+  give -per analysis, an error is returned</dd>
+  <dt>-analyses analyses</dt>
+  <dd>a space-separated list of analyses, only look in analyses
+  given by this parameter If analyses is given, -per analysis is
+  used. if you explicitely specify -per sample, an error is returned</dd>
+  <dt>-dbdir</dt>
+  <dd>directory with reference databases; this is needed if the
+  annotcomparfile is not annotated (e.g. a vcf file)</dd>
+</dl>
+<h2 id="h4461">Category</h2>
+<p>Analysis</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

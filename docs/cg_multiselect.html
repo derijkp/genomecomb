@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_multiselect</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Select</h1>
+<h2 id="h14">Format</h2>
+<p>cg multiselect ?options? ?datafile? ...</p>
+<h2 id="h68">Summary</h2>
+<p>Command for using cg select on multiple files, and combine the
+results</p>
+<h2 id="h154">Description</h2>
+<p>cg multiselect performs a <a href="cg_select.html">cg select</a>
+on all given datafiles separately. It can output a separate result
+file for each datafile, or combine the results into one output file
+in various ways.</p>
+<p>cg multiselect supports several (but not all) <a
+href="cg_select.html">cg select</a> options. For more info on thes
+options, refer to the <a href="cg_select.html">cg select</a> help.</p>
+<h2 id="h530">Arguments</h2>
+
+<dl>
+  <dt><b>datafile</b></dt>
+  <dd>file to be scanned. File may be compressed.</dd>
+</dl>
+<h2 id="h607">Options</h2>
+
+<dl>
+  <dt>-q query</dt>
+  <dd>only lines fullfilling conditions in query will be written to
+  outfile (see further)</dd>
+  <dt>-qf queryfile</dt>
+  <dd>only lines fullfilling conditions in queryfile will be
+  written to outfile (see further)</dd>
+  <dt>-f fields</dt>
+  <dd>only write given fields to result.</dd>
+  <dt>-rf removefields</dt>
+  <dd>write all, except given fields to result.</dd>
+  <dt>-samples samples</dt>
+  <dd>Only the given list of samples (space separated) will be
+  included in the output.</dd>
+  <dt>-s sortfields</dt>
+  <dd>sort on given fields (uses natural sort, so that e.g. 'chr1
+  chr2 chr10' will be sorted correctly)</dd>
+  <dt>-sr sortfields</dt>
+  <dd>sort on given fields in reverse order</dd>
+  <dt>-hc 0/1/2</dt>
+  <dd>is the header in the last comment line</dd>
+  <dt>-rc 0/1</dt>
+  <dd>remove comment</dd>
+  <dt>-samplingskip number</dt>
+  <dd>sample data, skipping <b>number</b> rows</dd>
+  <dt>-g groupfields</dt>
+  <dd>with this option a summary table is returned.</dd>
+  <dt>-gc groupcols</dt>
+  <dd>show other columns instead of count when using the -g option.</dd>
+  <dt>-o filename (-outfile)</dt>
+  <dd>Gives the name of the result file. If not given, output is
+  written to stdout</dd>
+  <dt>-split 1/0</dt>
+  <dd>indicate if in the datafiles, multiple alternative genotypes
+  are split over different lines (default 1)</dd>
+  <dt>-combine multicompar/cat/files</dt>
+  <dd>How to combine results (see further)</dd>
+</dl>
+<h2 id="h1780">Combine results</h2>
+<p>The -combine option determines how the seperate cg select results
+are combined. Each query is done separately first before combining
+the result, so the query should be set up so that it can be run on
+each file separately and that the results are in the proper format to
+be combined. The following types of combination are supported:</p>
+<h3 id="h2137">multicompar</h3>
+<p>The results are combined into a multicompar file using <a
+href="cg_multicompar.html">cg multicompar</a>. The result files must
+thus be variant files or multicompar files. The command does not get
+extra info (sreg, varall) on the files, so multicompar is run without
+reannot: If a variant line is not in the result file, the data for
+the samples coming from that file will be filled with unknown (?)
+completely.</p>
+<h3 id="h2554">cat</h3>
+<p>Results will be concatenated using <a href="cg_cat.html">cg
+cat</a> with the merge option: If they have different headers, the
+final result contains data for each field that occurs in at least one
+of the source files. If a given field is not present in one of the
+source files, it will be empty for each line coming from this file.</p>
+<p>This option can be useful for e.g. combining summary queries per
+sample</p>
+<pre>
+    cg multiselect -combine cat -g 'sample * sequenced v type *' tmp/multicompar1.tsv tmp/multicompar2.tsv
+</pre>
+<h3 id="h3069">files</h3>
+<p>Create a separate resultfile for each datafile. Each resultfile
+will be named using the original filename with the <b>filename</b>
+given in the -o option as a prefix.</p>
+<h2 id="h3248">Category</h2>
+<p>Query</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

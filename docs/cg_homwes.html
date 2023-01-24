@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_homwes</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">homwes</h1>
+<h2 id="h14">Format</h2>
+<p>cg homwes ?options? variantfile ?samples? ?resultfile?</p>
+<h2 id="h83">Summary</h2>
+<p>finds regions of homozygosity based on a variant file</p>
+<h2 id="h152">Description</h2>
+<p>This command searches for regions of homozygosity for the samples
+given based on the variant file variantfile. variantfile should
+preferably be a tab separated (Genomecomb) file with annotations. A
+vcf file will also be accepted, but dbdir should be given to annotate
+it. The homozygous regions are stored in resultfile (if resultfile is
+not given, the name of the resultfile will be based on the
+variantfile. A directory with the base name of resultfile and
+extension work will be created that contains all intermidiate data.</p>
+<h2 id="h699">Arguments</h2>
+
+<dl>
+  <dt>variantfile</dt>
+  <dd>tab separated or vcf file containing variants from exome
+  sequencing</dd>
+  <dt>samples</dt>
+  <dd>samples to be analysed. If it is the empty, all samples in
+  the file be used</dd>
+  <dt>resultfile</dt>
+  <dd>file to which the resulting regions of homozygosity will be
+  written. If more than one sample is analysed, it will be a
+  multiregion file containing the comparison of all samples, with the
+  individual results available in fales named
+  resultfileroot-sample.tsv</dd>
+</dl>
+<h2 id="h1157">Options</h2>
+
+<dl>
+  <dt>-dbdir dbdir</dt>
+  <dd>directory with reference databases; this is needed if the
+  annotcomparfile is not annotated (e.g. a vcf file)</dd>
+  <dt>-callers callers</dt>
+  <dd>callers lists the prefixes for the variant callers to be
+  used, e.g. 'gatk-rdsbwa- sam-rdsbwa-'. If empty (default) two
+  callers will be selected from the ones present in the file (in
+  order of preference: gatkh-rdsbwa- strelka-rdsbwa- gatk-rdsbwa-
+  sam-rdsbwa-)</dd>
+  <dt>-variantsonly 0/1</dt>
+  <dd>only include positions wich are variant in the sample (so
+  reference positions are discarded) (default 1)</dd>
+  <dt>-snpsonly 0/1</dt>
+  <dd>only use variants of type snp (default 0)</dd>
+  <dt>-filterrepeats 0/1</dt>
+  <dd>filter out variants in microsatelites or (other) simple
+  repeats (default 1)</dd>
+  <dt>-quality min</dt>
+  <dd>filter out variants with a quality &lt;= the given value
+  (default 50)</dd>
+  <dt>-genoqual min</dt>
+  <dd>filter out variants with a genoqual &lt;= the given value
+  (default 40)</dd>
+  <dt>-htz number</dt>
+  <dd>number of heterozygous snps allowed per window (default 1)</dd>
+  <dt>-density number</dt>
+  <dd>plink --homozyg-density option (default 200)</dd>
+  <dt>-gap number</dt>
+  <dd>plink --homozyg-gap option (default 4000)</dd>
+  <dt>-window number</dt>
+  <dd>plink --homozyg-window-snp option (default 20)</dd>
+</dl>
+<h2 id="h2305">reference</h2>
+<p>The homwes tool is described in the following paper (which you
+should reference when the tool was used)</p>
+<pre>
+Kancheva,D, Atkinson,D, De Rijk,P, Zimon,M, Chamova,T, Mitev,V, Yaramis,A, Maria Fabrizi,G, Topaloglu,H, Tournev,I, Parma, Y, Battaloglu, E, Estrada-Cuzcano, A, Jordanova, A (2015)
+Novel mutations in genes causing hereditary spastic paraplegia and Charcot-Marie-Tooth neuropathy identified by an optimized protocol for homozygosity mapping based on whole-exome sequencing.
+Genet. Med., 10.1038
+</pre>
+<h2 id="h2828">Category</h2>
+<p>Analysis</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

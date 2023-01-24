@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/howto_view</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Howto view results</h1>
+<p>This text gives examples of how to view results in a <a
+href="projectdir.html">projectdir</a> using the gui <a
+href="cg_viz.html">cg viz</a>.</p>
+<p>In the howto, the smal example and test data set ori_mixed_yri_mx2
+downloadable from the genomecomb website will be used. This data set
+was derived from publically available exome and genome sequencing
+data by extracting only raw data covering the region of the MX2 gene
+(on chr21) and a part of the ACO2 gene (on chr22).</p>
+<p>This howto expects a processed projectdir in tmp/mixed_yri_mx2.
+This can be created following the directions in <a
+href="howto_process_project.html">howto_process_project</a>.
+Alternatively you could also copy it from the expected dir (or adapt
+the path):</p>
+<pre>
+    cp -a expected/mixed_yri_mx2 tmp/mixed_yri_mx2
+</pre>
+<h2 id="h728">Startup</h2>
+<p>Start up <a href="cg_viz.html">cg viz</a> using</p>
+<pre>
+cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
+</pre>
+<p>This opens the annotated combined variant file (fomrmat described
+in <a href="tsv.html">tsv</a>) using cg viz, allowing you to browse
+through the table (even if it is millions of lines long).</p>
+<p>First thing you may want to do is make the title/header row
+higher. You can do this by dragging the edge down. You can also make
+columns broader by dragging the edges.</p>
+<h2 id="h1194">Fields</h2>
+<p>You can use the <b>Fields</b> button to limit the number of fields
+you want to see. The list on the right of the dialog shows the
+currently displayed fields. The list on the left shows available
+fields. Sample specific fields are indicated by having a - followed
+by a sample suffix. We will select to display only a limited set of
+sample specific fields:</p>
+
+<ul>
+  <li>Click &quot;Fields&quot;</li>
+  <li>Filter all sample specific fields in the right list by typing
+  a - in the Filter field above it</li>
+  <li>Use the left button (&lt;-) to remove all these fields from
+  display (right list)</li>
+  <li>Delete the - in the filter to show the remaining fields again</li>
+  <li>Click on the &quot;alt&quot; field; we will add back some of
+  the sample fields after this field</li>
+  <li>In the &quot;Filter&quot; field in the left selection box,
+  enter &quot;^zyg|^qual&quot;; only fields starting with
+  &quot;zyg&quot; or &quot;qual&quot; will be shown</li>
+  <li>Use the right arrow button (-&gt;) to add them to the display</li>
+  <li>You may also add or remove fields by selecting them with the
+  mouse, and using the &quot;&lt;-&quot; or &quot;-&gt;&quot; button</li>
+  <li>Click &quot;Go&quot; Now only the selected fields are
+  displayed. Longer field names in the title line are cut off; make
+  these visible by selecting the line between title and table, and
+  drag it lower.</li>
+</ul>
+<p>The sample fields have a specific format, e.g.</p>
+
+<dl>
+  <dt>zyg-gatkh-rdsbwa-exNA19240mx2</dt>
+  <dd>indicates the zygosity (as described in <a
+  href="tsv.html">tsv</a>) for this variant by the gatkh variant
+  caller on the reads aligned using bwa of the sample exNA19240mx2.</dd>
+  <dt>zyg-strelka-rdsbwa-exNA19240mx2</dt>
+  <dd>contains the zygosity according to the strelka variant caller
+  for the same sequence sample.</dd>
+  <dt>zyg-gatkh-rdsbwa-gilNA19240mx2</dt>
+  <dd>The same biological sample (NA19240) was also genome
+  sequenced, and sequence sample gilNA19240mx2 contains this data.
+  zyg-gatkh-rdsbwa-gilNA19240mx2 is then the zygosity called using
+  the same analysis tool on the genome sequence sample.</dd>
+</dl>
+<p>When combining sample results, process_project will check if a
+variant is not present in a sample variant list, whether this is due
+to actually being reference (zyg = r) or being unsequenced (zyg = u),
+according to the criteria used. also other data, such as the coverage
+or quality of the &quot;variant&quot; call, is added for the
+reference calls where possible. However, for unsequenced variants
+(zyg-* = u) many fields (e.g. quality) will remain empty (where ref
+call but no variant call) or ? for completely unknown (e.g. gath is
+not even called on regions with coverage &lt; 5)</p>
+<h2 id="h3596">Query</h2>
+<p>You can use <b>Query</b> to show only lines that fit a number of
+criteria. The query language is the same as supported by <a
+href="cg_select.html">cg select</a> and the specifics can be found in
+the <a href="cg_select.html">cg select</a> help. You can type a query
+directly into the Query field at the top, e.g. type
+$zyg-gatk-rdsbwa-gilNA19240mx2 == &quot;m&quot; to select only
+variants that are homozygous gatk calls for sample gilNA19240mx2 and
+press Enter.</p>
+<h3 id="h4037">Query builder</h3>
+<p>You can use the &quot;Query&quot; button to get help in building
+queries. The main part of the query builder is still a (larger) text
+field where you can edit the query as text.</p>
+<p>The buttons and selection lists allow easy adding of components to
+your query. You can for instance select one or more fields in the
+first list, and operator in the second and values in the third (Some
+common/example values are in the list for selection). Then clicking
+the and button will add the query component made this way at the
+cursor position using &quot;and&quot; logic while the or button does
+the same using or. condition, field, value and comp (comparison) ad
+these parts of the selections at the cursor.</p>
+<p>Using the functions button you can select out of all supported
+functions. Double click to insert the function with parameters based
+on the currently selected fields, operator and values. You can always
+still edit the result. The button block on the right gives shortcuts
+to some common functions.</p>
+<p>The &quot;EasyQuery&quot; button can be used for adding some
+common queries in an easier but less flexible way.</p>
+<h2 id="h5137">Sort</h2>
+<p>Select which fields to sort on; take the ones with - prefix for
+reverse sort.</p>
+<h2 id="h5227">Summaries</h2>
+<p>The <b>Summaries</b> button can be used to create summary data.
+This provides functionality similar to the -g and -gc options in <a
+href="cg_select.html">cg select</a> (more info in the <a
+href="cg_select.html">cg select</a> help), but you can select fields
+etc. in the GUI.</p>
+<p>For example:</p>
+
+<ul>
+  <li>Click Summaries</li>
+  <li>Select &quot;chromosome&quot; in the fields column (left)</li>
+  <li>Click &quot;Add to row grouping&quot; (top right)</li>
+  <li>Click &quot;Summary&quot; button at the bottom</li>
+  <li>The number of variants per chromosome is shown</li>
+  <li>Clear the query and press Enter to change to a summary of the
+  full data set</li>
+  <li>Select &quot;data&quot; in the Selection button next to the
+  Summaries button to return to the normal data view</li>
+</ul>
+<h2 id="h5879">Tree view</h2>
+<p>Make the <b>tree view</b> on the left larger by dragging the
+dividing line to the right. Here you can select other result files to
+view.</p>
+
+<ul>
+  <li>Click on reports directory in compar. This contains combined
+  reports data. Individual (more extensive) reports are in the
+  sampledirs.</li>
+  <li>Select report_stats-mixed_yri_mx2.tsv</li>
+  <li>Enter $parameter eq &quot;fw_numreads&quot; as a query</li>
+  <li>See the number of reads in the fastq files for each sample
+  (that started from fastq files)</li>
+</ul>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

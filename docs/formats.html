@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/formats</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Genomecomb file formats</h1>
+<p>Most files are in the <a href="tsv.html">tsv</a> format
+(tab-separated value), a simple but flexible format. The general tsv
+format is described in <a href="format_tsv.html">format_tsv</a>. Some
+tsv formats for specific data require (or often have) specific
+fields:</p>
+
+<dl>
+  <dt>region file format</dt>
+  <dd>for storing genomic region information, explained in <a
+  href="format_tsv.html">format_tsv</a></dd>
+  <dt>variant file format</dt>
+  <dd>for storing variants, explained in <a
+  href="format_tsv.html">format_tsv</a></dd>
+  <dt>transcript/gene file format</dt>
+  <dd>for storing transcripts, explained in <a
+  href="format_gene.html">format_gene</a></dd>
+  <dt>GATK variant data</dt>
+  <dd><a href="format_gatk_vars.html">format_gatk_vars</a> explains
+  the fields typically found in GATK called variants</dd>
+  <dt>samtools variant data</dt>
+  <dd><a href="format_sam_vars.html">format_sam_vars</a> explains
+  the fields typically found in samtools called variants</dd>
+</dl>
+
+<dl>
+  <dt>bcol format</dt>
+  <dd> <a href="format_bcol.html">format_bcol</a> descibes the bcol
+  format. This is a (partly) binary format that is more efficient at
+  storing value data for all bases in the genome.</dd>
+</dl>
+
+<dl>
+  <dt>project directory</dt>
+  <dd> <a href="format_project.html">format_project</a> explains
+  the structure of a genomecomb project directory. While not strictly
+  a file format, it is a specific directory structure created by (and
+  expected by) some genomecomb tools.</dd>
+</dl>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

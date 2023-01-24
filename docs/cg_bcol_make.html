@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_bcol_make</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Bcol_make</h1>
+<h2 id="h17">Format</h2>
+<p>cg bcol make ?options? bcolfile column ?srcfile?</p>
+<h2 id="h80">Summary</h2>
+<p>Creates a <a href="bcol.html">bcol</a> file</p>
+<h2 id="h119">Description</h2>
+<p>The bcol_make commands creates a <a href="bcol.html">bcol</a> file
+based on tab-separated data. The input data is given via stdin. The
+data in one of the columns (given as a parameter) in the file is
+converted to the binary format.</p>
+<p>Values in the input file can be assigned to specific positions
+using the poscol parameter, which indicates which field will contain
+the position. A default value will be added in the bcol file for
+positions skipped in the input file. If the endcol parameter is also
+given, all values between first pos ition and end will be set to the
+value in the value column. The optional chromsomecol parameter can be
+used to indicate which field must be used to assign values to a
+specific chromosome. If the input file contains fields with names
+recognized for chromosome, begin or end, these will be automatically
+used for these parameters. If these fields are present, but you do
+not want to use them, set the parameters explicitely to empty</p>
+<p>Multiple columns (of the same type) can be stored in one bcol
+file, e.g. for variant annotation (a different score for each
+potential alternative allele) using the -m and -l options.</p>
+<h2 id="h1269">Arguments</h2>
+
+<dl>
+  <dt><b>bcolfile</b></dt>
+  <dd>name of bcolfile to be created</dd>
+  <dt><b>column</b></dt>
+  <dd>Name of the column containing the data</dd>
+  <dt><b>srcfile</b></dt>
+  <dd>Name of the file used for providing input data (if not given,
+  default is from stdin)</dd>
+</dl>
+<h2 id="h1486">Options</h2>
+
+<dl>
+  <dt><b>-t type</b></dt>
+  <dd>type of data, should be one described in the description of
+  the format (<a href="bcol.html">bcol</a>)</dd>
+  <dt><b>--precision precision</b></dt>
+  <dd>default precision for display of data in bcol</dd>
+  <dt><b>-d defaultvalue</b> (--default)</dt>
+  <dd>value that will be given for positions not in the input file</dd>
+  <dt><b>-h header</b> (--header)</dt>
+  <dd>set to 0 (default is 1) if the input data does not have a
+  header (in this case chromosomecol and poscol must be given by
+  number, starting from 0)</dd>
+  <dt><b>-c chromosomecol</b> (--chromosomecol)</dt>
+  <dd>name of the column that contains the chromosome</dd>
+  <dt><b>-n chromosomename</b> (--chromosomename)</dt>
+  <dd>if no chromosomecol is present (no -c), this name will be
+  given as chromosome (default is empty)</dd>
+  <dt><b>-p poscol</b></dt>
+  <dd>name of the column that contains the positions</dd>
+  <dt><b>-e endcol</b></dt>
+  <dd>name of the column that contains the the end positions (in
+  case of regions, this cannot be used with -m)</dd>
+  <dt><b>-co compressionlevel</b> (--compress)</dt>
+  <dd>compression level used (default 8): 1 is very fast; 8 is
+  slower, but compresses better, 0 can be used for no compression</dd>
+  <dt><b>-l multilist</b> (--multilist)</dt>
+  <dd>a comma separated list with the names of all columns, e.g.
+  A,C,G,T for variant annotation. This option must be given together
+  with the next option (-m)</dd>
+  <dt><b>-m multicol</b> (--multicol)</dt>
+  <dd>name of the column containing a list of names the values will
+  be assigned to. If a name in <b>multilist</b> is not present in
+  this list for a row, the default value will be assigned.</dd>
+</dl>
+<h2 id="h2921">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

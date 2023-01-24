@@ -1,0 +1,507 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/docs/reference</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Genomecomb 0.106.0 Reference</h1>
+<h2 id="h36">Format</h2>
+<p>cg subcommand ?options? ....</p>
+<h2 id="h79">Description</h2>
+<p>This help page gives a (reference style) overview of all
+genomecomb functions. For an introductory text to genomecomb and its
+formats, use</p>
+<pre>
+cg help intro
+</pre>
+<p>All genomecombs functions are called using the cg command and a
+subcommand. The available subcommands are listed on this page (in
+categories) with a short description. To get further info on how to
+use the subcommands and their parameters, use</p>
+<pre>
+cg help subcommand
+</pre>
+<p>or</p>
+<pre>
+cg subcommand -h
+</pre>
+<h2 id="h561">Options</h2>
+<p>The following options are generic and available for all
+subcommands. They must however always preceed the subcommand specific
+options.</p>
+
+<dl>
+  <dt>-v number (--verbose)</dt>
+  <dd>Setting this to 1 or 2 (instead of the default 0) makes some
+  subcommands chattier about their progress. At the given number is
+  1, logging messages are shown (warnings, start of subtask, etc.) If
+  the number &gt;= 2, progress counters are also shown (for commands
+  that support them)</dd>
+  <dt>--stack 0/1</dt>
+  <dd>When the program returns an error, by default only the error
+  message is shown, which is normally ok to show errors in input
+  format, etc. if --stack is set to 1, a full stack trace is shown on
+  error (which may be useful to solve errors caused by bugs in the
+  program)</dd>
+</dl>
+<p>Many commands will transparantly compress a result file if it
+has an extension indicating this (.zst, .gz, ...). Following options
+are for this case:</p>
+
+<dl>
+  <dt>-compressionlevel number</dt>
+  <dd>number indicating the level of compression (1 for fast
+  compression, higher numbers for better but slower compression) used
+  when resultfiles are to be compressed</dd>
+  <dt>-compressionthreads number</dt>
+  <dd>Use <b>number</b> <a
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  href="cg_threads_(default_1)_to_compress_the_result_file_(if_the_result_needs_to_be_compressed,_and_the_compression_method_supports_threads).html">cg_threads
+  (default 1) to compress the result 
+file (if the result needs to be compressed, and the compression
+  method supports threads)</a></dd>
+</dl>
+<h2 id="h1821">Available subcommands</h2>
+<h3 id="h1851">Process</h3>
+
+<dl>
+  <dt><a href="cg_process_project.html">process_project</a>|threads
+  (default 1) to compress the result file (if the result needs to be
+  compressed, and the compression method supports threads)</dt>
+</dl>
+<h2 id="h2041">Available subcommands</h2>
+<h3 id="h2071">Process</h3>
+
+<dl>
+  <dt><a href="cg_process_project.html">process_project</a>]]</dt>
+  <dd>process a sequencing project directory (<a
+  href="projectdir.html">projectdir</a>), generating full analysis
+  information (variant calls, multicompar, reports, ...) starting
+  from raw sample data from various sources.</dd>
+  <dt><a href="cg_makerefdb.html">makerefdb</a></dt>
+  <dd>Create a reference sequence and annotation databases
+  directory</dd>
+  <dt><a href="cg_process_multicompar.html">process_multicompar</a></dt>
+  <dd>process a sequencing project directory. This expects a
+  genomecomb directory with samples already processed and makes
+  annotated multicompar data</dd>
+  <dt><a href="cg_process_reports.html">process_reports</a></dt>
+  <dd>Calculates a number of statistics on a sample in the reports
+  subdir</dd>
+  <dt><a href="cg_process_rtgsample.html">process_rtgsample</a></dt>
+  <dd>Convert rtg data to cg format</dd>
+  <dt><a href="cg_process_sample.html">process_sample</a></dt>
+  <dd>Processes one sample directory (<a
+  href="projectdir.html">projectdir</a>), generating full analysis
+  information (variant calls, multicompar, reports, ...) starting
+  from raw sample data that can come from various sources.</dd>
+  <dt><a href="cg_project_addsample.html">project_addsample</a></dt>
+  <dd>Add a sample directory to a project directory.</dd>
+  <dt><a href="cg_renamesamples.html">renamesamples</a></dt>
+  <dd>Converts the sample names in a file or entire directory to
+  other names.</dd>
+</dl>
+<h3 id="h3233">Query</h3>
+
+<dl>
+  <dt><a href="cg_select.html">select</a></dt>
+  <dd>Command for very flexible selection, sorting and conversion
+  of tab separated files</dd>
+  <dt><a href="cg_viz.html">viz</a></dt>
+  <dd>grahical vizualization of tsv files (even very large ones) as
+  table without loading everything into memory</dd>
+  <dt><a href="cg_multiselect.html">multiselect</a></dt>
+  <dd>Command for using cg select on multiple files, and combine
+  the results</dd>
+  <dt><a href="cg_groupby.html">groupby</a></dt>
+  <dd>Group lines in a tsv file, based on 1 or more identical
+  fields</dd>
+</dl>
+<h3 id="h3675">Analysis</h3>
+
+<dl>
+  <dt><a href="cg_exportplink.html">exportplink</a></dt>
+  <dd>make a plink &quot;Transposed fileset&quot; from the genome
+  data</dd>
+  <dt><a href="cg_homwes.html">homwes</a></dt>
+  <dd>finds regions of homozygosity based on a variant file</dd>
+  <dt><a href="cg_homwes_compare.html">homwes_compare</a></dt>
+  <dd>finds regions of homozygosity based on a variant file</dd>
+</dl>
+<h3 id="h3954">Regions</h3>
+
+<dl>
+  <dt><a href="cg_multireg.html">multireg</a></dt>
+  <dd>Compare multiple regions files</dd>
+  <dt><a href="cg_regselect.html">regselect</a></dt>
+  <dd>select all regions or variants in file that overlap with
+  regions in region_select_file</dd>
+  <dt><a href="cg_covered.html">covered</a></dt>
+  <dd>Find number of bases covered by regions in a region file</dd>
+  <dt><a href="cg_regcollapse.html">regcollapse</a></dt>
+  <dd>Collapses overlapping regions in one (sorted) or more region
+  files</dd>
+  <dt><a href="cg_regcommon.html">regcommon</a></dt>
+  <dd>list regions common between region_file1 and region_file2</dd>
+  <dt><a href="cg_regextract.html">regextract</a></dt>
+  <dd>Find regions with a minimum or maximum coverage in a bam,
+  sam, cram, bcol or tsv file.</dd>
+  <dt><a href="cg_regjoin.html">regjoin</a></dt>
+  <dd>join regions in 1 or 2 regionfiles</dd>
+  <dt><a href="cg_regsubtract.html">regsubtract</a></dt>
+  <dd>subtract regions in region_file2 from region_file1</dd>
+</dl>
+<h3 id="h4684">Annotation</h3>
+
+<dl>
+  <dt><a href="cg_annotate.html">annotate</a></dt>
+  <dd>Annotate a variant file with region, gene or variant data</dd>
+  <dt><a href="cg_download_biograph.html">download_biograph</a></dt>
+  <dd>download_biograph gene rank data from biograph.</dd>
+  <dt><a href="cg_download_mart.html">download_mart</a></dt>
+  <dd>Download data from biomart</dd>
+  <dt><a href="cg_geneannot2reg.html">geneannot2reg</a></dt>
+  <dd>Creates a (region) annotation file based on a genelist with
+  annotations.</dd>
+</dl>
+<h3 id="h5060">Validation</h3>
+
+<dl>
+  <dt><a href="cg_genome_seq.html">genome_seq</a></dt>
+  <dd>Returns sequences of regions in the genome (fasta file),
+  optionally masked for snps/repeats</dd>
+  <dt><a href="cg_makeprimers.html">makeprimers</a></dt>
+  <dd>Make sequencing primers for Sanger validation experiments</dd>
+  <dt><a href="cg_makesequenom.html">makesequenom</a></dt>
+  <dd>Make input files for designing sequenom validation
+  experiments</dd>
+  <dt><a href="cg_primercheck.html">primercheck</a></dt>
+  <dd>check primer sets for multiple amplicons and snps</dd>
+  <dt><a href="cg_validatesv.html">validatesv</a></dt>
+</dl>
+<h3 id="h5510">Variants</h3>
+
+<dl>
+  <dt><a href="cg_multicompar.html">multicompar</a></dt>
+  <dd>Compare multiple variant files</dd>
+  <dt><a href="cg_multicompar_reannot.html">multicompar_reannot</a></dt>
+  <dd>Reannotate multicompar file</dd>
+  <dt><a href="cg_multicount.html">multicount</a></dt>
+  <dd>Compare multiple count files</dd>
+  <dt><a href="cg_pmulticompar.html">pmulticompar</a></dt>
+  <dd>Compare multiple variant files</dd>
+  <dt><a href="cg_process_sv.html">process_sv</a></dt>
+  <dd>Do all steps on a Complete Genomics sample to generate
+  structural variant calls</dd>
+  <dt><a href="cg_sv.html">sv</a></dt>
+  <dd>generic command to call structural variants based on the
+  alignment in bamfile.</dd>
+  <dt><a href="cg_svmulticompar.html">svmulticompar</a></dt>
+  <dd>Compare multiple structural variant files</dd>
+  <dt><a href="cg_var.html">var</a></dt>
+  <dd>generic command to call variants based on the alignment in
+  bamfile.</dd>
+</dl>
+<h3 id="h6172">tsv</h3>
+
+<dl>
+  <dt><a href="cg_cat.html">cat</a></dt>
+  <dd>Concatenate tab separated files and print on the standard
+  output (stripping headers of files other than the first).</dd>
+  <dt><a href="cg_checktsv.html">checktsv</a></dt>
+  <dd>Checks the given tsv file for errors</dd>
+  <dt><a href="cg_collapsealleles.html">collapsealleles</a></dt>
+  <dd>Convert a split variant file to unsplit by collapsing alleles
+  of the same variant into one line.</dd>
+  <dt><a href="cg_graph.html">graph</a></dt>
+  <dd>Visualization of large tsv files as a scatter plot</dd>
+  <dt><a href="cg_index.html">index</a></dt>
+  <dd>make indices for a tsv file</dd>
+  <dt><a href="cg_less.html">less</a></dt>
+  <dd>view a (possibly compressed) file using the pager less.</dd>
+  <dt><a href="cg_paste.html">paste</a></dt>
+  <dd>merge lines of tab separated files.</dd>
+  <dt><a href="cg_split.html">split</a></dt>
+  <dd>split a tab separated file in multiple tab separated files
+  based on the content of a (usually chromosome) field.</dd>
+  <dt><a href="cg_tsvjoin.html">tsvjoin</a></dt>
+  <dd>join two tsv files based on common fields (must be sorted).</dd>
+</dl>
+<h3 id="h7002">Conversion</h3>
+
+<dl>
+  <dt><a href="cg_sam_clipamplicons.html">sam_clipamplicons</a></dt>
+  <dd>Clip primers from aligned sequences in a sam file (by
+  changing bases to N and quality to 0) given a set of target
+  amplicons.</dd>
+  <dt><a href="cg_liftover.html">liftover</a></dt>
+  <dd>Use liftover to convert a variant file from one build to
+  another</dd>
+  <dt><a href="cg_liftregion.html">liftregion</a></dt>
+  <dd>Use liftover to convert a region file from one build to
+  another</dd>
+  <dt><a href="cg_liftsample.html">liftsample</a></dt>
+  <dd>Use liftover to convert the files from a sample (variant,
+  region, ...) from one build to another</dd>
+  <dt><a href="cg_liftchain2tsv.html">liftchain2tsv</a></dt>
+  <dd>Converts data in UCSC chain file format (for liftOver) to a
+  tsv (tab separated) format to be used in e.g. cg liftregion.</dd>
+  <dt><a href="cg_correctvariants.html">correctvariants</a></dt>
+  <dd>Complete or correct a variants file</dd>
+  <dt><a href="cg_bam_sort.html">bam_sort</a></dt>
+  <dd>sort a bam file.</dd>
+  <dt><a href="cg_bamreorder.html">bamreorder</a></dt>
+  <dd>Changes the order of the contigs/chromosomes in a bam file</dd>
+  <dt><a href="cg_fastq_split.html">fastq_split</a></dt>
+  <dd>split a (large) fastq file in multiple smaller ones</dd>
+</dl>
+<h3 id="h7970">Format Conversion</h3>
+
+<dl>
+  <dt><a href="cg_bam2fastq.html">bam2fastq</a></dt>
+  <dd>Extracts reads from a bamfile into fastq. The actual
+  extraction is based on picard's SamToFastq or samtools bam2fq, but
+  the data is prepared first (ao. sorted by name to avoid the
+  problems caused by position sorted fq files)</dd>
+  <dt><a href="cg_bam2reg.html">bam2reg</a></dt>
+  <dd>Extract regions with a minimum coverage from a bam file.</dd>
+  <dt><a href="cg_bam2sam.html">bam2sam</a></dt>
+  <dd>convert bam (or cram) to sam, sorting chromosomes into
+  natural sort order.</dd>
+  <dt><a href="cg_bcol.html">bcol</a></dt>
+  <dd>several commands for managing bcol files</dd>
+  <dt><a href="cg_bcol_get.html">bcol_get</a></dt>
+  <dd>Get a list of values from a bcol file</dd>
+  <dt><a href="cg_bcol_make.html">bcol_make</a></dt>
+  <dd>Creates a <a href="bcol.html">bcol</a> file</dd>
+  <dt><a href="cg_bcol_table.html">bcol_table</a></dt>
+  <dd>Outputs the data in a <a href="bcol.html">bcol</a> file as
+  tab-separated</dd>
+  <dt><a href="cg_bcol_update.html">bcol_update</a></dt>
+  <dd>updates bcol file(s) in the old format to the new</dd>
+  <dt><a href="cg_bed2tsv.html">bed2tsv</a></dt>
+  <dd>Converts data in bed format to <a href="tsv.html">tsv</a>
+  format</dd>
+  <dt><a href="cg_cg2sreg.html">cg2sreg</a></dt>
+  <dd>Extracts sequenced region data from a Complete Genomics
+  format file in tsv (tab separated, simple feature table) format.
+  The command will also sort the tsv appropriately.</dd>
+  <dt><a href="cg_cg2tsv.html">cg2tsv</a></dt>
+  <dd>Converts data in Complete Genomics format to tsv (tab
+  separated, simple feature table) format. The command will also sort
+  the tsv appropriately. The cggenefile is optional. It contains the
+  CG gene annotations, which can be (best) left out as these
+  annotations (and more) can be done in genomecomb.</dd>
+  <dt><a href="cg_clc2tsv.html">clc2tsv</a></dt>
+  <dd>Converts output from the clc bio assembly cell snp caller to
+  tsv format</dd>
+  <dt><a href="cg_colvalue.html">colvalue</a></dt>
+  <dd>Converts data in tsv format from a long key-value format to a
+  wide column-value format</dd>
+  <dt><a href="cg_convcgcnv.html">convcgcnv</a></dt>
+  <dd>Convert the Complete Genomics CNV files to the cg format</dd>
+  <dt><a href="cg_convcgsv.html">convcgsv</a></dt>
+  <dd>Convert the Complete Genomics SV files to the cg format</dd>
+  <dt><a href="cg_csv2tsv.html">csv2tsv</a></dt>
+  <dd>Converts comma-separated value (csv) data to tab-sparated (<a
+  href="tsv.html">tsv</a>)</dd>
+  <dt><a href="cg_gb2fasta.html">gb2fasta</a></dt>
+  <dd>Comverts a genbank file to a fasta file The file may contain
+  multiple sequences. The name of the sequence (in the fasta file) is
+  taken from one of the following fields (in order, if not empty or
+  .): LOCUS, VERSION, ACCESSION, KEYWORDS, DEFINITION</dd>
+  <dt><a href="cg_gene2reg.html">gene2reg</a></dt>
+  <dd>Extract gene elements from data in genepred-like format to a
+  (tab separated) region file.</dd>
+  <dt><a href="cg_gff2tsv.html">gff2tsv</a></dt>
+  <dd>Converts data in gff format to gene tsv format</dd>
+  <dt><a href="cg_gtf2tsv.html">gtf2tsv</a></dt>
+  <dd>Converts data in gtf format to gene tsv (tab separated)
+  format</dd>
+  <dt><a href="cg_keyvalue.html">keyvalue</a></dt>
+  <dd>Converts data in tsv format from wide format (data for each
+  sample in separate columns) to keyvalue format.</dd>
+  <dt><a href="cg_long.html">long</a></dt>
+  <dd>Converts data in tsv format from wide format (data for each
+  sample/analysis in separate columns) to long format (data for each
+  sample/analysis in separate lines)</dd>
+  <dt><a href="cg_rtg2tsv.html">rtg2tsv</a></dt>
+  <dd>Converts data in rtg format to tsv format</dd>
+  <dt><a href="cg_sam2tsv.html">sam2tsv</a></dt>
+  <dd>Converts data in sam format to <a href="tsv.html">tsv</a>
+  format. The original sam header is included in the comments. Extra
+  fields in the sam file are kept as field:type:value, but put
+  together as a list in a column named other. Optionally the values
+  for some extra fields can be split into different columns using the
+  -fields option.</dd>
+  <dt><a href="cg_tsv2bed.html">tsv2bed</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to bed format. By default it will
+  create a minimal bed file by extracting chromosome,begin and end
+  from the input using the default fields.</dd>
+  <dt><a href="cg_tsv2csv.html">tsv2csv</a></dt>
+  <dd>Converts tab-sparated (<a href="tsv.html">tsv</a>) data to
+  comma-separated value (csv)</dd>
+  <dt><a href="cg_tsv2vcf.html">tsv2vcf</a></dt>
+  <dd>Converts data in genomecomb tab-separated variant format (<a
+  href="tsv.html">tsv</a>) to vcf.</dd>
+  <dt><a href="cg_vcf2tsv.html">vcf2tsv</a></dt>
+  <dd>Converts data in vcf format to genomecomb tab-separated
+  variant file (<a href="tsv.html">tsv</a>). The command will also
+  sort the tsv appropriately.</dd>
+  <dt><a href="cg_wide.html">wide</a></dt>
+  <dd>Converts data in tsv format from long format (data for each
+  sample in separate lines) to wide format (data for each sample in
+  separate columns)</dd>
+</dl>
+<h3 id="h11879">Report</h3>
+
+<dl>
+  <dt><a href="cg_bam_histo.html">bam_histo</a></dt>
+  <dd>create a report with coverage data of given regions in a bam
+  file</dd>
+  <dt><a href="cg_coverage_report.html">coverage_report</a></dt>
+  <dd>generates coverage report for region of interest A histo file
+  is generated at the location of the bam file</dd>
+  <dt><a href="cg_depth_histo.html">depth_histo</a></dt>
+  <dd>makes a histogram of the depth in the given bamfile,
+  subdivided in on- and oftarget regions</dd>
+  <dt><a href="cg_hsmetrics.html">hsmetrics</a></dt>
+  <dd>Creates a hsmetrics file using picard CalculateHsMetrics</dd>
+  <dt><a href="cg_predictgender.html">predictgender</a></dt>
+  <dd>predicts gender for a sample</dd>
+</dl>
+<h3 id="h12420">Info</h3>
+
+<dl>
+  <dt><a href="cg_help.html">help</a></dt>
+  <dd>display help</dd>
+  <dt><a href="cg_version.html">version</a></dt>
+  <dd>return version information</dd>
+  <dt><a href="cg_versions.html">versions</a></dt>
+  <dd>return version information as a tsv</dd>
+</dl>
+<h3 id="h12584">RNA</h3>
+
+<dl>
+  <dt><a href="cg_multitranscript.html">multitranscript</a></dt>
+  <dd>Compare multiple transcript files</dd>
+</dl>
+<h3 id="h12673">Compression</h3>
+
+<dl>
+  <dt><a href="cg_bgzip.html">bgzip</a></dt>
+  <dd>Compresses files using bgzip</dd>
+  <dt><a href="cg_compress.html">compress</a></dt>
+  <dd>Compresses files using a choice of methods</dd>
+  <dt><a href="cg_job_update.html">job_update</a></dt>
+  <dd>updates the logfile of a command using <a
+  href="joboptions.html">joboptions</a></dd>
+  <dt><a href="cg_lz4.html">lz4</a></dt>
+  <dd>Compresses files using lz4</dd>
+  <dt><a href="cg_lz4ra.html">lz4ra</a></dt>
+  <dd>decompresses part of a lz4 compressed file</dd>
+  <dt><a href="cg_razip.html">razip</a></dt>
+  <dd>Compresses files using razip</dd>
+  <dt><a href="cg_unzip.html">unzip</a></dt>
+  <dd>Decompresses</dd>
+  <dt><a href="cg_zcat.html">zcat</a></dt>
+  <dd>pipe contents of one or more (potentially compressed) files
+  to stdout.</dd>
+  <dt><a href="cg_zst.html">zst</a></dt>
+  <dd>Compresses files using zstd</dd>
+</dl>
+<h3 id="h13235">Mapping</h3>
+
+<dl>
+  <dt><a href="cg_map.html">map</a></dt>
+  <dd>align reads in fastq files to a reference genome using a
+  variety of methods</dd>
+</dl>
+<h3 id="h13346">Dev</h3>
+
+<dl>
+  <dt><a href="cg_qsub.html">qsub</a></dt>
+  <dd>submit a command to the cluster (grid engine).</dd>
+  <dt><a href="cg_sh.html">sh</a></dt>
+  <dd>runs a shell in which genomecomb commands can be input and
+  executed interactively.</dd>
+  <dt><a href="cg_source.html">source</a></dt>
+  <dd>runs a script (Tcl) with all commands/extensions from
+  genomecomb available.</dd>
+  <dt><a href="cg_tsvdiff.html">tsvdiff</a></dt>
+  <dd>compare tsv files</dd>
+</dl>
+<h3 id="h13669">Tools</h3>
+
+<dl>
+  <dt><a href="cg_cplinked.html">cplinked</a></dt>
+  <dd>create a copy of a directory where each file in it is a
+  softlink to the src.</dd>
+  <dt><a href="cg_hardsync.html">hardsync</a></dt>
+  <dd>creates a hardlinked copy of a directory in another location</dd>
+  <dt><a href="cg_mklink.html">mklink</a></dt>
+  <dd>Create softlinks (improved)</dd>
+</dl>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

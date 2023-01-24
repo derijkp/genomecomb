@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_makerefdb</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">makerefdb</h1>
+<h2 id="h17">Format</h2>
+<p>cg makerefdb ?options? dbdir</p>
+<h2 id="h60">Summary</h2>
+<p>Create a reference sequence and annotation databases directory</p>
+<h2 id="h138">Description</h2>
+<p>The reference directory contains the reference genome sequence
+with various indexes and the accompanying annotation databases. The
+cg makerefdb command creates such a basic reference directory for a
+given genome based on data in the UCSC genome browser
+(https://genome.ucsc.edu/) (except for the miRNA genes which are
+obtained from mirbase).</p>
+<p>The name of the directory indicates which genome data has to be
+downloaded: It should match the UCSC Genome Browser assembly ID of
+the desired genome.</p>
+<p>By default the reference sequence and some annotation databases
+will be downloaded. Using the options you can adjust which
+annotations are added. For some genomes genomecomb includes a script
+(e.g. makedbs/makedbs_hg38.sh for human)with extended preset options
+and adding (much) more annotations not coming from UCSC.</p>
+<h2 id="h972">Arguments</h2>
+
+<dl>
+  <dt>dbdir</dt>
+  <dd>name/path of result directory</dd>
+</dl>
+<h2 id="h1028">Options</h2>
+
+<dl>
+  <dt>-genesdb</dt>
+  <dd></dd>
+  <dt>-mirbase</dt>
+  <dd></dd>
+  <dt>-regionsdb_collapse</dt>
+  <dd></dd>
+  <dt>-regionsdb_join</dt>
+  <dd></dd>
+  <dt>-dbsnp</dt>
+  <dd></dd>
+  <dt>-refSeqFuncElemsurl</dt>
+  <dd></dd>
+  <dt>-genomeurl</dt>
+  <dd></dd>
+  <dt>-pseudoautosomal</dt>
+  <dd></dd>
+  <dt>-transcriptsurl</dt>
+  <dd></dd>
+  <dt>-transcriptsgtf</dt>
+  <dd></dd>
+  <dt>-webcache</dt>
+  <dd></dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+<h2 id="h1370">Example</h2>
+<p>The following example downloads the C. elegans ce11 reference
+sequence and some annotation databases. It will distribute processing
+of the data over 4 cores (-d 4).</p>
+<pre>
+
+cg makerefdb -d 4 -v 2 \
+    -regionsdb_collapse '
+        simpleRepeat rmsk phastConsElements26way phyloP135way
+    ' \
+    -regionsdb_join '' \
+    -genesdb '
+        {refGene int reg}
+        {ws245Genes extra int reg} 
+        {ensGene extra int reg}
+        {genscan extra}
+        {augustusGene extra}
+    ' \
+    -mirbase cel-22.1:ce11 \
+    /complgen/refseq/ce11
+
+</pre>
+<h2 id="h1932">Category</h2>
+<p>Process</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

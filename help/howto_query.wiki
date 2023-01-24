@@ -16,7 +16,7 @@ different technologies:
 * chromosome 21 and 22 Ilumina based exome sequences of NA19238 and NA19239
 
 The analysis result files used in these examples are available through the
-[[../install|install]] page). A detailed description of the columns
+[[install|install]] page). A detailed description of the columns
 present in this file are presented in the [[example_header|example_header]] section.
 
 The files used are:

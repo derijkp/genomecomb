@@ -19,9 +19,14 @@ Start up [[cg_viz]] using
 {{{
 cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
 }}}
+
 This opens the annotated combined variant file (fomrmat described in [[tsv]])
 using cg viz, allowing you to browse through the table (even if it is
 millions of lines long).
+
+First thing you may want to do is make the title/header row higher. You
+can do this by dragging the edge down. You can also make columns broader
+by dragging the edges.
 
 == Fields ==
 You can use the **Fields** button to limit the number of fields you want
@@ -45,22 +50,24 @@ title line are cut off; make these visible by selecting the line between
 title and table, and drag it lower.
 
 The sample fields have a specific format, e.g.
-; zyg-gatk-rdsbwa-exNA19240mx2: indicates the zygosity (as described in
-[[tsv]]) for this variant by the gatk variant caller on the reads aligned
+; zyg-gatkh-rdsbwa-exNA19240mx2: indicates the zygosity (as described in
+[[tsv]]) for this variant by the gatkh variant caller on the reads aligned
 using bwa of the sample exNA19240mx2.
-; zyg-sam-rdsbwa-exNA19240mx2: contains the zygosity according to the sam variant caller for
+; zyg-strelka-rdsbwa-exNA19240mx2: contains the zygosity according to the strelka variant caller for
 the same sequence sample.
-; zyg-gatk-rdsbwa-gilNA19240mx2: The same biological sample (NA19240) was
+; zyg-gatkh-rdsbwa-gilNA19240mx2: The same biological sample (NA19240) was
 also genome sequenced, and sequence sample gilNA19240mx2 contains this
-data. zyg-gatk-rdsbwa-gilNA19240mx2 is then the zygosity called using the
-same analysis tools on the genome sequence sample.
+data. zyg-gatkh-rdsbwa-gilNA19240mx2 is then the zygosity called using the
+same analysis tool on the genome sequence sample.
 
-When combining sample results, process_project will check if a variant is not present
-in a sample variant list, whether this is due to actually being reference (zyg = r) or being
-unsequenced (zyg = u), according to the criteria used.
-also other data, such as the quality of the "variant" call, is added for the reference calls
-where possible. You can see that no quality value is available (quality-* = ?) 
-for unsequenced variants (zyg-* = u)
+When combining sample results, process_project will check if a variant is
+not present in a sample variant list, whether this is due to actually
+being reference (zyg = r) or being unsequenced (zyg = u), according to the
+criteria used. also other data, such as the coverage or quality of the
+"variant" call, is added for the reference calls where possible. However,
+for unsequenced variants (zyg-* = u) many fields (e.g. quality) will remain empty
+(where ref call but no variant call) or ? for completely unknown (e.g.
+gath is not even called on regions with coverage < 5)
 
 == Query ==
 You can use **Query** to show only lines that fit a number of criteria.
@@ -71,8 +78,29 @@ You can type a query directly into the Query field at the top, e.g. type
 to select only variants that are homozygous gatk calls for sample gilNA19240mx2
 and press Enter. 
 
-You can use the "Query" button to get help in building queries
-or the "EasyQuery" button for adding some common queries in an easier way.
+=== Query builder ===
+You can use the "Query" button to get help in building queries. The main
+part of the query builder is still a (larger) text field where you can
+edit the query as text.
+
+The buttons and selection lists allow easy adding of components to your
+query. You can for instance select one or more fields in the first list,
+and operator in the second and values in the third (Some common/example
+values are in the list for selection). Then clicking the and button will
+add the query component made this way at the cursor position using "and"
+logic while the or button does the same using or. condition, field, value
+and comp (comparison) ad these parts of the selections at the cursor.
+
+Using the functions button you can select out of all supported functions.
+Double click to insert the function with parameters based on the currently
+selected fields, operator and values. You can always still edit the result.
+The button block on the right gives shortcuts to some common functions.
+
+The "EasyQuery" button can be used for adding some common queries in an easier 
+but less flexible way.
+
+== Sort ==
+Select which fields to sort on; take the ones with - prefix for reverse sort.
 
 == Summaries ==
 The **Summaries** button can be used to create summary data. This provides

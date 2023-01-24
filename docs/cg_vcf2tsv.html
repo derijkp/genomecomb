@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_vcf2tsv</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Vcf2tsv</h1>
+<h2 id="h15">Format</h2>
+<p>cg vcf2tsv ?options? ?infile? ?outfile?</p>
+<h2 id="h69">Summary</h2>
+<p>Converts data in vcf format to genomecomb tab-separated variant
+file (<a href="tsv.html">tsv</a>). The command will also sort the tsv
+appropriately.</p>
+<h2 id="h214">Description</h2>
+<p>cg vcf2tsv converts a vcf file to a tab-separated variant file (<a
+href="tsv.html">tsv</a>). The header section of the vcf is converted
+to the genomecomb header conventions in the tsv file. The fields
+describing the variant (chromosome, begin, end, type, ref, alt) are
+in the normal genomecomb conventions. The fields ID and QUAL in the
+vcf file are in the tsv as &quot;name&quot; and &quot;quality&quot;
+respectively. If genotype data is present, the normal genocomb fields
+(alleleSeq1, alleleSeq2, zyg, phased,genotypes) are added.</p>
+<p>All other information in the FORMAT or INFO data is converted into
+extra columns in the result file. These get the ID code in the
+original vcf file as a name, except for the following (common) fields
+that get a longer (more informative) name:</p>
+
+<dl>
+  <dt>AD</dt>
+  <dd>alleledepth (Allelic depths for the ref and alt alleles in
+  the order listed)</dd>
+  <dt>GT</dt>
+  <dd>genotype</dd>
+  <dt>DP in INFO</dt>
+  <dd>totalcoverage (Total Depth, counting all reads)</dd>
+  <dt>DP in FORMAT</dt>
+  <dd>coverage (Read Depth, counting only filtered reads used for
+  calling, and only from one sample)</dd>
+  <dt>FT</dt>
+  <dd>gfilter</dd>
+  <dt>GL</dt>
+  <dd>loglikelihood (three floating point log10-scaled likelihoods
+  for AA,AB,BB genotypes where A=ref and B=alt; not applicable if
+  site is not biallelic)</dd>
+  <dt>GQ</dt>
+  <dd>genoqual (genotype quality, encoded as a phred quality
+  -10log_10p(genotype call is wrong))</dd>
+  <dt>PS</dt>
+  <dd>phaseset (integer indicating the haplotype set the phased
+  genotype belongs to)</dd>
+  <dt>HQ</dt>
+  <dd>haploqual (haplotype qualities, two phred qualities comma
+  separated)</dd>
+  <dt>AN</dt>
+  <dd>totalallelecount (total number of alleles in called
+  genotypes)</dd>
+  <dt>AC</dt>
+  <dd>allelecount (allele count in genotypes, for each alt allele,
+  in the same order as listed)</dd>
+  <dt>AF</dt>
+  <dd>frequency (allele frequency for each alt allele in the same
+  order as listed)</dd>
+  <dt>AA</dt>
+  <dd>Ancestralallele</dd>
+  <dt>DB</dt>
+  <dd>dbsnp</dd>
+  <dt>H2</dt>
+  <dd>Hapmap2</dd>
+</dl>
+<p>In vcf files variants next to each other (such as e.g. a snp
+followed by a deletion) are described together, basically as a
+substition with several alleles. By default vcf2tsv will split these
+up into the separate types (and alleles) and adapt the resulting
+variant lines accordingly as far as possible (some fields contain
+lists correlated with the alleles). The way of handling this is set
+by the -split option</p>
+
+<dl>
+  <dt>ori</dt>
+  <dd>Using ori for -split will recreate the orignal setup,
+  creating exactly one line for each line in the vcf file. A combined
+  variant line will be converted to a variant of type sub. For all
+  fields the correlations with alleles will stay correct, but
+  querying and annotation will be harder (e.g. missing a common snp
+  because it is combined into a sub with an indel).</dd>
+  <dt>1</dt>
+  <dd>Each alternative allele will be on a seperate line. (split
+  version of <a href="tsv.html">tsv</a> format)</dd>
+  <dt>0</dt>
+  <dd>Different types will be on a seperate lines, but multiple
+  alleles are on the same line. (multiallelic version of <a
+  href="tsv.html">tsv</a> format)</dd>
+</dl>
+<p>The vcf fields containing lists that have to be handled
+specially are indicated in the vcf file with:</p>
+
+<dl>
+  <dt>Number=A</dt>
+  <dd>These contain a list of values corresponding to the
+  alternative alleles in the vcf. Each value will be assigned (as a
+  single value) to their proper allele.</dd>
+  <dt>Number=R</dt>
+  <dd>These contain a list of values corresponding to all alleles,
+  starting with the reference allele and then the alternatives. An
+  extra field (fieldname_ref) will be created that contains reference
+  value, and the other values are assigned to their proper allele.</dd>
+  <dt>Number=G</dt>
+  <dd>These fields contain a list of values for all potential
+  genotypes. They cannot be properly split up to the individual
+  alleles (especially as the alleles may end up as different types).
+  They are transfered as is, but the correlation in the resulting
+  file may be wrong.</dd>
+  <dt>Number=.</dt>
+  <dd>Unspecified; by default they are left as is, but in the
+  results of some programs they are related to alleles, either as A
+  or R. You can use the -typelist option to specify what to do with
+  them.</dd>
+</dl>
+<h2 id="h4002">Arguments</h2>
+
+<dl>
+  <dt>infile</dt>
+  <dd>file to be converted, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt>outfile</dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h4164">Options</h2>
+
+<dl>
+  <dt>-split 0/1/ori</dt>
+  <dd>produce a <a href="tsv.html">tsv</a> with split (1),
+  multiallelic (0) alleles or keep the original layout</dd>
+  <dt>-sort 0/1</dt>
+  <dd>By default (1) cg vcf2tsv will sort the file during
+  conversion. Explicit sorting is not always needed (e.g. if the vcf
+  is sorted and uses a natural sort order for chromsomes, or if
+  sorting will happen later in the workflow anyway) and can be turned
+  of using -sort 0 to save processing time.</dd>
+  <dt>-t typelist (-typelist)</dt>
+  <dd>Determines what to do with fields indicated with Number=. in
+  the vcf. The first character indicates how to deal by default with
+  such a field (R, A, to distribute over alleles or . to just copy
+  the list). Following this can be a (space separated) list of
+  fieldnames and how to handle them. (This will only be applied if
+  the given field is specified as Number=.) The default typelist is
+  &quot;. AD R RPA R AC A AF A&quot;, including some fields which are
+  commonly defined this way.</dd>
+  <dt>-keepfields fieldlist</dt>
+  <dd>Besides the obligatory fields, include only the fields in
+  fieldlist (space separated) in the output. Default is to use all
+  fields present in the file (*)</dd>
+  <dt>-locerror error/keep/correct</dt>
+  <dd>some vcfs contain locations that would be incorrect (lead to
+  problems for annotation etc.) in a tsv (e.g. end &lt; begin). By
+  default vcf2tsv will stop with an error on these (<b>error</b>).
+  Use <b>keep</b> to continue producing a tsv file including these
+  wrong entries, while <b>correct</b> will produce a tsv file where
+  this error is corrected (end changed to = begin).</dd>
+  <dt>-meta</dt>
+  <dd>list of key value pairs that will be added to meta data in
+  the comment lines</dd>
+</dl>
+<h2 id="h5744">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

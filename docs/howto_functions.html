@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/howto_functions</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Other functions</h1>
+<h2 id="h21">Genome region operations</h2>
+<p>Some examples of operations on genome regions files. Although some
+of the operations can also be achieved by advanced queries, we show
+here how to use regions files.</p>
+<p>Select regions sequenced by CG (with two SNV callers)</p>
+<pre>
+cg select -q 'count($sequenced-cg*, == 1) == 4' \
+    NA19240_chrom22.tsv.gz &gt; reg_2.tsv
+</pre>
+<p>Then calculate how large the selected regions are</p>
+<pre>
+cg covered reg2.tsv &gt; reg2.covered
+</pre>
+<p>Select regions representing all missense SNVs</p>
+<pre>
+cg select -q '$impact ==&quot;MISSENSE&quot; &amp;&amp; $type == &quot;snp&quot; ' \
+    NA19240_chrom22.tsv.gz &gt; reg_missense.tsv
+</pre>
+<p>Join both region files</p>
+<pre>
+cg regjoin reg_2.tsv reg_missense.tsv &gt; joined.tsv
+</pre>
+<p>Subtract missense SNVs from the first file</p>
+<pre>
+cg regsubtract reg_2.tsv reg_missense.tsv &gt; subtracted.tsv
+</pre>
+<h2 id="h810">Primer design</h2>
+<p>First select regions for design for all missense SNVs</p>
+<pre>
+cg makeregions reg_missense.tsv 200 &gt; regval_missense.tsv
+</pre>
+<p>Then make primers for them using the experiment name
+ValidationName and the location of the reference genome</p>
+<pre>
+cg makeprimers regval_missense.tsv ValidationName 600 500 dbdir &gt; primers-valreg.tsv
+</pre>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

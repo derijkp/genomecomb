@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_bam_histo</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">bam_histo</h1>
+<h2 id="h17">Format</h2>
+<p>cg bam_histo ?options? regionfile bamfile ?intervals?</p>
+<h2 id="h85">Summary</h2>
+<p>create a report with coverage data of given regions in a bam file</p>
+<h2 id="h166">Description</h2>
+<p>bam_histo creates a report with the coverage for the region(s) of
+interest given in regionfile. The report is a tsv file with a line
+for each region in the region file. Each line will show the number of
+bases with a coverage (sequencing depth) in the given intervals. It
+will also show the size of the region and the average, minimum and
+maximum depth</p>
+<h2 id="h538">Arguments</h2>
+
+<dl>
+  <dt><b>regionfile</b></dt>
+  <dd>region file: tab separated file describing region of
+  interest. Must contain fields: chr, begin, end &amp; name</dd>
+  <dt><b>bamfile</b></dt>
+  <dd>bam file for which a coverage report should be generated</dd>
+  <dt><b>intervals</b></dt>
+  <dd>list (space sperated) of numbers defining the intervals used</dd>
+</dl>
+<h2 id="h830">Options</h2>
+
+<dl>
+  <dt><b>-n namecol (-namecol)</b></dt>
+  <dd>fieldname (in the region file) to use as name for each row in
+  the result</dd>
+</dl>
+<h2 id="h947">Category</h2>
+<p>Report</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

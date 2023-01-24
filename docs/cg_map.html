@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_map</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Map</h1>
+<h2 id="h11">Format</h2>
+<p>cg map ?options? result refseq sample fastqfile ?fastqfile2? ...</p>
+<h2 id="h90">Summary</h2>
+<p>align reads in fastq files to a reference genome using a variety
+of methods</p>
+<h2 id="h181">Description</h2>
+<p>This is a generic command to map reads to a reference genome using
+different methods.</p>
+<p>The workload can be distributed on a cluster or using multiple
+cores with <a href="joboptions.html">job options</a> (more info with
+cg help joboptions) by mapping the separate fastq files in parallel
+and efficiently combining the results. Having the data in enough
+separate fastq files is required for good parallelisation.</p>
+<h2 id="h597">Arguments</h2>
+
+<dl>
+  <dt><b>result</b></dt>
+  <dd>resulting aligignment file, the file extension (.bam, .cram,
+  .sam) determines the format of the file</dd>
+  <dt><b>refseq</b></dt>
+  <dd>reference sequence (in fasta format, the reference directory
+  name may be given instead)</dd>
+  <dt><b>sample</b></dt>
+  <dd>sample name (will be used to fill in in the readgroup info)</dd>
+  <dt><b>fastqfile</b></dt>
+  <dd>fastq file with the sequences to be aligned</dd>
+</dl>
+<h2 id="h966">Options</h2>
+<p>This command can be distributed on a cluster or using multiple
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+
+<dl>
+  <dt>-method method</dt>
+  <dd>gives the alignment method/software to be used, e.g.: bwa,
+  minimap2, ngmlr, bowtie2</dd>
+  <dt>-paired 1/0 (-p)</dt>
+  <dd>fastqs are paired/unpaired; if paired the matching fastqs
+  should be given consecutively, e.g. set1_fw.fastq.gz
+  set1_rev.fastq.gz set2_fw.fastq.gz set2_rev.fastq.gz ...</dd>
+  <dt>-preset preset (-p,-x)</dt>
+  <dd>some of the mapping software (e.g. minimap2) supports
+  presets, these can be given here, e.g. splice, sr e.g. all presets
+  supported by minimap2 (map-ont, sr, splice, ..) and ngmlr (ont,
+  pacbio) can be used with their respective methods.</dd>
+  <dt>-readgroupdata readgroupdata</dt>
+  <dd>space separated key value list that will be put into the
+  readgroup info (The given sample will be added for some fields)</dd>
+  <dt>-fixmate</dt>
+  <dd>use samtools fixmate to fills in mate coordinates and insert
+  size fields</dd>
+  <dt>-sort coordinate/nosort/name/c/1</dt>
+  <dd>How to sort the result: &quot;1&quot; and &quot;c&quot; are
+  synonyms for coordinate sort</dd>
+  <dt>-mergesort 1/0</dt>
+  <dd>Instead of concatenating and then sorting all sam files,
+  mergesort will merge the already sorted sam files. This is faster
+  unless a lot of intermediate files have to be made because of the
+  limit to the number of files that can be opened at the same time.
+  (default 0)</dd>
+  <dt>-maxopenfiles number</dt>
+  <dd>the number of files that can be opened at the same time by
+  the system. (default is the limit given by the system where the
+  command is run in /proc/self/limits or using ulimit -n)</dd>
+  <dt>-keepsams 1/0</dt>
+  <dd>(default 0)</dd>
+  <dt>-threads number (-t)</dt>
+  <dd>(default 2)</dd>
+  <dt>-mem number</dt>
+  <dd>how much memory should be asked/reserved for the mapping
+  (default: decided by method)</dd>
+  <dt>-time number</dt>
+  <dd>how much time should be asked/reserved for the mapping
+  (default: decided by method)</dd>
+  <dt>-joinfastqs 1/0</dt>
+  <dd>If you have (too) many very small fastq files the fact that
+  fastqs are mapped seperately can become a performance problem (e.g.
+  more time spent on loading indexes than actual mapping). use
+  joinfastqs to combine fastq files into one (or 2 in case of -paired
+  1) before processing. (default 0)</dd>
+  <dt>-compressionlevel number</dt>
+  <dd>how much will the result file be compressed (what levels mean
+  depends on the compression method) (default: reasonable level for
+  given method)</dd>
+</dl>
+<h2 id="h3243">Dependencies</h2>
+<p>Some of the mapping programs supported are distributed with
+genomecomb (bwa and minimap2), but not all (e.g. ngmlr) These should
+be installed separately, and should be runnable from the path.</p>
+<h2 id="h3455">Category</h2>
+<p>Mapping</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/example_header</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Headers</h1>
+<p>This text describes the fields in the example file (and most files
+coming out of genomecomb analysis) shortly. More detail on the format
+of the example files can be found in <a
+href="format_tsv.html">format_tsv</a>.</p>
+<p>Some of the fields apply to variant itself: the basic variant
+fields describe the variant itself, the annotation fields give info
+on the variant (location etc.).</p>
+<p>Sample specific fields are given separately for each sample by
+appending a dash and the sample name to the generic fieldname. They
+specify data about the variant that can be different for each sample,
+e.g. the genotype (a sample can have a reference, heterozygous,...
+genotype for the variant), or sequencing quality score.</p>
+<h2 id="h694">Basic variant fields</h2>
+
+<ul>
+  <li><b>chromosome</b>: chromosome number</li>
+  <li><b>begin</b>: start position of variant (zero based)</li>
+  <li><b>end</b>: end position of variant (zero based)</li>
+  <li><b>type</b>: single nucleotide variants (snp), short
+  insertions (ins), deletions (del) or substitutions (sub), or the
+  combinations of two different variant types at heterozygous
+  positions (e.g. del_snp).</li>
+  <li><b>ref</b>: The reference allele at this position</li>
+  <li><b>alt</b>: The alternative allele at this position</li>
+</ul>
+<h2 id="h1163">Sample specific fields for cg samples</h2>
+
+<ul>
+  <li><b>sequenced-cg-cg-testNA19238chr2122cg</b>: Position sequenced
+  by CG/CG? (&quot;u&quot; = unsequenced, &quot;v&quot;=variant,
+  &quot;r&quot;=reference)</li>
+  <li><b>zyg-cg-cg-testNA19238chr2122cg</b>: zygosity according
+  according to CG</li>
+  <li><b>alleleSeq1-cg-cg-testNA19238chr2122cg</b>: First allele
+  called in CG genome.</li>
+  <li><b>alleleSeq2-cg-cg-testNA19238chr2122cg</b>: Second allele
+  called in CG genome.</li>
+  <li><b>totalScore1-cg-cg-testNA19238chr2122cg</b>: Variant score
+  at first allele.</li>
+  <li><b>totalScore2-cg-cg-testNA19238chr2122cg</b>: Variant score
+  at second allele.</li>
+  <li><b>coverage-cg-cg-testNA19238chr2122cg</b>: Coverage depth at
+  this position by CG.</li>
+  <li><b>refscore-cg-cg-testNA19238chr2122cg</b>: Reference score
+  at this position.</li>
+  <li><b>refcons-cg-cg-testNA19238chr2122cg</b>: in a poorly called
+  region (accoring to CG)</li>
+  <li><b>cluster-cg-cg-testNA19238chr2122cg</b>: Presence within a
+  cluster of SNVs by CG</li>
+</ul>
+<p>The same fields are present for NA19239 and NA19240</p>
+<h2 id="h2095">Sample specific fields for gatk analysis</h2>
+
+<ul>
+  <li><b>sequenced-gatk-rdsbwa-testNA19240chr21il</b>: sequenced by
+  Illumina/GATK? (&quot;u&quot; = unsequenced, &quot;v&quot;=variant,
+  &quot;r&quot;=reference)</li>
+  <li><b>zyg-gatk-rdsbwa-testNA19240chr21il</b>: zygosity according
+  to GATK (m=homozygous, t=heterozygous, c=compound, o=other,
+  r=reference, u=unsequenced)</li>
+  <li><b>alleleSeq1-gatk-rdsbwa-testNA19240chr21il</b>: First
+  allele called in Illumina genome by GATK.</li>
+  <li><b>alleleSeq2-gatk-rdsbwa-testNA19240chr21il</b>: Second
+  allele called in Illumina genome by GATK.</li>
+  <li><b>quality-gatk-rdsbwa-testNA19240chr21il</b>: Quality score
+  for this position as called by GATK on Illumina genome.</li>
+  <li><b>phased-gatk-rdsbwa-testNA19240chr21il</b>: order of
+  genotypes in alleleSeq1 and alleleSeq2 is significant (phase is
+  known)</li>
+  <li><b>genotypes-gatk-rdsbwa-testNA19240chr21il</b>: list of
+  genotypes, can contain more than 2</li>
+  <li><b>alleledepth_ref-gatk-rdsbwa-testNA19240chr21il</b>: depth
+  of reference allele</li>
+  <li><b>alleledepth-gatk-rdsbwa-testNA19240chr21il</b>: depth of
+  alternative alleles</li>
+  <li><b>coverage-gatk-rdsbwa-testNA19240chr21il</b>: Coverage
+  depth at this position by by Illumina/GATK.</li>
+  <li><b>genoqual-gatk-rdsbwa-testNA19240chr21il</b>: quality of
+  the genotypes</li>
+  <li><b>PL-gatk-rdsbwa-testNA19240chr21il</b>: Normalized,
+  Phred-scaled likelihoods for AA,AB,BB genotypes where A=ref and
+  B=alt; not applicable if site is not biallelic</li>
+  <li><b>BaseQRankSum-gatk-rdsbwa-testNA19240chr21il</b>:
+  Phred-scaled p-value From Wilcoxon Rank Sum Test of Alt Vs. Ref
+  base qualities</li>
+  <li><b>totalcoverage-gatk-rdsbwa-testNA19240chr21il</b>: Total
+  Depth, counting all reads (DP in vcf INFO)</li>
+  <li><b>DS-gatk-rdsbwa-testNA19240chr21il</b>: Were any of the
+  samples downsampled?</li>
+  <li><b>Dels-gatk-rdsbwa-testNA19240chr21il</b>: Fraction of Reads
+  Containing Spanning Deletions</li>
+  <li><b>FS-gatk-rdsbwa-testNA19240chr21il</b>: Phred-scaled
+  p-value using Fisher's exact test to detect strand bias</li>
+  <li><b>HaplotypeScore-gatk-rdsbwa-testNA19240chr21il</b>:
+  Consistency of the site with at most two segregating haplotypes</li>
+  <li><b>MQ-gatk-rdsbwa-testNA19240chr21il</b>: RMS Mapping Quality</li>
+  <li><b>MQ0-gatk-rdsbwa-testNA19240chr21il</b>: Total Mapping
+  Quality Zero Reads</li>
+  <li><b>MQRankSum-gatk-rdsbwa-testNA19240chr21il</b>: Z-score From
+  Wilcoxon rank sum test of Alt vs. Ref read mapping qualities</li>
+  <li><b>QD-gatk-rdsbwa-testNA19240chr21il</b>: Variant
+  Confidence/Quality by Depth</li>
+  <li><b>ReadPosRankSum-gatk-rdsbwa-testNA19240chr21il</b>: Z-score
+  from Wilcoxon rank sum test of Alt vs. Ref read position bias</li>
+  <li><b>SOR-gatk-rdsbwa-testNA19240chr21il</b>: Symmetric Odds
+  Ratio of 2x2 contingency table to detect strand bias</li>
+  <li><b>cluster-gatk-rdsbwa-testNA19240chr21il</b>: Presence
+  within a cluster of SNVs by Illumina/GATK (if yes &quot;cl&quot;,
+  if no &quot;&quot;)</li>
+</ul>
+<h2 id="h4755">Sample specific fields for samtools analysis</h2>
+
+<ul>
+  <li><b>sequenced-sam-rdsbwa-testNA19240chr21il</b>: sequenced by
+  Illumina/samtools? (&quot;u&quot; = unsequenced,
+  &quot;v&quot;=variant, &quot;r&quot;=reference)</li>
+  <li><b>zyg-sam-rdsbwa-testNA19240chr21il</b>: zygosity according
+  to samtools (m=homozygous, t=heterozygous, c=compound, o=other,
+  r=reference, u=unsequenced/unspecified)</li>
+  <li><b>alleleSeq1-sam-rdsbwa-testNA19240chr21il</b>: First allele
+  called in Illumina genome by samtools.</li>
+  <li><b>alleleSeq2-sam-rdsbwa-testNA19240chr21il</b>: Second
+  allele called in Illumina genome by GATK.</li>
+  <li><b>quality-sam-rdsbwa-testNA19240chr21il</b>: Quality score
+  for this position as called by GATK on Illumina genome.</li>
+  <li><b>phased-sam-rdsbwa-testNA19240chr21il</b>: order of
+  genotypes in alleleSeq1 and alleleSeq2 is significant (phase is
+  known)</li>
+  <li><b>genotypes-sam-rdsbwa-testNA19240chr21il</b>: list of
+  genotypes, can contain more than 2</li>
+  <li><b>genoqual-sam-rdsbwa-testNA19240chr21il</b>: genotype
+  quality</li>
+  <li><b>loglikelihood-sam-rdsbwa-testNA19240chr21il</b>:</li>
+  <li><b>coverage-sam-rdsbwa-testNA19240chr21il</b>: Coverage depth
+  at this position by by Illumina/GATK.</li>
+  <li><b>DV-sam-rdsbwa-testNA19240chr21il</b>: number of
+  high-quality non-reference bases</li>
+  <li><b>SP-sam-rdsbwa-testNA19240chr21il</b>: Phred-scaled strand
+  bias P-value</li>
+  <li><b>PL-sam-rdsbwa-testNA19240chr21il</b>: List of Phred-scaled
+  genotype likelihoods</li>
+  <li><b>totalcoverage-sam-rdsbwa-testNA19240chr21il</b>: Raw read
+  depth (DP in vcf INFO); samtools does not count all mapping reads
+  for totalcoverage (bad reads are filtered out)</li>
+  <li><b>DP4-sam-rdsbwa-testNA19240chr21il</b>: number of
+  high-quality ref-forward bases, ref-reverse, alt-forward and
+  alt-reverse bases</li>
+  <li><b>MQ-sam-rdsbwa-testNA19240chr21il</b>: Root-mean-square
+  mapping quality of covering reads</li>
+  <li><b>FQ-sam-rdsbwa-testNA19240chr21il</b>: Phred probability of
+  all samples being the same</li>
+  <li><b>AF1-sam-rdsbwa-testNA19240chr21il</b>: Max-likelihood
+  estimate of the first ALT allele frequency (assuming HWE)</li>
+  <li><b>AC1-sam-rdsbwa-testNA19240chr21il</b>: Max-likelihood
+  estimate of the first ALT allele count (no HWE assumption)</li>
+  <li><b>IS-sam-rdsbwa-testNA19240chr21il</b>: Maximum number of
+  reads supporting an indel and fraction of indel reads</li>
+  <li><b>PV4-sam-rdsbwa-testNA19240chr21il</b>: P-values for strand
+  bias, baseQ bias, mapQ bias and tail distance bias</li>
+  <li><b>PC2-sam-rdsbwa-testNA19240chr21il</b>: Phred probability
+  of the nonRef allele frequency in group1 samples being larger
+  (,smaller) than in group2.</li>
+  <li><b>QBD-sam-rdsbwa-testNA19240chr21il</b>: Quality by Depth:
+  QUAL/#reads</li>
+  <li><b>RPB-sam-rdsbwa-testNA19240chr21il</b>: Read Position Bias</li>
+  <li><b>MDV-sam-rdsbwa-testNA19240chr21il</b>: Maximum number of
+  high-quality nonRef reads in samples</li>
+  <li><b>VDB-sam-rdsbwa-testNA19240chr21il</b>: Variant Distance
+  Bias (v2) for filtering splice-site artefacts in RNA-seq data.
+  Note: this version may be broken.</li>
+  <li><b>cluster-sam-rdsbwa-testNA19240chr21il</b>: Presence within
+  a cluster of SNVs by Illumina/GATK (if yes &quot;cl&quot;, if no
+  &quot;&quot;)</li>
+</ul>
+<h2 id="h7662">Annotation fields</h2>
+
+<ul>
+  <li><b>intGene_impact</b>: impact on gene transcripts (can be list)
+  of intGene gene set (integration of refGene, knownGene, genecode,
+  ensGene)</li>
+  <li><b>intGene_gene</b>: gene name</li>
+  <li><b>intGene_descr</b>: description of transcript and location
+  of variant in transcript in several ways (including hgvs)</li>
+  <li><b>lincRNA_impact</b>: impact on long non-coding genes</li>
+  <li><b>lincRNA_gene</b>: long non-coding gene name</li>
+  <li><b>lincRNA_descr</b>: description of transcript and location
+  of variant in long non-coding transcript</li>
+  <li><b>refGene_impact</b>: impact on refGene genes</li>
+  <li><b>refGene_gene</b>: name of refGene genes</li>
+  <li><b>refGene_descr</b>: list of refGene transcripts and
+  description of location and effect of variant on the transcript</li>
+  <li><b>mirbase20_impact</b>: impact on mirbase20 miRNA</li>
+  <li><b>mirbase20_mir</b>: mirbase20 miRNA variant is located in</li>
+  <li><b>chainSelf</b>: Presence in self-chained region (yes =
+  &quot;label from UCSC&quot;, no = &quot;&quot;)</li>
+  <li><b>cytoBand</b>: approximate location of bands seen on
+  Giemsa-stained chromosomes.</li>
+  <li><b>dgvMerged</b>: Database of Genomic Variants (Structural
+  Var Regions)</li>
+  <li><b>evofold</b>: conserved functional RNA structures based on
+  predictions made with the EvoFold program</li>
+  <li><b>gad</b>: Genetic Association Database</li>
+  <li><b>genomicSuperDups</b>: Presence in segmental duplication
+  (yes = &quot;label from UCSC&quot;, no = &quot;&quot;)</li>
+  <li><b>gwasCatalog_name</b>: name single nucleotide polymorphisms
+  (SNPs) identified by published GWAS</li>
+  <li><b>gwasCatalog_score</b>: score for gwasCatalog SNPs</li>
+  <li><b>homopolymer_base</b>: if part of a homopolymer, the
+  homopolymer base is given</li>
+  <li><b>homopolymer_size</b>: if part of a homopolymer, the
+  homopolymer size is given</li>
+  <li><b>microsat</b>: Presence in a microsatelite</li>
+  <li><b>oreganno</b>: literature-curated regulatory regions,
+  transcription factor binding sites, and regulatory polymorphisms
+  from oreganno</li>
+  <li><b>phastConsElements46way_name</b>: evolutionary conservation
+  region name (phastcons raw log odds scores)</li>
+  <li><b>phastConsElements46way_score</b>: evolutionary
+  conservation score (phastcons)</li>
+  <li><b>phastConsElements46wayPlacental_name</b>: evolutionary
+  conservation name in placental mammals</li>
+  <li><b>phastConsElements46wayPlacental_score</b>: evolutionary
+  conservation score in placental mammals</li>
+  <li><b>phastConsElements46wayPrimates_name</b>: evolutionary
+  conservation name in primates</li>
+  <li><b>phastConsElements46wayPrimates_score</b>: evolutionary
+  conservation score in primates</li>
+  <li><b>rmsk</b>: Presence in a RepeatMasker region (yes =
+  &quot;label from UCSC&quot;, no = &quot;&quot;)</li>
+  <li><b>simpleRepeat</b>: Presence in simple tandem repeat (yes =
+  &quot;label from UCSC&quot;, no = &quot;&quot;)</li>
+  <li><b>targetScanS_name</b>: Putative miRNA binding site</li>
+  <li><b>targetScanS_score</b>: Putative miRNA binding site score</li>
+  <li><b>tfbsConsSites_name</b>: transcription factor binding site</li>
+  <li><b>tfbsConsSites_score</b>: transcription factor binding site
+  score</li>
+  <li><b>tRNAs</b>: transfer RNA</li>
+  <li><b>vistaEnhancers_name</b>: Vista distant-acting
+  transcriptional enhancer</li>
+  <li><b>vistaEnhancers_score</b>: Vista distant-acting
+  transcriptional enhancer score</li>
+  <li><b>wgEncodeCaltechRnaSeq</b>: Encode RnaSeq score</li>
+  <li><b>wgEncodeH3k4me1</b>: Encode H3k4me1 score</li>
+  <li><b>wgEncodeH3k4me3</b>: Encode H3k4me3 score</li>
+  <li><b>wgEncodeH3k27ac</b>: Encode H3k27ac score</li>
+  <li><b>wgEncodeRegDnaseClusteredV3_name</b>: Encode Dnase region
+  name</li>
+  <li><b>wgEncodeRegDnaseClusteredV3_score</b>: Encode Dnase region
+  score</li>
+  <li><b>wgEncodeRegTfbsClusteredV3_name</b>: Encode transcription
+  factor binding site name</li>
+  <li><b>wgEncodeRegTfbsClusteredV3_score</b>: Encode transcription
+  factor binding site score</li>
+  <li><b>wgRna_name</b>: RNA gene (pre-miRNA, snoRNA or scaRNA)
+  name</li>
+  <li><b>wgRna_score</b>: RNA gene score</li>
+  <li><b>1000g3</b>: frequency (in percent) of the variant in the
+  1000 genomes data set</li>
+  <li><b>cadd</b>: deleteriousness of single nucleotide variants
+  according to CADD</li>
+  <li><b>clinvar_acc</b>: clinvar accession number</li>
+  <li><b>clinvar_disease</b>: clinvar disease</li>
+  <li><b>gnomad_max_freqp</b>: maximum population frequency (in
+  percent) in the the gnmomad (genomic) database</li>
+  <li><b>gnomad_nfe_freqp</b>: maximum frequency in the NFE
+  population in the the gnmomad (genomic) database</li>
+  <li><b>kaviar</b>: frequency (in percent) in the klaviar database</li>
+  <li><b>snp147</b>: variant name (in the dbSNP 147 database)</li>
+  <li><b>snp147Common</b>: frequency in dbSNP 147 database (only
+  for variants &gt; 1% in a sufficient population)</li>
+  <li><b>evs_ea_freqp</b>: frequency (percent) in Exome Variant
+  Server (european american population)</li>
+  <li><b>evs_aa_freqp</b>: frequency (percent) in Exome Variant
+  Server (african american population)</li>
+  <li><b>evs_ea_mfreqp</b>: homozygote frequency (percent) in Exome
+  Variant Server (european american population)</li>
+  <li><b>evs_aa_mfreqp</b>: homozygote frequency (percent) in Exome
+  Variant Server (african american population)</li>
+</ul>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

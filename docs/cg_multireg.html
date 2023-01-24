@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_multireg</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Multireg</h1>
+<h2 id="h16">Format</h2>
+<p>cg multireg ?options? compar_file ?file? ...</p>
+<h2 id="h75">Summary</h2>
+<p>Compare multiple regions files</p>
+<h2 id="h121">Description</h2>
+<p>This command is used to create multiregion compar_files. These are
+tab separated files indicating which regions are present in multiple
+samples. The first columns indicate the position of the region using
+the chromosome,begin,end columns. These are followed by columns
+containing 1 if the region is present in samplename and 0 if not.</p>
+<h2 id="h475">Arguments</h2>
+
+<dl>
+  <dt>compar_file</dt>
+  <dd>file containing regions, and columns indicating the presence
+  of the region</dd>
+  <dt>file</dt>
+  <dd>region files to be added the compar_file. The name of the
+  column is name of the file added without extension</dd>
+</dl>
+<h2 id="h701">Options</h2>
+
+<dl>
+  <dt>-m maxopenfiles (-maxopenfiles)</dt>
+  <dd>The number of files that a program can keep open at the same
+  time is limited. pmulticompar will distribute the subtasks thus,
+  that the number of files open at the same time stays below this
+  number. With this option, the maximum number of open files can be
+  set manually (if the program e.g. does not deduce the proper limit,
+  or you want to affect the distribution).</dd>
+  <dt>-limitreg regionfile</dt>
+  <dd>limit multireg to regions in <b>regionfile</b></dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+threads with <a href="joboptions.html">job options</a> (more info
+with cg help joboptions)</p>
+<h2 id="h1324">Category</h2>
+<p>Regions</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

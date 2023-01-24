@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_multicompar</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Multicompar</h1>
+<h2 id="h19">Format</h2>
+<p>cg multicompar ?options? multicomparfile sampledir/varfile ...</p>
+<h2 id="h96">Summary</h2>
+<p>Compare multiple variant files</p>
+<h2 id="h142">Description</h2>
+<p>This command combines multiple variant files into one multicompar
+file; a tab separated file containing a wide table used to compare
+variants between different samples. Each line in the table contains
+general variant info (position, type, annotation, etc.) and columns
+with variant info specific to each sample (genotype, coverage, etc.).
+The latter have a column heading of the form field-&lt;sample&gt;.</p>
+<p>The &lt;sample&gt; name used is extracted from the filename of the
+variant files by removing the file extension and the start of the
+filename up to and including the first -. (Variant files are expected
+to use the following convention: var-&lt;sample&gt;.tsv.)
+&lt;sample&gt; can be simply the samplename, but may also include
+information about e.g. the sequencing or analysis method in the form
+method-samplename, e.g. var-gatk-sample1.tsv and var-sam-sample1.tsv
+to indicate variants called using gatk and samtools respectively for
+the same sample (sample1), thus allowing comparison of different
+methods, etc.</p>
+<p>When some samples contain a variant that others do not, the
+information in the multicompar file cannot be complete by combining
+variant files alone: A variant missing in one variant file may either
+mean that it is reference or that it is not sequenced. Other
+information about coverage, etc. on the variant not present in the
+variant file will also be missing. multicompar will indicate this
+missing information with a questing mark in the table; this missing
+information can be added by using the -reannot option or the
+multicompar_reannot command, if it is available in other files.
+(check cg multicompar_reannot help for more info)</p>
+<h2 id="h1794">Arguments</h2>
+
+<dl>
+  <dt><b>multicomparfile</b></dt>
+  <dd>resultfile, will be created if it does not exist</dd>
+  <dt><b>sampledir/varfile</b></dt>
+  <dd>directory or file containing variants of new sample to be
+  added More than one can added in one command</dd>
+</dl>
+<h2 id="h2013">Options</h2>
+
+<dl>
+  <dt><b>-reannot</b></dt>
+  <dd>Also do reannotation (see cg multicompar_reannot)</dd>
+  <dt><b>-reannotregonly</b></dt>
+  <dd>Also do reannotation, but only region data (sequenced) will
+  be updated</dd>
+  <dt><b>-targetvarsfile variantfile</b></dt>
+  <dd>All variants in <b>variantfile</b> will be in the final
+  multicompar, even if they are not present in any of the samples. A
+  column will be added to indicate for each variant if it was in the
+  <b>variantfile</b>. The name of the column will be the part of the
+  filename after the last dash. If <b>variantfile</b> contains a
+  &quot;name&quot; column, the content of this will be used in the
+  targets column instead of a 1.</dd>
+  <dt><b>-split</b></dt>
+  <dd>if 1 (default), multiple alternative alleles will be on a
+  separate lines, treated mostly as a separate variant Use 0 for
+  giving alternatives alleles on the same line, separated by comma in
+  the alt field</dd>
+</dl>
+<h2 id="h2840">Category</h2>
+<p>Variants</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

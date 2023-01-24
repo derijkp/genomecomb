@@ -1,0 +1,440 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_annotate</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Annotate</h1>
+<h2 id="h16">Format</h2>
+<p>cg annotate ?options? variantfile resultfile dbfile ...</p>
+<h2 id="h86">Summary</h2>
+<p>Annotate a variant file with region, gene or variant data</p>
+<h2 id="h159">Description</h2>
+<p>Adds new columns with annotation to variantfile. Each dbfile will
+add 1 or more columns to the resultfile. different types of dbfiles
+are treated differently. The type is determined based on the first
+part of the filename (before the first underscore). Each column will
+start with a base name (the part of the filename after the last
+underscore)</p>
+<h2 id="h525">Arguments</h2>
+
+<dl>
+  <dt><b>variantfile</b></dt>
+  <dd>file in <a href="tsv.html">tsv</a> format with variant data</dd>
+  <dt><b>resultfile</b></dt>
+  <dd>resulting file in <a href="tsv.html">tsv</a> format with new
+  columns added</dd>
+  <dt><b>dbfile</b></dt>
+  <dd>files (<a href="tsv.html">tsv</a> format) with features used
+  for annotation. If a directory is given for dbfile, all known
+  anotation files in this directory will be used for annotation</dd>
+</dl>
+<h2 id="h856">Options</h2>
+
+<dl>
+  <dt><b>-near dist</b></dt>
+  <dd>also annotate variants with the nearest feature in the dbfile
+  if it is closer than <b>dist</b> to it. A column name_dist will be
+  added that contains the distance. This option is only used for
+  region annotation</dd>
+  <dt><b>-name namefield</b></dt>
+  <dd>The name added as annotation normally is taken from a field
+  called name in the database file, or a field specified in the
+  database opt file. Using -name you can explicitely choose the field
+  to be used.</dd>
+  <dt><b>-u upstreamsize</b></dt>
+  <dd>The number of nts that will be considered up/downstream for
+  gene annotation (default 2000)</dd>
+  <dt><b>-dbdir dbdir</b></dt>
+  <dd>can (optionally) be used to explicitely specify the directory
+  containing the reference databases (The genome sequence
+  genome_*.ifas in it is used for gene annotation). By default the
+  directory the gene annotation file is in will be used. Annotation
+  databases in dbdir will not automatically be used to annotate by
+  using this option. (You will need to add dbdir as a <b>dbfile</b>
+  parameter for that)</dd>
+  <dt><b>-replace y/n/e/a</b></dt>
+  <dd>what to do if annotation fields to be added are already in
+  the variantfile: e (default) - give an error y - replace them with
+  new annotation if dbfile is newer, n - keep the old annotation, a -
+  allways replace them with new information</dd>
+  <dt>-distrreg</dt>
+  <dd>distribute regions for parallel processing. Possible options
+  are: <b> 0: no distribution (also empty) </b> 1: default
+  distribution <b> schr or schromosome: each chromosome processed
+  separately </b> chr or chromosome: each chromosome processed
+  separately, except the unsorted, etc. with a _ in the name that
+  will be combined), <b> a number: distribution into regions of this
+  size </b> a number preceded by an s: distribution into regions
+  targeting the given size, but breaks can only occur in unsequenced
+  regions of the genome (N stretches) <b> a number preceded by an r:
+  distribution into regions targeting the given size, but breaks can
+  only occur in large (&gt;=100000 bases) repeat regions </b> a
+  number preceded by an g: distribution into regions targeting the
+  given size, but breaks can only occur in large (&gt;=200000 bases)
+  regions without known genes <b> a file name: the regions in the
+  file will be used for distribution</b></dd>
+  <dt>-margin number</dt>
+  <dd>(SV only) Allow begin and end to deviate the number of bases
+  given (default 30)</dd>
+  <dt>-lmargin number</dt>
+  <dd>(SV only) Allow begin and end to deviate the number of bases
+  given for deletions, inversions (default 300)</dd>
+  <dt>-tmargin number</dt>
+  <dd>(SV only) Allow begin and end to deviate the number of bases
+  given for translocations (trans) and breakends (bnd) (default 300)</dd>
+  <dt>-overlap number</dt>
+  <dd>(SV only) minimum percent overlap needed to identify
+  deletions, inversions or insertions (size) as the same (default 75)</dd>
+  <dt>-type sv/var</dt>
+  <dd>type determines which databases of a given annotation dir
+  will be used for annotation (default var). Type var will not use
+  sv_* annotations and type sv will not use the var_* annotations</dd>
+</dl>
+<h2 id="h3759">database types</h2>
+
+<dl>
+  <dt><b>reg</b></dt>
+  <dd>regions file that must at least contain the columns
+  chromosome,start,end. Variants are checked for overlap with regions
+  in the file.</dd>
+  <dt><b>var</b></dt>
+  <dd>variations file that must at least contain the columns
+  chromosome,start,end,type,ref,alt to annotate variants that match
+  the given values. Typically, columns freq(p) and id are present for
+  annotation. Thus, only variants that match the alleles given in alt
+  will be annotated. If there are multiple alt values (separated by
+  commas), the freq annotation will also contain multiple fields
+  (separated by commas). var databases can also be a (multivalued)
+  bcol formatted (<a href="bcol.html">bcol</a>) file instead of a <a
+  href="tsv.html">tsv</a>; this is indicated by the extension bcol</dd>
+  <dt><b>gene</b></dt>
+  <dd>gene files (in <a href="gene.html">gene</a> tsv format).
+  Variants will be annotated with the effects they have on the genes
+  in these files as descibed below.</dd>
+  <dt><b>sv</b></dt>
+  <dd>Structural variant file that must at least contain the
+  columns chromosome,start,end,type,ref,alt to annotate structural
+  variants that approximately match the given values. Typically,
+  columns freq(p) and id are present for annotation. SVs match if
+  their respective begin positions (and end positions) differ &lt;
+  <b>margin</b> bases (<b>lmargin</b> for deletions and inversions,
+  <b>tmargin</b> for translocations/breakends) and overlap at least
+  <b>overlap</b> pct for deletions and inversions; For insertions the
+  smaller must be at least <b>overlap</b> pct of the larger.
+  breakends/translocations must link to the same chromosome at
+  positions &lt; <b>tmargin</b> bases apart.</dd>
+  <dt><b>mir</b></dt>
+  <dd>The effect of variants on miRNA genes is annotated based on a
+  tsv file of the miRNA genes. (more detail below)</dd>
+  <dt><b>bcol</b></dt>
+  <dd>bcol databases are used to annotate positions (e.g. snps)
+  with a given value. Database files are in the <a
+  href="bcol.html">bcol</a> format (also extension bcol).</dd>
+</dl>
+<p>If a database filename does not start with one of these types,
+it will be considered a regions database.</p>
+<h2 id="h5683">database parameters</h2>
+<p>If a file dbfile.opt exists, it will be scanned for database
+parameters. It should be a tab separated list, where each line
+contains a key and a value (separated by a tab)</p>
+<p>Possible keys are:</p>
+
+<dl>
+  <dt><b>name</b></dt>
+  <dd>this will be the base for names of added columns (in stead of
+  extracting it from the filename)</dd>
+  <dt><b>fields</b></dt>
+  <dd>These fields will be extracted from the database and added to
+  the annotated file in stead of the defaults (one or more of name,
+  name2, freq and score, depending on the type and name of the
+  database)</dd>
+</dl>
+<h2 id="h6225">Gene annotation</h2>
+<p>Annotation with a gene database will add the three columns
+describing the effect of the variant on transcripts and resulting
+proteins.</p>
+
+<dl>
+  <dt>dbname_impact</dt>
+  <dd>short code indicating impact/severity of the effect</dd>
+  <dt>dbname_gene</dt>
+  <dd>name of the gene(s) according to the database.</dd>
+  <dt>dbname_descr</dt>
+  <dd>location and extensive description of the effect(s) of the
+  variant on each transcript</dd>
+</dl>
+<p>Each of the columns can contain a semicolon separated list to
+indicate different effects on different transcripts. If all values in
+such a list would be the same (e.g. gene name in case of multiple
+transcripts of the same gene), only this one value is shown (not a
+list).</p>
+<p>Possible <b>impact</b> codes are:</p>
+
+<dl>
+  <dt>downstream</dt>
+  <dd>downstream of gene (up to 2000 bases)</dd>
+  <dt>upstream</dt>
+  <dd>upstream of gene (up to 2000 bases)</dd>
+  <dt>intron</dt>
+  <dd>intronic</dd>
+  <dt>reg</dt>
+  <dd>regulatory</dd>
+  <dt>prom</dt>
+  <dd>promotor</dd>
+  <dt>splice</dt>
+  <dd>variant in splice region (3 up to 8 bases into the intron
+  from the splice site)</dd>
+  <dt>RNA</dt>
+  <dd>in a transcript that is not coding</dd>
+  <dt>RNASPLICE</dt>
+  <dd>deletion containing at least one splice site (non-coding
+  transcript)</dd>
+  <dt>UTR3</dt>
+  <dd>variant in the 3' UTR</dd>
+  <dt>UTR3SPLICE</dt>
+  <dd>deletion or complext variant containing at least one splice
+  site in the 3' UTR</dd>
+  <dt>RNAEND</dt>
+  <dd>deletion containing the end of transcription</dd>
+  <dt>ESPLICE</dt>
+  <dd>essential splice site (2 bases into the intron from the
+  splice site)</dd>
+  <dt>CDSsilent</dt>
+  <dd>variant in coding region that has no effect on the protein
+  sequence</dd>
+  <dt>UTR5</dt>
+  <dd>variant in the 5' UTR</dd>
+  <dt>UTR5SPLICE</dt>
+  <dd>deletion or complext variant containing at least one splice
+  site in the 5' UTR</dd>
+  <dt>UTR5KOZAK</dt>
+  <dd>variant in the 5' UTR close (6 nts) to the start codon.</dd>
+  <dt>RNASTART</dt>
+  <dd>transcription_start</dd>
+  <dt>CDSMIS</dt>
+  <dd>coding variant causing a change in the protein sequence</dd>
+  <dt>CDSDEL</dt>
+  <dd>deletion in the coding region (not affecting frame of
+  translation)</dd>
+  <dt>CDSCOMP</dt>
+  <dd>complex variation (sub, inv, ...) in the coding region (not
+  affecting frame of translation)</dd>
+  <dt>CDSINS</dt>
+  <dd>insertion in the coding region (not affecting frame of
+  translation)</dd>
+  <dt>CDSNONSENSE</dt>
+  <dd>variation causing a premature stop codon in the protein
+  sequence (nonsense)</dd>
+  <dt>CDSSPLICE</dt>
+  <dd>deletion or complext variant affecting a splice site in the
+  coding region</dd>
+  <dt>CDSSTOP</dt>
+  <dd>change of a stop codon to a normal codon causing readthrough</dd>
+  <dt>CDSFRAME</dt>
+  <dd>indel causing a frameshift</dd>
+  <dt>CDSSTART</dt>
+  <dd>variation in the startcodon</dd>
+  <dt>CDSSTARTDEL</dt>
+  <dd>deletion affecting the startcodon</dd>
+  <dt>CDSSTARTCOMP</dt>
+  <dd>complex variation affecting the startcodon</dd>
+  <dt>GENEDEL</dt>
+  <dd>deletion (also used for sub) of whole gene</dd>
+  <dt>GENECOMP</dt>
+  <dd>complex variation (sub, inv, ...) affecting the whole gene</dd>
+</dl>
+<p><b>dbname_descr</b> contains a description of the variant at
+multiple levels according to the HGVS variant nomenclature (v 15.11 <a
+href="http://varnomen.hgvs.org/recommendations">http://varnomen.hgvs.org/recommendations</a>, <a
+href="http://www.ncbi.nlm.nih.gov/pubmed/26931183">http://www.ncbi.nlm.nih.gov/pubmed/26931183</a>, <a
+href="http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf">http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf</a>).
+There are some (useful or necessary) deviations from from the
+recommendations:</p>
+
+<ul>
+  <li>The reference is allways the transcript name given in the
+  database used; if a variant affects multiple transcripts, a
+  separate description is given for each variant (with its own
+  reference).</li>
+  <li>The reference is prefixed with the strand</li>
+  <li>An extra description is added (indicating the affected
+  element e.g. which exon)</li>
+  <li>Multiple consequitive variants are not combined, e.g two
+  consequitive substitutions (as genomecomb will usually create) are
+  described as two separate snps instead of as the recommended
+  delins. (One variant is adapted to shift to 3' or inserts changed
+  to dup or rep as recommended.)</li>
+  <li>For brevity, protein changes are not parenthesised (even
+  though they are all predictions)</li>
+  <li>For brevity, single letter AA codes are used.</li>
+</ul>
+<p>The description consists of the following elements, separated by
+colons</p>
+
+<dl>
+  <dt>transcript</dt>
+  <dd>name or id of the affected transcript, prefixed with a + if
+  the transcript is in the forward strand, - for reverse strand</dd>
+  <dt>element and element position</dt>
+  <dd>element indicates the gene element the variant is located in
+  (e.g. exon1 for the first exon). The element is followed by the
+  relative position of the variant in the given element, separated by
+  either a + or a -. For deletions spanning several elements, element
+  and element position for both start and end point of the deletion
+  are given, separated by _ - is used for the upstream element,
+  giving the position in the upstream region relative to the start of
+  transcription (-1 being the position just before the transcript
+  start). + is used for all other elements, the position given is
+  relative to the start of the element. The first base of exon2 would
+  be given as exon2+1. (These positions are not shifted to 3' as in
+  hgvs coding.)</dd>
+  <dt>DNA based description</dt>
+  <dd>description of the variant effect on de DNA level uses the
+  coding (c.) or non-coding (n.) DNA reference. The genomic reference
+  (g.) is not given as it can be easily deduced from the variant
+  fields. This is only present if the transcript is affected (so not
+  for up/downstream)</dd>
+  <dt>protein based description</dt>
+  <dd>description of the variant effect at the protein level (p.).
+  This is only present if the protein is affected.</dd>
+</dl>
+<h2 id="h11266">miRNA annotation</h2>
+<p>A miRNA gene file is a tsv file containing the following fields:</p>
+
+<dl>
+  <dt>chromosome,begin,end,strand</dt>
+  <dd>indicate the location of the hairpin in the genome</dd>
+  <dt>name,transcript</dt>
+  <dd>name of the miRNA gene and transcript; Different isomiRs can
+  be expressed from the same hairpin. These can be represented on
+  different lines in the files as different &quot;transcripts&quot;.
+  It generally not necesary to give different transcript names, as
+  the location of isomiR affected is geven in the annotation.</dd>
+  <dt>loopstart,loopend</dt>
+  <dd>begin and end genomic coordinates of the loop of the hairpin</dd>
+  <dt>mature1start,mature1end</dt>
+  <dd>genomic coordinates of the mature miRNA before the loop (vs
+  the genomic reference). These fields can be left empty if no mature
+  miRNA derives from that arm.</dd>
+  <dt>mature2start,mature2end</dt>
+  <dd>genomic coordinates of the mature miRNA(s) after the loop
+  (can be empty as well).</dd>
+  <dt>status</dt>
+  <dd>(optional) field indicating the status of the miRNA gene</dd>
+</dl>
+<p>Based on this miRNA gene file, the genomecomb miRNA annotation
+adds the following fields:</p>
+
+<dl>
+  <dt>dbname_impact</dt>
+  <dd>indicates which transcript is affected and the functional
+  element of the miRNA the variant is in, followed by the location of
+  the variant in this element between braces. e.g. a variant in the
+  mature sequence, especially the seed, is more likely to have an
+  impact on the function than one in the flank</dd>
+  <dt>dname_mir</dt>
+  <dd>name of the miRNA</dd>
+  <dt>dbname_status</dt>
+  <dd>optional field given when a status field is present in the
+  annotation file If multiple miRNA genes are affected, the fields
+  will contain a semi-colon separated list of impacts and genes.</dd>
+</dl>
+<p>Potential annotation elements are</p>
+
+<dl>
+  <dt>mature5p</dt>
+  <dd>variant in the sequence that ends up in the mature miRNA of
+  the 5p arm. The location of the affected isomiR in the hairpin is
+  added after the mature5p, and if the variant is in the seed region
+  (most important region in targetting) the word &quot;seed&quot; is
+  added after the location, e.g. mature5p21_43(a+4)seed</dd>
+  <dt>mature3p</dt>
+  <dd>variant in the mature miRNA of the 3p arm. Same additions as
+  for the mature5p are present.</dd>
+  <dt>loop</dt>
+  <dd>variant in the loop of the hairpin. Variants outside of the
+  mature miRNA can affect the expression of the miRNA through changes
+  in secundary structure and biogenesis.</dd>
+  <dt>armp5</dt>
+  <dd>5' arm variant.</dd>
+  <dt>arm3p</dt>
+  <dd>3' arm variant</dd>
+  <dt>flank</dt>
+  <dd>Variants up to 100 nts from the hairpin. These are still
+  likely to affect the biogenesis of the miRNA.</dd>
+  <dt>upstream</dt>
+  <dd>more than 100 nts (and less than 2000 by default) before from
+  the hairpin. If a variant affects a miRNA gene directly (up to
+  flank), up/downstream annotations for other miRNA genes are not
+  given.</dd>
+  <dt>downstream</dt>
+  <dd>more than 100 nts (and less than 2000 by default) after from
+  the hairpin</dd>
+</dl>
+<p>The location in the element is given by a reference (a for arm,
+m mature, l for loop) and a number indicating how many nts the
+variant is located away from the reference, e.g. loop(a+2) indicates
+that the variant is in the loop, 2 nts away from the arm. Negative
+numbers are used to indicate counting from the opposite direction,
+e.g. arm5p(m-5) is used to indicate a variant in the 5' arm 5 nts
+back from the mature sequence. An e can be added to the number to
+indicate that the location is at either end of the given element. A
+deletion of the complete miRNA genes is indicated by the impact
+GENEDEL. Deletions spanning several (but not all) elements list the
+affected elements joined by &amp;.</p>
+<h2 id="h14641">Category</h2>
+<p>Annotation</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

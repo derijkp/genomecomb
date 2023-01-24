@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_process_multicompar</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Process_multicompar</h1>
+<h2 id="h27">Format</h2>
+<p>cg process_multicompar ?options? projectdir ?dbdir?</p>
+<h2 id="h93">Summary</h2>
+<p>process a sequencing project directory. This expects a genomecomb
+directory with samples already processed and makes annotated
+multicompar data</p>
+<h2 id="h253">Description</h2>
+<p>This command runs the multicomparison step of <a
+href="cg_process_project.html">cg process_project</a>. As input, the
+command expects a basic genomecomb project directory with sequencing
+data (projectdir) for which the samples have already been processed.</p>
+<p>Some of the steps/commands it uses can be used separately as well:</p>
+
+<ul>
+  <li><a href="cg_pmulticompar.html">cg pmulticompar</a>: combine
+  variant data of multiple samples</li>
+  <li><a href="cg_annotate.html">cg annotate</a>: annotate combined
+  variant data</li>
+  <li><a href="cg_multireg.html">cg multireg</a>: combine sequenced
+  region data of multiple samples</li>
+</ul>
+<h2 id="h804">Arguments</h2>
+
+<dl>
+  <dt><b>projectdir</b></dt>
+  <dd>project directory with illumina data for different samples,
+  each sample in a sub directory. The proc will search for fastq
+  files in dir/samplename/fastq/</dd>
+  <dt><b>dbdir</b></dt>
+  <dd>directory containing reference data (genome sequence,
+  annotation, ...). dbdir can also be given in a projectinfo.tsv file
+  in the project directory. process_project called with the dbdir
+  parameter will create the projectinfo.tsv file.</dd>
+</dl>
+<h2 id="h1240">Options</h2>
+
+<dl>
+  <dt><b>-split 1/0</b></dt>
+  <dd>split multiple alternative genotypes over different line</dd>
+  <dt><b>-dbdir dbdir</b></dt>
+  <dd><b>dbdir</b> can also be given as an option (instead of
+  second parameter)</dd>
+  <dt><b>-dbfile file</b></dt>
+  <dd>Use <b>file</b> for extra (files in <b>dbdir</b> are already
+  used) annotation</dd>
+  <dt><b>-targetvarsfile file</b></dt>
+  <dd>Use this option to easily check certain target
+  positions/variants in the multicompar. The variants in <b>file</b>
+  will allways be added in the final multicompar file, even if none
+  of the samples is variant (or even sequenced) in it.</dd>
+  <dt><b>-m maxopenfiles</b> (-maxopenfiles)</dt>
+  <dd>The number of files that a program can keep open at the same
+  time is limited. pmulticompar will distribute the subtasks thus,
+  that the number of files open at the same time stays below this
+  number. With this option, the maximum number of open files can be
+  set manually (if the program e.g. does not deduce the proper limit,
+  or you want to affect the distribution).</dd>
+  <dt><b>-varfiles files</b></dt>
+  <dd>With this option you can limit the variant files to be added.
+  (default is to use all found in the project dir). They should be
+  given as a list of files in this option, so enclose in quotes. You
+  can still use * as a wildcard, as cg will resolve the wildcards
+  itself.</dd>
+  <dt><b>-svfiles files</b></dt>
+  <dd>With this option you can limit the structural variant files
+  to be added (default is to use all found in the project dir). They
+  should be given as a list of files in this option, so enclose in
+  quotes. You can still use * as a wildcard, as cg will resolve the
+  wildcards itself.</dd>
+  <dt>-keepfields fieldlist</dt>
+  <dd>Besides the obligatory fields, include only the fields in
+  fieldlist (space separated) in the output multicompar. Default is
+  to use all fields present in the file (*)</dd>
+  <dt>-limitreg regionfile</dt>
+  <dd>limit the variants and region multicompar files to the
+  regions given in <b>regionfile</b>. (Other results, such as
+  structural variants are not limited (yet))</dd>
+  <dt>-distrreg</dt>
+  <dd>annotation will be distributed in regions for parallel
+  processing. Possible options are <b> 0: no distribution (also
+  empty) </b> 1: default distribution <b> schr or schromosome: each
+  chromosome processed separately </b> chr or chromosome: each
+  chromosome processed separately, except the unsorted, etc. with a _
+  in the name that will be combined), <b> a number: distribution into
+  regions of this size </b> a number preceded by an s: distribution
+  into regions targeting the given size, but breaks can only occur in
+  unsequenced regions of the genome (N stretches) <b> a number
+  preceded by an r: distribution into regions targeting the given
+  size, but breaks can only occur in large (&gt;=100000 bases) repeat
+  regions </b> a number preceded by an g: distribution into regions
+  targeting the given size, but breaks can only occur in large
+  (&gt;=200000 bases) regions without known genes <b> a file name:
+  the regions in the file will be used for distribution</b></dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+<h2 id="h4213">Category</h2>
+<p>Process</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

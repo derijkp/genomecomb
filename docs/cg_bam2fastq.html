@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_bam2fastq</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">bam2fastq</h1>
+<h2 id="h17">Format</h2>
+<p>cg bam2fastq ?options? bamfile fastqfile1 ?fastqfile2?</p>
+<h2 id="h86">Summary</h2>
+<p>Extracts reads from a bamfile into fastq. The actual extraction is
+based on picard's SamToFastq or samtools bam2fq, but the data is
+prepared first (ao. sorted by name to avoid the problems caused by
+position sorted fq files)</p>
+<h2 id="h328">Arguments</h2>
+
+<dl>
+  <dt><b>bamfile</b></dt>
+  <dd>bamfile</dd>
+  <dt><b>fastqfile1</b></dt>
+  <dd>name of the fastq file that will contain the first read of
+  each pair. If it has an extension .gz, the fastqs will be
+  compressed</dd>
+  <dt><b>fastqfile2</b></dt>
+  <dd>name of the fastq file that will contain the matching second
+  read of each pair</dd>
+</dl>
+<h2 id="h611">Options</h2>
+
+<dl>
+  <dt>-m biobambam/picard/sam (--method)</dt>
+  <dd>which method is used underneath (default = sam)</dd>
+  <dt>-namesort 0/1</dt>
+  <dd>sort (based on name) before converting; this should be done
+  to avoid biases during (re)alignment because of position based sort
+  (default = 1). Set to 0 if the source bamfile is already
+  namesorted.</dd>
+  <dt>-sortmethod biobambam/samtools/collate</dt>
+  <dd>method used to (name)sort the bam file. Default is collate,
+  which is the fastest (by not doing full name sorting, but it is
+  sufficient for this purpose). collate as sortmethod can only be
+  used with th sam bam2fastq method</dd>
+  <dt>-single file (-s)</dt>
+  <dd>file to write single reads</dd>
+  <dt>-unmatched file (-u)</dt>
+  <dd>file to write unmatched first reads from pair</dd>
+  <dt>-unmatched2 file (-u2)</dt>
+  <dd>file to write unmatched second reads from pair</dd>
+</dl>
+<h2 id="h1382">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

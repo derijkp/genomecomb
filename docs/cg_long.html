@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_long</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">long</h1>
+<h2 id="h12">Format</h2>
+<p>cg long ?infile? ?outfile?</p>
+<h2 id="h53">Summary</h2>
+<p>Converts data in tsv format from wide format (data for each
+sample/analysis in separate columns) to long format (data for each
+sample/analysis in separate lines)</p>
+<h2 id="h231">Description</h2>
+<p>Genomecomb usually expects data in tsv files in wide format, where
+some fields are common/general for all samples (e.g. chromosome,
+begin, end, .. for variants) and some fields have specific values for
+each sample (e.g. quality, coverage, ...). In wide format these
+columns are named by adding &quot;-samplename&quot; to the fieldname.
+In the long format, sample specific data is on separate lines (the
+common fields are repeated in each line). &quot;cg long&quot;
+converts from wide to long format. &quot;<a href="cg_wide.html">cg
+wide</a>&quot; can be used for the reverse.</p>
+<h2 id="h782">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h952">Options</h2>
+
+<dl>
+  <dt>-type sample/analysis</dt>
+  <dd>determines whether lines are separated on sample (part after
+  last -) or analysis (part after first -) e.g.</dd>
+</dl>
+<pre>
+var   zyg-gatk-bwa-sample1    zyg-sam-bwa-sample1 zyg-gatk-bwa-sample2
+test    v   u   r
+</pre>
+<p>using sample this will be split to</p>
+<pre>
+var sample  zyg-gatk-bwa    zyg-sam-bwa zyg-gatk-bwa-sample2
+test    sample1 v   u
+test    sample2 r   
+</pre>
+<p>using analysis this will be split to</p>
+<pre>
+var sample  zyg
+test    gatk-bwa-sample1    v
+test    gatk-sam-sample1    u
+test    gatk-bwa-sample2    r   
+</pre>
+<p>Even though the analysis is now used, the name of the column is
+still sample! (to allow the use of sampleinfo files)</p>
+
+<dl>
+  <dt>-norm 1/0</dt>
+  <dd>If 1, output &quot;normalized&quot; long tables: The normal
+  output will contain only variant data with a numeric id, without
+  the data specific for each sample. An extra tsv file is generated
+  (&lt;outfile&gt;.sampledata.tsv) that contains the sample specific
+  data, one line per sample (identified by the id) and sample
+  (identified by a &quot;sample&quot; column)</dd>
+  <dt>-samplefields samplefields</dt>
+  <dd>Using this option, sample names that consist of several parts
+  separated by - (as typical in genomecomb output, e.g.
+  -gatk-rdsbwa-sample1) are split up in separate fields with the
+  field names given by <b>samplefields</b></dd>
+</dl>
+<h2 id="h2167">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

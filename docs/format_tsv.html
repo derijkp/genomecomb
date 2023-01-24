@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/format_tsv</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">tsv format</h1>
+<p>The standard file format used in GenomeComb is the widely
+supported, simple, yet flexible <a
+href="http://www.iana.org/assignments/media-types/text/tab-separated-values">tab-separated
+values file</a> (tsv). A tsv file is a simple text file containing
+tabular data, where each line represents a record or row in the
+table. Each field value of a record is separated from the next by a
+tab character. As values cannot be quoted (as in csv), they cannot
+contain tabs or newlines, unless by coding them e.g. by using escape
+characters (\t,\n)</p>
+<p>The first line of the tab file (not starting with a #) is a
+<b>header</b> that contains column names (or fields). Genomecomb
+allows comment lines (indicated by starting the line with a #
+character) containing metadata to precede the header. The convention
+genomecomb uses for storing metadata in the comments is described at
+the bottom of this help</p>
+<p>Depending on the columns present, tsv files can be used for
+various purposes. Usually the files are used to describe features on
+a reference genome sequence. In this context, Genomecomb recognizes
+columns with specific field names to have a special meaning. The
+order/position of the columns does not matter, although genomecomb
+will usually write tsv files with columns in a specific order. All
+tsv files can be easily <b>queried</b> using the <a
+href="cg_select.html">cg select</a> functionality or loaded into a
+local database.</p>
+<h2 id="h1409">region file format</h2>
+<p>Region files are used to indicate regions on the genome, and
+potentially associate some name, score, annotation, ... to it. Region
+files contain at least the following fields:</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>a string indicating the chromosome name.</dd>
+  <dt>begin</dt>
+  <dd>a number indicating the start of the region (half-open
+  coordinates).</dd>
+  <dt>end</dt>
+  <dd>a number indicating the end of the region (half-open
+  coordinates) Any extra columns can be added to provide information
+  on the region.</dd>
+</dl>
+<p>Coordinates are in zero-based half-open format as used by UCSC
+bed files and Complete Genomics files. This means for instance that
+the first base of a sequence will be indicated by begin=0 and end=1.
+It is possible to indicate regions not containing a base, e.g. the
+position/region before the first base would be indicated by begin=0,
+end=0. <b>chromosome</b> is a just a string. Many genomecomb tools
+allow mixing &quot;chr1&quot; and &quot;1&quot; type of notation for
+chromosome, meaning that &quot;chr1 1 2&quot; is considered the same
+region as &quot;1 1 2&quot;.</p>
+<p>Most genomecomb tools expect region files to be <b>sorted</b> on
+chromosome, begin, end using a <a href="natural_sort.html">natural
+sort</a> for chromosome names (.i.e sorted alphabetically, but with
+embedded numbers interpreted as numbers, e.g. chr1,chr2,chr11). Most
+of the files created by genomecomb are already properly sorted; You
+can sort files using the -s option of <a href="cg_select.html">cg
+select</a>. Use -s - to sort using the default expected sort order:
+cg select -s - file sortedfile</p>
+<p>If the normal chromosome, begin, end fields are not present, the
+following alternative fieldnames are also recognized:</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>&quot;chrom&quot;, &quot;chr&quot;, &quot;chr1&quot;,
+  &quot;genoName&quot;, &quot;tName&quot; and &quot;contig&quot;</dd>
+  <dt>begin</dt>
+  <dd>&quot;start&quot;, &quot;end1&quot;, &quot;chromStart&quot;,
+  &quot;genoStart&quot;, &quot;tStart&quot;, txStart&quot;,
+  &quot;pos&quot; and &quot;offset&quot; (end1 is recognised as begin
+  because of the structural variant code in genomecomb, where
+  start1,end1 and start2,end2 regions surround a SV).</dd>
+  <dt>end</dt>
+  <dd>&quot;start2&quot;, &quot;chromEnd&quot;,
+  &quot;genoEnd&quot;, &quot;tEnd&quot; or &quot;txEnd&quot;</dd>
+</dl>
+<h2 id="h3382">variant file format</h2>
+<p>A variant file is a tsv file containing a list of variants.
+chromosome, begin and end fields indicate the location of the variant
+in the same way as in region files, while other fields define the
+variant at the location: The following basic fields are present in a
+variant file:</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>chromosome name.</dd>
+  <dt>begin</dt>
+  <dd>start of the region (half-open coordinates).</dd>
+  <dt>end</dt>
+  <dd>end of the region (half-open coordinates)</dd>
+  <dt>type</dt>
+  <dd>type of variation: snp, ins, del, sub are recognised</dd>
+  <dt>ref</dt>
+  <dd>genotype of the reference sequence at the feature. For large
+  deletions, the size of the deletion can be used. Insertions will
+  have an empty string as ref. (also reference)</dd>
+  <dt>alt</dt>
+  <dd>alternative allele(s). If there are more than one
+  alternatives, they are separated by commas. Deletions have an empty
+  string as alt allele. (also alternative)</dd>
+</dl>
+<p>Variant files should be <b>sorted</b> on the fields chromosome,
+begin, end, type, alt (in that order).</p>
+<p>Further fields can be present to describe the variant in the
+sample or annotation information, many depending on the variant
+caller used (e.g. <a href="gatk_vars.html">gatk_vars</a> and <a
+href="sam_vars.html">sam_vars</a>). The following fields have
+specific meanings in genomecomb:</p>
+
+<dl>
+  <dt>sequenced</dt>
+  <dd>single letter code describing sequencing status (described
+  below)</dd>
+  <dt>zyg</dt>
+  <dd>zygosity, a single letter code indicating the zygosity of
+  sample for the variant. (described below)</dd>
+  <dt>alleleSeq1</dt>
+  <dd>genotype of variant at one allele</dd>
+  <dt>alleleSeq2</dt>
+  <dd>genotype of variant at other allele</dd>
+  <dt>phased</dt>
+  <dd>order of genotypes in alleleSeq1 and alleleSeq2 is
+  significant (phase is known)</dd>
+  <dt>quality</dt>
+  <dd>quality of the variant (or reference) call, assigned by the
+  variant caller. Normally phred scaled: -10log_10 prob(call in ALT
+  is wrong))</dd>
+  <dt>coverage</dt>
+  <dd>number of reads used to call the variant (covering the
+  variant). This is as reported by the variant caller; Interpretation
+  of coverage can differ between different callers</dd>
+</dl>
+<p>genomecomb has 2 options to deal with the presence of multiple
+alternative alleles on the same position:</p>
+
+<dl>
+  <dt>split</dt>
+  <dd>Each alternative allele is on a seperate line. e.g. A to G,C
+  variant (multialleic notation) is split into an A to G and an A to
+  C variant. While <a href="cg_select.html">cg select</a> can select
+  based on lists in fields (as in multiallelic mode), split mode
+  makes querying and selection of variants much easier. Split mode is
+  the default.</dd>
+  <dt>multiallelic</dt>
+  <dd>one line per position and type. All alternative alleles are
+  in one line in the variant file. The alt field contains a list
+  (separated by commas) of alternative alleles. If any of the other
+  fields contains values specific to an allele (e.g. frequency of the
+  allele in a population), this field will contain a comma separated
+  list with values in the order as the alt alleles list</dd>
+</dl>
+<h3 id="h6113">sequenced field</h3>
+<p>The sequenced field indicates sequenig status of the variant in
+the sample. The following codes can be found:</p>
+
+<dl>
+  <dt>u</dt>
+  <dd>the position is considered unsequenced in the sample (e.g.
+  because coverage or quality was too low).</dd>
+  <dt>v</dt>
+  <dd>the variant was found in the sample.</dd>
+  <dt>r</dt>
+  <dd>the position was sequenced, but the given variant is not
+  present In multiallelic mode, r allways means that the genotype is
+  reference. In split mode however, &quot;v&quot; will only be
+  assigned if the specific alternative is present in the genotype. So
+  &quot;r&quot; will be used even if there are non-reference alleles,
+  as long as they are not the given alternative!</dd>
+</dl>
+<p>When calling variants using GATK or samtools, genomecomb picks a
+relatively low quality treshhold (coverage &lt; 5 or quality &lt; 30)
+for considering variants unsequenced (sensitiviy over specificity).
+You can allways apply more stringent quality filtering on the result
+using <a href="cg_select.html">cg select</a>.</p>
+<h3 id="h7045">zyg</h3>
+<p>Possible zyg codes are:</p>
+
+<dl>
+  <dt>m</dt>
+  <dd>homozygous; the sample has two times the given alternative
+  allele</dd>
+  <dt>t</dt>
+  <dd>heterozygous; the sample has the given alternative allele and
+  one reference allele</dd>
+  <dt>c</dt>
+  <dd>compound; the sample has two different non-reference alleles.
+  In split mode, c is only used if one the those is the given variant
+  alt allele.</dd>
+  <dt>o</dt>
+  <dd>other; This is only used in split mode when the sample
+  contains non-reference alleles other than the variant alt allele.</dd>
+  <dt>r</dt>
+  <dd>reference</dd>
+  <dt>v</dt>
+  <dd>variant, but genotype was not specified</dd>
+  <dt>u</dt>
+  <dd>unsequenced It is possible to have an assigned zyg other than
+  u (e.g. t) even when the sequenced field is u, meaning that the
+  variant caller could make a zygosity estimate/prediction, but the
+  variant call is not of enough quality to consider it sequenced.</dd>
+</dl>
+<h2 id="h7837">Structural variants</h2>
+<p>Structural variants use basically the same format as small
+variants, but are usually in separate files because they are compared
+and queried differently. The only difference is in the extra types
+(inv, trans, bnd) and different alt notations for these types. For an
+inversion (inv) the alternative genotype (alt) is indicated by an
+&quot;i&quot;. Translocations (trans) and breakends (bnd) are
+indicated by a position on the breakpoint ( zero length location like
+for an insertion). The alt is indicated by the following patterns,
+where <b>chr:pos</b> gives the location the variant location is
+linked to. (AS for insertions, pos here points to a location between
+bases) <b>s</b> can be pesent to indicate inserted bases in the
+breakpoint:</p>
+
+<ul>
+  <li>.s[chr:pos[ The sequence starting after <b>chr:pos</b> is added
+  after the variant location</li>
+  <li>.s]chr:pos] The (reverse complement of) sequence before
+  <b>chr:pos</b> is joined after the variant location</li>
+  <li>]chr:pos]s. The sequence starting after <b>chr:pos</b> is
+  added before the variant location</li>
+  <li>[chr:pos[s. The (reverse complement of) sequence after
+  <b>chr:pos</b> is joined before the variant location</li>
+</ul>
+<h2 id="h8984">multicompar file</h2>
+<p>In a multicompar file, data for different samples is present in
+one file, so they can be compared. Fields that are specific to a
+sample have the samplename added to the fieldname separated by a
+dash, e.g. the zygosity of a variant in sample1 can be found in the
+column named zyg-sample1. The same sample can be analysed using
+different methods (aligners, variant callers). This is indicated
+using fieldname-methods-sample. (The methods-sample part is called
+the anlysis.)</p>
+<p>A small example multicompar variant file with two samples would
+contain the following fields</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>chromosome name.</dd>
+  <dt>begin</dt>
+  <dd>start of the region (half-open coordinates).</dd>
+  <dt>end</dt>
+  <dd>end of the region (half-open coordinates)</dd>
+  <dt>type</dt>
+  <dd>type of variation: snp, ins, del, sub are recognised</dd>
+  <dt>ref</dt>
+  <dd>reference sequence</dd>
+  <dt>alt</dt>
+  <dd>alternative allele(s).</dd>
+  <dt>sequenced-gatkh-rdsbwa-sample1</dt>
+  <dd>sequencing status of sample1, based on the gatk
+  haplotypecaller (gatkh) on a cleaned bwa alignment</dd>
+  <dt>zyg-gatkh-rdsbwa-sample1</dt>
+  <dd>zygosity of sample1</dd>
+  <dt>quality-gatkh-rdsbwa-sample1</dt>
+  <dd>variant quality in sample1</dd>
+  <dt>alleleSeq1-gatkh-rdsbwa-sample1</dt>
+  <dd>genotype of variant at one allele in sample1</dd>
+  <dt>alleleSeq2-gatkh-rdsbwa-sample1</dt>
+  <dd>genotype of variant at other allele in sample1</dd>
+  <dt>sequenced-gatkh-rdsbwa-sample2</dt>
+  <dd>sequencing status of sample2</dd>
+  <dt>zyg-gatkh-rdsbwa-sample2</dt>
+  <dd>zygosity of sample2</dd>
+  <dt>quality-gatkh-rdsbwa-sample2</dt>
+  <dd>variant quality in sample2</dd>
+  <dt>alleleSeq1-gatkh-rdsbwa-sample2</dt>
+  <dd>genotype of variant at one allele in sample2</dd>
+  <dt>alleleSeq2-gatkh-rdsbwa-sample2</dt>
+  <dd>genotype of variant at other allele in sample2</dd>
+</dl>
+<h2 id="h10563">tab based bioinformatics formats</h2>
+<p>Some formats used in bioinformatics contain data in a tab
+separated format where the header does not conform to the tsv specs.
+Most Genomecomb commands will detect and support some of these
+alternative comments/header styles:</p>
+
+<dl>
+  <dt>sam</dt>
+  <dd>starts with &quot;@HD VN&quot;, header lines start with @,
+  uses fixed columns</dd>
+  <dt>vcf</dt>
+  <dd>starts with &quot;<tt>fileformat=VCF&quot;, the last
+  &quot;comment&quot; line contains the header. In order to extract
+  the data merged in some of the vcf fields into a genomecomb
+  supported tsv, use <a href="cg_vcf2tsv.html">cg vcf2tsv</a></tt></dd>
+  <dt>Complete genomics</dt>
+  <dd>header line is preceeded by an empty line and starts with a
+  &gt; character</dd>
+</dl>
+<h2 id="h11208">metadata in comments format</h2>
+<p>The following conventions are used by genomecomb for storing
+metadata in the comments of a tsv file: The comment character (#) is
+followed by a keyword and a value separated by a tab character, e.g.
+the first comment lines will usually contain the &quot;filetype&quot;
+keyword and value, followed by fileversion and split status:</p>
+<pre>
+#filetype   tsv/varfile
+#fileversion    0.99
+#split  1
+</pre>
+<p>The same keyword (with different valuesd) can be repeated. In this
+case the values can be interpreted as a list. If the first value of
+such a list is &quot;table&quot; the list contains a tab-separated
+table: The next element (after table) contains the header, the
+following tab-separated lines with the data, e.g A typical table is
+the fields table describing the fields present in the tsv file, e.g.:</p>
+<pre>
+#fields table
+#fields field   number  type    description
+#fields chromosome  1   String  Chromosome/Contig
+#fields begin   1   Integer Begin of feature (0 based - half open)
+#fields end 1   Integer End of feature (0 based - half open)
+#fields type    1   String  Type of feature (snp,del,ins,...)
+#fields ref 1   String  Reference sequence, can be a number for large features
+#fields alt 1   String  Alternative sequence, can be a number for large features
+#fields name    1   String  name of feature
+#fields quality 1   Float   Quality score of feature
+#fields filter  1   String  Filter value
+#fields alleleSeq1  1   String  allele present on first chromosome/haplotype
+#fields alleleSeq2  1   String  allele present on second chromosome/haplotype
+#fields sequenced   1   String  sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
+#fields zyg 1   String  Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, v = variant but genotype unspecified, c = compound (i.e. genotype has this variant and other variant), u = unsequenced geno
+#fields phased  1   Integer Phased status: 0 if not phased, other integer if phased
+#fields genotypes   H   Integer Genotypes
+#fields alleledepth_ref 1   Integer Allelic depths for the ref allele
+#fields alleledepth A   Integer Allelic depths for the alt alleles in the order listed
+#fields frequency   A   Float   Allele Frequency
+</pre>
+<p>The fields table contains 4 columns: <b>field</b> contains the
+field name, <b>number</b> is 1 if the column contains a single value,
+A if it contains lists with a value for alternative allele or H if it
+contains a value for each haplotype/chromosome. <b>type</b> indicates
+the type of value in the column and <b>description</b> gives a
+textual description of the field.</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

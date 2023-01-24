@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_liftover</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">liftover</h1>
+<h2 id="h16">Format</h2>
+<p>cg liftover ?variantfile? ?resultfile? liftoverfile</p>
+<h2 id="h82">Summary</h2>
+<p>Use liftover to convert a variant file from one build to another</p>
+<h2 id="h162">Description</h2>
+<p>Converts a variantfile from one build to another based on a
+liftover file. The liftover file is a tab separated file indicating
+which regions in the source genome (chromosome,begin,end,strand)
+shoud be converted to which regions in the destination genome
+(destchromosome,destbegin,destend,deststrand). If a UCSC liftover
+chainfile is given as a liftover file, it is converted into a
+liftover file using the command &quot;cg liftchain2tsv chainfile
+liftoverfile&quot;.</p>
+<p>cg liftover tries to correct the variants if there are changes in
+strand or reference. It will adapt the fields ref, alt, sequenced*,
+zyg* according to the changes. It uses the file &lt;liftoverfile
+base&gt;.refchanges.tsv for this. This file must contain the
+differences in reference sequence between the source and destination
+genome, and can be generated using the command &quot;cg
+liftfindchanges srcgenome destgenome liftoverfile&quot; if not
+available.</p>
+<p>A liftover conversion is likely to cause loss of information: not
+all variants/regions can be properly converted. Variants that were
+dropped in the conversion, will be available in resultfile.unmapped.
+Regions that were not present in the source genome will obviously not
+have variants.</p>
+<h2 id="h1373">Arguments</h2>
+
+<dl>
+  <dt><b>variantfile</b></dt>
+  <dd>file in <a href="tsv.html">tsv</a> format (with variant
+  data), if not given, will take data from stdin</dd>
+  <dt><b>resultfile</b></dt>
+  <dd>resulting converted file, if not given, will output data to
+  stdout</dd>
+  <dt><b>liftoverfile</b></dt>
+  <dd>liftover file guiding the conversion. Liftover files are
+  normally in tsv format; If a (ucsc liftover) chainfile is given, it
+  will be converted, saved next to the chain file and used. e.g.
+  hg18ToHg19.over.tsv to convert from hg18 to hg19, and
+  hg19ToHg18.over.tsv to convert from hg19 to hg18</dd>
+</dl>
+<h2 id="h1889">Options</h2>
+
+<dl>
+  <dt><b>-regionfile file</b></dt>
+  <dd>a regionfile is a tsv file indicating which regions of the
+  genome are actually sequenced. If given, it is used to add changes
+  in the reference sequence in sequenced regions to variants. If
+  variantfile is a multisample file, the regionfile must also be
+  multisample (columns name sreg-sample or sample indicating for each
+  region if is sequenced in the specific sample)</dd>
+  <dt><b>-correctvariants 0/1</b></dt>
+  <dd>normally cg liftover tries to correct variant data as far as
+  possible, use 0 to skip this correction</dd>
+  <dt><b>-split 0/1</b></dt>
+  <dd>indicate if variantfile (and resultfile) is split (multiline
+  alt allele snps) or not (1 multiallelic line)</dd>
+  <dt><b>-sort 0/1</b></dt>
+  <dd>sort after liftover (default 1). Only set this to 0 if you
+  will be sorting the file afterwards in a pipeline anyway</dd>
+</dl>
+<h2 id="h2684">Category</h2>
+<p>Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

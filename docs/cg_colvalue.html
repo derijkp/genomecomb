@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_colvalue</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">colvalue</h1>
+<h2 id="h16">Format</h2>
+<p>cg colvalue ?options? ?infile? ?outfile?</p>
+<h2 id="h71">Summary</h2>
+<p>Converts data in tsv format from a long key-value format to a wide
+column-value format</p>
+<h2 id="h173">Description</h2>
+<p>In a file in long key-value format, each value is in a separate
+line, where each line has identifier fields indicating the object,
+key fields defining what the value descibes about the object, and a
+value field containing the actual value. &quot;cg colvalue&quot;
+converts these files to a wide col-value format, where all values
+about the object are on the same line in different columns.</p>
+<p>The fields identifying the object can be specified using the
+-idfields option. If not given, all fields except the key and value
+fields will be used as idfields.</p>
+<p>This command is similar to the <a href="cg_wide.html">cg wide</a>
+command, but more generic. <a href="cg_wide.html">cg wide</a> is
+specifically made for conveniently converting variant files (to wide
+variant file format with samples). cg colvalue can be used to
+&quot;transpose&quot; any tsv file.</p>
+<h2 id="h995">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h1165">Options</h2>
+
+<dl>
+  <dt>-idfields list</dt>
+  <dd>which fields identify the object (default sample or id)</dd>
+  <dt>-keyfields keyfields</dt>
+  <dd>fields which compose the key. If more than one field is
+  given, the fieldnames will be constructed by concatenating the
+  values with - (default is key or parameter)</dd>
+  <dt>-valuefield</dt>
+  <dd>field containing the value (default value)</dd>
+</dl>
+<h2 id="h1499">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

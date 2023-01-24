@@ -1,0 +1,951 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_select</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Select</h1>
+<h2 id="h14">Format</h2>
+<p>cg select ?options? ?datafile? ?outfile?</p>
+<h2 id="h69">Summary</h2>
+<p>Command for very flexible selection, sorting and conversion of tab
+separated files</p>
+<h2 id="h167">Description</h2>
+<p>Scans a <a href="tsv.html">tab separated file with header</a>, and
+returns selected lines and columns, optionally sorted. cg select can
+also add new columns calculated based on the content of other
+columns. It can also be used to create summaries. Examples of its use
+can be found in <a href="howto_query.html">howto_query</a></p>
+<h2 id="h471">Arguments</h2>
+
+<dl>
+  <dt>datafile</dt>
+  <dd>file to be scanned, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt>outfile</dt>
+  <dd>write results to outfile, if not given, uses stdout. If
+  outfile has an extension indicating compression (e.g. .zst), the
+  output file will be compressed using the proper method.</dd>
+</dl>
+<h2 id="h758">Options</h2>
+
+<dl>
+  <dt>-f fields</dt>
+  <dd>list of fields to be written to result. Can contain wildcards
+  or new calculated fields (see further)</dd>
+  <dt>-fo 0/1</dt>
+  <dd>if using the -f option, keep the field order from the
+  original file (usefull when e.g. using wildcards)</dd>
+  <dt>-q query</dt>
+  <dd>only lines fullfilling conditions in query will be written to
+  outfile (see further)</dd>
+  <dt>-qf queryfile</dt>
+  <dd>only lines fullfilling conditions in queryfile will be
+  written to outfile (see further)</dd>
+  <dt>-rf removefields</dt>
+  <dd>write all, except given fields to result.</dd>
+  <dt>-samples samples</dt>
+  <dd>Only the given list of samples (space separated) will be
+  included in the output. All non-sample related fields (those
+  without a -) will be included. The sample nnames may contain
+  wildcards (*)</dd>
+  <dt>-samplesfile file</dt>
+  <dd>same as the -samples option, but the samples are given in a
+  file (one sample per line, no header)</dd>
+  <dt>-ssamples samples</dt>
+  <dd>same as -samples, but the order of fields in the file will be
+  changed, so that samples are sorted as in the parameter</dd>
+  <dt>-s sortfields</dt>
+  <dd>sort on given fields using <a
+  href="natural_sort.html">natural sort</a>, so that e.g. 'chr1 chr2
+  chr10' will be sorted correctly) If a sort field is prepended with
+  an -, the sort will be reversed for that field. If
+  <b>sortfields</b> is &quot;-&quot;, the default sort fields will be
+  used (based on following fields, if present:
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  chromosome,begin,end,type,alt,strand,exonStarts,exonEnds,cdsStart,cdsEnd).
+  This will also accept name variations of the fields, such as chrom
+  instead of chromosome.</dd>
+  <dt>-sr sortfields</dt>
+  <dd>sort on given fields in reverse order</dd>
+  <dt>-si sampleinfofile</dt>
+  <dd>a file in which extra information about the samples can be
+  found (see further). If a file exists with the same name as the
+  datafile (without compression extension, if present) with
+  .sampleinfo or .sampleinfo.tsv appended, it will be used as
+  sampleinfofile by default.</dd>
+  <dt>-nh newheader</dt>
+  <dd>replace header in output with fields given by this option</dd>
+  <dt>-sh sepheader</dt>
+  <dd>write a resultfile without header, and write the header into
+  the file <b>sepheader</b></dd>
+  <dt>-hc headerincomment</dt>
+  <dd>if 1, the last of the starting comment lines will be used for
+  the header instead of the first non-comment line. If 2, the result
+  file will also have the header in the last comment.</dd>
+  <dt>-hf headerfile</dt>
+  <dd>datafile does not have a header, the header will be read from
+  <b>headerfile</b> instead</dd>
+  <dt>-hp header</dt>
+  <dd>datafile does not have a header, the list (space separated)
+  given in this parameter will be used as header for the file</dd>
+  <dt>-rc 0/1</dt>
+  <dd>remove comment</dd>
+  <dt>-h 0/1</dt>
+  <dd>return header fields in file</dd>
+  <dt>-n 0/1</dt>
+  <dd>return sample names in file</dd>
+  <dt>-samplingskip number</dt>
+  <dd>sample data, skipping <b>number</b> rows</dd>
+  <dt>-g groupfields</dt>
+  <dd>with this option a summary table is returned. This will
+  contain one line with information for each value or combination of
+  values in the given groupfield(s). <b>groupfields</b> has the
+  following format: &quot;field1 filter1 field2 filter2 ...&quot;.
+  For more information, see further (Summaries using -g and -gc)</dd>
+  <dt>-gc groupcols</dt>
+  <dd>show other columns instead of count when using the -g option.
+  <b>groupcols</b> has the following format: &quot;field1 filter1
+  field2 filter2 ... functions&quot;. For more information, see
+  further (Summaries using -g and -gc)</dd>
+  <dt>-rowfield</dt>
+  <dd>field that will contain the (current) row number (default
+  ROW)</dd>
+</dl>
+<h2 id="h3975">Fields (option -f)</h2>
+<p>With the -f option, the output can be limited to the fields given
+(whitespace separated list). The field argument can contain more than
+one line (enclose in '' when running from sh) to format for clarity,
+e.g.:</p>
+<pre>
+cg select -f '
+    chromosome
+    begin
+    end
+' file.tsv
+</pre>
+<p>An asterix (wildcard) can be used to indicated several fields
+matching a pattern. If a field with wildcards is prefixed with a
+minus, all fields not matching the pattern will be added. When using
+a wildcard, by default all matching fields will be added at that
+position. You can use the &quot;-fo 1&quot; option to keep the
+original field order (e.g. to keep them ordered per sample when using
+something like zyg-* coverage-* ...)</p>
+<p>A field starting with fieldname=formula will add a <b>calculated
+field: a field with the given fieldname for which the value will be
+calculated using the given formula. The formula can use any of the
+fields in the file and all operators or functions described further
+in the query secction. If the formula is complex (includes spaces),
+add braces around the entire field=formula.</b></p>
+<p>Calculated fields can be used in queries If the field definition
+is preceeded by a -, it is not included in the output (but can still
+be used in queries.</p>
+<p>You can create multiple calculated fields in one go using
+wildcards (*,\*\*,\*\*\*,...), e.g. freq-**=$count-**/double($total)
+to calculate columns freq-sample1, freq-sample2, ... for each sample
+for which a count-sample1, count-sample2, ... exists. Different
+patterns can be combined using different number of asterisks. The
+example uses 2 asterisks. You can use 1, but have to be careful; if
+the definition contains a multiplication (an asterisk), it would also
+be replaced by the pattern.</p>
+<h2 id="h5735">Query (option -q)</h2>
+<p>Queries (-q) are used to limit the output to lines fullfilling the
+conditions in query: Only lines for which the query is true are in
+the output. The query argument may be formatted for clarity using
+newlines (enclose in '' when running from sh) to format for clarity,
+e.g.:</p>
+<pre>
+cg select -q '
+    $type == &quot;snp&quot;
+    and $quality &gt;= 30
+' file.tsv
+</pre>
+<h3 id="h6112">Using field values</h3>
+<p>In queries, the value of a field for the line can be accessed
+using a $ followed by the name of the field, e.g. the query $start
+&gt; 10000 will only return lines where the value in the field start
+is larger than 10000.</p>
+<p>Fields can contain lists of values separated by commas (or
+semicolons or space) (= a vector). In such case a simple &gt;
+operator will give errors, as it only works on numbers. There are
+several functions and operators (described further) to handle these
+kind of values, e.g the query &quot;lmax($freq) &lt; 5&quot; can be
+used to select only lines for which the maximum freq in the
+list/vector is smaller than 5.</p>
+<p>The special variable ROW will contain the row number of the
+current line. $ROW starts at 0 for this first line after the
+header/comments. e.g.: $ROW == 1000 will select data line 1000 in the
+file. If the tsv file already has a field ROW, you must define
+another fieldname to contain the row number with the -rowfield
+option.</p>
+<h3 id="h7083">Operators</h3>
+<p>Queries support all operators provided by Tcl expr:</p>
+
+<dl>
+  <dt>== != </dt>
+  <dd>Boolean equal and not equal. Each operator produces a
+  zero/one result. Valid for all operand types.</dd>
+  <dt>&lt; &gt; &lt;= &gt;= </dt>
+  <dd>Boolean less, greater, less than or equal, and greater than
+  or equal. Each operator produces 1 if the condition is true, 0
+  otherwise. These operators will give an error if its operands are
+  not numbers. You can use <b>st</b>,<b>gt</b>,<b>se</b>,<b>ge</b>,
+  operators if you also want to compare strings</dd>
+  <dt>lt gt le ge </dt>
+  <dd>Boolean less, greater, less than or equal, and greater than
+  or equal; These operators work on strings as well as numbers; the
+  comparison is done as in a natural sort, so e.d. &quot;a10&quot; gt
+  &quot;a2&quot;</dd>
+  <dt>+ - </dt>
+  <dd>Add and subtract. Valid for any numeric operands.</dd>
+  <dt>* / % </dt>
+  <dd>Multiply, divide, remainder. None of these operands may be
+  applied to string operands, and remainder may be applied only to
+  integers. The remainder will always have the same sign as the
+  divisor and an absolute value smaller than the divisor.</dd>
+  <dt>&amp;&amp; </dt>
+  <dd>Logical AND. Produces a 1 result if both operands are
+  non-zero, 0 otherwise. Valid for numeric operands only (integers or
+  floating-point).</dd>
+  <dt>|| </dt>
+  <dd>Logical OR. Produces a 0 result if both operands are zero, 1
+  otherwise. Valid for numeric operands only (integers or
+  floating-point).</dd>
+  <dt>- + ~ ! </dt>
+  <dd>Unary minus, unary plus, bit-wise NOT, logical NOT. None of
+  these operands may be applied to string operands, and bit-wise NOT
+  may be applied only to integers.</dd>
+  <dt> </dt>
+  <dd>Left and right shift. Valid for integer operands only. A
+  right shift always propagates the sign bit.</dd>
+  <dt>&amp; </dt>
+  <dd>Bit-wise AND. Valid for integer operands only.</dd>
+  <dt>^ </dt>
+  <dd>Bit-wise exclusive OR. Valid for integer operands only.</dd>
+  <dt>| </dt>
+  <dd>Bit-wise OR. Valid for integer operands only.</dd>
+  <dt>x?y</dt>
+  <dd>z : If-then-else, as in C. If x evaluates to non-zero, then
+  the result is the value of y. Otherwise the result is the value of
+  z. The x operand must have a numeric value.</dd>
+</dl>
+<p>Some extra operators are added:</p>
+
+<dl>
+  <dt>condition1 <b>and</b> condition2</dt>
+  <dd>condition is true if both condition1 and condition2 are true
+  (same as &amp;&amp;)</dd>
+  <dt>condition1 <b>or</b> condition2</dt>
+  <dd>condition is true if either condition1 or condition2 is true
+  (same as ||)</dd>
+  <dt>value <b>** /pattern/</b></dt>
+  <dd>true if value matches the regular expression given by pattern</dd>
+</dl>
+<p>Several functions (see further: matches, regexp, oneof, shares,
+...) can also be used as operators, e.g.</p>
+
+<dl>
+  <dt>value <b>matches</b> pattern</dt>
+  <dd>true if value matches the glob pattern given by
+  <b>pattern</b> (using wildcards * for anything, ? for any single
+  character, [chars] for any of the characters in chars)</dd>
+  <dt>value <b>regexp</b> pattern</dt>
+  <dd>true if value matches the regular expression given by
+  <b>pattern</b></dd>
+</dl>
+<h3 id="h10906">Functions</h3>
+<p>Queries support all functions provided by Tcl expr</p>
+
+<dl>
+  <dt>exp(arg)<b> </b></dt>
+  <dd>exponential of arg.</dd>
+  <dt>fmod(x,y)<b> </b></dt>
+  <dd>floating-point remainder of the division of x by y.</dd>
+  <dt>isqrt(arg)<b> </b></dt>
+  <dd>Computes the integer part of the square root of arg.</dd>
+  <dt>log(arg)<b> </b></dt>
+  <dd>natural logarithm of arg. Arg must be a positive value.</dd>
+  <dt>log10(arg)<b> </b></dt>
+  <dd>base 10 logarithm of arg. Arg must be a positive value.</dd>
+  <dt>pow(x,y)<b> </b></dt>
+  <dd>Computes the value of x raised to the power y.</dd>
+  <dt>sqrt(arg)<b> </b></dt>
+  <dd>The argument may be any non-negative numeric value.</dd>
+</dl>
+
+<dl>
+  <dt>ceil(arg)<b> </b></dt>
+  <dd>smallest integral floating-point value (i.e. with a zero
+  fractional part) not less than arg. The argument may be any numeric
+  value.</dd>
+  <dt>floor(arg)<b> </b></dt>
+  <dd>largest integral floating-point value (i.e. with a zero
+  fractional part) not greater than arg. The argument may be any
+  numeric value.</dd>
+  <dt>round(arg)<b> </b></dt>
+  <dd>If arg is an integer value, returns arg, otherwise converts
+  arg to integer by rounding and returns the converted value.</dd>
+</dl>
+
+<dl>
+  <dt>abs(arg)<b> </b></dt>
+  <dd>absolute value of arg.</dd>
+  <dt>double(arg)<b> </b></dt>
+  <dd>The argument may be any numeric value, If arg is a
+  floating-point value, returns arg, otherwise converts arg to
+  floating-point and returns the converted value. May return Inf or
+  -Inf when the argument is a numeric value that exceeds the
+  floating-point range.</dd>
+  <dt>entier(arg)<b> </b></dt>
+  <dd>The argument may be any numeric value. The integer part of
+  arg is determined and returned. The integer range returned by this
+  function is unlimited, unlike int and wide which truncate their
+  range to fit in particular storage widths.</dd>
+  <dt>int(arg)<b> </b></dt>
+  <dd>The argument may be any numeric value. The integer part of
+  arg is determined, and then the low order bits of that integer
+  value up to the machine word size are returned as an integer value.
+  For reference, the number of bytes in the machine word are stored
+  in tcl_platform(wordSize).</dd>
+  <dt>bool(arg)<b> </b></dt>
+  <dd>Accepts any numeric value, or any string acceptable to string
+  is boolean, and returns the corresponding boolean value 0 or 1.
+  Non-zero numbers are true. Other numbers are false. Non-numeric
+  strings produce boolean value in agreement with string is true and
+  string is false.</dd>
+  <dt>wide(arg)<b> </b></dt>
+  <dd>The argument may be any numeric value. The integer part of
+  arg is determined, and then the low order 64 bits of that integer
+  value are returned as an integer value.</dd>
+</dl>
+
+<dl>
+  <dt>max(arg,...)<b> </b></dt>
+  <dd>argument with the greatest value.</dd>
+  <dt>min(arg,...)<b> </b></dt>
+  <dd>argument with the least value.</dd>
+  <dt>rand()<b> </b></dt>
+  <dd>Returns a pseudo-random floating-point value in the range
+  (0,1). The generator algorithm is a simple linear congruential
+  generator that is not cryptographically secure. Each result from
+  rand completely determines all future results from subsequent calls
+  to rand, so rand should not be used to generate a sequence of
+  secrets, such as one-time passwords. The seed of the generator is
+  initialized from the internal clock of the machine or may be set
+  with the srand function.</dd>
+  <dt>srand(arg)<b> </b></dt>
+  <dd>The arg, which must be an integer, is used to reset the seed
+  for the random number generator of rand. Returns the first random
+  number (see rand) from that seed. Each interpreter has its own
+  seed.</dd>
+</dl>
+
+<dl>
+  <dt>acos(arg)<b> </b></dt>
+  <dd>arc cosine of arg, in the range [0,pi] radians. Arg should be
+  in the range [-1,1].</dd>
+  <dt>asin(arg)<b> </b></dt>
+  <dd>arc sine of arg, in the range [-pi/2,pi/2] radians. Arg
+  should be in the range [-1,1].</dd>
+  <dt>atan(arg)<b> </b></dt>
+  <dd>arc tangent of arg, in the range [-pi/2,pi/2] radians.</dd>
+  <dt>atan2(y,x)<b> </b></dt>
+  <dd>arc tangent of y/x, in the range [-pi,pi] radians. x and y
+  cannot both be 0. If x is greater than 0, this is equivalent to
+  âatan [expr {y/x}]â.</dd>
+  <dt>cos(arg)<b> </b></dt>
+  <dd>cosine of arg, measured in radians.</dd>
+  <dt>cosh(arg)<b> </b></dt>
+  <dd>hyperbolic cosine of arg. If the result would cause an
+  overflow, an error is returned.</dd>
+  <dt>hypot(x,y)<b> </b></dt>
+  <dd>Computes the length of the hypotenuse of a right-angled
+  triangle âsqrt [expr {x*x+y*y}]â.</dd>
+  <dt>sin(arg)<b> </b></dt>
+  <dd>sine of arg, measured in radians.</dd>
+  <dt>sinh(arg)<b> </b></dt>
+  <dd>hyperbolic sine of arg. If the result would cause an
+  overflow, an error is returned.</dd>
+  <dt>tan(arg)<b> </b></dt>
+  <dd>tangent of arg, measured in radians.</dd>
+  <dt>tanh(arg)<b> </b></dt>
+  <dd>hyperbolic tangent of arg.</dd>
+</dl>
+<p>Several extra functions have been added:</p>
+<h4 id="h15002">Logical functions</h4>
+
+<dl>
+  <dt>not(condition)</dt>
+  <dd>condition is true if condition is not true</dd>
+  <dt>if(condition,true,?condition2,true2, ...?false)</dt>
+  <dd>if <b>condition</b> is true, the value for &quot;true&quot;
+  will be returned, otherwise the last parameter (<b>false</b>) is
+  returned</dd>
+  <dt>catch(value,?errorvalue?)</dt>
+  <dd>if an error is generated when calculating <b>value</b>, the
+  function returns <b>errorvalue</b>. If <b>errorvalue</b> is not
+  given, catch returns 1 on an error, and 0 on success (without
+  catch, the error message is returned.)</dd>
+</dl>
+<h4 id="h15507">Bio functions</h4>
+
+<dl>
+  <dt>region(&quot;chromosome</dt>
+  <dd>begin-end&quot;,...): is true for any region in dataset that
+  overlaps the given regions. Can also be given as
+  region(chromosome,begin,end,...). If the chromosome value in the
+  query or the data file starts with chr, this part is ignored: chr2
+  will match 2, as wel as Chr2.</dd>
+  <dt>chr_clip(value)</dt>
+  <dd>Returns the chromosome name without &quot;chr&quot; in front
+  (if present)</dd>
+  <dt>hovar(samplename)</dt>
+  <dd>true if the given sample is a homozygous variant. This is
+  equivalent to ($sequenced-samplename == &quot;v&quot; &amp;&amp;
+  $alleleSeq1-samplename == $alleleSeq2-samplename)</dd>
+  <dt>zyg(?sequenced?,alleleSeq1,alleleSeq2,ref,alt)</dt>
+  <dd>returns the zygosity code given the parameters. The sequenced
+  parameter is optional; if it is present, a &quot;u&quot; will cause
+  the zygosity to also be &quot;u&quot;. Possible result codes are: m
+  (homozygous, alleles are equal and in alt), t (heterozygous, one of
+  the alleles is in alt, the other is ref), r (reference, both
+  alleles are ref) c (compound, at least one allele in alt, the other
+  is not ref), o (other, at least one allele is not ref, but none are
+  in alt) v (variant, but genotype was not specified), u
+  (unsequenced) ? (could not deduce)</dd>
+  <dt>transcripts(geneset,filter,type)</dt>
+  <dd>returns the list of transcript names affected by a variant
+  for the given gene set, potentially filtered by impact type.
+  <b>geneset</b> is the base name of the gene annotation, e.g. when
+  it is &quot;refGene&quot;, the field &quot;refGene_descr&quot; will
+  be used to extract the transcipt names, &quot;refGene_gene&quot;
+  for the gene name and &quot;refGene_impact&quot; for the filtering.
+  If <b>filter</b> is given (a comma separated list if impacts), only
+  transcripts where the variant has one of the given impacts are
+  returned. You can use wildcards and &gt; to select multiple impacts
+  in the filter (e.g. CDS* for CDS impacts and &gt;=CDSmis for
+  anything at the level of missense and higher in the list).
+  <b>type</b> determines what is returned: t for only transcipt name,
+  gt for gene and transcript name and g for only the gene name.</dd>
+  <dt>maximpact(list,...)</dt>
+  <dd>returns the maximum impact from one or more lists of impacts.
+  The order of impact is as in the list given in <a
+  href="cg_annotate.html">cg annotate</a></dd>
+  <dt>alignedseq(region,?includeins?)</dt>
+  <dd>for an alignment tsv (typically converted from a bam/sam
+  file) this will return the allele of the aligned sequence at the
+  specifield (reference) position. The fields chromosome, begin, end,
+  cigar and seq must be present in the tsv file. If the read does not
+  align in the region, the empty string is returned. If the region is
+  completely in a deletion of the read, &quot;-&quot; will be
+  returned <b>region</b> is in the format
+  &quot;&lt;chr&gt;:&lt;begin&gt;-&lt;end&gt;&quot;, the optional
+  parameter <b>includeins</b> can be set to 1 to include neighboring
+  insertion sequences, or 0 (default) to not include them</dd>
+</dl>
+<h4 id="h18247">Number functions</h4>
+
+<dl>
+  <dt>between(value,{min max})<b> or </b>between(value,min,max)</dt>
+  <dd>true of value is &gt;= min and &lt;= max (e.g.
+  &quot;between($begin,1000,2000)&quot;) This function can also be
+  used as an operator, eg &quot;$field between {1 2}&quot;</dd>
+  <dt>min(a1,a2,...)</dt>
+  <dd>returns the minimum of a1, a2, ... min will return an error
+  if one of the values is not a number. Use lmin if some values are
+  list of numbers, or not numbers.</dd>
+  <dt>max(a1,a2,...)</dt>
+  <dd>returns the maximum of a1, a2, ... max will return an error
+  if one of the values is not a number. Use lmax if some values are
+  list of numbers, or not numbers.</dd>
+  <dt>avg(value,...)</dt>
+  <dd>returns the average of the values given. Non-number values
+  are ignored. If no number was given, the answer will be NaN</dd>
+  <dt>isnum(value)</dt>
+  <dd>true if value is a valid number</dd>
+  <dt>isint(value)</dt>
+  <dd>true if value is a valid integer</dd>
+  <dt>percent(value)</dt>
+  <dd>returns a fraction as a percent</dd>
+  <dt>def(value,default)</dt>
+  <dd>if value is not a number, it returns the given default,
+  otherwise value</dd>
+  <dt>format(formatstring, arg, ...)</dt>
+  <dd>format the given arguments according to the given
+  <b>formatstring</b>. <b>formatstring</b> follows the ANSI C sprintf
+  specification, e.g. use &quot;%.2f&quot; to print a floating point
+  number with two digits after the decimel point</dd>
+</dl>
+<h4 id="h19460">String functions</h4>
+
+<dl>
+  <dt>length(value)</dt>
+  <dd>returns the string length of value</dd>
+  <dt>toupper(value)</dt>
+  <dd>returns the uppercase version of string value</dd>
+  <dt>split(value,splitchars)</dt>
+  <dd>splits the string value on each occurence of any character in
+  splitchars</dd>
+  <dt>concat(value,...)</dt>
+  <dd>makes one long string by appending all values.</dd>
+  <dt>oneof($field,value1,value2,...)</dt>
+  <dd>returns true if the given field is equal to one of the values</dd>
+  <dt>regexp(value,pattern)</dt>
+  <dd>true if value matches the regular expression given by
+  <b>pattern</b></dd>
+  <dt>ncregexp(value,pattern)</dt>
+  <dd>true if value matches the regular expression given by
+  <b>pattern</b> without taking into account case (nocase)</dd>
+  <dt>regextract(value,pattern)</dt>
+  <dd>extract the part matching the given <b>pattern</b> from
+  <b>value</b></dd>
+  <dt>regsub(value,pattern,replace)</dt>
+  <dd>substitutes values matched by <b>pattern</b> in <b>value</b>
+  by <b>replace</b></dd>
+  <dt>matches(value,pattern)</dt>
+  <dd>true if value matches the glob pattern given by
+  <b>pattern</b> (using wildcards * for anything, ? for any single
+  character, [chars] for any of the characters in chars)</dd>
+  <dt>ncmatches(value,pattern)</dt>
+  <dd>like matches but without taking into account case (nocase)</dd>
+</dl>
+<h4 id="h20571">multifield functions</h4>
+<p>The following functions address multiple fields.</p>
+
+<dl>
+  <dt>count($field1, $field2, ..., test)</dt>
+  <dd>Counts the number of fields that fullfill the test (can be
+  things like: ' == &quot;A&quot;' or '&lt; 20')</dd>
+  <dt>counthasone($field1, $field2, ..., test)</dt>
+  <dd>Counts the number of fields containing a commma separated
+  lists for which one of the values fullfills the test</dd>
+  <dt>counthasall($field1, $field2, ..., test)</dt>
+  <dd>Counts the number of fields containing a commma separated
+  lists for which all of the values fullfill the test An asterix can
+  be used to indicated several fields matching a pattern. As field
+  names specific to a sample are made by appending with -samplename,
+  something like count($sequenced-*, == &quot;v&quot;) will give the
+  number of samples for which a variant was found</dd>
+</dl>
+<h4 id="h21344">Sample and analysis aggregates</h4>
+<p>Sometimes you want summary info for each (selected) variation over
+the samples in the file (e.g. in how many samples is the variant
+present, in which samples, ..). You can do this in a limited way
+using the previous count functions using an asterix, but it is very
+difficult to combine queries (correctly) this way. Sample aggregate
+functions can be used (much easier and more flexible) for this
+purpose:</p>
+<p>A sample aggregate function will loop over all samples in a line,
+testing a condition or aggregating values. In the arguments of the
+function (condition, value), you can use field names without the
+sample part, which will then be used for each sample, e.g.
+scount($sequenced-gatk-rdsbwa == &quot;v&quot;) will count the number
+of samples for which sequenced-gatk-rdsbwa-&lt;sample&gt; is equal to
+&quot;v&quot;. Samples that do not have the required field(s) are
+ignored.</p>
+<p>A special variable named sample is available with the name of the
+sample, e.g. scount($sample match &quot;a*&quot; and
+$sequenced-gatk-rdsbwa == &quot;v&quot;) will count the number of
+samples starting with an &quot;a&quot; for which
+sequenced-gatk-rdsbwa-&lt;sample&gt; is equal to &quot;v&quot;</p>
+<p>Following sample aggregates are available:</p>
+
+<dl>
+  <dt>scount(condition)</dt>
+  <dd>number of samples for which <b>condition</b> is true</dd>
+  <dt>slist(?condition?,value)</dt>
+  <dd>returns a (comma separated) list with results of value for
+  each sample for which (if given) <b>condition</b> is true</dd>
+  <dt>sdistinct(?condition?,value)</dt>
+  <dd>returns a non-redundant (comma separated) list of the results
+  of value for each sample for which (if given) <b>condition</b> is
+  true</dd>
+  <dt>sucount(?condition?,value)</dt>
+  <dd>number of unique values in field</dd>
+  <dt>smin(?condition?,value)</dt>
+  <dd>returns the minimum of results of value for each sample for
+  which (if given) <b>condition</b> is true</dd>
+  <dt>smax(?condition?,value)</dt>
+  <dd>returns the maximum of results of value for each sample for
+  which (if given) <b>condition</b> is true</dd>
+  <dt>ssum(?condition?,value)</dt>
+  <dd>returns the sum of results of value for each sample for which
+  (if given) <b>condition</b> is true</dd>
+  <dt>savg(?condition?,value)</dt>
+  <dd>returns the average of results of value for each sample for
+  which (if given) <b>condition</b> is true</dd>
+  <dt>sstdev(?condition?,value)</dt>
+  <dd>returns the standard deviation of results of value for each
+  sample for which (if given) <b>condition</b> is true</dd>
+  <dt>smedian(?condition?,value)</dt>
+  <dd>returns the median of results of value for each sample for
+  which (if given) <b>condition</b> is true</dd>
+  <dt>smode(?condition?,value)</dt>
+  <dd>returns the mode of results of value for each sample for
+  which (if given) <b>condition</b> is true</dd>
+  <dt>spercent(condition1,condition2)</dt>
+  <dd>returns 100.0*(number of samples for which condition1 and
+  condition2 are true)/(number of samples for which condition1 is
+  true)</dd>
+</dl>
+<p>The same functions starting with an a instead of an s (acount,
+alist, ...) are available for caclculating aggregate functions
+looping over all analyses, e.g. aavg($quality) to calulated the
+average quality over all analyses in a line. The special variable
+&quot;analysis&quot; will be available within the arguments.</p>
+<h4 id="h24334">comparing samples</h4>
+
+<dl>
+  <dt>compare(analysisname1,analysisname2, ...)</dt>
+  <dd>compares the variant in the given analyses, and returns one
+  of: sm (variant with the same genotype in all given analyses, with
+  all sequenced) df (different: variant in some, reference in other,
+  with all sequenced) mm (mismatch; variant in all, but different
+  genotypes, with all sequenced) un (unsequenced in some analyses,
+  variant in one of the others)</dd>
+  <dt>same(analysis1,analysis2, ...)</dt>
+  <dd>same: all analyses have the same genotype (does not have to
+  be a variant) (all sequenced)</dd>
+  <dt>sm(analysis1,analysis2, ...)</dt>
+  <dd>same: variant with the same genotype in all given analyses
+  (all sequenced)</dd>
+  <dt>df(analysis1,analysis2, ...)</dt>
+  <dd>different: variant in some, reference in other (all
+  sequenced)</dd>
+  <dt>mm(analysis1,analysis2, ...)</dt>
+  <dd>mismatch; variant in all, but different genotypes (all
+  sequenced)</dd>
+  <dt>un(analysis1,analysis2, ...)</dt>
+  <dd>unsequenced in some analyses, variant in one of the others</dd>
+</dl>
+<h3 id="h25275">Vectors</h3>
+<p>Several functions and operators deal with vectors, fields
+containing multiple values in the form of a comma (or ; or space)
+separated list.</p>
+<h4 id="h25433">vector functions (comma separated lists)</h4>
+<p>The following functions allow use of vectors in queries</p>
+
+<dl>
+  <dt>lmin(vector, ...)</dt>
+  <dd>the minimum of the list of numbers in vector(s). A default
+  value (NaN or not a number) is given for non-numeric characters
+  (-); any comparison with NaN is false.</dd>
+  <dt>lmax(vector, ...)</dt>
+  <dd>the maximum of the vector. A default value (NaN or not a
+  number) is given for non-numeric characters (-); any comparison
+  with NaN is false.</dd>
+  <dt>lmind(vector, ..., def)</dt>
+  <dd>same as lmin, but you can set the default value for
+  non-numeric characters is given as the last parameter</dd>
+  <dt>lmaxd(vector, ..., def)</dt>
+  <dd>same as lmax, but you can set the default value for
+  non-numeric characters is given as the last parameter</dd>
+  <dt>lminpos(vector, ...)</dt>
+  <dd>position (within the index) of the minimum value. If more
+  than one vector is given, the position of the minimum of all
+  vectors is given</dd>
+  <dt>lmaxpos(vector, ...)</dt>
+  <dd>position (within the index) of the maximum value. If more
+  than one vector is given, the position of the maximum of all
+  vectors is given</dd>
+  <dt>lsum(vector, ...)</dt>
+  <dd>the sum of the list of numbers in vector(s). Non numeric
+  values are ignored. If no numeric value is present in the vectors,
+  NaN (not a number) will be returned; any comparison with NaN is
+  false.</dd>
+  <dt>lavg(vector, ...)</dt>
+  <dd>the average of the vector. Non numeric values are ignored. If
+  no numeric value is present in the vectors, NaN (not a number) will
+  be returned; any comparison with NaN is false.</dd>
+  <dt>lstdev(vector, ...)</dt>
+  <dd>the standard deviation of the vector. Non numeric values are
+  ignored. If no numeric value is present in the vectors, NaN (not a
+  number) will be returned; any comparison with NaN is false.</dd>
+  <dt>lmedian(vector, ...)</dt>
+  <dd>the median of the vector. Non numeric values are ignored. If
+  no numeric value is present in the vectors, NaN (not a number) will
+  be returned; any comparison with NaN is false.</dd>
+  <dt>lmode(vector, ...)</dt>
+  <dd>the mode (element that is most abundant) of the vector. The
+  result can be a new vector (if multiple values occur at the same
+  count)</dd>
+  <dt>llen(vector)</dt>
+  <dd>number of elements in the vector (also <b>llength</b>)</dd>
+  <dt>lsort(vector)</dt>
+  <dd>the sorted vector (uses natural sort)</dd>
+  <dt>vector(value1,value2, ...)</dt>
+  <dd>creates a vector from a number of values. If some elements
+  are vectors themselves, they will be concatenated</dd>
+  <dt>lindex(vector, position)</dt>
+  <dd>the value of the element at the given <b>position</b> in the
+  list. The first element is at position 0!</dd>
+  <dt>lrange(vector, start, end)</dt>
+  <dd>the a sublist of vector from element at position <b>start</b>
+  up to and including the element at <b>end</b>. The first element is
+  at position 0!</dd>
+  <dt>lsearch(vector, element, ?args?)</dt>
+  <dd>returns the position of <b>element</b> in the list
+  <b>vector</b>. If &quot;-glob&quot; is given as an extra argument,
+  <b>element</b> can be a glob pattern.</dd>
+  <dt>contains(vector, value)</dt>
+  <dd>true if <b>vector</b> contains <b>value</b>. This can also be
+  used as an operator: vector contains value</dd>
+  <dt>shares(vector, valuelist)</dt>
+  <dd>true if <b>vector</b> and the list in <b>valuelist</b> (a
+  SPACE separated list!) share a value. This can also be used as an
+  operator: vector shares valuelist</dd>
+  <dt>lone(vector)</dt>
+  <dd>true if one of elements of the vector is true</dd>
+  <dt>lall(vector)</dt>
+  <dd>true if all elements of the vector are true</dd>
+  <dt>lcount(vector)</dt>
+  <dd>number of elements in vector that are true</dd>
+</dl>
+<h4 id="h28673">vector operators</h4>
+<p>Several special operators are added that work on comma (or ; or
+space) separated lists (vectors). The result of such an operator is
+also a vector. The arguments to such an operator must be of the same
+length, or one of them must be of length 1. If one of them is of
+length 1, the same element will be used versus all elements in the
+other vector. Supported operators are: @<b>, @*, @/, @%, @-, @+,
+@&gt;, @&lt;, @&gt;=, @&lt;=, @==, @!=, @&amp;&amp;, @||, vand, vor,
+vin, vni</b></p>
+<h4 id="h29157">vector functions (that return vectors)</h4>
+
+<dl>
+  <dt>vdistinct(vector, ...)</dt>
+  <dd>returns a vector in which each element in one of the vectors
+  occurs only once</dd>
+  <dt>vabs(vector)</dt>
+  <dd>returns vector of absolute values of given vector</dd>
+  <dt>vavg(vector1,vector2,...)</dt>
+  <dd>returns vector with average value for each position in the
+  vector</dd>
+  <dt>vmax(vector1,vector2,...)</dt>
+  <dd>returns vector with maximum value for each position in the
+  vector</dd>
+  <dt>vmin(vector1,vector2,...)</dt>
+  <dd>returns vector with minimum value for each position in the
+  vector</dd>
+  <dt>vdef(vector,default)</dt>
+  <dd>returns the given vector, but with all non numbers replaced
+  by default</dd>
+  <dt>vif(condition,true,?condition2,true2, ...?false)</dt>
+  <dd>like if, but conditions, true1, ... and false may be vectors,
+  and a vector is returned</dd>
+  <dt>vformat(formatstring, arg, ...)</dt>
+  <dd>same as format, but arg may be a vector, and the result is a
+  vector</dd>
+</dl>
+<h2 id="h29998">Summaries using -g and -gc</h2>
+<p>The -g (groupfields) and -gc (groupcols) allow the flexible
+creation of summaries by calculating summary or aggregate values for
+uniqe combinations of values in different fields. The default summary
+is a count of lines, e.g. using the field &quot;type&quot; in -g will
+return the number of each type of variant in a variant file. The
+summary is made taking into account the query (-q).</p>
+<p>The resulting summaries are again in the <a
+href="tsv.html">tsv</a> format and can be queried again.</p>
+<p>Warning: This option will use memory proportional to the size of
+the resulting summary!, so grouping on e.g. position in a file with
+millions of lines may exaust the memory.</p>
+<h3 id="h30667">groupfields</h3>
+<p>The <b>groupfields</b> option is used to enter the field(s) to
+aggregate upon (together with a filter to apply for each field) in
+the following format: &quot;fieldname1 filter1 fieldname2 filter2
+...&quot; If the parameter is given with only one element, this field
+is used without filter. If multiple fields are given, they must be
+alternated with a filter. Fields used as groupfields may be
+calculated columns. The resulting <a href="tsv.html">tsv</a> file
+will contain a column for each of the grouping fields (and added
+columnsfor the summary data).</p>
+<p>The <b>filter</b> elements can be used to show only specific
+values for each field. The filter is a list of allowed values
+separated by spaces. If a list element contains spaces, enclose it in
+{}. Filter elements can contain wildcards (*) that match any set of
+characters (e.g. CDS* to match any value starting with CDS). If the
+filter is * or {} (=emtpy) all values will be used.</p>
+<p>The special field <b>all</b> can be used to summarize over all
+selected lines. The value of the field &quot;all&quot; (unless it is
+actually present in the file) will be &quot;all&quot; for all lines.
+This allows you to e.g. count the number of result lines of a query
+by adding -g all. If the file contains an actual field
+&quot;all&quot;, you can use &quot;-&quot; or &quot;_&quot; instead
+to get an overview summary.</p>
+<p>muticompar <a href="tsv.html">tsv</a> files can contain data of
+multiple samples or analyses: Sample/analysis specific fields are
+indicated by adding the analysis as a suffix to the generic/returning
+fieldname, separated by a - character. The analysis can consist of
+multiple parts separated by -. The last part of the analysis is the
+sample name, e.g. zyg-gatk-bwa-sample1 contains the zygosity data
+determined by gatk on a bwa alignment of sample1.</p>
+<p>The use of the field <b>sample</b> or <b>analysis</b> for grouping
+(if not present in the file) triggers a different interpretation of
+the file: Instead of calculating aggregate info (e.g. counting) by
+collecting info per line, info is now analyzed per sample or
+analysis. You can add sample specific fields without the
+sample/analysis suffix for grouping, e.g. -g 'sample * zyg-gatk-bwa
+*' will list the number of reference, homozygotes, ... called by gatk
+for each sample. (use -g 'analysis * zyg *' if you want the data for
+each analysis in the file). Only data on samples that have all fields
+required are in the summary: Samples with missing (either -g or -gc)
+fields are ignored. If a field is not found in any of the samples, an
+error is given. Further, only only one of <b>sample</b> or
+<b>analysis</b> can be used as a field. Using both together (in
+either -g or -gc) will also cause an error)</p>
+<p>If a field is given that only exists in the file as part of an
+analysis/sample specific one, processing per sample/analysis is also
+triggered, even though the aggregate will not be separated per
+sample. e.g. using zyg (in a file with only zyg-samplexx fields) will
+result in counting zyg values for all variants in all
+samples/analyses together.</p>
+<h3 id="h33630">groupcols</h3>
+<p>The <b>groupcols (-gc)</b> option can be used to add other summary
+columns than the default count. <b>groupcols</b> is a list with the
+following format: &quot;field1 filter1 field2 filter2 ...
+functions&quot;. A different column will be made in the summary table
+for each combination of values in field1,field2,... They can be
+filtered the same way as in the -g option.</p>
+<p>The last element in this (space separated) list is
+<b>functions</b>. This determines what type of summary data will be
+given in each column, I takes the form of e.g. avg(quality), which
+will return the average of the values in the quality column matching
+the given values in group and column. Supported functions are</p>
+
+<dl>
+  <dt>count</dt>
+  <dd>number of lines (does not need a field argument)</dd>
+  <dt>percent</dt>
+  <dd>count as percent versus total count in given column</dd>
+  <dt>gpercent</dt>
+  <dd>count as percent versus total count in given group (row)</dd>
+  <dt>min(field)</dt>
+  <dd>minimum of all values in the field (for the given group and
+  column)</dd>
+  <dt>max(field)</dt>
+  <dd>maximum</dd>
+  <dt>sum(field)</dt>
+  <dd>sum of values in this field</dd>
+  <dt>avg(field)</dt>
+  <dd>average</dd>
+  <dt>median(field)</dt>
+  <dd>median</dd>
+  <dt>q1(field)</dt>
+  <dd>q1</dd>
+  <dt>q3(field)</dt>
+  <dd>q3</dd>
+  <dt>stdev(field)</dt>
+  <dd>standard deviation</dd>
+  <dt>ucount(field)</dt>
+  <dd>number of unique values in field</dd>
+  <dt>distinct(field)</dt>
+  <dd>lists (comma separated) all distinct values found in the
+  field</dd>
+  <dt>list(field)</dt>
+  <dd>lists (comma separated) all values found in the field (the
+  same one can occur multiple times) <b>functions</b> can be a comma
+  separated list to display multiple summary functions, eg.
+  min(coverage),max(coverage) to display minimum and maximum coverage
+  (in separate columns). A string with an asterix can be used as
+  field, adding the aggregate function for all matching fields as a
+  new entry to the list, e.g. min(coverage-*)</dd>
+</dl>
+<p>The name of the new summary field created starts with the
+summary function; if it has a field &quot;argument&quot;, the name
+will start with function_field (e.g. max_freq). If other other
+grouping fields were used, the values are added in order concatenated
+by -</p>
+<h3 id="h35590">loop over list fields</h3>
+<p>Some fields (may) contain lists (e.g. genes, impacts), where you
+would like to summarize over the elements in the lists. You can do
+this by prepending the fieldname with a + or - on the groupfields or
+groupcols. In case of a prepended +, the select command will loop
+over each element in the list for each line when making the summary.
+This means that the same line may be counted several times (for
+different elements). If the same element is present multiple times in
+the list, it is counted multiple times. If a - is prepended, the
+select command will first remove duplicates in each list before
+looping over them. When multiple looped lists are present, all
+possible combinations are counted.</p>
+<h2 id="h36317">sampleinfofile</h2>
+<p>A sampleinfofile is a tab delimited file containing extra
+information about the samples in the datafile. It should contain one
+column named id, that will contain the sample names. other fields
+contain the extra data. You can use this information in most places
+where you use field values (queries, calculated fields, grouping)
+using the $fieldname-sample construct, e.g. if there is a field
+gender in the sampleinfofile (and not in the datafile, you can use
+$gender-sample1 to get the gender of sample1 in a query. This also
+works with analyses from a given sample, e.g. you can also use
+$gender-gatk-bwa-sample1.</p>
+<p>If there are no $fieldname-sample fields, but there is a field
+named &quot;sample&quot; in the file (e.g. in the long format), that
+sample field will be used to make the link. In this case the
+sampleinfo will be available by using the plain fieldnames in
+sampleinfo (without -sample added)</p>
+<h2 id="h37234">Queryfile</h2>
+<p>A queryfile is a tab delimited file with a header describing a
+query. The output will contain resultlines where all values in the
+columns given in the query header in the resultline are equal to the
+corresponding values given in one line of the query file.</p>
+<h2 id="h37508">Category</h2>
+<p>Query</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

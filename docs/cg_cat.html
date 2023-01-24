@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_cat</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">cat</h1>
+<h2 id="h11">Format</h2>
+<p>cg cat ?options? file ?file? ...</p>
+<h2 id="h58">Summary</h2>
+<p>Concatenate tab separated files and print on the standard output
+(stripping headers of files other than the first).</p>
+<h2 id="h190">Description</h2>
+<p>Concatenate tab separated files and print on the standard output.
+Headers of tab files others than the first one will be stripped. If
+one of the tab file does not have the same fields as the first, an
+error is given, unless the merge or force options are used.</p>
+<h2 id="h471">Arguments</h2>
+
+<dl>
+  <dt><b>file</b> ...</dt>
+  <dd>files to be concatenated</dd>
+</dl>
+<h2 id="h529">Options</h2>
+
+<dl>
+  <dt><b>-m 0/1</b> (--merge)</dt>
+  <dd>if the merge option is given, tab files with different fields
+  will be merged: The resulting tab file has each field that occurs
+  in at least one of the source files. If a given field is not
+  present in one of the source files, it will be empty for each line
+  coming from this file.</dd>
+  <dt><b>-f 0/1</b> (--force)</dt>
+  <dd>if the force option is given, tab files with different fields
+  will still be concatenated without error.</dd>
+  <dt><b>-s 0/1</b> (--sort)</dt>
+  <dd>if the sort option is given, the files will be sorted
+  (natural sort order) before being concatenated. This is usefull for
+  e.g. concatenating files split over chromosomes in the correct
+  order.</dd>
+  <dt><b>-c m/0/1/f/n</b> (--comments)</dt>
+  <dd>Determines what will be in the comments of the result file.
+  if -c is m (default), the comments are merged (supposing they are
+  using the genomecomb metadata in comments format as described in <a
+  href="format_tsv.html">format_tsv</a>) if -c is 1, the names of the
+  files that are concatenated are added in the comment in addition to
+  the comments of all source files. if 0 the comments of all source
+  files are there, but no extra comments (file names) are added. You
+  can use the value f to only display the comment of the first file,
+  or n to leave out comments completely.</dd>
+  <dt><b>-n fieldname</b> (--fieldname)</dt>
+  <dd>if -n is not empty, a column with the name fieldname will be
+  added, that contains the filename where the line came from</dd>
+  <dt><b>-fields fields</b> (--fields)</dt>
+  <dd>only return the given <b>fields</b> in the concatenated
+  output</dd>
+  <dt>-catfiles 0/1</dt>
+  <dd>show concatenated files in merged header (only for -c m)
+  under key catfiles (default 0)</dd>
+</dl>
+<h2 id="h2121">Category</h2>
+<p>tsv</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

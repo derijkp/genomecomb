@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/howto_process_project</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Howto process_project</h1>
+<p>This text describes an example of how to use cg process_project to
+analyze, combine, and annotate whole genome, exome or targetted
+Illumina sequencing raw data using genomecomb. Starting from raw
+data, a fully annotated <a href="projectdir.html">projectdir</a> will
+be created, that can be further queried and analyzed using <a
+href="cg_select.html">cg select</a> and <a href="cg_viz.html">cg
+viz</a></p>
+<p>In this howto, the smal example and test data set
+ori_mixed_yri_mx2 downloadable from the genomecomb website will be
+used. This data set was derived from publically available exome and
+genome sequencing data by extracting only raw data covering the
+region of the MX2 gene (on chr21) and a part of the ACO2 gene (on
+chr22).</p>
+<h2 id="h699">Create projectdir</h2>
+<p>All analyses happen in a project directory (extensively described
+in <a href="projectdir.html">projectdir</a>): You can create a
+project directory and add raw data using the <a
+href="cg_project_addsample.html">cg project_addsample</a> command as
+described below. You can also just create the basic structure (fastq
+files in directories like
+&lt;projectdir&gt;/samples/&lt;sampledir&gt;/fastq/&lt;fastqfile&gt;)
+using other means.</p>
+<h2 id="h1098">Add samples</h2>
+<p>We start by creating and populating a projectdir
+(tmp/mixed_yri_mx2) with samples using the <a
+href="cg_project_addsample.html">cg project_addsample</a> command.
+(The projectdir will be made with the first addsample call if it does
+not yet exists)</p>
+<pre>
+
+# get the example data
+wget http://genomecomb.bioinf.be/download/dataset_mixed_yri_mx2.tar.gz
+tar xvzf dataset_mixed_yri_mx2.tar.gz
+cd dataset_mixed_yri_mx2
+
+# Create the projectdir
+# This is not strictly needed: 
+# It would be made with the first addsample call if it did not yet exists
+mkdir -p tmp/mixed_yri_mx2
+
+# Add a Complete genomics sample named cgNA19240mx2. 
+# ori/mixed_yri_mx2/cgNA19240mx2 contains an ASM directory as obtained from Complete Genomics
+# by default the project_addsample creates softlinks to the fastqs in the original directory
+cg project_addsample tmp/mixed_yri_mx2 cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+
+# Add illumina fastq files from a genome sequencing using wildcards to find all fastq files
+cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz
+
+# Add illumina fastq files from exome sequencing
+# The option -targetfile gives a regionfile with the target regions for this sample
+# (The \ at the end of the first line means the the command is continued on the next line)
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+  tmp/mixed_yri_mx2 exNA19239mx2 ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz
+
+# Add another exome sequencing sample
+# Here we do not give the individual fastq files as argument, but the directory containing them.
+# you can only do this if the directory does not contain fastq files from other samples
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+
+</pre>
+<h2 id="h2952">Process project</h2>
+<p>The <a href="cg_process_project.html">cg process_project</a>
+command will run the entire secondary analysis (clipping, alignment,
+variant calling, reports, ...) and part of the tertiary analysis
+(combining samples, annotation, ...) on the samples in the projectdir
+Reference information (genome sequence, annotation files, etc.) are
+in /complgen/refseq/hg19</p>
+<pre>
+cg process_project -verbose 2 -d 2 \
+    -paired 1 -clip 1 \
+    -aligner 'bwa' \
+    -removeduplicates 1 \
+    -realign 1 \
+    -distrreg 0 \
+    -aliformat cram \
+    -varcallers 'gatkh strelka' \
+    -svcallers 'manta' \
+    -refdir /complgen/refseq/hg19 \
+    tmp/mixed_yri_mx2
+</pre>
+<p>If the command is interupted, The processing can continue from
+where it was by repeating the same command.</p>
+<p>Processing can be distributed over more than one processing unit:
+The -d 2 parameter in the example distibutes the processing over 2
+cores on the local machine. If you have a cluster, you can distribute
+on the cluster using -d sge (for Sun Grid Engine) or -d slurm</p>
+<p>The -distrreg is 0 because for such a small data set (covering
+only a small part of the genome) more extensive distribution would
+actually give more work (overhead) than it saves (esp. giving it only
+2 cores to work with)</p>
+<h2 id="h4206">Results</h2>
+<p>All analysis results are added in the projectdir, as described in <a
+href="projectdir.html">projectdir</a>. You can check the
+process_project_*.finished file (tsv) for information on how long
+jobs took etc. If there was an error, the file will be called
+process_project_*.error, and contains info on the error(s).</p>
+<h2 id="h4509">View results</h2>
+<p><a href="cg_viz.html">cg viz</a> allows an easy (graphical
+interface) view of the results.</p>
+<pre>
+cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
+</pre>
+<p>opens the annotated combined variant file (format described in <a
+href="format_tsv.html">format_tsv</a>) using cg viz, allowing you to
+browse through the table (even if it is millions of lines long). Look
+in <a href="howto_view.html">howto_view</a> for some examples of what
+to do in cg viz.</p>
+<h2 id="h4920">Flexible queries using cg select</h2>
+<p><a href="cg_select.html">cg select</a> can be used to query the
+result files: selecting or adding fields, selecting variants
+fullfilling given criteria or making summaries using a command line
+tool (functionality is similar to cg viz, with a few extras). As such
+it can be more easily integrated in other workflows and exact logging
+of what was done is easier dan using cg viz.</p>
+<p>Some examples are shown here, you can find more examples in <a
+href="howto_query.html">howto_query</a> and an extensive description
+of the possibilities in the <a href="cg_select.html">cg select</a>
+help.</p>
+<pre>
+# Which fields are in the file, results are shown on the terminal (stdout)
+cg select -h tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
+
+# Which &quot;samples&quot; are in the file, results are shown on the terminal (stdout)
+cg select -n tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
+
+# Write a file tmp/short.tsv containing only the basic variant fields
+cg select -f 'chromosome begin end type ref alt' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
+
+# Add a field count that calculates in how many of the &quot;NA19240 samples&quot; zyg-gatkh-rdsbwa
+# (zygosity call by gatk haplotype caller) is either t or m
+cg select -overwrite 1 \
+    -f 'chromosome begin end type ref alt {count=scount($zyg-gatkh-rdsbwa in &quot;t m&quot; and $sample regexp &quot;NA19240&quot;)}' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
+
+# Select only variants where gatk has made a homozygous call in sample gilNA19240mx2
+# The results are compressed using &quot;piping&quot;: 
+# The results of cg select are transferred (indicated by the | or pipe character) to &quot;cg zst&quot;
+# cg zst compresses the data.
+# the &gt; character redirects the results of the compression to the file tmp/homozygous.tsv.zst
+cg select -q '$zyg-gatkh-rdsbwa-gilNA19240mx2 == &quot;m&quot;' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst | cg zst &gt; tmp/homozygous.tsv.zst
+
+# intGene_impact contains the impact of the variant on all alternative splice variants in the intGene
+# gene dataset. intGene_impact contains a list of impacts (so we cannot use ==).
+# You can also query using regular expression. The following selects only variants with 
+# impact matching the regexp pattern &quot;UTR|RNA&quot;: containing UTR or RNA
+cg select -q '$intGene_impact regexp &quot;UTR|RNA&quot;' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr.tsv
+
+# You can also properly check the list vs a given list of impacts
+# (getting the correct list may be easier in cg viz using Easyquery)
+# shares is true if the list in intGene_impact shares elements with the given list
+cg select \
+    -q '$intGene_impact shares {RNASTART UTR5KOZAK UTR5SPLICE UTR5 RNAEND UTR3SPLICE UTR3 RNASPLICE RNA}' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr2.tsv
+
+</pre>
+<h2 id="h7753">References</h2>
+<p>The following is an example text describing the default
+process_project workflow for Illumina sequencing with the proper
+references (The &lt;version&gt; actually used for the various tools
+can be found in the analysisinfo files):</p>
+<pre>
+Analysis was performed in-house with a standardized pipeline integrated in
+genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
+were aligned to the hg38 genome reference (3) using bwa mem (4) and the
+resulting sam file converted to bam using samtools (5). Bam files were
+sorted and duplicates were removed using samtools markdup (5). Realignment
+in the neighborhood of indels was performed with GATK (6). Variants were
+called at all positions with a totalcoverage &gt;= 5 using both GATK
+haplotype caller (7) and strelka (8). At the initial stage positions with
+a coverage &lt; 8 or a genotype quality score &lt; 25 were considered
+unsequenced. Structural variants were called using manta (9) and lumpy
+(10). The resulting variant sets of different individuals were combined
+and annotated using genomecomb (1).
+
+(1) genomecomb &lt;version&gt;, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
+(2) fastq-mcf &lt;version&gt;, Erik Aronesty (2011). ea-utils : &quot;Command-line tools for processing biological sequencing data&quot;; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
+(3) hg38 (GRCh38) downloaded from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz on 2020-06-06, Schneider V.A. et al. (2017) Evaluation of GRCh38 and de novo haploid genome assemblies demonstrates the enduring quality of the reference assembly. Genome Res. 2017 May; 27(5): 849\u2013864. [PMID: 28396521]
+(4) bwa &lt;version&gt;, Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168] 
+(5) samtools &lt;version&gt;, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943] 
+(6) GATK 3.8-1-0-gf15c1c3ef, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(7) GATK &lt;version&gt;, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(8) strelka &lt;version&gt;, Kim S. et al. (2018) Strelka2: fast and accurate calling of germline and somatic variants.  Nat Methods. 15(8):591-594. [PMID: 30013048]
+(9) manta &lt;version&gt;, Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and cancer sequencing applications. Bioinformatics, 32, 1220-1222 [PMID: 26647377]
+(10) lumpy &lt;version&gt;, Layer M.R. et al. (2014) LUMPY: a probabilistic framework for structural variant discovery. Genome biology, 15(6), R84 [PMID: 24970577]
+</pre>
+<h3 id="h11525">Reference Variations</h3>
+<p>Adapt this according to the analysis tools used. The actual
+versions used can be found in the analysisinfo files. In the example
+we did not run lumpy (which gives an error on too small a dataset),
+so this should be removed from the text. If other tools were used,
+add them in the text and the references.</p>
+<p>For amplicon sequencing, the markduplicates part should be
+removed, and the following part added after making the realignment:
+Amplicon primers were clipped using genomecomb (1)</p>
+<p>}}}</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

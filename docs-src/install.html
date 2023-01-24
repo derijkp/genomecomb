@@ -1,0 +1,190 @@
+<html>
+<header>
+<title>GenomeComb Installation</title>
+</header>
+
+<h1>GenomeComb</h1>
+<h1 class=subtitle>Installation</h1>
+
+<h2>System Requirements</h2>
+<p>
+Binaries for genomecomb are available for 64bit Linux systems (Linux-x86_64).
+Genomecomb itself is distributed as a portable application directory: A
+self-contained directory with the genomecomb executable (cg) and all
+needed depencies compiled in a way they should work on all (except very
+ancient) Linux systems.
+</p>
+
+<h2>Install program</h2>
+
+<p>
+Installation of the genomecomb package itself is as simple as downloading
+the binary archive from one of the following links and unpacking the
+downloaded archive somewhere in the PATH
+
+</p>
+<ul>
+<li><a href="https://github.com/derijkp/genomecomb/releases/download/v0.106.0/genomecomb-0.106.0-Linux-x86_64.tar.gz">genomecomb-0.106.0-Linux-x86_64.tar.gz</a> (github)
+<li><a href="http://genomecomb.bioinf.be/download/genomecomb-0.106.0-Linux-x86_64.tar.gz">genomecomb-0.106.0-Linux-x86_64.tar.gz</a> (VIB/UAntwerp server)
+<li><a href="old_releases.html#genomecomb">older releases</a>
+</ul>
+
+<p>
+If the directory and link are not in the path, you can allways call the
+executable (cg) directly from the directory, add the directory to the
+PATH, or put a soft-link to the executable somehwere in the path. (The
+executable itself must stay in the application directory to work.)
+
+Example using a softlink to make it available in a bin directory. e.g.:
+<pre>
+ln -s /opt/genomecomb-0.106.0-Linux-x86_64/cg /usr/local/bin/cg
+</pre>
+</p>
+
+<h2>Download reference data</h2>
+<p>
+For many analyses, such as annotation, you need a reference genome and
+genome annotation data. These have to be available in a directory you will
+give as a parameter (refseq).
+
+You can download these for several species/builds (some of these, esp human are very large: 55G):
+
+</p>
+<ul>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg38-0.106.0.tar.gz">refdb_hg38-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg19-0.106.0.tar.gz">refdb_hg19-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_mm10-0.106.0.tar.gz">refdb_mm10-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_dm6-0.106.0.tar.gz">refdb_dm6-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_ce11-0.106.0.tar.gz">refdb_ce11-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_sacCer3-0.106.0.tar.gz">refdb_sacCer3-0.106.0.tar.gz</a>
+<li><a href="old_releases.html#refdb">older releases</a>
+</ul>
+<p>
+
+Install by unpacking in a directory<br>
+
+Some larger files in the reference databases (cadd annotation, minimap2 and
+star indexes) are provided separately (downloads below). You can install
+these download by unpacking directly in the relevant reference database directory (the one
+you unpacked before)
+</p>
+<ul>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.106.0.tar.gz">refdb_hg38-cadd-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg38-minimap2-0.106.0.tar.gz">refdb_hg38-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg38-star-0.106.0.tar.gz">refdb_hg38-star-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg19-cadd-0.106.0.tar.gz">refdb_hg19-cadd-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_hg19-minimap2-0.106.0.tar.gz">refdb_hg19-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_dm6-minimap2-0.106.0.tar.gz">refdb_dm6-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_dm6-star-0.106.0.tar.gz">refdb_dm6-star-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_ce11-minimap2-0.106.0.tar.gz">refdb_ce11-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_ce11-star-0.106.0.tar.gz">refdb_ce11-star-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.106.0.tar.gz">refdb_mm10-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_mm10-star-0.106.0.tar.gz">refdb_mm10-star-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_sacCer3-minimap2-0.106.0.tar.gz">refdb_sacCer3-minimap2-0.106.0.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_sacCer3-star-0.106.0.tar.gz">refdb_sacCer3-star-0.106.0.tar.gz</a>
+</ul>
+
+Special reference files are needed for the cg liftover command (to lift e.g. variants from one genome build to another).
+These are provided (for lifting between the differnt human builds) in the following download
+<ul>
+<li><a href="http://genomecomb.bioinf.be/download/refdb_liftover-0.106.0.tar.gz">refdb_liftover-0.106.0.tar.gz</a>
+</ul>
+
+<h2>Build reference data (optional)</h2>
+<p>
+For genomes that are not available for download (but that are available on the 
+<a href="https://genome.ucsc.edu/cgi-bin/hgGateway">UCSC genome browser</a>),
+you can create a (basic) reference directory using the 
+<a href="cg_makerefdb.html">cg makerefdb</a> command.
+
+<p>
+Some annotation files are ommitted from the downloads because of the size
+or because they may not be redistributed (dbnsfp). The genomecomb bundle
+also contains the scripts used to make the downloadable reference data (in
+the directory makedbs). You can use these to download the source data and
+build the (more complete) databases yourself. However, this is a process
+that takes a lot of time and space.
+
+<h2>External software</h2>
+<p>
+Some of the externally developed software used by genomecomb is included
+in the distribution (e.g. samtools, tabix). Most external software needs
+to be installed on the system (if you want to use them) in a way
+genomecomb can call them, usually just having the correct executable(s) in
+the path (for others, like gatk or picard, it will look for a directory of
+that name in the path).
+
+For more convenient installation the following downloads contain portable
+application directories for most of the supported software (in versions
+that were tested with genomecomb). These can be made available to
+genomecomb only (not disturbing the rest of the system) by unpacking them
+in the directory extra in the genomecomb application. Of course they can
+also be made available generally on the system by unpacking in a directory
+in the PATH.
+
+<ul>
+<li><a href="http://genomecomb.bioinf.be/download/extra/minimap2-2.24-linux-x86_64.tar.gz">minimap2-2.24-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/clair3-0.1.5-linux-x86_64.tar.gz">clair3-0.1.5-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/longshot-0.4.1-linux-x86_64.tar.gz">longshot-0.4.1-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/sniffles-2.0.7-linux-x86_64.tar.gz">sniffles-2.0.7-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/cutesv-1.0.11-linux-x86_64.tar.gz">cutesv-1.0.11-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/nanopolish-0.13.2-linux-x86_64.tar.gz">nanopolish-0.13.2-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/flair-1.5-linux-x86_64.tar.gz">flair-1.5-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/isoquant-3.1.0-linux-x86_64.tar.gz">isoquant-3.1.0-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/flames-c1_413e09c-linux-x86_64.tar.gz">flames-c1_413e09c-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/sqanti3-4.2-linux-x86_64.tar.gz">sqanti3-4.2-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/GATK-3.8.1.0-gf15c1c3ef-java.tar.gz">GATK-3.8.1.0-gf15c1c3ef-java.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/gatk-4.1.8.1-java.tar.gz">gatk-4.1.8.1-java.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/strelka-2.9.10-linux-x86_64.tar.gz">strelka-2.9.10-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/picard-2.21.3-java.tar.gz">picard-2.21.3-java.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/lumpy-0.2.13-linux-x86_64.tar.gz">lumpy-0.2.13-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/manta-1.6.0-linux-x86_64.tar.gz">manta-1.6.0-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz">STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/hisat2-2.2.1-linux-x86_64.tar.gz">hisat2-2.2.1-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/dirR-4.2.1-linux-x86_64.tar.gz">dirR-4.2.1-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/python3-3.9-linux-x86_64.tar.gz">python3-3.9-linux-x86_64.tar.gz</a>
+<li><a href="http://genomecomb.bioinf.be/download/extra/nextflow-22.10.0-linux-x86_64.tar.gz">nextflow-22.10.0-linux-x86_64.tar.gz</a>
+</ul>
+
+<h2>Example files</h2>
+<p>
+To be able to <a href="howto_query.html">demonstrate selected queries</a>, we have made our annotations
+of the comparison of chr 21 and 22 of the NA19238, NA19239 and NA19240 individuals ( NA19240 sequenced with
+different technologies) available: <a href="http://genomecomb.bioinf.be/download/dataset_howto_query.tar.gz">dataset_howto_query.tar.gz</a>
+
+For the <a href="howto_process_project.html">process_project howto</a>, a small dataset 
+<a href="http://genomecomb.bioinf.be/download/dataset_mixed_yri_mx2.tar.gz">dataset_mixed_yri_mx2.tar.gz</a> is available for download.
+
+</p>
+
+<h2>Example commandline install</h2>
+<p>
+The following commands will install genomecomb and the hg38 reference databases in the /opt/genomecomb directory. 
+</p>
+<pre>
+mkdir /opt/genomecomb
+cd /opt/genomecomb
+
+wget http://genomecomb.bioinf.be/download/genomecomb-0.106.0-Linux-x86_64.tar.gz
+tar xvzf genomecomb-0.106.0-Linux-x86_64.tar.gz
+ln -s /opt/genomecomb/genomecomb-0.106.0-Linux-x86_64/cg /usr/local/bin/cg
+
+wget http://genomecomb.bioinf.be/download/refdb_hg38-0.106.0.tar.gz
+tar xvzf refdb_hg38-0.106.0.tar.gz
+wget http://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.106.0.tar.gz
+cd /opt/genomecomb/hg38
+tar xvzf ../refdb_hg38-cadd-0.106.0.tar.gz
+cd /opt/genomecomb
+
+wget http://genomecomb.bioinf.be/download/dataset_howto_query.tar.gz
+tar xvzf dataset_howto_query.tar.gz
+
+# delete downloaded files
+rm genomecomb-0.106.0-Linux-x86_64.tar.gz
+rm refdb_hg38-0.106.0.tar.gz refdb_hg38-cadd-0.106.0.tar.gz
+rm dataset_howto_query.tar.gz
+</pre>
+
+</p>
+
+</html>

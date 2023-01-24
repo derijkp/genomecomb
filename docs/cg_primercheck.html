@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_primercheck</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Primercheck</h1>
+<h2 id="h19">Format</h2>
+<p>cg primercheck ?options? primerfile dbdir ?resultfile?</p>
+<h2 id="h88">Summary</h2>
+<p>check primer sets for multiple amplicons and snps</p>
+<h2 id="h153">Description</h2>
+<p>This command checks a list of primersets, given in a tab separated
+file with at least the columns name, primer1, primer2. It will add
+the location of the amplicon amplified by these primers (in the
+genome given in <b>dbdir</b>) as columns chromosome, begin, end. If
+the full primers match more than one amplicon, these values cannot be
+attributed.</p>
+<p>The command will also perform an ePCR by checking if the 15base
+end parts of the primers amplify more than 1 amplicon; the number of
+amplicons found is in the column &quot;numamplicons&quot;, the
+location of the amplicons in &quot;amplicons&quot;.</p>
+<p>The positions of the primers are checked for known snps (in
+dbsnp). All snps found are listed in the columns
+&quot;primer1_snps&quot; and /&quot;primer2_snps&quot;, together with
+information about position,frequency and validation status. The
+frequency of the most frequent snp is shown in columns
+&quot;primer1_snpsmaxfreq&quot; and &quot;primer2_snpsmaxfreq&quot;.</p>
+<p>The &quot;amplicon_fts&quot; column will list any homopolymers
+detected in the amplicon.</p>
+<h2 id="h1159">Arguments</h2>
+
+<dl>
+  <dt>primerfile</dt>
+  <dd>tsv file that has at least the columns name, primer1, primer2</dd>
+  <dt>dbdir</dt>
+  <dd>directory containing reference genomes and variation data</dd>
+  <dt>resultfile</dt>
+  <dd>results will be written to this file if given, otherwise to
+  stdout</dd>
+</dl>
+<h2 id="h1400">Options</h2>
+
+<dl>
+  <dt>-m maxnum</dt>
+  <dd>further analysis stops if a primer has &gt; <b>maxnum</b>
+  hits in the genome (default 5000)</dd>
+  <dt>-s maxsize</dt>
+  <dd>only amplicons smaller than <b>maxsize</b> are considered in
+  numamplicons (default 1000)</dd>
+  <dt>-a maxamplicons</dt>
+  <dd>if more than <b>maxamplicons</b> are found, further analysis
+  is aborted (default 100)</dd>
+  <dt>-i includefields (-includefields)</dt>
+  <dd>include the fields in <b>includefields</b> (space separated
+  list) of the source file into the resultfile. If
+  <b>includefields</b> is '*' (or 1), all fields will be included</dd>
+</dl>
+<h2 id="h1920">Category</h2>
+<p>Validation</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

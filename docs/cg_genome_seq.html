@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_genome_seq</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">genome_seq</h1>
+<h2 id="h18">Format</h2>
+<p>cg genome_seq ?options? regionfile/regions dbdir ?outfile?</p>
+<h2 id="h91">Summary</h2>
+<p>Returns sequences of regions in the genome (fasta file),
+optionally masked for snps/repeats</p>
+<h2 id="h198">Description</h2>
+<p>This command returns the sequences of the genomic regions given in
+the file regionfile in fasta format (to stdout or to a file outfile).
+Regionfile is a tab delimited file with at least following columns:
+chromosome begin end. Repeatmasker repeats are softmasked (lower
+case) in the output sequences. Optionally you can hardmask repeats,
+and soft or hardmask known (dbsnp) variants based on frequency.</p>
+<h2 id="h619">Arguments</h2>
+
+<dl>
+  <dt><b>regionfile</b></dt>
+  <dd>tab delimited file containing targets with at least following
+  columns: chromosome begin end.</dd>
+  <dt><b>regions</b></dt>
+  <dd>If the string given for <b>regionfile/regions</b> does not
+  exist as a file, it is parsed as a list of regions, given by
+  chromosome,begin,end that can be separated in a variety of ways
+  (colon, dash, comma, space or newlines), e.g., all of the following
+  formats are accepted: 'chr1:100-200,chr2:100-200' 'chr1 100 200
+  chr2 100 200' 'chr1-100-200 chr2-100-200'</dd>
+  <dt><b>dbdir</b></dt>
+  <dd>directory containing reference genomes and variation data</dd>
+</dl>
+<h2 id="h1190">Options</h2>
+
+<dl>
+  <dt><b>-f freq</b> (--freq)</dt>
+  <dd>only softmask (lowercase) dbsnp variants if they have a
+  frequency &gt; freq (given as a fraction, default is 0, use -1 to
+  include all)</dd>
+  <dt><b>-fp freqp</b> (--freqp)</dt>
+  <dd>only softmask (lowercase) dbsnp variants if they have a
+  frequency &gt; freqp (given as a percentage, default is 0, use -1
+  to include all)</dd>
+  <dt><b>-n freqn</b> (--freqn)</dt>
+  <dd>only mask (using N) dbsnp variants if they have a frequency
+  &gt; freqn (given as a fraction, default is 0.2, use -1 to include
+  all)</dd>
+  <dt><b>-np freqnp</b> (--freqnp)</dt>
+  <dd>only mask (using N) dbsnp variants if they have a frequency
+  &gt; freqnp (given as a percentage, default is 20, use -1 to
+  include all)</dd>
+  <dt><b>-p snpdbpattern</b> (--snpdbpattern)</dt>
+  <dd>determines which variant databases are used
+  (dbdir/var_*snpdbpattern*.tsv.gz). default is &quot;snp&quot; for
+  dbsnp. you can e.g. use &quot;Common&quot; for the common variants
+  in dbsnp</dd>
+  <dt><b>-d delsize</b> (--delsize)</dt>
+  <dd>only mask (using N) dbsnp variants if they are smaller than
+  delsize (default is 5, use -1 to include all)</dd>
+  <dt><b>-r repeatmasker</b> (--repeatmasker)</dt>
+  <dd>how to mask repeatmasker repeats: &quot;s&quot; means
+  softmask (lowercase), use &quot;N&quot; to mask using Ns, and 0 for
+  no repeatmasking (default is &quot;s&quot;)</dd>
+  <dt><b>-i idcolumn</b> (--id)</dt>
+  <dd>The ids for the fasta file will be taken from the given
+  column (location will be added after a space)</dd>
+  <dt><b>-c concatseq</b> (--concat)</dt>
+  <dd>using this option, all regions will be concatenated into one
+  sequence with concatseq between them. To just concatenate the
+  sequences, use -c ''</dd>
+  <dt><b>-m mapfile</b> (--mapfile)</dt>
+  <dd>Create a map file that describes which regions in the newly
+  created fasta file map to which regions in the genome</dd>
+  <dt><b>--namefield namefield</b></dt>
+  <dd>entries in the map file will have a name obtained from the
+  <b>namefield</b> column in the region file</dd>
+  <dt><b>-cn concatname</b> (--concatname)</dt>
+  <dd>The concatname wil be the name of sequence in the fasta file
+  generated (if not given, the name will be based on the file)</dd>
+  <dt><b>-e concatend</b> (--concatend)</dt>
+  <dd>The sequence given by concatend will be added to start and
+  end of the final sequence (only if -c option was used)</dd>
+  <dt><b>-ca concatadj</b> (--concatadj)</dt>
+  <dd>The concatseq (-c option) will only be added if regions are
+  separated by at least one base. concatadj will be used to concat
+  adjoining regions (and is '' by default)</dd>
+  <dt><b>-g windowsize</b> (--gc)</dt>
+  <dd>add gc content on id line. if windowsize 0 only total gc
+  content will be added. For windowsize &gt; 0, the max gc content
+  for the given windowsize will also be added (default = -1 for no gc
+  content)</dd>
+  <dt><b>-gs gccontent</b> (--gcsplit)</dt>
+  <dd>Split the result in low and high gc (high has gc &gt;=
+  <b>gccontent</b>). The gc used depends on the -gc option. If -gc is
+  not given, the maxgc at a windowsize of 100 is used. This option
+  cannot be combined with concatenating sequences, and outfile has to
+  be specified. 2 files will be generated with lowgc and highgc added
+  in the given outfile name.</dd>
+  <dt><b>-gd 0/1</b> (--gcdisplay)</dt>
+  <dd>determines if the gc content is actually displayed on the
+  name line. By setting this to 0, you can set a windowsize (using
+  -g) to split the files on, without the gc content being displayed
+  on the name line If you set -gd to 1 without setting -g, the total
+  gc content will be shown</dd>
+  <dt><b>-s 0/1</b> (--split)</dt>
+  <dd>If this option is 1, each region will be saved as a separate
+  fasta file. The</dd>
+  <dt><b>-l char</b> (--limitchars)</dt>
+  <dd>Replace all but alphanumeric characters, _, . and - in the
+  sequence names by <b>char</b></dd>
+</dl>
+<h2 id="h4571">Category</h2>
+<p>Validation</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_process_reports</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">process_reports</h1>
+<h2 id="h23">Format</h2>
+<p>cg process_reports ?options? sampledir ?dbdir? ?reports?</p>
+<h2 id="h94">Summary</h2>
+<p>Calculates a number of statistics on a sample in the reports
+subdir</p>
+<h2 id="h177">Description</h2>
+<p>cg process_reports commands calculated a number of statistics on a
+sample and stores these in the subdir reports of the sample. If a
+type of report cannot be made (e.g. fastqstats if there are no fastqs
+for the sample), it will be skipped. Most reports are functional
+rather than fancy: a tsv file with sample, source (i.e. program used
+to make them), parameter and value</p>
+<p>Following report types can be selected:</p>
+<div style="margin-left:2em">
+  <p>fastqstats: stats about number, length, quality, ... of reads in
+  the fastq files made using fastq-stats (files
+  report_fastq_fw-source.tsv and report_fastq_rev-sample.tsv) ;
+  fastqc: fastqc analysis with graphs etc. per fastq file (in the
+  fastqc subdir) ; flagstat_reads: stats about bamfiles in the
+  sampledir made using samtools flagstat (file
+  report_flagstat_reads-source.tsv) based on primary alignments only
+  (so counts reads) ; flagstat_alignmments: stats about bamfiles in
+  the sampledir made using samtools flagstat (file
+  report_flagstat_alignments-source.tsv). This counts alignments, not
+  reads (includes secondary alignments) ; samstats: stats about
+  bamfiles in the sampledir made using samtools stats (file
+  report_samstats_summary-source.tsv) all kinds of summary stats
+  based on the sam/bam/cram file (including nr reads, etc) Als
+  creates several report_samstats_section-source.tsv file containing
+  information such as readlength distribution (section=RL), ;
+  histodepth: create a histogram of the sequencing depth. If a
+  targetfile is present, histograms for on- and off-target regions
+  will be separated. The report_* version contains coverage
+  statistics at various depth cutoffs ; vars: number of variants,
+  quality variants ($coverage &gt;= 20 and $quality &gt;= 50), etc in
+  the various var files (file report_vars-source.tsv) ; hsmetrics:
+  picard hsmetrics analysis of target coverage ; covered: how much
+  bases are covered in the various region files (5x coverage, 20x
+  coverage, gatk sequenced, ...), oper chromosome and in total (file
+  report_covered-source.tsv) ; histo: &quot;histogram&quot; of
+  coverage (file crsbwa-sample.histo) ; predictgender: predict gender
+  of a sample</p>
+</div>
+<h2 id="h2282">Arguments</h2>
+
+<dl>
+  <dt>sampledir</dt>
+  <dd>processed sample directory (containing variant files, bam
+  files, etc.)</dd>
+  <dt>dbdir</dt>
+  <dd>directory containing reference data (genome sequence,
+  annotation, ...)</dd>
+  <dt>reports</dt>
+  <dd>select wich reports to make (can also be given as an option).
+  You can use <b>basic</b> (default) to add all basic reports
+  (currently all except predictgender), or <b>all</b> to create all
+  report types.</dd>
+</dl>
+<h2 id="h2670">Options</h2>
+
+<dl>
+  <dt>-dbdir dbdir</dt>
+  <dd>dir containing the reference databases</dd>
+  <dt>-r reports (also --reports)</dt>
+  <dd>list of reports to make</dd>
+  <dt>-paired 0/1</dt>
+  <dd>fastq reports are split in fw and rev if paired is 1
+  (default), all data is put under fw if 0</dd>
+  <dt>-threads integer</dt>
+  <dd>The underlying code my use <b>integer</b> number of threads
+  (default 1, not all reports can use threads)</dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+threads with <a href="joboptions.html">job options</a> (more info
+with cg help joboptions)</p>
+<h2 id="h3166">Category</h2>
+<p>Process</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

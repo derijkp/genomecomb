@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_var</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Var</h1>
+<h2 id="h11">Format</h2>
+<p>cg var ?options? bamfile refseq ?resultfile?</p>
+<h2 id="h70">Summary</h2>
+<p>generic command to call variants based on the alignment in
+bamfile.</p>
+<h2 id="h153">Description</h2>
+<p>The command can be used to call variants using different methods.
+The methods are implemented in separate commands such as cg var_gatk;
+The method indicated using the -method option will be actually used.
+By default, the result will consist of several files with names
+derived from the bam file name: If the bamfile has a name of the form
+map-alignmethod-sample.bam, the result files will consist of file
+with names like these (depending on the varcaller used):
+varall-varcaller-alignmethod-sample.tsv.zst
+var-varcaller-alignmethod-sample.tsv.zst
+sreg-varcaller-alignmethod-sample.tsv.zst The optional argument
+resultfile can be given to use a a result filename. The names of
+other results files are based on this given filename.</p>
+<p>cg var can distribute variant calling by analysing separate
+regions in parallel and combining the results (-distrreg option).
+This command can be distributed on a cluster or using multiple cores
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+<h2 id="h1167">Arguments</h2>
+
+<dl>
+  <dt>bamfile</dt>
+  <dd>alignment on which to call variants</dd>
+  <dt>refseq</dt>
+  <dd>genomic reference sequence (must be the one used for the
+  alignment)</dd>
+  <dt>resultfile</dt>
+  <dd>resulting variant file instead of default based on bam file
+  name</dd>
+</dl>
+<h2 id="h1388">Options</h2>
+
+<dl>
+  <dt>-method varcaller</dt>
+  <dd>use the given method (<b>varcaller</b>) to call variants.
+  Default varcaller is gatkh for the GATK haplotyped genotype caller.
+  Other possible values are: gatk (GATK unified genoptype caller),
+  strelka, sam, bcf, freebayes, longshot, medaka</dd>
+  <dt>-regionfile regionfile</dt>
+  <dd>only call variants in the region(s) given in regionfile if
+  the method used does not support -regionfile (e.g. longshot,
+  medaka), this option will be ignored: the entire genome is called,
+  and results will not be limited to the given regionfile</dd>
+  <dt>-regmincoverage mincoverage</dt>
+  <dd>If no regionfile is given, variants will be called only in
+  regions with a coverage of at least <b>mincoverage</b> (default 3)</dd>
+  <dt>-distrreg</dt>
+  <dd>distribute regions for parallel processing (default
+  s50000000). Possible options are <b> 0: no distribution (also
+  empty) </b> 1: default distribution <b> schr or schromosome: each
+  chromosome processed separately </b> chr or chromosome: each
+  chromosome processed separately, except the unsorted, etc. with a _
+  in the name that will be combined), <b> a number: distribution into
+  regions of this size </b> a number preceded by an s: distribution
+  into regions targeting the given size, but breaks can only occur in
+  unsequenced regions of the genome (N stretches) <b> a number
+  preceded by an r: distribution into regions targeting the given
+  size, but breaks can only occur in large (&gt;=100000 bases) repeat
+  regions </b> a number preceded by an g: distribution into regions
+  targeting the given size, but breaks can only occur in large
+  (&gt;=200000 bases) regions without known genes <b> a file name:
+  the regions in the file will be used for distribution</b></dd>
+  <dt>-datatype datatype</dt>
+  <dd>Some variant callers (strelka) need to know the type of data
+  (genome, exome or amplicons) for analysis. You can specify it using
+  this option. If not given, it is deduced from acompanying region
+  files (reg_*_amplicons.tsv for ampicons or reg_*_amplicons.tsv for
+  exome)</dd>
+  <dt>-split 1/0</dt>
+  <dd>indicate if in the datafiles, multiple alternative genotypes
+  are split over different lines (default 1)</dd>
+  <dt>-hap_bam 0/1</dt>
+  <dd>if the methods supports it (currently only longshot), also
+  create a haplotyped bam</dd>
+  <dt>-t number (-threads)</dt>
+  <dd>number of threads used by each job (if the method supports
+  threads)</dd>
+  <dt>-cleanup 0/1</dt>
+  <dd>Use 0 to no cleanup some of the temporary files (vcf, delvar,
+  ...)</dd>
+  <dt>-opt options</dt>
+  <dd>These options are passed through to the underlying variant
+  caller (default is empty)</dd>
+</dl>
+<h2 id="h3812">Category</h2>
+<p>Variants</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

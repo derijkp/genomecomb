@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_process_sv</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Process_sv</h1>
+<h2 id="h18">Format</h2>
+<p>cg process_sv ?options? cgdir resultdir dbdir</p>
+<h2 id="h78">Summary</h2>
+<p>Do all steps on a Complete Genomics sample to generate structural
+variant calls</p>
+<h2 id="h173">Description</h2>
+<p>cg process_sv detects structural variants based on discordant read
+pairs in the Complete Genomics (CGI) mapping files. This structural
+variant caller was developed on some of the earliest Complete
+Genomics samples, and has become a bit superfluous since Complete
+Genomics includes structural variant calls in their standard output.
+There are some reasons that it may stil be useful:</p>
+
+<ul>
+  <li>On the original data it was more sensitive, picking up smaller
+  deletions and some small insertions. However, changes in the
+  experimental setup of more recent runs have nullified this
+  advantage, leading to a great number of false positives (The
+  deletions &lt; 600 and insertions that the CGI sv caller does not
+  detect have to be discarded anyway because of FDR).</li>
+  <li>Analysing samples that did not yet have CGI calls</li>
+  <li>The intermediate files provide a nice visualisation in
+  combination with <a href="cg_viz.html">cg viz</a></li>
+</ul>
+<p>cg process_sv successively runs the following steps:</p>
+
+<ul>
+  <li><b>map2sv</b> creates tab-separated files containing the
+  mapping locations of each mate pair sorted on the location of the
+  first mate and distributed per chromosome.
+  (sv/sample-chr-paired.tsv)</li>
+  <li><b>tsv_index</b> is used indexes these files.</li>
+  <li><b>svinfo</b></li>
+  <li><b>svfind</b> is used for the actual detection of variants
+  from the mate-pair files, resulting in a sv prediction file per
+  chromosome (sv/sample-chr-paired-sv.tsv)</li>
+  <li><b>cg cat</b> adds all of these together in one result file
+  (sv/svall-samplename.tsv)</li>
+  <li><b>cg select</b> is used to produce the final result file
+  (sv-samplename.tsv) by filtering out (very) low quality calls</li>
+</ul>
+<h2 id="h1755">Arguments</h2>
+
+<dl>
+  <dt><b>cgdir</b></dt>
+  <dd>directory conataing the CGI mapping files</dd>
+  <dt><b>resultdir</b></dt>
+  <dd>&quot;sample directory&quot; where results will be written.
+  The resultfile will be named sv-samplename.tsv (where samplename is
+  the name of the resultdir). All intermediate data is stored in a
+  subdir sv in <b>resultdir</b></dd>
+  <dt><b>dbdir</b></dt>
+  <dd>directory containing reference data (genome sequence,
+  annotation, ...).</dd>
+</dl>
+<h2 id="h2139">Options</h2>
+
+<dl>
+  <dt><b>-force 0/1</b></dt>
+  <dd>force full reanalysis even if some files already exist</dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+<h2 id="h2359">Resultfile</h2>
+<h2 id="h2378">Example</h2>
+<pre>
+cg process_sv GS27657-FS3-L01 NA19238cg /complgen/refseq/hg19
+</pre>
+<h2 id="h2463">Category</h2>
+<p>Variants</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

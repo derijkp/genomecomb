@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_mklink</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">cplinked</h1>
+<h2 id="h16">Format</h2>
+<p>cg mklink ?options? source ... dest</p>
+<h2 id="h66">Summary</h2>
+<p>Create softlinks (improved)</p>
+<h2 id="h109">Description</h2>
+<p>cg mklink creates softlinks using a syntax similar to &quot;ln
+-s&quot;: <b>dest</b> will be a softlink pointing to <b>src</b>. If
+<b>dest</b> is a directory, more than one src can be linked/copied.</p>
+<p>cg mklink &quot;improves&quot; on using ln -s in following ways:</p>
+
+<ul>
+  <li>You do not have to be in the dest directory to get the correct
+  relative link. The correct relative link will be calculated based
+  on the full path of src and dest, no matter where your pwd is, no
+  matter if src is given as an absolute path, or as an extended
+  relative path.</li>
+  <li>The link (dest) will get the same time as <b>src</b></li>
+  <li>Links can be created to files that do not exist (yet)</li>
+  <li>If dest is a link, it will be overwritten, if it is a real
+  file, an error is given</li>
+</ul>
+<h2 id="h833">Arguments</h2>
+
+<dl>
+  <dt>src</dt>
+  <dd>file to be copied</dd>
+  <dt>dest</dt>
+  <dd>destination</dd>
+</dl>
+<h2 id="h895">Options</h2>
+
+<dl>
+  <dt>-absolute 0/1 (-a)</dt>
+  <dd>softlinks will use absolute paths if 1, relative paths if 0
+  (default 0)</dd>
+  <dt>-matchtime 1/0</dt>
+  <dd>0 turns off setting link (dest) to the same time as
+  <b>src</b> (default 1)</dd>
+</dl>
+<h2 id="h1094">Category</h2>
+<p>Tools</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

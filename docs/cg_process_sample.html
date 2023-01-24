@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_process_sample</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Process</h1>
+<h2 id="h15">Format</h2>
+<p>cg process_sample ?options? ?oridir? sampledir</p>
+<h2 id="h76">Summary</h2>
+<p>Processes one sample directory (<a
+href="projectdir.html">projectdir</a>), generating full analysis
+information (variant calls, multicompar, reports, ...) starting from
+raw sample data that can come from various sources.</p>
+<h2 id="h286">Description</h2>
+<p>The command expects a basic genomecomb sample directory (as
+described extensively in <a href="projectdir.html">projectdir</a>) It
+generates all kinds of result data (variant calls, sequenced regions,
+...) analyses and reports.</p>
+<p>Several types of source data (fastq files, Complete Genomics
+analysis dir, ...) are supported. The directory containing the
+original starting data can be given as an option, an argument, or it
+can be present in a dir named ori in the sample dir. If given as an
+argument, a link named ori to the original data will be made. The
+results (which analyses, etc.) differ according to the type of
+original data, the parameters given (e.g. use -amplicons for amplicon
+sequencing) and files in the sampledir.</p>
+<p>By default, process_sample will only create files that do no exist
+yet, or update ones that are older than files they depend on. This
+way an analysis that was interupted, can be simply restarted (giving
+the same command), and it will proceed from where it was.</p>
+<h2 id="h1271">Arguments</h2>
+
+<dl>
+  <dt>oridir</dt>
+  <dd>directory containing original data, this can be a data
+  directory as it comes from Complete Genomics, or simply a directory
+  containing fastq files or a bam file. This argument is optional; if
+  not given, a directory named ori containing the source data is
+  expected in the sampledir (This can be a softlink), or a fastq dir
+  with fastq files.</dd>
+  <dt>sampledir</dt>
+  <dd>name of the sample directory to be created (or completed if
+  it already exists)</dd>
+</dl>
+<h2 id="h1729">Options</h2>
+<p>As different types of original data are processed differently, not
+all options are allways applicable. Options that are not applicable
+to the given type of data are ignored.</p>
+
+<dl>
+  <dt>-dbdir dbdir</dt>
+  <dd>Some of the analysis require a reference genome and
+  databases; <b>dbdir</b> gives the directory where to find these</dd>
+  <dt>-oridir oridir</dt>
+  <dd>directory containing original data, this can be a data
+  directory as it comes from Complete Genomics, or simply a directory
+  containing fastq files or a bam file. A softlink to oridir named
+  ori will be made in the sample directory.</dd>
+  <dt>-minfastqreads number</dt>
+  <dd>if less then <b>number</b> reads are found in the fastq files
+  of the sample, the sample is not processed.</dd>
+  <dt>-clip</dt>
+  <dd>clip adaptor sequences prior to alignment using fastq-mcf
+  (default 1)</dd>
+  <dt>-paired 1/0 (-p)</dt>
+  <dd>sequenced are paired/unpaired</dd>
+  <dt>-adapterfile file</dt>
+  <dd>Use <b>file</b> for possible adapter sequences</dd>
+  <dt>-removeskew num</dt>
+  <dd>-k parameter for sequence clipping using fastq-mcf: sKew
+  percentage-less-than causing cycle removal</dd>
+  <dt>-aligner aligner (-a)</dt>
+  <dd>use the given aligner for mapping to the reference genome
+  (default bwa) Currently supported are: bwa, bowtie2, minimap2_sr,
+  minimap2, ngmlr ; for rna-seq: star, star_2p, hisat2,
+  minimap2_splice</dd>
+  <dt>-aliformat format</dt>
+  <dd>format of the (final) alignment (map) file, this is by
+  default bam, but can be set to cram</dd>
+  <dt>-realign value</dt>
+  <dd>If <b>value</b> is 0, realignment will not be performed, use
+  1 for (default) realignment with gatk, or <b>value</b> srma for
+  alignment with srma</dd>
+  <dt>-removeduplicates 0/1/picard/biobambam</dt>
+  <dd>By default duplicates will be removed (marked actually) using
+  samtools except for amplicon sequencing. With this option you can
+  specifically request or turn of duplicate removal (overruling the
+  default). If you want to use large amounts of memory ;-), you can
+  still use picard for removing duplicates (third option)</dd>
+  <dt>-amplicons ampliconfile</dt>
+  <dd>This option turns on amplicon sequencing analysis (see
+  further) using the amplicons defained in <b>ampliconfile</b></dd>
+  <dt>-varcallers varcallers</dt>
+  <dd>(space separated) list of variant callers to be used (default
+  &quot;gatkh strelka&quot;). Currently supported are: gatk, gatkh
+  (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3,</dd>
+  <dt>-svcallers svcallers</dt>
+  <dd>(space separated) list of structural variant callers to be
+  used (default empty). Currently supported are: manta, lumpy, gridds
+  sniffles, cuteSV, npinv</dd>
+  <dt>-methcallers svcallers</dt>
+  <dd>(space separated) list of methylation callers to be used
+  (default empty). Currently supported are: nanopolish</dd>
+  <dt>-counters counters</dt>
+  <dd>(space separated) list of counter programs to be used for
+  rna-seq data. Currently supported are: rnaseqc</dd>
+  <dt>-split 1/0 (-s)</dt>
+  <dd>split multiple alternative genotypes over different line</dd>
+  <dt>-downsampling_type NONE/ALL_READS/BY_SAMPLE/</dt>
+  <dd>sets the downsampling type used by GATK (empty for default).</dd>
+  <dt>-reports list</dt>
+  <dd>use basic (default) for creating most reports (or all for all
+  reports). If you only want some made, give these as a space
+  separated list. Possible reports are: fastqstats fastqc
+  flagstat_reads flagstat_alignments samstats alignedsamstats
+  unalignedsamstats histodepth vars hsmetrics covered histo
+  predictgender</dd>
+  <dt>-m maxopenfiles (-maxopenfiles)</dt>
+  <dd>The number of files that a program can keep open at the same
+  time is limited. pmulticompar will distribute the subtasks thus,
+  that the number of files open at the same time stays below this
+  number. With this option, the maximum number of open files can be
+  set manually (if the program e.g. does not deduce the proper limit,
+  or you want to affect the distribution).</dd>
+  <dt>-samBQ number</dt>
+  <dd>only for samtools; minimum base quality for a base to be
+  considered (samtools --min-BQ option)</dd>
+  <dt>-distrreg regions</dt>
+  <dd>distribute regions for parallel processing. Possible options
+  are <b> 0: no distribution (also empty) </b> 1: default
+  distribution <b> schr or schromosome: each chromosome processed
+  separately </b> chr or chromosome: each chromosome processed
+  separately, except the unsorted, etc. with a _ in the name that
+  will be combined), <b> a number: distribution into regions of this
+  size </b> a number preceded by an s: distribution into regions
+  targeting the given size, but breaks can only occur in unsequenced
+  regions of the genome (N stretches) <b> a number preceded by an r:
+  distribution into regions targeting the given size, but breaks can
+  only occur in large (&gt;=100000 bases) repeat regions </b> a
+  number preceded by an g: distribution into regions targeting the
+  given size, but breaks can only occur in large (&gt;=200000 bases)
+  regions without known genes <b> a file name: the regions in the
+  file will be used for distribution</b></dd>
+  <dt>-maxfastqdistr maxfastqdistr</dt>
+  <dd>if there are more than <b>maxfastqdistr</b> separate input
+  fastqs, they will be merged into <b>maxfastqdistr</b> fastqs for
+  analysis: If there are many (small) fastqs, the overhead to
+  processes (alignment etc.) them separately (default, to distribute
+  the load) can become too large.</dd>
+  <dt>-datatype datatype</dt>
+  <dd>Some variant callers (strelka) need to know the type of data
+  (genome, exome or amplicons) for analysis. You can specify it using
+  this option. If not given, it is deduced from acompanying region
+  files (reg_*_amplicons.tsv for ampicons or reg_*_amplicons.tsv for
+  exome)</dd>
+  <dt>-hap_bam 0/1</dt>
+  <dd>if 1 produce a bam file with haplotype indictions (longshot
+  only) (default 0)</dd>
+  <dt>-depth_histo_max number</dt>
+  <dd>in reports, count positions with up to <b>number</b> depth
+  (default 1000). Larger dfepths will be counted under <b>number</b></dd>
+  <dt>-targetfile targetfile</dt>
+  <dd>if targetfile is provided, coverage statistics will be
+  calculated for this region</dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+cores with <a href="joboptions.html">job options</a> (more info with
+cg help joboptions) The option -distrreg can be used to allow a
+greater distribution by doing some analyses (variantcalling,
+annotations) split by region (chromosomes) and combinfing the results</p>
+<h2 id="h7593">Sample types</h2>
+<p>Several types of sample data are supported:</p>
+<h3 id="h7658">(Illumina) (targeted) shotgun sequencing</h3>
+<p>In this case the starting raw data for the sample is fastq files.
+These should be in a subdirectory of the sampledir named fastq. They
+can also be in a directory ori in the sampledir, in which case the
+fastq dir will be made and links to the fastq files made in it.</p>
+<p>The names of matching fastq files of paired reads should be
+consecutive when sorted naturaly,the forward reads first. The usual
+naming of these files (same name, except for a 1 and 2) is ok. The
+name of each sample is taken from the sampledir name. The sample name
+should not contain hyphens (-)</p>
+<p>By default reads are clipped using fastq-mcf, aligned to the
+reference genome in dbdir using bwa mem, duplicates removed (using
+picard) and realigned (using gatk). Variants are called using gatk
+and samtools. All files generated have names following the convention
+of using hyphens to separate different elements about the file. The
+first element is the type of file. The last element (before the
+extension) is the sample name. There can be several steps in between.
+Each sampledir will contain results for this individual sample of the
+following type:</p>
+
+<dl>
+  <dt>map-rdsbwa-sample1.bam</dt>
+  <dd>bam file created by aligning the reads of sample1 to the
+  reference genome in dbdir using bwa. The bam file has been sorted
+  (s), duplicate marked (d), and realigned (r).</dd>
+</dl>
+
+<dl>
+  <dt>var-gatk-rdsbwa-sample1.tsv</dt>
+  <dd>a <a href="intro.html">variant file</a> that contains
+  variants called by gatk based on map-rdsbwa-sample1.bam. Positions
+  with a quality &lt; 30 or coverage &lt; 5 are considered
+  unsequenced. Lower quality variants (but with quality &gt;= 10) are
+  still included in the variant list, but have the a &quot;u&quot; in
+  the sequenced and zyg columns to indicate that they are considered
+  unsequenced</dd>
+  <dt>sreg-gatk-rdsbwa-sample1.tsv</dt>
+  <dd>A region file with all regions that can be considered
+  sequenced (quality &gt;= 30 and coverage &gt;= 5) using the same
+  methods and quality measures as var-gatk-rdsbwa-sample1.tsv. Any
+  position in those regions that is not in the variant file can be
+  called reference with the same reliability as the variant calls.</dd>
+  <dt>varall-gatk-rdsbwa-sample1.tsv</dt>
+  <dd>variant calling data by gatk for all positions with &gt;= 5
+  coverage (also reference called positions). This file is used to
+  create the sreg files, and to update data in making multicompar
+  files later.</dd>
+  <dt>reg_cluster-gatk-rdsbwa-S0489.tsv</dt>
+  <dd>regions with many clustered variants (which are less
+  reliable)</dd>
+</dl>
+<p>For samtools variant calling on the same bamfile
+(map-rdsbwa-sample1.bam), these result files are named
+var-sam-rdsbwa-sample1.tsv, sreg-sam-rdsbwa-sample1.tsv,
+varall-sam-rdsbwa-sample1.tsv, reg_cluster-sam-rdsbwa-S0489.tsv</p>
+<p>If the experiment used e.g. exome capture, this can be indicated
+by the presence of a file named reg_targets.tsv (or matching
+reg_*_targets*.tsv) in the sampledir (or the option -targetfile). If
+present, coverage statistics will be calculated for this region.</p>
+<h3 id="h10576">Amplicon sequencing</h3>
+<p>Amplicon sequencing samples are indicated by the presence of a
+file named reg_amplicons.tsv (or matching reg_*_amplicons*.tsv) in
+the sampledir. If the option -amplicons is given to the command, a
+link to the given ampliconfile will be created in the sampledir and
+used. If an ampliconfile (or link) already exists in the sampledir,
+it will NOT be overwritten! (only a warning given).</p>
+<p>An amplicon file is a <a href="tsv.html">tsv</a> file indicating
+the genomic location of the amplicons It must have the following
+fields:</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>chromosome of amplicon</dd>
+  <dt>begin</dt>
+  <dd>start of sequenceable part of amplicon: i.e. at the end of
+  the forward primer</dd>
+  <dt>end</dt>
+  <dd>end of sequenceable part of amplicon: i.e. before the reverse
+  primer sequence in the genome refernce</dd>
+  <dt>outer_begin</dt>
+  <dd>start of amplicon including primers, i.e. start of forward
+  primer in the genome</dd>
+  <dt>outer_end</dt>
+  <dd>end of amplicon including primers, i.e. end of reverse primer
+  sequence in the genome</dd>
+</dl>
+<p>Amplicon sequencing samples can also start from the fastq files
+and are processed similarly to shotgun sequencing, but analysis is
+different in a few ways:</p>
+<p>Variants will only be called in the sequenceneable part of the
+amplicons (i.e. between begin and end). (off-target mappings are not
+called) To avoid wrong results by &quot;sequencing&quot; primers, the
+primer parts of amplicons will be clipped based on their mapping on
+the expected amplicons in the bam file. (This is done by replacing
+the sequence by Ns and reducing quality to 0 for these positions)</p>
+<p>Several options use different defaults when amplicon sequencing is
+specified (-removeduplicates 0 -removeskew 0 -dt NONE).</p>
+<h3 id="h12211">Complete Genomics sequencing</h3>
+<p>Complete Genomics source data is already aligned and variant
+called. The region and variant information is converted to a similar
+format as use for (Illumina) shotgun sequencing, with some
+differences:</p>
+
+<ul>
+  <li>Naming uses a cg-cg- prefix: var-cg-cg-sample1.tsv,
+  sreg-cg-cg-sample1.tsv, reg_cluster-cg-cg-S0489.tsv, ...</li>
+  <li>Some files are not present (e.g. no varall)</li>
+  <li>Extra files, e.g. the directory coverage-cg-sample contains
+  whole genome coverage, refscore, ... data in the form of <a
+  href="bcol.html">bcol</a> files.</li>
+  <li>CG data can include structural variant (cgsv-sample.tsv) and
+  CNV (cgcnv-sample.tsv) calls</li>
+</ul>
+<h3 id="h12835">Precalculated data</h3>
+<p>The sampledir may contain precalculated data data from other
+pipelines. If these are in the correct format, they will be
+integrated in the project. vcf files (var-*.vcf) in the ori
+subdirectory of the sample will be converted to tsv files, and their
+variants included in the multicompar.</p>
+<h2 id="h13150">Category</h2>
+<p>Process</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

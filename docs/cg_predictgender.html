@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_predictgender</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">predictgender</h1>
+<h2 id="h21">Format</h2>
+<p>cg predictgender ?options? bamfile/sampledir ?outfile?</p>
+<h2 id="h90">Summary</h2>
+<p>predicts gender for a sample</p>
+<h2 id="h134">Description</h2>
+<p>cg predictgender calculates a number of relevant metrics and
+predicts the gender of the given sample. It outputs the results in
+report form (tsv file with parameter/value fields). The predicted
+gender is in the predgender line in the results.</p>
+<p>Usually the sampledir is given as argument, and the command will
+find all files needed for the prediction in it. If a bamfile is given
+instead, the command will look for other files needed in the same
+directory. The other files used can however also be given explicitely
+using options (-varfile, -targetfile)</p>
+<p>The measures compare the non-pseudoautosomal region on the Y
+chromosome (yreg) to the non-pseudoautosomal region on the X
+chromosome (xreg). these regions can be derived from data in the
+given reference dbdir (-dbdir) or given directly by the options -regy
+and -regx.</p>
+<p>The gender prediction is primarily based on the the ratio of
+median coverage of 500 target regions in regy vs regx
+(<b>pg_yxcovratio</b>). If this is unclear (insufficient X coverage,
+between 0.1 and 0.3), a combination of the ratio of number of reads
+mapping to regy (normalized vs the target region) vs that of regx
+(<b>pg_yxnratio</b>), and the percentage of heterozygous high quality
+variants (<b>pg_pcthqheterozygous</b>) is used.</p>
+<h2 id="h1404">Arguments</h2>
+
+<dl>
+  <dt>bamfile/sampledir</dt>
+  <dd>The bamfile of the sample or the sampledir can be given as
+  first argument</dd>
+  <dt>outfile</dt>
+  <dd>if given, results are written to outfile. Otherwise to stdout</dd>
+</dl>
+<h2 id="h1589">Options</h2>
+
+<dl>
+  <dt>-dbdir dbdir</dt>
+  <dd>dbdir containing reference genomes databases, used to find
+  non-pseudoautosomal regions</dd>
+  <dt>-varfile varfile</dt>
+  <dd>variantfile used for calculating the percentage of
+  heterozygous high quality variants</dd>
+  <dt>-targetfile targetfile</dt>
+  <dd>used to find the size of target area and targeted regions in
+  regy and regx</dd>
+  <dt>-xreg xreg</dt>
+  <dd>non-pseudoautosomal region on the X chromosome</dd>
+  <dt>-yreg yreg</dt>
+  <dd>non-pseudoautosomal region on the Y chromosome</dd>
+  <dt>-refreg refreg</dt>
+  <dd>non X/Y chromosome region, used for adding some reference
+  metrics</dd>
+</dl>
+<h2 id="h2120">Category</h2>
+<p>Report</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

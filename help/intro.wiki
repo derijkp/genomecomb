@@ -66,7 +66,7 @@ unless by coding them using escape characters (\t,\n)
 == Project directories ==
 While not necessary for many of the commands, using the specific
 organisation of files in a Genomecomb project directory (described in [[projectdir]])
-is useful: e.g. the process commands (e.g. [[process_project]],[[process_sample]])
+is useful: e.g. the process commands (e.g. [[cg process_project]],[[cg process_sample]])
 to run an entire analysis pipeline expect this structure to start from and
 generates all additional data in this structure.
 

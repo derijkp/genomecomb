@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_gene2reg</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">gene2reg</h1>
+<h2 id="h16">Format</h2>
+<p>cg gene2reg ?infile? ?outfile?</p>
+<h2 id="h61">Summary</h2>
+<p>Extract gene elements from data in genepred-like format to a (tab
+separated) region file.</p>
+<h2 id="h166">Description</h2>
+<p>cg gene2reg outputs a <a href="tsv.html">tsv</a> file with the
+location and meta info about each element of a gene on a separate
+line. The output is a region file (fields chromosome, begin, end)
+that typically includes the following extra fields:</p>
+
+<dl>
+  <dt>type</dt>
+  <dd>UTR, CDS, intron, RNA</dd>
+  <dt>element</dt>
+  <dd>exon1, intron1, exon2, intron1, ...</dd>
+  <dt>rna_start</dt>
+  <dd>start of the element on the RNA sequence</dd>
+  <dt>rna_end</dt>
+  <dd>end of the element on the RNA sequence</dd>
+  <dt>protein_start</dt>
+  <dd>start of the element on the RNA sequence relative to the
+  protein start</dd>
+  <dt>protein_end</dt>
+  <dd>start of the element on the RNA sequence relative to the
+  protein start</dd>
+  <dt>gene</dt>
+  <dd>gene name</dd>
+  <dt>transcript</dt>
+  <dd>transcript id</dd>
+</dl>
+<h2 id="h817">Options</h2>
+
+<dl>
+  <dt>-upstream nrbases</dt>
+  <dd>if <b>nrbases</b> &gt; 0 upstream and downstream regions will
+  be added, where <b>nrbases</b> gives how many bases will be
+  assigned as upstream/downstream (default 0)</dd>
+  <dt>-nocds 0/1</dt>
+  <dd>if 1 (default = 0) indications of cdsStart and cdsEnd are not
+  taken into account, and all genes will be handled as non coding,
+  meaning that also for coding genes all regions will be output as
+  type RNA instead of UTR and CDS, and exons containf start or stop
+  site are in one (RNA) region.</dd>
+</dl>
+<h2 id="h1314">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h1484">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

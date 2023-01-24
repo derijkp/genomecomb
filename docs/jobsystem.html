@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/jobsystem</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Job system</h1>
+<p>The genomecomb job system allows you to create workflows by
+writing and debugging (easy) sequential code, which you can
+(optionally) make distributed by indicating subtasks (jobs) and their
+dependencies in the code using the &quot;job&quot; commmand.</p>
+<p>Subtasks can be run sequentially, locally distributed (using a
+number of worker processes) or distributed on a cluster (using sun
+grid engine). On a cluster the program will run briefly, submitting
+all jobs with the correct dependencies and then finishing (while the
+jobs still run). Dependencies and targets are file based.</p>
+<p>It also shares some features with make. It will not (re)run
+subtasks for which the target (file) is already completed, and none
+of the dependencies are newer. If the program is interupted,
+rerunning with the same parameters will continue the analysis where
+it left off. To avoid continuing on unfinished (interupted) files,
+write results to temporary files during processing, and rename to the
+final target when (successfully) finished</p>
+<p>The job system is used by including the following commands
+(example in job_example.tcl):</p>
+<h2 id="h1113">job_init</h2>
+<p>job_init initializes the job system. It accept the following job
+options and returns the rest of the arguments:</p>
+
+<dl>
+  <dt>-d value (--distribute)</dt>
+  <dd>if value is a number, the job is distributed over the given
+  number of processes. Use sge to distribute using Grid Engine (also
+  -distribute)</dd>
+  <dt>-dpriority value</dt>
+  <dd>(only for sge) run jobs with the given priority (default is
+  0)</dd>
+  <dt>-dqueue value</dt>
+  <dd>(only for sge) Use this option if you want to run on another
+  queue than the default all.q</dd>
+  <dt>-dcleanup success/never/allways</dt>
+  <dd>Allows you to keep all run/log files in the log_jobs dirs
+  even if a jub is successfull (<b>never</b>), or to allways delete
+  them (<b>allways</b>) instead of only deleting them after a
+  succesfull run (<b>success</b>)</dd>
+  <dt>-v number (--verbose)</dt>
+  <dd>This general option has a big effect on job enabled commands:
+  If it is &gt; 0, they will output a lot of info (to stder) on
+  dependencies, jobs started, etc.</dd>
+  <dt>-f 0/1 (--force)</dt>
+  <dd>use -f 1 to rerun all jobs, even if some were actually
+  already successfully finished (also -force)</dd>
+  <dt>-silent 0/1</dt>
+  <dd>use -silent 1 to supress output with info on the processing</dd>
+  <dt>-skipjoberrors 0/1</dt>
+  <dd>Errors in one job can cause the command to stop; use
+  -skipjoberrors 1 to skip over these errors and complete other jobs
+  (as far as they are not dependent on the the job with an error)</dd>
+  <dt>-runcmd cmd (-runcommand)</dt>
+  <dd>For distributed processing, the command used to run job
+  scripts made (default is &quot;cg source -stack 1&quot;)</dd>
+  <dt>-logfile filename</dt>
+  <dd>(base) filename of the logfile (see next paragraph)</dd>
+</dl>
+<p>Typical use:</p>
+<pre>
+set argv [job_init {*}$argv]
+</pre>
+<h2 id="h2677">job_logfile</h2>
+<p>job_logfile sets the (base) filename of the logfile. A timestamp
+and changing extension (.submitting, .running, .finished, .error
+according to status) will be added. The optional extra parameters are
+added as info in the comments of the log file: <b>basedir</b> sets a
+base directory in which most of the action will be going on. If
+jobfiles are within this directory, they are recorded as relative
+paths. <b>cmdline</b> is used to indicate with which parameters the
+command/run was started. Custom information can be added using extra
+key value pairs. (The keys distribute and pid are reserved for use by
+the job system)</p>
+<p>Typical use:</p>
+<pre>
+job_logfile logfile ?basedir? ?cmdline? ?key value? ... 
+</pre>
+<p>You can only have one logfile for a run, which is set by the first
+call to job_logfile. Calling job_logfile a second time will not
+change this. (The -logfile option in job_init will override a
+subsequent call to job_logfile) set_job_logfile also sets the
+variable job_logdir to [file dir $logdir]/log_jobs (or to any
+directory given as an argument)</p>
+<h2 id="h3741">job_logdir</h2>
+<p>The job log directory is a directory where per job output, job
+scripts, logs, etc. will be stored while jobs are running. Each job
+is (should be) uniquely defined by the combination of log dir and
+jobname (see further). The job logdir can be changed (multiple times,
+resulting in multiple logdirs) during a run, so that the same
+job(name)s can be used together with a changed logdir for e.g.
+processing multiple samples using the same code.</p>
+<p>After a successfull run, useful info from the logdirs is collected
+into the logfile and the logdirs are by default removed. After an
+error, they are by default retained for error checking/solving.</p>
+<p>The current job log directory is given by the (content of the)
+variable job_logdir. The job command will give an error if job_logdir
+is not defined. You can change the variable directly or you can set
+it using the set_job_logdir command (which will also expand it to the
+full path and create the directory), e.g.</p>
+<pre>
+set_job_logdir log_jobs
+</pre>
+<p>job_init will set log_jobs to a default value (log_jobs in the
+directory of the logfile).</p>
+<h2 id="h4835">job</h2>
+<p>The job command is used to define a subtask that may be
+distributed and to state dependencies (files the job uses) and
+targets (files the job will create). In the program between job
+commands you can use any code, even for giving some of the parameters
+to the job command. The limitation is that this code should not rely
+on the results of previous jobs (which may not be finished yet at
+this point if run e.g. with sge). The code in another job however can
+rely on these results if the resulting file/target is given as a
+dependency to this job. The command is run as follows</p>
+<pre>
+job jobname ?options? -deps dependencylist -targets targetlist -code code
+or
+job jobname ?options? dependencylist targetlist code
+</pre>
+<p><b>jobname</b> is the name given to the job, and has to be unique
+within the same log dir. It is used to uniquely create run, log and
+error files in the log directory, and to name jobs if run on a
+cluster. The options -deps, -targets and -code are given in the
+command description as they are obligatory. If not present as an
+option, the must be present as arguments.</p>
+<p><b>targetlist</b> contains a list of files that the job will
+create. Variables are expanded in this list: You can use -targets
+{$target1 $target2} and $target1 and $target2 will be replaced with
+the value in variables target1 and target2. When using this method,
+you should also enclose a one element list in {}: If one of the
+variables used contains a space, the result would be split up as
+separate elements. You can of course also create a list explicitely
+using the list command -targets [list $target1 $target2]</p>
+<p><b>dependencylist</b> contains a list of files which the job uses
+and is thus dependent on: If one or more of these dependencies do not
+exist and are not going to be made by previous jobs (targets), the
+program will stop with an error. If the option -optional 1 is given,
+the job will be skipped instead. Stating dependencies are important
+for parallel processing: A job will only be run once the dependencies
+are available.</p>
+<p>File names in the dependency list may use <b>wildcards</b>. These
+will be expanded to all matching files, using both already existing
+files and files that will be made by previous jobs (targets).</p>
+<p>The list can also contain <b>optional dependencies</b>, indicated
+by a filename (or pattern) enclosed in parentheses. The job will not
+give an error or be skipped if an optional dependency does not exist,
+but the job will not be actually executed until this dependency/file
+is made if it is a target of a previous job.</p>
+<p><b>code</b> contains the code to be executed in the job. This code
+will run in a separate scope from the code outside the job. Variables
+set in it will not be visible to the caller and it does not see
+variables in the caller (though you can pass them using the -vars
+option). locally defined procs (i.e. not automatically called from
+the path) are also not visible, unless passed with the -procs option
+It has a number of predefined variables: <b>deps</b> (contains the
+list of dependencies; in case you used wildcards, deps will contain
+the filenames, not the patterns), targets (filenames to be created).
+For convenience are also available: dep (first dependency), dep2
+(second dependency) and target (first target), target2 (second
+target). It is advised (generally as well) to create <b>result files
+using a temporary name</b> (e.g. $target.temp), and rename them to
+$target when finished: This way, if a job crashes, there will never
+be a target file present that is incomplete.</p>
+<p>job supports following <b>options</b>:</p>
+
+<dl>
+  <dt>-deps dependencylist</dt>
+  <dd>list of files on which this job is dependent.</dd>
+  <dt>-targets targetlist</dt>
+  <dd>list of files that will be created by the job</dd>
+  <dt>-code code</dt>
+  <dd>code to be executed in the job.</dd>
+  <dt>-vars varlist</dt>
+  <dd>a list of variables that must be passed on to the job.</dd>
+  <dt>-procs proclist</dt>
+  <dd>a list of procs that must be passed on to the job.</dd>
+  <dt>-optional 0/1</dt>
+  <dd>By default (0) an error will be given if the job cannot run
+  because of missing dependencies. Set -optional to 1 to indicate
+  that this job is optional, and can be simply skipped if not all
+  dependencies are available.</dd>
+  <dt>-skip skiplist</dt>
+  <dd>If all files in skiplist exist, the job will be skipped, even
+  if some of the targets are not present. This can be used to avoid
+  (re)running substeps to a final goal (where the files resulting
+  from this substep are removed after the final result is made). The
+  -skip option can be given multiple times. The job is skipped if any
+  of the given skiplists is complete.</dd>
+  <dt>-force 0/1</dt>
+  <dd>If 1, this job will be run even if the target files already
+  exist. This is usefull if e.g. an existing files needs to be
+  adapted.</dd>
+  <dt>-checkcompressed 0/1</dt>
+  <dd>dependencies (and targets) are normally searched regardless
+  of compression status (e.g. either test.tsv as test.tsv.zst will
+  match test.tsv). Use this option for the job specifically
+  targetting compression</dd>
+  <dt>-rmtargets rmtargets</dt>
+  <dd>This job will have the removal of given files as target</dd>
+  <dt>-io io</dt>
+  <dd>give value &gt; 1 if job is heavy on io (in sge, translates
+  to (soft) job options: -l io=$value)</dd>
+  <dt>-cores numcores</dt>
+  <dd>give value &gt; 1 if job uses more than 1 core (on sge hard
+  option: &quot;-pe local $value&quot; if local pe is defined) If
+  using multiple cores, other requirements on sge are per core! For
+  memory (-mem) this conversion will be done by the system, and you
+  must give the total required memory (for the job)</dd>
+  <dt>-mem memorysize</dt>
+  <dd>indication of (maximum) memory needed by the job (on sge: -l
+  mem_free=$value,virtual_free=$value, where value is corrected by
+  the system based on -cores)</dd>
+  <dt>-time timelimit</dt>
+  <dd>indication of (maximum) time needed by the job (on sge: -l
+  s_rt=$time)</dd>
+  <dt>-hard hardlimits</dt>
+  <dd>on sge: extra options passed on as hard limits</dd>
+  <dt>-soft softlimits</dt>
+  <dd>on sge: extra options passed on as soft limits</dd>
+</dl>
+<h2 id="h10607">tools</h2>
+<p>jobglob: same as glob, but takes into account files that will be
+available at that stage of the program (targets of previous jobs) You
+can use this command to start a separate job for each file/dependency
+matching a pattern, e.g.</p>
+<pre>
+foreach file [jobglob test*.tsv] {
+    job test-$file -deps {$file} -targets {[file root $file]-result.tsv} -code {
+        # do something
+    }
+}
+</pre>
+<p>jobglob1: returns the first file in a jobglob</p>
+<p>jobfileexists: same as &quot;file exists&quot;, but takes into
+account files that will be available at that stage of the program
+(targets of previous jobs)</p>
+<p>jobtargetexists target dep1 ...: returns 1 if target already
+exists and is newer than all dependencies. Returns 0 if target does
+not exists or if one of the files/patterns in deps is newer than
+target or is in the queue or being made. By default if a dep does not
+exist and is not being made, it will not be considered
+&quot;newer&quot;. You can use the -checkdepexists 1 option to also
+return 0 if a dep does not exist.</p>
+<p>job_cleanup_add file ?file? ..: add files to list of files that
+will be cleaned up after the run. Deletion will be done using -force,
+so if <b>file</b> is a directory, it will be deleted even if there
+are still files in it</p>
+<p>job_cleanup_ifempty_add file ?file? ..: add files to list of files
+that will be cleaned up after the run. Deletion will be done without
+-force, so if <b>file</b> is a directory, it will only be deleted if
+empty. These are deleted after regular cleanup (which should delete
+all files in the directory)</p>
+<h2 id="h12121">job_runall</h2>
+<p>Jobs that will make targets that cannot (easily) be determined
+beforehand, e.g. a number of output files with file names based on
+calculation, are best avoided if these results must be processed
+further in the workflow: Because you cannot specify the resulting
+files as targets, commands like jobglob will not see them untill they
+are actually made, making this incompatible with distributed jobs
+(which rely on dependencies to know when and which jobs can be run).</p>
+<p>If you really cannot avoid this type of job, you can use the
+command job_runall after it. job_runall will wait untill all jobs
+started up till there are finished, and then continue the submission
+script. This works because the targets are then actually made and can
+be (job)globbed. (This does severily limits parallelisation.) For
+direct runs (-d direct), the command has no effect (not needed, as
+all jobs are allways directly run).</p>
+<h2 id="h13041">job_wait</h2>
+<p>job_wait must be added at the end of the program. It will wait (if
+needed) for all jobs to finish. Then it will cleanup temporary files
+and update the log file. On a cluster (sge) the program will actually
+finish; The final processing by job_wait is submitted as a job that
+will run after all other jobs are finished.</p>
+<pre>
+job_wait
+</pre>
+<h2 id="h13393">Category</h2>
+<p>Dev</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

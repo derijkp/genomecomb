@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_regcollapse</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Regcollapse</h1>
+<h2 id="h19">Format</h2>
+<p>cg regcollapse ?options? region_file1 ...</p>
+<h2 id="h75">Summary</h2>
+<p>Collapses overlapping regions in one (sorted) or more region files</p>
+<h2 id="h157">Description</h2>
+<p>Collapses overlapping regions in one (sorted) or more region
+files, resulting in a region file (written to stdout) with
+non-overlapping regions covering the same total region as the source
+file(s). Overlaps between regions are cut at the overlap. Non
+overlapping regions keep the annotation (columns other than the ones
+indicated the region) of the original. Overlap regions get the
+annotation of the highest scoring region if a score column is
+available. If not, overlap regions are annotated with a (comma
+separated) list of the distinct values in the original annotations of
+the overlapping regions.</p>
+<h2 id="h780">Arguments</h2>
+
+<dl>
+  <dt><b>region_file1</b></dt>
+  <dd>region file</dd>
+  <dt>...</dt>
+  <dd>other region files</dd>
+</dl>
+<h2 id="h855">Options</h2>
+
+<dl>
+  <dt><b>-o filename</b></dt>
+  <dd>write result to filename instead of stdout</dd>
+  <dt><b>-s scorefield</b></dt>
+  <dd>name of the column to use as scores.</dd>
+  <dt><b>-n numfield</b></dt>
+  <dd>name of a numfield: overlap regions will get the sum of the
+  original values in this field as annotation</dd>
+</dl>
+<h2 id="h1113">Category</h2>
+<p>Regions</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

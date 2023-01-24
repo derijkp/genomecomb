@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/howto_multicompar_cg</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">multicompar</h1>
+<h2 id="h18">Prepare samples</h2>
+<p>Sort data, Convert variations and gene annotation information to
+one annotated variation file called</p>
+
+<ul>
+  <li>one variation (2 alleles) per line</li>
+  <li>including gene information for the variations that have it It
+  also creates</li>
+  <li>region files such as the ref-(in)consistent regions and
+  clusters of variations are located</li>
+  <li>some (genome) coverage data</li>
+</ul>
+<pre>
+cg process_sample originalsampledir sampledir dbdir ?force?
+</pre>
+
+<ul>
+  <li>originalsampledir: is a directory with the sample data as it
+  comes from from CG, nothing will be changed in this dir</li>
+  <li>sampledir: a directory with the sample data in genomecombs
+  formats, that will be created if not present yet; if present, files
+  not created yet will be added (e.g. after stopped job)</li>
+  <li>dbdir: directory containing reference databases</li>
+  <li>?force?: if the parameter force is given, the command will
+  restart from the beginning, and redo every step. If not given, the
+  command will only create files that do not exist yet.</li>
+</ul>
+<p>Important files in the resulting sample dir are:</p>
+
+<ul>
+  <li>fannotvar-samplename.tsv: file containing the variant list with
+  annotations in tab separated format</li>
+  <li>sreg-samplename.tsv: region file with the regions that are
+  considered as sequenced by CG</li>
+  <li>coverage: directory containing files with genomewide coverage
+  (per chromosme) Other informative files in the resulting sample dir
+  are:</li>
+  <li>reg_cluster.tsv: region file containing regions with
+  clustered variants</li>
+  <li>reg_lowscore.tsv: region file containing regions with low
+  variant score</li>
+  <li>reg_nocall.tsv: region file containing regions that contain
+  at least one nocall allele</li>
+  <li>reg_refcons.tsv: region file containing regions that contain
+  at least one allele score as refconsistant / refinconsistent
+  (uncertain)</li>
+</ul>
+<pre>
+cg process_rtgsample originalsampledir sampledir ?force?
+</pre>
+<p>does similar for RTG data. It expects two subdirs in
+originalsampledir:</p>
+
+<ul>
+  <li>ori: dir containing original rtg variation file (pattern
+  *unfiltered.snp*)</li>
+  <li>allpos: dir with files with info on full genome (pattern
+  chr${chr}_snps.txt) The resulting sampledir is similar to the one
+  produced by process_sample (not all files are present)</li>
+</ul>
+<h2 id="h2145">Compare genomes</h2>
+<p>Compare samples by making a file containing information of all
+samples in a wide table (tab separated), where each line contains
+general variant info (position, type, annotation, etc.), plus columns
+with variant info specific to each sample (genotype, coverage, etc.).
+The latter have a column heading of the form info-samplename</p>
+<pre>
+mkdir resultsdir
+cg multicompar resultsdir/mcomparfile sampledir ... ...
+</pre>
+
+<ul>
+  <li>sampledir: processed (using process_sample) sample directories
+  to be compared</li>
+  <li>resultsdir/mcomparfile: The sampledirs given will be added to
+  this file. The sampledirs are expected to be one dir below the
+  resultdir.</li>
+</ul>
+<p>Complete annotation info in multicompar file: Information that
+is not directly in the individual variant files, such as coverage for
+a sample where the variant was not called, is extracted from the full
+data files, and added to the multicompar file.</p>
+<pre>
+cg multicompar_reannot resultsdir/mcomparfile
+</pre>
+
+<ul>
+  <li>resultsdir/mcomparfile: The sampledirs given will be added to
+  this file. The sampledirs are expected to be one dir below the
+  resultdir.</li>
+</ul>
+<h2 id="h3243">Annotate comparison file</h2>
+<p>Add (a lot of) annotations to the mcomparfile using:</p>
+<pre>
+cg annotate mcomparfile resultfile dbdir
+</pre>
+
+<ul>
+  <li>mcomparfile: variant file (can be from multicomparison, has to
+  have alt field)</li>
+  <li>resultfile: new file that will be written: mcomparfile+ added
+  columns with annotation</li>
+  <li>dbdir: directory containing reference databases and
+  annotation files (.../hg18)</li>
+</ul>
+<h2 id="h3628">Select variants</h2>
+<p>cg select can be used to easily query the resulting file.</p>
+<pre>
+cg select ?options? ?infile? ?outfile?
+</pre>
+<p>More info can be found in the help on <a
+href="cg_select.html">select</a></p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

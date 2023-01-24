@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_pmulticompar</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Pmulticompar</h1>
+<h2 id="h20">Format</h2>
+<p>cg pmulticompar ?options? multicomparfile sampledir/varfile ...</p>
+<h2 id="h98">Summary</h2>
+<p>Compare multiple variant files</p>
+<h2 id="h144">Description</h2>
+<p>This command combines multiple variant files into one
+<b>multicompar file</b>: a tab separated file containing a wide table
+used to compare variants between different samples. Each line in the
+table contains general variant info (position, type, annotation,
+etc.) and columns with variant info specific to each sample
+(genotype, coverage, etc.). The latter have a column heading of the
+form field-&lt;sample&gt;.</p>
+<p>The <b>&lt;sample&gt; name</b> used is extracted from the filename
+of the variant files by removing the file extension and the start of
+the filename up to and including the first -. (Variant files are
+expected to use the following convention: var-&lt;sample&gt;.tsv.)
+&lt;sample&gt; can be simply the samplename, but may also include
+information about e.g. the sequencing or analysis method in the form
+method-samplename, e.g. var-gatk-sample1.tsv and var-sam-sample1.tsv
+to indicate variants called using gatk and samtools respectively for
+the same sample (sample1), thus allowing comparison of different
+methods, etc.</p>
+<h3 id="h1169">Completing missing information</h3>
+<p>When some samples contain a variant that others do not, the
+information in the multicompar file cannot be complete by combining
+variant files alone: A variant missing in one variant file may either
+mean that it is reference or that it is not sequenced. Other
+information about coverage, etc. on the variant not present in the
+variant file will also be missing. multicompar will try to
+<b>complete this missing info</b> based on files (if present)
+accompanying the variant file (in the same directory and having a
+similar filename). Folowing files can be used for completing
+multicompar data:</p>
+
+<ul>
+  <li>sreg-&lt;sample&gt;.tsv: a tab-separated region file indicating
+  all regions that are sequenced. If the variant is located in such a
+  region, the sequenced-sample value will be set to r (for
+  reference). Outside of these regions it will be annotated as u
+  (unsequenced).</li>
+  <li>varall-&lt;sample&gt;.tsv: an tsv file made by returning
+  &quot;variant&quot; calling results for all positions. This must
+  contain the same columns as the variant file. All fields can be
+  completed from a varall file. If a variant is not in the varall
+  file, it is set to u (unsequenced).</li>
+</ul>
+<p>If data can not be completed using accompanying files, the
+missing information will be indicated by a questing mark as a value
+in the table.</p>
+<h3 id="h2477">Adding to an existing multicomnpar</h3>
+<p>Using the same command, you can add new samples to an existing
+multicompar file. pmulticompar needs the original variant files and
+accompanying files for the existing multicompar file. It can find
+these files (based on filename) easily if everything is organised in
+a <a href="projectdir.html">projectdir</a> (hint: You can add samples
+in another projectdir without duplication using symbolic links)
+pmulticompar will look however in various places relative to the
+multicompar file (same directory, samples directory in same dir,
+parent directory, samples directory in parent dir).</p>
+<h3 id="h3077">compared to old multicompar</h3>
+<p>cg pmulticompar is a parallel and much faster version of <a
+href="cg_multicompar.html">multicompar</a>. It also integrates the
+reannot step in one. It is more finicky about e.g. directory
+structure (needs to find the original sample variant files) and does
+not support all accompanying information files that the old one does.</p>
+<h2 id="h3425">Arguments</h2>
+
+<dl>
+  <dt><b>multicomparfile</b></dt>
+  <dd>resultfile, will be created if it does not exist</dd>
+  <dt><b>sampledir/varfile</b></dt>
+  <dd>directory or file containing variants of new sample to be
+  added. More than one can added in one command If a sample directory
+  is given, all files in it of the format var-&lt;sample&gt;.tsv (or
+  fannotvar-&lt;sample&gt;.tsv) will be added as variant files.</dd>
+</dl>
+<h2 id="h3782">Options</h2>
+
+<dl>
+  <dt>-r 0/1 (--reannotregonly)</dt>
+  <dd>Also do reannotation, but only region data (sreg) will be
+  updated</dd>
+  <dt>-t variantfile (--targetvarsfile)</dt>
+  <dd>All variants in <b>variantfile</b> will be in the final
+  multicompar, even if they are not present in any of the samples. A
+  column will be added to indicate for each variant if it was in the
+  targetvarsfile. The name of the column will be the part of the
+  filename after the last dash. If <b>variantfile</b> contains a
+  &quot;name&quot; column, the content of this will be used in the
+  targets column instead of a 1.</dd>
+  <dt>-s 0/1 (-split --split)</dt>
+  <dd>if 1 (default), multiple alternative alleles will be on a
+  separate lines, treated mostly as a separate variant Use 0 for
+  giving alternatives alleles on the same line, separated by comma in
+  the alt field</dd>
+  <dt>-e 0/1 (--erroronduplicates)</dt>
+  <dd>if 1, an error is given if one of the samples to be added is
+  alread present in the multicompar file. The default (0) is to skip
+  these.</dd>
+  <dt>-i 0/1 (--skipincomplete)</dt>
+  <dd>if set to 0, pmulticompar will stop with an error if no sreg
+  or varall file is found for a sample. If 1 (default), it will give
+  a warning, but continue making the multicompar file (incomplete for
+  this sample)</dd>
+  <dt>-keepfields fieldlist</dt>
+  <dd>Besides the obligatory fields, include only the fields in
+  fieldlist (space separated) in the resulting multicompar. Default
+  is to use all fields present in the file (*)</dd>
+  <dt>-m maxopenfiles (-maxopenfiles)</dt>
+  <dd>The number of files that a program can keep open at the same
+  time is limited. pmulticompar will distribute the subtasks thus,
+  that the number of files open at the same time stays below this
+  number. With this option, the maximum number of open files can be
+  set manually (if the program e.g. does not deduce the proper limit,
+  or you want to affect the distribution).</dd>
+  <dt>-limitreg regionfile</dt>
+  <dd>limit the processing to only variants overlapping the regions
+  given in <b>regionfile</b></dd>
+  <dt>-force 0/1</dt>
+  <dd>pmulticompar creates a lot of temporary files (in the .temp
+  dir). Even if some of these exist their recreation is forced by
+  default (for safety). If a pmulticompar was interupted, you can use
+  -force 0 to reuse the temp files already used instead of recreating
+  them.</dd>
+</dl>
+<p>This command can be distributed on a cluster or using multiple
+with <a href="joboptions.html">job options</a> (more info with cg
+help joboptions)</p>
+<h2 id="h6079">Category</h2>
+<p>Variants</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

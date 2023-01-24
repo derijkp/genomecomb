@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_coverage_report</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">coverage_report</h1>
+<h2 id="h23">Format</h2>
+<p>cg coverage_report ?options? ?regionfile? ?bamfiles?</p>
+<h2 id="h90">Summary</h2>
+<p>generates coverage report for region of interest A histo file is
+generated at the location of the bam file</p>
+<h2 id="h213">Arguments</h2>
+
+<dl>
+  <dt><b>regionfile</b></dt>
+  <dd>region file: tab separated file describing region of
+  interest. Must contain fields: chr, begin, end &amp; name</dd>
+  <dt><b>bamfiles</b></dt>
+  <dd>one or more bam files for which a coverage report should be
+  generated</dd>
+</dl>
+<h2 id="h441">Options</h2>
+
+<dl>
+  <dt><b>-s</b></dt>
+  <dd>suffix to add to histo filename - default empty</dd>
+</dl>
+<p>supports job options:</p>
+
+<dl>
+  <dt><b>-d x</b></dt>
+  <dd>distribute subjobs of command over x processes</dd>
+  <dt><b>-d sge</b></dt>
+  <dd>use grid engine to distribute subjobs</dd>
+</dl>
+<h2 id="h649">Category</h2>
+<p>Report</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

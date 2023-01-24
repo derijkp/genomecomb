@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/format_gene</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">transcript/gene file</h1>
+<p>A transcript/gene file is a <a href="tsv.html">tsv</a> file
+containing a list of transcripts. Each line contains one transcript.
+The standard region fields (chromosome, begin and end) indicate the
+location of the transcript (and the transcript file is thus also a
+region file) while other fields indicate the strand, exons etc.</p>
+<p>The basic fields for a transcript file are</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>chromosome name</dd>
+  <dt>begin</dt>
+  <dd>transcription start position</dd>
+  <dt>end</dt>
+  <dd>transcription end position</dd>
+  <dt>strand</dt>
+  <dd>indication of the strand: + or -, empty or . can be used for
+  unknown</dd>
+  <dt>cdsStart</dt>
+  <dd>start of the coding region (genomic position)</dd>
+  <dt>cdsEnd</dt>
+  <dd>end of the coding region (genomic position)</dd>
+  <dt>exonStarts</dt>
+  <dd>list of exon start positions</dd>
+  <dt>exonEnds</dt>
+  <dd>list of Exon end positions</dd>
+  <dt>transcript</dt>
+  <dd>Name of transcript (usually transcript_id from GTF)</dd>
+  <dt>gene</dt>
+  <dd>name of gene (e.g. gene_id from GTF). This field
+  preferentially contains the HGNC name for the gene, but other ids
+  are possible</dd>
+</dl>
+<p>Most genomecomb tools will accept some (commonly encounterd)
+alternative fieldnames if these are not present:</p>
+
+<dl>
+  <dt>chromosome</dt>
+  <dd>&quot;chrom&quot;, &quot;chr&quot;, &quot;chr1&quot;,
+  &quot;genoName&quot;, &quot;tName&quot; and &quot;contig&quot;</dd>
+  <dt>begin</dt>
+  <dd>&quot;start&quot;, &quot;end1&quot;, &quot;chromStart&quot;,
+  &quot;genoStart&quot;, &quot;tStart&quot;, txStart&quot;,
+  &quot;pos&quot; and &quot;offset&quot; (end1 is recognised as begin
+  because of the structural variant code in genomecomb, where
+  start1,end1 and start2,end2 regions surround a SV).</dd>
+  <dt>end</dt>
+  <dd>&quot;start2&quot;, &quot;chromEnd&quot;,
+  &quot;genoEnd&quot;, &quot;tEnd&quot; or &quot;txEnd&quot;</dd>
+  <dt>transcript</dt>
+  <dd>&quot;transcript_id&quot;, &quot;transcriptid&quot;,
+  &quot;name&quot;</dd>
+  <dt>gene_name</dt>
+  <dd>&quot;gene&quot;,&quot;name2&quot;, &quot;geneid&quot;,
+  &quot;gene_id&quot;</dd>
+</dl>
+<p>Any other fields can be added, but the following are common:</p>
+
+<dl>
+  <dt>category</dt>
+  <dd>field indicating if the transcript is known, novel or
+  intergenic (transcript of a novel gene); for novel transcripts how
+  they differ from (the closest) known transcipt can be added after
+  novel (, e.g. novl_in_catalog)</dd>
+  <dt>exonCount</dt>
+  <dd>number of exons</dd>
+  <dt>source</dt>
+  <dd>source of data</dd>
+  <dt>geneid</dt>
+  <dd>a gene identifier, such as the ensembl id. This field can be
+  used to add a specific id as well as the HGNC name (in gene).
+  Genomecomb also checks the fields
+  &quot;gene_id&quot;,&quot;gene_name&quot;,&quot;gene&quot;,
+  &quot;name2&quot; for this. Remark that these alternative field
+  names overlap with gene alternatives. This provides for when no
+  specific gene id was provided.</dd>
+</dl>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

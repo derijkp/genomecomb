@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/format_bcol</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">bcol format</h1>
+<p>The bcol format stores one (or more) column(s) of data in an
+efficient binary format. All data must be of the same type (list of
+supported types below). bcol files can e.g. used to store a score for
+each position of the genome and use this for annotation.</p>
+<p>The bcol format consists of two files, one in a text format
+describing the bcol data (bcolfile.bcol) and one containing the
+actual binary data (bcolfile.bcol.bin.zst). There may be a (third)
+index file (bcolfile.bcol.bin.zsti) for faster random access to the
+compressed binary data. bcol files can be created based on a
+tab-separated file (<a href="tsv.html">tsv</a>) file using the
+command <a href="cg_bcol_make.html">cg bcol make</a>.</p>
+<p>There was an older version of the bcol format (which did not
+support multiple chromosomes or multiple alleles) that is not
+described here. Files (there were separate bcol files per chromsome)
+in this older format can be converted to the current using</p>
+<pre>
+cg bcol_update newbcolfile oldbcolfile ?oldbcolfile2? ...
+</pre>
+<h2 id="h1003">bcolfile.bcol</h2>
+<p>bcolfile.bcol is a tab-separated file (<a href="tsv.html">tsv</a>)
+with the following format</p>
+<pre>
+# binary column
+# type iu
+# default 0
+# precision 3
+chromosome      begin   end
+1       0       50
+2       10      51
+</pre>
+<p>The fields &quot;chromosome begin end&quot; must be present, and
+indicate for which regions data is present in the binary file. They
+folow the same zero-based half-open indexing scheme as all genomecomb
+tsv files.</p>
+<p>The comments before the table must contain the following
+information:</p>
+
+<ul>
+  <li>The first comment line &quot;# binary column&quot; indicates it
+  is a bcol file.</li>
+  <li>The &quot;# type&quot; comment line indicates the type of
+  data in the binary file (supported types listed below)</li>
+  <li>The &quot;# default&quot; indicates the default value: the
+  return value for any position not in the file.</li>
+  <li>&quot;# precision&quot; indicates the default precision used
+  when outputting values from the bcol.</li>
+</ul>
+<p>A bcol file can contain multiple values for each position. This
+is indicated by the extra field multi in the bcol comments. e.g.
+&quot;# multi A,C,T,G&quot; is used in a var bcol to indicate that
+there are 4 values for each position for the bases A, C, T and G
+respectively.</p>
+<h3 id="h2135">Supported types</h3>
+
+<dl>
+  <dt>d</dt>
+  <dd>double-precision floating point (64 bit) in machine native
+  byte order</dd>
+  <dt>q</dt>
+  <dd>double-precision floating point (64 bit) in little-endian
+  byte order</dd>
+  <dt>Q</dt>
+  <dd>double-precision floating point (64 bit) in big-endian byte
+  order</dd>
+  <dt>f</dt>
+  <dd>Single-precision floating point (32 bit) in machine native
+  byte order</dd>
+  <dt>r</dt>
+  <dd>Single-precision floating point (32 bit) in little-endian
+  byte order</dd>
+  <dt>R</dt>
+  <dd>Single-precision floating point (32 bit) in big-endian byte
+  order</dd>
+  <dt>w</dt>
+  <dd>wide integer (64-bit) in little-endian byte order</dd>
+  <dt>W</dt>
+  <dd>wide integer (64-bit) in big-endian byte order</dd>
+  <dt>m</dt>
+  <dd>wide integer (64-bit) in machine native byte order</dd>
+  <dt>i</dt>
+  <dd>integer (32-bit) in little-endian byte order</dd>
+  <dt>I</dt>
+  <dd>integer (32-bit) in big-endian byte order</dd>
+  <dt>n</dt>
+  <dd>integer (32-bit) in machine native byte order</dd>
+  <dt>s</dt>
+  <dd>small integer (16 bit) in little-endian byte order</dd>
+  <dt>S</dt>
+  <dd>small integer (16 bit) in big-endian byte order</dd>
+  <dt>t</dt>
+  <dd>small integer (16 bit) in machine native byte order</dd>
+  <dt>c</dt>
+  <dd>8 bit integer (1 byte or character) The integer types can
+  have an u appended for unsigned types</dd>
+</dl>
+<h2 id="h3177">bcolfile.bcol.bin.zst</h2>
+<p>bcolfile.bcol.bin.zst is the (compressed) binary file containing
+the actual data, a lz3 compressed continuous stream of values in the
+given binary type. The uncompressed binary file (bcolfile.bcol.bin)
+is also recognized, but by default the binaries are compressed. A zst
+index file bcolfile.bcol.bin.zst.zsti may also exists to speed up
+random access to the compressed binary.</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

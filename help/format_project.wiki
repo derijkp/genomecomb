@@ -62,7 +62,7 @@ name. There can be several steps in between.
 Each sampledir can contain results for this individual sample of the following 
 type (depending on source data):
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
-to the reference genome in dbdir using bwa. The bam file has been sorted
+to the reference genome in refdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
 ; var-gatk-rdsbwa-sample1.tsv.zst: a (compressed) [[format_tsv|tsv]] variant file that contains
 variants called by gatk based on map-rdsbwa-sample1.bam. 
@@ -105,7 +105,7 @@ The subdirectory compar contains comparisons of all samples, e.g.:
 all variants in all samples (and all methods). If a variant is not present
 in one of the samples, the information at the position of the variant will
 be completed (is the position sequenced or not, coverage, ...) The file is
-also annotated with all databases in dbdir (impact on genes, regions of
+also annotated with all databases in refdir (impact on genes, regions of
 interest, known variant data)
 ; sreg-projectname.tsv.zst: sequenced region multicompar file containing for all
 regions whether they are sequenced (1) or nor (0) for each sample.
@@ -118,7 +118,7 @@ differ less than 300 bases. For insertions and translocation, a difference
 of 30 bases in position is allowed (by default).
 Also, for structural variants information will not be completed (is the
 position sequenced or not, coverage, ...) for samples without a variant
-call. The file is also annotated with all databases in dbdir (impact on
+call. The file is also annotated with all databases in refdir (impact on
 genes, regions of interest, known variant data)
 
 == analysisinfo files ==
@@ -131,7 +131,7 @@ versions, settings, ...)
 projectinfo.tsv is a [[tsv]] file containing data about the project.
 It must have 2 columns: key and value. The following keys can be found:
 
-; dbdir: directory containing reference data (genome sequence,
+; refdir: directory containing reference data (genome sequence,
 annotation, ...). projectinfo.tsv file.
 ; split: if 1, each alternative allele is on a separate line. If 0,
 multiple alternative alleles in the sample location and allele specific data 

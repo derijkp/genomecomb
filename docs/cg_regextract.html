@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_regextract</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Regextract</h1>
+<h2 id="h18">Format</h2>
+<p>cg regextract ?options? file1 ?file2? ...</p>
+<h2 id="h74">Summary</h2>
+<p>Find regions with a minimum or maximum coverage in a bam, sam,
+cram, bcol or tsv file.</p>
+<h2 id="h176">Description</h2>
+<p>Write a regionsfile to stdout that contains all regions in the
+given bam, sam, cram, bcol or tsv file(s) that have given minimum or
+maximum coverage. e.g. regions in file1 with a minimum coverage of 20
+are extracted using</p>
+<pre>
+cg regextract -min 20 file1
+</pre>
+<p>Using the -max option will give all regions where the coverage in
+the file reaches at most the given maximum. WARNING: This will only
+check regions that have a actual given coverage in the file;
+Positions that are not present in the given file are not returned!
+For bam and cram files (only), you can use the -all option to include
+these regions with no given coverage (in this case unused reference
+sequences).</p>
+<p>If there is no chromosome data in the input files (tsv without
+chromosome), the chromosome name is taken from the filename by
+splitting on &quot;-&quot;, and taking the second element.</p>
+<h2 id="h1043">Arguments</h2>
+
+<dl>
+  <dt><b>file1</b></dt>
+  <dd>sam/bam/cram file or file containing (chromosome,) position
+  and value columns, or bcol file.</dd>
+  <dt><b>...</b></dt>
+  <dd>other files</dd>
+</dl>
+<h2 id="h1190">Options</h2>
+
+<dl>
+  <dt>-qfields list</dt>
+  <dd>list (separated by spaces) of possible fieldnames to use as
+  values for the cutoff; The first in the list that is in the header
+  will be used (default = &quot;coverage
+  uniqueSequenceCoverage&quot;). This option is not used for bcol
+  files, as they contain data for only one &quot;column&quot;.</dd>
+  <dt>-posfields list</dt>
+  <dd>list (separated by spaces) of possible fieldnames to use as
+  position; The first in the list that is in the header will be used
+  (default = &quot;offset pos position begin start&quot;). This
+  option is not used for bcol files.</dd>
+  <dt>-min number</dt>
+  <dd>extract regions with coverage &gt;= number.</dd>
+  <dt>-max number</dt>
+  <dd>extract regions with coverage &lt;= number.</dd>
+  <dt>-shift</dt>
+  <dd>change the position by the given amount, e.g. -1 to change
+  from 1-based to 0-based coordinates, (default is -1 for bam, cram
+  and sam files, for other files 0)</dd>
+  <dt>-q number</dt>
+  <dd>Minimum mapping quality for an alignment to be used (only
+  used for bams and crams)</dd>
+  <dt>-Q number</dt>
+  <dd>Minimum base quality for a base to be considered (only used
+  for bams and crams)</dd>
+  <dt>-f 0/1 (--filtered)</dt>
+  <dd>(only used for bams and crams) if 1, skip anomalous read
+  pairs and low quality for calculating depth. Low quality filtering
+  in this option is achieved by setting -q and -Q at 20, unless you
+  specifically define other values for these options. (default 0)</dd>
+  <dt>-all 0/1</dt>
+  <dd>(only for bams and crams) Return all regions (&lt;= max),
+  including regions with no given coverage (unused reference
+  sequences)</dd>
+  <dt>-region region</dt>
+  <dd>limit command to the given region in the form &quot;chr&quot;
+  or &quot;chr:begin-end&quot; in half-open coordinates: begin and
+  end start from 0 and end is not included</dd>
+</dl>
+<h2 id="h2858">Category</h2>
+<p>Regions</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

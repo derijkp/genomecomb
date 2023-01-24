@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/format_project</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">genome project directory</h1>
+<p>Although most genomecomb commands can be individually run on files
+located anywhere, some of the commands expect or generate data
+organised in a specific project structure: A genomecomb project
+directory or <b>projectdir</b> for short is a directory containing
+(links to) raw data and analysis in this particular structure, which
+is described in this help.</p>
+<p>The <a href="cg_process_project.html">cg proccess_project</a>
+command can e.g. be used to generate a projectdir with full analysis
+information (variant calls, multicompar, reports, ...) starting from
+raw sample data from various sources.</p>
+<h2 id="h613">overview</h2>
+<p>A projectdir basically contains individual sample directories (in
+the subdirectory samples) and overview data (samples comparisons) in
+the following structure:</p>
+
+<dl>
+  <dt>samples</dt>
+  <dd>directory containing a separate sample directory for each
+  sample</dd>
+  <dt>compar</dt>
+  <dd>directory containing files that combine and compare data from
+  all samples (multicompar files)</dd>
+  <dt>projectinfo.tsv</dt>
+  <dd>a file with some meta data about the analysis/data in the
+  projectdir As long as compatible analysis (same reference genome,
+  split or unsplit variants) were used, the same sampledir can be
+  used in multiple projects (e.g. using a soft link).</dd>
+</dl>
+<p>The <b>project name</b> is taken from the filename of the
+projectdir. The project name will be used (a.o.) in naming most of
+the overview files. These filenames will end with a hyphen-minus
+character followed by the projectsname. For this reason, the
+hyphen-minus character may not be used in the projectname.</p>
+<p>Most of the result files in a projectdir/sampledir are
+tab-separated value files (file extension tsv) of various types
+(described in <a href="format_tsv.html">format_tsv</a>). For space
+reasons, files are often compressed. genomecomb tools can generally
+handle compressed files transparently.</p>
+<h2 id="h1804">sample directory</h2>
+<p>Indivual sample data is in subdirectories of the samples directory
+in the projectdir. Each of these sampledirs contains the raw data and
+analysed data from one sample. The <b>sample name</b> is taken from
+the filename of the sampledir. As hyphen-minus characters are used in
+naming the analysis results files ending with the sample name, this
+character (-) should not be present in the name.</p>
+<h3 id="h2218">sample source data</h3>
+
+<dl>
+  <dt>ori</dt>
+  <dd>A sampledir can contain a (link to a) directory containing
+  the original sequnencing data, named ori. The commands <a
+  href="cg_process_sample.html">cg process_sample</a> or <a
+  href="cg_process_project.html">cg process_project</a> can be used
+  to analyse the data and produce a fully filled sampledir/projectdir</dd>
+</dl>
+
+<dl>
+  <dt>fastq</dt>
+  <dd>If the original data is in the form of fastq files, the fastq
+  files for that sample are present in a subdirectory named
+  <b>fastq</b>. (If fastq files are found in the ori directory, a
+  fastq dir is made, and the files linked.) The names of matching
+  fastq files of paired reads should be consecutive when sorted
+  naturaly,the forward reads first. The usual naming of these files
+  (same name, except for a 1 and 2) is ok.</dd>
+</dl>
+<h3 id="h2955">sample results</h3>
+<p>All files generated have names following the convention of using
+hyphen-minus to separate different elements of the file. The first
+element indicates what is in the file. The last element (before the
+extension) is the sample name. There can be several steps in between.</p>
+<p>Each sampledir can contain results for this individual sample of
+the following type (depending on source data):</p>
+
+<dl>
+  <dt>map-rdsbwa-sample1.bam</dt>
+  <dd>bam file created by aligning the reads of sample1 to the
+  reference genome in refdir using bwa. The bam file has been sorted
+  (s), duplicate marked (d), and realigned (r).</dd>
+  <dt>var-gatk-rdsbwa-sample1.tsv.zst</dt>
+  <dd>a (compressed) <a href="format_tsv.html">tsv</a> variant file
+  that contains variants called by gatk based on
+  map-rdsbwa-sample1.bam.</dd>
+  <dt>sreg-gatk-rdsbwa-sample1.tsv.zst</dt>
+  <dd>A region file with all regions that can be considered
+  sequenced using the same methods and quality measures as
+  var-gatk-rdsbwa-sample1.tsv.zst. Any position in those regions that
+  is not in the variant file can be called reference with the same
+  reliability as the variant calls.</dd>
+  <dt>varall-gatk-rdsbwa-sample1.tsv.zst</dt>
+  <dd>variant file containing variant calls by gatk for all
+  positions with &gt;= 5 coverage (also reference called positions).
+  This file is used to create the sreg files, and to update data in
+  making multicompar files later.</dd>
+  <dt>reg_cluster-gatk-rdsbwa-S0489.tsv.zst</dt>
+  <dd>regions with many clustered variants (which are less
+  reliable)</dd>
+  <dt>bcolall</dt>
+  <dd>directory containing whole genome coverage, refscore, ...
+  data in the form of <a href="bcol.html">bcol</a> files. These files
+  can be used to create the sreg files, and to update data in making
+  multicompar files later. (In older project dirs, this directory may
+  be called coverage-cg-* and contain old style formatted bcol files)</dd>
+  <dt>sv-manta-rdsbwa-sample.tsv.zst</dt>
+  <dd>structural variant calls by manta</dd>
+  <dt>cgsv-sample.tsv.zst</dt>
+  <dd>Complete Genomics structural variants</dd>
+  <dt>cgcnv-sample.tsv.zst</dt>
+  <dd>Complete Genomics CNV data</dd>
+</dl>
+<p>The result files from samtools variant calling on the same
+bamfile (map-rdsbwa-sample1.bam), are named
+var-sam-rdsbwa-sample1.tsv.zst, sreg-sam-rdsbwa-sample1.tsv.zst,
+varall-sam-rdsbwa-sample1.tsv.zst,
+reg_cluster-sam-rdsbwa-S0489.tsv.zst</p>
+<p>For Complete Genomics alignment and variant calling the files are
+named var-cg-cg-sample1.tsv.zst, sreg-cg-cg-sample1.tsv.zst,
+reg_cluster-cg-cg-S0489.tsv.zst</p>
+<p>The sampledir may contain precalculated data data from other
+pipelines. If these are in the correct format, they will be
+integrated in the project. vcf files (var-*.vcf) will be converted to
+tsv files, and their variants included in the multicompar.</p>
+<h2 id="h5538">compar dir</h2>
+<p>The subdirectory compar contains comparisons of all samples, e.g.:</p>
+
+<dl>
+  <dt>annot_compar-projectname.tsv.zst</dt>
+  <dd>multicompar file containing information for all variants in
+  all samples (and all methods). If a variant is not present in one
+  of the samples, the information at the position of the variant will
+  be completed (is the position sequenced or not, coverage, ...) The
+  file is also annotated with all databases in refdir (impact on
+  genes, regions of interest, known variant data)</dd>
+  <dt>sreg-projectname.tsv.zst</dt>
+  <dd>sequenced region multicompar file containing for all regions
+  whether they are sequenced (1) or nor (0) for each sample.</dd>
+  <dt>annot_sv-projectname.tsv.zst</dt>
+  <dd>multicompar structural variant file containing information
+  for all structural variants in all samples (and all methods). This
+  file is made differently from the small vrariants file: Structural
+  variant comparison uses approximate matching: Inversion and
+  deletions are matched if they overlap at least 75%, and the begin
+  and end positions differ less than 300 bases. For insertions and
+  translocation, a difference of 30 bases in position is allowed (by
+  default). Also, for structural variants information will not be
+  completed (is the position sequenced or not, coverage, ...) for
+  samples without a variant call. The file is also annotated with all
+  databases in refdir (impact on genes, regions of interest, known
+  variant data)</dd>
+</dl>
+<h2 id="h6938">analysisinfo files</h2>
+<p>Most files have an accompanying analysisinfo file (same name as
+the file, but with the extension .analysisinfo added). These are tsv
+files containing information about how the file was made (which
+programs were used, which versions, settings, ...)</p>
+<h2 id="h7212">projectinfo.tsv</h2>
+<p>projectinfo.tsv is a <a href="tsv.html">tsv</a> file containing
+data about the project. It must have 2 columns: key and value. The
+following keys can be found:</p>
+
+<dl>
+  <dt>refdir</dt>
+  <dd>directory containing reference data (genome sequence,
+  annotation, ...). projectinfo.tsv file.</dd>
+  <dt>split</dt>
+  <dd>if 1, each alternative allele is on a separate line. If 0,
+  multiple alternative alleles in the sample location and allele
+  specific data are on one line, the relevant fields containing
+  (comma separated) lists.</dd>
+</dl>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

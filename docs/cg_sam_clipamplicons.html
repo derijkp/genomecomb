@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_sam_clipamplicons</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">sam_clipamplicons</h1>
+<h2 id="h25">Format</h2>
+<p>cg sam_clipamplicons ?options? ampliconsfile ?sourcefile?
+?resultfile?</p>
+<h2 id="h110">Summary</h2>
+<p>Clip primers from aligned sequences in a sam file (by changing
+bases to N and quality to 0) given a set of target amplicons.</p>
+<h2 id="h250">Description</h2>
+<p>cg sam_clipamplicons clips primers from aligned sequences in a sam
+file (by changing bases to N and quality to 0) given a set of target
+amplicons.</p>
+<p>sourcefile can be in sam, bam or cram format. (in case of cram,
+the -refseq option must be given). The format is deduced from the
+file extension. If sourcefile is not given or &quot;-&quot;, the
+input data is taken from stdin. In this case, it must be in sam
+format, unless the option -inputformat is used to specify another
+input format.</p>
+<p>resultfile can also be in sam, bam or cram format. When sent to
+stdout (resultfile absent or &quot;-&quot;) the format defaults to
+sam, unless changed using the -outputformat option.</p>
+<h2 id="h920">Arguments</h2>
+
+<dl>
+  <dt>ampliconsfile</dt>
+  <dd>tab delimited file containing targets with at least following
+  columns: chromosome begin end</dd>
+  <dt>sourcefile</dt>
+  <dd>source sam file</dd>
+  <dt>resultfile</dt>
+  <dd>resulting sam file with clipping</dd>
+</dl>
+<h2 id="h1123">Options</h2>
+
+<dl>
+  <dt>-refseq refseq</dt>
+  <dd>genomic reference sequence</dd>
+  <dt>-if sam/bam/cram (-inputformat)</dt>
+  <dd>format of input</dd>
+  <dt>-of sam/bam/cram (-outputformat)</dt>
+  <dd>format of output</dd>
+</dl>
+<h2 id="h1287">Category</h2>
+<p>Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

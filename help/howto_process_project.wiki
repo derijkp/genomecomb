@@ -1,9 +1,10 @@
 = Howto process_project =
 
-This text describes how to analyze, combine, and annotate whole genome,
-exome or targetted sequencing raw data using genomecomb. Starting from raw
-data, a fully annotated [[projectdir]] will be created, that can be further
-queried and analyzed using [[cg_select]] and [[cg_viz]]
+This text describes an example of how to use cg process_project to
+analyze, combine, and annotate whole genome, exome or targetted Illumina
+sequencing raw data using genomecomb. Starting from raw data, a fully
+annotated [[projectdir]] will be created, that can be further queried and
+analyzed using [[cg_select]] and [[cg_viz]]
 
 In this howto, the smal example and test data set ori_mixed_yri_mx2 downloadable from the genomecomb
 website will be used. This data set was derived from publically available exome and genome
@@ -21,7 +22,14 @@ directories like <projectdir>/samples/<sampledir>/fastq/<fastqfile>) using other
 
 We start by creating and populating a projectdir (tmp/mixed_yri_mx2) with samples using the [[cg_project_addsample]] 
 command. (The projectdir will be made with the first addsample call if it does not yet exists)
+
 {{{
+
+# get the example data
+wget http://genomecomb.bioinf.be/download/dataset_mixed_yri_mx2.tar.gz
+tar xvzf dataset_mixed_yri_mx2.tar.gz
+cd dataset_mixed_yri_mx2
+
 # Create the projectdir
 # This is not strictly needed: 
 # It would be made with the first addsample call if it did not yet exists
@@ -38,32 +46,56 @@ cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 ori/mixed_yri_mx2/gilNA1924
 # Add illumina fastq files from exome sequencing
 # The option -targetfile gives a regionfile with the target regions for this sample
 # (The \ at the end of the first line means the the command is continued on the next line)
-cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
-tmp/mixed_yri_mx2 exNA19239mx2 ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+  tmp/mixed_yri_mx2 exNA19239mx2 ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz
 
 # Add another exome sequencing sample
 # Here we do not give the individual fastq files as argument, but the directory containing them.
 # you can only do this if the directory does not contain fastq files from other samples
-cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
-tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+
 }}}
 
 == Process project ==
 The [[cg_process_project]] command will run the entire secondary analysis (clipping,
 alignment, variant calling, reports, ...) and part of the tertiary
 analysis (combining samples, annotation, ...) on the samples in the projectdir
-Reference information (genome sequence, annotation files, etc.) are in /data/refseq/hg19
+Reference information (genome sequence, annotation files, etc.) are in /complgen/refseq/hg19
 {{{
-cg process_project -verbose 2 -d 2 -split 1 -dbdir /data/refseq/hg19 tmp/mixed_yri_mx2
+cg process_project -verbose 2 -d 2 \
+    -paired 1 -clip 1 \
+    -aligner 'bwa' \
+    -removeduplicates 1 \
+    -realign 1 \
+    -distrreg 0 \
+    -aliformat cram \
+    -varcallers 'gatkh strelka' \
+    -svcallers 'manta' \
+    -refdir /complgen/refseq/hg19 \
+    tmp/mixed_yri_mx2
 }}}
+
 If the command is interupted, The processing can continue from where it
-was by repeating the same command. Processing can also be distributed over
-more than one processing unit: The -d 2 parameter in the example
-distibutes the processing over 2 cores on the local machine. If you have a
-Sun Grid Engine cluster, you can distribute on the cluster using -d sge
+was by repeating the same command. 
+
+Processing can be distributed over more than one processing unit: The -d 2
+parameter in the example distibutes the processing over 2 cores on the
+local machine. If you have a cluster, you can distribute on the cluster
+using -d sge (for Sun Grid Engine) or -d slurm
+
+The -distrreg is 0 because for such a small data set (covering only a
+small part of the genome) more extensive distribution would actually give
+more work (overhead) than it saves (esp. giving it only 2 cores to work
+with)
+
+== Results ==
+All analysis results are added in the projectdir, as described in
+[[projectdir]]. You can check the process_project_*.finished file (tsv)
+for information on how long jobs took etc. If there was an error, the file
+will be called process_project_*.error, and contains info on the error(s).
 
 == View results ==
-All analysis results are added in the projectdir, described in [[projectdir]].
 [[cg_viz]] allows an easy (graphical interface) view of the results.
 {{{
 cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
@@ -92,20 +124,21 @@ cg select -n tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
 
 # Write a file tmp/short.tsv containing only the basic variant fields
 cg select -f 'chromosome begin end type ref alt' \
-tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
 
-# Add a field count that calculates in how many of the "NA19240 samples" zyg is either t or m
-cg select \
--f 'chromosome begin end type ref alt {count=scount($zyg in "t m" and $sample regexp "NA19240")}' \
-tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
+# Add a field count that calculates in how many of the "NA19240 samples" zyg-gatkh-rdsbwa
+# (zygosity call by gatk haplotype caller) is either t or m
+cg select -overwrite 1 \
+    -f 'chromosome begin end type ref alt {count=scount($zyg-gatkh-rdsbwa in "t m" and $sample regexp "NA19240")}' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/short.tsv
 
 # Select only variants where gatk has made a homozygous call in sample gilNA19240mx2
 # The results are compressed using "piping": 
 # The results of cg select are transferred (indicated by the | or pipe character) to "cg zst"
 # cg zst compresses the data.
 # the > character redirects the results of the compression to the file tmp/homozygous.tsv.zst
-cg select -q '$zyg-gatk-rdsbwa-gilNA19240mx2 == "m"' \
-tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst | cg zst > tmp/homozygous.tsv.zst
+cg select -q '$zyg-gatkh-rdsbwa-gilNA19240mx2 == "m"' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst | cg zst > tmp/homozygous.tsv.zst
 
 # intGene_impact contains the impact of the variant on all alternative splice variants in the intGene
 # gene dataset. intGene_impact contains a list of impacts (so we cannot use ==).
@@ -118,48 +151,51 @@ tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr.tsv
 # (getting the correct list may be easier in cg viz using Easyquery)
 # shares is true if the list in intGene_impact shares elements with the given list
 cg select \
--q '$intGene_impact shares {RNASTART UTR5KOZAK UTR5SPLICE UTR5 RNAEND UTR3SPLICE UTR3 RNASPLICE RNA}' \
-tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr2.tsv
+    -q '$intGene_impact shares {RNASTART UTR5KOZAK UTR5SPLICE UTR5 RNAEND UTR3SPLICE UTR3 RNASPLICE RNA}' \
+    tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr2.tsv
 
 }}}
 
-== Reference ==
+== References ==
 The following is an example text describing the default process_project
 workflow for Illumina sequencing with the proper references (The <version>
 actually used for the various tools can be found in the analysisinfo files):
 
 {{{
-Analysis was performed using the pipeline integrated in genomecomb (1) The
-pipeline used fastq-mcf (2) for adapter clipping. Reads were then aligned
-using bwa mem (3) and the resulting sam file converted to bam using
-samtools (4). Bam files were sorted and duplicates were removed (marked) using
-samtools markdup (4). Realignment in the neighborhood of
-indels was performed with GATK (5). Variants were called at all positions
-with a totalcoverage >= 5 using both GATK (5) and samtools (4). At this
-initial stage positions with a coverage < 5 or a quality < 30 were
-considered unsequenced. The resulting variant sets of different
-individuals were combined and annotated using genomecomb (1).
+Analysis was performed in-house with a standardized pipeline integrated in
+genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
+were aligned to the hg38 genome reference (3) using bwa mem (4) and the
+resulting sam file converted to bam using samtools (5). Bam files were
+sorted and duplicates were removed using samtools markdup (5). Realignment
+in the neighborhood of indels was performed with GATK (6). Variants were
+called at all positions with a totalcoverage >= 5 using both GATK
+haplotype caller (7) and strelka (8). At the initial stage positions with
+a coverage < 8 or a genotype quality score < 25 were considered
+unsequenced. Structural variants were called using manta (9) and lumpy
+(10). The resulting variant sets of different individuals were combined
+and annotated using genomecomb (1).
 
-(1) genomecomb version <version>, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
-(2) fastq-mcf version <version>, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
-(3) bwa version <version>, Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168] 
-(4) samtools version <version>, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943] 
-(5) GATK version <version>, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(1) genomecomb <version>, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
+(2) fastq-mcf <version>, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
+(3) hg38 (GRCh38) downloaded from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz on 2020-06-06, Schneider V.A. et al. (2017) Evaluation of GRCh38 and de novo haploid genome assemblies demonstrates the enduring quality of the reference assembly. Genome Res. 2017 May; 27(5): 849\u2013864. [PMID: 28396521]
+(4) bwa <version>, Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168] 
+(5) samtools <version>, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943] 
+(6) GATK 3.8-1-0-gf15c1c3ef, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(7) GATK <version>, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(8) strelka <version>, Kim S. et al. (2018) Strelka2: fast and accurate calling of germline and somatic variants.  Nat Methods. 15(8):591-594. [PMID: 30013048]
+(9) manta <version>, Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and cancer sequencing applications. Bioinformatics, 32, 1220-1222 [PMID: 26647377]
+(10) lumpy <version>, Layer M.R. et al. (2014) LUMPY: a probabilistic framework for structural variant discovery. Genome biology, 15(6), R84 [PMID: 24970577]
 }}}
 
-=== Variations ===
-For amplicon sequencing, remove the markduplicates part, and add
+=== Reference Variations ===
+Adapt this according to the analysis tools used. The actual versions used
+can be found in the analysisinfo files. In the example we did not run
+lumpy (which gives an error on too small a dataset), so this should be
+removed from the text. If other tools were used, add them in the text and
+the references.
+
+For amplicon sequencing, the markduplicates part should be removed, and
+the following part added after making the realignment:
 {{{Amplicon primers were clipped using genomecomb (1)}}}
-after making the realignment.
 
-If freebayes was used to call variants, add it to the list of variant callers, also
-for freebayes, genoqual is used for determining unsequenced (freebayes
-does not give the correct value in quality for doing this), e.g.:
-
-{{{
-... and freebayes (x). For GATK, positions with a coverage < 5 or a quality score < 30 were
-considered unsequenced. For freebayes coverage < 5 or a genotype quality < 30
-was used as a cut-off.
-
-(x) freebayes version <version>, Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing. arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012
 }}}

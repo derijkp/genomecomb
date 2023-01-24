@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/help/joboptions</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Joboptions</h1>
+<h2 id="h18">Format</h2>
+<p>cg command ?joboptions? ...</p>
+<h2 id="h60">Summary</h2>
+<p>Several commands understand these job options</p>
+<h2 id="h121">Description</h2>
+<p>Several genomecomb commands (indicated by &quot;supports job
+options&quot; in their help) consist of subtasks (jobs) that can be
+run in parallel. If such command is interupted, it can continue
+processing from the already processed data (completed subtasks) by
+running the same command. The --distribute or -d option can be used
+to select alternative processing methods.</p>
+<h2 id="h500">direct run</h2>
+<p>Without a -d option (or -d direct) the command will run jobs
+sequentially, stopping when an error occurs in a job. It will skip
+any job where the targets were already completed (and the files it
+uses as input were not changed after this completion). While runing
+the command maintains a logfile containing one line with information
+for each job (such as job name, status, starttime, endtime, duration,
+target files), which can be useful to check when an error occurs.
+After a succesful run this logfile is removed unless you specifically
+specified -d direct or -d 1.</p>
+<h3 id="h1086">distributed run</h3>
+<p>An analysis can be run faster by running multiple jobs at the same
+time using multiple cores/threads on one machine (by giving the
+number of cores/threads that may be used to the -d option) or nodes
+on a cluster managed by the grid engine (option <b>sge</b>)</p>
+<p>Some jobs depend on results of previous jobs, and have to wait for
+these to finish first, so the entire capacity is not allways filled.
+If an error occurs in a job, the program will still continue with
+other jobs. Subsequent jobs depending on the results of the failed
+job will also fail, but others may run succesfully. (In this way -d 1
+is different from -d direct).</p>
+<p>The command used to start the analysis will produce a logfile
+(with the extension .submitting) while submitting the jobs. Each job
+gets a line in the logfile, and also produces a number of small files
+(runscript, joblogfile, error output) in directories called log_jobs.
+(The first column in the logfile refers to their location.) These
+small files are normally removed after a successfull analysis (but
+not when there were errors, as they may be useful for debugging).
+When the command is finished submitting, the logfile is updated and
+gets the extension .running. When the run is completed, the logfile
+is again updated and gets the extension .finished if no jobs had
+errors, or .error if it did. You can update the logfile while jobs
+are running using the command:</p>
+<pre>
+cg job_update logfile
+</pre>
+<h3 id="h2538">local distribtion</h3>
+<p>Using <b>-d number</b> starts up to <b>number</b> jobs in separate
+processes managed by the submitting command. The submitting command
+must keep running untill all jobs are finished. it will output some
+progress, but you can get more info by updating and checking the log
+file.</p>
+<h3 id="h2837">grid engine distribution</h3>
+<p>Using &quot;<b>-d sge</b>&quot; the submitting command will submit
+all jobs to the Grid Engine as grid engine jobs with proper
+dependencies between the jobs. The program itself will stop when all
+jobs are submitted. You can check progress/errors by updating and
+checking the logfile.</p>
+<p>Some tools request multiple cores/slots for one job on a grid
+engine cluster using the parallel environment (pe) local (using -pe
+local &lt;nr of slots&gt; -R y). This will only work if the pe local
+is properly defined (it often is, by convention, but not by default).
+If no pe local is defined, multiple slots are not requested and nodes
+may be overloaded. if the local pe is defined, but not in a way that
+allows for this, jobs may not run. The following settings (create
+with &quot;qconf -ap local&quot; or modify with &quot;qconf -mp
+local&quot;) work on our cluster pe_name local slots 9999999
+user_lists NONE xuser_lists NONE start_proc_args /bin/true
+stop_proc_args /bin/true allocation_rule $pe_slots control_slaves
+TRUE job_is_first_task TRUE urgency_slots min accounting_summary
+FALSE</p>
+<h2 id="h3971">Options</h2>
+<p>List of all options supported by job enabled commands:</p>
+
+<dl>
+  <dt>-d value (--distribute)</dt>
+  <dd>distribute method, see in description (also -distribute)</dd>
+  <dt>-dpriority value</dt>
+  <dd>(only for sge) run jobs with the given priority (default is
+  0)</dd>
+  <dt>-dqueue value</dt>
+  <dd>(only for sge) Use this option if you want to run on another
+  queue than the default all.q</dd>
+  <dt>-dcleanup success/never/allways</dt>
+  <dd>Allows you to keep all run/log files in the log_jobs dirs
+  even if a jub is successfull (<b>never</b>), or to allways delete
+  them (<b>allways</b>) instead of only deleting them after a
+  succesfull run (<b>success</b>)</dd>
+  <dt>-dremove 0/1</dt>
+  <dd>remove logfiles from older runs (relevant info is included in
+  new one, default 0)</dd>
+  <dt>-v number (--verbose)</dt>
+  <dd>This general option has a big effect on job enabled commands:
+  If it is &gt; 0, they will output a lot of info (to stder) on
+  dependencies, jobs started, etc.</dd>
+  <dt>-f 0/1 (--force)</dt>
+  <dd>use -f 1 to rerun all jobs, even if some were actually
+  already successfully finished (also -force)</dd>
+  <dt>--skipjoberrors 0/1</dt>
+  <dd>Errors in one job cause the entire command to stop (in direct
+  mode); use --skipjoberrors 1 to skip over these errors and complete
+  other jobs (as far as they are not dependent on the the job with an
+  error) (also -skipjoberrors)</dd>
+  <dt>-logfile filename</dt>
+  <dd>use filename as base for logfile instead of the default.</dd>
+</dl>
+<p>When run on a cluster, it can be important to request enough
+memory/time. Genomecomb will by default request a larger memory or
+timeslot for larger jobs. It is however very difficult to get the
+right amount for all occasions (as it can be highly dependent on
+data). Many genomcomb tools have the options -mem and -time to
+increase the amount requested (vs the default). However not all, so
+the following two generic job options can change these requested
+amounts for any job:</p>
+
+<dl>
+  <dt>-dmem</dt>
+  <dd>memory value (given as e.g. 2G for 2 gigbyte or 4M for 4
+  megabyte) or requested memory adjustment list</dd>
+  <dt>-dtime</dt>
+  <dd>time value (given as 2:00:00 for 2 hours) or time adjustment
+  list If a single value is given it will be the default value for
+  all jobs (unless a specific higher default would already be used).
+  Using an adjustment list for these options allows changing the
+  values for specific job(s). The list consists of, alternatingly, a
+  pattern and a value. If the name of a job matches the pattern, the
+  value is applied to that job. The pattern * matches any job name,
+  and can thus be used to set a default at the start of the list (The
+  last match in the list determines the actual value). The other
+  patterns are used as regular expressions. for example, the
+  following options</dd>
+</dl>
+<pre>
+-dmem '* 2G map_bwa 10G' -dtime '*2:00:00 map_bwa 10:00:00'
+</pre>
+<p>will set the default requested memory to 2G and time to 2h, but
+for mapping with bwa 10G of memory will be re quested and 10h.</p>
+<h2 id="h6740">Category</h2>
+<p>Format Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_depth_histo</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Depth_histo</h1>
+<h2 id="h19">Format</h2>
+<p>cg depth_histo ?options? bamfile ?regionfile?</p>
+<h2 id="h79">Summary</h2>
+<p>makes a histogram of the depth in the given bamfile, subdivided in
+on- and oftarget regions</p>
+<h2 id="h186">Description</h2>
+<p>depth_histo outputs a <a href="tsv.html">tsv</a> formatted
+histogram of the depth: For each depth (column depth) the number of
+bases with this depth are given in the target region (column
+ontarget) and outside the target region (column offtarget). The
+target region is given in the regionfile in <a
+href="tsv.html">tsv</a> format. The histogram is by default limited
+to a maximum depth of 1000 (Positions with a depth &gt;= 1000 are
+counted as depth 1000). This can be changed with the -max option.
+Depths not presents in are skipped in the output</p>
+<h2 id="h712">Options</h2>
+
+<dl>
+  <dt>-max maxnum</dt>
+  <dd>The maximum depth in the histogram (default = 1000).
+  Positions with a depth &gt;= maxnum are counted as depth maxnum</dd>
+  <dt>-q num</dt>
+  <dd>Only count reads with base quality greater than num</dd>
+  <dt>-Q num</dt>
+  <dd>Only count reads with mapping quality greater than num</dd>
+</dl>
+<h2 id="h983">Arguments</h2>
+
+<dl>
+  <dt><b>bamfile</b></dt>
+  <dd>bamfile</dd>
+  <dt><b>regionfile</b></dt>
+  <dd>target regions. If no target regionfile is given, all bases
+  will be counted in offtarget</dd>
+</dl>
+<h2 id="h1130">Example</h2>
+<pre>
+cg depth_histo test.bam regfile.tsv &gt; histo.tsv
+</pre>
+<h2 id="h1201">Category</h2>
+<p>Report</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

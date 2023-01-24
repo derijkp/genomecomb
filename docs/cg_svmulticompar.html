@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_svmulticompar</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Svmulticompar</h1>
+<h2 id="h21">Format</h2>
+<p>cg svmulticompar ?options? file svfile ...</p>
+<h2 id="h78">Summary</h2>
+<p>Compare multiple structural variant files</p>
+<h2 id="h135">Description</h2>
+<p>This command is used to create multi sv compar_files. These are
+tab separated files indicating structural variants present in one or
+more samples. As structural variant (sv) calls are usually imprecise,
+the sv (of different samples) are approximately matched: Begin, end
+or alt values do not have to match exactly. The global variant
+features (chromosome, begin, end, type, ref, alt) are taken from the
+first sample the variant is seen in. (so there can be small
+differences due to order of samples given) The values for begin, end
+and alt values of each sample are kept as lbegin-sample, lend-sample
+and lalt-sample.</p>
+<p>SVs match if they are the same type (trans and bnd are considered
+the same type for this) and begin, end and alt differences are within
+the given margins. Begin (and end) difference are calculated by the
+number of bases between begin positions (and end positions), and must
+(in general) not be more than <b>margin</b> (default 30) bases. For
+deletions and inversions <b>lmargin</b> (default 300) is used, but
+they also must have at least <b>minoverlap</b> (default 75%) percent
+(vs largest SV) to match. Insertions use <b>margin</b> (30) from
+begin and end differences, and pct overlap (but only based on size,
+sequence is not compared) must be at least <b>minoverlap</b> (default
+75%). For special insertions (alt starts with &lt;) alts must match
+completely. For translocations or breakends <b>tmargin</b> (default
+300) is used as a limit for begin and end differences; They must also
+link to the same chromosome, and difference in position of the link
+may also be maximaly <b>tmargin</b>.</p>
+<h2 id="h1741">Arguments</h2>
+
+<dl>
+  <dt><b>svmulticomparfile</b></dt>
+  <dd>resultfile, will be created if it does not exist</dd>
+  <dt><b>svfile</b></dt>
+  <dd>file containing structural variants of new sample to be added
+  More than one svfile can added in one command</dd>
+</dl>
+<h2 id="h1954">Options</h2>
+
+<dl>
+  <dt>-margin number</dt>
+  <dd>Allow begin and end to deviate the number of bases given
+  (default 30)</dd>
+  <dt>-lmargin number</dt>
+  <dd>Allow begin and end to deviate the number of bases given for
+  deletions, inversions (default 300)</dd>
+  <dt>-tmargin number</dt>
+  <dd>Allow begin and end to deviate the number of bases given for
+  translocations (trans) and breakends (bnd) (default 300)</dd>
+  <dt>-overlap number</dt>
+  <dd>minimum percent overlap needed to identify deletions,
+  inversions or insertions (size) as the same (default 75)</dd>
+</dl>
+<h2 id="h2440">Category</h2>
+<p>Variants</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_fastq_split</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">fastq_split</h1>
+<h2 id="h19">Format</h2>
+<p>cg fastq_split ?options? infile outtemplate</p>
+<h2 id="h77">Summary</h2>
+<p>split a (large) fastq file in multiple smaller ones</p>
+<h2 id="h144">Description</h2>
+<p>cg fastq_split will split a (large) fastq file in several smaller
+fastq files. You can either specify the target number of sequences
+per output file (-numseq option), or the target number of files you
+want to generate (-parts option). outtemplate is a filename (which
+may contain a path) that determines the names of the files the parts
+of the fastq file will be written to. The file part will be prepended
+with p&lt;part&gt;_., e.g. if outtemplate is results/test.fastq.gz,
+the results files will be named: results/p1_test.fastq.gz
+results/p2_test.fastq.gz ...</p>
+<p>The command supports parallel processing using the <a
+href="joboptions.html">joboptions</a>, mainly for the second part of
+the command, namely compressing the resulting fastq files. The first
+part (splitting up the file) is not parallellized, but can be run as
+a single job on a cluster when using the -parts option. Using
+-numseq, the first part is always run directly (not as a job),
+because the command cannot know up front how many parts will be
+generated, and thus not submit the follow up compression jobs</p>
+<h2 id="h1207">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b> ...</dt>
+  <dd>fastq file to split</dd>
+  <dt><b>outtemplate</b> ...</dt>
+  <dd>template for filenames that will be generated</dd>
+</dl>
+<h2 id="h1331">Options</h2>
+
+<dl>
+  <dt><b>-parts number</b></dt>
+  <dd>number of output files to generate (this option has
+  preference)</dd>
+  <dt><b>-numseq number</b></dt>
+  <dd>number of sequences to store per output file</dd>
+  <dt><b>-maxparts number</b></dt>
+  <dd>maximum number of parts that will be generated (if numseq is
+  small, last part will contain all remaining sequenced)</dd>
+  <dt><b>-threads number</b></dt>
+  <dd>number of threads to use to compress the output files (bgzip
+  -@)</dd>
+</dl>
+<h2 id="h1726">Category</h2>
+<p>Conversion</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

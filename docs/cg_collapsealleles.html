@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_collapsealleles</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">collapsealleles</h1>
+<h2 id="h23">Format</h2>
+<p>cg collapsealleles ?options? ?file? ?outfile?</p>
+<h2 id="h83">Summary</h2>
+<p>Convert a split variant file to unsplit by collapsing alleles of
+the same variant into one line.</p>
+<h2 id="h195">Description</h2>
+<p>In a split <a href="tsv.html">tsv</a> variant file, multiple
+alternative alleles of the same variant are on different lines. cg
+collapsealleles can join these lines to create an unsplit,
+multiallelic variant file. If multiple lines are merged, most of the
+fields will contain a list (comma separated) of the values for that
+field on the original separate lines (one element per alternative
+allele). If they all have the same value, that single value is put in
+the result field instead of the list</p>
+<p>For some fields the correct value(s) are calculated based on the
+merged allele lines.</p>
+
+<dl>
+  <dt>sequenced</dt>
+  <dd>one sequenced code (v if one of the allelles is v, u if one
+  of them is u, ...)</dd>
+  <dt>zyg</dt>
+  <dd>one zyg code (e.g. m if one of the joined alleles was
+  homozygous)</dd>
+  <dt>genotypes</dt>
+  <dd>list of genotypes (same number as in the individual alleles)</dd>
+</dl>
+<h2 id="h1019">Arguments</h2>
+
+<dl>
+  <dt>file</dt>
+  <dd>file to be converted (from stdin if not given)</dd>
+  <dt>outfile</dt>
+  <dd>file to be written (write to stdout if not given)</dd>
+</dl>
+<h2 id="h1152">Options</h2>
+
+<dl>
+  <dt>-duplicates method</dt>
+  <dd>method tells how to deal with situation when there are
+  multiple lines that contain the same allele (from the same variant)
+  * keep: keep all (default), the list in alt field can contain
+  duplicate alleles * max field: pick the one that has the highest
+  value for the given field * min field: pick the one that has the
+  lowest value for the given field * first: pick the first one in the
+  file</dd>
+</dl>
+<h2 id="h1577">Category</h2>
+<p>tsv</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+
