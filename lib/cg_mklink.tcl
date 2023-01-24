@@ -43,8 +43,16 @@ proc mklink {args} {
 			file link -symbolic $dest $src
 		} else {
 			set keeppwd [pwd]
+			mkdir [file dir $dest]
 			cd [file dir $dest]
-			exec ln -s $src [file tail $dest]
+			# for some reason, linking to a non-existing file this way (called from Tcl)
+			# sometimes gives an "Error: couldn't execute "ln": too many levels of symbolic links" error
+			# workaround: called from bash -> no error
+			if {[catch {
+				exec ln -s $src [file tail $dest]
+			}]} {
+				exec bash -c "ln -s \'$src\' \'[file tail $dest]\'"
+			}
 			cd $keeppwd
 		}
 	}
