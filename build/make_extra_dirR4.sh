@@ -262,25 +262,25 @@ sudo make install
 # R
 # -
 # useful hints in getting it compiled found at https://tdhock.github.io/blog/2017/compiling-R/
-#version=3.5.3
+#dirRversion=3.5.3
 #majorversion=3
-version=4.2.1
+dirRversion=4.2.1
 majorversion=4
 
 cd /build
-rm -rf /build/R-$version
-download https://cran.r-project.org/src/base/R-$majorversion/R-$version.tar.gz
-cd /build/R-$version
+rm -rf /build/R-$dirRversion
+download https://cran.r-project.org/src/base/R-$majorversion/R-$dirRversion.tar.gz
+cd /build/R-$dirRversion
 make distclean || true
 
 # make sure the manually installed libs (in /usr/local) are used
-cd /build/R-$version
+cd /build/R-$dirRversion
 PATH=/usr/local/bin:$PATH \
     LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:$LD_LIBRARY_PATH \
     CFLAGS="-I/usr/local/include -fPIC" \
     CPPFLAGS="-I/usr/local/include -fPIC" \
     LDFLAGS="-L/usr/local/lib -L/usr/local/lib64" \
-    ./configure  --enable-static --disable-java --enable-R-shlib --prefix=/build/dirR-$version-$arch
+    ./configure  --enable-static --disable-java --enable-R-shlib --prefix=/build/dirR-$dirRversion-$arch
 
 PATH=/usr/local/bin:$PATH \
     LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:$LD_LIBRARY_PATH \
@@ -297,37 +297,37 @@ PATH=/usr/local/bin:$PATH \
     make install
 
 # copy dl libraries to R local lib dir
-cp -a -f /usr/lib64/libgfortran*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libgomp*.so.1* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/*pango* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /lib64/libreadline*.so.6* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libquadmath.so.0* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /build/zlib-1.2.11/libz.so.1* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib64/libssl*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib64/libcrypto*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/local/lib/libcurl*.so* /build/dirR-$version-$arch/lib64/R/lib
-# cp -a -f /usr/local/lib/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libpng*.so* /build/dirR-$version-$arch/lib64/R/lib
-# cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libtiff*.so* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libpixman*.so* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libcairo*.so* /build/dirR-$version-$arch/lib64/R/lib
-#cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libxml2*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/*tcl* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/*tk* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -fr /usr/share/tcl8.5 /build/dirR-$version-$arch/lib64/R/share
-cp -a -fr /usr/share/tk8.5 /build/dirR-$version-$arch/lib64/R/share
-#cp -a -f /usr/lib64/libpng12.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/liblzma* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libicuuc.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libicudata.so* /build/dirR-$version-$arch/lib64/R/lib
-cp -a -f /usr/lib64/libpcre2-8.so* /build/dirR-$version-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libgfortran*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libgomp*.so.1* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*pango* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /lib64/libreadline*.so.6* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libquadmath.so.0* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /build/zlib-1.2.11/libz.so.1* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/local/lib64/libssl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/local/lib64/libcrypto*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/local/lib/libcurl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# cp -a -f /usr/local/lib/libpng*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpng*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# cp -a -f /usr/local/lib/libtiff*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libtiff*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpixman*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+#cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libxml2*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tcl* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tk* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/*tk* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -fr /usr/share/tcl8.5 /build/dirR-$dirRversion-$arch/lib64/R/share
+cp -a -fr /usr/share/tk8.5 /build/dirR-$dirRversion-$arch/lib64/R/share
+#cp -a -f /usr/lib64/libpng12.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/liblzma* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicuuc.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libicudata.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libpcre2-8.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 
 echo '
 puts [list set argv $argv]
@@ -356,90 +356,98 @@ close $f
 exec chmod ugo+x $file
 ' > /tmp/convert
 
-tclsh /tmp/convert /build/dirR-$version-$arch/bin/R /build/dirR-$version-$arch
-cp /build/dirR-$version-$arch/bin/R.ori /build/dirR-$version-$arch/R.ori
-tclsh /tmp/convert /build/dirR-$version-$arch/R /build/dirR-$version-$arch '$(dirname "$script")'
-tclsh /tmp/convert /build/dirR-$version-$arch/lib64/R/bin/R /build/dirR-$version-$arch '$(dirname "$(dirname "$(dirname "$(dirname "$script")")")")'
+tclsh /tmp/convert /build/dirR-$dirRversion-$arch/bin/R /build/dirR-$dirRversion-$arch
+cp /build/dirR-$dirRversion-$arch/bin/R.ori /build/dirR-$dirRversion-$arch/R.ori
+tclsh /tmp/convert /build/dirR-$dirRversion-$arch/R /build/dirR-$dirRversion-$arch '$(dirname "$script")'
+tclsh /tmp/convert /build/dirR-$dirRversion-$arch/lib64/R/bin/R /build/dirR-$dirRversion-$arch '$(dirname "$(dirname "$(dirname "$(dirname "$script")")")")'
 
 # packages
 # --------
 
-#if [ ! -f /build/dirR-$version-$arch/lib64/R/etc/Makeconf.ori ] ; then
-#	cp /build/dirR-$version-$arch/lib64/R/etc/Makeconf /build/dirR-$version-$arch/lib64/R/etc/Makeconf.ori
+#if [ ! -f /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf.ori ] ; then
+#	cp /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf.ori
 #fi
-#sed 's/CXX11 =/CXX11 = g++ -std=c++11/g' /build/dirR-$version-$arch/lib64/R/etc/Makeconf.ori \
+#sed 's/CXX11 =/CXX11 = g++ -std=c++11/g' /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf.ori \
 #    | sed 's#CXX11FLAGS =  $(LTO)#CXX11FLAGS = -I/usr/local/include -fPIC#g' \
-#    > /build/dirR-$version-$arch/lib64/R/etc/Makeconf
+#    > /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf
 
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("tidyverse", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("rmarkdown", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("shiny", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("googleVis", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("DT", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("RColorBrewer", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("pheatmap", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("curl", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("plotly", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("tidyverse", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rmarkdown", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("shiny", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("googleVis", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("DT", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("RColorBrewer", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("pheatmap", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("curl", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("plotly", repos="http://cran.us.r-project.org")'
 yuminstall libtiff-devel
-cp -a -f /usr/lib64/libtiff.so* /build/dirR-$version-$arch/lib64/R/lib
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("jpeg", repos="http://cran.us.r-project.org")'
+cp -a -f /usr/lib64/libtiff.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("jpeg", repos="http://cran.us.r-project.org")'
 
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("xml2", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("XML", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("xml2", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("XML", repos="http://cran.us.r-project.org")'
 
 yuminstall cmake3
 yuminstall NLopt NLopt-devel
-cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$version-$arch/lib64/R/lib
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("nloptr", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("lme4", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("pbkrtest", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("car", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("rstatix", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("ggpubr", repos="http://cran.us.r-project.org")'
+cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("nloptr", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("lme4", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("pbkrtest", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("car", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstatix", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggpubr", repos="http://cran.us.r-project.org")'
 
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("BiocManager", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("DESeq2")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("edgeR")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("http://hartleys.github.io/QoRTs/QoRTs_STABLE.tar.gz",repos=NULL,type="source");'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("BiocManager", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DESeq2")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("edgeR")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("http://hartleys.github.io/QoRTs/QoRTs_STABLE.tar.gz",repos=NULL,type="source");'
 # get java part with: wget http://hartleys.github.io/QoRTs/QoRTs.jar
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("PCAtools")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("pcaExplorer")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("PCAtools")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("pcaExplorer")'
 
-/build/dirR-$version-$arch/R --vanilla -e $'BiocManager::install("Rhtslib")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("Rsamtools")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("ggbio")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e $'BiocManager::install("Rhtslib")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("Rsamtools")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("ggbio")'
 
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("bambu")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("bambu")'
 
 # leafcutter
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("rstan", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("rstantools", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstan", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstantools", repos="http://cran.us.r-project.org")'
 yuminstall gsl-devel
-cp -a /usr/lib64/libgsl*.so* /build/dirR-$version-$arch/lib64/R/lib
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("DirichletMultinomial")'
-/build/dirR-$version-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter")'
+cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DirichletMultinomial")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter")'
 
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("Seurat", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("Seurat", repos="http://cran.us.r-project.org")'
 
 # other
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("MOFA2")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("mixOmics")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("MOFA2")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("mixOmics")'
 # Rhtslib does not compile for some reason, so not for now
-# /build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("chromVAR")'
-/build/dirR-$version-$arch/R --vanilla -e 'BiocManager::install("OmicCircos")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("RCircos", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("ggdendro", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("GGally", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("ComplexUpset", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("corrplot", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("eulerr", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("vioplot", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("gplots", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("gtools", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("ggrepel", repos="http://cran.us.r-project.org")'
-# /build/dirR-$version-$arch/R --vanilla -e 'install.packages("SRAdb", repos="http://cran.us.r-project.org")'
-# /build/dirR-$version-$arch/R --vanilla -e 'install.packages("factoextra", repos="http://cran.us.r-project.org")'
-/build/dirR-$version-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
+# /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("chromVAR")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("OmicCircos")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("RCircos", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggdendro", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("GGally", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ComplexUpset", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("corrplot", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("eulerr", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("vioplot", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("gplots", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("gtools", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggrepel", repos="http://cran.us.r-project.org")'
+# /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SRAdb", repos="http://cran.us.r-project.org")'
+# /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("factoextra", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
+
+cd /build
+ln -sf dirR-$dirRversion-$arch/R dirR-4.2.1
+ln -sf dirR-$dirRversion-$arch/R dirR
+ln -sf dirR-$dirRversion-$arch/R R
+rm dirR-$dirRversion-$arch.tar.gz || true
+tar cvzf dirR-$dirRversion-$arch.tar.gz dirR-$dirRversion-$arch dirR-4.2.1 dirR R
+cp -ra dirR-$dirRversion-$arch dirR-4.2.1 dirR R /io/extra$ARCH
 
 echo "Finished building dirR4"

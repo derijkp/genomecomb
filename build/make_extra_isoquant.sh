@@ -178,7 +178,6 @@ $dir/share/isoquant-*-0/src/gtf2db.py ${1+"$@"}
 ' > isoquant_gtf2db
 chmod ugo+x isoquant_gtf2db
 
-rm ../isoquant-$isoquantversion-$arch.tar.gz || true
 cd /build
 ln -s isoquant-$isoquantversion-$arch/isoquant .
 ln -s isoquant-$isoquantversion-$arch/isoquant isoquant3
@@ -186,8 +185,10 @@ ln -s isoquant-$isoquantversion-$arch/isoquant isoquant-$isoquantversion
 ln -s isoquant-$isoquantversion-$arch/isoquant.py .
 ln -s isoquant-$isoquantversion-$arch/gtf2db .
 ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db .
-tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant-$isoquantversion-$arch isoquant isoquant.py gtf2db isoquant_gtf2db
-cp -ra isoquant-$isoquantversion-$arch /io/extra$ARCH
+ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db isoquant3_gtf2db
+rm isoquant-$isoquantversion-$arch.tar.gz || true
+tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db
+cp -ra isoquant-$isoquantversion-$arch isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db /io/extra$ARCH
 cd /io/extra$ARCH/
 rm isoquant || true
 

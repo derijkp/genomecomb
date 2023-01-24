@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+hisat2version=2.2.1
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -114,8 +116,6 @@ conda init bash
 # hisat2
 # -----
 
-hisat2version=2.2.1
-
 conda create -y -n hisat2
 conda activate hisat2
 conda config --add channels bioconda
@@ -130,11 +130,11 @@ cd /build
 conda install -y -c conda-forge conda-pack
 rm hisat2.tar.gz || true
 conda pack -n hisat2 -o hisat2.tar.gz
-rm -rf hisat2-$hisat2version.old || true
-mv hisat2-$hisat2version hisat2-$hisat2version.old || true
+rm -rf hisat2-$hisat2version-$arch.old || true
+mv hisat2-$hisat2version-$arch hisat2-$hisat2version-$arch.old || true
 
-mkdir /build/hisat2-$hisat2version
-cd /build/hisat2-$hisat2version
+mkdir /build/hisat2-$hisat2version-$arch
+cd /build/hisat2-$hisat2version-$arch
 tar xvzf ../hisat2.tar.gz
 
 echo '#!/bin/bash
@@ -146,12 +146,13 @@ $dir/bin/hisat2 ${1+"$@"}
 ' > hisat2
 chmod ugo+x hisat2
 
-rm ../hisat2.tar.gz
 cd /build
-tar cvzf hisat2-$hisat2version.tar.gz hisat2-$hisat2version
-cp -ra hisat2-$hisat2version /io/extra$ARCH
+rm hisat2.tar.gz
+ln -sf hisat2-$hisat2version-$arch/hisat2 hisat2
+ln -sf hisat2-$hisat2version-$arch/hisat2 hisat2-$hisat2version
+tar cvzf hisat2-$hisat2version-$arch.tar.gz hisat2-$hisat2version-$arch hisat2 hisat2-$hisat2version
+cp -ra hisat2-$hisat2version-$arch hisat2 hisat2-$hisat2version /io/extra$ARCH
 cd /io/extra$ARCH/
-ln -s hisat2-$hisat2version/hisat2 .
 
 conda deactivate
 

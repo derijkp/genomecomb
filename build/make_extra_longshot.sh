@@ -22,6 +22,8 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 source "${dir}/start_hbb.sh"
 
+longshotversion=0.4.1
+
 # Parse arguments
 # ===============
 
@@ -119,23 +121,22 @@ conda init bash
 # --------
 cd /build
 
-version=0.4.1
-
 conda create -y -n longshot
 conda activate longshot
-conda install -y longshot=$version
+conda install -y longshot=$longshotversion
 
 rm longshot.tar.gz || true
 conda pack -n longshot -o longshot.tar.gz
-mkdir longshot-$version
-cd longshot-$version
+mkdir longshot-$longshotversion-$arch
+cd longshot-$longshotversion-$arch
 tar xvzf ../longshot.tar.gz
 rm ../longshot.tar.gz
 cd /build
-tar cvzf longshot-$version.tar.gz longshot-$version
-cp -ra longshot-$version /io/extra$ARCH
+ln -sf longshot-$longshotversion-$arch/bin/longshot longshot
+ln -sf longshot-$longshotversion-$arch/bin/longshot longshot-$longshotversion
+tar cvzf longshot-$longshotversion-$arch.tar.gz longshot-$longshotversion-$arch longshot longshot-$longshotversion
+cp -ra longshot-$longshotversion-$arch longshot longshot-$longshotversion /io/extra$ARCH
 cd /io/extra$ARCH/
-ln -sf longshot-$version/bin/longshot longshot
 
 conda deactivate
 

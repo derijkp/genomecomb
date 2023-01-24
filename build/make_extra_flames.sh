@@ -129,10 +129,10 @@ conda install -y -c conda-forge conda-pack
 cd /build
 rm flames.tar.gz || true
 conda pack -n flames -o flames.tar.gz
-rm -rf flames-$flamesversion.old || true
-mv flames-$flamesversion flames-$flamesversion.old || true
-mkdir /build/flames-$flamesversion
-cd /build/flames-$flamesversion
+rm -rf flames-$flamesversion-$arch.old || true
+mv flames-$flamesversion-$arch flames-$flamesversion-$arch.old || true
+mkdir /build/flames-$flamesversion-$arch
+cd /build/flames-$flamesversion-$arch
 tar xvzf ../flames.tar.gz
 
 # add flames code
@@ -143,16 +143,16 @@ rm $flamescommit.zip
 cd /build
 
 # compile single cell code
-cd /build/flames-$flamesversion/FLAMES-$flamescommit/src
+cd /build/flames-$flamesversion-$arch/FLAMES-$flamescommit/src
 g++ -std=c++11 -lz -O2 -o ../match_cell_barcode ssw/ssw_cpp.cpp ssw/ssw.c match_cell_barcode.cpp kseq.h edit_dist.cpp
-cd /build/flames-$flamesversion/bin
+cd /build/flames-$flamesversion-$arch/bin
 ln -s ../FLAMES-$flamescommit/match_cell_barcode .
-cd /build/flames-$flamesversion/FLAMES-$flamescommit/python
+cd /build/flames-$flamesversion-$arch/FLAMES-$flamescommit/python
 ln -s ../FLAMES-$flamescommit/match_cell_barcode .
 
 # add wrapper scripts
 
-cd /build/flames-$flamesversion
+cd /build/flames-$flamesversion-$arch
 wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred
 wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gff3ToGenePred
 
@@ -201,10 +201,13 @@ chmod ugo+x flames
 
 rm /build/flames.tar.gz
 cd /build
-# tar cvzf flames-$flamesversion.tar.gz flames-$flamesversion
-cp -ra flames-$flamesversion /io/extra$ARCH
+ln -sf flames-$flamesversion-$arch/flames .
+ln -sf flames-$flamesversion-$arch/flames flames-$flamesversion
+ln -sf flames-$flamesversion-$arch/bulk_long_pipeline.py flames_bulk_long_pipeline.py
+ln -sf flames-$flamesversion-$arch/sc_long_pipeline.py flames_sc_long_pipeline.py
+tar cvzf flames-$flamesversion-$arch.tar.gz flames-$flamesversion-$arch flames flames-$flamesversion flames_bulk_long_pipeline.py flames_sc_long_pipeline.py
+cp -ra flames-$flamesversion-$arch flames flames-$flamesversion flames_bulk_long_pipeline.py flames_sc_long_pipeline.py /io/extra$ARCH
 cd /io/extra$ARCH/
-ln -s flames-$flamesversion/flames .
 
 conda deactivate
 

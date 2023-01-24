@@ -208,6 +208,7 @@ ln -s lumpy-$lumpyversion-$arch/lumpyexpress .
 ln -s lumpy-$lumpyversion-$arch/lumpy_filter .
 ln -s lumpy-$lumpyversion-$arch/lumpy lumpy-$lumpyversion
 ln -s lumpy-$lumpyversion-$arch/lumpyexpress lumpyexpress-$lumpyversion
+tar cvzf lumpy-$lumpyversion-$arch.tar.gz lumpy-$lumpyversion-$arch lumpy lumpyexpress lumpy_filter lumpy-$lumpyversion lumpyexpress-$lumpyversion
 
 echo "build in $builddir/lumpy-$lumpyversion-$arch"
 echo "installed in $srcdir/lumpy-$lumpyversion-$arch"

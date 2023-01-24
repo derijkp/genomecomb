@@ -86,11 +86,14 @@ function download {
 # --------
 
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/minimap2 ] ; then
+	# already available as portable directory, nothing to do than unpack
 	cd /io/extra
 	wget https://github.com/lh3/minimap2/releases/download/v2.24/minimap2-2.24_x64-linux.tar.bz2
 	tar xvjf minimap2-2.24_x64-linux.tar.bz2
 	rm minimap2-2.24_x64-linux.tar.bz2
-	ln -sf minimap2-2.24_x64-linux/minimap2 minimap2
+	mv minimap2-2.24_x64-linux minimap2-2.24-linux-x86_64
+	ln -sf minimap2-2.24-linux-x86_64/minimap2 minimap2
+	tar cvzf /build/minimap2-2.24-linux-x86_64.tar.gz minimap2-2.24-linux-x86_64 minimap2
 fi
 
 echo "Finished installing extra external binary extra$ARCH/minimap2-2.24_x64-linux"

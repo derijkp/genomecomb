@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+sqanti3version=4.2
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -121,8 +123,6 @@ conda init bash
 # -------
 cd /build
 
-sqanti3version=4.2
-
 conda create -y -n sqanti3
 conda activate sqanti3
 
@@ -145,30 +145,30 @@ conda install -y conda-pack
 cd /build
 rm sqanti3.tar.gz || true
 conda pack -n sqanti3 -o sqanti3.tar.gz
-rm -rf sqanti3-$sqanti3version.old
-mv sqanti3-$sqanti3version sqanti3-$sqanti3version.old || true
-mkdir sqanti3-$sqanti3version
-cd /build/sqanti3-$sqanti3version
+rm -rf sqanti3-$sqanti3version-$arch.old
+mv sqanti3-$sqanti3version-$arch sqanti3-$sqanti3version-$arch.old || true
+mkdir sqanti3-$sqanti3version-$arch
+cd /build/sqanti3-$sqanti3version-$arch
 tar xvzf ../sqanti3.tar.gz
 cp -ra /build/SQANTI3-$version .
 
 # replace sqanti3 gtfToGenePred with hbb compiled one (that should work on more systems)
-cd /build/sqanti3-$sqanti3version
+cd /build/sqanti3-$sqanti3version-$arch
 mv ./SQANTI3-$version/utilities/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred.sqanti3
 cp -al ./bin/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred
 
 
 # make import from cdna_cupcake work
-cd /build/sqanti3-$sqanti3version
+cd /build/sqanti3-$sqanti3version-$arch
 git clone https://github.com/Magdoll/cDNA_Cupcake.git
-cd /build/sqanti3-$sqanti3version/cDNA_Cupcake
+cd /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake
 #pip install Cython
 #python setup.py build
 # clean a bit
-rm -rf /build/sqanti3-$sqanti3version/cDNA_Cupcake/.git
+rm -rf /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake/.git
 
 # make excutables in appdir root that will use the appdir env
-cd /build/sqanti3-$sqanti3version
+cd /build/sqanti3-$sqanti3version-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -198,14 +198,17 @@ PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_RulesFilter.
 chmod ugo+x sqanti3_RulesFilter.py
 
 # R and Rscript do not come out of conda in state that is working in appdir
-mv /build/sqanti3-$sqanti3version/bin/R /build/sqanti3-$sqanti3version/bin/R.conda || true
-mv /build/sqanti3-$sqanti3version/bin/Rscript /build/sqanti3-$sqanti3version/bin/Rscript.conda || true
-cp /io/build/sqanti3_files/R* /build/sqanti3-$sqanti3version/bin
+mv /build/sqanti3-$sqanti3version-$arch/bin/R /build/sqanti3-$sqanti3version-$arch/bin/R.conda || true
+mv /build/sqanti3-$sqanti3version-$arch/bin/Rscript /build/sqanti3-$sqanti3version-$arch/bin/Rscript.conda || true
+cp /io/build/sqanti3_files/R* /build/sqanti3-$sqanti3version-$arch/bin
 
-rm /build/sqanti3-$sqanti3version.tar.gz
+rm /build/sqanti3-$sqanti3version-$arch.tar.gz
 cd /build
-tar cvzf sqanti3-$sqanti3version.tar.gz sqanti3-$sqanti3version
-cp -ra sqanti3-$sqanti3version /io/extra$ARCH
+ln -sf sqanti3-$sqanti3version-$arch/sqanti3_qc.py .
+ln -sf sqanti3-$sqanti3version-$arch/sqanti3_RulesFilter.py .
+
+tar cvzf sqanti3-$sqanti3version-$arch.tar.gz sqanti3-$sqanti3version-$arch sqanti3_qc.py sqanti3_RulesFilter.py
+cp -ra sqanti3-$sqanti3version-$arch sqanti3_qc.py sqanti3_RulesFilter.py /io/extra$ARCH
 cd /io/extra$ARCH/
 
 conda deactivate

@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+cutesvversion=1.0.11
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -120,7 +122,6 @@ conda init bash
 # -----
 cd /build
 
-cutesvversion=1.0.11
 githubversion=cuteSV-v$cutesvversion
 
 conda create -y -n cutesv
@@ -129,11 +130,11 @@ conda install -y cutesv
 
 rm cutesv.tar.gz || true
 conda pack -n cutesv -o cutesv.tar.gz
-rm -rf cutesv-$cutesvversion.old
-mv cutesv-$cutesvversion cutesv-$cutesvversion.old || true
+rm -rf cutesv-$cutesvversion-$arch.old
+mv cutesv-$cutesvversion-$arch cutesv-$cutesvversion-$arch.old || true
 
-mkdir /build/cutesv-$cutesvversion
-cd /build/cutesv-$cutesvversion
+mkdir /build/cutesv-$cutesvversion-$arch
+cd /build/cutesv-$cutesvversion-$arch
 tar xvzf ../cutesv.tar.gz
 
 echo '#!/bin/bash
@@ -145,10 +146,12 @@ cuteSV ${1+"$@"}
 ' > cuteSV
 chmod ugo+x cuteSV
 
-rm ../cutesv.tar.gz
 cd /build
-tar cvzf cutesv-$cutesvversion.tar.gz cutesv-$cutesvversion
-cp -ra cutesv-$cutesvversion /io/extra$ARCH
+rm cutesv.tar.gz
+ln -sf cutesv-$cutesvversion-$arch/cuteSV cuteSV
+ln -sf cutesv-$cutesvversion-$arch/cuteSV cuteSV-$cutesvversion
+tar cvzf cutesv-$cutesvversion-$arch.tar.gz cutesv-$cutesvversion-$arch cuteSV cuteSV-$cutesvversion
+cp -ra cutesv-$cutesvversion-$arch cuteSV cuteSV-$cutesvversion /io/extra$ARCH
 cd /io/extra$ARCH/
 
 

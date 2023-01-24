@@ -170,7 +170,8 @@ rm clair3_models.tar.gz
 
 rm ../clair3.tar.gz
 cd /build
-tar cvzf clair3-$clair3version.tar.gz clair3-$clair3version
+ln -sf clair3-$clair3version-$arch/run_clair3.sh run_clair3.sh
+tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch run_clair3.sh
 cp -ra clair3-$clair3version /io/extra$ARCH
 cd /io/extra$ARCH/
 ln -s clair3-0.1-r5/run_clair3.sh .

@@ -129,15 +129,15 @@ conda install -y flair=$flairversion
 # make portable appdir
 rm flair.tar.gz || true
 conda pack -n flair -o flair.tar.gz
-rm -rf flair-$flairversion.old
-mv flair-$flairversion flair-$flairversion.old || true
-mkdir flair-$flairversion
-cd flair-$flairversion
+rm -rf flair-$flairversion-$arch.old
+mv flair-$flairversion-$arch flair-$flairversion-$arch.old || true
+mkdir flair-$flairversion-$arch
+cd flair-$flairversion-$arch
 tar xvzf ../flair.tar.gz
 cp /io/build/flair_files/plot_isoform_usage.patched.py bin/bin
 
 # make excutables in appdir root that will use the appdir env
-cd /build/flair-$flairversion
+cd /build/flair-$flairversion-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -205,8 +205,9 @@ chmod ugo+x diffsplice_fishers_exact.py
 # package
 rm ../flair.tar.gz
 cd /build
-tar cvzf flair-$flairversion.tar.gz flair-$flairversion
-cp -ra flair-$flairversion /io/extra$ARCH
+ln -sf flair-1.5-$arch/flair.py flair.py
+tar cvzf flair-$flairversion-$arch.tar.gz flair-$flairversion-$arch flair.py
+cp -ra flair-$flairversion-$arch /io/extra$ARCH
 cd /io/extra$ARCH/
 
 conda deactivate
