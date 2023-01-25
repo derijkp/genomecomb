@@ -35,7 +35,7 @@ proc mklink {args} {
 		}
 	}
 	set err [catch {file link $dest} link]
-	if {!$err || $link ne "$src"} {
+	if {!$err && $link ne "$src"} {
 		file delete $dest
 	}
 	if {![file exists $dest]} {
