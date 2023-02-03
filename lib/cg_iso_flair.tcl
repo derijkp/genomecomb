@@ -94,20 +94,20 @@ proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} 
 # set totalcountsfile {}
 proc cg_flair_mergeresults {target transcript_classification_file transcripts_genepred_file counts_matrix_file {totalcountsfile {}}} {
 	#
-	# combined
-	# adapted tempfiles
-	set tempclassification [tempfile].class
-	set tempgenepred [tempfile].genepred
-	set tempcount [tempfile].count
-	# class
-	cg select -f {id="$isoform" *} $transcript_classification_file | cg select -s id > $tempclassification
-	# genepred
-	cg select -f {id="$name" *} $transcripts_genepred_file | cg select -s id > $tempgenepred
-	# remake ids in countfile
-	set tempfile [tempfile]
-	catch {close $f}
-	set f [gzopen $counts_matrix_file]
+	# read classifications in classa
+	unset -nocomplain classa
+	set f [gzopen $transcript_classification_file]
+	set classheader [tsv_open $f]
+	set classidpos [lsearch $classheader isoform]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		set classid [lindex $line $classidpos]
+		set classa($classid) $line
+	}
+	close $f
+	# read counts in counta
 	unset -nocomplain counta
+	set f [gzopen $counts_matrix_file]
 	set cntheader [tsv_open $f]
 	set cntheader [list_regsub {_conditionA_batch1$} $cntheader {}]
 	set numsamples [expr {[llength $cntheader] -1}]
@@ -133,11 +133,11 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	file_write $totalcountsfile [join [lrange $cntheader 1 end] \t]\n[join $totalcounts \t]\n
 	#
 	# write combi file
-	catch {close $fg} ; catch {close $fclass} ; catch {close $o} ; 
-	set fg [gzopen $tempgenepred]
-	set gheader [lrange [tsv_open $fg] 1 end]
- 	set fclass [gzopen $tempclassification]
-	set classheader [lrange [tsv_open $fclass] 1 end]
+	catch {close $fg} ; catch {close $o} ; 
+	set fg [gzopen $transcripts_genepred_file]
+	# set gheader [lrange [tsv_open $fg] 1 end]
+	set gheader [tsv_open $fg]
+	set gheader [lrange $gheader 1 end]
 	set scatpos [lsearch $classheader structural_category]
 	set o [open $target.temp w]
 	set newheader $gheader
@@ -168,19 +168,13 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		if {[gets $fg gline] == -1} break
 		set gline [split $gline \t]
 		set gid [list_shift gline]
-		if {[gets $fclass classline] == -1} break
-		set classline [split $classline \t]
-		set classid [list_shift classline]
+		if {![info exists classa($gid)]} {
+			error "class data not found for $gid"
+		}
+		set classline $classa($gid)
+		set classid [lindex $classline $classidpos]
 		set scat [lindex $classline $scatpos]
 		if {[info exists cattrans($scat)]} {set scat $cattrans($scat)}
-		while {$classid ne $gid} {
-			if {[gets $fclass classline] == -1} break
-			set classline [split $classline \t]
-			set classid [list_shift classline]
-		}
-		if {$classid ne $gid} {
-			error "classification not found for $gid in $transcripts_genepred_file (in transcript classifiction file $transcript_classification_file)"
-		}
 		set result [join $gline \t]\t$scat
 		append result \t[join [list_sub $classline $poss] \t]
 		if {[info exists counta($gid)]} {
@@ -197,7 +191,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		incr nr
 	}
 	close $o
-	close $fg ; close $fclass
+	close $fg
 	# write final target
 	file_write $target.temp2 [deindent {
 		#filetype	tsv/transcriptsfile
