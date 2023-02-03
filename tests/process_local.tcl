@@ -33,9 +33,10 @@ test process_sample {bwa distrreg} {
 	exec cg process_sample {*}$::dopts -threads 1 -aligners bwa -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
 	# chr21:42730799-42762826
+	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.106.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.106.0	coordinate	1	genomecomb	0.106.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.106.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	$genomecombversion	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	$genomecombversion	coordinate	1	genomecomb	$genomecombversion	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	$genomecombversion	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x projectinfo.tsv -x *.analysisinfo -x *.stats.zst \
@@ -51,9 +52,10 @@ test process_sample {bwa distrreg cram} {
 	exec cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >& tmp/NA19240m.startuplog
 	# chr21:42730799-42762826
+	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent {
 		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.106.0	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.106.0	coordinate	1	genomecomb	0.106.0	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.106.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	$genomecombversion	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	$genomecombversion	coordinate	1	genomecomb	$genomecombversion	samtools	1.15 (using htslib 1.15)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	$genomecombversion	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]\n
 	set result {}
 	lappend result [tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
