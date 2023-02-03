@@ -13,6 +13,8 @@ proc distrreg_checkvalue {value {default s50000000}} {
 		return $value
 	} elseif {[regexp {^g([0-9]+)$} $value]} {
 		return $value
+	} elseif {[regexp {^x([0-9]+)$} $value]} {
+		return $value
 	} elseif {[file exists $value]} {
 		return [file_absolute $value]
 	} else {
@@ -132,11 +134,19 @@ proc distrreg_use {distrreg {defdistrreg chr} {maxdistrreg {}}} {
 		} else {
 			return $distrreg
 		}
-	} elseif {[regexp {^s([0-9]+)$} $distrreg temp num]} {
+	} elseif {[regexp {^x([0-9]+)$} $distrreg temp num]} {
 		if {$maxdistrreg in "0 schr chr"} {
 			return $maxdistrreg
-		} elseif {[regexp {^s([0-9]+)$} $maxdistrreg temp maxnum]} {
-			return s[maxint $maxnum $num]
+		} elseif {[regexp {^([sgrx])([0-9]+)$} $maxdistrreg temp maxtype maxnum]} {
+			return $maxtype[maxint $maxnum $num]
+		} else {
+			return $distrreg
+		}
+	} elseif {[regexp {^([sgrx])([0-9]+)$} $distrreg temp type num]} {
+		if {$maxdistrreg in "0 schr chr"} {
+			return $maxdistrreg
+		} elseif {[regexp {^([sgrx])([0-9]+)$} $maxdistrreg temp maxtype maxnum]} {
+			return $type[maxint $maxnum $num]
 		} else {
 			return $distrreg
 		}
@@ -207,13 +217,16 @@ proc distrreg_nolowgene250k {refdir} {
 	return $nolowgenefile
 }
 
-proc distrreg_regs {regfile refseq {addunaligned 1}} {
+proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 	if {$regfile eq "" || $regfile eq "0"} {
 		return {}
 	}
 	set refseq [refseq $refseq]
 	if {$regfile eq "1"} {
 		set regfile chr
+	}
+	if {[regexp {^x([0-9]+)$} $regfile temp regsize]} {
+		set regfile $type$regsize
 	}
 	if {[regexp {^s([0-9]+)$} $regfile temp regsize]} {
 		set sequencedfile [gzfile [file dir $refseq]/extra/reg_*_sequencedgenome.tsv]

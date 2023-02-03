@@ -1050,7 +1050,7 @@ proc iso_isoquant_job {args} {
 		{*}[versions iso_isoquant dbdir zstd os]
 
 	# analysis per sample
-	set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
+	set regions [list_remove [distrreg_regs $distrreg $refseq g] unaligned]
 	cd $sampledir
 	set sample [file tail $sampledir]
 	set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
@@ -1059,7 +1059,7 @@ proc iso_isoquant_job {args} {
 	}
 	foreach region $regions {
 		set regdir $root/$root-$region
-		job ${root}-$region -mem 15G -cores $threads -deps {
+		job isquant-${root}-$region -mem 15G -cores $threads -deps {
 			$bam $refseq $reftranscripts
 		} -targets {
 			$regdir/00_regali
@@ -1067,6 +1067,7 @@ proc iso_isoquant_job {args} {
 			bam refseq regdir region reftranscripts threads root sample
 			options data_type quantification analysisname distrreg
 		} -code {
+			if {[file exists $regdir.temp]} {file delete -force $regdir.temp}
 			mkdir $regdir.temp
 			analysisinfo_write $bam $regdir.temp/00_regali \
 				analysis $root sample $sample \
