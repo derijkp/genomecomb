@@ -261,6 +261,11 @@ int gz_DStringGetLine(DString *linePtr,	GZFILE *f1) {
 		}
 		if (c == EOF && cnt == 0) {cnt = -1;}
 	}
+	if (buf_end == cur) {
+		bsz += 1;
+		buf=(char *)realloc(buf,bsz);
+		buf_end=buf+bsz;
+	}
 	*cur='\0';
 	linePtr->string = buf;
 	linePtr->size = cnt;
@@ -281,7 +286,7 @@ void gz_skip_header(GZFILE *f1, DString *linePtr,unsigned int *numfields,unsigne
 	if (pos != NULL) {curpos=*pos;}
 	read = gz_DStringGetLine(linePtr, f1);
 	if (read == -1) return;
-	if (strlen(linePtr->string) >= 16 && strncmp(linePtr->string,"##fileformat=VCF",16) == 0) {
+	if (linePtr->size >= 16 && strncmp(linePtr->string,"##fileformat=VCF",16) == 0) {
 		/* vcf style header */
 		while (read != -1) {
 			if (linePtr->string[0] == '\0') {

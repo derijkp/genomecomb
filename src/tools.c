@@ -467,7 +467,7 @@ int naturalcompare_diff(int left,int right) {
  * if they are the same, diff determines result.
  */
 int naturalcompare_simplenum(char *left,int alen,char *right, int blen,int diff, int secondaryDiff, int invert) {
-	 DPRINT("  compare_simplenum: %s vs %s    diff=%d invert=%d secondaryDiff=%d", left, right, diff,invert,secondaryDiff);
+	 NODPRINT("  compare_simplenum: %s vs %s    diff=%d invert=%d secondaryDiff=%d", left, right, diff,invert,secondaryDiff);
 	while (alen && blen) {
 		if (!NATDIGIT(left)) {
 			if (!NATDIGIT(right)) {
@@ -518,11 +518,11 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	}
 	left = (char *)a;
 	right = (char *)b;
-	 DPRINT("---------- naturalcompare {%s} vs {%s} ----------",a,b);
+	 NODPRINT("---------- naturalcompare {%s} vs {%s} ----------",a,b);
 	/* find the first difference (not case) */
 	while (1) {
 		diff = naturalcompare_diff(*left,*right);
-		 DPRINT("diff %c vs %c: %d", *left, *right, diff);
+		 NODPRINT("diff %c vs %c: %d", *left, *right, diff);
 		if (!alen || *left == '\0') {
 			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
@@ -552,7 +552,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		(potential) number comparison
 		-----------------------------
 	 */
-	 DPRINT("compare number: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
+	 NODPRINT("compare number: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
 	/* move back to start of number to get context */
 	
 	start = left;
@@ -563,7 +563,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	} else {
 		/* check for context before diff */
 		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
-	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+	 	NODPRINT("checked before: %s context=%d invert=%d",start,context,invert);
 		if (context <= LOC_SIMPLE) {simplenum = 1;}
 	}
 	if (start == left) {
@@ -647,9 +647,9 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		}
 		start = left;
 		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
-	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+	 	NODPRINT("checked before: %s context=%d invert=%d",start,context,invert);
 		if (context <= LOC_SIMPLE) {simplenum = 1;}
-	 	DPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
+	 	NODPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
 	}
 	if (simplenum) {
 		 DPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
@@ -674,9 +674,9 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 			if (nmright != NM_DIGIT) {nmright = 0;}
 		}
 		naturalcompare_numbercontext_after(left, alen, start, nmleft, &contextleft);
- 		DPRINT("checked left after: %s left=%s contextleft=%d",start,left,contextleft);
+ 		NODPRINT("checked left after: %s left=%s contextleft=%d",start,left,contextleft);
 		naturalcompare_numbercontext_after(right, blen, rstart, nmright, &contextright);
-	 	DPRINT("checked right after: %s right=%s contextright=%d",rstart,right,contextright);
+	 	NODPRINT("checked right after: %s right=%s contextright=%d",rstart,right,contextright);
 		/* sort numbers before the rest */
 		if (contextleft == LOC_NONUM || contextright == LOC_NONUM) {
 			if (diff == 0 && startingzero != 0) {return startingzero;}
@@ -712,12 +712,12 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		if ((nmright == NM_E || context == LOC_E || context == LOC_ESIGN) && contextright != LOC_ENUM) {nmright = 0;}
 		/* nmleft and nmright could have been changed to indicate diff is not really in a number */
 		if (!nmleft && !nmright) {return (diff<0)?-1:1;}
-		 DPRINT("specialnum - invert %d - context %d", invert, context);
+		 NODPRINT("specialnum - invert %d - context %d", invert, context);
 		/* special cases, +, -, . at diff */
 		/* if not scientific notation (checked before) we can only have - or + at diff if at start */
 		/* - always smaller */
 		if (start == left) {
-			 DPRINT("specialnum start: %s vs %s    diff %d", left, right, diff);
+			 NODPRINT("specialnum start: %s vs %s    diff %d", left, right, diff);
 			/* difference is at start of number */
 			if (*left == '-') {
 				return -1;
@@ -768,7 +768,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 				return result;
 			}
 		} else {
-			 DPRINT("specialnum: %s vs %s  context=%d nmleft=%d nmright=%d diff %d", left, right, context, nmleft, nmright, diff);
+			 NODPRINT("specialnum: %s vs %s  context=%d nmleft=%d nmright=%d diff %d", left, right, context, nmleft, nmright, diff);
 			if (context < LOC_SIGNNUM) {
 				/* like at start; if we are not yet in a number, use diff, otherwise numbers sort first */
 				if (nmleft != NM_DIGIT) {
@@ -902,6 +902,7 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	register char *cur;
 	register int cnt;
 	register int	c;
+NODPRINT("prepre memsize=%ld string=%ld static=%ld",linePtr->memsize,linePtr->string,linePtr->staticspace)
 	if (linePtr->memsize != -1 && linePtr->string != linePtr->staticspace) {
 		buf = linePtr->string;
 		buf_end = linePtr->string+linePtr->memsize;
@@ -924,10 +925,16 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 			buf_end=buf+bsz;
 		}
 	}
+	if (buf_end == cur) {
+		buf=(char *)realloc(buf,bsz+1);
+		cur=buf+bsz;
+		bsz += 1;
+		buf_end=buf+bsz;
+	}
 	*cur='\0';
 	linePtr->string = buf;
 	linePtr->size = cnt;
-	linePtr->memsize = buf_end-buf;
+	linePtr->memsize = bsz;
 	if (c == EOF && cnt == 0) return -1;
 	return cnt;
 }
@@ -1406,7 +1413,7 @@ void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields,unsigned in
 	if (pos != NULL) {curpos=*pos;}
 	read = DStringGetLine(linePtr, f1);
 	if (read == -1) return;
-	if (strlen(linePtr->string) >= 16 && strncmp(linePtr->string,"##fileformat=VCF",16) == 0) {
+	if (linePtr->size >= 16 && strncmp(linePtr->string,"##fileformat=VCF",16) == 0) {
 		/* vcf style header */
 		while (read != -1) {
 			if (linePtr->string[0] == '\0') {

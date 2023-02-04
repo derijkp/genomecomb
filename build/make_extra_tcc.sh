@@ -25,6 +25,13 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 source "${dir}/start_hbb.sh"
 
+# settings
+# ========
+
+# release version does not work with musl, used master version (at given patch) instead (next)
+tccpatch=cc40305a121246116d5e08037e94942a9c0ec1fb
+tccversion=master2020-12-25
+
 # Script run within Holy Build box
 # ================================
 
@@ -71,10 +78,6 @@ function download {
 # tcc
 # ---
 cd /build
-
-# release version does not work with musl, used master version (at given patch) instead (next)
-tccpatch=cc40305a121246116d5e08037e94942a9c0ec1fb
-tccversion=master2020-12-25
 
 cd /build
 rm -rf tinycc.old || true
@@ -140,20 +143,22 @@ cp -ra /build/tcc-$tccversion-$arch/share /io/extra$ARCH/tcc-$tccversion-$arch
 cp -ra /build/musl-1.2.1-$arch /io/extra$ARCH/tcc-$tccversion-$arch/lib
 
 # make "executable" shell script that sets the env variables
-echo '#!/bin/sh
-script="$(readlink -f "$0")"
+echo '#!/bin/sh' > /io/extra$ARCH/tcc-$tccversion-$arch/tcc
+echo "arch=$arch" >> /io/extra$ARCH/tcc-$tccversion-$arch/tcc
+echo 'script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 TCC_LIB_PATH=$dir/lib/tcc \
 TCC_CRT_PATH=$dir/lib/musl-1.2.1-$arch/lib \
 C_INCLUDE_PATH=$dir/lib/musl-1.2.1-$arch/include:$C_INCLUDE_PATH \
 LIBRARY_PATH=$dir/lib/tcc:$dir/lib/musl-1.2.1-$arch/lib:$LIBRARY_PATH \
     $dir/bin/tcc ${1+"$@"}
-' > /io/extra$ARCH/tcc-$tccversion-$arch/tcc
+' >> /io/extra$ARCH/tcc-$tccversion-$arch/tcc
 chmod ugo+x /io/extra$ARCH/tcc-$tccversion-$arch/tcc
 
 # make alternative "executable" shell script that uses the system libraries iso musl
-echo '#!/bin/sh
-script="$(readlink -f "$0")"
+echo '#!/bin/sh' > /io/extra$ARCH/tcc-$tccversion-$arch/tcc-system
+echo "arch=$arch" >> /io/extra$ARCH/tcc-$tccversion-$arch/tcc-system
+echo 'script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 SYSTEM_LIB=/usr/lib/$arch-linux-gnu
 TCC_LIB_PATH=$dir/lib/tcc \
@@ -162,7 +167,7 @@ C_INCLUDE_PATH=$dir/lib/tcc/include:$C_INCLUDE_PATH \
 LIBRARY_PATH=$dir/lib/tcc:$SYSTEM_LIB:$LIBRARY_PATH \
     $dir/bin/tcc ${1+"$@"}
 ' > /io/extra$ARCH/tcc-$tccversion-$arch/tcc-system
-chmod ugo+x /io/extra$ARCH/tcc-$tccversion-$arch/tcc
+chmod ugo+x /io/extra$ARCH/tcc-$tccversion-$arch/tcc-system
 
 # link to tcc
 cd /io/extra$ARCH/

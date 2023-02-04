@@ -8,7 +8,7 @@ echo "Making debug versions of bins in $dir (fast, using tcc)"
 cd $dir/src
 
 CC=tcc
-COPT="-g"
+COPT="-g -DDEBUG"
 CFLAGS="$COPT -D_FILE_OFFSET_BITS=64 -Wall -I$dir/src -I$dir/src/external"
 GZTOOLS_C="../src/gztools.c ../src/lz4.c ../src/lz4tools.c ../src/razf.c ../src/bgzf.c ../src/zstdtools.c ../src/external/zstddeclib.c ../src/external/zlib_amalg.c"
 GZPOPEN_C=../src/gzpopen.c
