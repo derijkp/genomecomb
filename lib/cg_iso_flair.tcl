@@ -354,7 +354,7 @@ proc flair_job {args} {
 			job flair_correct-$rootname {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 			-cores $threads \
 			-deps {
-				$bam $refseq $reftranscripts
+				$bam $bam.bai $refseq $reftranscripts
 			} -targets {
 				flair-$rootname/all_corrected-flair-$rootname.bed
 			} -vars {
