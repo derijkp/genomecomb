@@ -34,8 +34,12 @@ putsvars script
 
 set appdir [file dir [file dir [file normalize $script]]]
 if {![info exists basetestdir]} {
-	# set basetestdir [file dir [file normalize $script]]
-	set basetestdir [file dir $appdir]/tests_genomecomb
+	if {![info exists argv]} {
+		set basetestdir [pwd]
+	} else {
+		# set basetestdir [file dir [file normalize $script]]
+		set basetestdir [file dir $appdir]/tests_genomecomb
+	}
 }
 file mkdir $basetestdir
 cd $basetestdir
@@ -292,7 +296,7 @@ proc write_vcf {file data {extracomment {}} {extrainfo {}}} {
 		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 		##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 	}]]
-	if {$extracomment ne ""} {puts -nonewline $f $extracomment}
+	if {$extracomment ne ""} {puts -nonewline $f [string trim $extracomment]\n}
 	set header [lindex $data 0]
 	set data [lrange $data 1 end]
 	puts $f \#[join $header \t]

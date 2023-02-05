@@ -3,7 +3,7 @@ ARCH ?=
 arch ?= x86_64
 COPT ?= -O2
 GCC ?= gcc
-ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.4.4
+ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.5.2
 EXEEXT ?=
 CFLAGS := -D_FILE_OFFSET_BITS=64 -Wall $(COPT) -I~/dev/genomecomb/src ${CFLAGS} -I$(ZSTDDIR)/lib -L$(ZSTDDIR)/lib
 TOOLS = tools.c tools.h debug.h
@@ -40,7 +40,8 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/tsv2csv$(EXEEXT) \
      ../bin$(ARCH)/distrreg$(EXEEXT) \
      ../bin$(ARCH)/mergesorted$(EXEEXT) \
-     ../bin$(ARCH)/noise$(EXEEXT)
+     ../bin$(ARCH)/noise$(EXEEXT) \
+     ../bin$(ARCH)/estimate_error_rate$(EXEEXT)
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -185,3 +186,5 @@ clean:
 ../bin$(ARCH)/noise$(EXEEXT): noise.c $(TOOLS)
 	$(GCC) noise.c tools.c $(CFLAGS) -o ../bin$(ARCH)/noise$(EXEEXT)
 
+../bin$(ARCH)/estimate_error_rate$(EXEEXT): estimate_error_rate.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
+	$(GCC) estimate_error_rate.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/estimate_error_rate$(EXEEXT) $(LIBZ)

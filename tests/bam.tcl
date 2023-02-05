@@ -1068,6 +1068,188 @@ test noise {noise -perpos 1} {
 	}
 } 0
 
+test estimate_error_rate {pretest} {
+	file_write tmp/temp.pup [deindent {
+		chr19	9439154	A	3	.gG	CDI
+		chr19	9439155	C	3	.,.	CDI
+		chr19	9439389	G	40	.....,.-1C..,,.......,,,....,.....,.,,..,..	@B9@DI>BDIGD<DDF=;DDDDFHJDIGGJIDGD?HDDF@
+		chr19	9439515	C	53	,$....T*+3gct.,,.,+3gct.T.,T.t..,T.,+3gct.+3GCT.+3GCT..,+3gct.+3GCTT,t,,+3gct.t.+3GCT.tT,,,t,T,+3gct,+3gctt,.	CC>ADD<DIID<CDCFDC;DCJDD<<<7J<<IDDD/JC<GDJ>DBCDJ<<CD@
+		chr19	9439626	C	20	,,,,.,,,,,,,.,..,.,,	FFFFDHGHGFFD;<IFDH?8
+		chr21	9439632	C	20	,,,.,,,,,,,,..,.,,,^],	FFFDFHJIJAJDJHDHD0@>
+		chr21	9439651	T	22	,,g.,..,.,,,g,G,.,,..,	@DIBIEDDFDB<DD;DD?DHDB
+		chr21	9439680	A	26	.$,..,.,,,,,.,.,,..,.,,,,..	0FBDJ>J<DBDCDHDDHIDJD0D?GF
+		chr21	9439702	C	26	,.,,,g,G,A,,..,.g,,,..,.g,	FCJCIHI>IEFJHIFHD<<5JIBF<>
+		chr21	9439709	C	27	.,,,a,A,.,,..,.a,,,..,.aa,,	<HDHJI9JCFIDFJIGII8JGDGCED>
+		chr21	9444119	c	57	.$.,..........................,....,.......,.............^!.	CEDEEDE@EHH=IJIJIHJHJIIJJIJJJCJJJ<IHJIIFIAFIEJGHHHHHDC:@?
+		chr21	43539135	G	26	...A........,.,..,....,,,^],	DDFEHGJEJJJI@JDGIDJJJJDDCD
+		chr21	43539136	C	26	..-2NN...T......,.,..,....,,,,	DDD@H<JHGJJBDJDAJCIJIJDDAD
+		chr21	43539137	A	27	..*..-1N....Aa.,.,..,....,,,,^].	DEEDHDJ>HJJBCJCHJCJIJJDCCDC
+		chr21	43539138	G	27	..*..*.......,.,..,....,,,,.	DDDFHHIFJJJGCJ@BJCJJIJDCACC
+		chr21	43539139	A	27	............,.,..,....,,,,.	?DCFFCIGIJJG>ICGJDJGJJDC>AC
+	}]\n
+	file_write tmp/regfile.tsv [deindent {
+		chromosome	begin	end
+		chr1	1000	10000
+		chr21	9439651	43539136
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		#filetype	tsv/errorrate_file
+		#fileversion	0.99
+		#description	info for estimating error rate
+		#general bam stats:
+		#nummatch	176
+		#nummismatch	12
+		#numdel	1
+		#numins	0
+		#mismatch_pct	6.34921
+		#del_pct	0.52910
+		#ins_pct	0.00000
+		#error_pct	6.87831
+		quality	nummatch	nummismatch	numdel	numins	error_pc
+		0	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		1	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		2	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		3	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		4	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		5	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		6	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		7	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		8	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		9	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		10	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		11	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		12	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		13	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		14	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		15	2	0	0	0	0.00000	0.00000	0.00000	0.00000
+		16	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		17	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		18	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		19	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		20	1	0	0	0	0.00000	0.00000	0.00000	0.00000
+		21	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		22	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		23	1	0	0	0	0.00000	0.00000	0.00000	0.00000
+		24	0	1	0	0	100.00000	0.00000	0.00000	100.00000
+		25	1	0	0	0	0.00000	0.00000	0.00000	0.00000
+		26	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		27	5	2	0	0	28.57143	0.00000	0.00000	28.57143
+		28	1	0	0	0	0.00000	0.00000	0.00000	0.00000
+		29	3	1	0	0	25.00000	0.00000	0.00000	25.00000
+		30	2	0	0	0	0.00000	0.00000	0.00000	0.00000
+		31	4	0	0	0	0.00000	0.00000	0.00000	0.00000
+		32	3	0	0	0	0.00000	0.00000	0.00000	0.00000
+		33	4	0	0	0	0.00000	0.00000	0.00000	0.00000
+		34	9	1	0	0	10.00000	0.00000	0.00000	10.00000
+		35	31	1	1	0	3.03030	3.03030	0.00000	6.06061
+		36	6	3	0	0	33.33333	0.00000	0.00000	33.33333
+		37	10	0	0	0	0.00000	0.00000	0.00000	0.00000
+		38	7	1	0	0	12.50000	0.00000	0.00000	12.50000
+		39	19	1	0	0	5.00000	0.00000	0.00000	5.00000
+		40	26	0	0	0	0.00000	0.00000	0.00000	0.00000
+		41	39	1	0	0	2.50000	0.00000	0.00000	2.50000
+		42	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		43	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		44	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		45	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		46	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		47	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		48	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		49	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		50	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		51	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		52	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		53	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		54	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		55	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		56	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		57	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		58	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+		59	0	0	0	0	0.00000	0.00000	0.00000	0.00000
+	}]\n
+	exec estimate_error_rate tmp/regfile.tsv 0 0 < tmp/temp.pup > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+	file_write tmp/regfile.tsv [deindent {
+		chromosome	begin	end
+		chr19	9439514	9439515
+		chr21	9439651	43539136
+	}]\n
+	exec estimate_error_rate tmp/regfile.tsv 0 0 < tmp/temp.pup > tmp/result.tsv
+	exec grep {#num} tmp/result.tsv
+} {#nummatch	215
+#nummismatch	25
+#numdel	1
+#numins	11}
+
+test estimate_error_rate {command} {
+	test_cleantmp
+	exec samtools view -b data/map-rdsbwa-NA19240_small.sam > tmp/temp.bam
+	exec samtools index tmp/temp.bam
+	set bamfile tmp/temp.bam
+	set refseq $::refseqdir/hg19
+	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
+	file_write tmp/sreg-temp.tsv [deindent {
+		chromosome	begin	end
+		chr21	9825522	9825548
+	}]\n
+	file_write tmp/var-temp.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		chr21	9825530	9825531	snp	A	G
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+	}]\n
+	cg estimate_error_rate -refseq $refseq $bamfile tmp/sreg-temp.tsv tmp/var-temp.tsv > tmp/result.tsv
+	catch {
+		exec diff tmp/result.tsv tmp/expected.tsv
+	}
+	exec grep {#num} tmp/result.tsv
+} {#nummatch	2025
+#nummismatch	13
+#numdel	3
+#numins	3}
+
+test estimate_error_rate {diff var} {
+	test_cleantmp
+	exec samtools view -b data/map-rdsbwa-NA19240_small.sam > tmp/temp.bam
+	exec samtools index tmp/temp.bam
+	set bamfile tmp/temp.bam
+	set refseq $::refseqdir/hg19
+	# exec samtools mpileup -f $refseq/genome_hg19.ifas -A --ignore-overlaps tmp/temp.bam > tmp/temp.pup
+	file_write tmp/sreg-temp.tsv [deindent {
+		chromosome	begin	end
+		chr21	9825522	9825548
+	}]\n
+	file_write tmp/var-temp.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		chr21	9825531	9825532	snp	A	G
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+	}]\n
+	cg estimate_error_rate -refseq $refseq $bamfile tmp/sreg-temp.tsv tmp/var-temp.tsv tmp/result.tsv
+	catch {
+		exec diff tmp/result.tsv tmp/expected.tsv
+	}
+	exec grep {#num} tmp/result.tsv
+} {#nummatch	1942
+#nummismatch	96
+#numdel	3
+#numins	3}
+
+test estimate_error_rate {bugfix} {
+	file_write tmp/temp.pup [deindent [subst -nocommands -novariables {
+		chr1	33527	T	26	,,,,,..,,,,.cA,*,..,...,,,	9:<55BJ96977&%87.^D1EQA,;.
+	}]]\n
+	file_write tmp/regfile.tsv [deindent {
+		chromosome	begin	end
+		chr1	1000	40000
+	}]\n
+	exec estimate_error_rate tmp/regfile.tsv 0 0 < tmp/temp.pup > tmp/result.tsv
+	exec grep {#num} tmp/result.tsv
+} {#nummatch	23
+#nummismatch	2
+#numdel	0
+#numins	0}
+
 test bam_varia {longshot_replacebam} {
 	test_cleantmp
 	file copy -force data/minimap2.bam tmp/minimap2.bam
