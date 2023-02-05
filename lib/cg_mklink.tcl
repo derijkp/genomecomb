@@ -16,6 +16,9 @@ proc mklink {args} {
 	set src [file_absolute $src]
 	set keepsrc $src
 	set dest [file_absolute $dest]
+	if {[file exists $dest] && [file isdir $dest]} {
+		set dest $dest/[file tail $src]
+	}
 	if {$src eq $dest} {
 		error "cannot mklink a file to itself: $src"
 	}
