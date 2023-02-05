@@ -820,4 +820,23 @@ test vcf2tsv {correct sniffles ins END error} {
 	exec diff tmp/cresult.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {MIN_DP} {
+	write_vcf tmp/test.vcf {
+		CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  SAMPLE
+		chr1    1       .       N       <NON_REF>       0       .       END=10000       GT:GQ:MIN_DP:PL ./.:1:0:0,0,0
+		chr1    10003   .       A       <NON_REF>       0       .       END=10005       GT:GQ:MIN_DP:PL 0/0:12:4:0,12,119
+	} {##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum DP observed within the GVCF block">}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	genoqual	coverage	MIN_DP
+		chr1	0	1	snp	N	.	1	0	0
+		chr1	10002	10003	snp	A	.	12	4	4
+	}]\n
+	# ../bin/vcf2tsv 1 '. AD R RPA R AC A AF A' tmp/test.vcf - {} 0 '*' error 0
+	cg vcf2tsv tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 -f {
+		chromosome	begin	end type ref alt genoqual coverage MIN_DP
+	} tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
 testsummarize

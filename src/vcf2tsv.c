@@ -70,7 +70,7 @@ static int numalleles,altvarsmax=0;
 /* svendpos and svend captures position and value of "END" in info fields, it is also used for gvcf <NON_REF> calls */
 static int linenr,svendpos=-1,svlenpos=-1,svtypepos=-1,chr2pos=-1,pos2pos=-1,strandspos=-1;
 int svend=-1, svlen=0;
-static int ADpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
+static int ADpos = -1, MIN_DPpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
 #define a_pos(array) (DStringArrayGet(array,1))
@@ -927,7 +927,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		OBufferBucket *bufferbucket;
 		DString *bufferstring;
 		AltVar *altvar;
-		int ADpos = -1, GQXpos = -1;
+		int ADpos = -1, MIN_DPpos = -1, GQXpos = -1;
 		altvar = altvars+curpos;
 		curallele = altvar->curallele;
 		/* "ref" allele is not printed out	if refout == -1 */
@@ -972,6 +972,8 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 				order[i] = DStringArraySearch(lineformat,string->string,string->size);
 				if (string->size == 2 && string->string[0] == 'A' && string->string[1] == 'D') {
 					ADpos = i;
+				} else if (string->size == 6 && strncmp(string->string,"MIN_DP",6) == 0) {
+					MIN_DPpos = i;
 				} else if (string->size == 3 && string->string[0] == 'G' && string->string[1] == 'Q' && string->string[2] == 'X') {
 					GQXpos = i;
 				}
@@ -1150,6 +1152,25 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 								char *cur, *end;
 								int dp = 0;
 								value = DStringArrayGet(genoa,order[ADpos]);
+								cur = value->string; end = value->string + value->size;
+								while (cur < end) {
+									dp += atoi(cur);
+									while (cur++) {
+										if (*cur == ',') {
+											cur++;
+											break;
+										} else if (cur >= end) {
+											break;
+										}
+									}
+								}
+								DStringPrintf(bufferstring,"\t%d",dp);
+							} else if (i == DPpos && MIN_DPpos != -1 && order[MIN_DPpos] != -1) {
+								/* if depth is not given, get depth from MIN_DP field: sum af all alleles counts */
+								DString *value;
+								char *cur, *end;
+								int dp = 0;
+								value = DStringArrayGet(genoa,order[MIN_DPpos]);
 								cur = value->string; end = value->string + value->size;
 								while (cur < end) {
 									dp += atoi(cur);
@@ -1485,6 +1506,7 @@ int main(int argc, char *argv[]) {
 			if (strcmp(id->string,"GT") == 0) continue;
 			if (strcmp(id->string,"DP") == 0) {DPpos = fieldpos;}
 			if (strcmp(id->string,"AD") == 0) {ADpos = fieldpos;}
+			if (strcmp(id->string,"MIN_DP") == 0) {MIN_DPpos = fieldpos;}
 			if (strcmp(id->string,"GQX") == 0) {GQXpos = fieldpos;}
 			if (strcmp(id->string,"GQ") == 0) {GQpos = fieldpos;}
 			ds = (DString *)dstring_hash_get(conv_formata,id);
