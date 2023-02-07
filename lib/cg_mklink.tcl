@@ -52,9 +52,9 @@ proc mklink {args} {
 			# sometimes gives an "Error: couldn't execute "ln": too many levels of symbolic links" error
 			# workaround: called from bash -> no error
 			if {[catch {
-				exec ln -s $src [file tail $dest]
+				exec ln -sf $src [file tail $dest]
 			}]} {
-				exec bash -c "ln -s \'$src\' \'[file tail $dest]\'"
+				exec bash -c "ln -sf \'$src\' \'[file tail $dest]\'"
 			}
 			cd $keeppwd
 		}
