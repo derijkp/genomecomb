@@ -9,7 +9,8 @@ proc cg_gatk_index {args} {
 		set opt -I
 	}
 	foreach file [list $file {*}$args] {
-		if {[string range $file end-6 end] eq ".vcf.gz"} {
+		if {[file extension $file] eq ".gz" && [file extension [file root $file]] in ".vcf .gvcf"} {
+		if {[string range $file end-6 end] in ".vcf.gz" || [string range $file end-6 end] in ".gvcf.gz"} {
 			exec tabix -p vcf $file
 		} else {
 			gatkexec [list -XX:ParallelGCThreads=1 -Xms1g -Xmx1g] IndexFeatureFile $opt $file
