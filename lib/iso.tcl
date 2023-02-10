@@ -73,6 +73,7 @@ proc cg_iso_combine_genecounts {genecounts args} {
 	unset -nocomplain geneinfoa
 	unset -nocomplain gcounta
 	unset -nocomplain dummya
+	unset -nocomplain chrgenea
 	set f [gzopen [lindex $args 0]]
 	set header [tsv_open $f comments1]
 	close $f
@@ -96,7 +97,18 @@ proc cg_iso_combine_genecounts {genecounts args} {
 		foreach field $restfields {lappend dummya($num) 0}
 		while {[gets $f line] != -1} {
 			set line [split $line \t]
+			set chr [lindex $line 0]
 			set gene [lindex $line $genepos]
+			if {[info exists chrgene($gene-$chr)]} {
+				set gene gene-$chr
+			} elseif {[info exists chrgenea($gene)]} {
+				if {$chrgenea($gene) ne $chr} {
+					set gene gene-$chr
+					set chrgenea($gene) $chr
+				}
+			} else {
+				set chrgenea($gene) $chr
+			}
 			list_addnew geneinfoa($gene) [list_sub $line $poss]
 			set gcounta($num,$gene) [list_sub $line $restposs]
 		}
@@ -114,10 +126,11 @@ proc cg_iso_combine_genecounts {genecounts args} {
 		if {[llength $lines] > 1} {
 			set chr [list_remdup [list_subindex $lines 0]]
 			if {[llength $chr] > 1} {
-				error "error combining gene count files: gene $gene is in different chromosomes ($chr)"
+				# should never get here -> solved earlier using chrgenea
+				puts stderr "error combining gene count files: gene $gene is in different chromosomes ($chr)"
 			}
-			set begin [min [list_subindex $lines 1]]
-			set end [max [list_subindex $lines 2]]
+			set begin [lmath_min [list_subindex $lines 1]]
+			set end [lmath_max [list_subindex $lines 2]]
 			set strand [join [list_remdup [split [list_subindex $lines 3] { ,}]] ,]
 			set line [lindex $lines 0]
 			lset line 1 $begin
