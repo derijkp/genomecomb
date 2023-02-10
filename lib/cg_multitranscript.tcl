@@ -107,7 +107,7 @@ proc cg_multitranscript {args} {
 		foreach file $isoformfiles {
 			incr fnum
 			if {$a(status,$fnum) == -1} continue
-			lappend curids [lrange $a(curid,$fnum) 0 end-5]
+			lappend curids [lrange $a(curid,$fnum) 0 5]
 		}
 		if {![llength $curids]} break
 		set curid [lindex [bsort $curids] 0]
@@ -171,7 +171,7 @@ proc cg_multitranscript {args} {
 					set a(status,$fnum) [gets $a(f,$fnum) a(curline,$fnum)]
 					set a(curline,$fnum) [split $a(curline,$fnum) \t]
 					set temp [list_sub $a(curline,$fnum) $a(id,$fnum)]
-					set ctemp [lrange $temp 0 end-5]
+					set ctemp [lrange $temp 0 5]
 					if {[lindex [bsort [list $curid $ctemp]] 1] ne $ctemp} {
 						error "file $file not sorted correctly; should be sorted on: chromosome begin end strand exonStarts exonEnds"
 					}
