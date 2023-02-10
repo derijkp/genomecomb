@@ -1060,7 +1060,7 @@ proc iso_isoquant_job {args} {
 	foreach region $regions {
 		set regdir $root/$root-$region
 		job isquant-${root}-$region -mem 15G -cores $threads -deps {
-			$bam $bai $refseq $reftranscripts
+			$bam $bam.bai $refseq $reftranscripts
 		} -targets {
 			$regdir/00_regali
 		} -vars {
