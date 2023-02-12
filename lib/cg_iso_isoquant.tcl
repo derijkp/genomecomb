@@ -79,7 +79,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	set targetisoformcountsfile $destdir/isoform_counts-${root}.tsv
 	set targetgenecountsfile $destdir/gene_counts-${root}.tsv
 	set targetreadassignmentsfile $destdir/read_assignments-${root}.tsv
-	array set strandnamea {+ p - m . u}
 	# info from known isos
 	# --------------------
 	# transcriptidsa gets the transcripts that are actually in the results (from readassignment file)
@@ -121,7 +120,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		if {$type ne "gene"} continue
 		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 		if {[regexp ^novel_gene $gene]} {
-			set geneconva($gene) novel_${chr}_$strandnamea($strand)_${begin}_${end}
+			set geneconva($gene) [gene_name $chr $strandnamea($strand) $begin $end]
 			set gene $geneconva($gene)
 		}
 		if {![info exists genebasica($gene)]} {
@@ -144,7 +143,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {$type ne "gene"} continue
 			if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 			if {[regexp ^novel_gene $gene]} {
-				set geneconva($gene) novel_${chr}_$strandnamea($strand)_${begin}_${end}
+				set geneconva($gene) [gene_name $chr $strandnamea($strand) $begin $end]
 				set gene $geneconva($gene)
 			}
 			if {![info exists genebasica($gene)]} {

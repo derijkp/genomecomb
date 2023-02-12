@@ -470,7 +470,7 @@ proc process_multicompar_job {args} {
 				-deps [list {*}$acountfiles {*}[job_analysisinfo_files $acountfiles]] \
 				-targets {$target} -vars {acountfiles} -code {
 					analysisinfo_combine $target $acountfiles
-					cg multicount $target.temp {*}$acountfiles
+					cg multigene $target.temp {*}$acountfiles
 					result_rename $target.temp $target
 				}
 			}
@@ -486,7 +486,7 @@ proc process_multicompar_job {args} {
 			} -code {
 				analysisinfo_combine $target $countfiles
 				if {[catch {
-					cg multicount $target.temp {*}$countfiles
+					cg multigene $target.temp {*}$countfiles
 				} msg]} {
 					file_write $target.error "multi-method count file could not be made because: $msg"
 					file_write $target.temp ""

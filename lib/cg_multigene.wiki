@@ -1,0 +1,43 @@
+= Multigene =
+
+== Format ==
+cg multigene ?options? multigenefile genefile genefile ?genefile? ...
+
+== Summary ==
+Compare multiple gene files
+
+== Description ==
+This command combines multiple gene files into one multigene file; a tab
+separated file containing a wide table used to compare gene (counts)
+between different samples. Each line in the table contains general gene
+info (chromosome, begin, end, strand, ?gene?, ?geneid?) and columns with
+transcript info specific to each sample (count, etc.). The latter have a
+column heading of the form field-<sample>.
+
+<sample> can be simply the samplename, but may also include information
+about e.g. the sequencing or analysis method in the form method-samplename, e.g.
+count-isoquant-sample1.
+
+When a gene was not detected in a sample, the value in the table is set to 0.0.
+
+By default multigene will match based on the gene name (or geneid), For
+novel samples (identified based on the presence of a pattern in the gene
+name, default containing "novel") approximate matching is used: Novel
+genes will be matched if they overlap.  The resulting gene will have the
+lowest start and highest end position of these matches. The id of these
+result genes will be changed to one unique for that gene and consistent
+over different experiments (based on location and strand)
+
+
+== Arguments ==
+; multigenefile: resultfile, will be created if it does not exist
+; genefile: file containing gene (counts) of a new sample to be added
+  More than one can added in one command
+
+== Options ==
+; -novelpattern pattern: For all genes whose id/name matches
+**pattern** (default: novel) approximate matching will be used.
+
+== Category ==
+RNA
+
