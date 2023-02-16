@@ -92,6 +92,7 @@ proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} 
 }
 
 # set totalcountsfile {}
+# foreach {target transcript_classification_file transcripts_genepred_file counts_matrix_file totalcountsfile} $args break
 proc cg_flair_mergeresults {target transcript_classification_file transcripts_genepred_file counts_matrix_file {totalcountsfile {}}} {
 	#
 	# read classifications in classa
@@ -137,7 +138,6 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	set fg [gzopen $transcripts_genepred_file]
 	# set gheader [lrange [tsv_open $fg] 1 end]
 	set gheader [tsv_open $fg]
-	set gheader [lrange $gheader 1 end]
 	set scatpos [lsearch $classheader structural_category]
 	set o [open $target.temp w]
 	set newheader $gheader
@@ -167,7 +167,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	while 1 {
 		if {[gets $fg gline] == -1} break
 		set gline [split $gline \t]
-		set gid [list_shift gline]
+		set gid [lindex $gline 0]
 		if {![info exists classa($gid)]} {
 			error "class data not found for $gid"
 		}
