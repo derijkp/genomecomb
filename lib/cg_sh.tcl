@@ -31,6 +31,7 @@ proc cg_wish {args} {
 
 proc cg_sh {args} {
 	global tcl_platform
+	set ::tcl_interactive 1
 	if {[lsearch $args tk] != -1} {
 		cg_wish {*}$args
 		return
