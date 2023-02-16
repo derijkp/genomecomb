@@ -473,24 +473,31 @@ proc flair_job {args} {
 				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
 					gene_counts-flair-$rootname.tsv \
 					{*}$extrainfo
-				catch_exec sqanti3_qc.py \
-					flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
-					$reftranscripts \
-					$refseq \
-					-d sqanti3-flair-$rootname \
-					-o sqanti3-flair-$rootname \
-					--report skip
-				cg genepred2tsv \
-					sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genePred \
-					sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv
-				# merge results
 				set target isoform_counts-flair-$rootname.tsv
-				cg_flair_mergeresults $target \
-					sqanti3-flair-$rootname/sqanti3-flair-${rootname}_classification.txt \
-					sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv \
-					flair-$rootname/counts_matrix-flair-$rootname.tsv \
-					totalcounts-flair-$rootname.tsv
-				cg_flair_genecounts isoform_counts-flair-$rootname.tsv gene_counts-flair-$rootname.tsv
+				if {[file size flair-$rootname/transcripts-flair-$rootname.isoforms.gtf] == 0} {
+					foreach target $targets {
+						file_write $target ""
+					}
+					file_write isoform_counts-flair-$rootname.tsv [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid} \t]\n
+				} else {
+					catch_exec sqanti3_qc.py \
+						flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
+						$reftranscripts \
+						$refseq \
+						-d sqanti3-flair-$rootname \
+						-o sqanti3-flair-$rootname \
+						--report skip
+					cg genepred2tsv \
+						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genePred \
+						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv
+					# merge results
+					cg_flair_mergeresults $target \
+						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_classification.txt \
+						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv \
+						flair-$rootname/counts_matrix-flair-$rootname.tsv \
+						totalcounts-flair-$rootname.tsv
+					cg_flair_genecounts isoform_counts-flair-$rootname.tsv gene_counts-flair-$rootname.tsv
+				}
 			}
 			foreach genename $plotgenes {
 				job flair_plotisoforms-$rootname-$genename {*}$skips -deps {
