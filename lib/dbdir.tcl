@@ -74,7 +74,10 @@ proc ref_gtftranscripts refseq {
 	if {[file exists $reftranscripts]} {
 		return $reftranscripts
 	}
-	error "no gtf reference transcripts found in $refdir"
+	puts stderr "no gtf reference transcripts found in $refdir"
+	set reftranscripts [tempfile].gtf
+	file_write $reftranscripts ""
+	return $reftranscripts
 }
 
 proc ref_tsvtranscripts refseq {
