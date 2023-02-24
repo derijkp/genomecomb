@@ -166,10 +166,6 @@ proc var_clair3_job {args} {
 			ont {
 				set platform ont
 				set tech ont
-				if {$model eq ""} {
-					puts stderr "warning: -model for clair3 not given; using default r941_prom_hac_g360+g422"
-					set model r941_prom_hac_g360+g422
-				}
 			}
 			hifi {
 				set platform hifi
@@ -189,20 +185,6 @@ proc var_clair3_job {args} {
 	if {$platform eq ""} {
 		puts stderr "warning: -platform for clair3 not given; using default ont"
 		set platform ont
-	}
-	if {$model eq ""} {
-		puts stderr "warning: -model for clair3 not given; using default r941_prom_hac_g360+g422"
-		set model r941_prom_hac_g360+g422
-	}
-	if {[file exists $model]} {
-		set model [file_absolute $model]
-	} else {
-		set clairscript [follow_links [exec which run_clair3.sh]]
-		set clairdir [file dir $clairscript]
-		if {![file exists $clairdir/models/$model]} {
-			error "model does not exists: $clairdir/models/$model"
-		}
-		set model $clairdir/models/$model
 	}
 	if {$resultfile eq ""} {
 		if {$rootname eq ""} {
@@ -248,11 +230,37 @@ proc var_clair3_job {args} {
 		region opts index threads
 		mincoverage mingenoqual split platform model
 	} -code {
+		if {$model eq ""} {
+			set runinfofile [gzfile [file dir $dep]/runinfo*.tsv]
+			set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
+			if {[string index $guppyversion 0] in "5 6"} {
+				set usemodel r941_prom_sup_g5014
+			} elseif {[string index $guppyversion 0] in "3 4"} {
+				set usemodel r941_prom_hac_g360+g422
+			} elseif {[string index $guppyversion 0] in "2"} {
+				set usemodel r941_prom_hac_g238
+			} else {
+				puts stderr "warning: -model for clair3 not given and no runinfo file; using default r941_prom_sup_g5014"
+				set usemodel r941_prom_sup_g5014
+			}
+		} else {
+			set usemodel $model
+		}
+		if {[file exists $usemodel]} {
+			set usemodel [file_absolute $usemodel]
+		} else {
+			set clairscript [follow_links [exec which run_clair3.sh]]
+			set clairdir [file dir $clairscript]
+			if {![file exists $clairdir/models/$usemodel]} {
+				error "model does not exists: $clairdir/models/$usemodel"
+			}
+			set model $clairdir/models/$usemodel
+		}
 		analysisinfo_write $dep $varfile \
 			analysis $root sample $root \
 			varcaller clair3 varcaller_version [version clair3] \
 			varcaller_cg_version [version genomecomb] varcaller_region $region \
-			varcaller_platform $platform varcaller_model $model \
+			varcaller_platform $platform varcaller_model $usemodel \
 			varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual
 		set regions [samregions $region $refseq]
 		set tempvcfdir [gzroot $vcffile].temp
@@ -288,7 +296,7 @@ proc var_clair3_job {args} {
 			file_write $varallfile ""
 		}
 		file rename -force -- $tempvcfdir/merge_output.vcf.gz $vcffile
-		file delete -force $tempvcfdir
+		catch {file delete -force $tempvcfdir}
 		set tempfile [filetemp $varfile]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
