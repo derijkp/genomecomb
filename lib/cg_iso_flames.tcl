@@ -189,17 +189,32 @@ proc iso_flames_job {args} {
 			set fastqfile [lindex $fastqfiles 0]
 			mklink -absolute 0 $fastqfile $mergedfastqfile[gzext $fastqfile]
 		}
-		exec flames bulk_long_pipeline.py {*}$extraopts \
-			--genomefa [file tail $refseq] \
-			--gff3 [file tail $reftranscripts] \
-			--outdir tempflames \
-			--config_file config.json \
-			--fq_dir fastq \
-			>@ stdout 2>@ stderr
-		foreach file [glob tempflames/*] {
-			file rename -force $file .
+		set f [gzopen $mergedfastqfile.gz]
+		for {set i 0} {$i < 20} {incr i} {gets $f}
+		set short [eof $f]
+		if {$short} {
+			# only 4 reads aligned -> skip running isoquant
+			file_write isoform_annotated.filtered.gff3 {}
+			file_write transcript_assembly.fa {}
+			set o [wgzopen transcript_count.csv.gz w] ; gzclose $o
+			file_write flames-not_enough_reads ""
+			cd $destdir
+			file_write isoform_counts-flames-$root.tsv ""
+			file_write gene_counts-flames-$root.tsv ""
+			return
+		} else {
+			exec flames bulk_long_pipeline.py {*}$extraopts \
+				--genomefa [file tail $refseq] \
+				--gff3 [file tail $reftranscripts] \
+				--outdir tempflames \
+				--config_file config.json \
+				--fq_dir fastq \
+				>@ stdout 2>@ stderr
+			foreach file [glob tempflames/*] {
+				file rename -force $file .
+			}
+			file delete tempflames
 		}
-		file delete tempflames
 		#
 		cd $destdir
 		mklink -absolute 0 flames-$root/isoform_annotated.filtered.gff3 transcripts-flames-$root.isoforms.gff3

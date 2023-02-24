@@ -46,7 +46,12 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 	} else {
 		set root ${isocaller}-$exproot
 	}
-	set isoformfiles [bsort [jobglob samples/*/isoform_counts-${isocaller}-*.tsv]]
+	set isoformfiles {}
+	foreach isoformfile [bsort [jobglob samples/*/isoform_counts-${isocaller}-*.tsv]] {
+		if {[file size $isoformfile] == 0} continue
+		lappend isoformfiles $isoformfile
+	}
+	
 	if {[llength $isoformfiles]} {
 		job iso_compar-isoform_counts-$root \
 		-deps $isoformfiles \

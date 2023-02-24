@@ -193,7 +193,14 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	close $o
 	close $fg
 	# write final target
-	file_write $target.temp2 [deindent {
+	file_write $target.temp2 [iso_flair_comments]\n
+	cg select -s - $target.temp >> $target.temp2
+	file rename -force $target.temp2 $target
+	file delete -force $target.temp
+}
+
+proc iso_flair_comments {} {
+	deindent {
 		#filetype	tsv/transcriptsfile
 		#fileversion	0.99
 		#fields	table
@@ -260,10 +267,7 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		#fields	type	1	String	type of element
 		#fields	counts	1	Integer	Number of reads mapping to isoform
 		#fields	tpm	1	Float	Transcripts per million (number of reads mapping nomralized to 1m reads total)
-	}]\n
-	cg select -s - $target.temp >> $target.temp2
-	file rename -force $target.temp2 $target
-	file delete -force $target.temp
+	}
 }
 
 proc iso_flair_job {args} {
@@ -478,7 +482,9 @@ proc flair_job {args} {
 					foreach target $targets {
 						file_write $target ""
 					}
-					file_write isoform_counts-flair-$rootname.tsv [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid} \t]\n
+					file_write isoform_counts-flair-$rootname.tsv [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid counts-flair-$sample tpm-flair-$sample} \t]\n
+					file_write gene_counts-flair-$rootname.tsv [join [list type gene gene_type chromosome begin end strand nrtranscripts counts-flair-$sample tpm-flair-$sample] \t]\n
+					file_write total_counts-flair-$rootname.tsv $sample\n
 				} else {
 					catch_exec sqanti3_qc.py \
 						flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
