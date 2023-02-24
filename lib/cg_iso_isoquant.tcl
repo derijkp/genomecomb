@@ -23,9 +23,14 @@ proc convert_isoquant_add_ambig {varVar ambig} {
 	}
 }
 
-proc convert_isoquant_reggenedb {reftranscripts samregions refseq regreftranscripts reggenedb} {
+proc convert_isoquant_reggenedb {reftranscripts samregions refseq regreftranscriptsVar reggenedbVar} {
+	upvar $regreftranscriptsVar regreftranscripts
+	upvar $reggenedbVar reggenedb
+	set regreftranscripts [tempfile].tsv
+	set reggenedb [tempfile].gtf
 	set regfile [tempfile].tsv
 	if {$samregions eq ""} {
+		set regreftranscripts $regreftranscripts[gzext $reftranscripts]
 		mklink $reftranscripts $regreftranscripts
 	} else {
 		distrreg_reg2tsv $regfile $samregions $refseq
@@ -120,7 +125,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		if {$type ne "gene"} continue
 		if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 		if {[regexp ^novel_gene $gene]} {
-			set geneconva($gene) [gene_name $chr $strandnamea($strand) $begin $end]
+			set geneconva($gene) [gene_name $chr $strand $begin $end]
 			set gene $geneconva($gene)
 		}
 		if {![info exists genebasica($gene)]} {
@@ -143,7 +148,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {$type ne "gene"} continue
 			if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
 			if {[regexp ^novel_gene $gene]} {
-				set geneconva($gene) [gene_name $chr $strandnamea($strand) $begin $end]
+				set geneconva($gene) [gene_name $chr $strand $begin $end]
 				set gene $geneconva($gene)
 			}
 			if {![info exists genebasica($gene)]} {
@@ -973,13 +978,53 @@ proc iso_isoquant_job {args} {
 	set threads 8
 	set data_type nanopore
 	set quantification all
+	set gene_quantification {}
 	set options {}
 	set strictpct 90
+	set analysisname isoquant
+	set datatype nanopore
+	set model_construction_strategy default_ont
+	set splice_correction_strategy default_ont
 	set resultfile {}
+	set regions {}
+	set options {}
 	cg_options iso_isoquant args {
 		-preset {
-			if {$value ni "sensitive nanopore"} {error "isoquant preset $value not supported, must be one of: sens nanopore"}
+			if {$value ni "sens sensitive nanopore"} {}
 			set preset $value
+			if {$value in {nanopore ont {}}} {
+			} elseif {$value in "sens ont_sens nanopore_sens"} {
+				set datatype nanopore
+				set splice_correction_strategy default_ont
+				set model_construction_strategy sensitive_ont
+			} elseif {$value in "all"} {
+				set datatype nanopore
+				set splice_correction_strategy default_ont
+				set model_construction_strategy all
+			} elseif {$value in "pacbio"} {
+				set datatype pacbio
+				set splice_correction_strategy default_pacbio
+				set model_construction_strategy default_pacbio
+			} elseif {$value in "pacbiosens"} {
+				set datatype pacbio
+				set splice_correction_strategy default_pacbio
+				set model_construction_strategy sensitive_pacbio
+			} elseif {$value in "pacbioall"} {
+				set datatype pacbio
+				set splice_correction_strategy default_pacbio
+				set model_construction_strategy all
+			} elseif {$value in "assembly"} {
+				set datatype assembly
+				set splice_correction_strategy assembly
+				set model_construction_strategy assembly
+			} else {
+				error "isoquant preset $value not supported, must be one of: nanopore sens all pacbio pacbiosens assembly"
+			}
+			if {$preset eq "nanopore"} {
+				set analysisname isoquant
+			} else {
+				set analysisname isoquant_$preset
+			}
 		}
 		-refseq {
 			set refseq $value
@@ -994,14 +1039,23 @@ proc iso_isoquant_job {args} {
 				set distrreg [distrreg_checkvalue $value]
 			}
 		}
-		-quantification {
+		-transcript_quantification - -quantification {
 			set quantification $value
+		}
+		-gene_quantification {
+			set gene_quantification $value
 		}
 		-data_type {
 			set data_type $value
 		}
+		-splice_correction_strategy {
+			set splice_correction_strategy $value
+		}
 		-model_construction_strategy {
-			lappend options --model_construction_strategy $value
+			set model_construction_strategy $value
+		}
+		-matching_strategy {
+			lappend options --matching_strategy $value
 		}
 		-threads {
 			set threads $value
@@ -1009,14 +1063,12 @@ proc iso_isoquant_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-regions {
+			set regions $value
+		}
 	} {bam resultfile} 1 2
 	set bam [file_absolute $bam]
 	set refseq [refseq $refseq]
-	if {$preset eq "nanopore"} {
-		set analysisname isoquant
-	} else {
-		set analysisname isoquant_$preset
-	}
 	if {$resultfile eq ""} {
 		set root ${analysisname}-[file_rootname $bam]
 		set resultfile [file dir $bam]/isoform_counts-$root.tsv
@@ -1027,6 +1079,7 @@ proc iso_isoquant_job {args} {
 	}
 	set resultfile [file_absolute $resultfile]
 	set sampledir [file dir $resultfile]
+	if {$gene_quantification eq ""} {set gene_quantification $quantification}
 	if {$reftranscripts eq ""} {
 		set reftranscripts [ref_tsvtranscripts $refseq]
 	} elseif {[file extension $reftranscripts] eq ".gtf"} {
@@ -1049,7 +1102,9 @@ proc iso_isoquant_job {args} {
 		{*}[versions iso_isoquant dbdir zstd os]
 
 	# analysis per sample
-	set regions [list_remove [distrreg_regs $distrreg $refseq g] unaligned]
+	if {$regions eq ""} {
+		set regions [list_remove [distrreg_regs $distrreg $refseq g] unaligned]
+	}
 	cd $sampledir
 	set sample [file tail $sampledir]
 	set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
@@ -1064,7 +1119,8 @@ proc iso_isoquant_job {args} {
 			$regdir/00_regali
 		} -vars {
 			bam refseq regdir region reftranscripts threads root sample
-			options data_type quantification analysisname distrreg
+			options data_type quantification gene_quantification analysisname distrreg
+			model_construction_strategy splice_correction_strategy matching_strategy
 		} -code {
 			if {[file exists $regdir.temp]} {file delete -force $regdir.temp}
 			mkdir $regdir.temp
@@ -1091,22 +1147,26 @@ proc iso_isoquant_job {args} {
 			} else {
 				exec samtools index $tempbam
 				# region gene file
-				set regreftranscripts [tempfile].tsv
-				set reggenedb [tempfile].gtf
-				convert_isoquant_reggenedb $reftranscripts $samregions $refseq $regreftranscripts $reggenedb
+				convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 				set tempgenedb [tempfile].db
+
+				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/isoquant.log 
 				exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 				exec isoquant3 \
-					{*}$options \
-					--threads $threads \
+					--data_type $data_type \
+					--model_construction_strategy $model_construction_strategy \
+					--splice_correction_strategy $splice_correction_strategy \
 					--transcript_quantification $quantification \
-					--gene_quantification $quantification \
+					--gene_quantification $gene_quantification \
+					--threads $threads \
+					--count_exons \
 					--reference $refseq \
 					--bam $tempbam \
 					--genedb $tempgenedb \
-					--data_type $data_type \
 					--keep_tmp \
+					{*}$options \
 					-o $regdir.temp 2>@ stderr >@ stdout
+
 			}
 			file delete -force $regdir
 			file rename $regdir.temp $regdir
@@ -1138,10 +1198,8 @@ proc iso_isoquant_job {args} {
 					ambiguity inconsistency covered_pct polya classification closest_known
 				} \t]\n
 			} else {
-				set regreftranscripts [tempfile].tsv
-				set reggenedb [tempfile].gtf
 				set samregions [samregions $region $refseq]
-				convert_isoquant_reggenedb $reftranscripts $samregions $refseq $regreftranscripts $reggenedb
+				convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 				convert_isoquant $isodir $destdir $sample $refseq $reggenedb $regreftranscripts $root
 			}
 		}
