@@ -114,25 +114,30 @@ proc cg_tsv2gtf {args} {
 				}
 			}
 		}
+
 		set num 0
 		set framespos 0
-		foreach dline $list ndline [lrange $list 1 end] {
+		set result {}
+		foreach dline $list {
 			foreach {begin end type element rna_start rna_end protein_start protein_end} $dline break
-			incr begin
-			incr end
-			set nbegin [lindex $ndline 0]
-			set ntype [lindex $ndline 0]
-			if {$type eq $ntype || $nbegin != $end} {
-				if {$noexon} {
-					set noexon 0
-				} else {
-					puts $o [join [list $chr $source exon $begin $end $score $strand . $attr] \t]
-				}
+			set prevtype [lindex $result end 2]
+			if {$prevtype eq "CDS"} {
+				set prev end-1
 			} else {
-				set nend [lindex $ndline 1]
-				incr nend
-				puts $o [join [list $chr $source exon $begin $nend $score $strand . $attr] \t]
-				set noexon 1
+				set prev end
+			}
+			set prevend [lindex $result $prev 4]
+			if {$prevend eq $begin} {
+				if {[lindex $result $prev 2] eq "CDS"} {
+					error "adjoined CDSes at $line"
+				}
+				incr begin
+				incr end
+				lset result $prev 4 $end
+			} else {
+				incr begin
+				incr end
+				lappend result [list $chr $source exon $begin $end $score $strand . $attr]
 			}
 			if {$type eq "CDS"} {
 				if {$num == $adjstartcds} {
@@ -144,10 +149,13 @@ proc cg_tsv2gtf {args} {
 				if {$num != $remove} {
 					set frame [expr {3-$protein_start%3}]
 					if {$frame == 3} {set frame 0}
-					puts $o [join [list $chr $source $type $begin $end $score $strand $frame $attr] \t]
+					lappend result [list $chr $source $type $begin $end $score $strand $frame $attr]
 				}
 			}
 			incr num
+		}
+		foreach line $result {
+			puts $o [join $line \t]
 		}
 		if {$upstream} {
 			set dline [lindex $ftlist end]

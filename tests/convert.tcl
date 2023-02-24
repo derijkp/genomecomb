@@ -1925,6 +1925,21 @@ test tsv2gtf {basic with CDS bug fix empty CDS} {
 	exec diff tmp/test.gtf tmp/expected.gtf
 } {}
 
+test tsv2gtf {bug fix} {
+	file_write tmp/test.tsv [string trim [deindent {
+		chromosome	begin	end	transcript	gene	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	source	gene_type	havana_transcript	transcript_name	exon_number	gene_id	tag	transcript_support_level	gene_name	level	transcript_type	transcript_id	exon_id	ont	hgnc_id	havana_gene	protein_id	ccdsid
+		chr4	573879	576295	ENST00000610212.3	ENSG00000273238.3	-	574904	576062	1	573879,	576295,	HAVANA	protein_coding	OTTHUMT00000492917.2	TMEM271-201	1	ENSG00000273238.3	CAGE_supported_TSS,basic,Ensembl_canonical,MANE_Select,appris_principal_1	NA	TMEM271	2	protein_coding	ENST00000610212.3	ENSE00003703066.3		HGNC:53639	OTTHUMG00000192218.2	ENSP00000493161.1	
+	}]]\n
+	file_write tmp/expected.gtf [string trim [deindent {
+		chr4	HAVANA	transcript	573880	576295	.	-	.	gene_id "TMEM271"; transcript_id "ENST00000610212.3";
+		chr4	HAVANA	exon	573880	576295	.	-	.	gene_id "TMEM271"; transcript_id "ENST00000610212.3";
+		chr4	HAVANA	CDS	574908	576062	.	-	0	gene_id "TMEM271"; transcript_id "ENST00000610212.3";
+	}]]\n
+	cg tsv2gtf -stack 1 tmp/test.tsv tmp/test.gtf
+	exec diff tmp/test.gtf tmp/expected.gtf
+} {}
+
+
 test convert_pipe {convert_pipe various} {
 	set errors {}
 	foreach {test expected} {
