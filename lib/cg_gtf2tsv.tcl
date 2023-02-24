@@ -63,7 +63,7 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 			#fields	end	1	Integer	Transcription end position
 			#fields	type	1	Integer	Type of element (transcript typically)
 			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
-			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_id from GTF)
+			#fields	gene	1	String	Alternate name / name of gene (e.g. gene_name or gene_id from GTF)
 			#fields	strand	1	String	+ or - for strand
 			#fields	cdsStart	1	Integer	Coding region start
 			#fields	cdsEnd	1	Integer	Coding region end
@@ -198,12 +198,14 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 				error "field transcript_id not found in attributes"
 			}
 			regsub ^transcript: $curtranscript {} curtranscript
-			if {[info exists curattra(gene_id)]} {
+			if {[info exists curattra(gene_name)]} {
+				set curgene [list_remdup $curattra(gene_name)]
+			} elseif {[info exists curattra(gene_id)]} {
 				set curgene [list_remdup $curattra(gene_id)]
 			} elseif {[info exists genea($curtranscript)]} {
 				set curgene $genea($curtranscript)
 			} else {
-				error "field gene_id not found in attributes"
+				error "field gene_name or gene_id not found in attributes"
 			}
 			puts $fb [join [list $chrom $curbegin $curend transcript $curtranscript $curgene $curstrand \
 				$curcdsStart $curcdsEnd $curexonCount \
