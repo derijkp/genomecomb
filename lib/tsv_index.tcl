@@ -295,6 +295,7 @@ proc maketabix_job {args} {
 	job [job_relfile2name maketabix [file tail $file]] {*}$skips -optional $optional -deps {$file} -targets {$target} -code {
 		putslog "making $target"
 		set tempfile [filetemp_ext $dep]
+		file delete $tempfile
 		mklink $dep $tempfile
 		cg_maketabix $tempfile
 		file rename -force $tempfile.tbi $dep.tbi
