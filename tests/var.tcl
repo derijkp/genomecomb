@@ -590,7 +590,8 @@ test var {var_clair3 basic giab data} {
 		truth_HG002_hg38 \
 		tmp/clair3/benchmark.tsv
 	set result {}
-	lappend result [tsvdiff -x *.log -x *.finished  -x *.zsti \
+	lappend result [tsvdiff -q 1\
+		-x *.log -x *.finished  -x *.zsti \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
 		tmp/clair3 expected/clair3]
