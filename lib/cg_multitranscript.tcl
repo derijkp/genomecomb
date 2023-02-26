@@ -79,6 +79,7 @@ proc multitranscript_open {isoformfiles aVar} {
 proc cg_multitranscript {args} {
 	set match {}
 	set exact 0
+	set skipempty 1
 	cg_options multitranscript args {
 		-exact {
 			set exact 1
@@ -87,8 +88,22 @@ proc cg_multitranscript {args} {
 		-match {
 			set match $value
 		}
+		-skipempty {
+			set skipempty $value
+		}
 	} compar_file 2
 	set isoformfiles $args
+	if {$skipempty} {
+		set todo {}
+		foreach isoformfile $isoformfiles {
+			if {[file size $isoformfile] == 0} continue
+			lappend todo $isoformfile
+		}
+		set isoformfiles $todo
+		if {![llength $isoformfiles]} {
+			error "multitranscript error: all given isoformfiles are empty"
+		}
+	}
 
 	analysisinfo_combine $compar_file $isoformfiles
 	foreach file $isoformfiles {

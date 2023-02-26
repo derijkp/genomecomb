@@ -46,12 +46,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 	} else {
 		set root ${isocaller}-$exproot
 	}
-	set isoformfiles {}
-	foreach isoformfile [bsort [jobglob samples/*/isoform_counts-${isocaller}-*.tsv]] {
-		if {[file size $isoformfile] == 0} continue
-		lappend isoformfiles $isoformfile
-	}
-	
+	set isoformfiles [bsort [jobglob samples/*/isoform_counts-${isocaller}-*.tsv]]	
 	if {[llength $isoformfiles]} {
 		job iso_compar-isoform_counts-$root \
 		-deps $isoformfiles \
@@ -61,7 +56,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 			isoformfiles exproot root isocaller iso_match
 		} -code {
 			set isoformcounts compar/isoform_counts-$root.tsv
-			cg multitranscript -match $iso_match $isoformcounts {*}$isoformfiles
+			cg multitranscript -match $iso_match $isoformcounts {*}$todo
 		}
 	}
 	set genefiles [bsort [jobglob samples/*/gene_counts-${isocaller}-*.tsv]]
