@@ -4,22 +4,8 @@ proc version_flames {} {
 	lindex [split [file tail $flamesdir] -] end
 }
 
-proc cg_iso_flames_genecounts {isoformcounts genecounts} {
-	set tempfile [tempfile]
-	cg select -overwrite 1 \
-		-g {geneid} \
-		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),distinct(structural_category),ucount(transcript),sum(counts-*)} \
-		$isoformcounts $tempfile
-	catch {close $f} ; catch {close $o}
-	set f [open $tempfile]
-	set header [tsv_open $f]
-	set oheader {gene chromosome begin end strand type category nrtranscripts}
-	foreach field [lrange $header 7 end] {
-		regsub sum_ $field {} field
-		lappend oheader $field
-	}
-	set o [open $genecounts w]
-	puts $o [deindent {
+proc iso_flames_header_genecounts {root} {
+	set header [deindent {
 		#filetype	tsv/genecountsfile
 		#fileversion	0.99
 		#fields	table
@@ -34,7 +20,24 @@ proc cg_iso_flames_genecounts {isoformcounts genecounts} {
 		#fields	counts	1	Integer	Number of reads mapping to gene
 		#fields	type	1	String	Type of element
 	}]
-	puts $o [join $oheader \t]
+	set oheader {gene chromosome begin end strand type category nrtranscripts}
+	lappend oheader counts-$root
+	append header \n[join $oheader \t]
+	return $header
+}
+
+proc cg_iso_flames_genecounts {isoformcounts genecounts} {
+	set tempfile [tempfile]
+	set root [file_rootname $genecounts]
+	cg select -overwrite 1 \
+		-g {geneid} \
+		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),distinct(structural_category),ucount(transcript),sum(counts-*)} \
+		$isoformcounts $tempfile
+	catch {close $f} ; catch {close $o}
+	set f [open $tempfile]
+	set inheader [tsv_open $f]
+	set o [open $genecounts w]
+	puts $o [iso_flames_header_genecounts $root]
 	while {[gets $f line] != -1} {
 		set line [split $line \t]
 		set line [linsert $line 5 gene]
@@ -44,6 +47,38 @@ proc cg_iso_flames_genecounts {isoformcounts genecounts} {
 	}
 	close $o
 	close $f
+}
+
+proc iso_flames_header_isoformcounts {root} {
+	set header [deindent {
+		#filetype	tsv/transcriptsfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	chromosome	1	String	Chromosome name
+		#fields	strand	1	String	+ or - for strand
+		#fields	begin	1	Integer	Transcription start position
+		#fields	end	1	Integer	Transcription end position
+		#fields	type	1	String	type of element
+		#fields	cdsStart	1	Integer	Coding region start
+		#fields	cdsEnd	1	Integer	Coding region end
+		#fields	exonCount	1	Integer	Number of exons
+		#fields	exonStarts	E	Integer	Exon start positions
+		#fields	exonEnds	E	Integer	Exon end positions
+		#fields	score	1	Float	Score
+		#fields	geneid	1	String	gene id (e.g. gene_id from GTF)
+		#fields	cdsStartStat	1	String	Status of CDS start annotation (none, unknown, incomplete, or complete)
+		#fields	cdsEndStat	1	String	Status of CDS end annotation (none, unknown, incomplete, or complete)
+		#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
+		#fields	category	1	String	one of the isoform categories (known, novel, intergenic)
+		#fields	counts	1	Integer	Number of reads mapping to isoform
+	}]
+	append header \n[join [list \
+		transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames \
+		type category counts-$root
+	] \t]
+	return $header
 }
 
 proc iso_flames_job {args} {
@@ -92,8 +127,8 @@ proc iso_flames_job {args} {
 	}
 	if {$resultfile eq ""} {
 		set sample [file tail [file dir $fastqdir]]
-		set root fastqs-$sample
-		set resultfile [file dir $fastqdir]/isoform_counts-flames-$root.tsv
+		set root flames-fastqs-$sample
+		set resultfile [file dir $fastqdir]/isoform_counts-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
 		set root [file_rootname $resultfile]
@@ -114,29 +149,29 @@ proc iso_flames_job {args} {
 	job_logfile $destdir/flames_[file tail $destdir] $destdir $cmdline \
 		{*}[versions flames dbdir zstd os]
 	# analysis per sample
-	set flamesdir $destdir/flames-$root
+	set flamesdir $destdir/$root
 	set fastqfiles [bsort [jobgzfiles $fastqdir/*.fq $fastqdir/*.fastq]]
 	if {[llength $fastqfiles] == 0} {
 		error "could not run flames: no fastq files found (tried in $fastqdir)"
 	}
 	mkdir $flamesdir
-	job flames-[file tail $resultfile] {*}$skips -skip flames-$root/counts_matrix-flames-$root.tsv \
+	job flames-[file tail $resultfile] {*}$skips -skip $root/counts_matrix-$root.tsv \
 	-cores $threads \
 	-deps [list {*}$fastqfiles $refseq $reftranscripts] -targets {
 		$resultfile
-		$destdir/gene_counts-flames-$root.tsv
+		$destdir/gene_counts-$root.tsv
 	} -vars {
 		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq threads extraopts sample
 	} -code {
 		set extrainfo [list \
-			analysis flames-$root sample $sample \
+			analysis $root sample $sample \
 			isocaller_reftranscripts [file tail $reftranscripts] \
 			isocaller_distrreg 0 \
 			isocaller flames isocaller_version [version flames]
 		]
 		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile \
 			{*}$extrainfo
-		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $destdir/gene_counts-flames-$root.tsv \
+		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $destdir/gene_counts-$root.tsv \
 			{*}$extrainfo
 		set keeppwd [pwd]
 		cd $flamesdir
@@ -185,11 +220,13 @@ proc iso_flames_job {args} {
 		if {[llength $fastqfiles] > 1} {
 			exec cg zcat {*}$fastqfiles | gzip --fast > $mergedfastqfile.gz.temp
 			file rename -force $mergedfastqfile.gz.temp $mergedfastqfile.gz
+			set mergedfastqfile $mergedfastqfile.gz
 		} else {
 			set fastqfile [lindex $fastqfiles 0]
 			mklink -absolute 0 $fastqfile $mergedfastqfile[gzext $fastqfile]
+			set mergedfastqfile $mergedfastqfile[gzext $fastqfile]
 		}
-		set f [gzopen $mergedfastqfile.gz]
+		set f [gzopen $mergedfastqfile]
 		for {set i 0} {$i < 20} {incr i} {gets $f}
 		set short [eof $f]
 		if {$short} {
@@ -199,8 +236,9 @@ proc iso_flames_job {args} {
 			set o [wgzopen transcript_count.csv.gz w] ; gzclose $o
 			file_write flames-not_enough_reads ""
 			cd $destdir
-			file_write isoform_counts-flames-$root.tsv ""
-			file_write gene_counts-flames-$root.tsv ""
+			file_write isoform_counts-${root}.tsv [iso_flames_header_isoformcounts $root]\n
+			set inheader [list gene chromosomeb begin end strand type category nrtranscripts sum_counts-$root]
+			file_write gene_counts-${root}.tsv [iso_flames_header_genecounts $root]\n
 			return
 		} else {
 			exec flames bulk_long_pipeline.py {*}$extraopts \
@@ -217,11 +255,11 @@ proc iso_flames_job {args} {
 		}
 		#
 		cd $destdir
-		mklink -absolute 0 flames-$root/isoform_annotated.filtered.gff3 transcripts-flames-$root.isoforms.gff3
-		mklink -absolute 0 flames-$root/transcript_assembly.fa transcripts-flames-$root.isoforms.fa
+		mklink -absolute 0 $root/isoform_annotated.filtered.gff3 transcripts-$root.isoforms.gff3
+		mklink -absolute 0 $root/transcript_assembly.fa transcripts-$root.isoforms.fa
 		# make isoform_counts
 		# read counts
-		set f [gzopen flames-$root/transcript_count.csv.gz]
+		set f [gzopen $root/transcript_count.csv.gz]
 		set header [split [gets $f] ,]
 		unset -nocomplain a
 		while {[gets $f line] != -1} {
@@ -230,37 +268,10 @@ proc iso_flames_job {args} {
 		}
 		close $f
 		# make genepred and add counts
-		exec flames gff3ToGenePred flames-$root/isoform_annotated.filtered.gff3 flames-$root/isoform_annotated.filtered.genepred
-		set o [open flames-$root/isoform_counts-flames-$root.tsv w]
-		puts $o [deindent {
-			#filetype	tsv/transcriptsfile
-			#fileversion	0.99
-			#fields	table
-			#fields	field	number	type	description
-			#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
-			#fields	chromosome	1	String	Chromosome name
-			#fields	strand	1	String	+ or - for strand
-			#fields	begin	1	Integer	Transcription start position
-			#fields	end	1	Integer	Transcription end position
-			#fields	type	1	String	type of element
-			#fields	cdsStart	1	Integer	Coding region start
-			#fields	cdsEnd	1	Integer	Coding region end
-			#fields	exonCount	1	Integer	Number of exons
-			#fields	exonStarts	E	Integer	Exon start positions
-			#fields	exonEnds	E	Integer	Exon end positions
-			#fields	score	1	Float	Score
-			#fields	geneid	1	String	gene id (e.g. gene_id from GTF)
-			#fields	cdsStartStat	1	String	Status of CDS start annotation (none, unknown, incomplete, or complete)
-			#fields	cdsEndStat	1	String	Status of CDS end annotation (none, unknown, incomplete, or complete)
-			#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
-			#fields	category	1	String	one of the isoform categories (known, novel, intergenic)
-			#fields	counts	1	Integer	Number of reads mapping to isoform
-		}]
-		puts $o [join [list \
-			transcript chromosome strand begin end cdsStart cdsEnd exonCount exonStarts exonEnds score geneid cdsStartStat cdsEndStat exonFrames \
-			type category counts-flames-$root
-		] \t]
-		set f [open flames-$root/isoform_annotated.filtered.genepred]
+		exec flames gff3ToGenePred $root/isoform_annotated.filtered.gff3 $root/isoform_annotated.filtered.genepred
+		set o [open $root/isoform_counts-$root.tsv w]
+		puts $o [iso_flames_header_isoformcounts $root]
+		set f [open $root/isoform_annotated.filtered.genepred]
 		unset -nocomplain genea ; unset -nocomplain transcriptsa
 		foreach {gene transcript count} [lrange [exec cg gtf2tsv $reftranscripts | cg select -g {gene * transcript *}] 3 end] {
 			set genea($gene) 1
@@ -292,10 +303,10 @@ proc iso_flames_job {args} {
 		}
 		close $f
 		close $o
-		cg select -s - flames-$root/isoform_counts-flames-$root.tsv flames-$root/isoform_counts-flames-$root.stsv
-		file rename -force flames-$root/isoform_counts-flames-$root.stsv isoform_counts-flames-$root.tsv
-		cg_iso_flames_genecounts isoform_counts-flames-$root.tsv gene_counts-flames-$root.tsv.temp
-		file rename -force gene_counts-flames-$root.tsv.temp gene_counts-flames-$root.tsv
+		cg select -s - $root/isoform_counts-$root.tsv $root/isoform_counts-$root.stsv
+		file rename -force $root/isoform_counts-$root.stsv isoform_counts-$root.tsv
+		cg_iso_flames_genecounts isoform_counts-$root.tsv gene_counts-$root.tsv.temp
+		file rename -force gene_counts-$root.tsv.temp gene_counts-$root.tsv
 	}
 }
 

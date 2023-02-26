@@ -33,6 +33,35 @@ test ont_rna {flames basic SIRV test} {
 	exec diff tmp/sirv/gene_counts-flames-fastqs-sirv.tsv data/gene_counts-flames-fastqs-sirv.tsv
 } {}
 
+test ont_rna {flames empty fastq} {
+	file delete -force tmp/sirv
+	file mkdir tmp/sirv/fastq
+	file_write tmp/sirv/fastq/empty.fastq ""
+	foreach file [glob -nocomplain data/SIRV-flames/SIRV*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/sirv/[file tail $file]
+	}
+	# flames works directly form fastq (and we could give the fastq directory instead of the bam file
+	# going via bam to fit into the the typical workflow
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/sirv/map-minimap2-sirv.bam \
+		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		tmp/sirv/sirv \
+		tmp/sirv/fastq/empty.fastq
+	exec samtools index tmp/sirv/map-minimap2-sirv.bam
+	cg iso_flames -stack 1 \
+		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		tmp/sirv/map-minimap2-sirv.bam
+	# check vs expected
+	cg select -overwrite 1 -q 0 data/isoform_counts-flames-fastqs-sirv.tsv tmp/expected-isoform_counts-flames-fastqs-sirv.tsv
+	cg select -overwrite 1 -q 0 data/gene_counts-flames-fastqs-sirv.tsv tmp/expected-gene_counts-flames-fastqs-sirv.tsv
+	exec diff tmp/sirv/isoform_counts-flames-fastqs-sirv.tsv tmp/expected-isoform_counts-flames-fastqs-sirv.tsv
+	exec diff tmp/sirv/gene_counts-flames-fastqs-sirv.tsv tmp/expected-gene_counts-flames-fastqs-sirv.tsv
+} {}
+
 test ont_rna {flair basic SIRV test} {
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
