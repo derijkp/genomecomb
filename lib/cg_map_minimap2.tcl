@@ -58,8 +58,8 @@ proc map_mem_minimap2 {mem threads preset deps} {
 # splice : noisy Nanopore Direct RNA-seq
 # splice:hq : Final PacBio Iso-seq or traditional cDNA
 # asm5 : intra-species asm-to-asm alignment
-# va-pb : PacBio read overlap
-# va-ont : Nanopore read overlap
+# ava-pb : PacBio read overlap
+# ava-ont : Nanopore read overlap
 
 proc cg_map_minimap2 {args} {
 	if {[info exists ::cgextraopts(minimap2)]} {set extraopts $::cgextraopts(minimap2)} else {set extraopts {}}
@@ -75,8 +75,17 @@ proc cg_map_minimap2 {args} {
 			set paired $value
 		}
 		-x - -preset {
-			if {$value eq "splicehq"} {set value splice:hq}
-			if {$value eq "splicesmall"} {
+			if {$value eq "splicehq"} {
+				set value splice:hq
+			} elseif {$value in "pb pacbio"} {
+				set value map-pb
+			} elseif {$value in "ont"} {
+				set value map-ont
+			} elseif {$value in "avapb"} {
+				set value ava-pb
+			} elseif {$value in "pb avaont"} {
+				set value ava-ont
+			} elseif {$value eq "splicesmall"} {
 				set value splice
 				lappend extraopts -B3 -O3,6
 			}

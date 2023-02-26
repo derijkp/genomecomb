@@ -76,7 +76,7 @@ not processed and not added to the final compar.
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
 ; -aligner aligner (-a): use the given aligner for mapping to the reference genome (default bwa)
-Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, ngmlr ; for rna-seq: star, star_2p, hisat2, minimap2_splice
+Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, minimap2_pb, minimap2_asm20, ngmlr ; for rna-seq: star, star_2p, hisat2, minimap2_splice, minimap2_splicehq
 ; -aliformat format: format of the (final) alignment (map) files, this is by default bam, but can be set to cram
 ; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or **value** srma for alignment with srma
