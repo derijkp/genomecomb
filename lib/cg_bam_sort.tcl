@@ -229,7 +229,7 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} 
 	} else {
 		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k1,1N 2>@ stderr" w]
 	}
-	puts $o $line
+	if {$line ne ""} {puts $o $line}
 	fcopy stdin $o
 	close $o
 }
