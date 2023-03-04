@@ -26,9 +26,11 @@ proc iso_flames_header_genecounts {root} {
 	return $header
 }
 
-proc cg_iso_flames_genecounts {isoformcounts genecounts} {
+proc cg_iso_flames_genecounts {isoformcounts genecounts {root {}}} {
 	set tempfile [tempfile]
-	set root [file_rootname $genecounts]
+	if {$root eq ""} {
+		set root [file_rootname $genecounts]
+	}
 	cg select -overwrite 1 \
 		-g {geneid} \
 		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),distinct(structural_category),ucount(transcript),sum(counts-*)} \
@@ -305,7 +307,7 @@ proc iso_flames_job {args} {
 		close $o
 		cg select -s - $root/isoform_counts-$root.tsv $root/isoform_counts-$root.stsv
 		file rename -force $root/isoform_counts-$root.stsv isoform_counts-$root.tsv
-		cg_iso_flames_genecounts isoform_counts-$root.tsv gene_counts-$root.tsv.temp
+		cg_iso_flames_genecounts isoform_counts-$root.tsv gene_counts-$root.tsv.temp $root
 		file rename -force gene_counts-$root.tsv.temp gene_counts-$root.tsv
 	}
 }
