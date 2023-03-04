@@ -101,6 +101,32 @@ test vcf2tsv {vcf2tsv combination alleles -> position insdel} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {vcf2tsv empty missing alleleSeq1 fix for when vcf (incorrectly) does not use tabs in header} {
+	file_write tmp/test.vcf [deindent {
+		##fileformat=VCFv4.2
+		##FILTER=<ID=PASS,Description="All filters passed">
+		##FILTER=<ID=LowQual,Description="Low quality variant">
+		##FILTER=<ID=RefCall,Description="Reference call">
+		##INFO=<ID=P,Number=0,Type=Flag,Description="Result from pileup calling">
+		##INFO=<ID=F,Number=0,Type=Flag,Description="Result from full-alignment calling">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read depth for each allele">
+		##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred-scaled genotype likelihoods rounded to the closest integer">
+		##FORMAT=<ID=AF,Number=1,Type=Float,Description="Estimated allele frequency in the range of [0,1]">
+		##contig=<ID=chr1,length=248956422>
+		##contig=<ID=chr2,length=242193529>
+		#CHROM	POS ID REF ALT QUAL FILTER INFO FORMAT SAMPLE
+	}]
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	genoqual	coverage	alleledepth_ref	alleledepth	PL	frequency	P	F
+	}
+	# ../bin/vcf2tsv 1 '. AD R RPA R AC A AF A' - - '' 0 * error 0 tmp/test.tsv.gz.temp.2.tsv.gz '' < tmp/test.vcf
+	cg vcf2tsv tmp/test.vcf | cg select -rc 1 > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test vcf2tsv {vcf2tsv ins and del} {
 	exec cg vcf2tsv -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv

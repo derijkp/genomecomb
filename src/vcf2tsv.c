@@ -1468,7 +1468,17 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			} else {
-				header = DStringArrayFromCharM(line->string+1,"\t");
+				/* check for non-tab header */
+				int ok=0 ; char *c = line->string;
+				while (*c) {
+					if (*c == '\t') {ok ++; break;}
+					c++;
+				}
+				if (ok >= 8) {
+					header = DStringArrayFromCharM(line->string+1,"\t");
+				} else {
+					header = DStringArrayFromCharM(line->string+1,"\t ");
+				}
 				break;
 			}
 		}
