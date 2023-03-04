@@ -1,3 +1,13 @@
+proc version_STAR {} {
+	set version [exec STAR --version]
+	regsub -- {_20..-..-..$} $version {} version
+	return $version
+}
+
+proc version_star {} {
+	version_STAR
+}
+
 proc refseq_star_job {refseq {gtffile {}} {threads 4}} {
 	upvar job_logdir job_logdir
 	set refseq [refseq $refseq]
