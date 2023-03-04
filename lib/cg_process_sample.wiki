@@ -71,7 +71,7 @@ Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers svcallers: (space separated) list of methylation callers to be used (default empty).
 Currently supported are: nanopolish
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.
-Currently supported are: rnaseqc
+Currently supported are: rnaseqc, qorts
 ; -split 1/0 (-s): split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use basic (default) for creating most reports (or all for all reports). If you only
