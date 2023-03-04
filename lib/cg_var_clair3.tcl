@@ -167,7 +167,7 @@ proc var_clair3_job {args} {
 				set platform ont
 				set tech ont
 			}
-			hifi {
+			hifi - pacbio {
 				set platform hifi
 				set tech pacbio
 				set model hifi
@@ -290,12 +290,12 @@ proc var_clair3_job {args} {
 				--gvcf
 		}
 		if {[file exists $tempvcfdir/merge_output.gvcf]} {
-			cg_gzip $tempvcfdir/merge_output.gvcf
+			cg sortvcf -threads $threads $tempvcfdir/merge_output.gvcf $tempvcfdir/merge_output.gvcf.gz
 			file rename -force -- $tempvcfdir/merge_output.gvcf.gz $varallfile
 		} else {
 			file_write $varallfile ""
 		}
-		file rename -force -- $tempvcfdir/merge_output.vcf.gz $vcffile
+		cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile
 		catch {file delete -force $tempvcfdir}
 		set tempfile [filetemp $varfile]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
