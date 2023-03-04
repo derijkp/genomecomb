@@ -45,7 +45,6 @@ _total_no_feature	5	0	0	0
 _total_ambiguous	14	0	0	0}
 
 test counters {process_project rnaseqc and qorts} {
-
 	test_cleantmp
 	mkdir tmp/samples/s1
 	cg_bam_sort data/star-p.sam tmp/samples/s1/map-sstar-s1.bam
@@ -71,12 +70,12 @@ test counters {process_project rnaseqc and qorts} {
 		#fields count_cds	1	Integer	gene counts per sample
 		#fields count_utr	1	Integer	gene counts per sample
 		#fields count_ambig_gene	1	Integer	gene counts per sample
-		geneid	counts-qorts-sstar-s2	count_cds-qorts-sstar-s2	count_utr-qorts-sstar-s2	count_ambig_gene-qorts-sstar-s2	counts-qorts-sstar-s1	count_cds-qorts-sstar-s1	count_utr-qorts-sstar-s1	count_ambig_gene-qorts-sstar-s1
-		ENSG00000100412.11	2	2	0	14	2	2	0	14
-		ENSG00000100413.12	1	0	1	14	1	0	1	14
-		ENSG00000183486.8	78	61	17	0	78	61	17	0
-		_total_no_feature	5	0	0	0	5	0	0	0
-		_total_ambiguous	14	0	0	0	14	0	0	0
+		gene	geneid	counts-qorts-sstar-s2	count_cds-qorts-sstar-s2	count_utr-qorts-sstar-s2	count_ambig_gene-qorts-sstar-s2	counts-qorts-sstar-s1	count_cds-qorts-sstar-s1	count_utr-qorts-sstar-s1	count_ambig_gene-qorts-sstar-s1
+		ENSG00000100412.11	ENSG00000100412.11	2	2	0	14	2	2	0	14
+		ENSG00000100413.12	ENSG00000100413.12	1	0	1	14	1	0	1	14
+		ENSG00000183486.8	ENSG00000183486.8	78	61	17	0	78	61	17	0
+		_total_ambiguous	_total_ambiguous	14	0	0	0	14	0	0	0
+		_total_no_feature	_total_no_feature	5	0	0	0	5	0	0	0
 	}]\n
 	exec diff tmp/temp.tsv tmp/expected.tsv
 	cg select -overwrite 1 -q {$counts-rnaseqc-sstar-s1 > 0 || $counts-rnaseqc-sstar-s2 > 0} tmp/compar/gene_counts-rnaseqc-sstar-tmp.tsv tmp/temp.tsv
@@ -87,13 +86,12 @@ test counters {process_project rnaseqc and qorts} {
 		#fields geneid	1	String	id field
 		#fields genename	1	String	name field
 		#fields counts	1	Integer	gene counts per sample
-		geneid	genename	counts-rnaseqc-sstar-s2	counts-rnaseqc-sstar-s1
-		ENSG00000183486.8	MX2	38	38
-		ENSG00000100412.11	ACO2	1	1
-		ENSG00000100413.12	POLR3H	8	8
+		gene	geneid	counts-rnaseqc-sstar-s2	counts-rnaseqc-sstar-s1
+		ACO2	ENSG00000100412.11	1	1
+		MX2	ENSG00000183486.8	38	38
+		POLR3H	ENSG00000100413.12	8	8
 	}]\n
 	exec diff tmp/temp.tsv tmp/expected.tsv
-
 } {}
 
 testsummarize

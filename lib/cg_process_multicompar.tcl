@@ -463,14 +463,23 @@ proc process_multicompar_job {args} {
 				set analysis [join [lrange [split [file_rootname $file] -] 0 end-1] -]
 				lappend a($analysis) $file
 			}
+			if {$prefix eq "exon_counts"} {
+				set multigene 0
+			} else {
+				set multigene 1
+			}
 			foreach analysis [array names a] {
 				set acountfiles $a($analysis)
 				set target compar/${prefix}-${analysis}-${experiment}.tsv
 				job multicount-${prefix}-${analysis}-${experiment} -optional 1 \
 				-deps [list {*}$acountfiles {*}[job_analysisinfo_files $acountfiles]] \
-				-targets {$target} -vars {acountfiles} -code {
+				-targets {$target} -vars {acountfiles multigene} -code {
 					analysisinfo_combine $target $acountfiles
-					cg multigene $target.temp {*}$acountfiles
+					if {$multigene} {
+						cg multigene $target.temp {*}$acountfiles
+					} else {
+						cg multicount $target.temp {*}$acountfiles
+					}
 					result_rename $target.temp $target
 				}
 			}
