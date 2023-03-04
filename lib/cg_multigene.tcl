@@ -66,7 +66,7 @@ proc cg_multigene {args} {
 		if {[llength $basicfieldspresent] < 4} {
 			list_addnew basicfieldspresent {*}[list_sub $common -exclude [list_find $poss -1]]
 		}
-		set genepos [multigene_findfield $header {gene_name gene name2 geneid gene_id} gene fieldname $file]
+		set genepos [multigene_findfield $header {gene_name genename gene name2 geneid gene_id} gene fieldname $file]
 		set geneidpos [multigene_findfield $header {gene_id geneid gene} geneid fieldname $file]
 		lappend poss $genepos $geneidpos
 		set restposs [list_find -regexp $header -]
@@ -121,6 +121,7 @@ proc cg_multigene {args} {
 	}
 	# parray geneinfoa
 	# parray gcounta
+	catch {close $o}
 	set o [open $genecounts.temp w]
 	set basicfieldspresent [list_sub $basicfieldspresent [list_remove [list_cor $basicfieldspresent $common] -1]]
 	set poss [list_cor $common $basicfieldspresent]
@@ -134,8 +135,10 @@ proc cg_multigene {args} {
 	set genes [bsort [array names geneinfoa]]
 	foreach gene $genes {
 		set lines $geneinfoa($gene)
-		if {[llength $lines] > 1} {
-			set chr [list_remdup [list_subindex $lines 0]]
+		set chr [list_remdup [list_subindex $lines 0]]
+		if {$chr eq {{}}} {
+			# no location
+		} elseif {[llength $lines] > 1} {
 			if {[llength $chr] > 1} {
 				# should never get here -> solved earlier using chrgenea
 				puts stderr "error combining gene count files: gene $gene is in different chromosomes ($chr)"
@@ -153,6 +156,7 @@ proc cg_multigene {args} {
 				lset line 4 $ogene
 				lset line 5 $ogene
 			}
+			set lines [list $line]
 		} else {
 			set line [lindex $lines 0]
 			if {$novelpattern ne "" && [regexp $novelpattern $gene]} {
@@ -161,29 +165,28 @@ proc cg_multigene {args} {
 				lset line 4 $ogene
 				lset line 5 $ogene
 			}
+			set lines [list $line]
 		}
-		set geneid [lindex $line end]
-		if {$gene in ". dummy"} continue
-		set num -1
-		foreach file $args {
-			incr num
-			if {[info exists gcounta($num,$gene)]} {
-				lappend line {*}$gcounta($num,$gene)
-			} else {
-				lappend line {*}$dummya($num)
+		foreach line $lines {
+			set geneid [lindex $line end]
+			if {$gene in ". dummy"} continue
+			set num -1
+			foreach file $args {
+				incr num
+				if {[info exists gcounta($num,$gene)]} {
+					lappend line {*}$gcounta($num,$gene)
+				} else {
+					lappend line {*}$dummya($num)
+				}
 			}
+			if {[llength $basicfieldspresent] < 4} {
+				set line [list {*}[list_sub $line $poss] {*}[lrange $line 4 end]]
+			}
+			puts $o [join $line \t]
 		}
-		if {[llength $basicfieldspresent] < 4} {
-			set line [list {*}[list_sub $line $poss] {*}[lrange $line 4 end]]
-		}
-		puts $o [join $line \t]
 	}
 	close $o
 	cg select -overwrite 1 -s - $genecounts.temp $genecounts.temp2
 	file delete $genecounts.temp
 	file rename -force $genecounts.temp2 $genecounts
-}
-
-proc cg_multicount {args} {
-	cg_multigene {*}$args
 }
