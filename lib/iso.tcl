@@ -56,7 +56,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 			isoformfiles exproot root isocaller iso_match
 		} -code {
 			set isoformcounts compar/isoform_counts-$root.tsv
-			cg multitranscript -match $iso_match $isoformcounts {*}$todo
+			cg multitranscript -match $iso_match $isoformcounts {*}$isoformfiles
 		}
 	}
 	set genefiles [bsort [jobglob samples/*/gene_counts-${isocaller}-*.tsv]]
