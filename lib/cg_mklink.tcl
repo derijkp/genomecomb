@@ -16,15 +16,12 @@ proc mklink {args} {
 	set src [file_absolute $src]
 	set keepsrc $src
 	set dest [file_absolute $dest]
-	if {[file exists $dest] && [file isdir $dest]} {
-		set dest $dest/[file tail $src]
-	}
 	if {$src eq $dest} {
 		error "cannot mklink a file to itself: $src"
 	}
 	if {!$absolute} {
 		set pos 0
-		set ssrc [file split $src]
+		set ssrc [file split $keepsrc]
 		set sdest [file split $dest]
 		# puts $ssrc\n$sdest
 		foreach s $ssrc d $sdest {
@@ -37,12 +34,21 @@ proc mklink {args} {
 			set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
 		}
 	}
+	# cannot do file exists first because a (existing) link to an unexisting file would return 0
 	set err [catch {file link $dest} link]
-	if {!$err && $link ne "$src"} {
-		file delete $dest
+	if {$err} {
+		if {[file exists $dest]} {
+			error "cg mklink error: destination exists and is not a link: $dest"
+		}
+		set make 1
+	} elseif {$link ne "$src"} {
+		set make 1
+	} else {
+		set make 0
 	}
-	if {![file exists $dest]} {
-		if {[file exists $src]} {
+	if {$make} {
+		file delete $dest
+		if {[file exists $keepsrc]} {
 			file link -symbolic $dest $src
 		} else {
 			set keeppwd [pwd]
@@ -59,8 +65,11 @@ proc mklink {args} {
 			cd $keeppwd
 		}
 	}
-	if {[file exists $keepsrc] && $matchtime} {
-		exec touch -h -d [clock format [file mtime $keepsrc]] $dest
+	if {[file exists $keepsrc] && $matchtime && ![catch {file lstat $keepsrc a}]} {
+		set mtime $a(mtime)
+		if {[file_mtime $dest] ne $mtime} {
+			exec touch -h -d [clock format $mtime] $dest
+		}
 	}
 }
 
@@ -85,9 +94,13 @@ proc mklink_asjob {dep target} {
 
 proc cg_mklink {args} {
 	set absolute 0
+	set matchtime 1
 	cg_options mklink args {
 		-absolute - -a {
 			set absolute $value
+		}
+		-matchtime {
+			set matchtime $value
 		}
 	} {src dest} 2 ... {
 		make a soflink (dest points to src)
@@ -100,11 +113,9 @@ proc cg_mklink {args} {
 			error "only can make links from multiple files in a directory"
 		}
 		foreach src $srcs {
-			mklink -absolute $absolute $src $dest/[file tail $src]
+			mklink -absolute $absolute -matchtime $matchtime $src $dest/[file tail $src]
 		}
-	} elseif {[file isdir $dest]} {
-		mklink -absolute $absolute $src $dest/[file tail $src]
 	} else {
-		mklink -absolute $absolute $src $dest
+		mklink -absolute $absolute -matchtime $matchtime $src $dest
 	}
 }

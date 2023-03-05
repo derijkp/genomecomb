@@ -18,6 +18,12 @@ no matter where your pwd is, no matter if src is given as an absolute path, or a
 * Links can be created to files that do not exist (yet)
 * If dest is a link, it will be overwritten, if it is a real file, an error is given
 
+Even if **dest** is a directory, cg mklink will try to replace it if it is
+a link (to a directory) or give an error if it is a real directory: It
+will not create a file in the dest dir. 
+Only when multiple sources are given, **dest** must be a directory and
+links to all sources will be made in the **dest** directory
+
 == Arguments ==
 ; src: file to be copied
 ; dest: destination
