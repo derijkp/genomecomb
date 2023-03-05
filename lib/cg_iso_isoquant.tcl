@@ -990,7 +990,6 @@ proc iso_isoquant_job {args} {
 	set options {}
 	cg_options iso_isoquant args {
 		-preset {
-			if {$value ni "sens sensitive nanopore"} {}
 			set preset $value
 			if {$value in {nanopore ont {}}} {
 			} elseif {$value in "sens ont_sens nanopore_sens"} {
