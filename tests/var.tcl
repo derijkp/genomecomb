@@ -547,30 +547,70 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 
 #test var {var_clair3 basic longshot data} {
 #	cd $::smalltestdir
-#	file delete -force tmp/clair3
-#	file mkdir tmp/clair3
+#	file delete -force tmp/lsclair3
+#	file mkdir tmp/lsclair3
 #	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
-#		mklink $file tmp/clair3/[file tail $file]
+#		mklink $file tmp/lsclair3/[file tail $file]
 #	}
-#	cg var_clair3 {*}$::dopts -platform hifi -model hifi \
-#		tmp/clair3/pacbio_reads_30x.bam tmp/clair3/genome.fa
-#	cg vcf2tsv tmp/clair3/ground_truth_variants.vcf tmp/clair3/ground_truth_variants.tsv
-#	cg multicompar tmp/clair3/compar.tsv tmp/clair3/var-clair3-pacbio_reads_30x.tsv.zst tmp/clair3/ground_truth_variants.tsv
+#	cg var_clair3 {*}$::dopts \
+#		-preset pacbio \
+#		tmp/lsclair3/pacbio_reads_30x.bam tmp/lsclair3/genome.fa
+#	cg vcf2tsv tmp/lsclair3/ground_truth_variants.vcf tmp/lsclair3/ground_truth_variants.tsv
+#	cg multicompar tmp/lsclair3/compar.tsv tmp/lsclair3/var-clair3-pacbio_reads_30x.tsv.zst tmp/lsclair3/ground_truth_variants.tsv
+#	cg benchmarkvars tmp/lsclair3/compar.tsv ground_truth_variants tmp/lsclair3/benchmark.tsv
 #	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
 #		-ignorefields {varcaller_cg_version} \
-#		tmp/clair3 expected/clair3
-#	cg benchmarkvars tmp/clair3/compar.tsv ground_truth_variants tmp/clair3/benchmark.tsv
-#	list [cg select -g chromosome tmp/clair3/compar.tsv] [cg select -g {zyg-clair3-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/clair3/compar.tsv]
+#		tmp/lsclair3 expected/lsclair3
+#	list [cg select -g chromosome tmp/lsclair3/compar.tsv] [cg select -g {zyg-clair3-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/lsclair3/compar.tsv]
 #} {{chromosome	count
-#contig1	250
-#contig2	219
-#contig3	246} {zyg-clair3-pacbio_reads_30x	zyg-ground_truth_variants	count
-#?	m	2
-#?	t	9
-#m	m	228
-#t	?	1
-#t	t	475}}
+#contig1	3466
+#contig2	2698
+#contig3	2601} {zyg-clair3-pacbio_reads_30x	zyg-ground_truth_variants	count
+#?	m	4
+#?	t	47
+#c	?	2
+#c	m	1
+#c	t	1
+#m	?	7
+#m	m	195
+#m	t	1
+#t	?	3370
+#t	m	26
+#t	t	415
+#u	?	4672
+#u	m	4
+#u	t	20}}
 
+test var {var_clair3 basic pepperdata} {
+	cd $::smalltestdir
+	file delete -force tmp/clair3_ppr
+	file mkdir tmp/clair3_ppr
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/clair3_ppr/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/clair3_ppr/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/clair3_ppr/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/clair3_ppr/sreg-truth.tsv
+	#
+	cg var_clair3 {*}$::dopts \
+		tmp/clair3_ppr/test.bam $::refseqdir/hg38
+	file delete tmp/clair3_ppr/compar.tsv
+	cg multicompar -reannot 1 tmp/clair3_ppr/compar.tsv tmp/clair3_ppr/var-clair3-test.tsv.zst tmp/clair3_ppr/var-truth.tsv
+	cg benchmarkvars -refcurve_cutoffs {{} 10 20 30 40 50 60} tmp/clair3_ppr/compar.tsv truth tmp/clair3_ppr/benchmark.tsv
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
+		tmp/clair3_ppr expected/clair3_ppr]
+	lappend result [cg select -g chromosome tmp/clair3_ppr/compar.tsv]
+	lappend result [cg select -g {zyg-clair3-test * zyg-truth *} tmp/clair3_ppr/compar.tsv]
+	join [list_remove $result {}] \n
+} {chromosome	count
+20	273
+zyg-longshot-test	zyg-truth	count
+m	m	33
+m	u	91
+r	m	3
+t	t	12
+t	u	134}
 
 test var {var_clair3 basic giab data} {
 	cd $::smalltestdir

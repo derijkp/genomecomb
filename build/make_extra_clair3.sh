@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+clair3version=0.1.12
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -57,12 +59,12 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-8
-yuminstall rh-python36
+yuminstall devtoolset-9
+# yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
 # scl enable devtoolset-8 rh-python36 bash
-source /opt/rh/devtoolset-8/enable
-source /opt/rh/rh-python36/enable
+source /opt/rh/devtoolset-9/enable
+#source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -98,21 +100,18 @@ cd /build
 
 # miniconda
 # ---------
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+export minicondaversion=py38_4.9.2
+cd /build
+wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
 unset PYTHONPATH
-rm -rf /build/miniconda || true
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+rm -rf /build/miniconda-$minicondaversion
+bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
 
 # bioconda
 # --------
 
-PATH=/build/miniconda/bin:$PATH
+PATH=/build/miniconda-$minicondaversion/bin:$PATH
 
-conda install -y -c conda-forge conda-pack
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
 conda init bash
 . ~/.bash_profile
 
@@ -120,22 +119,34 @@ conda init bash
 # -----
 cd /build
 
-clair3version=0.1.12
-
 conda create -y -n clair3
 conda activate clair3
-conda install -y clair3=$clair3version
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda install -y clair3=$clair3version python=3.9
+
+conda deactivate
 
 # make package
+# ------------
 
+cd /build
+# installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
+conda install -y -c conda-forge conda-pack
 rm clair3.tar.gz || true
 conda pack -n clair3 -o clair3.tar.gz
-rm -rf clair3-$clair3version.old
-mv clair3-$clair3version clair3-$clair3version.old || true
-
-mkdir /build/clair3-$clair3version
-cd /build/clair3-$clair3version
+rm -rf clair3-$clair3version-$arch.old || true
+mv clair3-$clair3version-$arch clair3-$clair3version-$arch.old || true
+mkdir /build/clair3-$clair3version-$arch
+cd /build/clair3-$clair3version-$arch
 tar xvzf ../clair3.tar.gz
+
+# patch (for error: `np.int` was a deprecated)
+catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
+set c [file_read bin/preprocess/CreateTensorPileupFromCffi.py.ori]
+regsub -all {np.int([^0-9])} $c {int\1} c2
+file_write bin/preprocess/CreateTensorPileupFromCffi.py $c2
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -145,6 +156,15 @@ LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
 $dir/bin/run_clair3.sh ${1+"$@"}
 ' > run_clair3.sh
 chmod ugo+x run_clair3.sh
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+$dir/bin/run_clair3.sh ${1+"$@"}
+' > clair3
+chmod ugo+x clair3
 
 mv bin/whatshap bin/whatshap.ori
 cat << 'EOF' > bin/whatshap
@@ -161,21 +181,19 @@ if __name__ == '__main__':
 EOF
 chmod ugo+x bin/whatshap
 
-cd /build/clair3-$clair3version
+cd /build/clair3-$clair3version-$arch
 mkdir models
 cd models
 wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz 
 tar xvzf clair3_models.tar.gz
 rm clair3_models.tar.gz
 
-rm ../clair3.tar.gz
 cd /build
-ln -sf clair3-$clair3version-$arch/run_clair3.sh run_clair3.sh
-tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch run_clair3.sh
-cp -ra clair3-$clair3version /io/extra$ARCH
-cd /io/extra$ARCH/
-ln -s clair3-0.1-r5/run_clair3.sh .
+ln -sf clair3-$clair3version-$arch/clair3 .
+ln -sf clair3-$clair3version-$arch/run_clair3.sh .
+rm clair3-$clair3version-$arch.tar.gz || true
+tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch clair3 run_clair3.sh
+rm -rf /io/extra$ARCH/clair3-$clair3version-$arch
+cp -ra clair3-$clair3version-$arch clair3-$clair3version-$arch clair3 run_clair3.sh /io/extra$ARCH
 
-conda deactivate
-
-echo "Finished building clair3"
+echo "Finished building clair3-$clair3version-$arch"

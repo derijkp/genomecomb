@@ -4,7 +4,8 @@ proc var_clair3_tools {} {
 
 proc version_clair3 {} {
 	set version ?
-	catch {exec run_clair3.sh --version} version
+	catch {exec run_clair3.sh -v} version
+	regexp {Clair3 ([^\n]+)} $version temp version
 	set version [lindex $version end]
 }
 
@@ -232,7 +233,11 @@ proc var_clair3_job {args} {
 	} -code {
 		if {$model eq ""} {
 			set runinfofile [gzfile [file dir $dep]/runinfo*.tsv]
-			set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
+			if {[file exists $runinfofile]} {
+				set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
+			} else {
+				set guppyversion ?
+			}
 			if {[string index $guppyversion 0] in "5 6"} {
 				set usemodel r941_prom_sup_g5014
 			} elseif {[string index $guppyversion 0] in "3 4"} {
@@ -279,7 +284,7 @@ proc var_clair3_job {args} {
 				distrreg_reg2bed $tempbed $regions $refseq
 				lappend opts --bed_fn=$tempbed
 			}
-			catch_exec run_clair3.sh {*}$opts \
+			set result [catch_exec run_clair3.sh {*}$opts \
 				--include_all_ctgs \
 				--threads $threads \
 				--platform=$platform \
@@ -287,11 +292,16 @@ proc var_clair3_job {args} {
 				--bam_fn=$dep \
 				--ref_fn=$refseq \
 				--output=$tempvcfdir \
-				--gvcf
+				--gvcf \
+			]
+			if {[regexp {[Ee]rror} $result]} {
+				error $result
+			}
 		}
-		if {[file exists $tempvcfdir/merge_output.gvcf]} {
-			cg sortvcf -threads $threads $tempvcfdir/merge_output.gvcf $tempvcfdir/merge_output.gvcf.gz
-			file rename -force -- $tempvcfdir/merge_output.gvcf.gz $varallfile
+		set gvcf [gzfile $tempvcfdir/merge_output.gvcf]
+		if {[file exists $gvcf]} {
+			cg sortvcf -threads $threads $gvcf $gvcf.s.gz
+			file rename -force -- $gvcf.s.gz $varallfile
 		} else {
 			file_write $varallfile ""
 		}
