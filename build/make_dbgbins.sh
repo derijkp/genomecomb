@@ -60,6 +60,7 @@ $CC $CFLAGS -o ../bin/distrreg ../src/distrreg.c ../src/tools.c
 $CC $CFLAGS -o ../bin/mergesorted ../src/mergesorted.c ../src/tools.c $GZPOPEN_C
 $CC $CFLAGS -o ../bin/test_naturalcompare ../src/test_naturalcompare.c ../src/tools.c
 $CC $CFLAGS -o ../bin/noise ../src/tools.c ../src/noise.c
+$CC $CFLAGS -o ../bin/estimate_error_rate ../src/tools.c ../src/tools_var.c ../src/estimate_error_rate.c $GZTOOLS_C
 
 echo "Done"
 echo "Reminder: $CC included in extra compiles binaries statically linked with musl, so you need the following option to use valgrind:"
