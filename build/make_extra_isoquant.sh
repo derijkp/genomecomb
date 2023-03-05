@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+isoquantversion=3.1.2
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -113,8 +115,6 @@ conda init bash
 # --------
 cd /build
 
-isoquantversion=3.1.0
-
 conda create -y -n isoquant
 conda activate isoquant
 conda config --add channels defaults
@@ -140,7 +140,10 @@ cd /build/isoquant-$isoquantversion-$arch
 tar xvzf ../isoquant.tar.gz
 
 # patch
-cp /io/extern-src/isoquant/long_read_counter.py share/isoquant-$isoquantversion-0/src/long_read_counter.py
+cd share/isoquant-$isoquantversion-*/src
+cp long_read_counter.py long_read_counter.py.ori || true
+cp /io/extern-src/isoquant/long_read_counter.py long_read_counter.py
+cd /build/isoquant-$isoquantversion-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -165,7 +168,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-*-0/src/gtf2db.py ${1+"$@"}
+$dir/share/isoquant-*/src/gtf2db.py ${1+"$@"}
 ' > gtf2db
 chmod ugo+x gtf2db
 
@@ -174,22 +177,22 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-*-0/src/gtf2db.py ${1+"$@"}
+$dir/share/isoquant-*/src/gtf2db.py ${1+"$@"}
 ' > isoquant_gtf2db
 chmod ugo+x isoquant_gtf2db
 
 cd /build
-ln -s isoquant-$isoquantversion-$arch/isoquant .
-ln -s isoquant-$isoquantversion-$arch/isoquant isoquant3
-ln -s isoquant-$isoquantversion-$arch/isoquant isoquant-$isoquantversion
-ln -s isoquant-$isoquantversion-$arch/isoquant.py .
-ln -s isoquant-$isoquantversion-$arch/gtf2db .
-ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db .
-ln -s isoquant-$isoquantversion-$arch/isoquant_gtf2db isoquant3_gtf2db
+ln -sf isoquant-$isoquantversion-$arch/isoquant .
+ln -sf isoquant-$isoquantversion-$arch/isoquant isoquant3
+ln -sf isoquant-$isoquantversion-$arch/isoquant isoquant-$isoquantversion
+ln -sf isoquant-$isoquantversion-$arch/isoquant.py .
+ln -sf isoquant-$isoquantversion-$arch/gtf2db .
+ln -sf isoquant-$isoquantversion-$arch/isoquant_gtf2db .
+ln -sf isoquant-$isoquantversion-$arch/isoquant_gtf2db isoquant3_gtf2db
 rm isoquant-$isoquantversion-$arch.tar.gz || true
 tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db
+rm -rf /io/extra$ARCH/isoquant-$isoquantversion-$arch
 cp -ra isoquant-$isoquantversion-$arch isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db /io/extra$ARCH
 cd /io/extra$ARCH/
-rm isoquant || true
 
-echo "Finished building isoquant"
+echo "Finished building isoquant-$isoquantversion-$arch"
