@@ -1110,14 +1110,15 @@ proc iso_isoquant_job {args} {
 	if {![llength $regions]} {
 		set regions {{}}
 	}
+	set workdir $root.temp
 	foreach region $regions {
-		set regdir $root/$root-$region
+		set regdir $workdir/$root-$region
 		job isquant-${root}-$region -mem 15G -cores $threads -deps {
 			$bam $bam.bai $refseq $reftranscripts
 		} -targets {
 			$regdir/00_regali
 		} -vars {
-			bam refseq regdir region reftranscripts threads root sample
+			bam refseq regdir region reftranscripts threads root sample workdir
 			options data_type quantification gene_quantification analysisname distrreg
 			model_construction_strategy splice_correction_strategy matching_strategy
 		} -code {
@@ -1165,7 +1166,7 @@ proc iso_isoquant_job {args} {
 					--keep_tmp \
 					{*}$options \
 					-o $regdir.temp 2>@ stderr >@ stdout
-
+				file delete $tempbam
 			}
 			file delete -force $regdir
 			file rename $regdir.temp $regdir
@@ -1201,6 +1202,7 @@ proc iso_isoquant_job {args} {
 				convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 				convert_isoquant $isodir $destdir $sample $refseq $reggenedb $regreftranscripts $root
 			}
+			file delete -force $isodir
 		}
 	}
 	#
@@ -1210,7 +1212,7 @@ proc iso_isoquant_job {args} {
 	set readfiles {}
 	set missing {}
 	foreach region $regions {
-		set regdir $root/$root-$region
+		set regdir $workdir/$root-$region
 		set isofile $regdir/isoform_counts-${root}.tsv
 		set genefile $regdir/gene_counts-${root}.tsv
 		set readfile $regdir/read_assignments-${root}.tsv
@@ -1237,12 +1239,14 @@ proc iso_isoquant_job {args} {
 		totalcounts-${root}.tsv
 	} -vars {
 		isofiles genefiles readfiles sample refseq regdir region reftranscripts genedb root analysisname
-		strictpct
+		strictpct workdir
 	} -code {
 		analysisinfo_write [lindex $isofiles 0] isoform_counts-${root}.tsv
 		analysisinfo_write [lindex $genefiles 0] gene_counts-${root}.tsv
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv
 		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
+		cg tsv2gtf isoform_counts-${root}.tsv isoforms-${root}.gtf.gz
+		file delete -force $workdir
 	}
 }
 
