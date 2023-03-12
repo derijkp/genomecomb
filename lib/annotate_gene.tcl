@@ -1154,7 +1154,11 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 		lset dposs end $pos
 	}
 	if {-1 in $dposs} {
-		error "error: gene file misses the following fields: [list_sub $deffields [list_find $dposs -1]]"
+		set missingfields [list_sub $deffields [list_find $dposs -1]]
+		set missingfields [list_remove $missingfields cdsStart cdsEnd]
+		if {[llength $missingfields]} {
+			error "error: gene file misses the following fields: $missingfields"
+		}
 	}
 	lappend dposs [lsearch $header exonCount]
 	return $header
