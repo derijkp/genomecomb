@@ -299,6 +299,7 @@ proc write_vcf {file data {extracomment {}} {extrainfo {}}} {
 	if {$extracomment ne ""} {puts -nonewline $f [string trim $extracomment]\n}
 	set header [lindex $data 0]
 	set data [lrange $data 1 end]
+	if {$header eq ""} {set header {CHROM POS ID REF ALT QUAL FILTER INFO FORMAT SAMPLE}}
 	puts $f \#[join $header \t]
 	foreach line $data {
 		puts $f [join $line \t]

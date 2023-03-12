@@ -303,7 +303,7 @@ proc var_clair3_job {args} {
 			cg sortvcf -threads $threads $gvcf $gvcf.s.gz
 			file rename -force -- $gvcf.s.gz $varallfile
 		} else {
-			file_write $varallfile ""
+			empty_gvcf $varallfile [list $root]
 		}
 		cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile
 		catch {file delete -force $tempvcfdir}

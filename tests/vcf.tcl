@@ -41,8 +41,38 @@ test vcfcat {vcfcat -o} {
 	exec diff tmp/temp3.vcf tmp/expected.vcf
 } {}
 
-test vcfcat {vcfcat first empy} {
+test vcfcat {vcfcat first empy file} {
 	file_write tmp/temp1.vcf {}
+	write_vcf tmp/temp2.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_vcf tmp/expected.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	cg vcfcat tmp/temp1.vcf tmp/temp2.vcf > tmp/temp3.vcf
+	exec diff tmp/temp3.vcf tmp/expected.vcf
+} {}
+
+test vcfcat {vcfcat first compressed empy file} {
+	file_write tmp/temp1.vcf {}
+	cg gzip tmp/temp1.vcf
+	write_vcf tmp/temp2.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	cg gzip tmp/temp2.vcf
+	write_vcf tmp/expected.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	cg vcfcat tmp/temp1.vcf.gz tmp/temp2.vcf.gz > tmp/temp3.vcf
+	exec diff tmp/temp3.vcf tmp/expected.vcf
+} {}
+
+test vcfcat {vcfcat first empy vcf} {
+	empty_vcf tmp/temp1.vcf {NA00001 NA00002 NA00003}
 	write_vcf tmp/temp2.vcf {
 		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
 		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
