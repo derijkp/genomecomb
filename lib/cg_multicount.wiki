@@ -1,0 +1,32 @@
+= Multicount =
+
+== Format ==
+cg multicount ?options? multicountfile countfile countfile ?countfile? ...
+
+== Summary ==
+Compare multiple count files
+
+== Description ==
+This command combines multiple count files into one multicount file; a
+tab separated file containing a wide table used to compare genes/exon/.. (counts)
+between different samples. Each line in the table contains gene/exon/.. names
+ and columns with the count info specific to each sample (count, etc.). The latter have a
+column heading of the form field-<sample>.
+
+<sample> can be simply the samplename, but may also include information
+about e.g. the sequencing or analysis method in the form method-samplename, e.g.
+count_weighed-isoquant-sample1.tsv.
+
+When a transcript was not detected in a sample, the value in the table is set to 0.0
+
+== Arguments ==
+; multicountfile: resultfile, will be created if it does not exist
+; countfile: file containing count data of a new sample to be added
+  More than one can added in one command
+
+== Options ==
+; -idfields list: list with fields to be used as id (default: geneid
+genename gene exon) if present in the count files.
+
+== Category ==
+Variants
