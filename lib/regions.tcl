@@ -117,3 +117,11 @@ proc samregion {region {refseq {}} {full 0}} {
 	}
 	lindex $regions 0
 }
+
+proc regions_skip {region skipregions} {
+	if {$region in $skipregions} {return 1}
+	foreach skipregion $skipregions {
+		if {[regexp ^$skipregion: $region]} {return 1}
+	}
+	return 0
+}

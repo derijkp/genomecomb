@@ -1,0 +1,72 @@
+= Var =
+
+== Format ==
+cg iso_isoquant ?options? bamfile ?resultfile?
+
+== Summary ==
+Call and count isoforms and genes using isoquant.
+
+== Description ==
+The command can be used to call and count isoforms and genes using a
+method based on isoquant (https://github.com/ablab/IsoQuant).
+
+Following adaptations are done when running isoquant within genomecomb
+* running is (can be) heavily parallelised in a way that distribution over a cluster is also possible
+* Known transcripts and novel predictions/models are merged into one result
+* The main output is in the [[transcript]] format.
+* Different types of counting are available from one run
+; iq_all: isoquant standard output for the all option
+; weighed: reads supporting multiple (N) transcripts are weighed as 1/N
+; unique: count only reads uniquely supporting one transcript
+; strict: only unique reads that cover >= 90% of the transcript
+; aweighed, aunique, astrict: same as above, but reads must have polyA (detected)
+
+By default (if resultfile is not given) the names of the resultfiles are
+derived from the bam file name. For a bamfile map-$root.bam (where $root
+is the name of the sample and analysis), the main result file will in the
+same directory as the bam file and named isoform_counts-isoquant-$root.tsv
+(or isoform_counts-isoquant_$preset-$root.tsv if a preset was specified)
+The gene_counts and read_assignments files are named similarly
+(gene_counts-isoquant-$root.tsv and read_assignments-isoquant-$root.tsv).
+
+== Arguments ==
+; bamfile: alignment on which to call isoforms
+; resultfile: resulting isoform count file instead of default based on bam file name
+
+== Options ==
+; -preset preset: select one of a number of presets (default ont)
+Possible options are 
+** ont: optimal settings for ONT reads (this is the defaul)
+** sens: sensitive settings for ONT reads, more transcripts are reported possibly at a cost of precision
+** all: reports almost all novel transcripts, loses precision in favor to recall (is also slower)
+** pacbio: optimal settings for PacBio CCS reads (default_pacbio in isoquant)
+** pacbiosens: sensitive settings for PacBio CCS reads, more transcripts are reported possibly at a cost of precision (sensitive_pacbio in isoquant)
+** pacbioall: reports almost all novel transcripts (for pacbio), loses precision in favor to recall (is also slower)
+** assembly: optimal settings for a transcriptome assembly: input sequences are considered to be reliable and each transcript to be represented only once, so abundance is not considered
+; -distrreg: distribute regions for parallel processing (default s50000000).
+Possible options are 
+** 0: no distribution (also empty)
+** 1: default distribution
+** schr or schromosome: each chromosome processed separately
+** chr or chromosome: each chromosome processed separately, except the unsorted, etc. with a _ in the name that will be combined),
+** a number: distribution into regions of this size
+** a number preceded by an s: distribution into regions targeting the given size, but breaks can only occur in unsequenced regions of the genome (N stretches)
+** a number preceded by an r: distribution into regions targeting the given size, but breaks can only occur in large (>=100000 bases) repeat regions
+** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
+** a file name: the regions in the file will be used for distribution
+; -refseq:
+; -reftranscripts:
+; -transcript_quantification:
+; -gene_quantification:
+; -data_type:
+; -splice_correction_strategy:
+; -model_construction_strategy:
+; -matching_strategy:
+; -threads:
+; -skip:
+; -regions:
+; -skipregions:
+; -cleanup:
+
+== Category ==
+Rna-seq

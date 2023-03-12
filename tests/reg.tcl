@@ -827,6 +827,18 @@ chr2	5005	5006	snp
 chr2	5010	5011	snp
 chr2	5011	5012	snp}
 
+test regions_skip {basic} {
+	list \
+	[regions_skip chrM {chrM M}] \
+	[regions_skip M {chrM M}] \
+	[regions_skip chrM:0-100 {chrM M}] \
+	[regions_skip M:0-100 {chrM M}] \
+	[regions_skip chr2 {chrM M}] \
+	[regions_skip 2 {chrM M}] \
+	[regions_skip chr2:0-100 {chrM M}] \
+	[regions_skip 2:0-100 {chrM M}] \
+} {1 1 1 1 0 0 0 0}
+
 set ::env(PATH) $keeppath
 
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
