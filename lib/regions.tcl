@@ -121,7 +121,7 @@ proc samregion {region {refseq {}} {full 0}} {
 proc regions_skip {region skipregions} {
 	if {$region in $skipregions} {return 1}
 	foreach skipregion $skipregions {
-		if {[regexp ^$skipregion: $region]} {return 1}
+		if {[regexp ^$skipregion\[:_\ -\] $region]} {return 1}
 	}
 	return 0
 }

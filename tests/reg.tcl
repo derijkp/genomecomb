@@ -833,11 +833,15 @@ test regions_skip {basic} {
 	[regions_skip M {chrM M}] \
 	[regions_skip chrM:0-100 {chrM M}] \
 	[regions_skip M:0-100 {chrM M}] \
+	[regions_skip chrM-0-100 {chrM M}] \
+	[regions_skip M-0-100 {chrM M}] \
 	[regions_skip chr2 {chrM M}] \
 	[regions_skip 2 {chrM M}] \
 	[regions_skip chr2:0-100 {chrM M}] \
 	[regions_skip 2:0-100 {chrM M}] \
-} {1 1 1 1 0 0 0 0}
+	[regions_skip chr2-0-100 {chrM M}] \
+	[regions_skip 2-0-100 {chrM M}] \
+} {1 1 1 1 1 1 0 0 0 0 0 0}
 
 set ::env(PATH) $keeppath
 
