@@ -60,6 +60,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(debug)]} {
 		set cgjob(debug) 0
 	}
+	if {![info exists cgjob(nosubmit)]} {
+		set cgjob(nosubmit) 0
+	}
 	if {![info exists cgjob(resubmit)]} {
 		set cgjob(resubmit) 1
 	}
@@ -139,6 +142,10 @@ proc job_args {jobargs} {
 			}
 			-debug - --debug {
 				set cgjob(debug) 1
+			}
+			-dnosubmit {
+				set cgjob(nosubmit) [lindex $jobargs $pos]
+				incr pos
 			}
 			-noresubmit - --noresubmit {
 				set cgjob(resubmit) 0

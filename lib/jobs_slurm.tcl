@@ -137,8 +137,13 @@ proc job_process_submit_slurm {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to slurm: it has a comma in the output file $job.out"
 	}
-	putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]"
-	set jnum [exec sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]
+	if {!$cgjob(nosubmit)} {
+		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]"
+		set jnum [exec sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]
+	} else {
+		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]"
+		set jnum [incr cgjob(nosubmit)]
+	}
 	regexp {[0-9]+} $jnum jobnum
 	lappend cgjob(endjobids) $jobnum
 	return $jobnum
@@ -230,8 +235,13 @@ proc job_wait_slurm {} {
 	if {$priority != 0} {
 		lappend options --nice=$priority
 	}
-	# puts [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]
-	exec sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile
+	if {!$cgjob(nosubmit)} {
+		putslog "slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]"
+		exec sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile
+	} else {
+		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]"
+		set jnum [incr cgjob(nosubmit)]
+	}
 }
 
 # https://slurm.schedmd.com/sbatch.html

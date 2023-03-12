@@ -39,6 +39,9 @@ use -skipjoberrors 1 to skip over these errors and complete other jobs (as far a
 dependent on the the job with an error)
 ; -runcmd cmd (-runcommand): For distributed processing, the command used to run job scripts made (default is "cg source -stack 1")
 ; -logfile filename: (base) filename of the logfile (see next paragraph)
+; -dnosubmit 0/1: (debugging, only for sge, slurm) when set to 1 (default 0) Go over startup,
+generating logging output, but without actually submitting jobs to the cluster. 
+WARNING: Files older than dependencies are renamed to file.old
 
 Typical use:
 {{{
