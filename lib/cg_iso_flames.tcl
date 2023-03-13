@@ -151,19 +151,18 @@ proc iso_flames_job {args} {
 	job_logfile $destdir/flames_[file tail $destdir] $destdir $cmdline \
 		{*}[versions flames dbdir zstd os]
 	# analysis per sample
-	set flamesdir $destdir/$root
+	# set flamesdir $destdir/$root
 	set fastqfiles [bsort [jobgzfiles $fastqdir/*.fq $fastqdir/*.fastq]]
 	if {[llength $fastqfiles] == 0} {
 		error "could not run flames: no fastq files found (tried in $fastqdir)"
 	}
-	mkdir $flamesdir
-	job flames-[file tail $resultfile] {*}$skips -skip $root/counts_matrix-$root.tsv \
+	job flames-[file tail $resultfile] {*}$skips \
 	-cores $threads \
 	-deps [list {*}$fastqfiles $refseq $reftranscripts] -targets {
 		$resultfile
 		$destdir/gene_counts-$root.tsv
 	} -vars {
-		fastqdir fastqfiles resultfile reftranscripts root destdir flamesdir refseq threads extraopts sample
+		fastqdir fastqfiles resultfile reftranscripts root destdir refseq threads extraopts sample
 	} -code {
 		set extrainfo [list \
 			analysis $root sample $sample \
@@ -176,6 +175,8 @@ proc iso_flames_job {args} {
 		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $destdir/gene_counts-$root.tsv \
 			{*}$extrainfo
 		set keeppwd [pwd]
+		set flamesdir [tempdir]
+		mkdir $flamesdir
 		cd $flamesdir
 		file_write config.json [deindent {
 			{
@@ -257,11 +258,11 @@ proc iso_flames_job {args} {
 		}
 		#
 		cd $destdir
-		mklink -absolute 0 $root/isoform_annotated.filtered.gff3 transcripts-$root.isoforms.gff3
-		mklink -absolute 0 $root/transcript_assembly.fa transcripts-$root.isoforms.fa
+		cg gzip -o transcripts-$root.isoforms.gff3.gz $flamesdir/isoform_annotated.filtered.gff3
+		cg gzip -o transcripts-$root.isoforms.fa.gz $flamesdir/transcript_assembly.fa
 		# make isoform_counts
 		# read counts
-		set f [gzopen $root/transcript_count.csv.gz]
+		set f [gzopen $flamesdir/transcript_count.csv.gz]
 		set header [split [gets $f] ,]
 		unset -nocomplain a
 		while {[gets $f line] != -1} {
@@ -270,10 +271,10 @@ proc iso_flames_job {args} {
 		}
 		close $f
 		# make genepred and add counts
-		exec flames gff3ToGenePred $root/isoform_annotated.filtered.gff3 $root/isoform_annotated.filtered.genepred
-		set o [open $root/isoform_counts-$root.tsv w]
+		exec flames gff3ToGenePred $flamesdir/isoform_annotated.filtered.gff3 $flamesdir/isoform_annotated.filtered.genepred
+		set o [open $flamesdir/isoform_counts-$root.tsv w]
 		puts $o [iso_flames_header_isoformcounts $root]
-		set f [open $root/isoform_annotated.filtered.genepred]
+		set f [open $flamesdir/isoform_annotated.filtered.genepred]
 		unset -nocomplain genea ; unset -nocomplain transcriptsa
 		foreach {gene transcript count} [lrange [exec cg gtf2tsv $reftranscripts | cg select -g {gene * transcript *}] 3 end] {
 			set genea($gene) 1
@@ -305,10 +306,11 @@ proc iso_flames_job {args} {
 		}
 		close $f
 		close $o
-		cg select -s - $root/isoform_counts-$root.tsv $root/isoform_counts-$root.stsv
-		file rename -force $root/isoform_counts-$root.stsv isoform_counts-$root.tsv
+		cg select -s - $flamesdir/isoform_counts-$root.tsv $flamesdir/isoform_counts-$root.stsv
+		file rename -force $flamesdir/isoform_counts-$root.stsv isoform_counts-$root.tsv
 		cg_iso_flames_genecounts isoform_counts-$root.tsv gene_counts-$root.tsv.temp $root
 		file rename -force gene_counts-$root.tsv.temp gene_counts-$root.tsv
+		file delete -force $flamesdir
 	}
 }
 
