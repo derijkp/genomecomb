@@ -33,7 +33,7 @@ proc cg_mergesorted {args} {
 	if {[llength $args] == 1} {
 		set f [gzopen [lindex $args 0]]
 		fcopy $f stdout
-		exit 0
+		return
 	}
 	if {!$headerline && ![llength $sortposs]} {
 		error "if -headerline is 0, -sortposs must be given"
