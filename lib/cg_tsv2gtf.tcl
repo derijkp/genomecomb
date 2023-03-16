@@ -31,11 +31,22 @@ proc cg_tsv2gtf {args} {
 	set scorepos [lsearch $header score]
 	set rest [list_sub $header -exclude $dposs]
 	set restposs [list_cor $header $rest]
+	set geneid_pos [lsearch $header gene_id]
+	set genename_pos [lsearch $header gene_name]
+	set includefields {}
+	set includeposs {}
+	foreach field {gene_type transcript_type transcript_name level transcript_support_level hgnc_id tag havana_gene havana_transcript} {
+		set pos [lsearch $header $field]
+		if {$pos == -1} continue
+		lappend includefields $field
+		lappend includeposs $pos
+	}
 	set gchr {}
 	unset -nocomplain genea
-	while {![eof $f]} {
+	while 1 {
 		set attr {}
-		set line [split [gets $f] \t]
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
 		if {![llength $line]} continue
 		if {$sourcepos == -1} {
 			set source genepred2tsv
@@ -50,19 +61,32 @@ proc cg_tsv2gtf {args} {
 		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs 2000 $nocds]
 		set ftlist [dict get $geneobj ftlist]
 		foreach {chr begin end} [list_sub $line $regposs] break
-		set gene [dict get $geneobj genename]
+		if {$genename_pos != -1} {
+			set genename [lindex $line $genename_pos]
+		} else {
+			set genename [dict get $geneobj genename]
+		}
+		if {$geneid_pos != -1} {
+			set geneid [lindex $line $geneid_pos]
+		} else {
+			set geneid [dict get $geneobj genename]
+		}
 		set transcript [dict get $geneobj transcriptname]
 		set compl [dict get $geneobj complement]
 		if {!$compl} {set strand +} else {set strand -}
 		set rest [list_sub $line $restposs]
-		set attr "gene_id \"$gene\"\; transcript_id \"$transcript\"\;"
+		set attr "gene_id \"$geneid\"\; transcript_id \"$transcript\"\; gene_name \"$genename\"\;"
+		foreach field $includefields value [list_sub $line $includeposs] {
+			append attr " $field \"$value\"\;"
+		}
 		#
 		if {$addgene} {
-			if {![info exists genea($gene)]} {
-				set genea($gene) [list $chr $source gene [expr {$begin+1}] $end . $strand . "gene_id \"$gene\"\;"]
+			if {![info exists genea($genename)]} {
+				set genea($genename) [list $chr $source gene [expr {$begin+1}] $end . $strand . \
+					"gene_id \"$geneid\"\; gene_name \"$genename\"\;"]
 			} else {
-				set gend [lindex $genea($gene) 4]
-				if {$end > $gend} {lset genea($gene) 4 $end}
+				set gend [lindex $genea($genename) 4]
+				if {$end > $gend} {lset genea($genename) 4 $end}
 			}
 		}
 		#
@@ -165,8 +189,8 @@ proc cg_tsv2gtf {args} {
 		}
 	}
 	if {$addgene} {
-		foreach gene [array names genea] {
-			puts $o [join $genea($gene) \t]
+		foreach genename [array names genea] {
+			puts $o [join $genea($genename) \t]
 		}
 	}
 	if {$o ne "stdout"} {

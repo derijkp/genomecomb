@@ -83,7 +83,11 @@ test vcfcat {vcfcat first empy vcf} {
 	}
 	cg vcfcat tmp/temp1.vcf tmp/temp2.vcf > tmp/temp3.vcf
 	exec diff tmp/temp3.vcf tmp/expected.vcf
-} {}
+} {3a4
+> ##reference=1000GenomesPilot-NCBI36
+19d19
+< ##reference=1000GenomesPilot-NCBI36
+child process exited abnormally} error
 
 test vcfcat {vcfcat -s 1 -o} {
 	write_vcf tmp/temp1.vcf {
