@@ -314,6 +314,7 @@ cp -a -f /usr/lib64/libtiff*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libpixman*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 #cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libfribidi*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 #cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libxml2*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libjpeg*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
