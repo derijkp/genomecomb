@@ -1,6 +1,19 @@
 proc version_flair {} {
-	set flairdir [findflair]
-	lindex [split [file tail $flairdir] -] end
+	if {[catch {catch_exec flair --version} version]} {
+		set flairdir [findflair]
+		set temp [split [file tail $flairdir] -]
+		set version [lindex $temp 1]
+		return $version
+	}
+	lindex $version end
+}
+
+proc flair_bin {bin} {
+	if {[catch {exec which $bin} msg]} {
+		return $bin.py
+	} else {
+		return $bin
+	}
 }
 
 proc flair_getref {refseq} {
@@ -138,6 +151,10 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 	set fg [gzopen $transcripts_genepred_file]
 	# set gheader [lrange [tsv_open $fg] 1 end]
 	set gheader [tsv_open $fg]
+	set gposs [tsv_basicfields $gheader 12 0]
+	set gposs [list_sub $gposs {0 6 7 8}]
+	set namepos [lsearch $gheader name]
+	set genepos [lsearch $gheader gene]
 	set scatpos [lsearch $classheader structural_category]
 	set o [open $target.temp w]
 	set newheader $gheader
@@ -175,6 +192,11 @@ proc cg_flair_mergeresults {target transcript_classification_file transcripts_ge
 		set classid [lindex $classline $classidpos]
 		set scat [lindex $classline $scatpos]
 		if {[info exists cattrans($scat)]} {set scat $cattrans($scat)}
+		if {$scat ne "known"} {
+			foreach {chromosome strand exonStarts exonEnds} [list_sub $gline $gposs] break
+			set name [iso_name $chromosome $strand $exonStarts $exonEnds]
+			lset gline $namepos $name
+		}
 		set result [join $gline \t]\t$scat
 		append result \t[join [list_sub $classline $poss] \t]
 		if {[info exists counta($gid)]} {
@@ -370,9 +392,9 @@ proc flair_job {args} {
 					isocaller_distrreg 0 \
 					isocaller flair isocaller_version [version flair]
 				set bed12 [file root $bam].bed12
-				exec bam2Bed12.py -i $bam > $bed12.temp
+				exec [flair_bin bam2Bed12] -i $bam > $bed12.temp
 				file rename -force $bed12.temp $bed12
-				catch_exec flair.py correct -t $threads \
+				catch_exec [flair_bin flair] correct -t $threads \
 					-g $refseq \
 					--gtf $reftranscripts \
 					-q $bed12 \
@@ -414,7 +436,7 @@ proc flair_job {args} {
 				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed $target
 				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 				puts "collapse -> flair-$rootname-collapse"
-				catch_exec flair.py collapse \
+				catch_exec [flair_bin flair] collapse \
 					-t $threads \
 					-g $refseq \
 					--gtf $reftranscripts \
@@ -440,12 +462,18 @@ proc flair_job {args} {
 				lappend manifestdata [join [list $sample conditionA batch1 flair-$rootname/allseq-$rootname.fastq.gz] \t]
 				file_write reads_manifest.tsv [join $manifestdata \n]\n
 				puts "quantify -> flair-$rootname/counts_matrix-flair-$rootname.tsv"
-				catch_exec flair.py quantify \
+				catch_exec [flair_bin flair] quantify \
 					--threads $threads \
 					-r reads_manifest.tsv \
 					-i flair-$rootname/transcripts-flair-$rootname.isoforms.fa \
 					-o flair-$rootname/counts_matrix-flair-$rootname.tsv.temp >@ stdout 2>@ stderr
-				file rename -force flair-$rootname/counts_matrix-flair-$rootname.tsv.temp flair-$rootname/counts_matrix-flair-$rootname.tsv
+				if {[file exists flair-$rootname/counts_matrix-flair-$rootname.tsv.temp]} {
+					# older versions
+					file rename -force flair-$rootname/counts_matrix-flair-$rootname.tsv.temp flair-$rootname/counts_matrix-flair-$rootname.tsv
+				} else {
+					# newer versions
+					file rename -force flair-$rootname/counts_matrix-flair-$rootname.tsv.temp.counts.tsv flair-$rootname/counts_matrix-flair-$rootname.tsv
+				}
 			}
 			job flair_sqanti-$rootname {*}$skips -deps {
 				flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
@@ -517,7 +545,7 @@ proc flair_job {args} {
 					mkdir flair_results
 					puts "plot $rootname"
 					catch {
-						exec plot_isoform_usage.py flair-$rootname/transcripts-flair-$rootname.isoforms.bed flair-$rootname/counts_matrix-flair-$rootname.tsv $genename
+						exec [flair_bin plot_isoform_usage] flair-$rootname/transcripts-flair-$rootname.isoforms.bed flair-$rootname/counts_matrix-flair-$rootname.tsv $genename
 					}
 					file rename ${genename}_isoforms.png flair_results/${genename}_isoforms.png
 				}
@@ -549,7 +577,7 @@ proc flair_job {args} {
 			exec cat {*}$bedfiles > compar/flair-$exproot/all_corrected-flair-$exproot.bed
 			# 
 			putslog "collapse transcript info -> trancripts-flair-$exproot.*"
-			catch_exec flair.py collapse \
+			catch_exec [flair_bin flair] collapse \
 				-t $threads \
 				-g $refseq \
 				--gtf $reftranscripts \
@@ -582,7 +610,7 @@ proc flair_job {args} {
 			file_write compar/flair-$exproot/flair.temp/reads_manifest-flair-$exproot.tsv $c
 			#
 			puts "quantify -> compar/flair-$exproot/counts_matrix-flair-$exproot.tsv"
-			catch_exec flair.py quantify \
+			catch_exec [flair_bin flair] quantify \
 				--tpm \
 				-t $threads \
 				-r compar/flair-$exproot/flair.temp/reads_manifest-flair-$exproot.tsv \
@@ -604,7 +632,7 @@ proc flair_job {args} {
 			file delete compar/flair-$exproot/flair.temp
 			# puts "diffExp on compar/counts_matrix-flair-$exproot.tsv"
 			# file delete -force flair-diffexp-$exproot
-			# exec flair.py diffExp -q compar/counts_matrix-flair-$exproot.tsv -o compar/diffexp-flair-$exproot
+			# exec flair diffExp -q compar/counts_matrix-flair-$exproot.tsv -o compar/diffexp-flair-$exproot
 			# exec python $flairdir/bin/bin/diff_iso_usage.py compar/diffiso-flair-$exproot.tsv
 		}
 		if {$sqanti} {
@@ -735,7 +763,7 @@ proc cg_flair_plot_isoform_usage {args} {
 	} else {
 		set ::env(FONTCONFIG_PATH) /etc/fonts
 	}
-	exec plot_isoform_usage.py $flairtranscriptsbed $flaircounts_matrix $genename $resultprefix
+	exec [flair_bin plot_isoform_usage] $flairtranscriptsbed $flaircounts_matrix $genename $resultprefix
 }
 
 proc cg_flair {args} {
