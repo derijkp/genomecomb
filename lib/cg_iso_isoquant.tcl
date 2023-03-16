@@ -732,8 +732,6 @@ proc iso_isoquant_mergeresults_old_monmerge {isofiles genefiles readfiles strict
 proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample root {analysisname isoquant}} {
 	set tempreads [tempfile]
 	set tempreads2 [tempfile]
-	set tempreads tempreads.tsv
-	set tempreads2 tempreads2.tsv
 	cg cat -m 1 {*}$readfiles | cg select -s read_id > $tempreads
 
 	unset -nocomplain tcounta
