@@ -2,7 +2,7 @@ proc cg_gb2fasta {args} {
 	set fields {}
 	set infile -
 	set outfile -
-	set clean_names 0
+	set clean_names 1
 	cg_options cg_fasta args {
 		-clean_names {
 			set clean_names $value
@@ -67,5 +67,13 @@ proc cg_gb2fasta {args} {
 }
 
 proc cg_gb2fas {args} {
+	cg_gb2fasta {*}$args
+}
+
+proc cg_gbk2fasta {args} {
+	cg_gb2fasta {*}$args
+}
+
+proc cg_gbk2fas {args} {
 	cg_gb2fasta {*}$args
 }

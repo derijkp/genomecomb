@@ -14,7 +14,7 @@ LOCUS, VERSION, ACCESSION, KEYWORDS, DEFINITION
 ; fastafile: output file
 
 == Options ==
-; -clean_names 0/1: if 1 (default 0) all characters not alpha numerical or
+; -clean_names 0/1: if 1 (default 1) all characters not alpha numerical or
 _ will be replaced with _ in the id
 
 == Category ==
