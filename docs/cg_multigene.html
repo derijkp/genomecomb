@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_bgzip</title>
+<title>/home/peter/dev/genomecomb/lib/cg_multigene</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,48 +49,51 @@
 
 <div id="middle">
 
-<h1 id="h1">bgzip</h1>
-<h2 id="h13">Format</h2>
-<p>cg bgzip ?options? file ...</p>
-<h2 id="h55">Summary</h2>
-<p>Compresses files using bgzip</p>
-<h2 id="h99">Description</h2>
-<p>The given files are compressed using bgzip, and the original
-uncompressed files are removed (by default). Files already compressed
-using another method, are recompressed using bgzip.</p>
-<h2 id="h301">Options</h2>
-<p>supports options:
+<h1 id="h1">Multigene</h1>
+<h2 id="h17">Format</h2>
+<p>cg multigene ?options? multigenefile genefile genefile ?genefile?
+...</p>
+<h2 id="h101">Summary</h2>
+<p>Compare multiple gene files</p>
+<h2 id="h144">Description</h2>
+<p>This command combines multiple gene files into one multigene file;
+a tab separated file containing a wide table used to compare gene
+(counts) between different samples. Each line in the table contains
+general gene info (chromosome, begin, end, strand, ?gene?, ?geneid?)
+and columns with transcript info specific to each sample (count,
+etc.). The latter have a column heading of the form
+field-&lt;sample&gt;.</p>
+<p>&lt;sample&gt; can be simply the samplename, but may also include
+information about e.g. the sequencing or analysis method in the form
+method-samplename, e.g. count-isoquant-sample1.</p>
+<p>When a gene was not detected in a sample, the value in the table
+is set to 0.0.</p>
+<p>By default multigene will match based on the gene name (or
+geneid), For novel samples (identified based on the presence of a
+pattern in the gene name, default containing &quot;novel&quot;)
+approximate matching is used: Novel genes will be matched if they
+overlap. The resulting gene will have the lowest start and highest
+end position of these matches. The id of these result genes will be
+changed to one unique for that gene and consistent over different
+experiments (based on location and strand)</p>
+<h2 id="h1317">Arguments</h2>
+
 <dl>
-  <dt>-k 0/1 (--keep)</dt>
-  <dd>keep the original uncompressed file if 1 (default 0)</dd>
-  <dt>-t number (-threads)</dt>
-  <dd>Use <b>number</b> of threads to do the compression</dd>
-  <dt>-c number (--compressionlevel)</dt>
-  <dd>number indicating compression level, where smaller numbers
-  indicates faster compression (default and meaningfull values
-  depends on method)</dd>
-  <dt>-b number (--blocksize)</dt>
-  <dd>number indicating the blocksize in Kb (default depends on the
-  method)</dd>
-  <dt>-i 0/1 (--index)</dt>
-  <dd>also create an index file (if applicable)</dd>
-  <dt>-t number (--threads)</dt>
-  <dd>use <b>number</b> of threads for compression (if supported by
-  the method)</dd>
-  <dt>-o filename (--outputfile)</dt>
-  <dd>The compressed file will be written to <b>filename</b>. If
-  the --keep option is not explicitely given, using -o will change
-  the &quot;default&quot; for -k to 1.</dd>
+  <dt>multigenefile</dt>
+  <dd>resultfile, will be created if it does not exist</dd>
+  <dt>genefile</dt>
+  <dd>file containing gene (counts) of a new sample to be added
+  More than one can added in one command</dd>
 </dl>
-<p>supports job options:
+<h2 id="h1511">Options</h2>
+
 <dl>
-  <dt><b>-d x</b></dt>
-  <dd>distribute subjobs of command over x processes</dd>
-  <dt><b>-d sge</b></dt>
-  <dd>use grid engine to distribute subjobs</dd>
+  <dt>-novelpattern pattern</dt>
+  <dd>For all genes whose id/name matches <b>pattern</b> (default:
+  novel) approximate matching will be used.</dd>
 </dl>
-<h2 id="h1219">Category</h2>
-<p>Compression</p>
+<h2 id="h1651">Category</h2>
+<p>RNA</p>
 </div>
 
 <div id="right">

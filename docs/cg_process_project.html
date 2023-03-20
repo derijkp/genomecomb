@@ -93,8 +93,7 @@ process_sample</a>.</p>
 <p>In the final step process_project will call <a
 href="cg_process_multicompar.html">cg process_multicompar</a> to
 combine sample results in the subdirectory compar. Different result
-files may be present depending on the type of analysis:</p>
-
+files may be present depending on the type of analysis:
 <dl>
   <dt>annot_compar-projectname.tsv</dt>
   <dd>multicompar file containing information for all variants in
@@ -153,8 +152,8 @@ given type of data are ignored.</p>
   <dt>-aligner aligner (-a)</dt>
   <dd>use the given aligner for mapping to the reference genome
   (default bwa) Currently supported are: bwa, bowtie2, minimap2_sr,
-  minimap2, ngmlr ; for rna-seq: star, star_2p, hisat2,
-  minimap2_splice</dd>
+  minimap2, minimap2_pb, minimap2_asm20, ngmlr ; for rna-seq: star,
+  star_2p, hisat2, minimap2_splice, minimap2_splicehq</dd>
   <dt>-aliformat format</dt>
   <dd>format of the (final) alignment (map) files, this is by
   default bam, but can be set to cram</dd>
@@ -284,7 +283,7 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combining the results</p>
-<h2 id="h10797">Dependencies</h2>
+<h2 id="h10845">Dependencies</h2>
 <p>Some of the programs used in this workflow are not distributed
 with genomecomb. e.g., gatk and strelka should be installed
 separately. In general this extra software should be made available
@@ -293,13 +292,13 @@ directory named picard* that contains the picard jar file. Some also
 support environment variables, e.g. GATK or PICARD to indicated the
 picard installation directory. The genomecomb source distribution has
 scripts to make a portable version of most of this extra software.</p>
-<h2 id="h11351">Example</h2>
+<h2 id="h11399">Example</h2>
 <pre>
 export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
 export PICARD=/opt/bio/picard-tools-1.87
 cg process_project -d sge testproject /complgen/refseq/hg19
 </pre>
-<h2 id="h11529">Category</h2>
+<h2 id="h11577">Category</h2>
 <p>Process</p>
 </div>
 

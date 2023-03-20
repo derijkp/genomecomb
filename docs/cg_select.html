@@ -230,8 +230,7 @@ file. If the tsv file already has a field ROW, you must define
 another fieldname to contain the row number with the -rowfield
 option.</p>
 <h3 id="h7083">Operators</h3>
-<p>Queries support all operators provided by Tcl expr:</p>
-
+<p>Queries support all operators provided by Tcl expr:
 <dl>
   <dt>== != </dt>
   <dd>Boolean equal and not equal. Each operator produces a
@@ -280,8 +279,7 @@ option.</p>
   the result is the value of y. Otherwise the result is the value of
   z. The x operand must have a numeric value.</dd>
 </dl>
-<p>Some extra operators are added:</p>
-
+<p>Some extra operators are added:
 <dl>
   <dt>condition1 <b>and</b> condition2</dt>
   <dd>condition is true if both condition1 and condition2 are true
@@ -293,8 +291,7 @@ option.</p>
   <dd>true if value matches the regular expression given by pattern</dd>
 </dl>
 <p>Several functions (see further: matches, regexp, oneof, shares,
-...) can also be used as operators, e.g.</p>
-
+...) can also be used as operators, e.g.
 <dl>
   <dt>value <b>matches</b> pattern</dt>
   <dd>true if value matches the glob pattern given by
@@ -304,9 +301,8 @@ option.</p>
   <dd>true if value matches the regular expression given by
   <b>pattern</b></dd>
 </dl>
-<h3 id="h10906">Functions</h3>
-<p>Queries support all functions provided by Tcl expr</p>
-
+<h3 id="h10901">Functions</h3>
+<p>Queries support all functions provided by Tcl expr
 <dl>
   <dt>exp(arg)<b> </b></dt>
   <dd>exponential of arg.</dd>
@@ -423,7 +419,7 @@ option.</p>
   <dd>hyperbolic tangent of arg.</dd>
 </dl>
 <p>Several extra functions have been added:</p>
-<h4 id="h15002">Logical functions</h4>
+<h4 id="h14997">Logical functions</h4>
 
 <dl>
   <dt>not(condition)</dt>
@@ -438,7 +434,7 @@ option.</p>
   given, catch returns 1 on an error, and 0 on success (without
   catch, the error message is returned.)</dd>
 </dl>
-<h4 id="h15507">Bio functions</h4>
+<h4 id="h15502">Bio functions</h4>
 
 <dl>
   <dt>region(&quot;chromosome</dt>
@@ -494,7 +490,7 @@ option.</p>
   parameter <b>includeins</b> can be set to 1 to include neighboring
   insertion sequences, or 0 (default) to not include them</dd>
 </dl>
-<h4 id="h18247">Number functions</h4>
+<h4 id="h18242">Number functions</h4>
 
 <dl>
   <dt>between(value,{min max})<b> or </b>between(value,min,max)</dt>
@@ -527,7 +523,7 @@ option.</p>
   specification, e.g. use &quot;%.2f&quot; to print a floating point
   number with two digits after the decimel point</dd>
 </dl>
-<h4 id="h19460">String functions</h4>
+<h4 id="h19455">String functions</h4>
 
 <dl>
   <dt>length(value)</dt>
@@ -560,9 +556,8 @@ option.</p>
   <dt>ncmatches(value,pattern)</dt>
   <dd>like matches but without taking into account case (nocase)</dd>
 </dl>
-<h4 id="h20571">multifield functions</h4>
-<p>The following functions address multiple fields.</p>
-
+<h4 id="h20566">multifield functions</h4>
+<p>The following functions address multiple fields.
 <dl>
   <dt>count($field1, $field2, ..., test)</dt>
   <dd>Counts the number of fields that fullfill the test (can be
@@ -578,7 +573,7 @@ option.</p>
   something like count($sequenced-*, == &quot;v&quot;) will give the
   number of samples for which a variant was found</dd>
 </dl>
-<h4 id="h21344">Sample and analysis aggregates</h4>
+<h4 id="h21339">Sample and analysis aggregates</h4>
 <p>Sometimes you want summary info for each (selected) variation over
 the samples in the file (e.g. in how many samples is the variant
 present, in which samples, ..). You can do this in a limited way
@@ -599,8 +594,7 @@ sample, e.g. scount($sample match &quot;a*&quot; and
 $sequenced-gatk-rdsbwa == &quot;v&quot;) will count the number of
 samples starting with an &quot;a&quot; for which
 sequenced-gatk-rdsbwa-&lt;sample&gt; is equal to &quot;v&quot;</p>
-<p>Following sample aggregates are available:</p>
-
+<p>Following sample aggregates are available:
 <dl>
   <dt>scount(condition)</dt>
   <dd>number of samples for which <b>condition</b> is true</dd>
@@ -644,7 +638,7 @@ alist, ...) are available for caclculating aggregate functions
 looping over all analyses, e.g. aavg($quality) to calulated the
 average quality over all analyses in a line. The special variable
 &quot;analysis&quot; will be available within the arguments.</p>
-<h4 id="h24334">comparing samples</h4>
+<h4 id="h24329">comparing samples</h4>
 
 <dl>
   <dt>compare(analysisname1,analysisname2, ...)</dt>
@@ -669,11 +663,11 @@ average quality over all analyses in a line. The special variable
   <dt>un(analysis1,analysis2, ...)</dt>
   <dd>unsequenced in some analyses, variant in one of the others</dd>
 </dl>
-<h3 id="h25275">Vectors</h3>
+<h3 id="h25270">Vectors</h3>
 <p>Several functions and operators deal with vectors, fields
 containing multiple values in the form of a comma (or ; or space)
 separated list.</p>
-<h4 id="h25433">vector functions (comma separated lists)</h4>
+<h4 id="h25428">vector functions (comma separated lists)</h4>
 <p>The following functions allow use of vectors in queries</p>
 
 <dl>
@@ -752,7 +746,7 @@ separated list.</p>
   <dt>lcount(vector)</dt>
   <dd>number of elements in vector that are true</dd>
 </dl>
-<h4 id="h28673">vector operators</h4>
+<h4 id="h28668">vector operators</h4>
 <p>Several special operators are added that work on comma (or ; or
 space) separated lists (vectors). The result of such an operator is
 also a vector. The arguments to such an operator must be of the same
@@ -761,7 +755,7 @@ length 1, the same element will be used versus all elements in the
 other vector. Supported operators are: @<b>, @*, @/, @%, @-, @+,
 @&gt;, @&lt;, @&gt;=, @&lt;=, @==, @!=, @&amp;&amp;, @||, vand, vor,
 vin, vni</b></p>
-<h4 id="h29157">vector functions (that return vectors)</h4>
+<h4 id="h29152">vector functions (that return vectors)</h4>
 
 <dl>
   <dt>vdistinct(vector, ...)</dt>
@@ -788,7 +782,7 @@ vin, vni</b></p>
   <dd>same as format, but arg may be a vector, and the result is a
   vector</dd>
 </dl>
-<h2 id="h29998">Summaries using -g and -gc</h2>
+<h2 id="h29993">Summaries using -g and -gc</h2>
 <p>The -g (groupfields) and -gc (groupcols) allow the flexible
 creation of summaries by calculating summary or aggregate values for
 uniqe combinations of values in different fields. The default summary
@@ -800,7 +794,7 @@ href="tsv.html">tsv</a> format and can be queried again.</p>
 <p>Warning: This option will use memory proportional to the size of
 the resulting summary!, so grouping on e.g. position in a file with
 millions of lines may exaust the memory.</p>
-<h3 id="h30667">groupfields</h3>
+<h3 id="h30662">groupfields</h3>
 <p>The <b>groupfields</b> option is used to enter the field(s) to
 aggregate upon (together with a filter to apply for each field) in
 the following format: &quot;fieldname1 filter1 fieldname2 filter2
@@ -850,7 +844,7 @@ triggered, even though the aggregate will not be separated per
 sample. e.g. using zyg (in a file with only zyg-samplexx fields) will
 result in counting zyg values for all variants in all
 samples/analyses together.</p>
-<h3 id="h33630">groupcols</h3>
+<h3 id="h33625">groupcols</h3>
 <p>The <b>groupcols (-gc)</b> option can be used to add other summary
 columns than the default count. <b>groupcols</b> is a list with the
 following format: &quot;field1 filter1 field2 filter2 ...
@@ -861,8 +855,7 @@ filtered the same way as in the -g option.</p>
 <b>functions</b>. This determines what type of summary data will be
 given in each column, I takes the form of e.g. avg(quality), which
 will return the average of the values in the quality column matching
-the given values in group and column. Supported functions are</p>
-
+the given values in group and column. Supported functions are
 <dl>
   <dt>count</dt>
   <dd>number of lines (does not need a field argument)</dd>
@@ -906,7 +899,7 @@ summary function; if it has a field &quot;argument&quot;, the name
 will start with function_field (e.g. max_freq). If other other
 grouping fields were used, the values are added in order concatenated
 by -</p>
-<h3 id="h35590">loop over list fields</h3>
+<h3 id="h35585">loop over list fields</h3>
 <p>Some fields (may) contain lists (e.g. genes, impacts), where you
 would like to summarize over the elements in the lists. You can do
 this by prepending the fieldname with a + or - on the groupfields or
@@ -918,7 +911,7 @@ the list, it is counted multiple times. If a - is prepended, the
 select command will first remove duplicates in each list before
 looping over them. When multiple looped lists are present, all
 possible combinations are counted.</p>
-<h2 id="h36317">sampleinfofile</h2>
+<h2 id="h36312">sampleinfofile</h2>
 <p>A sampleinfofile is a tab delimited file containing extra
 information about the samples in the datafile. It should contain one
 column named id, that will contain the sample names. other fields
@@ -934,12 +927,12 @@ named &quot;sample&quot; in the file (e.g. in the long format), that
 sample field will be used to make the link. In this case the
 sampleinfo will be available by using the plain fieldnames in
 sampleinfo (without -sample added)</p>
-<h2 id="h37234">Queryfile</h2>
+<h2 id="h37229">Queryfile</h2>
 <p>A queryfile is a tab delimited file with a header describing a
 query. The output will contain resultlines where all values in the
 columns given in the query header in the resultline are equal to the
 corresponding values given in one line of the query file.</p>
-<h2 id="h37508">Category</h2>
+<h2 id="h37503">Category</h2>
 <p>Query</p>
 </div>
 

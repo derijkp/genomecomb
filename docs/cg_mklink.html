@@ -58,8 +58,7 @@
 <p>cg mklink creates softlinks using a syntax similar to &quot;ln
 -s&quot;: <b>dest</b> will be a softlink pointing to <b>src</b>. If
 <b>dest</b> is a directory, more than one src can be linked/copied.</p>
-<p>cg mklink &quot;improves&quot; on using ln -s in following ways:</p>
-
+<p>cg mklink &quot;improves&quot; on using ln -s in following ways:
 <ul>
   <li>You do not have to be in the dest directory to get the correct
   relative link. The correct relative link will be calculated based
@@ -71,7 +70,12 @@
   <li>If dest is a link, it will be overwritten, if it is a real
   file, an error is given</li>
 </ul>
-<h2 id="h833">Arguments</h2>
+<p>Even if <b>dest</b> is a directory, cg mklink will try to
+replace it if it is a link (to a directory) or give an error if it is
+a real directory: It will not create a file in the dest dir. Only
+when multiple sources are given, <b>dest</b> must be a directory and
+links to all sources will be made in the <b>dest</b> directory</p>
+<h2 id="h1152">Arguments</h2>
 
 <dl>
   <dt>src</dt>
@@ -79,7 +83,7 @@
   <dt>dest</dt>
   <dd>destination</dd>
 </dl>
-<h2 id="h895">Options</h2>
+<h2 id="h1214">Options</h2>
 
 <dl>
   <dt>-absolute 0/1 (-a)</dt>
@@ -89,7 +93,7 @@
   <dd>0 turns off setting link (dest) to the same time as
   <b>src</b> (default 1)</dd>
 </dl>
-<h2 id="h1094">Category</h2>
+<h2 id="h1413">Category</h2>
 <p>Tools</p>
 </div>
 

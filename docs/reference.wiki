@@ -1,4 +1,4 @@
-= Genomecomb 0.106.0 Reference =
+= Genomecomb 0.107.0 Reference =
 
 == Format ==
 cg subcommand ?options? ....
@@ -197,6 +197,7 @@ A histo file is generated at the location of the bam file
 ; [[cg_versions|versions]]: return version information as a tsv
 
 === RNA ===
+; [[cg_multigene|multigene]]: Compare multiple gene files
 ; [[cg_multitranscript|multitranscript]]: Compare multiple transcript files
 
 === Compression ===
@@ -212,6 +213,9 @@ A histo file is generated at the location of the bam file
 
 === Mapping ===
 ; [[cg_map|map]]: align reads in fastq files to a reference genome using a variety of methods
+
+=== Rna-seq ===
+; [[cg_iso_isoquant|iso_isoquant]]: Call and count isoforms and genes using isoquant.
 
 === Dev ===
 ; [[cg_qsub|qsub]]: submit a command to the cluster (grid engine).

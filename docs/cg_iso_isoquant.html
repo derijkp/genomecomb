@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_iso_isoquant</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Var</h1>
+<h2 id="h11">Format</h2>
+<p>cg iso_isoquant ?options? bamfile ?resultfile?</p>
+<h2 id="h72">Summary</h2>
+<p>Call and count isoforms and genes using isoquant.</p>
+<h2 id="h137">Description</h2>
+<p>The command can be used to call and count isoforms and genes using
+a method based on isoquant (https://github.com/ablab/IsoQuant).</p>
+<p>Following adaptations are done when running isoquant within
+genomecomb
+<ul>
+  <li>running is (can be) heavily parallelised in a way that
+  distribution over a cluster is also possible</li>
+  <li>Known transcripts and novel predictions/models are merged
+  into one result</li>
+  <li>The main output is in the <a
+  href="transcript.html">transcript</a> format.</li>
+  <li>Different types of counting are available from one run ;
+  iq_all: isoquant standard output for the all option ; weighed:
+  reads supporting multiple (N) transcripts are weighed as 1/N ;
+  unique: count only reads uniquely supporting one transcript ;
+  strict: only unique reads that cover &gt;= 90% of the transcript ;
+  aweighed, aunique, astrict: same as above, but reads must have
+  polyA (detected)</li>
+</ul>
+<p>By default (if resultfile is not given) the names of the
+resultfiles are derived from the bam file name. For a bamfile
+map-$root.bam (where $root is the name of the sample and analysis),
+the main result file will in the same directory as the bam file and
+named isoform_counts-isoquant-$root.tsv (or
+isoform_counts-isoquant_$preset-$root.tsv if a preset was specified)
+The gene_counts and read_assignments files are named similarly
+(gene_counts-isoquant-$root.tsv and
+read_assignments-isoquant-$root.tsv).</p>
+<h2 id="h1485">Arguments</h2>
+
+<dl>
+  <dt>bamfile</dt>
+  <dd>alignment on which to call isoforms</dd>
+  <dt>resultfile</dt>
+  <dd>resulting isoform count file instead of default based on bam
+  file name</dd>
+</dl>
+<h2 id="h1634">Options</h2>
+
+<dl>
+  <dt>-preset preset</dt>
+  <dd>select one of a number of presets (default ont) Possible
+  options are <b> ont: optimal settings for ONT reads (this is the
+  defaul) </b> sens: sensitive settings for ONT reads, more
+  transcripts are reported possibly at a cost of precision <b> all:
+  reports almost all novel transcripts, loses precision in favor to
+  recall (is also slower) </b> pacbio: optimal settings for PacBio
+  CCS reads (default_pacbio in isoquant) <b> pacbiosens: sensitive
+  settings for PacBio CCS reads, more transcripts are reported
+  possibly at a cost of precision (sensitive_pacbio in isoquant) </b>
+  pacbioall: reports almost all novel transcripts (for pacbio), loses
+  precision in favor to recall (is also slower) <b> assembly: optimal
+  settings for a transcriptome assembly: input sequences are
+  considered to be reliable and each transcript to be represented
+  only once, so abundance is not considered</b></dd>
+  <dt>-distrreg</dt>
+  <dd>distribute regions for parallel processing (default
+  s50000000). Possible options are <b> 0: no distribution (also
+  empty) </b> 1: default distribution <b> schr or schromosome: each
+  chromosome processed separately </b> chr or chromosome: each
+  chromosome processed separately, except the unsorted, etc. with a _
+  in the name that will be combined), <b> a number: distribution into
+  regions of this size </b> a number preceded by an s: distribution
+  into regions targeting the given size, but breaks can only occur in
+  unsequenced regions of the genome (N stretches) <b> a number
+  preceded by an r: distribution into regions targeting the given
+  size, but breaks can only occur in large (&gt;=100000 bases) repeat
+  regions </b> a number preceded by an g: distribution into regions
+  targeting the given size, but breaks can only occur in large
+  (&gt;=200000 bases) regions without known genes <b> a file name:
+  the regions in the file will be used for distribution</b></dd>
+  <dt>-refseq</dt>
+  <dd></dd>
+  <dt>-reftranscripts</dt>
+  <dd></dd>
+  <dt>-transcript_quantification</dt>
+  <dd></dd>
+  <dt>-gene_quantification</dt>
+  <dd></dd>
+  <dt>-data_type</dt>
+  <dd></dd>
+  <dt>-splice_correction_strategy</dt>
+  <dd></dd>
+  <dt>-model_construction_strategy</dt>
+  <dd></dd>
+  <dt>-matching_strategy</dt>
+  <dd></dd>
+  <dt>-threads</dt>
+  <dd></dd>
+  <dt>-skip</dt>
+  <dd></dd>
+  <dt>-regions</dt>
+  <dd></dd>
+  <dt>-skipregions</dt>
+  <dd></dd>
+  <dt>-cleanup</dt>
+  <dd></dd>
+</dl>
+<h2 id="h3719">Category</h2>
+<p>Rna-seq</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

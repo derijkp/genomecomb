@@ -149,7 +149,7 @@ to the given type of data are ignored.</p>
   (default empty). Currently supported are: nanopolish</dd>
   <dt>-counters counters</dt>
   <dd>(space separated) list of counter programs to be used for
-  rna-seq data. Currently supported are: rnaseqc</dd>
+  rna-seq data. Currently supported are: rnaseqc, qorts</dd>
   <dt>-split 1/0 (-s)</dt>
   <dd>split multiple alternative genotypes over different line</dd>
   <dt>-downsampling_type NONE/ALL_READS/BY_SAMPLE/</dt>
@@ -214,9 +214,9 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combinfing the results</p>
-<h2 id="h7593">Sample types</h2>
+<h2 id="h7600">Sample types</h2>
 <p>Several types of sample data are supported:</p>
-<h3 id="h7658">(Illumina) (targeted) shotgun sequencing</h3>
+<h3 id="h7665">(Illumina) (targeted) shotgun sequencing</h3>
 <p>In this case the starting raw data for the sample is fastq files.
 These should be in a subdirectory of the sampledir named fastq. They
 can also be in a directory ori in the sampledir, in which case the
@@ -275,7 +275,7 @@ varall-sam-rdsbwa-sample1.tsv, reg_cluster-sam-rdsbwa-S0489.tsv</p>
 by the presence of a file named reg_targets.tsv (or matching
 reg_*_targets*.tsv) in the sampledir (or the option -targetfile). If
 present, coverage statistics will be calculated for this region.</p>
-<h3 id="h10576">Amplicon sequencing</h3>
+<h3 id="h10583">Amplicon sequencing</h3>
 <p>Amplicon sequencing samples are indicated by the presence of a
 file named reg_amplicons.tsv (or matching reg_*_amplicons*.tsv) in
 the sampledir. If the option -amplicons is given to the command, a
@@ -284,8 +284,7 @@ used. If an ampliconfile (or link) already exists in the sampledir,
 it will NOT be overwritten! (only a warning given).</p>
 <p>An amplicon file is a <a href="tsv.html">tsv</a> file indicating
 the genomic location of the amplicons It must have the following
-fields:</p>
-
+fields:
 <dl>
   <dt>chromosome</dt>
   <dd>chromosome of amplicon</dd>
@@ -313,12 +312,11 @@ the expected amplicons in the bam file. (This is done by replacing
 the sequence by Ns and reducing quality to 0 for these positions)</p>
 <p>Several options use different defaults when amplicon sequencing is
 specified (-removeduplicates 0 -removeskew 0 -dt NONE).</p>
-<h3 id="h12211">Complete Genomics sequencing</h3>
+<h3 id="h12218">Complete Genomics sequencing</h3>
 <p>Complete Genomics source data is already aligned and variant
 called. The region and variant information is converted to a similar
 format as use for (Illumina) shotgun sequencing, with some
-differences:</p>
-
+differences:
 <ul>
   <li>Naming uses a cg-cg- prefix: var-cg-cg-sample1.tsv,
   sreg-cg-cg-sample1.tsv, reg_cluster-cg-cg-S0489.tsv, ...</li>
@@ -329,13 +327,13 @@ differences:</p>
   <li>CG data can include structural variant (cgsv-sample.tsv) and
   CNV (cgcnv-sample.tsv) calls</li>
 </ul>
-<h3 id="h12835">Precalculated data</h3>
+<h3 id="h12842">Precalculated data</h3>
 <p>The sampledir may contain precalculated data data from other
 pipelines. If these are in the correct format, they will be
 integrated in the project. vcf files (var-*.vcf) in the ori
 subdirectory of the sample will be converted to tsv files, and their
 variants included in the multicompar.</p>
-<h2 id="h13150">Category</h2>
+<h2 id="h13157">Category</h2>
 <p>Process</p>
 </div>
 
