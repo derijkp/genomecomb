@@ -346,7 +346,7 @@ test ont_rna {process_project multi methods} {
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 \
 		-split 1 \
-		-d sge -dnosubmit 1 \
+		-d 4 \
 		-threads 2 \
 		-paired 0 -clip 0 \
 		-maxfastqdistr 250 \

@@ -604,13 +604,16 @@ test var {var_clair3 basic pepperdata} {
 	lappend result [cg select -g {zyg-clair3-test * zyg-truth *} tmp/clair3_ppr/compar.tsv]
 	join [list_remove $result {}] \n
 } {chromosome	count
-20	273
-zyg-longshot-test	zyg-truth	count
-m	m	33
-m	u	91
-r	m	3
+20	553
+zyg-clair3-test	zyg-truth	count
+m	m	34
+m	r	3
+m	u	88
+r	m	1
+t	m	1
 t	t	12
-t	u	134}
+t	u	171
+u	u	243}
 
 test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
