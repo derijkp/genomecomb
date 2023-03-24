@@ -3,6 +3,7 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 		set preset map-ont
 	}
 	upvar job_logdir job_logdir
+	job_logfile [file dir $refseq]/refseq_minimap2_[file tail $refseq]_$preset [file dir $refseq] "cg refseq_minimap2 $refseq $preset"
 	set minimap2refseq $refseq.minimap2.$preset
 	if {[file exists $minimap2refseq]} {return $minimap2refseq}
 	set tail [file tail $refseq]
