@@ -137,10 +137,10 @@ job sniffles_trf -optional 1 -targets {
 } -vars {} -code {
 	wgetfile https://github.com/fritzsedlazeck/Sniffles/raw/master/annotations/human_hs37d5.trf.bed extra/sniffles_hg19.trf.bed.temp
 	exec cg bed2tsv extra/sniffles_hg19.trf.bed.temp \
-		| cg select -f {chromosome="chr$chromosome" begin end} \
+		| cg select -f {{chromosome=if($chromosome regexp "^chr",$chromosome,"chr$chromosome")} begin end} \
 		| cg select -s chromosome \
 		| cg tsv2bed > extra/sniffles_hg19.trf.bed.temp2
-	file rename extra/sniffles_hg19.trf.bed.temp2 extra/sniffles_hg19.trf.bed
+	file rename -force extra/sniffles_hg19.trf.bed.temp2 extra/sniffles_hg19.trf.bed
 	file delete extra/sniffles_hg19.trf.bed.temp
 }
 
