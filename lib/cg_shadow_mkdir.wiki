@@ -1,0 +1,63 @@
+= shadow_mkdir =
+
+== Format ==
+cg shadow_mkdir ?options? dir ?shadowdir?
+
+== Summary ==
+create a shadowed dir 
+
+== Description ==
+cg shadow_mkdir creates a directory **dir** (shadow_source) that is
+actually a softlink pointing to a (generated) storage directory (shadow_dir) in
+another location, typically on another (file)system. 
+
+The shadow directory is made in the directory **shadowbase**: This can be given using the option -shadowbase
+or else the environment variable SHADOWBASE is used.
+If -shadowbase is not specified, nor the environment variable SHADOWBASE defined, the directory will be made in place
+(i.e. like a simple "mkdir $dir")
+
+== Arguments ==
+; dir: "directory" to be made
+
+== Options ==
+; -shadowbase shadowbase: The actual storage directory wil be generated in shadowbase
+
+== Use ==
+Shadow dirs are esp. usefull to provide a faster and/or untracked (by e.g.
+zfs snapshots or backups) storage location for making temporary/intermediate files
+that should still be accessible from different jobs and nodes in the
+original data structure. 
+
+genomecomb e.g. uses workdirs to temporarily store the the temporary results from
+separate jobs aligning fastqs, variant calling of separate regions, etc. 
+and combines the results (in yet another job).
+If SHADOWBASE is defined, shadowdirs are used for these workdirs; these
+can be located on a fast ssd server separate from the experiment directory
+, while not filling up space (and potentially being snapshot or synced to
+backup) on the experiment storage.
+
+== Deletion ==
+To delete a shadowdir, use
+{{{
+cg shadow_delete dir
+}}}
+shadow_delete will delete both the link and the shadow storage, after
+checking it is actually a shadow dir (It will give an error if the shadow
+dir contains a softlink named shadow_source, which shadow_mkdir makes to
+point to dir). If dir is not a link, the directory will be deleted.
+
+== Clean ==
+If you would use e.g. ```rm dir``` only  the link would be deleted; the
+actual (orphaned now) storage dir would remain. You can clean out orphaned
+storage dirs from shadowbase using
+{{{
+cg shadow_clean ?shadowbase?
+}}}
+To see if a shadow dir is orphaned, shadow_clean checks the link named
+shadow_source in the shadow dir. If shadow_source no longer exists, the
+shadow dir is deleted; Beware that if you moved shadow_source (by e.g.
+moving the directory in which it is located), it will not be found, and
+the shadow dir deleted on shadow_clean.
+
+== Category ==
+Tools

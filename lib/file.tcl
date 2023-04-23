@@ -100,6 +100,16 @@ proc workdir {file} {
 	return $workdir
 }
 
+proc shadow_workdir {file} {
+	set workdir [gzroot $file].temp
+	if {[file exists $workdir] && ![file isdir $workdir]} {
+		file delete $workdir
+	}
+	shadow_mkdir $workdir
+	job_cleanup_add_shadow $workdir
+	return $workdir
+}
+
 proc touch {args} {
 	exec touch {*}$args
 }

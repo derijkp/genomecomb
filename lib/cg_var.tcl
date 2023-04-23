@@ -141,8 +141,7 @@ proc var_job {args} {
 		set root [file_rootname $varfile]
 		# start
 		## Create sequencing region files
-		set workdir [workdir $varfile]
-		file mkdir $workdir
+		set workdir [shadow_workdir $varfile]
 		if {$distrreg eq "regionfile"} {
 			if {$regionfile eq ""} {
 				error "used -distrreg regionfile and -regionfile is not given"
@@ -266,6 +265,7 @@ proc var_job {args} {
 			}
 			lappend cleanupfiles {*}$list
 		}
+		lappend cleanupfiles $workdir
 		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
 		return $resultfiles
 	}

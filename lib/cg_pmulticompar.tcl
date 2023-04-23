@@ -5,7 +5,7 @@
 #
 
 proc multi_merge_job {varsfile files args} {
-	set workdir [workdir $varsfile]/paste
+	set workdir [shadow_workdir $varsfile]/paste
 	file mkdir $workdir
 	upvar job_logdir job_logdir
 	set optional 0
@@ -592,7 +592,7 @@ proc pmulticompar_job {args} {
 	#
 	# merge variants
 	# todo: check for concurrency
-	set workdir [workdir $compar_file]/multicompar
+	set workdir [shadow_workdir $compar_file]/multicompar
 	file mkdir $workdir
 	set real_compar_file [jobglob $compar_file]
 	if {$real_compar_file ne ""} {

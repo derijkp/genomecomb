@@ -1130,7 +1130,7 @@ proc iso_isoquant_job {args} {
 		set regions {{}}
 	}
 	# set workdir [file_absolute $root.temp]
-	set workdir [file_absolute $root]
+	set workdir [shadow_workdir [file_absolute $root]]
 	set mainskips [list \
 		isoform_counts-${root}.tsv \
 		gene_counts-${root}.tsv \
@@ -1286,7 +1286,7 @@ proc iso_isoquant_job {args} {
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv
 		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
 		cg tsv2gtf isoform_counts-${root}.tsv isoforms-${root}.gtf.gz
-		catch {file delete -force $workdir}
+		catch {shadow_delete $workdir}
 	}
 }
 

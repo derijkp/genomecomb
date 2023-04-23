@@ -1417,6 +1417,7 @@ proc job_init {args} {
 	set cgjob(totalduration) {0 0}
 	set cgjob(cleanup) success
 	set cgjob(removeold) 0
+	set cgjob(cleanupshadowfiles) {}
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
 	set cgjob(dmem) {}
@@ -1495,8 +1496,18 @@ proc job_cleanup_add {args} {
 	}
 }
 
+proc job_cleanup_add_shadow {args} {
+	global cgjob
+	foreach file $args {
+		lappend cgjob(cleanupshadowfiles) [file_absolute $file]
+	}
+}
+
 proc job_cleanup {} {
 	global cgjob
+	foreach file $cgjob(cleanupshadowfiles) {
+		catch {shadow_delete $file}
+	}
 	foreach file $cgjob(cleanupfiles) {
 		catch {file delete -force $file}
 	}

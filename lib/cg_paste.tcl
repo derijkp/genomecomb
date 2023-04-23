@@ -47,7 +47,7 @@ proc tsv_paste_job {args} {
 		}
 		return
 	}
-	set workdir [workdir $outputfile]/paste
+	set workdir [shadow_workdir $outputfile]/paste
 	file delete -force $workdir
 	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}

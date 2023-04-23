@@ -113,7 +113,7 @@ proc sv_job {args} {
 		## Create sequencing region files
 		set keeppwd [pwd]
 		cd $destdir
-		set workdir [workdir $resultfile]
+		set workdir [shadow_workdir $resultfile]
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [file_root [file tail $resultfile]]
 		set regfiles {}

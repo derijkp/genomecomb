@@ -73,7 +73,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 		}
 		return
 	}
-	set workdir [workdir $compar_file]/multicompar
+	set workdir [shadow_workdir $compar_file]/multicompar
 	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/multireg.temp*]}
 	set todo $files

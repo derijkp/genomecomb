@@ -14,6 +14,7 @@ proc sam_catmerge_job {args} {
 	set mergesort 0
 	set maxopenfiles {}
 	set mem {}
+	set rmfiles {}
 	set time 6:00:00
 	cg_options sam_catmerge args {
 		-name {
@@ -51,6 +52,9 @@ proc sam_catmerge_job {args} {
 		-distrreg {
 			set distrreg [distrreg_checkvalue $value]
 		}
+		-rmfiles {
+			set rmfiles $value
+		}
 		-skips {
 			set skips $value
 		}
@@ -78,18 +82,15 @@ proc sam_catmerge_job {args} {
 		{*}[versions samtools]
 	# run
 
-	set workdir [workdir $resultfile]
+	set workdir [shadow_workdir $resultfile]
 	set tempresultfile $workdir/[file tail $resultfile]
 
 	if {$deletesams} {
-		set rmfiles {}
 		foreach file $samfiles {
 			lappend rmfiles $file [index_file $file] [analysisinfo_file $file]
 		}
 		set rmfiles [list_remove $rmfiles {}]
 		job_cleanup_add $tempresultfile $workdir
-	} else {
-		set rmfiles {}
 	}
 	set analysisinfofile [analysisinfo_file $resultfile]
 	set regions [distrreg_regs $distrreg $refseq]
@@ -264,7 +265,7 @@ proc sam_catmerge_job {args} {
 				result_rename $tempregresult $regresult
 			}
 		}
-		foreach rmfile $rmfiles {file delete -force $rmfile}
+		foreach rmfile $rmfiles {shadow_delete $rmfile}
 	}
 	if {$index} {
 		bam_index_job $resultfile

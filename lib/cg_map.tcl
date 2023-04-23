@@ -208,8 +208,8 @@ proc map_job {args} {
 		}
 		return $result
 	}
-	set workdir [workdir $result]
-	job_cleanup_add $workdir
+	set workdir [shadow_workdir $result]
+	job_cleanup_add_shadow $workdir
 	if {!$paired} {
 		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
@@ -291,6 +291,7 @@ proc map_job {args} {
 		-name map_${method}2bam-$sample \
 		-refseq $refseq \
 		-deletesams [string is false $keepsams] \
+		-rmfiles $workdir \
 		-- $result {*}$samfiles
 	return $result
 }

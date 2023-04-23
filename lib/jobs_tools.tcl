@@ -35,20 +35,20 @@ proc cleanup_job {args} {
 			foreach file $rmtargets {
 				if {!$forcedirs && [file isdir $file]} {
 					if {![llength [glob -nocomplain $file/*]]} {
-						catch {file delete -force $file}
+						catch {shadow_delete $file}
 					}
 				} else {
-					catch {file delete -force $file}
+					catch {shadow_delete $file}
 				}
 				if {$delassociated} {
 					set indexfile [index_file $file]
 					if {[file exists $indexfile]} {
-						file delete -force $indexfile
+						shadow_delete $indexfile
 					}
 					set analysisinfofile [analysisinfo_file $file]
-					if {[file exists $analysisinfofile]} {file delete -force $analysisinfofile}
+					if {[file exists $analysisinfofile]} {shadow_delete $analysisinfofile}
 					if {[file exists [gzroot $file].index] && ($forcedirs || $delassociated > 1)} {
-						file delete -force [gzroot $file].index
+						shadow_delete [gzroot $file].index
 					}
 				}
 			}

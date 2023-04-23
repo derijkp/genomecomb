@@ -27,6 +27,7 @@ runtests bcol.tcl
 runtests cg2tsv.tcl
 runtests clip.tcl
 runtests convert.tcl
+runtests file.tcl
 runtests compress.tcl
 runtests fastq.tcl
 runtests genome_seq.tcl
