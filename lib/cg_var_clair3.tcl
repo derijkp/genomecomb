@@ -29,11 +29,14 @@ proc clair3_replacebam {finalbam oribam} {
 }
 
 proc clair3_empty_vcf {vcffile} {
-	set o [open $vcffile w]
+	set o [wgzopen $vcffile]
 	puts $o [deindent {
 		##fileformat=VCFv4.2
 		##source=clair3 v0.4.0
 		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth of reads passing MAPQ filter">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read depth for each allele">
+		##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred-scaled genotype likelihoods rounded to the closest integer">
 		##INFO=<ID=AC,Number=R,Type=Integer,Description="Number of Observations of Each Allele">
 		##INFO=<ID=AM,Number=1,Type=Integer,Description="Number of Ambiguous Allele Observations">
 		##INFO=<ID=MC,Number=1,Type=Integer,Description="Minimum Error Correction (MEC) for this single variant">
@@ -54,12 +57,13 @@ proc clair3_empty_vcf {vcffile} {
 		##FILTER=<ID=sb,Description="Allelic strand bias">
 		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 		##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 		##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase Set">
 		##FORMAT=<ID=UG,Number=1,Type=String,Description="Unphased Genotype (pre-haplotype-assembly)">
 		##FORMAT=<ID=UQ,Number=1,Type=Float,Description="Unphased Genotype Quality (pre-haplotype-assembly)">
 		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE
 	}]
-	close $o
+	gzclose $o
 }
 
 proc var_clair3_job {args} {
@@ -305,7 +309,12 @@ proc var_clair3_job {args} {
 		} else {
 			empty_gvcf $varallfile [list $root]
 		}
-		cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile
+		if {[file exists $tempvcfdir/merge_output.vcf.gz]} {
+			cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile.s.gz
+			file rename -force -- $vcffile.s.gz $vcffile
+		} else {
+			clair3_empty_vcf $vcffile
+		}
 		catch {file delete -force $tempvcfdir}
 		set tempfile [filetemp $varfile]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
