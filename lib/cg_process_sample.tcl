@@ -476,7 +476,7 @@ proc process_sample_job {args} {
 	set dt {}
 	set targetfile {}
 	set reports basic
-	# if not set (stays empty, willl be set later depending on type of experiment)
+	# if not set (stays empty, will be set later depending on type of experiment)
 	set removeduplicates {}
 	set amplicons {}
 	set threads 2
@@ -487,9 +487,13 @@ proc process_sample_job {args} {
 	set maxfastqdistr {}
 	set hap_bam 0
 	set depth_histo_max 1000
+	set fastqdir {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
+		}
+		-fastqdir {
+			set fastqdir $value
 		}
 		-dbdir - -refdir {
 			set dbdir $value
@@ -602,6 +606,7 @@ proc process_sample_job {args} {
 	} elseif {[llength $args] == 2} {
 		foreach {oridir sampledir} $args break
 	}
+	if {$fastqdir eq ""} {set fastqdir $sampledir/fastq}
 	set reports [reports_expand $reports]
 	set dbdir [file_absolute $dbdir]
 	set sampledir [file_absolute $sampledir]
@@ -613,7 +618,7 @@ proc process_sample_job {args} {
 	set sample [file tail $sampledir]
 	#
 	if {$minfastqreads > 0} {
-		set files [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		set files [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 		if {![llength $files]} {return {}}
 		set file [lindex $files 0]
 		set f [gzopen $file]
@@ -757,15 +762,15 @@ proc process_sample_job {args} {
 	# allways sort
 	append resultbamprefix s
 	# find fastq files in fastq dir
-	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 	if {![llength $fastqfiles]} {
-		file mkdir $sampledir/fastq
+		file mkdir $fastqdir
 		# if there are none in the fastq dir, check ori dir
 		set fastqfiles [bsort [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
 		if {[llength $fastqfiles]} {
 			set targets {}
 			foreach file $fastqfiles {
-				lappend targets $sampledir/fastq/[file tail $file]
+				lappend targets $fastqdir/[file tail $file]
 			}
 			job fastq_from_ori-$sample -deps $fastqfiles -targets $targets -code {
 				foreach file $deps target $targets {
@@ -776,7 +781,7 @@ proc process_sample_job {args} {
 			# check if there are bam files in ori to extract fastq from
 			set files [bsort [jobglob $sampledir/ori/*.bam $sampledir/ori/*.cram]]
 			foreach file $files {
-				set base $sampledir/fastq/[file tail [file root $file]]
+				set base $fastqdir/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
 				set target2 $base-R2.fastq.gz
 				job [job_relfile2name bam2fastq- $file] -deps {$file} -cores $threads \
@@ -787,7 +792,7 @@ proc process_sample_job {args} {
 				}
 			}
 		}
-		set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 	} 
 	# create bam from fastq files (if found)
 	set cleanedbams {}
