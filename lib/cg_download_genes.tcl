@@ -10,14 +10,23 @@ proc cg_download_genes {args} {
 	file mkdir $temp
 	set ucscfile $temp/ucsc_${build}_${geneset}.tsv
 	cg_download_ucsc $ucscfile $build $geneset
-	if {$geneset in "ensGene knownGene" && ![info exists geneidcol]} {
+	if {($geneset in "ensGene knownGene" || [regexp {^wgEncodeGencode} $geneset]) && ![info exists geneidcol]} {
 		unset -nocomplain a
+		set extrafields {}
 		if {$geneset eq "ensGene"} {
 			if {![catch {
 				cg_download_ucsc $temp/ensemblToGeneName.tsv ${build} ensemblToGeneName
 			}]} {
 				array set a [split [string trim [file_read $temp/ensemblToGeneName.tsv]] "\n\t"]
 			}
+		} elseif {[regexp {^(wgEncodeGencode.*V)([0-9]+)$} $geneset temp set version]} {
+			unset -nocomplain a
+			if {![catch {
+				cg_download_ucsc $temp/wgEncodeGencodeAttrsV$version.tsv ${build} wgEncodeGencodeAttrsV$version
+			}]} {
+				array set a [split [string trim [cg select -f {transcriptId geneId} $temp/wgEncodeGencodeAttrsV$version.tsv]] "\n\t"]
+			}
+			set extrafields {gene=$name2}
 		} else {
 			if {![catch {
 				cg_download_ucsc $temp/kgXref.tsv ${build} kgXref
@@ -42,7 +51,7 @@ proc cg_download_genes {args} {
 		}
 		close $o
 		close $f
-	        cg select -s - -f {chrom start end strand geneid *} $temp/$resulttail.temp2 {*}[compresspipe $resulttail 12] > $temp/$resulttail
+	        cg select -s - -f "chrom start end strand geneid $extrafields *" $temp/$resulttail.temp2 {*}[compresspipe $resulttail 12] > $temp/$resulttail
 	} else {
 		if {![info exists geneidcol]} {
 			if {$geneset in "genscan acembly"} {
