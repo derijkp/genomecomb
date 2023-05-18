@@ -49,7 +49,7 @@ if (read < (start+size) || strncmp(buffer+start,test,size) != 0 || (buffer[start
 
 #ifdef DEBUG
 void debug_printprogress(ZSTDres *res,char *msg) {
-	DPRINT("* %s at %zu  currentpos: %zu framepos: %llu contentsize:%llu inframepos:%llu type:%d",msg,ftello(res->finput),res->currentpos,res->framepos,res->contentsize,res->inframepos,res->zfh.frameType);
+	NODPRINT("* %s at %zu  currentpos: %zu framepos: %llu contentsize:%llu inframepos:%llu type:%d",msg,ftello(res->finput),res->currentpos,res->framepos,res->contentsize,res->inframepos,res->zfh.frameType);
 }
 #endif
 
@@ -59,7 +59,7 @@ void debug_printprogress(ZSTDres *res,char *msg) {
 /* returns contentsize, which is 0 for skippedframes */
 int zstd_readheader(ZSTDres *res) {
 	size_t error;
-	DPRINT("zstd_readheader ftel start:%ld",ftell(res->finput));
+	NODPRINT("zstd_readheader ftel start:%ld",ftell(res->finput));
 	if (res->inframepos != 0 && res->frameread == 0) {
 		fprintf(stderr, "read or skip frame before reading header of new one\n");
 		exit(1);
@@ -68,27 +68,27 @@ int zstd_readheader(ZSTDres *res) {
 	res->frameread = 0;
 	res->framefilepos = ftell(res->finput);
 	error = fread(res->buffer, 1, MIN_ZSTD_HEADERSIZE, res->finput);
-	DPRINT("tel2:%ld",ftell(res->finput));
-	DPRINT("error:%lu",error);
-	DPRINT("MIN_ZSTD_HEADERSIZE:%d",MIN_ZSTD_HEADERSIZE);
+	NODPRINT("tel2:%ld",ftell(res->finput));
+	NODPRINT("error:%lu",error);
+	NODPRINT("MIN_ZSTD_HEADERSIZE:%d",MIN_ZSTD_HEADERSIZE);
 	if (error == 0 && feof(res->finput)) return(0);
 	if (error != MIN_ZSTD_HEADERSIZE) ERROR("error in file: incomplete zstd frame header");
 	error = ZSTD_getFrameHeader(&(res->zfh), (const void*) res->buffer, MIN_ZSTD_HEADERSIZE);
-	DPRINT("ZSTD_getFrameHeader:%lu",error);
+	NODPRINT("ZSTD_getFrameHeader:%lu",error);
 	if (ZSTD_isError(error)) {
 		fprintf(stderr,"%s\n",ZSTD_getErrorName(error));
 		exit(1);
 	} else if (error > MIN_ZSTD_HEADERSIZE) {
 		res->inframepos = error;
 		error = fread(res->buffer+MIN_ZSTD_HEADERSIZE, 1, res->inframepos-MIN_ZSTD_HEADERSIZE, res->finput);
-		DPRINT("tel3:%ld",ftell(res->finput));
-		DPRINT("fread:%ld",error);
+		NODPRINT("tel3:%ld",ftell(res->finput));
+		NODPRINT("fread:%ld",error);
 		if (error != res->inframepos-MIN_ZSTD_HEADERSIZE) ERROR("could not read zstd header");
 		error = ZSTD_getFrameHeader(&(res->zfh), (const void*) res->buffer, res->inframepos);
 	} else {
 		res->inframepos = MIN_ZSTD_HEADERSIZE;
 	}
-	DPRINT("tel4:%ld",ftell(res->finput));
+	NODPRINT("tel4:%ld",ftell(res->finput));
 	if (ZSTD_isError(error)) {
 		fprintf(stderr,"error reading zstd frame header: %s\n",ZSTD_getErrorName(error));
 		exit(1);
@@ -102,8 +102,8 @@ int zstd_readheader(ZSTDres *res) {
 		exit(1);
 	}
 #ifdef DEBUG
-printf("contentsize:%lld\n",res->contentsize);
-printf("telend:%ld\n",ftell(res->finput));
+NODPRINT("contentsize:%lld\n",res->contentsize);
+NODPRINT("telend:%ld\n",ftell(res->finput));
 debug_printprogress(res,"readheader");
 #endif
 	return(res->contentsize);
@@ -114,7 +114,7 @@ uint32_t zstd_readblockheader(ZSTDres *res) {
 	uint32_t blocksize;
 	char *blockbuffer;
 	if (feof(res->finput)) return(0);
-	DPRINT("---- readblockheader at ftello: %zu ----",ftello(res->finput));
+	NODPRINT("---- readblockheader at ftello: %zu ----",ftello(res->finput));
 	if (res->bufferpos + 3 > res->buffersize) {
 		res->buffersize += 3;
 		res->buffer = (char *)realloc(res->buffer,res->buffersize);
@@ -211,12 +211,12 @@ debug_printprogress(res,"skipframe");
 		 * just a quick hack to solve
 		*/
 		size_t framesize = 8 + MEM_readLE32((BYTE const*)res->buffer+4);
-		DPRINT("skip %llu of skippable frame at ftello: %zu ----",framesize - res->inframepos, ftello(res->finput));
+		NODPRINT("skip %llu of skippable frame at ftello: %zu ----",framesize - res->inframepos, ftello(res->finput));
 		fseeko(res->finput,framesize - res->inframepos,SEEK_CUR);
 		res->inframepos = 0;
 		res->frameread = 0;
 	} else {
-		DPRINT("skip frame at ftello: %zu ----\n",ftello(res->finput));
+		NODPRINT("skip frame at ftello: %zu ----\n",ftello(res->finput));
 		res->bufferpos = res->inframepos;
 		res->lastblock = 0;
 		while (1) {
@@ -353,7 +353,7 @@ ZSTDres *zstd_openfile(char *file) {
 }
 
 int zstd_seek(ZSTDres *res, uint64_t pos, int where) {
-	DPRINT("zstd_seek: %lu where:%d\n",pos,where);
+	NODPRINT("zstd_seek: %lu where:%d\n",pos,where);
 	if (where == SEEK_SET) {
 	} else if (where == SEEK_CUR) {
 		pos = res->currentpos + pos;
