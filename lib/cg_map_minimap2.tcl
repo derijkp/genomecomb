@@ -104,6 +104,11 @@ proc cg_map_minimap2 {args} {
 		-extraopts {
 			lappend extraopts {*}$value
 		}
+		-keepcomments {
+			if {[true $value]} {
+				lappend extraopts -y
+			}
+		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using minimap2
 	}
@@ -135,7 +140,8 @@ proc cg_map_minimap2 {args} {
 				error $msg
 			}
 		}
-		puts stderr $msg
+		# puts stderr $msg
+		# puts stderr "previous is message, not error"
 	} else {
 		if {$fixmate} {
 			set fixmate "| samtools fixmate -m -O sam - -"
@@ -159,6 +165,7 @@ proc cg_map_minimap2 {args} {
 				error $msg
 			}
 		}
-		puts stderr $msg
+		# puts stderr $msg
+		# puts stderr "previous is message, not error"
 	}
 }
