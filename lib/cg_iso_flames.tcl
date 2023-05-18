@@ -92,6 +92,9 @@ proc iso_flames_job {args} {
 	set skips {}
 	set genes {}
 	set extraopts {}
+	set preset {}
+	set referencecsv {}
+	set hasumi {}
 	set sqanti 1
 	set threads 8
 	set resultfile {}
@@ -108,6 +111,16 @@ proc iso_flames_job {args} {
 		}
 		-distrreg {
 			# not used
+		}
+		-preset {
+			if {$preset ni "sc {} normal"} {error "isoflames only allows -preset sc or '' (empty)"}
+			set preset $value
+		}
+		-referencecsv {
+			set referencecsv $value
+		}
+		-hasumi {
+			set hasumi $value
 		}
 		-extraopts {
 			set extraopts $value
@@ -127,9 +140,14 @@ proc iso_flames_job {args} {
 			error "could not find fastq dir for $bam ($fastqdir)"
 		}
 	}
+	if {$preset in {{} normal}} {
+		set analysisname flames
+	} else {
+		set analysisname flames_$preset
+	}
 	if {$resultfile eq ""} {
 		set sample [file tail [file dir $fastqdir]]
-		set root flames-fastqs-$sample
+		set root $analysisname-fastqs-$sample
 		set resultfile [file dir $fastqdir]/isoform_counts-$root.tsv
 	} else {
 		set resultfile [file_absolute $resultfile]
@@ -140,6 +158,14 @@ proc iso_flames_job {args} {
 	set reftranscripts [file_absolute $reftranscripts]
 	set resulttail [file tail $resultfile]
 	set destdir [file dir $resultfile]
+	if {$hasumi eq ""} {
+		if {$preset eq "sc"} {set hasumi true} else {set hasumi false}
+	}
+	if {[true $hasumi]} {
+		set hasumi true
+	} else {
+		set hasumi false
+	}
 	#
 	set refseq [refseq $refseq]
 	if {$reftranscripts eq ""} {
@@ -158,17 +184,19 @@ proc iso_flames_job {args} {
 	}
 	job flames-[file tail $resultfile] {*}$skips \
 	-cores $threads \
-	-deps [list {*}$fastqfiles $refseq $reftranscripts] -targets {
+	-deps [list {*}$fastqfiles $refseq $reftranscripts $referencecsv] -targets {
 		$resultfile
 		$destdir/gene_counts-$root.tsv
 	} -vars {
 		fastqdir fastqfiles resultfile reftranscripts root destdir refseq threads extraopts sample
+		preset referencecsv
 	} -code {
 		set extrainfo [list \
 			analysis $root sample $sample \
 			isocaller_reftranscripts [file tail $reftranscripts] \
 			isocaller_distrreg 0 \
-			isocaller flames isocaller_version [version flames]
+			isocaller flames isocaller_version [version flames] \
+			isocaller_preset $preset \
 		]
 		analysisinfo_write [gzfile $fastqdir/*.fastq $fastqdir/*.fq] $resultfile \
 			{*}$extrainfo
@@ -178,7 +206,7 @@ proc iso_flames_job {args} {
 		set flamesdir [tempdir]
 		mkdir $flamesdir
 		cd $flamesdir
-		file_write config.json [deindent {
+		file_write config.json [deindent [subst {
 			{
 			    "comment":"this is the default config for SIRV spike-in data. use splice annotation on alignment.",
 			    "pipeline_parameters":{
@@ -189,7 +217,7 @@ proc iso_flames_job {args} {
 			    },
 			    "global_parameters":{
 			        "generate_raw_isoform":true,
-			        "has_UMI":false
+			        "has_UMI":$hasumi
 			    },
 			    "isoform_parameters":{
 			        "MAX_DIST":10,
@@ -215,25 +243,34 @@ proc iso_flames_job {args} {
 			        "min_read_coverage":0.75
 			    }
 			}
-		}]
+		}]]
 		mklink $refseq [file tail $refseq]
 		mklink $reftranscripts [file tail $reftranscripts]
 		mkdir fastq
 		set mergedfastqfile fastq/$root.fastq
-		if {[llength $fastqfiles] > 1} {
-			exec cg zcat {*}$fastqfiles | gzip --fast > $mergedfastqfile.gz.temp
-			file rename -force $mergedfastqfile.gz.temp $mergedfastqfile.gz
-			set mergedfastqfile $mergedfastqfile.gz
+		if {$preset eq "sc"} {
+			exec flames match_cell_barcode \
+				$fastqdir \
+				barcodestatistics-$root.tsv \
+				$mergedfastqfile.gz \
+				$referencecsv \
+				2
 		} else {
-			set fastqfile [lindex $fastqfiles 0]
-			mklink -absolute 0 $fastqfile $mergedfastqfile[gzext $fastqfile]
-			set mergedfastqfile $mergedfastqfile[gzext $fastqfile]
+			if {[llength $fastqfiles] > 1} {
+				exec cg zcat {*}$fastqfiles | gzip --fast > $mergedfastqfile.gz.temp
+				file rename -force $mergedfastqfile.gz.temp $mergedfastqfile.gz
+				set mergedfastqfile $mergedfastqfile.gz
+			} else {
+				set fastqfile [lindex $fastqfiles 0]
+				mklink -absolute 0 $fastqfile $mergedfastqfile[gzext $fastqfile]
+				set mergedfastqfile $mergedfastqfile[gzext $fastqfile]
+			}
 		}
 		set f [gzopen $mergedfastqfile]
 		for {set i 0} {$i < 20} {incr i} {gets $f}
 		set short [eof $f]
 		if {$short} {
-			# only 4 reads aligned -> skip running isoquant
+			# only 4 reads aligned -> skip running flames
 			file_write isoform_annotated.filtered.gff3 {}
 			file_write transcript_assembly.fa {}
 			set o [wgzopen transcript_count.csv.gz w] ; gzclose $o
@@ -243,6 +280,19 @@ proc iso_flames_job {args} {
 			set inheader [list gene chromosomeb begin end strand type category nrtranscripts sum_counts-$root]
 			file_write gene_counts-${root}.tsv [iso_flames_header_genecounts $root]\n
 			return
+		} elseif {$preset eq "sc"} {
+			exec flames bulk_long_pipeline.py {*}$extraopts \
+				--genomefa [file tail $refseq] \
+				--gff3 [file tail $reftranscripts] \
+				--outdir tempflames \
+				--reference_csv $referencecsv \
+				--config_file config.json \
+				--fq_dir fastq \
+				>@ stdout 2>@ stderr
+			foreach file [glob tempflames/*] {
+				file rename -force $file .
+			}
+			file delete tempflames
 		} else {
 			exec flames bulk_long_pipeline.py {*}$extraopts \
 				--genomefa [file tail $refseq] \
