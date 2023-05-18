@@ -68,7 +68,9 @@ proc sam_catmerge_job {args} {
 			set time $value
 		}
 	} {resultfile samfile} 1 ... {
-		merge sam files by concatenating (no problem with max open files) and then sorting them
+		merge sam files by concatenating (no problem with max open files) and then sorting them.
+		For already sorted files, you can use the option -mergesort 1 for more perfermonance: 
+		Instead of concatenating and sorting, a hierarchical (if > max open files) mergesort is used
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
