@@ -1,4 +1,8 @@
-proc cg_checktsv {file} {
+proc cg_checktsv {args} {
+	set checksort 1
+	cg_options checktsv args {
+		-checksort {set checksort $value}
+	} {file}
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 4 0]
@@ -22,12 +26,14 @@ proc cg_checktsv {file} {
 		set llen [llength $line]
 		if {!$llen && [eof $f]} break
 		incr linenr
-		set cur [list_sub $line $poss]
-		if {[list $prev $cur] ne [bsort [list $prev $cur]]} {
-			puts stderr "line $linenr is sorted wrong:\t$line (prev = $prev)"
-			set error 1
+		if {$checksort} {
+			set cur [list_sub $line $poss]
+			if {[list $prev $cur] ne [bsort [list $prev $cur]]} {
+				puts stderr "line $linenr is sorted wrong:\t$line (prev = $prev)"
+				set error 1
+			}
+			set prev $cur
 		}
-		set prev $cur
 	}
 	close $f
 	if {$error} {error "checking tsv file $file concluded with errors"}

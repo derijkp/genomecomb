@@ -422,7 +422,7 @@ char *naturalcompare_numbercontext_after(char *cur, int curlen, char *start, int
 int naturalcompare_atof(char *a,char *b) {
 	double da = atof(a);
 	double db = atof(b);
-	 DPRINT("atof %s vs %s: %f, %f",a,b,da,db);
+	 NODPRINT("atof %s vs %s: %f, %f",a,b,da,db);
 	if (da < db) {
 		return -1;
 	} else if (da > db) {
@@ -584,14 +584,14 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		}
 		if (!nmleft) {
 			if (!nmright) {
-				DPRINT("shortcut no nums: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
+				NODPRINT("shortcut no nums: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
 				return (diff<0)?-1:1;
 			} else {
-				DPRINT("shortcut !nmleft: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
+				NODPRINT("shortcut !nmleft: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
 				return 1;
 			}
 		} else if (!nmright) {
-			DPRINT("shortcut !nmright: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
+			NODPRINT("shortcut !nmright: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
 			return -1;
 		} else {
 			/* - at start of num always sorts first, regardless size of num */
@@ -625,7 +625,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		}
 		blen += (right - rstart);
 		right = rstart + rightzeros;
-	 	DPRINT("zero check: start: %s rstart: %s leftzeros: %d rightzeros: %d left: %s right: %s",start,rstart,leftzeros,rightzeros,left,right);
+	 	NODPRINT("zero check: start: %s rstart: %s leftzeros: %d rightzeros: %d left: %s right: %s",start,rstart,leftzeros,rightzeros,left,right);
 		contextleft = context;
 		contextright = context;
 		endleft = naturalcompare_numbercontext_after(left, alen, start, nmleft, &contextleft);
@@ -652,7 +652,7 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	 	NODPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
 	}
 	if (simplenum) {
-		 DPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
+		NODPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
 		/* simplenum indicates we have embedded numbers */
 		/* so we will just compare size of integer */
 		/* we will not take into account invert, decimal */

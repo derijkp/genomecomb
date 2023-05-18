@@ -2545,12 +2545,12 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		}
 		start = left;
 		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
-	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+	 	NODPRINT("checked before: %s context=%d invert=%d",start,context,invert);
 		if (context <= LOC_SIMPLE) {simplenum = 1;}
-	 	DPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
+	 	NODPRINT("zero fix: left: %s (%d) right: %s (%d)",left,alen,right,blen);
 	}
 	if (simplenum) {
-		 DPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
+		NODPRINT("simplenum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
 		/* simplenum indicates we have embedded numbers */
 		/* so we will just compare size of integer */
 		/* we will not take into account invert, decimal */
