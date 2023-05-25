@@ -122,13 +122,17 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {![info exists genebasica($geneid)]} {
 				set genebasica($geneid) [list $chr $begin $end $strand]
 			} else {
+				set prevbegin [lindex $genebasica($geneid) 2]
 				if {[lindex $genebasica($geneid) 0] ne "$chr"} {
 					puts stderr "Chromosome does not match for transcripts of same gene $geneid: $line"
 				} elseif {[lindex $genebasica($geneid) 3] ne "$strand"} {
 					puts stderr "Strand does not match for transcripts of same gene $geneid: $line"
-				} elseif {$begin > [lindex $genebasica($geneid) 2]} {
+				} elseif {$begin > $prevbegin} {
 					puts stderr "transcript not overlapping previous for same gene $geneid: $line"
-				} elseif {$end > [lindex $genebasica($geneid) 2]} {
+					if {[expr {$begin - $prevbegin}] < 100000} {
+						lset genebasica($geneid) 2 $end
+					}
+				} elseif {$end > $prevbegin} {
 					lset genebasica($geneid) 2 $end
 				}
 			}
