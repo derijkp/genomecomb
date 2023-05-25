@@ -1065,6 +1065,7 @@ proc process_sample_job {args} {
 			if {$preset ne ""} {lappend options -preset $preset}
 			iso_${isocaller}_job \
 				{*}$options \
+				-cleanup $cleanup \
 				-distrreg $distrreg -threads $threads \
 				-refseq $refseq \
 				$cleanedbam

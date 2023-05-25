@@ -335,6 +335,9 @@ proc flair_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-cleanup {
+			# currently unused
+		}
 	} {projectdir}
 	set projectdir [file_absolute $projectdir]
 	if {[file isdir $projectdir]} {

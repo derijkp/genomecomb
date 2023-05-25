@@ -128,6 +128,9 @@ proc iso_flames_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
+		-cleanup {
+			# currently unused
+		}
 	} {bam resultfile} 1 2
 	set bam [file_absolute $bam]
 	if {[file isdir $bam]} {
