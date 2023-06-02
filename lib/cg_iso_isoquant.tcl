@@ -548,8 +548,8 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	}
 	gzclose $o
 	gzclose $f
-	cg select -overwrite 1 -s - $temptarget ${temptarget}2
-	file rename -force ${temptarget}2 $targetreadassignmentsfile
+	cg select -overwrite 1 -s - $temptarget ${temptarget}2.zst
+	file rename -force ${temptarget}2.zst $targetreadassignmentsfile.zst
 	file delete $temptarget
 	#
 	# make isoform_counts file
@@ -953,7 +953,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		if {$cheader ne $header} {
 			error "header of $genefile differs from header of [lindex $genefiles 0]"
 		}
-		set genepos [lsearch $cheader gene]
+		set genepos [lsearch $cheader geneid]
 		while {[gets $f line] != -1} {
 			set line [split $line \t]
 			set gene [lindex $line $genepos]
@@ -1425,7 +1425,7 @@ proc iso_isoquant_job {args} {
 					convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 					convert_isoquant $isodir $destdir $sample $refseq $reggenedb $regreftranscripts $root $singlecell
 				} else {
-					convert_isoquant $isodir $destdir $sample $refseq "" "" $root
+					convert_isoquant $isodir $destdir $sample $refseq "" "" $root $singlecell
 				}
 			}
 			if {$cleanup} {
@@ -1445,7 +1445,7 @@ proc iso_isoquant_job {args} {
 		set regdir $workdir/$root-$region
 		set isofile $regdir/isoform_counts-${root}.tsv
 		set genefile $regdir/gene_counts-${root}.tsv
-		set readfile $regdir/read_assignments-${root}.tsv
+		set readfile $regdir/read_assignments-${root}.tsv.zst
 		lappend isofiles $isofile
 		lappend genefiles $genefile
 		lappend readfiles $readfile
@@ -1530,3 +1530,4 @@ proc cg_iso_isoquant {args} {
 	iso_isoquant_job {*}$args
 	job_wait
 }
+
