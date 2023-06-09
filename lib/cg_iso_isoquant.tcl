@@ -1419,6 +1419,7 @@ proc iso_isoquant_job {args} {
 					read_id chromosome begin end strand exonStarts exonEnds aligned_size
 					ambiguity inconsistency covered_pct polya classification closest_known
 				} \t]\n
+				cg zst $regdir/read_assignments-${root}.tsv
 			} else {
 				if {$reftranscripts ne "none"} {
 					set samregions [samregions $region $refseq]
