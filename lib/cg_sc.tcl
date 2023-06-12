@@ -111,6 +111,7 @@ proc sc_barcodes_job args {
 	set cmdline [clean_cmdline cg sc_barcodes {*}$args]
 	set whitelist {}
 	set refseq {}
+	# = end truseq universal adapter
 	set adaptorseq CTACACGACGCTCTTCCGATCT
 	set barcodesize 16
 	set umisize 12
@@ -172,12 +173,12 @@ proc sc_barcodes_job args {
 	# merge barcodes and find cell barcodes
 	set summaries [jobglob $resultdir/barcodes/*.summary_barcodes.tsv]
 	set barcodefiles [jobglob $resultdir/barcodes/*.barcodes.tsv]
-	job merge_barcodes-$sample -deps $summaries -targets {
+	job merge_barcodes-$sample -deps [list {*}$barcodefiles {*}$summaries] -targets {
 		$resultdir/mergedbarcodes.tsv.zst
 		$resultdir/barcode2celbarcode.tsv
 		$resultdir/reads_per_cell.tsv
 	} -vars {
-		summaries resultdir whitelist
+		barcodefiles summaries resultdir whitelist
 	} -procs {
 		ali_ident_matrix
 	} -code {
@@ -197,6 +198,7 @@ proc sc_barcodes_job args {
 		while {1} {
 			foreach {id barcode umi} [split $line \t] break
 			if {$barcode ne $prevbarcode} {
+				incr a($prevbarcode) $count
 				if {$count > 0 && $barcode ne ""} {
 					puts $o $prevbarcode\t$count\t$umicount
 				}
@@ -214,32 +216,20 @@ proc sc_barcodes_job args {
 			# putsvars barcode count umicount
 		}
 		gzclose $o ; gzclose $f
-
-#		unset -nocomplain a
-#		foreach file $summaries {
-#			set f [gzopen $file]
-#			set header [tsv_open $f]
-#			if {$header ne "barcode count"} {error "wrong file $file?"}
-#			while {[gets $f line] != -1} {
-#				foreach {barcode count} [split $line \t] break
-#				if {![info exists a($barcode)]} {
-#					set a($barcode) $count
-#				} else {
-#					incr a($barcode) $count
-#				}
-#			}
-#		}
-#		# barcode counts list
-#		set mergedbarcodesfile $resultdir/mergedbarcodes.tsv
-#		set o [wgzopen $mergedbarcodesfile.temp]
-#		puts $o barcode\tcount
-#		foreach barcode [array names a] {
-#			puts $o $barcode\t$a($barcode)
-#		}
-#		gzclose $o
 		cg select -overwrite 1 -s -count $mergedbarcodesfile.temp.zst $mergedbarcodesfile.temp2.zst
 		file rename -force $mergedbarcodesfile.temp2.zst $mergedbarcodesfile
 		file delete $mergedbarcodesfile.temp.zst
+#		# read counts into a after file is made already
+#		unset -nocomplain a
+#		set f [gzopen $resultdir/mergedbarcodes.tsv.zst]
+#		set header [tsv_open $f]
+#		if {$header ne "barcode count umicount"} {error "wrong file $file?"}
+#		while {[gets $f line] != -1} {
+#			foreach {barcode count} [split $line \t] break
+#			incr a($barcode) $count
+#		}
+#		gzclose $f
+
 		#
 		# load whitelist
 		catch {close $f}
@@ -323,6 +313,8 @@ proc sc_barcodes_job args {
 				unset a($match)
 			}
 		}
+		close $o
+		gzclose $f
 		file rename -force $barcode2celbarcodefile.temp $barcode2celbarcodefile
 		# cg select -g cellbarcode barcode2celbarcode.tsv	| cg select -g all
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
@@ -406,8 +398,8 @@ proc sc_barcodes_job args {
 					set oname "@${cellbarcode}_${umi}\#[string range $name 1 end] CB:Z:$cellbarcode CR:Z:$barcode MI:Z:$umi"
 				} else {
 					set oname @${barcode}_${umi}\#[string range $name 1 end]
-					set celbarcode $barcode
-					set oname "@${celbarcode}_${umi}\#[string range $name 1 end] CB:Z:$cellbarcode CR:Z:$barcode MI:Z:$umi"
+					set cellbarcode $barcode
+					set oname "@${cellbarcode}_${umi}\#[string range $name 1 end] CB:Z:$cellbarcode CR:Z:$barcode MI:Z:$umi"
 				}
 				puts $fqo $oname
 				puts $fqo $fqseq

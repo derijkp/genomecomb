@@ -68,5 +68,44 @@ Possible options are
 ; -skipregions:
 ; -cleanup:
 
+
+== Results ==
+=== read_asignments ===
+The read_assignment files returns for each read where it aligns and which
+genes/isoforms it supports. For reads that could have come from multiple isoforms/genes,
+multiple lines are present (one for each isoform/gene). In this case the ambiguity and
+gambiguity fields indicate how many isoforms and genes are supported.
+
+; read_id: 
+; chromosome: 
+; begin: 
+; end: 
+; strand: 
+; exonStarts: 
+; exonEnds: 
+; aligned_size: 
+; isoform_id: 
+; gene_id: 
+; assignment_type: how does the read match the assigned transcript (unique, inconsistent, ..)
+; assignment_events: lists noted differences with the asigned transcript
+; inconsistency: level of inconsistency of the read with the assigned
+transcript based on assignment_events (reads with inconsistency >= 2 are
+not counted for an isoform)
+** 0: unique or no inconsistencies of note
+** 1: minor differences such as probable alignment artifacts, alternative transcription start / end
+** 2: (incomplete) intron retentions
+** 3: major inconsistencies (major_exon_elongation,alternative_structure,alt_donor_site,alt_acceptor_site, ...)
+; additional_info: 
+; ambiguity: number of isoforms the read supports (could come from), isoforms from different genes are included
+; gambiguity: number of genes the read supports (< ambiguity: multiple isoforms from one gene are counted as one)
+; covered_pct: size of the (aligned) read vs the total size of the isoform (in percent)
+; polya: "True" if a polyA was detected in the read, "False" if no polyA was detected on the read (empty if read does not support any isoform)
+; classification: 
+; closest_known: 
+; cellbarcode: 
+; umi: 
+; umicount: 
+
+
 == Category ==
 Rna-seq
