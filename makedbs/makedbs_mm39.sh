@@ -2,11 +2,11 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
-# Script to download and prepare all reference databases (including genome) for mm10
+# Script to download and prepare all reference databases (including genome) for mm39
 # call using
-# makedbs_mm10.sh ?options? ?dest? ?webcache?
+# makedbs_mm39.sh ?options? ?dest? ?webcache?
 # where 
-# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/mm10)
+# * dest: the directory where the reference databases will be installed (default /complgen/refseqnew/mm39)
 # * webcache: directory that will be used to cache downloads (default /complgen/refseqnew/webcache)
 # options:
 # -d distr: allow distributed processing on 
@@ -21,7 +21,7 @@ exec cg source "$0" "$@"
 # basic settings (for makerefdb_job)
 # --------------
 
-set build mm10
+set build mm39
 set defaultdest /complgen/refseqnew
 
 # basic settings
@@ -33,7 +33,7 @@ Y	90745845	91644698	PAR1
 }
 set dbsnpversion 142
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/108.20200622/GCF_000001635.26_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gff.gz
-set mirbase mmu-22.1:mm10
+set mirbase mmu-22.1:mm39
 set regionsdb_collapse {
 	cytoBand oreganno cpgIslandExt tRNAs
 	microsat rmsk simpleRepeat 
@@ -58,8 +58,8 @@ set genesdb [list \
 
 # extra settings
 # --------------
-set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M25/gencode.vM25.annotation.gtf.gz
-set transcriptsgtf extra/gene_mm10_gencode.vM25.gtf
+set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/gencode.vM32.annotation.gtf.gz
+set transcriptsgtf extra/gene_mm39_gencode.vM32.gtf
 
 # prepare
 # =======
@@ -72,7 +72,7 @@ set cmdline [clean_cmdline cg [info script] {*}$args]
 # arguments, start job system
 logverbose 2
 set argv [job_init {*}$argv]
-cg_options makedbs_mm10.sh argv {
+cg_options makedbs_mm39.sh argv {
 } {dest webcache} 0 2
 
 if {![info exists dest] || $dest eq ""} {set dest $defaultdest}
@@ -111,7 +111,7 @@ makerefdb_job \
 	-webcache $webcache \
 	$dest/$build
 
-# rest after this is mm10 specific code
+# rest after this is mm39 specific code
 # -------------------------------------
 
 job_wait
