@@ -466,6 +466,7 @@ proc process_sample_job {args} {
 	set svcallers {}
 	set methcallers {}
 	set counters {}
+	set reftranscripts {}
 	set isocallers {}
 	set realign 1
 	set cleanup 1
@@ -531,6 +532,9 @@ proc process_sample_job {args} {
 		}
 		-counters {
 			set counters $value
+		}
+		-reftranscripts {
+			set reftranscripts $value
 		}
 		-isocallers {
 			set isocallers $value
@@ -724,7 +728,7 @@ proc process_sample_job {args} {
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers svcallers methcallers counters isocallers realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers methcallers counters reftranscripts isocallers realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -1064,7 +1068,9 @@ proc process_sample_job {args} {
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
 			iso_${isocaller}_job \
+				-reftranscripts $reftranscripts \
 				{*}$options \
+				-cleanup $cleanup \
 				-distrreg $distrreg -threads $threads \
 				-refseq $refseq \
 				$cleanedbam
