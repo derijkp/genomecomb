@@ -488,6 +488,8 @@ proc process_sample_job {args} {
 	set hap_bam 0
 	set depth_histo_max 1000
 	set fastqdir {}
+	set singlecell {}
+	set singlecell_whitelist {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -509,6 +511,13 @@ proc process_sample_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligners $value
+		}
+		-singlecell {
+			if {$value ni "ontr10x"} {error "Unknown value $value for -singlecell, must be one of: ontr10x"}
+			set singlecell $value
+		}
+		-singlecell-whitelist {
+			set singlecell_whitelist $value
 		}
 		-realign - -realign {
 			set realign $value
@@ -748,6 +757,12 @@ proc process_sample_job {args} {
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
 		lappend todo(var) [file tail $target]
+	}
+	# single cell fastq adaptation
+	# ----------------------------
+	if {$singlecell ne ""} {
+		sc_barcodes_job -whitelist $singlecell_whitelist $fastqdir $sampledir
+		set fastqdir $sampledir/bcfastq
 	}
 	# use generic (fastq/bam source)
 	# ------------------------------
