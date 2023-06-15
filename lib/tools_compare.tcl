@@ -13,6 +13,26 @@ proc chr_compare {chr1 chr2} {
 	loc_compare $chr1 $chr2
 }
 
+# natural less then
+proc loc_lt {chr1 chr2} {
+	if {[loc_compare $chr1 $chr2] < 0} {return 1} else {return 0}
+}
+
+# natural less then or equal
+proc loc_lte {chr1 chr2} {
+	if {[loc_compare $chr1 $chr2] <= 0} {return 1} else {return 0}
+}
+
+# natural greater then
+proc loc_gt {chr1 chr2} {
+	if {[loc_compare $chr1 $chr2] > 0} {return 1} else {return 0}
+}
+
+# natural greater then or equal
+proc loc_gte {chr1 chr2} {
+	if {[loc_compare $chr1 $chr2] >= 0} {return 1} else {return 0}
+}
+
 proc distr_chr_compare {chr1 start limitchr limitstart limitend} {
 	set comp [loc_compare $chr1 $limitchr]
 	if {
