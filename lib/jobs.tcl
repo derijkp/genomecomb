@@ -844,7 +844,7 @@ proc job_log {job args} {
 proc job_getfromlog {job key} {
 	set c [file_read $job.log]
 	set line [lindex [regexp -all -inline "$key: \[^\\n\]+" $c] end]
-	return [string range $line [expr {[string length $key]+1}] end]
+	return [lindex [string range $line [expr {[string length $key]+1}] end] 0]
 }
 
 # log to buffer only, only go to output at job_log

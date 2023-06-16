@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+flairversion=1.7
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -57,11 +59,11 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-8
+yuminstall devtoolset-9
 yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
 # scl enable devtoolset-8 rh-python36 bash
-source /opt/rh/devtoolset-8/enable
+source /opt/rh/devtoolset-9/enable
 source /opt/rh/rh-python36/enable
 
 
@@ -96,55 +98,97 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# mamba
+# -----
+cd /build
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda || true
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda install -y -c conda-forge conda-pack
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
 # flair
 # -----
 cd /build
 
-flairversion=1.5
+mamba create -y -n flair
+mamba activate flair
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+mamba install -y flair=$flairversion python=3.9
 
-conda create -y -n flair
-conda activate flair
-conda install -y flair=$flairversion
+mamba deactivate
 
-# make portable appdir
+# make package
+# ------------
+
+cd /build
+# installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
+mamba install -y -c conda-forge conda-pack
+
 rm flair.tar.gz || true
 conda pack -n flair -o flair.tar.gz
-rm -rf flair-$flairversion-$arch.old
+rm -rf flair-$flairversion-$arch.old || true
 mv flair-$flairversion-$arch flair-$flairversion-$arch.old || true
-mkdir flair-$flairversion-$arch
-cd flair-$flairversion-$arch
+mkdir /build/flair-$flairversion-$arch
+cd /build/flair-$flairversion-$arch
 tar xvzf ../flair.tar.gz
-cp /io/build/flair_files/plot_isoform_usage.patched.py bin/bin
+cp /io/build/flair_files/plot_isoform_usage.patched.py bin/plot_isoform_usage.patched
 
 # make excutables in appdir root that will use the appdir env
 cd /build/flair-$flairversion-$arch
+
+mv bin/flair bin/flair.ori
+cat << 'EOF' > bin/flair
+#!/bin/sh
+'''exec' python "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from flair.__main__ import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())
+EOF
+chmod ugo+x bin/flair
+
+mv bin/f2py bin/f2py.ori
+cat << 'EOF' > bin/f2py
+#!/bin/sh
+'''exec' python "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from f2py.__main__ import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())
+EOF
+chmod ugo+x bin/f2py
+
+mv bin/f2py3 bin/f2py3.ori
+cp -al bin/f2py bin/f2py3
+
+mv bin/f2py3.9 bin/f2py3.9.ori
+cp -al bin/f2py bin/f2py3.9
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/flair.py ${1+"$@"}
+$dir/bin/flair ${1+"$@"}
 ' > flair.py
 chmod ugo+x flair.py
 
@@ -153,60 +197,79 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/bin/bam2Bed12.py ${1+"$@"}
-' > bam2Bed12.py
-chmod ugo+x bam2Bed12.py
+$dir/bin/flair ${1+"$@"}
+' > flair
+chmod ugo+x flair
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-python $dir/bin/bin/plot_isoform_usage.py ${1+"$@"}
-' > plot_isoform_usage.py
-chmod ugo+x plot_isoform_usage.py
+$dir/bin/bam2Bed12 ${1+"$@"}
+' > bam2Bed12
+chmod ugo+x bam2Bed12
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-python $dir/bin/bin/predictProductivity.py ${1+"$@"}
-' > predictProductivity.py
-chmod ugo+x predictProductivity.py
+python $dir/bin/plot_isoform_usage ${1+"$@"}
+' > plot_isoform_usage
+chmod ugo+x plot_isoform_usage
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-python $dir/bin/bin/mark_intron_retention.py ${1+"$@"}
-' > mark_intron_retention.py
-chmod ugo+x mark_intron_retention.py
+python $dir/bin/predictProductivity ${1+"$@"}
+' > predictProductivity
+chmod ugo+x predictProductivity
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-python $dir/bin/bin/diff_iso_usage.py ${1+"$@"}
-' > diff_iso_usage.py
-chmod ugo+x diff_iso_usage.py
+python $dir/bin/mark_intron_retention ${1+"$@"}
+' > mark_intron_retention
+chmod ugo+x mark_intron_retention
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-python $dir/bin/bin/diffsplice_fishers_exact.py ${1+"$@"}
-' > diffsplice_fishers_exact.py
-chmod ugo+x diffsplice_fishers_exact.py
+python $dir/bin/diff_iso_usage ${1+"$@"}
+' > diff_iso_usage
+chmod ugo+x diff_iso_usage
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/bin/diffsplice_fishers_exact ${1+"$@"}
+' > diffsplice_fishers_exact
+chmod ugo+x diffsplice_fishers_exact
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+python $dir/lib/python3.9/site-packages/flair/identify_gene_isoform.py ${1+"$@"}
+' > identify_gene_isoform.py
+chmod ugo+x identify_gene_isoform.py
 
 # package
-rm ../flair.tar.gz
 cd /build
-ln -sf flair-1.5-$arch/flair.py flair.py
-tar cvzf flair-$flairversion-$arch.tar.gz flair-$flairversion-$arch flair.py
+rm flair.tar.gz
+ln -sf flair-$flairversion-$arch/flair.py flair.py
+ln -sf flair-$flairversion-$arch/flair flair
+tar cvzf flair-$flairversion-$arch.tar.gz flair-$flairversion-$arch flair.py flair
 cp -ra flair-$flairversion-$arch /io/extra$ARCH
 cd /io/extra$ARCH/
 

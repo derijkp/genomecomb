@@ -9,11 +9,32 @@ proc version_flair {} {
 }
 
 proc flair_bin {bin} {
-	if {[catch {exec which $bin} msg]} {
-		return $bin.py
-	} else {
+	if {![catch {exec which $bin} msg]} {
 		return $bin
 	}
+	if {$bin in "flair"} {
+		return $bin.py
+	}
+	set dir [file dir [file_resolve [exec which flair.py]]]
+	regsub {\.py$} $bin {} bin2
+	if {[file exists $dir/$bin]} {
+		return $dir/$bin
+	} elseif {[file exists $dir/$bin.py]} {
+		return $dir/$bin.py
+	} elseif {[info exists bin2] && [file exists $dir/$bin2]} {
+		return $dir/$bin2
+	} elseif {[file exists $dir/bin/$bin]} {
+		return $dir/bin/$bin
+	} elseif {[file exists $dir/bin/bin/$bin]} {
+		return $dir/bin/bin/$bin
+	} elseif {[info exists bin2] && [file exists $dir/bin/$bin2]} {
+		return $dir/bin/$bin2
+	} elseif {[info exists bin2] && [file exists $dir/bin/bin/$bin2]} {
+		return $dir/bin/bin/$bin2
+	} elseif {[info exists bin2] && [file exists $dir/bin/bin/$bin2.py]} {
+		return $dir/bin/bin/$bin2.py
+	}
+	error "flair binary $bin no found (looking in $dir)"
 }
 
 proc flair_getref {refseq} {
@@ -47,21 +68,21 @@ proc findflair {} {
 	return $flair
 }
 
-proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} {
+proc cg_flair_genecounts {isoformcounts genecounts {genefield gene}} {
 	set tempfile [tempfile]
 	cg select -overwrite 1 \
 		-g $genefield \
-		-gc {distinct(structural_category),distinct(subcategory),distinct(chromosome),min(begin),max(end),distinct(strand),ucount(transcript),sum(counts-*),sum(tpm-*)} \
+		-gc {distinct(chromosome),min(begin),max(end),distinct(strand),ucount(transcript),sum(counts-*)} \
 		$isoformcounts $tempfile
 	catch {close $f} ; catch {close $o}
 	set f [open $tempfile]
 	set header [tsv_open $f]
 	set oheader {type gene gene_type chromosome begin end strand nrtranscripts}
-	foreach field [lrange $header 8 end] {
+	foreach field [lrange $header 6 end] {
 		regsub sum_ $field {} field
 		lappend oheader $field
 	}
-	set o [open $genecounts w]
+	set o [open $genecounts.temp w]
 	puts $o [deindent {
 		#filetype	tsv/genecountsfile
 		#fileversion	0.99
@@ -79,217 +100,108 @@ proc cg_flair_genecounts {isoformcounts genecounts {genefield associated_gene}} 
 		#fields	type	1	String	type of element
 	}]
 	puts $o [join $oheader \t]
-	while {[gets $f line] != -1} {
-		set line [split $line \t]
-		foreach {gene category sub} $line break
-		set novel [regexp {^novel} $gene]
-		if {!$novel && ![regexp _ $gene]} {
-			set genetype known
-		} elseif {[regexp fusion $category]} {
-			set genetype fusion
-		} elseif {!$novel} {
-			set genetype overlap
-		} elseif {[regexp antisense $category]} {
-			set genetype novel_antisense
-		} elseif {[regexp intergenic $category]} {
-			set genetype novel_intergenic
-		} elseif {[regexp genic_intron $category]} {
-			set genetype novel_genic_intron
-		} else {
-			set genetype novel
-		}
-		puts $o gene\t$gene\t$genetype\t[join [lrange $line 3 end] \t]
-	}
-	close $o
-	close $f
-}
-
-# set totalcountsfile {}
-# foreach {target transcript_classification_file transcripts_genepred_file counts_matrix_file totalcountsfile} $args break
-proc cg_flair_mergeresults {target transcript_classification_file transcripts_genepred_file counts_matrix_file {totalcountsfile {}}} {
-	#
-	# read classifications in classa
-	unset -nocomplain classa
-	set f [gzopen $transcript_classification_file]
-	set classheader [tsv_open $f]
-	set classidpos [lsearch $classheader isoform]
-	while {[gets $f line] != -1} {
-		set line [split $line \t]
-		set classid [lindex $line $classidpos]
-		set classa($classid) $line
-	}
-	close $f
-	# read counts in counta
-	unset -nocomplain counta
-	set f [gzopen $counts_matrix_file]
-	set cntheader [tsv_open $f]
-	set cntheader [list_regsub {_conditionA_batch1$} $cntheader {}]
-	set numsamples [expr {[llength $cntheader] -1}]
-	set totalcounts [list_fill $numsamples 0]
-	while {[gets $f line] != -1} {
-		set line [split $line \t]
-		set cntid [lindex $line 0]
-		set cntid [lindex [split $cntid _] 0]
-		set counta($cntid) [lrange $line 1 end]
-		set temp {}
-		foreach tcnt $totalcounts cnt [lrange $line 1 end] {
-			set tcnt [expr {$tcnt + $cnt}]
-			lappend temp $tcnt
-		}
-		set totalcounts $temp
-	}
-	close $f
-	set exproot [file_rootname $target]
-	regsub \\.genepred $exproot {} exproot
-	if {$totalcountsfile eq ""} {
-		set totalcountsfile [file dir $target]/totalcounts-$exproot.tsv
-	}
-	file_write $totalcountsfile [join [lrange $cntheader 1 end] \t]\n[join $totalcounts \t]\n
-	#
-	# write combi file
-	catch {close $fg} ; catch {close $o} ; 
-	set fg [gzopen $transcripts_genepred_file]
-	# set gheader [lrange [tsv_open $fg] 1 end]
-	set gheader [tsv_open $fg]
-	set gposs [tsv_basicfields $gheader 12 0]
-	set gposs [list_sub $gposs {0 6 7 8}]
-	set namepos [lsearch $gheader name]
-	set genepos [lsearch $gheader gene]
-	set scatpos [lsearch $classheader structural_category]
-	set o [open $target.temp w]
-	set newheader $gheader
-	set newheader [list_replace $newheader {chrom chromosome txStart begin txEnd end}]
-	lappend newheader category
-	set pclassheader [list_remove $classheader id isoform chrom strand]
-	set poss [list_cor $classheader $pclassheader]
-	lappend newheader {*}$pclassheader
-	lappend newheader type
-	foreach sample [lrange $cntheader 1 end] {
-		lappend newheader counts-flair-$sample
-	}
-	foreach sample [lrange $cntheader 1 end] {
-		lappend newheader tpm-flair-$sample
-	}
-	puts $o [join $newheader \t]
-	set emptycntresult [list_fill [expr {2*[llength $totalcounts]}] 0]
-	set nr 1
-	set gr 0
-	array set cattrans {
-		full-splice_match known
-		intergenic intergenic
-		incomplete-splice_match novel_incomplete 
-		novel_in_catalog novel_in_catalog novel_not_in_catalog novel_not_in_catalog
-		genic novel_genic antisense novel_antisense fusion novel_fusion genic_intron novel_genic_intron
-	}
 	while 1 {
-		if {[gets $fg gline] == -1} break
-		set gline [split $gline \t]
-		set gid [lindex $gline 0]
-		if {![info exists classa($gid)]} {
-			error "class data not found for $gid"
-		}
-		set classline $classa($gid)
-		set classid [lindex $classline $classidpos]
-		set scat [lindex $classline $scatpos]
-		if {[info exists cattrans($scat)]} {set scat $cattrans($scat)}
-		if {$scat ne "known"} {
-			foreach {chromosome strand exonStarts exonEnds} [list_sub $gline $gposs] break
-			set name [iso_name $chromosome $strand $exonStarts $exonEnds]
-			lset gline $namepos $name
-		}
-		set result [join $gline \t]\t$scat
-		append result \t[join [list_sub $classline $poss] \t]
-		if {[info exists counta($gid)]} {
-			append result \ttranscript\t[join $counta($gid) \t]
-			foreach cnt $counta($gid) tcnt $totalcounts {
-				append result \t[expr {1000000.0*$cnt/$tcnt}]
-			}
-			puts $o $result
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
+		foreach {gene} $line break
+		set novel [regexp {^novel} $gene]
+		if {[regexp {^novel} $gene]} {
+			set genetype novel
 		} else {
-			puts stderr "count not find count for $gid at line $nr ($transcripts_genepred_file and $counts_matrix_file)"
-			append result \ttranscript\t[join $emptycntresult \t]
-			puts $o $result
+			set genetype known
 		}
-		incr nr
+		puts $o gene\t$gene\t$genetype\t[join [lrange $line 1 end] \t]
 	}
 	close $o
-	close $fg
-	# write final target
-	file_write $target.temp2 [iso_flair_comments]\n
-	cg select -s - $target.temp >> $target.temp2
-	file rename -force $target.temp2 $target
-	file delete -force $target.temp
+	close $f
+	cg select -s - $genecounts.temp $genecounts.temp2
+	file rename -force $genecounts.temp2 $genecounts
+	file delete $genecounts.temp
 }
 
-proc iso_flair_comments {} {
-	deindent {
+proc cg_flair_mergeresults {rootname tsvreftranscripts flairtranscripts flaircountmatrix out_isoform_counts_file out_gene_counts_file out_total_counts_file} {
+	cg gtf2tsv $flairtranscripts [file root $flairtranscripts].tsv
+	#
+	set basicfields {transcript gene geneid chromosome strand begin end exonStarts exonEnds cdsStart cdsEnd exonCount}
+	catch {gzclose $fr} ; set fr [gzopen $tsvreftranscripts]
+	set frheader [tsv_open $fr]
+	set rposs [list_cor $frheader $basicfields]
+	unset -nocomplain refa
+	unset -nocomplain refgenea
+	while 1 {
+		if {[gets $fr line] == -1} break
+		set line [list_sub [split $line \t] $rposs]
+		set refa([lindex $line 0]) $line
+		set refgenea([lindex $line 1]) 1
+	}
+	gzclose $fr
+	catch {gzclose $fc} ; set fc [gzopen $flaircountmatrix]
+	set fcheader [tsv_open $fc]
+	unset -nocomplain countsa
+	set totalcount 0
+	while 1 {
+		if {[gets $fc line] == -1} break
+		set line [split $line \t]
+		foreach {transcript count} $line break
+		set countsa($transcript) $count
+		set totalcount [expr {$totalcount + $count}]
+	}
+	gzclose $fc
+	#
+	file_write $out_total_counts_file totalcount-flair-$rootname\n$totalcount\n
+	#
+	set tempfile [tempfile]
+	set o [open $tempfile w]
+	puts $o [deindent {
 		#filetype	tsv/transcriptsfile
 		#fileversion	0.99
 		#fields	table
 		#fields	field	number	type	description
-		#fields	name	1	String	Name of gene (usually transcript_id from GTF)
 		#fields	chromosome	1	String	Chromosome name
-		#fields	strand	1	String	+ or - for strand
 		#fields	begin	1	Integer	Transcription start position
 		#fields	end	1	Integer	Transcription end position
+		#fields	type	1	Integer	Type of element (transcript typically)
+		#fields	transcript	1	String	Name of transcript (usually transcript_id from GTF)
+		#fields	gene	1	String	Alternate name / name of gene (e.g. gene_name or gene_id from GTF)
+		#fields	strand	1	String	+ or - for strand
 		#fields	cdsStart	1	Integer	Coding region start
 		#fields	cdsEnd	1	Integer	Coding region end
 		#fields	exonCount	1	Integer	Number of exons
 		#fields	exonStarts	E	Integer	Exon start positions
 		#fields	exonEnds	E	Integer	Exon end positions
-		#fields	score	1	Float	Score
-		#fields	name2	1	String	Alternate name (e.g. gene_id from GTF)
-		#fields	cdsStartStat	1	String	Status of CDS start annotation (none, unknown, incomplete, or complete)
-		#fields	cdsEndStat	1	String	Status of CDS end annotation (none, unknown, incomplete, or complete)
-		#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
-		#fields	length	1	Integer	isoform length
-		#fields	exons	1	Integer	Number of exons
-		#fields	structural_category	1	String	one of the SQANTI3 isoform categories based on the best matching reference transcript (https://github.com/ConesaLab/SQANTI3/wiki/SQANTI3-output-explanation)
-		#fields	associated_gene	1	String	the reference gene name
-		#fields	associated_transcript	1	String	the reference transcript name
-		#fields	ref_length	1	Integer	reference transcript length
-		#fields	ref_exons	1	Integer	reference transcript number of exons
-		#fields	diff_to_TSS	1	Integer	distance of query isoform 5' start to reference transcript start end. Negative value means query starts downstream of reference
-		#fields	diff_to_TTS	1	Integer	distance of query isoform 3' end to reference annotated end site. Negative value means query ends upstream of reference
-		#fields	diff_to_gene_TSS	1	Integer	distance of query isoform 5' start to the closest start end of any transcripts of the matching gene
-		#fields	diff_to_gene_TTS	1	Integer	distance of query isoform 3' end to the closest end of any transcripts of the matching gene
-		#fields	subcategory	1	String	additional splicing categorization, separated by semi-colons
-		#fields	RTS_stage	1	String	TRUE if one of the junctions could be a RT switching artifact
-		#fields	all_canonical	1	String	TRUE if all junctions have canonical splice sites
-		#fields	min_sample_cov	1	String	sample with minimum coverage
-		#fields	min_cov	1	Integer	minimum junction coverage based on short read STAR junction output file. NA if no short read given
-		#fields	min_cov_pos	1	Integer	the junction that had the fewest coverage. NA if no short read data given
-		#fields	sd_cov	1	Integer	standard deviation of junction coverage counts from short read data. NA if no short read data given
-		#fields	FL	1	Integer	FL count associated with this isoform per sample if --fl_count is provided, otherwise NA
-		#fields	n_indels	1	Integer	total number of indels based on alignment
-		#fields	n_indels_junc	1	Integer	number of junctions in this isoform that have alignment indels near the junction site (indicating potentially unreliable junctions)
-		#fields	bite	1	String	TRUE if contains at least one "bite" positive SJ
-		#fields	iso_exp	1	Integer	short read expression for this isoform if --expression is provided, otherwise NA
-		#fields	gene_exp	1	Integer	short read expression for the gene associated with this isoform (summing over all isoforms) if --expression is provided, otherwise NA
-		#fields	ratio_exp	1	Integer	ratio of iso_exp to gene_exp if --expression is provided, otherwise NA
-		#fields	FSM_class	1	String	classifies the transcript according to the expression of other isoforms in the gene to which the transcript belongs
-		#fields	coding	1	String	coding or non_coding transcript
-		#fields	ORF_length	1	Integer	predicted ORF length
-		#fields	CDS_length	1	Integer	predicted CDS length
-		#fields	CDS_start	1	Integer	CDS start
-		#fields	CDS_end	1	Integer	CDS end
-		#fields	CDS_genomic_start	1	Integer	genomic coordinate of the CDS start. If on - strand, this coord will be greater than the end
-		#fields	CDS_genomic_end	1	Integer	genomic coordinate of the CDS end. If on - strand, this coord will be smaller than the start
-		#fields	predicted_NMD	1	String	TRUE if there's a predicted ORF and CDS ends at least 50bp before the last junction; FALSE if otherwise. NA if non-coding
-		#fields	perc_A_downstream_TTS	1	Float	percent of genomic "A"s in the downstream 20 bp window. If this number if high (say > 0.8), the 3' end site of this isoform is probably not reliable
-		#fields	seq_A_downstream_TTS	1	String	sequence of the downstream 20 bp window
-		#fields	dist_to_cage_peak	1	Integer	distance to closest TSS based on CAGE Peak data
-		#fields	within_cage_peak	1	String	TRUE if the PacBio transcript start site is within a CAGE Peak
-		#fields	dist_to_polya_site	1	Integer	if --polyA_motif_list is given, shows the location of the last base of the hexamer. Position 0 is the putative poly(A) site. This distance is hence always negative because it is upstream
-		#fields	within_polya_site	1	String	
-		#fields	polyA_motif	1	String	if --polyA_motif_list is given, shows the top ranking polyA motif found within 50 bp upstream of end
-		#fields	polyA_dist	1	Integer	: if --polyA_motif_list is given, shows the location of the last base of the hexamer. Position 0 is the putative poly(A) site. This distance is hence always negative because it is upstream
-		#fields	ORF_seq	1	String	ORF sequence
-		#fields	ratio_TSS	1	Float	Using Short-Read data, we measure the mean coverage of the 100bp upstream and downstream a reported TSS.
-		#fields	type	1	String	type of element
-		#fields	counts	1	Integer	Number of reads mapping to isoform
-		#fields	tpm	1	Float	Transcripts per million (number of reads mapping nomralized to 1m reads total)
+		#fields	source	1	String	Source of data
+		#fields	count	1	Integer	number of supporting reads for isoform
+	}]
+	puts $o [join [list {*}$basicfields type transcripttype counts-flair-$rootname] \t]
+	catch {gzclose $ff} ; set ff [gzopen [file root $flairtranscripts].tsv]
+	set ffheader [tsv_open $ff]
+	set fposs [list_cor $ffheader $basicfields]
+	while 1 {
+		if {[gets $ff line] == -1} break
+		set line [list_sub [split $line \t] $fposs]
+		foreach {transcript gene geineid} $line break
+		set len [string length $gene]
+		# if {[string range $transcript end-$len end] eq "_$gene"} {
+		# 	set transcript [string range $transcript 0 end-[expr {$len+1}]]
+		# }
+		if {[info exists refa($transcript)]} {
+			set line $refa($transcript)
+			lappend line transcript known
+		} else {
+			foreach {temp gene geneid chromosome strand begin end exonStarts exonEnds} $line break
+			lset line 0 [iso_name $chromosome $strand $exonStarts $exonEnds size]
+			if {![info exists refgenea($gene)]} {
+				lset line 1 novelg_$gene
+			}
+			lappend line transcript novel
+		}
+		lappend line [get countsa(${transcript}_$gene) 0]
+		puts $o [join $line \t]
 	}
+	gzclose $o
+	cg select -overwrite 1 -s - $tempfile {*}[compresspipe $out_isoform_counts_file] > $out_isoform_counts_file.temp
+	file rename -force $out_isoform_counts_file.temp $out_isoform_counts_file
+	cg_flair_genecounts $out_isoform_counts_file $out_gene_counts_file
 }
 
 proc iso_flair_job {args} {
@@ -362,6 +274,7 @@ proc flair_job {args} {
 	} else {
 		set reftranscripts [file_absolute $reftranscripts]
 	}
+	ref_transcripts_convert $reftranscripts tsvreftranscripts gtfreftranscripts
 	set flairdir [findflair]
 	job_logfile $projectdir/flair_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions flair dbdir zstd os]
@@ -383,15 +296,15 @@ proc flair_job {args} {
 			job flair_correct-$rootname {*}$skips -skip flair-$rootname/counts_matrix-flair-$rootname.tsv \
 			-cores $threads \
 			-deps {
-				$bam $bam.bai $refseq $reftranscripts
+				$bam $bam.bai $refseq $gtfreftranscripts
 			} -targets {
 				flair-$rootname/all_corrected-flair-$rootname.bed
 			} -vars {
-				bam rootname flairdir refseq reftranscripts threads sample
+				bam rootname flairdir refseq gtfreftranscripts threads sample
 			} -code {
 				analysisinfo_write $bam $target \
 					analysis flair-$rootname sample $sample \
-					isocaller_reftranscripts [file tail $reftranscripts] \
+					isocaller_reftranscripts [file tail $gtfreftranscripts] \
 					isocaller_distrreg 0 \
 					isocaller flair isocaller_version [version flair]
 				set bed12 [file root $bam].bed12
@@ -399,7 +312,7 @@ proc flair_job {args} {
 				file rename -force $bed12.temp $bed12
 				catch_exec [flair_bin flair] correct -t $threads \
 					-g $refseq \
-					--gtf $reftranscripts \
+					--gtf $gtfreftranscripts \
 					-q $bed12 \
 					-o flair-$rootname/transcripts-flair-$rootname.temp >@ stdout 2>@ stderr
 				file rename flair-$rootname/transcripts-flair-$rootname.temp_all_corrected.bed flair-$rootname/all_corrected-flair-$rootname.bed
@@ -428,23 +341,27 @@ proc flair_job {args} {
 			-deps {
 				flair-$rootname/allseq-$rootname.fastq.gz
 				flair-$rootname/all_corrected-flair-$rootname.bed
-				$refseq $reftranscripts
+				$refseq $gtfreftranscripts
 			} -targets {
 				flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
 				flair-$rootname/transcripts-flair-$rootname.isoforms.bed
 				flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 			} -vars {
-				rootname refseq reftranscripts threads
+				rootname refseq gtfreftranscripts threads
 			} -code {
 				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed $target
 				analysisinfo_write flair-$rootname/all_corrected-flair-$rootname.bed flair-$rootname/transcripts-flair-$rootname.isoforms.fa
 				puts "collapse -> flair-$rootname-collapse"
+				exec [flair_bin identify_gene_isoform.py] \
+					flair-$rootname/all_corrected-flair-$rootname.bed \
+					$gtfreftranscripts \
+					flair-$rootname/all_corrected_renamed-flair-$rootname.bed
 				catch_exec [flair_bin flair] collapse \
 					-t $threads \
 					-g $refseq \
-					--gtf $reftranscripts \
+					--gtf $gtfreftranscripts \
 					-r flair-$rootname/allseq-$rootname.fastq.gz \
-					-q flair-$rootname/all_corrected-flair-$rootname.bed \
+					-q flair-$rootname/all_corrected_renamed-flair-$rootname.bed \
 					-o flair-$rootname/temptranscripts-flair-$rootname >@ stdout 2>@ stderr
 				foreach file [glob flair-$rootname/temptranscripts-flair-$rootname*] {
 					file rename -force $file flair-$rootname/[string range [file tail $file] 4 end]
@@ -478,62 +395,46 @@ proc flair_job {args} {
 					file rename -force flair-$rootname/counts_matrix-flair-$rootname.tsv.temp.counts.tsv flair-$rootname/counts_matrix-flair-$rootname.tsv
 				}
 			}
-			job flair_sqanti-$rootname {*}$skips -deps {
+			job flair_convert-$rootname {*}$skips -deps {
 				flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
-				flair-$rootname/counts_matrix-flair-$rootname.tsv
-				$reftranscripts
+				
+				$tsvreftranscripts
 				$refseq
 			} -targets {
 				isoform_counts-flair-$rootname.tsv
 				gene_counts-flair-$rootname.tsv
 				totalcounts-flair-$rootname.tsv
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_classification.txt
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_junctions.txt
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.gtf
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genePred
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv
-				sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.fasta
 			} -vars {
-				rootname sample refseq reftranscripts
+				rootname sample refseq gtfreftranscripts reftranscripts tsvreftranscripts
 			} -code {
-				mkdir sqanti3-flair-$rootname
+				set flairtranscripts flair-$rootname/transcripts-flair-$rootname.isoforms.gtf
+				set flaircountmatrix flair-$rootname/counts_matrix-flair-$rootname.tsv
+				set out_isoform_counts_file isoform_counts-flair-$rootname.tsv
+				set out_gene_counts_file gene_counts-flair-$rootname.tsv
+				set out_total_counts_file totalcounts-flair-$rootname.tsv
 				set extrainfo [list \
 					analysis flair-$rootname sample $sample \
 					isocaller flair isocaller_version [version flair] \
-					isocaller_flair_sqanti3 [version sqanti3_qc.py]
+					reftranscripts $reftranscripts \
 				]
-				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
-					isoform_counts-flair-$rootname.tsv \
+				analysisinfo_write $flairtranscripts \
+					$out_isoform_counts_file \
 					{*}$extrainfo
-				analysisinfo_write flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
-					gene_counts-flair-$rootname.tsv \
+				analysisinfo_write $flairtranscripts \
+					$out_gene_counts_file \
 					{*}$extrainfo
-				set target isoform_counts-flair-$rootname.tsv
-				if {[file size flair-$rootname/transcripts-flair-$rootname.isoforms.gtf] == 0} {
+				set target $out_isoform_counts_file
+				if {[file size $flairtranscripts] == 0} {
 					foreach target $targets {
 						file_write $target ""
 					}
-					file_write isoform_counts-flair-$rootname.tsv [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid counts-flair-$sample tpm-flair-$sample} \t]\n
-					file_write gene_counts-flair-$rootname.tsv [join [list type gene gene_type chromosome begin end strand nrtranscripts counts-flair-$sample tpm-flair-$sample] \t]\n
+					file_write $out_isoform_counts_file [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid counts-flair-$sample tpm-flair-$sample} \t]\n
+					file_write $out_gene_counts_file [join [list type gene gene_type chromosome begin end strand nrtranscripts counts-flair-$sample tpm-flair-$sample] \t]\n
 					file_write total_counts-flair-$rootname.tsv $sample\n
 				} else {
-					catch_exec sqanti3_qc.py \
-						flair-$rootname/transcripts-flair-$rootname.isoforms.gtf \
-						$reftranscripts \
-						$refseq \
-						-d sqanti3-flair-$rootname \
-						-o sqanti3-flair-$rootname \
-						--report skip
-					cg genepred2tsv \
-						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genePred \
-						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv
-					# merge results
-					cg_flair_mergeresults $target \
-						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_classification.txt \
-						sqanti3-flair-$rootname/sqanti3-flair-${rootname}_corrected.genepred.tsv \
-						flair-$rootname/counts_matrix-flair-$rootname.tsv \
-						totalcounts-flair-$rootname.tsv
-					cg_flair_genecounts isoform_counts-flair-$rootname.tsv gene_counts-flair-$rootname.tsv
+					cg_flair_mergeresults $rootname \
+						$tsvreftranscripts $flairtranscripts $flaircountmatrix \
+						$out_isoform_counts_file $out_gene_counts_file $out_total_counts_file
 				}
 			}
 			foreach genename $plotgenes {
@@ -571,7 +472,7 @@ proc flair_job {args} {
 			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
 			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.bed
 		} -vars {
-			bedfiles allseq_fasqfiles exproot sample refseq reftranscripts threads
+			bedfiles allseq_fasqfiles exproot sample refseq gtfreftranscripts threads
 		} -code {
 			analysisinfo_write [lindex $bedfiles 0] $target flair [version flair]
 			analysisinfo_write [lindex $bedfiles 0] compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf flair [version flair]
@@ -583,7 +484,7 @@ proc flair_job {args} {
 			catch_exec [flair_bin flair] collapse \
 				-t $threads \
 				-g $refseq \
-				--gtf $reftranscripts \
+				--gtf $gtfreftranscripts \
 				-r [join $allseq_fasqfiles ,] \
 				-q compar/flair-$exproot/all_corrected-flair-$exproot.bed \
 				-o compar/flair-$exproot/transcripts-flair-$exproot >@ stdout 2>@ stderr
@@ -644,7 +545,7 @@ proc flair_job {args} {
 			set counts_matrix_file compar/flair-$exproot/counts_matrix-flair-$exproot.tsv
 			job flair_sqanti_compar-$exproot {*}$skips -deps {
 				compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
-				$reftranscripts
+				$gtfreftranscripts
 				$refseq
 				$counts_matrix_file
 			} -targets {
@@ -662,7 +563,7 @@ proc flair_job {args} {
 				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.fasta
 			} -vars {
 				transcript_classification_file transcripts_genepred_file counts_matrix_file
-				exproot sample refseq reftranscripts
+				exproot sample refseq gtfreftranscripts
 			} -code {
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/isoform_counts-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
 				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/gene_counts-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
@@ -671,7 +572,7 @@ proc flair_job {args} {
 				if {[catch {
 					catch_exec sqanti3_qc.py \
 						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$reftranscripts \
+						$gtfreftranscripts \
 						$refseq \
 						-d compar/sqanti3-flair-$exproot \
 						-o sqanti3-flair-$exproot \
@@ -680,7 +581,7 @@ proc flair_job {args} {
 				}]} {
 					catch_exec sqanti3_qc.py \
 						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$reftranscripts \
+						$gtfreftranscripts \
 						$refseq \
 						-d compar/sqanti3-flair-$exproot \
 						-o sqanti3-flair-$exproot \

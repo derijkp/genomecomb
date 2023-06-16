@@ -60,6 +60,20 @@ proc refdir {{refseq {}} {dbdir {}}} {
 	file dir [refseq $refseq $dbdir]]
 }
 
+proc ref_transcripts_convert {reftranscripts tsvreftranscriptsVar gtfreftranscriptsVar} {
+	upvar $tsvreftranscriptsVar tsvreftranscripts
+	upvar $gtfreftranscriptsVar gtfreftranscripts
+	if {[file extension [gzroot $reftranscripts]] in ".gtf .gtf"} {
+		set gtfreftranscripts $reftranscripts
+		set tsvreftranscripts [file root [gzroot $reftranscripts]].tsv
+		cg gtf2tsv $reftranscripts $tsvreftranscripts
+	} else {
+		set tsvreftranscripts $reftranscripts
+		set gtfreftranscripts [file root [gzroot $reftranscripts]].gtf
+		cg tsv2gtf $reftranscripts $gtfreftranscripts
+	}
+}
+
 proc ref_gtftranscripts refseq {
 	set refdir [refdir $refseq]
 	set reftranscripts [lindex [bsort [gzfiles $refdir/extra/*gencode*.gtf]] end]

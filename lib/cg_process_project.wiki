@@ -94,6 +94,8 @@ Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
 Currently supported are: nanopolish
+; -reftranscripts reftranscripts: file with reference transcripts for isoform calling. (default empty -> finds default in refdb)
+Currently supported are: flair, isoquant, flames
 ; -isocallers isocallers: (space separated) list of isofrom calling (and counting) programs to be used for rna-seq data.
 Currently supported are: flair, isoquant, flames
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.

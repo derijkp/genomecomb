@@ -95,7 +95,6 @@ proc iso_flames_job {args} {
 	set preset {}
 	set referencecsv {}
 	set hasumi {}
-	set sqanti 1
 	set threads 8
 	set resultfile {}
 	set reftranscripts {}

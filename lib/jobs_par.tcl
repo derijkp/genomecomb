@@ -128,13 +128,6 @@ proc job_process_par_onepass {} {
 		}
 		# indicate targets are in the queue, so job_finddeps will find them
 		job_process_par_marktargets $targets $rmtargets q
-#		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
-#		if {$depsrunning || [llength $targetsrunning]} {
-#			job_logclear $job
-#			lappend cgjob(queue) $line
-#			job_logclose $job
-#			continue
-#		}
 		job_log $job
 		if {$cgjob(force)} {
 			foreach target $targets {

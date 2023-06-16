@@ -38,6 +38,7 @@ proc process_project_job {args} {
 	set maxfastqdistr {}
 	set hap_bam 0
 	set depth_histo_max 1000
+	set reftranscripts {}
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -92,6 +93,9 @@ proc process_project_job {args} {
 		}
 		-isocallers {
 			set isocallers $value
+		}
+		-reftranscripts {
+			set reftranscripts $value
 		}
 		-iso_match {
 			set iso_match $value
@@ -270,6 +274,7 @@ proc process_project_job {args} {
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
+				-reftranscripts $reftranscripts \
 				-isocallers $isocallers \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
@@ -287,6 +292,7 @@ proc process_project_job {args} {
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
+				-reftranscripts $reftranscripts \
 				-isocallers $isocallers \
 				-hap_bam $hap_bam \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
@@ -301,12 +307,13 @@ proc process_project_job {args} {
 				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
-				counters isocallers
+				counters isocallers reftranscripts
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 					-counters $counters \
+					-reftranscripts $reftranscripts \
 					-isocallers $isocallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -324,6 +331,7 @@ proc process_project_job {args} {
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 			-counters $counters \
+			-reftranscripts $reftranscripts \
 			-isocallers $isocallers \
 			-hap_bam $hap_bam \
 			-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
