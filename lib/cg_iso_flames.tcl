@@ -92,7 +92,6 @@ proc iso_flames_job {args} {
 	set skips {}
 	set genes {}
 	set extraopts {}
-	set sqanti 1
 	set threads 8
 	set resultfile {}
 	set reftranscripts {}
@@ -114,6 +113,9 @@ proc iso_flames_job {args} {
 		}
 		-skip {
 			lappend skips -skip $value
+		}
+		-cleanup {
+			# not implemented
 		}
 	} {bam resultfile} 1 2
 	set bam [file_absolute $bam]
