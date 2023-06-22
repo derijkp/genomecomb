@@ -191,7 +191,7 @@ proc iso_flames_job {args} {
 		$destdir/gene_counts-$root.tsv
 	} -vars {
 		fastqdir fastqfiles resultfile reftranscripts root destdir refseq threads extraopts sample
-		preset referencecsv
+		preset referencecsv hasumi
 	} -code {
 		set extrainfo [list \
 			analysis $root sample $sample \
