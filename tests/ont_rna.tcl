@@ -89,6 +89,35 @@ test ont_rna {flair basic SIRV test} {
 	exec diff tmp/sirv/gene_counts-flair-minimap2-sirv.tsv data/gene_counts-flair-minimap2-sirv.tsv
 } {}
 
+test ont_rna {flair basic SIRV test resultfile} {
+	file delete -force tmp/sirv
+	file mkdir tmp/sirv/fastq
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/sirv/fastq/[file tail $file]
+	}
+	foreach file [glob -nocomplain data/SIRV-flames/*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/sirv/[file tail $file]
+	}
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/sirv/map-minimap2-sirv.bam \
+		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		tmp/sirv/sirv \
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+	exec samtools index tmp/sirv/map-minimap2-sirv.bam
+	cg flair -stack 1 \
+		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		tmp/sirv/map-minimap2-sirv.bam tmp/result/iso_count-result.tsv
+	# check vs expected
+	cg select -overwrite 1 -f {transcript gene geneid chromosome strand begin end exonStarts exonEnds cdsStart cdsEnd exonCount type transcripttype counts-flair-result=$counts-flair-minimap2-sirv} data/isoform_counts-flair-minimap2-sirv.tsv expected.tsv 
+	exec diff tmp/result/iso_count-result.tsv expected.tsv
+	cg select -overwrite 1 -f {type	gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-result=$counts-flair-minimap2-sirv} data/gene_counts-flair-minimap2-sirv.tsv expected.tsv 
+	exec diff tmp/result/gene_counts-result.tsv expected.tsv 
+} {}
+
 test ont_rna {isoquant basic SIRV test} {
 	file delete -force tmp/sirv
 	file mkdir tmp/sirv/fastq
