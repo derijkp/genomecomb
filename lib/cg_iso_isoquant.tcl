@@ -1,5 +1,5 @@
 proc convert_isoquant_ambigcount {ambig} {
-	if {$ambig} {
+	if {$ambig > 1} {
 		return [expr {1.0/$ambig}]
 	} else {
 		return 1
@@ -78,6 +78,30 @@ proc convert_isoquant_add {varVar {count 1}} {
 	}
 }
 
+proc iso_isoquant_add_tcounts {tcountaVar iso assignment_type ambiguity polya covered_pct strictpct ambigcount {count 1}} {
+	upvar $tcountaVar tcounta
+	convert_isoquant_add tcounta($iso,t) $ambigcount
+	if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
+		# unique
+		convert_isoquant_add tcounta($iso,u) $count
+		if {$covered_pct >= $strictpct} {
+			# strict
+			convert_isoquant_add tcounta($iso,s) $count
+		}
+	}
+	if {$polya eq "True"} {
+		convert_isoquant_add tcounta($iso,a) $ambigcount
+		if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
+			# unique
+			convert_isoquant_add tcounta($iso,au) $count
+			if {$covered_pct >= $strictpct} {
+				# strict
+				convert_isoquant_add tcounta($iso,as) $count
+			}
+		}
+	}
+}
+
 proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts root} {
 	set strictpct 90
 	set read_assignmentsfile [gzfile $isodir/*.read_assignments.tsv]
@@ -90,8 +114,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	# sizea will contain the size of the known transcripts
 	# transcriptidsa: which transcript ids are actually in known file
 	# transcriptsa: transcript (iso_name) to known name (transcript_id)
-	# translate geneid 2 gene
-	# basic gene info (chr begin end strand)
+	# geneid2genea: translate geneid 2 gene
+	# genebasica: basic gene info (chr begin end strand)
+	# transcript2genea: get gene for transcript (oriname)
+	# geneconva: original gene name to final genename
 	unset -nocomplain sizea
 	unset -nocomplain transcriptidsa
 	unset -nocomplain transcriptsa
@@ -110,7 +136,23 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {[gets $f line] == -1} break
 			set split [split $line \t]
 			foreach {chr begin end strand starts ends oriname gene geneid} [list_sub $split $poss] break
-			set genebasica($geneid) [list $chr $begin $end $strand]
+			if {![info exists genebasica($geneid)]} {
+				set genebasica($geneid) [list $chr $begin $end $strand]
+			} else {
+				set prevbegin [lindex $genebasica($geneid) 2]
+				if {[lindex $genebasica($geneid) 0] ne "$chr"} {
+					puts stderr "Chromosome does not match for transcripts of same gene $geneid: $line"
+				} elseif {[lindex $genebasica($geneid) 3] ne "$strand"} {
+					puts stderr "Strand does not match for transcripts of same gene $geneid: $line"
+				} elseif {$begin > $prevbegin} {
+					puts stderr "transcript not overlapping previous for same gene $geneid: $line"
+					if {[expr {$begin - $prevbegin}] < 100000} {
+						lset genebasica($geneid) 2 $end
+					}
+				} elseif {$end > $prevbegin} {
+					lset genebasica($geneid) 2 $end
+				}
+			}
 			set transcript2genea($oriname) $geneid
 			if {$gene ne $geneid} {set geneid2genea($geneid) $gene}
 			set transcript [iso_name $chr $strand $starts $ends size]
@@ -123,7 +165,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	set file [gzfile $isodir/*.extended_annotation.gtf]
 	if {[file exists $file]} {
 		set f [open $file]
-		while {[gets $f line] != -1} {
+		while {1} {
+			if {[gets $f line] == -1} break
+			if {[string index $line 0] eq "#"} continue
 			set line [split $line \t]
 			foreach {chr src type begin end temp strand temp info} $line break
 			if {$type ne "gene"} continue
@@ -138,7 +182,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 		close $f
 	}
-
+	#
 	#
 	# info from model isos
 	# --------------------
@@ -195,11 +239,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 		close $f
 	}
+	#
 	unset -nocomplain transcriptidsa
 	#
-	# read_assignments
-	# ----------------
-	# load model transcripts read info
+	# read_assignments (models)
+	# -------------------------
+	# load model transcripts read info in read2isoa
 	unset -nocomplain read2isoa
 	set mfile [gzfile $isodir/*.transcript_model_reads.tsv]
 	if {[file exists $mfile]} {
@@ -213,11 +258,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 		gzclose $f
 	}
-
+	#
 	# check which reads have ambiguous mappings (from original read_assignmentsfile)
 	unset -nocomplain ambiga
 	array set ambiga [split [cg select -hc 1 -g read_id $read_assignmentsfile | cg select -q {$count > 1}] \n\t]
-
 	#
 	# make read_assignments file
 	# --------------------------
@@ -241,7 +285,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	set chrpos [lsearch $newheader chromosome]
 	set readpos [lsearch $newheader read_id]
 	set isopos [lsearch $newheader isoform_id]
-	set genepos [lsearch $newheader gene_id]
+	set geneidpos [lsearch $newheader gene_id]
 	set infopos [lsearch $newheader additional_info]
 	set beginpos [lsearch $newheader begin]
 	set endpos [lsearch $newheader end]
@@ -255,12 +299,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 #		chromosome begin end strand exonStarts exonEnds 
 #		read_id isoform_id gene_id additional_info assignment_type aligned_size
 #	}]
+	lappend newheader ambiguity inconsistency covered_pct polya classification closest_known
 	#
 	# set o [wgzopen $temptarget w {} 4]
 	set o [open $temptarget w]
-	puts $o [join $newheader \t]\tambiguity\tinconsistency\tcovered_pct\tpolya\tclassification\tclosest_known	
+	puts $o [join $newheader \t]
 	unset -nocomplain tcounta
 	unset -nocomplain gcounta
+	unset -nocomplain ctcounta
+	unset -nocomplain cgcounta
 	unset -nocomplain donea
 	for {set p 0} {$p <= 100} {incr p} {set pcta($p) 0}
 	while 1 {
@@ -281,7 +328,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		set strand [lindex $line $strandpos]
 		set begin [lindex $exonStarts 0]
 		set end [lindex $exonEnds end]
-		set gene [lindex $line $genepos]
+		set geneid [lindex $line $geneidpos]
 		if {[info exists ambiga($read)]} {set ambig $ambiga($read)} else {set ambig 0}
 		set assignment_type [lindex $line $assignment_typepos]
 		lset line $beginpos $begin
@@ -420,6 +467,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set inconsistencylist [list $inconsistency]
 		}
 		set ambigcount [convert_isoquant_ambigcount $ambig]
+		set count 1
 		foreach iso $isos inconsistency $inconsistencylist {
 			if {[info exists outputa($iso)]} {
 				lset line $isopos $outputa($iso)
@@ -429,21 +477,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {$iso ne "."} {
 				if {[info exists transcript2genea($iso)]} {
 					set geneid $transcript2genea($iso)
+					if {[info exists geneconva($geneid)]} {set geneid $geneconva($geneid)}
+					lset line $geneidpos $geneid
 				} else {
-					set geneid [lindex $line $genepos]
+					set geneid [lindex $line $geneidpos]
 					set transcript2genea($iso) $geneid
 				}
 			} else {
 				set geneid .
 			}
-			if {[info exists geneconva($geneid)]} {
-				set gene $geneconva($geneid)
-			} elseif {[info exists geneid2genea($geneid)]} {
-				set gene $geneid2genea($geneid)
-			} else {
-				set gene $geneid
-			}
-			lset line $genepos $gene
 			if {[info exists sizea($iso)]} {
 				set pct [expr {100*$size/$sizea($iso)}]
 				if {$pct > 100} {set pct 100}
@@ -457,39 +499,34 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				convert_isoquant_add tcounta($iso,t) $ambigcount
 				if {!$ambig && $assignment_type ne "inconsistent"} {
 					# unique
-					convert_isoquant_add tcounta($iso,u)
+					convert_isoquant_add tcounta($iso,u) $count
 					if {$pct >= $strictpct} {
 						# strict
-						convert_isoquant_add tcounta($iso,s)
+						convert_isoquant_add tcounta($iso,s) $count
 					}
 				}
 				if {$polya eq "True"} {
 					convert_isoquant_add tcounta($iso,a) $ambigcount
 					if {!$ambig && $assignment_type ne "inconsistent"} {
 						# unique
-						convert_isoquant_add tcounta($iso,au)
+						convert_isoquant_add tcounta($iso,au) $count
 						if {$pct >= $strictpct} {
 							# strict
-							convert_isoquant_add tcounta($iso,as)
+							convert_isoquant_add tcounta($iso,as) $count
 						}
 					}
 				}
 			}
-			if {![info exists gcounta($geneid)]} {
-				set gcounta($geneid) $ambigcount
-			} else {
-				set gcounta($geneid) [expr {$gcounta($geneid) + $ambigcount}]
-			}
+			convert_isoquant_add gcounta($geneid) $ambigcount
 		}
 		if {[gets $f line] == -1} break
 	}
-
 	gzclose $o
 	gzclose $f
-	cg select -overwrite 1 -s - $temptarget ${temptarget}2
-	file rename -force ${temptarget}2 $targetreadassignmentsfile
+	cg select -overwrite 1 -s - $temptarget ${temptarget}2.zst
+	file rename -force ${temptarget}2.zst $targetreadassignmentsfile.zst
 	file delete $temptarget
-
+	#
 	# make isoform_counts file
 	# ------------------------
 	# read isoquant counts
@@ -505,7 +542,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		array set countsa [read $f]
 		gzclose $f
 	}
-
 	set basefields {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
 	# lappend remove {*}$basefields
 	set newheader $basefields
@@ -563,6 +599,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	puts $o $comments
 	puts $o [join $newheader \t]\tcategory\tsize\tcounts_iqall-$sample\tcounts_weighed-${root}\tcounts_unique-${root}\tcounts_strict-${root}\tcounts_aweighed-${root}\tcounts_aunique-${root}\tcounts_astrict-${root}
 	if {$regreftranscripts ne ""} {
+		set keepoutputa [array get outputa]
 		while 1 {
 			if {[gets $f line] == -1} break
 			set line [split $line \t]
@@ -574,9 +611,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set t [get tcounta($iso,t) 0]
 			if {[get countsa($iso) 0] == 0 && $t == 0} continue
 			set geneid [lindex $line $geneidpos]
-			if {[info exists geneid2genea($geneid)]} {
-				lset line $genepos $geneid2genea($geneid)
-			}
 			set line [list_sub $line $poss]
 			puts $o [join $line \t]\tknown\t$sizea($iso)\t[get countsa($iso)]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
 		}
@@ -597,9 +631,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set line [split $line \t]
 			set oriname [lindex $line $isopos]
 			set geneid [lindex $line $geneidpos]
-			if {[info exists geneid2genea($geneid)]} {
-				lset line $genepos $geneid2genea($geneid)
-			}
 			if {![info exists outputa($oriname)]} continue
 			set t [get tcounta($oriname,t) 0]
 			if {[get countsa($oriname) 0] < 1 && $t < 1} continue
@@ -636,7 +667,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	close $o
 	cg select -overwrite 1 -s - $targetisoformcountsfile.temp $targetisoformcountsfile.temp2
 	file rename -force $targetisoformcountsfile.temp2 $targetisoformcountsfile
-
 	#
 	# make gene_counts file
 	# ---------------------
@@ -732,6 +762,7 @@ proc iso_isoquant_mergeresults_old_monmerge {isofiles genefiles readfiles strict
 proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample root {analysisname isoquant}} {
 	set tempreads [tempfile]
 	set tempreads2 [tempfile]
+	putslog "Merging readfiles"
 	cg cat -m 1 {*}$readfiles | cg select -s read_id > $tempreads
 
 	unset -nocomplain tcounta
@@ -753,9 +784,11 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set read 0
 	set nr 0
 
+	putslog "gathering counts"
+	# gather counts in memory (tcounta,gcounta)
 	while 1 {
-		# incr nr
-		# if {![expr $nr%1000]} {puts $nr}
+		incr nr
+		if {![expr $nr%1000000]} {puts $nr}
 		if {$read == -1} break
 		set read [gets $f line]
 		set line [split $line \t]
@@ -792,6 +825,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			}
 			if {$ambiguity > 0} {
 				foreach gene $genes {
+					if {$gene eq "."} continue
 					if {![info exists gcounta($gene)]} {
 						set gcounta($gene) $gambigcount
 					} else {
@@ -803,28 +837,9 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 					lappend l $gambiguity
 					puts $o [join $l \t]
 					# count
-					foreach {assignment_type iso pct polya} [list_sub $l $poss] break
-					if {$inconsistency < 2} {
-						convert_isoquant_add tcounta($iso,t) $ambigcount
-						if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
-							# unique
-							convert_isoquant_add tcounta($iso,u)
-							if {$pct >= $strictpct} {
-								# strict
-								convert_isoquant_add tcounta($iso,s)
-							}
-						}
-						if {$polya eq "True"} {
-							convert_isoquant_add tcounta($iso,a) $ambigcount
-							if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
-								# unique
-								convert_isoquant_add tcounta($iso,au)
-								if {$pct >= $strictpct} {
-									# strict
-									convert_isoquant_add tcounta($iso,as)
-								}
-							}
-						}
+					foreach {assignment_type iso covered_pct polya} [list_sub $l $poss] break
+					if {$inconsistency < 2 && $iso ne "."} {
+						iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount
 					}
 				}
 			}
@@ -835,6 +850,8 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	}
 	close $o
 
+	putslog "write isoform_counts -> isoform_counts-${root}.tsv"
+	# write isoform_counts
 	set o [open isoform_counts-${root}.tsv.temp w]
 	foreach refisofile $isofiles {
 		set f [open $refisofile]
@@ -873,6 +890,8 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	file rename -force isoform_counts-${root}.tsv.temp2 isoform_counts-${root}.tsv
 	file delete isoform_counts-${root}.tsv.temp
 
+	putslog "write gene_counts -> gene_counts-${root}.tsv"
+	# write gene_counts
 	set o [open gene_counts-${root}.tsv.temp w]
 	set f [open [lindex $genefiles 0]]
 	set header [tsv_open $f comments]
@@ -885,7 +904,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		if {$cheader ne $header} {
 			error "header of $genefile differs from header of [lindex $genefiles 0]"
 		}
-		set genepos [lsearch $cheader gene]
+		set genepos [lsearch $cheader geneid]
 		while {[gets $f line] != -1} {
 			set line [split $line \t]
 			set gene [lindex $line $genepos]
@@ -899,76 +918,12 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	file rename -force gene_counts-${root}.tsv.temp2 gene_counts-${root}.tsv
 	file delete gene_counts-${root}.tsv.temp
 
+	putslog "sort read_assignment file -> read_assignments-${root}.tsv.zst"
 	# sort read_assignment file
 	cg select -s - $tempreads2 read_assignments-${root}.tsv.temp.zst
 	file rename -force read_assignments-${root}.tsv.temp.zst read_assignments-${root}.tsv.zst
 
-	if 0 {
-		#
-		# join original isoquant output files
-		mkdir $root/00_isoquant.temp
-		set isofile [lindex $isofiles 0]
-		set dir [file dir $isofile]
-		set files [list_remove [dirglob $dir/00_regali *] aux 00_regali.gene_tpm.tsv 00_regali.transcript_tpm.tsv 00_regali.transcript_model_tpm.tsv]
-		foreach file $files {
-			catch {close $oa($file)}
-		}
-		unset -nocomplain oa
-		unset -nocomplain infoa
-		foreach file $files {
-			set oa($file) [open $root/00_isoquant.temp/$file w]
-			set f [open $dir/00_regali/$file]
-			while {[gets $f line] != -1} {
-				if {[string range $line 0 1] eq "__"} {
-					foreach {key value} [split $line \t] break
-					set infoa($file,$key) $value
-				} else {
-					puts $oa($file) $line
-				}
-			}
-			close $f
-		}
-		foreach isofile [lrange $isofiles 1 end] {
-			set dir [file dir $isofile]
-			putsvars dir
-			foreach file $files {
-				set f [open $dir/00_regali/$file]
-				while 1 {
-					set read [gets $f line]
-					if {$read == -1} break
-					if {[string index $line 0] ne "#"} break
-				}
-				if {[regexp counts $file]} {
-					while {$read != -1} {
-						if {[string range $line 0 1] eq "__"} {
-							foreach {key value} [split $line \t] break
-							incr infoa($file,$key) $value
-						} else {
-							puts $oa($file) $line
-						}
-						set read [gets $f line]
-					}
-				} elseif {$read != -1} {
-					puts $oa($file) $line
-					fcopy $f $oa($file)
-				}
-				close $f
-			}
-		}
-		foreach file $files {
-			foreach name [array names infoa $file,*] {
-				foreach {file key} [split $name ,] break
-				set value $infoa($name)
-				puts $oa($file) $key\t$value
-			}
-			close $oa($file)
-		}
-		if {[file exists $root/00_isoquant]} {
-			catch {file delete $root/00_isoquant.old}
-			file rename $root/00_isoquant $root/00_isoquant.old
-		}
-		file rename $root/00_isoquant.temp $root/00_isoquant
-	}
+	putslog "totalcounts totalcounts-${root}.tsv"
 	# totalcounts
 	cg select -overwrite 1 -g all -gc {sum(count*-*)} isoform_counts-${root}.tsv | cg select -rf all > totalcounts-${root}.tsv.temp
 	file rename -force totalcounts-${root}.tsv.temp totalcounts-${root}.tsv
@@ -1029,7 +984,7 @@ proc iso_isoquant_job {args} {
 				set splice_correction_strategy assembly
 				set model_construction_strategy assembly
 			} else {
-				error "isoquant preset $value not supported, must be one of: nanopore sens all pacbio pacbiosens assembly"
+				error "isoquant preset $value not supported, must be one of: nanopore sens sc scnanopore all pacbio pacbiosens assembly"
 			}
 			if {$preset eq "nanopore"} {
 				set analysisname isoquant
@@ -1081,6 +1036,7 @@ proc iso_isoquant_job {args} {
 			set skipregions $value
 		}
 		-cleanup {
+			if {$value ni {0 1}} {error "wrong option $value for -cleanup: must be 0 or 1"}
 			set cleanup $value
 		}
 	} {bam resultfile} 1 2
@@ -1116,6 +1072,8 @@ proc iso_isoquant_job {args} {
 	# hanging problems with threads, run single
 	set threads 1
 	# set iso_isoquantdir [findiso_isoquant]
+	#
+	# make job log file
 	job_logfile $sampledir/iso_${root} $sampledir $cmdline \
 		{*}[versions iso_isoquant dbdir zstd os]
 
@@ -1129,10 +1087,10 @@ proc iso_isoquant_job {args} {
 	if {![llength $regions]} {
 		set regions {{}}
 	}
-	# set workdir [file_absolute $root.temp]
-	set workdir [shadow_workdir [file_absolute $root]]
+	 set workdir [file_absolute $root.temp]
+	# set workdir [shadow_workdir [file_absolute $root]]
 	set mainskips [list \
-		isoform_counts-${root}.tsv \
+		$resultfile \
 		gene_counts-${root}.tsv \
 		read_assignments-${root}.tsv \
 		totalcounts-${root}.tsv \
@@ -1186,7 +1144,7 @@ proc iso_isoquant_job {args} {
 					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 					lappend options --genedb $tempgenedb
 				}
-				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/isoquant.log 
+				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/OUT $regdir.temp/isoquant.log 
 				exec isoquant3 \
 					--data_type $data_type \
 					--model_construction_strategy $model_construction_strategy \
@@ -1201,6 +1159,9 @@ proc iso_isoquant_job {args} {
 					-o $regdir.temp 2>@ stderr >@ stdout
 				file delete $tempbam
 			}
+			if {![file exists $regdir.temp/00_regali] && [file exists $regdir.temp/OUT]} {
+				file rename $regdir.temp/OUT $regdir.temp/00_regali
+			}
 			file delete -force $regdir
 			file rename $regdir.temp $regdir
 		}
@@ -1209,7 +1170,7 @@ proc iso_isoquant_job {args} {
 		} -targets {
 			$regdir/isoform_counts-${root}.tsv
 			$regdir/gene_counts-${root}.tsv
-			$regdir/read_assignments-${root}.tsv
+			$regdir/read_assignments-${root}.tsv.zst
 		} -vars {
 			sample refseq regdir region reftranscripts root analysisname cleanup
 		} -code {
@@ -1230,6 +1191,7 @@ proc iso_isoquant_job {args} {
 					read_id chromosome begin end strand exonStarts exonEnds aligned_size
 					ambiguity inconsistency covered_pct polya classification closest_known
 				} \t]\n
+				cg zst $regdir/read_assignments-${root}.tsv
 			} else {
 				if {$reftranscripts ne "none"} {
 					set samregions [samregions $region $refseq]
@@ -1244,6 +1206,7 @@ proc iso_isoquant_job {args} {
 			}
 		}
 	}
+
 	#
 	# combine results from separately calculated regions
 	set isofiles {}
@@ -1255,7 +1218,7 @@ proc iso_isoquant_job {args} {
 		set regdir $workdir/$root-$region
 		set isofile $regdir/isoform_counts-${root}.tsv
 		set genefile $regdir/gene_counts-${root}.tsv
-		set readfile $regdir/read_assignments-${root}.tsv
+		set readfile $regdir/read_assignments-${root}.tsv.zst
 		lappend isofiles $isofile
 		lappend genefiles $genefile
 		lappend readfiles $readfile
@@ -1273,20 +1236,19 @@ proc iso_isoquant_job {args} {
 		}
 	}
 	job isoquant_join-$root -cores 1 -deps [list {*}$isofiles {*}$genefiles {*}$readfiles] -targets {
-		isoform_counts-${root}.tsv
+		$resultfile
 		gene_counts-${root}.tsv
-		read_assignments-${root}.tsv
+		read_assignments-${root}.tsv.zst
 		totalcounts-${root}.tsv
 	} -vars {
 		isofiles genefiles readfiles sample refseq regdir region reftranscripts genedb root analysisname
-		strictpct workdir
+		strictpct workdir resultfile
 	} -code {
-		analysisinfo_write [lindex $isofiles 0] isoform_counts-${root}.tsv
+		analysisinfo_write [lindex $isofiles 0] $resultfile
 		analysisinfo_write [lindex $genefiles 0] gene_counts-${root}.tsv
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv
 		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
-		cg tsv2gtf isoform_counts-${root}.tsv isoforms-${root}.gtf.gz
-		catch {shadow_delete $workdir}
+		cg tsv2gtf $resultfile isoforms-${root}.gtf.gz
 	}
 }
 
@@ -1295,3 +1257,4 @@ proc cg_iso_isoquant {args} {
 	iso_isoquant_job {*}$args
 	job_wait
 }
+
