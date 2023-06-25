@@ -25,7 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-isoquantversion=3.1.2
+isoquantversion=3.3.0
+conda_isoquantversion=3.2.0
 
 all=1
 extra=1
@@ -94,42 +95,43 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
+# mamba
+# -----
 cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
 # isoquant
 # --------
 cd /build
 
-conda create -y -n isoquant
-conda activate isoquant
+mamba create -y -n isoquant
+mamba activate isoquant
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda install -y isoquant=$isoquantversion python=3.9
+mamba install -y isoquant=$conda_isoquantversion python=3.9
 
-conda deactivate
+mamba deactivate
 
 # make package
 # ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
+mamba install -y -c conda-forge conda-pack
+
 rm isoquant.tar.gz || true
 conda pack -n isoquant -o isoquant.tar.gz
 rm -rf isoquant-$isoquantversion-$arch.old || true
@@ -139,10 +141,22 @@ mkdir /build/isoquant-$isoquantversion-$arch
 cd /build/isoquant-$isoquantversion-$arch
 tar xvzf ../isoquant.tar.gz
 
-# patch
-cd share/isoquant-$isoquantversion-*/src
+# to 3.3.0
+cd /build/isoquant-$isoquantversion-$arch/share
+wget https://github.com/ablab/IsoQuant/releases/download/v$isoquantversion/IsoQuant-$isoquantversion.tar.gz
+tar xvzf IsoQuant-$isoquantversion.tar.gz
+rm -rf isoquant-$conda_isoquantversion*
+rm IsoQuant-$isoquantversion.tar.gz
+mv IsoQuant-$isoquantversion isoquant-$isoquantversion
+cd isoquant-$isoquantversion
+cd ../bin
+rm isoquant.py ; ln -s ../share/isoquant-3.3.0/isoquant.py .
+
+## patch
+cd /build/isoquant-$isoquantversion-$arch/share/isoquant-$isoquantversion*/src
 cp long_read_counter.py long_read_counter.py.ori || true
 cp /io/extern-src/isoquant/long_read_counter.py long_read_counter.py
+
 cd /build/isoquant-$isoquantversion-$arch
 
 echo '#!/bin/bash
