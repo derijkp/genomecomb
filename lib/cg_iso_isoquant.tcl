@@ -531,14 +531,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			} else {
 				set geneid .
 			}
-#			if {[info exists geneconva($geneid)]} {
-#				set gene $geneconva($geneid)
-#			} elseif {[info exists geneid2genea($geneid)]} {
-#				# set gene $geneid2genea($geneid)
-#			} else {
-#				set gene $geneid
-#			}
-#			# lset line $geneidpos $gene
 			if {[info exists sizea($iso)]} {
 				set pct [expr {100*$size/$sizea($iso)}]
 				if {$pct > 100} {set pct 100}
@@ -668,9 +660,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set t [get tcounta($iso,t) 0]
 			if {[get countsa($iso) 0] == 0 && $t == 0} continue
 			set geneid [lindex $line $geneidpos]
-#			if {[info exists geneid2genea($geneid)]} {
-#				lset line $genepos $geneid2genea($geneid)
-#			}
 			set line [list_sub $line $poss]
 			puts $o [join $line \t]\tknown\t$sizea($iso)\t[get countsa($iso)]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
 		}
@@ -691,9 +680,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set line [split $line \t]
 			set oriname [lindex $line $isopos]
 			set geneid [lindex $line $geneidpos]
-#			if {[info exists geneid2genea($geneid)]} {
-#				lset line $genepos $geneid2genea($geneid)
-#			}
 			if {![info exists outputa($oriname)]} continue
 			set t [get tcounta($oriname,t) 0]
 			if {[get countsa($oriname) 0] < 1 && $t < 1} continue
@@ -1416,7 +1402,7 @@ proc iso_isoquant_job {args} {
 	 set workdir [file_absolute $root.temp]
 	# set workdir [shadow_workdir [file_absolute $root]]
 	set mainskips [list \
-		isoform_counts-${root}.tsv \
+		$resultfile \
 		gene_counts-${root}.tsv \
 		read_assignments-${root}.tsv \
 		totalcounts-${root}.tsv \
@@ -1470,7 +1456,7 @@ proc iso_isoquant_job {args} {
 					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 					lappend options --genedb $tempgenedb
 				}
-				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/isoquant.log 
+				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/OUT $regdir.temp/isoquant.log 
 				exec isoquant3 \
 					--data_type $data_type \
 					--model_construction_strategy $model_construction_strategy \
@@ -1484,6 +1470,9 @@ proc iso_isoquant_job {args} {
 					{*}$options \
 					-o $regdir.temp 2>@ stderr >@ stdout
 				file delete $tempbam
+			}
+			if {![file exists $regdir.temp/00_regali] && [file exists $regdir.temp/OUT]} {
+				file rename $regdir.temp/OUT $regdir.temp/00_regali
 			}
 			file delete -force $regdir
 			file rename $regdir.temp $regdir
@@ -1559,7 +1548,7 @@ proc iso_isoquant_job {args} {
 		}
 	}
 	job isoquant_join-$root -cores 1 -deps [list {*}$isofiles {*}$genefiles {*}$readfiles] -targets {
-		isoform_counts-${root}.tsv
+		$resultfile
 		gene_counts-${root}.tsv
 		read_assignments-${root}.tsv.zst
 		totalcounts-${root}.tsv
@@ -1567,7 +1556,7 @@ proc iso_isoquant_job {args} {
 		isofiles genefiles readfiles sample refseq regdir region reftranscripts genedb root analysisname
 		strictpct workdir singlecell
 	} -code {
-		analysisinfo_write [lindex $isofiles 0] isoform_counts-${root}.tsv
+		analysisinfo_write [lindex $isofiles 0] $resultfile
 		analysisinfo_write [lindex $genefiles 0] gene_counts-${root}.tsv
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv
 		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
