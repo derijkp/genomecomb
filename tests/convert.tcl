@@ -1984,4 +1984,13 @@ test convert {gb2fasta} {
 	exec diff tmp/results.fas data/plasmids.fas
 } {}
 
+test 10x {tsv210x and 10x2tsv} {
+	set tsvfile data/sc_gene_counts-test.tsv
+	set 10xdir tmp/test.10x
+	set genefields {geneid gene gene_id} ; set cellbarcodefield {} ; set countfield {}
+	cg tsv210x data/sc_gene_counts-test.tsv tmp/test.10x
+	cg 10x2tsv tmp/test.10x tmp/sc_gene_counts-result.tsv
+	exec diff tmp/sc_gene_counts-result.tsv data/sc_gene_counts-test.tsv
+} {}
+
 testsummarize
