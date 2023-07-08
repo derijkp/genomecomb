@@ -105,7 +105,7 @@ proc cg_tsvjoin {args} {
 		set tempfile1 [tempfile].zst
 		set tempfile2 [tempfile].zst
 		cg select -s $idfields1 $file1 $tempfile1
-		cg select -s $idfields1 $file2 $tempfile2
+		cg select -s $idfields2 $file2 $tempfile2
 		set f1 [gzopen $tempfile1]
 		set header1 [tsv_open $f1 comments1]
 		set f2 [gzopen $tempfile2]
