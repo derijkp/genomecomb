@@ -1,7 +1,8 @@
 # This script is meant to be sourced in a Holy build box build script to start the HBB docker
 # it interprets the options:
-# -b|-bits|--bits: 32 for 32 bits build (default 64)
-# -d|-builddir|--builddir: top directory to build in (default ~/build/tcl-$arch)
+# -a|-arch|--arch: 64, x86_64 or linux-x86_64 for 64 bit Linux build (default); ix86, 32 or linux-ix86 for 32 bits Linux build; win, windows-x86_64 or mingw-w64 for Windows 64 bit build
+# -b|-bits|--bits: select 32 or 64 bits Linux build (default 64 = same as -arch x86_64)
+# -d|-builddir|--builddir: top directory to build in (default ~/build/bin-$arch)
 # and presents all options (excluding -bbuilddir) to the program in the docker
 
 # you can use the following to use in the build script
@@ -35,29 +36,39 @@ if [ ! -f /hbb_exe/activate ]; then
 
 	echo "Running script $dir/$file"
 	builddir=""
-	bits=64
+	arch=linux-x86_64
 	argumentspos=1; 
 	while [[ "$#" -gt 0 ]]; do case $1 in
-		-b|-bits|--bits) bits="$2"; shift;;
+		-b|-bits|--bits) arch="$2"; shift;;
+		-a|-arch|--arch) arch="$2"; shift;;
 		-d|-builddir|--builddir) builddir="$(readlink -f "$2")" ; shift;;
 		*) arguments[$argumentspos]="$1"; argumentspos+=1 ; arguments[$argumentspos]="$2"; argumentspos+=1 ; shift;;
 	esac; shift; done
+	if [ "$bits" = "32" ] ; then arch=linux-ix86 ; fi
+	if [ "$bits" = "64" ] ; then arch=linux-x86_64 ; fi
+	if [ "$arch" = "32" ] || [ "$arch" = "ix86" ] ; then 
+		arch=linux-ix86
+	elif [ "$arch" = "64" ] || [ "$arch" = "x86_64" ]; then
+		arch=linux-x86_64
+	elif [ "$arch" = "win" ] || [ "$arch" = "mingw-w64" ]; then
+		arch=windows-x86_64
+	fi
 	if [ "$builddir" = "" ] ; then
-		if [ "$bits" = "32" ] ; 	then
+		if [ "$arch" = "linux-ix86" ] ; 	then
 			builddir="$HOME/build/bin-ix86"
 		else
 			builddir="$HOME/build/bin-x86_64"
 		fi
 	fi
 	mkdir -p "$builddir"
-	echo "Build $bits bits version"
+	echo "Build $arch version"
 	echo "builddir=$builddir"
 	echo "srcdir=$srcdir"
 	# run the script in holy build box
 	uid=$(id -u)
 	gid=$(id -g $uid)
 	
-	if [ "$bits" = "32" ] ; 	then
+	if [ "$arch" = "linux-ix86" ] ; 	then
 		if docker image list | grep --quiet hbb3-32; then
 			buildbox=hbb3-32
 		else
@@ -79,13 +90,13 @@ if [ "$1" = "stage2" ] ; then
 	# in stage 2 we will create the user build with sudo access
 	# then restart the script (skipping to stage 3)
 	file=$2
-	bits=$3
+	arch=$3
 	uid=$4
 	gid=$5
 	srcdir=$6
 	builddir=$7
 	# prepare the user build with sudo rights
-	echo "installing sudo"
+	echo "installing sudo ($arch)"
 	if ! rpm --quiet --query sudo; then
 		yum install -q -y sudo
 	fi
@@ -97,7 +108,7 @@ if [ "$1" = "stage2" ] ; then
 	# default nr of processes (for user build) is sometimes not enough
 	sudo sed -i 's/4096/10240/' /etc/security/limits.d/20-nproc.conf
 	# (re)start script for stage 3: running the actual code
-	sudo -u build bash /io/$file "stage3" ${@:2}
+	sudo -u build bash /io/$file "stage3" "$file" "$bits" "$uid" "$gid" "$srcdir" "$builddir" ${arguments[*]}
 	exit
 fi
 
@@ -115,25 +126,29 @@ file=$2
 if [ $(basename "$file") = "start_hbb3.sh" ] ; then
 	# install yuminstall in .bashrc so it will be available in the new shell started here
 	mkdir -p /home/build
-	echo 'function yuminstall {
+	echo "
+	file=$2
+	arch=$3
+	uid=$4
+	gid=$5
+	srcdir=$6
+	builddir=$7
+	" >> /home/build/.bashrc
+	echo 'if [ "$arch" = 'linux-ix86' ] ; then
+		ARCH='-linux-ix86'
+		arch=linux-ix86
+		bits=32
+	else
+		ARCH=''
+		arch=linux-x86_64
+		bits=64
+	fi
+	function yuminstall {
 		echo "yuminstall $1"
 		if ! rpm --quiet --query "$1"; then
 			sudo yum install -y "$1"
 		fi
 	}
-	if [ "$3" = '32' ] ; then
-		ARCH='-ix86'
-		arch=ix86
-		bits=32
-	else
-		ARCH=''
-		arch=x86_64
-		bits=64
-	fi
-	uid=$4;
-	gid=$5;
-	srcdir=$6;
-	builddir=$7;
 	' >> /home/build/.bashrc
 	# if run as start_hbb.sh directly, show a shell
 	echo "shell started by start_hbb3.sh"
@@ -142,13 +157,13 @@ if [ $(basename "$file") = "start_hbb3.sh" ] ; then
 fi
 
 # if sourced in another script, continue executing this other script
-if [ "$3" = '32' ] ; then
-	ARCH='-ix86'
-	arch=ix86
+if [ "$3" = 'linux-ix86' ] ; then
+	ARCH='-linux-ix86'
+	arch=linux-ix86
 	bits=32
 else
 	ARCH=''
-	arch=x86_64
+	arch=linux-x86_64
 	bits=64
 fi
 uid=$4;
@@ -157,4 +172,4 @@ srcdir=$6;
 builddir=$7;
 shift 7;
 
-echo "Entering Holy Build Box environment; building using $bits bits, uid=$uid, gid=$gid"
+echo "Entering Holy Build Box environment; building using arch $arch, uid=$uid, gid=$gid"

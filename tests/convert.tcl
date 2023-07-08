@@ -1164,6 +1164,54 @@ test format {tsvjoin -type full with duplicates, file2 longer} {
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test format {tsvjoin unsorted} {
+	write_tab tmp/file1.tsv {
+		id	v1
+		id1	a
+		id3	c
+		id2	b
+	}
+	write_tab tmp/file2.tsv {
+		id	v2
+		id4	4
+		id1	1
+		id2	2
+	}
+	write_tab tmp/expected.tsv {
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+		id3	c	{}
+		id4	{}	4
+	}
+	exec cg tsvjoin tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {tsvjoin unsorted -sorted 1 error} {
+	write_tab tmp/file1.tsv {
+		id	v1
+		id1	a
+		id3	c
+		id2	b
+	}
+	write_tab tmp/file2.tsv {
+		id	v2
+		id4	4
+		id1	1
+		id2	2
+	}
+	write_tab tmp/expected.tsv {
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+		id3	c	{}
+		id4	{}	4
+	}
+	exec cg tsvjoin -sorted 1 tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {file tmp/file1.tsv not properly sorted on id (id3 comes before id2)} error
+
 test csv2tsv {csv2tsv} {
 	file_write tmp/temp.csv [deindent {
 		a,b,c

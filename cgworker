@@ -1,0 +1,52 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec tclsh "$0" ${1+"$@"}
+
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
+# see where we are, add the lib dir in the original location to auto_path, load extension
+set script [file join [pwd] [info script]]
+set scriptname [file tail $script]
+while 1 {
+	if {[catch {set script [file join [pwd] [file readlink $script]]}]} break
+}
+
+set appdir [file dir $script]
+if {[file exists $appdir/apps/cg/cg.tcl]} {
+	set appdir $appdir/apps/cg
+}
+if {[lrange [file split $script] end-2 end] eq {apps cg cg.tcl}} {
+	set appbasedir [file dir [file dir $appdir]]
+	set auto_path [list $appbasedir/lib $appbasedir/lib/tcl8.5 $appbasedir/lib/tk8.5]
+}
+lappend auto_path $appdir/lib $appdir/lib-exp
+package require Extral
+source $appdir/lib/file.tcl
+package require genomecomb
+genomecombenv
+package require BioTcl
+
+fconfigure stdout -buffering line
+fconfigure stdin -buffering line
+
+#proc run {} [join $argv \n]
+#puts [run]
+while 1 {
+	set cmd [gets stdin]
+	proc run {} [join $cmd \n]
+	# proc run {} $cmd
+	if {[catch {run} result]} {
+		append result \n$::errorInfo
+		puts [list 1 {*}[split $result \n]]
+		# puts [list 1 $result]
+	} else {
+		puts [list 0 {*}[split $result \n]]
+		# puts [list 0 $result]
+	}
+	flush stdout
+}
+
