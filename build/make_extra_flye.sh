@@ -25,7 +25,7 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-flyeversion=2.9.1
+flyeversion=2.9.2
 
 all=1
 extra=1
