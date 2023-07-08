@@ -244,9 +244,15 @@ proc findjar {program {envvar {}}} {
 proc findR {} {
 	global R
 	if {![info exists R]} {
-		set R [searchpath RCG dirR-4.2.1 dirR-4.1.2 Rcg dirR R]
+		set R [searchpath RCG dirR-4.2.1/R dirR-4.1.2/R dirR Rcg R]
 	}
 	return $R
+}
+
+proc R {cmd} {
+	set tempfile [tempfile].R
+	file_write $tempfile $cmd
+	exec [findR] --vanilla < $tempfile >@ stdout 2>@ stderr
 }
 
 proc findpython3 {} {
