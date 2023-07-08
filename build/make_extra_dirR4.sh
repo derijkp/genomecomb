@@ -329,6 +329,8 @@ cp -a -f /usr/lib64/libicuuc.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicudata.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libpcre2-8.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f /usr/lib64/libtinfo.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+
 
 echo '
 puts [list set argv $argv]
@@ -422,6 +424,10 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter")'
 
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("Seurat", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("sleepwalk", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SCINA", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("HGNChelper", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("openxlsx", repos="http://cran.us.r-project.org")'
 
 # other
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("MOFA2")'
@@ -442,6 +448,8 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 # /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SRAdb", repos="http://cran.us.r-project.org")'
 # /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("factoextra", repos="http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("https://github.com/dzhang32/ggtranscript/archive/refs/tags/v0.99.3.tar.gz", repos=NULL, type="source")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("survminer", repos="http://cran.us.r-project.org")'
 
 cd /build
 ln -sf dirR-$dirRversion-$arch/R dirR-4.2.1
