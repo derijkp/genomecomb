@@ -25,7 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-clair3version=0.1.12
+# clair3version=0.1.12
+clair3version=1.0.3
 
 all=1
 extra=1
@@ -142,11 +143,12 @@ mkdir /build/clair3-$clair3version-$arch
 cd /build/clair3-$clair3version-$arch
 tar xvzf ../clair3.tar.gz
 
-# patch (for error: `np.int` was a deprecated)
-catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
-set c [file_read bin/preprocess/CreateTensorPileupFromCffi.py.ori]
-regsub -all {np.int([^0-9])} $c {int\1} c2
-file_write bin/preprocess/CreateTensorPileupFromCffi.py $c2
+# should be solved in v1.0.0
+## patch (for error: `np.int` was a deprecated)
+#catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
+#set c [file_read bin/preprocess/CreateTensorPileupFromCffi.py.ori]
+#regsub -all {np.int([^0-9])} $c {int\1} c2
+#file_write bin/preprocess/CreateTensorPileupFromCffi.py $c2
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -184,7 +186,7 @@ chmod ugo+x bin/whatshap
 cd /build/clair3-$clair3version-$arch
 mkdir models
 cd models
-wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz 
+wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
 tar xvzf clair3_models.tar.gz
 rm clair3_models.tar.gz
 
