@@ -57,6 +57,9 @@ proc job_args {jobargs} {
 			set cgjob(silent) 1
 		}
 	}
+	if {![info exists cgjob(dry)]} {
+		set cgjob(dry) 0
+	}
 	if {![info exists cgjob(debug)]} {
 		set cgjob(debug) 0
 	}
@@ -123,7 +126,7 @@ proc job_args {jobargs} {
 			-dremoveold {
 				set value [lindex $jobargs $pos]
 				incr pos
-				if {$value ni {0 1}} {error "$value not a valid option for -dcleanup, should be one of: 0 1"}
+				if {$value ni {0 1}} {error "$value not a valid option for -dremoveold, should be one of: 0 1"}
 				set cgjob(removeold) $value
 			}
 			-silent - --silent {
@@ -140,8 +143,14 @@ proc job_args {jobargs} {
 				set cgjob(runcmd) [lindex $jobargs $pos]
 				incr pos
 			}
+			-dry {
+				set val [lindex $jobargs $pos]
+				set cgjob(dry) $val
+				incr pos
+			}
 			-debug - --debug {
-				set cgjob(debug) 1
+				set val [lindex $jobargs $pos]
+				set cgjob(debug) $val
 			}
 			-dnosubmit {
 				set cgjob(nosubmit) [lindex $jobargs $pos]
@@ -402,7 +411,7 @@ proc jobtargetexists {args} {
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
 #			job_log [job_relfile2name targetexists- $target] "one of targets older than dep $timefile (renaming to .old): $targets"
 #			foreach target $targets {
-#				file rename -force -- $target $target.old
+#				job_to_old $target
 #			}
 			return 0
 		}
@@ -737,12 +746,8 @@ proc job_checktarget {job target skiptarget time timefile checkcompressed {newid
 		if {$time eq "now"} {
 			if {!$skiptarget} {
 				job_lognf $job "target older than dep $timefile (renaming to .old): $target"
-				# foreach file $files {
-				# 	job_backup $file 1
-				# }
 				foreach file $files {
-					file delete -force $file.old
-					file rename -force -- $file $file.old
+					job_to_old $file
 				}
 			} else {
 				job_lognf $job "skiptarget older than dep $timefile: $target"
@@ -1137,6 +1142,15 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
+proc job_to_old {file} {
+	if {$::cgjob(dry)} {
+		set cgjob_rm($file) old
+	}
+	if {![job_file_or_link_exists $file]} return
+	file delete -force $file.old
+	file rename -force -- $file $file.old
+}
+
 proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 	set cmd ""
 	set jobname [file tail $job]
@@ -1402,12 +1416,12 @@ proc job_init {args} {
 	unset -nocomplain job_logdir_submit
 	set ::job_method_info {}
 	set cgjob(hasargs) 0
+	set cgjob(dry) 0
 	set cgjob(debug) 0
 	set cgjob(distribute) 0
 	set cgjob(force) 0
 	set cgjob(queue) {}
 	set cgjob(id) 1
-	set cgjob(debug) 0
 	set cgjob(resubmit) 1
 	set cgjob(skipjoberrors) 0
 	set cgjob(runcmd) [list $::genomecombdir/cg source -stack 1]

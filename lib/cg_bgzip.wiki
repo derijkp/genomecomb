@@ -25,6 +25,7 @@ If the --keep option is not explicitely given, using -o will change the "default
 supports job options:
 ; **-d x**: distribute subjobs of command over x processes
 ; **-d sge**: use grid engine to distribute subjobs
+; **-d slurm**: use slurm to distribute subjobs
 
 == Category ==
 Compression

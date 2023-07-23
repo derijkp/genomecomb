@@ -60,3 +60,22 @@ proc cleanup_job {args} {
 proc job_optdeps {deps} {
 	return \([join $deps \)\ \(]\)
 }
+
+proc job_reset_olds {dir {exclude log_jobs}} {
+	# putsvars dir
+	foreach file [glob -nocomplain $dir/*] {
+		if {[file tail $file] in $exclude} {
+			puts "excluded $file"
+		} elseif {[regexp \\.old$ $file]} {
+			if {![file exists [file root $file]]} {
+				puts [list mv $file [file root $file]]
+				file rename $file [file root $file]
+			} else {
+				puts "skipped $file (exists without .old)"
+			}
+		} elseif {[file isdir $file]} {
+			job_reset_olds $file $exclude
+		}
+	}
+}
+

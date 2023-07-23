@@ -127,7 +127,7 @@ proc job_process_distr_jobmanager {} {
 proc job_process_submit_distr {job runfile args} {
 #set jobnum [incr cgjob_distr(num)]
 #return $jobnum
-	global cgjob_distr cgjob_distr_queue
+	global cgjob cgjob_distr cgjob_distr_queue
 	set options {}
 	set deps {}
 	set cores 1
@@ -187,9 +187,14 @@ proc job_process_submit_distr {job runfile args} {
 	set jobnum [incr cgjob_distr(num)]
 	catch {file delete $job.out}
 	catch {file delete $job.err}
-	lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options]
-	set cgjob_distr_queue($jobnum) 1
-	job_process_distr_jobmanager
+	if {$cgjob(nosubmit) || $cgjob(dry)} {
+		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
+	} else {
+		putslog "distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
+		lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options]
+		set cgjob_distr_queue($jobnum) 1
+		job_process_distr_jobmanager
+	}
 	return $jobnum
 }
 

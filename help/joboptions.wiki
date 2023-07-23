@@ -52,7 +52,7 @@ command:
 cg job_update logfile
 }}}
 
-=== local distribtion ===
+=== local distribution ===
 Using **-d number** starts up to **number** jobs in separate processes
 managed by the submitting command. The submitting command must keep
 running untill all jobs are finished. it will output some progress, but
@@ -82,6 +82,12 @@ control_slaves     TRUE
 job_is_first_task  TRUE
 urgency_slots      min
 accounting_summary FALSE
+
+=== slurm distribution ===
+Using "**-d slurm**" the submitting command will submit all jobs to slurm
+with proper dependencies between the jobs. The program itself will stop
+when all jobs are submitted. You can check progress/errors by updating and
+checking the logfile.
 
 == Options ==
 List of all options supported by job enabled commands:
