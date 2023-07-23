@@ -161,7 +161,7 @@ proc job_process_submit_sge {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to sge: it has a comma in the output file $job.out, which grid engine sometimes has problems with"
 	}
-	if {!$cgjob(nosubmit)} {
+	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]"
 		set jnum [exec qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]
 	} else {
@@ -247,7 +247,7 @@ proc job_wait_sge {} {
 	if {[llength $cgjob(endjobids)]} {
 		lappend options -hold_jid [join $cgjob(endjobids) ,]
 	}
-	if {!$cgjob(nosubmit)} {
+	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "sge_submit: [list qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile]"
 		exec qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile
 	} else {

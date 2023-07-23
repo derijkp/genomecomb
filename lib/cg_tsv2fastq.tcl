@@ -20,17 +20,25 @@ proc cg_tsv2fastq {args} {
 	if {$idpos == -1} {
 		set idpos [lsearch $header qname]
 	}
-	incr idpos
+	if {$idpos == -1} {
+		set idpos [lsearch $header name]
+	}
 	set seqpos [lsearch $header seq]
 	if {$seqpos == -1} {
 		set seqpos [lsearch $header sequence]
 	}
-	incr seqpos
 	set qualpos [lsearch $header qual]
 	if {$qualpos == -1} {
 		set qualpos [lsearch $header quality]
 	}
-	incr qualpos
-	set awkcode [subst {print \$$idpos "\\n" \$$seqpos "\\n+\\n" \$$qualpos}]
-	chanexec $f $o [list awk -F {\t} \{$awkcode\}]
+	set poss [list $idpos $seqpos $qualpos]
+	while {[gets $f line] != -1} {
+		foreach {id seq qual} [list_sub [split $line \t] $poss] break
+		if {$qual eq ""} {
+			set qual [string_fill ! [string length $seq]]
+		}
+		puts $o $id\n$seq\n+\n$qual
+	}
+	gzclose $f
+	gzclose $o
 }

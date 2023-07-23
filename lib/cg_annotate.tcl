@@ -331,8 +331,8 @@ proc cg_annotate_job {args} {
 			}
 		}
 		if {!$skip} {
-			file rename -force -- $resultfile $resultfile.old
-			file rename -force -- $analysisinfofile $analysisinfofile.old
+			job_to_old $resultfile
+			job_to_old $analysisinfofile
 		}
 	} else {
 		set checkresult 0

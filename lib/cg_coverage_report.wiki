@@ -17,6 +17,7 @@ A histo file is generated at the location of the bam file
 supports job options:
 ; **-d x**: distribute subjobs of command over x processes
 ; **-d sge**: use grid engine to distribute subjobs
+; **-d slurm**: use slurm to distribute subjobs
 
 == Category ==
 Report

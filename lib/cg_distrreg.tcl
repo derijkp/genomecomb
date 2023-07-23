@@ -56,6 +56,10 @@ proc cg_distrreg {args} {
 	} {file resultprefix resultsuffix regions} 4 4 {
 		distribute (sorted) tsv files into multiple files per region
 	}
+	foreach region $regions {
+		set target $resultprefix$region$resultsuffix
+		analysisinfo_write $file $target
+	}
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	gzclose $f

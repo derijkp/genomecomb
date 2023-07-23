@@ -87,7 +87,7 @@ proc testmultitarget {target files} {
 		}
 		if {!$ok} {
 			putslog "$target has to be remade, renaming to $target.old"
-			file rename -force -- $target $target.old
+			job_to_old $target
 		}
 	}
 }

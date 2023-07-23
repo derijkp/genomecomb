@@ -1,3 +1,7 @@
+# allows you to get deps and targets of a command (set of commands) without actually running/submitting:
+# job_getinfo 1
+# ... commands ...
+# foreach {deps targets} [job_getinfo 0] break
 proc job_getinfo {{value {}}} {
 	if {$value eq ""} {
 		get ::job_getinfo 0

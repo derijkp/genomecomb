@@ -192,23 +192,31 @@ proc distrreg_norep100000file {refdir} {
 	return $norep100000file
 }
 
-proc distrreg_nolowgene250k {refdir} {
+proc distrreg_nolowgene {refdir {cutoff 200000} {name 200k}} {
 	set ref [file tail $refdir]
-	set nolowgenefile [gzfile $refdir/extra/reg_${ref}_nolowgene250k.tsv.zst]
+	set nolowgenefile [gzfile $refdir/extra/reg_${ref}_nolowgene$name.tsv.zst]
+	if {![file exists $nolowgenefile]} {
+		set temp [lindex [bsort [gzfiles $refdir/extra/reg_${ref}_nolowgene*.tsv.zst]] 0] 
+		if {[file exists $temp]} {
+			return $temp
+		}
+	}
 	if {![file exists $nolowgenefile]} {
 		set fullgenomefile [gzfile $refdir/extra/reg_*_fullgenome.tsv]
 		set temp [tempfile]
 		set genedbtsv [gzfile \
 			$refdir/gene_*_intGene.tsv.zst \
 			$refdir/extra/gene_*_gencode.tsv.zst \
+			$refdir/gene_*.tsv.zst \
 			$refdir/extra/gene_*.tsv.zst \
 			$refdir/gene_*_refGene.tsv.zst \
 		]
 		cg regjoin $genedbtsv > $temp
 		set temp2 [tempfile]
 		cg regsubtract $fullgenomefile $temp > $temp2
+		# cg select -f {chromosome {size=$end - $begin}} $temp2 | cg select -s -size | head -40
 		set temp3 [tempfile]
-		cg select -overwrite 1 -q {$end - $begin > 200000} $temp2 $temp3
+		cg select -overwrite 1 -q "\$end - \$begin > $cutoff" $temp2 $temp3
 		# cg regsubtract $fullgenomefile $temp3 | cg select -f {{size=$end - $begin} *} | cg select -s size
 		cg regsubtract $fullgenomefile $temp3 | cg zst > $nolowgenefile.temp
 		file rename $nolowgenefile.temp $nolowgenefile
@@ -323,9 +331,9 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 		}
 	}
 	if {[regexp {^g([0-9]+)$} $regfile temp regsize]} {
-		set nolowgenefile [distrreg_nolowgene250k [file dir $refseq]]
+		set nolowgenefile [distrreg_nolowgene [file dir $refseq]]
 		if {![file exists $nolowgenefile]} {
-			putslog "nolowgene250kfile not found ($nolowgenefile), using distrreg chr"
+			putslog "nolowgenefile not found ($nolowgenefile), using distrreg chr"
 			set regfile chr
 		} else {
 			unset -nocomplain donea

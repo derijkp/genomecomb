@@ -98,6 +98,9 @@ proc process_multicompar_job {args} {
 		-m - -maxopenfiles {
 			maxopenfiles [expr {$value - 4}]
 		}
+		-*-* {
+			set ::specialopt($key) $value
+		}
 	} {destdir dbdir} 1
 	set dbfiles [list_remove [list_remdup $dbfiles] {}]
 	set destdir [file_absolute $destdir]
@@ -204,7 +207,7 @@ proc process_multicompar_job {args} {
 			if {![file exists $varfile] || [file mtime $varfile] > $mtime} {
 				putslog "redo all: $varfile is newer than $compar_file"
 				set stilltodo $varfiles
-				if {[file exists $compar_file]} {file rename -force -- $compar_file $compar_file.old}
+				if {[file exists $compar_file]} {job_to_old $compar_file}
 				break
 			}
 			set analysis [file_analysis $varfile]
@@ -328,7 +331,7 @@ proc process_multicompar_job {args} {
 				if {![file exists $methfile] || [file mtime $methfile] > $mtime} {
 					putslog "redo all: $methfile is newer than $methcompar_file"
 					set stilltodo $umethfiles
-					if {[file exists $methcompar_file]} {file rename -force -- $methcompar_file $methcompar_file.old}
+					if {[file exists $methcompar_file]} {job_to_old $methcompar_file}
 					break
 				}
 				set analysis [file_analysis $methfile]

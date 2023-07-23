@@ -137,7 +137,7 @@ proc job_process_submit_slurm {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to slurm: it has a comma in the output file $job.out"
 	}
-	if {!$cgjob(nosubmit)} {
+	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]"
 		set jnum [exec sbatch --job-name=j$name --output=$job.out --error=$job.err {*}$options $runfile]
 	} else {
@@ -235,7 +235,7 @@ proc job_wait_slurm {} {
 	if {$priority != 0} {
 		lappend options --nice=$priority
 	}
-	if {!$cgjob(nosubmit)} {
+	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]"
 		exec sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile
 	} else {

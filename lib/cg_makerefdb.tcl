@@ -509,15 +509,15 @@ proc makerefdb_job {args} {
 		$dbdir/extra/gene_*.tsv.zst \
 		$dbdir/gene_*_refGene.tsv.zst \
 	]
-	job nolowgene250k -optional 1 -deps {
+	job nolowgene -optional 1 -deps {
 		$fullgenome
 		$genefile
 	} -targets {
-		$dbdir/extra/reg_${build}_nolowgene250k.tsv.zst
+		$dbdir/extra/reg_${build}_nolowgene200k.tsv.zst
 	} -vars {
 		dbdir
 	} -code {
-		distrreg_nolowgene250k $dbdir
+		distrreg_nolowgene $dbdir
 	}
 
 	if {$transcriptsgtf ne ""} {

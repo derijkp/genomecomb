@@ -52,7 +52,7 @@ proc analysisinfo_write {dep target args} {
 	}
 	if {[file exists $depanalysisinfo] && [file size $depanalysisinfo] != 0} {
 		if {$dep eq $target} {
-			file rename -force -- $depanalysisinfo $depanalysisinfo.old
+			job_to_old $depanalysisinfo
 			set f [open $depanalysisinfo.old]
 		} else {
 			set f [open $depanalysisinfo]
