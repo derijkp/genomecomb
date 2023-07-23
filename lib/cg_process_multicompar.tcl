@@ -98,6 +98,9 @@ proc process_multicompar_job {args} {
 		-m - -maxopenfiles {
 			maxopenfiles [expr {$value - 4}]
 		}
+		-*-* {
+			set ::specialopt($key) $value
+		}
 	} {destdir dbdir} 1
 	set dbfiles [list_remove [list_remdup $dbfiles] {}]
 	set destdir [file_absolute $destdir]
