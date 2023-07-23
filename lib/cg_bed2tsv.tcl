@@ -38,10 +38,18 @@ proc cg_bed2tsv {args} {
 	} else {
 		set size [expr {[llength $line]-1}]
 		puts $o [join [lrange $bedfields 0 $size] \t]
-		puts $o $line
-		fconfigure $f -translation binary
-		fconfigure $o -translation binary
-		fcopy $f $o
+		if {[llength [split $line \t]] <= 12} {
+			puts $o $line
+			fconfigure $f -translation binary
+			fconfigure $o -translation binary
+			fcopy $f $o
+		} else {
+			while 1 {
+				set line [lrange [split $line \t] 0 11]
+				puts $o [join $line \t]
+				if {[gets $f line] == -1} break
+			}
+		}
 	}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
