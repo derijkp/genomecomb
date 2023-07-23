@@ -9,14 +9,15 @@ The basic fields for a transcript file are
 ; chromosome: chromosome name
 ; begin: transcription start position
 ; end: transcription end position
-; strand: indication of the strand: + or -, empty or . can be used for unknown
-; cdsStart:	start of the coding region (genomic position)
-; cdsEnd: end of the coding region (genomic position)
+; strand: indication of the strand; + or -, empty or . can be used for unknown
 ; exonStarts: list of exon start positions
-; exonEnds:	list of	Exon end positions
-; transcript:	Name of transcript (usually transcript_id from GTF)
-; gene:	name of gene (e.g. gene_id from GTF). This field preferentially
+; exonEnds: list of	Exon end positions
+; cdsStart: start of the coding region (genomic position)
+; cdsEnd: end of the coding region (genomic position)
+; transcript: Name of transcript (usually transcript_id from GTF)
+; gene: name of gene. This field preferentially
         contains the HGNC name for the gene, but other ids are possible
+; geneid: This field typically contains	the id of a gene (e.g. ensembl id for gene)
 
 Most genomecomb tools will accept some (commonly encounterd) alternative
 fieldnames if these are not present:
@@ -25,8 +26,8 @@ fieldnames if these are not present:
 (end1 is recognised as begin because of the structural variant code in genomecomb, where start1,end1
 and start2,end2 regions surround a SV).
 ; end: "start2", "chromEnd", "genoEnd", "tEnd" or "txEnd"
-; transcript:	"transcript_id", "transcriptid", "name"
-; gene_name:	"gene","name2", "geneid", "gene_id"
+; transcript: "transcript_id", "transcriptid", "name"
+; gene_name: "gene","name2", "geneid", "gene_id"
 
 Any other fields can be added, but the following are common:
 ; category: field indicating if the transcript is known, novel or intergenic (transcript of a novel gene); 
