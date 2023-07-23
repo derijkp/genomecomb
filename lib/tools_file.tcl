@@ -635,3 +635,12 @@ proc tempramdir {size} {
 	file_write $::Extral::tempramdir/pid [pid]
 	return $::Extral::tempramdir
 }
+
+proc write_table {file header data} {
+	set o [wgzopen $file]
+	puts $o [join $header \t]
+	foreach line $data {
+		puts $o [join $line \t]
+	}
+	gzclose $o
+}
