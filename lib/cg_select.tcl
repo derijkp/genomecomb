@@ -406,7 +406,7 @@ proc tsv_select_counthasall {ids operator value} {
 
 proc tsv_select_region {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	set ids [split $ids ":-_ ,\{\}\""]
+	set ids [split $ids ":- ,\{\}\""]
 	set ids [list_remove $ids {}]
 	set poss [tsv_basicfields $header 3]
 	set fields [list_sub $header $poss]
