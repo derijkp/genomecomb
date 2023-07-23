@@ -146,6 +146,15 @@ $dir/bin/hisat2 ${1+"$@"}
 ' > hisat2
 chmod ugo+x hisat2
 
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+$dir/bin/hisat2-build ${1+"$@"}
+' > hisat2-build
+chmod ugo+x hisat2-build
+
 cd /build
 rm hisat2.tar.gz
 ln -sf hisat2-$hisat2version-$arch/hisat2 hisat2
