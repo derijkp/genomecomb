@@ -106,7 +106,6 @@ Z   1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  0
 }
 
 proc sc_barcodes_job args {
-	# putslog [list iso_isoquant_job {*}$args]
 	upvar job_logdir job_logdir
 	global appdir
 	set cmdline [clean_cmdline cg sc_barcodes {*}$args]
@@ -198,6 +197,7 @@ proc sc_barcodes_job args {
 		$resultdir/barcode_cutoff-info.tsv
 	} -vars {
 		barcodefiles resultdir whitelist barcodesize threads mergedbarcodesfile
+		mincells maxcells cutoff
 	} -code {
 
 		#
@@ -362,18 +362,19 @@ proc sc_barcodes_job args {
 		$resultdir/barcode2celbarcode.tsv
 		$resultdir/reads_per_cell.tsv
 	} -vars {
-		barcode_matches resultdir whitelist barcodesize threads maxcells mincells
+		barcode_matches resultdir whitelist barcodesize threads
+		maxcells mincells mergedbarcodesfile cutoff
 	} -code {
-		if 0 {
-			set f [gzopen $mergedbarcodesfile]
-			set h [tsv_open $f]
-			while {[gets $f line] != -1} {
-				foreach {barcode count umicount whitelist} [split $line \t] break
-				set a($barcode) $count
-				set wa($barcode) $whitelist
-			}
-			close $f
-		}
+#		if 0 {
+#			set f [gzopen $mergedbarcodesfile]
+#			set h [tsv_open $f]
+#			while {[gets $f line] != -1} {
+#				foreach {barcode count umicount whitelist} [split $line \t] break
+#				set a($barcode) $count
+#				if {$whitelist} {set wa($barcode) 1}
+#			}
+#			close $f
+#		}
 
 		# load counts in a (counts) and ua (umicounts)
 		set f [gzopen $mergedbarcodesfile]
@@ -391,9 +392,8 @@ proc sc_barcodes_job args {
 		# even if a match is also in whitelist we take it as an error in the higher count barcode:
 		# this is likely to come across, while it is highly unlikely to have 2 1-diff barcodes in actual cells
 		# unset a($match) to indicate this one is already taken (assign to highest)
-		set barcode2celbarcodefile $resultdir/barcode2celbarcode.tsv
 		catch {close $f} ; catch {close $o}
-		set o [open $barcode2celbarcodefile.temp w]
+		set o [open $resultdir/barcode2celbarcode.tsv.temp w]
 		puts $o barcode\tcellbarcode\tcount\tumicount\twhitelistmatch
 		# min size of barcode (start)
 		set num 0
@@ -411,10 +411,6 @@ proc sc_barcodes_job args {
 					continue
 				}
 				puts "[incr num].$barcode ($a($barcode))"
-				if {![info exists wa($barcode)]} {
-					# not in whitelist, but do we really want to skip these if high counts?
-					continue
-				}
 				set count $a($barcode)
 				if {$count < $cutoff && $num > $mincells} break
 				if {$num > $maxcells} break
@@ -436,14 +432,23 @@ proc sc_barcodes_job args {
 		}
 		close $o
 
-		file rename -force $barcode2celbarcodefile.temp $barcode2celbarcodefile
+		file rename -force $resultdir/barcode2celbarcode.tsv.temp $resultdir/barcode2celbarcode.tsv
 		# cg select -g cellbarcode barcode2celbarcode.tsv	| cg select -g all
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
+	}
+	job reads_per_cell-$sample -deps {
+		$resultdir/barcode2celbarcode.tsv
+	} -targets {
+		$resultdir/reads_per_cell.tsv
+		$resultdir/umis_per_cell.tsv
+	} -vars {
+		resultdir
+	} -code {
 		# readcounts
-		cg select -g cellbarcode -gc {sum(count)} $barcode2celbarcodefile | cg select -f {cellbarcode count=$sum_count} -s -sum_count > $resultdir/reads_per_cell.tsv.temp
+		cg select -g cellbarcode -gc {sum(count)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_count} -s -sum_count > $resultdir/reads_per_cell.tsv.temp
 		file rename -force $resultdir/reads_per_cell.tsv.temp $resultdir/reads_per_cell.tsv
 		# umicounts
-		cg select -g cellbarcode -gc {sum(umicount)} $barcode2celbarcodefile | cg select -f {cellbarcode count=$sum_umicount} -s -sum_umicount > $resultdir/umis_per_cell.tsv.temp
+		cg select -g cellbarcode -gc {sum(umicount)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_umicount} -s -sum_umicount > $resultdir/umis_per_cell.tsv.temp
 		file rename -force $resultdir/umis_per_cell.tsv.temp $resultdir/umis_per_cell.tsv
 		unset -nocomplain a ; unset -nocomplain wa
 		# foreach barcode_match $barcode_matches {
