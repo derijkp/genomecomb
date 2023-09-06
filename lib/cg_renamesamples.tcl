@@ -10,7 +10,7 @@ proc file_rename {file newfile} {
 	puts "$file -> $newfile"
 	file rename $file $newfile
 	if {[catch {file mtime $newfile $time}]} {
-		exec touch -h -d [clock format $time] $dest
+		exec touch -h -d [clock format $time] $newfile
 	}
 }
 
