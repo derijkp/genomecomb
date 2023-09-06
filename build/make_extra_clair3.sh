@@ -26,7 +26,7 @@ source "${dir}/start_hbb.sh"
 # ===============
 
 # clair3version=0.1.12
-clair3version=1.0.3
+clair3version=1.0.4
 
 all=1
 extra=1

@@ -604,16 +604,14 @@ test var {var_clair3 basic pepperdata} {
 	lappend result [cg select -g {zyg-clair3-test * zyg-truth *} tmp/clair3_ppr/compar.tsv]
 	join [list_remove $result {}] \n
 } {chromosome	count
-20	553
+20	510
 zyg-clair3-test	zyg-truth	count
-m	m	34
-m	r	3
-m	u	88
-r	m	1
-t	m	1
+m	m	36
+m	r	1
+m	u	85
 t	t	12
-t	u	171
-u	u	243}
+t	u	153
+u	u	223}
 
 test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
@@ -642,17 +640,57 @@ test var {var_clair3 basic giab data} {
 	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3/compar.tsv]
 	list_remove $result {}
 } {{chromosome	count
-1	732
-6	469
-10	331} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
-c	u	12
+1	584
+6	379
+10	284} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
+c	u	2
 m	m	24
-m	u	144
+m	u	134
 t	t	59
-t	u	424
+t	u	370
 u	c	2
 u	t	1
-u	u	866}}
+u	u	655}}
+
+test var {var -method clair3 -distrreg g5000000 basic giab data} {
+	cd $::smalltestdir
+	file delete -force tmp/clair3_var
+	make_smallgiabonttest $::smalltestdir/tmp/clair3_var
+	cg var -method clair3 -distrreg g5000000 \
+		{*}$::dopts -platform ont -model ont \
+		tmp/clair3_var/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
+	file delete tmp/clair3_var/compar.tsv
+	cg multicompar -reannot 1 tmp/clair3_var/compar.tsv \
+		tmp/clair3_var/var-clair3-sminimap2-pHG002_hg38.tsv.zst \
+		tmp/clair3_var/var-truth_HG002_hg38.tsv
+	cg benchmarkvars \
+		-refcurve_cutoffs {{} 8 10 15 20 30} \
+		-analyses {clair3-sminimap2-pHG002_hg38} \
+		-regionfile tmp/clair3_var/sreg-truth_HG002_hg38.tsv \
+		tmp/clair3_var/compar.tsv \
+		truth_HG002_hg38 \
+		tmp/clair3_var/benchmark.tsv
+	set result {}
+	lappend result [tsvdiff -q 1\
+		-x *.log -x *.finished  -x *.zsti \
+		-x compar.tsv.reannot \
+		-ignorefields {varcaller_cg_version} \
+		tmp/clair3_var expected/clair3]
+	lappend result [cg select -g chromosome tmp/clair3_var/compar.tsv]
+	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3_var/compar.tsv]
+	list_remove $result {}
+} {{chromosome	count
+1	586
+6	396
+10	279} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
+c	u	2
+m	m	24
+m	u	132
+t	t	59
+t	u	367
+u	c	2
+u	t	1
+u	u	674}}
 
 test var {var_longshot basic pepperdata} {
 	cd $::smalltestdir
