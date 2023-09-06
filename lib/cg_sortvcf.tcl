@@ -36,7 +36,7 @@ proc cg_sortvcf {args} {
 		set c [lreplace $c $insert -1 {*}$neworder]
 	}
 	puts $o [join $c \n]
-	puts $o \#$header
+	puts $o \#[join $header \t]
 	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" -t \\t -s -N"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
