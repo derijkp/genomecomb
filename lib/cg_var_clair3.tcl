@@ -316,23 +316,33 @@ proc var_clair3_job {args} {
 		}
 		if {[file exists $tempvcfdir/merge_output.vcf.gz]} {
 			if {$phasing} {
-				if {$platform eq "ont"} {
-					set seqplatformopt --ont
+				# check if empty -> longphase gives incorrect output on empty vcf file
+				set ft [gzopen $tempvcfdir/merge_output.vcf.gz]
+				set header [tsv_open $ft]
+				if {[gets $ft line] == -1} {set empty 1} else {set empty 0}
+				gzclose $ft
+				if {$empty} {
+					clair3_empty_vcf $vcffile
 				} else {
-					set seqplatformopt --pb
+					if {$platform eq "ont"} {
+						set seqplatformopt --ont
+					} else {
+						set seqplatformopt --pb
+					}
+					catch_exec [clair3_dir]/bin/longphase phase \
+						-s $tempvcfdir/merge_output.vcf.gz \
+						-b $dep \
+						-r $refseq \
+						-t $threads -o $tempvcfdir/phased-merge_output \
+						--indels \
+						$seqplatformopt
+					cg sortvcf -threads $threads $tempvcfdir/phased-merge_output.vcf $vcffile.s.gz
+					file rename -force -- $vcffile.s.gz $vcffile
 				}
-				catch_exec [clair3_dir]/bin/longphase phase \
-					-s $tempvcfdir/merge_output.vcf.gz \
-					-b $dep \
-					-r $refseq \
-					-t $threads -o $tempvcfdir/phased-merge_output \
-					--indels \
-					$seqplatformopt
-				cg sortvcf -threads $threads $tempvcfdir/phased-merge_output.vcf $vcffile.s.gz
 			} else {
 				cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile.s.gz
+				file rename -force -- $vcffile.s.gz $vcffile
 			}
-			file rename -force -- $vcffile.s.gz $vcffile
 		} else {
 			clair3_empty_vcf $vcffile
 		}

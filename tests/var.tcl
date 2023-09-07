@@ -652,11 +652,12 @@ u	c	2
 u	t	1
 u	u	655}}
 
-test var {var -method clair3 -distrreg g5000000 basic giab data} {
+test var {var -method clair3 -distrreg x5000000 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3_var
 	make_smallgiabonttest $::smalltestdir/tmp/clair3_var
-	cg var -method clair3 -distrreg g5000000 \
+	cg var -method clair3 \
+		-distrreg x5000000 \
 		{*}$::dopts -platform ont -model ont \
 		tmp/clair3_var/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3_var/compar.tsv
