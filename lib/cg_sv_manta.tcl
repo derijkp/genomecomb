@@ -1,7 +1,24 @@
+proc findmanta {} {
+	global mantadir
+	if {![info exists mantadir]} {
+		if {![catch {exec which configManta.py} temp]} {
+			set temp [file_resolve $temp]
+			set mantadir [file dir $temp]
+		} else {
+			set mantadir [searchpath MANTADIR manta manta*]
+			set mantadir [file_resolve $mantadir]
+			if {![file isdir $mantadir]} {set mantadir [file dir $mantadir]}
+		}
+		set ::env(PATH) $mantadir/bin:$::env(PATH)
+		set ::env(LD_LIBRARY_PATH) $mantadir/lib:$::env(LD_LIBRARY_PATH)
+	}
+	return $mantadir
+}
+
 proc version_manta {} {
 	set version ?
 	set mantadir [searchpath MANTADIR manta manta*]
-	set help [catch_exec $mantadir/bin/configManta.py -h]
+	set help [catch_exec configManta.py -h]
 	regexp {Version: ([^\n]*)} $help temp version
 	return $version
 }
@@ -104,10 +121,10 @@ proc sv_manta_job {args} {
 	} -targets {
 		$resultfile.mantarun/results/variants/diploidSV.vcf.gz $resultfile.mantarun.analysisinfo
 	} -vars {
-		resultfile manta opts gatkrefseq threads root regionfile
+		resultfile manta opts gatkrefseq threads root regionfile bamfile
 	} -code {
-		set mantadir [searchpath MANTADIR manta manta*]
-		analysisinfo_write $dep $resultfile.mantarun sample $root varcaller manta varcaller_version [version manta] varcaller_cg_version [version genomecomb]
+		set mantadir [findmanta]
+		analysisinfo_write $bamfile $resultfile.mantarun sample $root varcaller manta varcaller_version [version manta] varcaller_cg_version [version genomecomb]
 		if {$regionfile ne ""} {
 			set tempbed [tempbed $regionfile]
 			cg_bgzip -k 1 -o $tempbed.gz $tempbed
@@ -115,8 +132,8 @@ proc sv_manta_job {args} {
 			lappend opts --callRegions $tempbed.gz
 		}
 		if {[file exists $resultfile.mantarun]} {file delete -force $resultfile.mantarun}
-		exec $mantadir/bin/configManta.py {*}$opts \
-			--bam $dep \
+		exec configManta.py {*}$opts \
+			--bam $bamfile \
 			--referenceFasta $gatkrefseq \
 			--runDir $resultfile.mantarun
 		catch_exec $resultfile.mantarun/runWorkflow.py -m local -j $threads

@@ -1,11 +1,32 @@
+proc strelka_env {} {
+	set strelkadir [findstrelka]
+	set ::env(PATH) $strelkadir/bin:$::env(PATH)
+	set ::env(LD_LIBRARY_PATH) $strelkadir/lib:$::env(LD_LIBRARY_PATH)
+}
+
+proc findstrelka {} {
+	global strelkadir
+	if {![info exists strelkadir]} {
+		if {![catch {exec which configureStrelkaGermlineWorkflow.py} temp]} {
+			set temp [file_resolve $temp]
+			set strelkadir [file dir $temp]
+		} else {
+			set strelkadir [searchpath STRELKADIR strelka strelka*]
+			set strelkadir [file_resolve $strelkadir]
+			if {![file isdir $strelkadir]} {set strelkadir [file dir $strelkadir]}
+		}
+	}
+	return $strelkadir
+}
+
 proc var_strelka_tools {} {
 	return {strelka}
 }
 
 proc version_strelka {} {
 	set version ?
-	set strelkadir [searchpath STRELKAADIR strelka strelka*]
-	set version [catch_exec $strelkadir/bin/configureStrelkaGermlineWorkflow.py --version]
+	set strelkadir [findstrelka]
+	set version [catch_exec configureStrelkaGermlineWorkflow.py --version]
 	return $version
 }
 
@@ -186,11 +207,11 @@ proc var_strelka_job {args} {
 			}
 		}
 		if {!$zerosize} {
+			strelka_env
 			set strelkarun [scratchdir]/strelkarun
 			file delete -force $strelkarun
 			file mkdir $strelkarun
-			set strelkadir [searchpath STRELKAADIR strelka strelka*]
-			exec $strelkadir/bin/configureStrelkaGermlineWorkflow.py {*}$opts \
+			exec configureStrelkaGermlineWorkflow.py {*}$opts \
 				--bam $dep \
 				--referenceFasta $refseq \
 				--runDir $strelkarun
