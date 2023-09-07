@@ -1669,7 +1669,7 @@ test gtf2tsv {-separate 1} {
 		chr4	2999	4000	exon	transcript2-2	gene2	+	source2		gene2	transcript2-2	1
 		chr4	4499	5000	exon	transcript2-2	gene2	+	source2		gene2	transcript2-2	2
 	}]]\n
-	cg gtf2tsv -separate 1 tmp/test.gtf | cg select -rf {score phase} > tmp/test.tsv
+	cg gtf2tsv -separate 1 -sort 0 tmp/test.gtf | cg select -rf {score phase} > tmp/test.tsv
 	cg tsvdiff tmp/test.tsv tmp/expected.tsv
 } {}
 
