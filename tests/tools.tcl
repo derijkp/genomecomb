@@ -35,7 +35,7 @@ putsvars script
 set appdir [file dir [file dir [file normalize $script]]]
 if {![info exists basetestdir]} {
 	if {![info exists argv]} {
-		set basetestdir [pwd]
+		set basetestdir [pwd]/tmp
 	} else {
 		# set basetestdir [file dir [file normalize $script]]
 		set basetestdir [file dir $appdir]/tests_genomecomb
