@@ -647,8 +647,8 @@ test cg_sam_catmerge {-mergesort 1 -maxopenfiles 2 .sam 5 files } {
 		C1	147	chr1	1000121	60	20M	=	1000100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		D1	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		E1	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
-		D1	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		E1	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		D1	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr2	1000100	60	50M	=	1000100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	1000100	60	50M	=	1000100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
