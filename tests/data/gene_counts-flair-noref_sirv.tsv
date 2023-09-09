@@ -13,17 +13,21 @@
 #fields	tpm	1	Float	Number of gene transcripts per million total transcripts
 #fields	type	1	String	type of element
 type	gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-minimap2-sirv
+gene	novelg_SIRV1:000	novel	SIRV1	995	10771	-	3	243.0
+gene	novelg_SIRV1:10000	novel	SIRV1	10894	11186	-	1	103.0
+gene	novelg_SIRV1:11000	novel	SIRV1	11433	11631	+	1	21.0
 gene	SIRV2N	known	SIRV2	1000	5907	-	2	230.0
 gene	SIRV3N	known	SIRV3	998	1968	-	1	69.0
-gene	SIRV3P	known	SIRV3	1944	8939	+	1	271.0
+gene	SIRV3P	known	SIRV3	1944	8940	+	2	70.0
 gene	novelg_SIRV3:7000	novel	SIRV3	7997	8285	+	1	8.0
 gene	novelg_SIRV3:9000	novel	SIRV3	9651	9899	-	1	17.0
-gene	SIRV4P	known	SIRV4	1012	3389	+	1	148.0
-gene	novelg_SIRV4:3000	novel	SIRV4	3639	4104	-	1	162.0
-gene	SIRV4N	known	SIRV4	8322	15122	-	1	125.0
-gene	SIRV5P	known	SIRV5	1056	10991	+	3	233.0
-gene	novelg_SIRV5:11000	novel	SIRV5	11568	11849	+	1	43.0
-gene	novelg_SIRV5:13000	novel	SIRV5	13284	13606	+	1	5.0
-gene	SIRV6P	known	SIRV6	1000	11826	+	6	686.0
+gene	SIRV4P	known	SIRV4	1012	3389	+	1	150.0
+gene	novelg_SIRV4:3000	novel	SIRV4	3639	4104	-	1	161.0
+gene	SIRV4N	known	SIRV4	8322	15122	-	1	126.0
+gene	SIRV5P	known	SIRV5	1056	10991	+	3	229.0
+gene	novelg_SIRV5:11000	novel	SIRV5	11568	11849	+	1	44.0
+gene	novelg_SIRV5:13000	novel	SIRV5	13284	13606	+	1	4.0
+gene	SIRV6P	known	SIRV6	1000	11826	+	6	696.0
 gene	novelg_SIRV6:1000	novel	SIRV6	1889	2120	+	1	79.0
 gene	novelg_SIRV6:9000	novel	SIRV6	9021	10968	+	1	70.0
+gene	SIRV7N	known	SIRV7	1003	147923	-	1	112.0

@@ -25,7 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-flairversion=1.7
+flairversion=2.0
+# build has patches, check if they still work/apply before just changing versions
 
 all=1
 extra=1
@@ -142,6 +143,12 @@ mv flair-$flairversion-$arch flair-$flairversion-$arch.old || true
 mkdir /build/flair-$flairversion-$arch
 cd /build/flair-$flairversion-$arch
 tar xvzf ../flair.tar.gz
+
+# patches
+# avoid collapse error on missing _ in names due to chrom not in junc_to_tn
+mv lib/python3.9/site-packages/flair/identify_gene_isoform.py lib/python3.9/site-packages/flair/identify_gene_isoform.py.ori
+cp /io/build/flair_files/identify_gene_isoform.patched.py lib/python3.9/site-packages/flair/identify_gene_isoform.py
+# different color handling, not updated to new flair version
 cp /io/build/flair_files/plot_isoform_usage.patched.py bin/plot_isoform_usage.patched
 
 # make excutables in appdir root that will use the appdir env
@@ -155,7 +162,7 @@ cat << 'EOF' > bin/flair
 # -*- coding: utf-8 -*-
 import re
 import sys
-from flair.__main__ import main
+from flair.flair import main
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
     sys.exit(main())
@@ -170,7 +177,7 @@ cat << 'EOF' > bin/f2py
 # -*- coding: utf-8 -*-
 import re
 import sys
-from f2py.__main__ import main
+from numpy.f2py.f2py2e import main
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
     sys.exit(main())
@@ -269,8 +276,9 @@ cd /build
 rm flair.tar.gz
 ln -sf flair-$flairversion-$arch/flair.py flair.py
 ln -sf flair-$flairversion-$arch/flair flair
+ln -sf flair-$flairversion-$arch/flair flair-$flairversion
 tar cvzf flair-$flairversion-$arch.tar.gz flair-$flairversion-$arch flair.py flair
-cp -ra flair-$flairversion-$arch /io/extra$ARCH
+cp -ra flair-$flairversion-$arch flair.py flair /io/extra$ARCH
 cd /io/extra$ARCH/
 
 conda deactivate

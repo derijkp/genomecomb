@@ -3,9 +3,10 @@ proc version_flair {} {
 		set flairdir [findflair]
 		set temp [split [file tail $flairdir] -]
 		set version [lindex $temp 1]
-		return $version
 	}
-	lindex $version end
+	set result [lindex $version end]
+	regsub ^v $result {} result
+	return $result
 }
 
 proc flair_bin {bin} {
@@ -57,12 +58,17 @@ proc flair_getref {refseq} {
 proc findflair {} {
 	global flair
 	if {![info exists flair]} {
-		set flair [searchpath flair flair flair*]
-		if {$flair eq ""} {
-			set flair [searchpath FLAIR flair flair*]
+		if {![catch {exec which flair} temp]} {
+			set temp [file_resolve $temp]
+			set flair [file dir $temp]
+		} else {
+			set flair [searchpath flair flair flair*]
+			if {$flair eq ""} {
+				set flair [searchpath FLAIR flair flair*]
+			}
+			set flair [file_resolve $flair]
+			if {![file isdir $flair]} {set flair [file dir $flair]}
 		}
-		set flair [file_resolve $flair]
-		if {![file isdir $flair]} {set flair [file dir $flair]}
 		set ::env(PATH) $flair:$::env(PATH)
 	}
 	return $flair
@@ -137,18 +143,40 @@ proc cg_flair_mergeresults {rootname tsvreftranscripts flairtranscripts flaircou
 	gzclose $fr
 	catch {gzclose $fc} ; set fc [gzopen $flaircountmatrix]
 	set fcheader [tsv_open $fc]
+	set samples [lrange $fcheader 1 end]
+	if {[llength $samples] > 1 && $rootname ne ""} {
+		error "more than one sample when rootname given"
+	}
+	foreach sample $samples {
+		set totalcounta($sample) 0
+	}
 	unset -nocomplain countsa
-	set totalcount 0
 	while 1 {
 		if {[gets $fc line] == -1} break
 		set line [split $line \t]
-		foreach {transcript count} $line break
-		set countsa($transcript) $count
-		set totalcount [expr {$totalcount + $count}]
+		set transcript [lindex $line 0]
+		foreach {count} [lrange $line 1 end] sample $samples {
+			set countsa($transcript,$sample) $count
+			set totalcounta($sample) [expr {$totalcounta($sample) + $count}]
+		}
 	}
 	gzclose $fc
 	#
-	file_write $out_total_counts_file totalcount-flair-$rootname\n$totalcount\n
+	set o [open $out_total_counts_file w]
+	set newheader {}
+	set result {}
+	if {$rootname ne ""} {
+		lappend newheader totalcount-$rootname
+		lappend result $totalcounta($sample)
+	} else {
+		foreach sample $samples {
+			lappend newheader totalcount-$sample
+			lappend result $totalcounta($sample)
+		}
+	}
+	puts $o [join $newheader \t]
+	puts $o [join $result \t]
+	gzclose $o
 	#
 	set tempfile [tempfile]
 	set o [open $tempfile w]
@@ -172,7 +200,15 @@ proc cg_flair_mergeresults {rootname tsvreftranscripts flairtranscripts flaircou
 		#fields	source	1	String	Source of data
 		#fields	count	1	Integer	number of supporting reads for isoform
 	}]
-	puts $o [join [list {*}$basicfields type transcripttype counts-$rootname] \t]
+	set newheader [list {*}$basicfields type transcripttype]
+	if {$rootname ne ""} {
+		lappend newheader counts-$rootname
+	} else {
+		foreach sample $samples {
+			lappend newheader counts-$sample
+		}
+	}
+	puts $o [join $newheader \t]
 	catch {gzclose $ff} ; set ff [gzopen [file root $flairtranscripts].tsv]
 	set ffheader [tsv_open $ff]
 	set fposs [list_cor $ffheader $basicfields]
@@ -195,7 +231,9 @@ proc cg_flair_mergeresults {rootname tsvreftranscripts flairtranscripts flaircou
 			}
 			lappend line transcript novel
 		}
-		lappend line [get countsa(${transcript}_$gene) 0]
+		foreach sample $samples {
+			lappend line [get countsa(${transcript}_$gene,$sample) 0]
+		}
 		puts $o [join $line \t]
 	}
 	gzclose $o
@@ -218,7 +256,6 @@ proc flair_job {args} {
 	set refseq {}
 	set skips {}
 	set plotgenes {}
-	set sqanti 1
 	set compar multitranscript
 	set reftranscripts {}
 	set threads 8
@@ -255,18 +292,26 @@ proc flair_job {args} {
 	} {projectdir resultfile} 1 2
 	set projectdir [file_absolute $projectdir]
 	if {[file isdir $projectdir]} {
-		set bams [glob -nocomplain $projectdir/samples/*.bam $projectdir/samples/*.cram]
-		if {[llength $sampledirs] == 0} {
-			set sampledirs [list $projectdir]
-			set compar 0
-		}
-		# select bam later
-		set bam {}
 		if {$resultfile ne ""} {
 			error "cannot specify resultfile when giving a directory as input"
 		}
+		set useresultfile 0
+		set bams [glob -nocomplain $projectdir/samples/*/*.bam $projectdir/samples/*/*.cram]
+		if {[llength $bams] == 0} {
+			set bams [glob -nocomplain $projectdir/*.bam $projectdir/*.cram]
+			if {[llength $bams] == 0} {
+				error "no bams/crams found in $projectdir/samples/*/*.*am or in $projectdir/*.*am"
+			}
+			set compar 0
+		}
 	} else {
 		# not a dir, so should be a bamfile
+		set useresultfile 1
+		set bam $projectdir
+		if {$resultfile eq ""} {
+			set rootname ${analysisname}-[file_rootname $bam]
+			set resultfile [file dir $bam]/isoform_counts-$rootname.tsv
+		}			
 		set resultfile [file_absolute $resultfile]
 		set bams [list $projectdir]
 		set compar 0
@@ -288,34 +333,32 @@ proc flair_job {args} {
 	job_logfile $projectdir/flair_[file tail $projectdir] $projectdir $cmdline \
 		{*}[versions flair dbdir zstd os]
 	# analysis per sample
-	set allseq_fasqfiles {}
+	set allseq_fastqfiles {}
 	foreach bam $bams {
-		putsvars bam
 		set sampledir [file dir $bam]
-		if {$resultfile eq ""} {
+		if {$useresultfile} {
+			set rootname [file_rootname $resultfile]
+		} else {
 			set rootname ${analysisname}-[file_rootname $bam]
 			set resultfile [file dir $bam]/isoform_counts-$rootname.tsv
-		} else {
-			set resultfile [file_absolute $resultfile]
-			set rootname [file_rootname $resultfile]
 		}
 		set resultdir [file dir $resultfile]
 		set sample [file tail [file dir $resultfile]]
 		cd $sampledir
-		set flairdir $resultdir/$rootname
+		set workdir $resultdir/$rootname
 		set sample [file tail $sampledir]
-		mkdir $flairdir
-		job flair_correct-$rootname {*}$skips -skip $flairdir/counts_matrix-$rootname.tsv \
+		mkdir $workdir
+		job flair_correct-$rootname {*}$skips -skip $workdir/counts_matrix-$rootname.tsv \
 		-cores $threads \
 		-deps {
 			$bam $bam.bai $refseq $gtfreftranscripts
 		} -targets {
-			$flairdir/all_corrected-$rootname.bed
+			$workdir/all_corrected-$rootname.bed
 		} -vars {
-			bam rootname flairdir refseq gtfreftranscripts threads sample
+			bam rootname workdir refseq gtfreftranscripts threads sample
 		} -code {
 			analysisinfo_write $bam $target \
-				analysis $flairdir sample $sample \
+				analysis $workdir sample $sample \
 				isocaller_reftranscripts [file tail $gtfreftranscripts] \
 				isocaller_distrreg 0 \
 				isocaller flair isocaller_version [version flair]
@@ -326,91 +369,92 @@ proc flair_job {args} {
 				-g $refseq \
 				--gtf $gtfreftranscripts \
 				-q $bed12 \
-				-o $flairdir/transcripts-$rootname.temp >@ stdout 2>@ stderr
-			file rename $flairdir/transcripts-$rootname.temp_all_corrected.bed $flairdir/all_corrected-$rootname.bed
-			catch {file rename $flairdir/transcripts-$rootname.temp_all_inconsistent.bed $flairdir/all_inconsistent-$rootname.bed}
+				-o $workdir/transcripts-$rootname.temp >@ stdout 2>@ stderr
+			file rename $workdir/transcripts-$rootname.temp_all_corrected.bed $workdir/all_corrected-$rootname.bed
+			catch {file rename $workdir/transcripts-$rootname.temp_all_inconsistent.bed $workdir/all_inconsistent-$rootname.bed}
 			file delete $bed12
 		}
 		set fastqfiles [jobglob fastq/*.fastq.gz]
-		set allseq_fasqfile $rootname/allseq-$rootname.fastq.gz
-		lappend allseq_fasqfiles [file_absolute $allseq_fasqfile]
+		lappend allseq_fastqfiles $workdir/allseq-$rootname.fastq.gz
 		job flair_allseq-$rootname {*}$skips -skip $rootname/counts_matrix-$rootname.tsv \
 		-deps $fastqfiles -targets {
-			$flairdir/allseq-$rootname.fastq.gz
+			$workdir/allseq-$rootname.fastq.gz
 		} -vars {
-			rootname fastqfiles flairdir
+			rootname fastqfiles workdir
 		} -code {
 			# next best on combined data from samples
 			if {![llength $fastqfiles]} {error "No fastq files found"}
-			set tempfastq $flairdir/allseq-$rootname.fastq.gz
+			set tempfastq $workdir/allseq-$rootname.fastq.gz
 			if {![file exists $tempfastq]} {
 				puts "Making $tempfastq"
 				exec cat {*}$fastqfiles > $tempfastq.temp
 				file rename $tempfastq.temp $tempfastq
 			}
 		}
-		job flair_collapse-$rootname {*}$skips -skip $flairdir/counts_matrix-$rootname.tsv \
+		job flair_collapse-$rootname {*}$skips -skip $workdir/counts_matrix-$rootname.tsv \
 		-cores $threads \
 		-deps {
-			$flairdir/allseq-$rootname.fastq.gz
-			$flairdir/all_corrected-$rootname.bed
+			$workdir/allseq-$rootname.fastq.gz
+			$workdir/all_corrected-$rootname.bed
 			$refseq $gtfreftranscripts
 		} -targets {
-			$flairdir/transcripts-$rootname.isoforms.gtf
-			$flairdir/transcripts-$rootname.isoforms.bed
-			$flairdir/transcripts-$rootname.isoforms.fa
+			$workdir/transcripts-$rootname.isoforms.gtf
+			$workdir/transcripts-$rootname.isoforms.bed
+			$workdir/transcripts-$rootname.isoforms.fa
 		} -vars {
-			rootname refseq gtfreftranscripts threads flairdir
+			rootname refseq gtfreftranscripts threads workdir
 		} -code {
-			analysisinfo_write $flairdir/all_corrected-$rootname.bed $target
-			analysisinfo_write $flairdir/all_corrected-$rootname.bed $flairdir/transcripts-$rootname.isoforms.fa
+			analysisinfo_write $workdir/all_corrected-$rootname.bed $workdir/transcripts-$rootname.isoforms.gtf
+			analysisinfo_write $workdir/all_corrected-$rootname.bed $workdir/transcripts-$rootname.isoforms.fa
 			puts "collapse -> $rootname-collapse"
 			exec [flair_bin identify_gene_isoform.py] \
-				$flairdir/all_corrected-$rootname.bed \
+				$workdir/all_corrected-$rootname.bed \
 				$gtfreftranscripts \
-				$flairdir/all_corrected_renamed-$rootname.bed
+				$workdir/all_corrected_renamed-$rootname.bed \
+				>@ stdout 2>@ stderr
 			catch_exec [flair_bin flair] collapse \
 				-t $threads \
 				-g $refseq \
 				--gtf $gtfreftranscripts \
-				-r $flairdir/allseq-$rootname.fastq.gz \
-				-q $flairdir/all_corrected_renamed-$rootname.bed \
-				-o $flairdir/temptranscripts-$rootname >@ stdout 2>@ stderr
-			foreach file [glob $flairdir/temptranscripts-$rootname*] {
-				file rename -force $file $flairdir/[string range [file tail $file] 4 end]
+				-r $workdir/allseq-$rootname.fastq.gz \
+				-q $workdir/all_corrected_renamed-$rootname.bed \
+				-o $workdir/temptranscripts-$rootname \
+				>@ stdout 2>@ stderr
+			foreach file [glob $workdir/temptranscripts-$rootname*] {
+				file rename -force $file $workdir/[string range [file tail $file] 4 end]
 			}
 		}
 		job flair_quantify-$rootname {*}$skips -cores $threads -deps {
-			$flairdir/transcripts-$rootname.isoforms.fa
-			$flairdir/allseq-$rootname.fastq.gz
+			$workdir/transcripts-$rootname.isoforms.fa
+			$workdir/allseq-$rootname.fastq.gz
 		} -targets {
-			$flairdir/counts_matrix-$rootname.tsv
+			$workdir/counts_matrix-$rootname.tsv
 		} -vars {
-			rootname sample threads flairdir
+			rootname sample threads workdir
 		} -code {
-			analysisinfo_write $flairdir/transcripts-$rootname.isoforms.fa $target \
+			analysisinfo_write $workdir/transcripts-$rootname.isoforms.fa $target \
 				analysis $rootname sample $sample \
 				isocaller flair isocaller_version [version flair]
 			set manifestdata {}
-			lappend manifestdata [join [list $sample conditionA batch1 $flairdir/allseq-$rootname.fastq.gz] \t]
+			lappend manifestdata [join [list $sample conditionA batch1 $workdir/allseq-$rootname.fastq.gz] \t]
 			file_write reads_manifest.tsv [join $manifestdata \n]\n
-			puts "quantify -> $flairdir/counts_matrix-$rootname.tsv"
+			puts "quantify -> $workdir/counts_matrix-$rootname.tsv"
 			catch_exec [flair_bin flair] quantify \
 				--threads $threads \
 				-r reads_manifest.tsv \
-				-i $flairdir/transcripts-$rootname.isoforms.fa \
-				-o $flairdir/counts_matrix-$rootname.tsv.temp >@ stdout 2>@ stderr
-			if {[file exists $flairdir/counts_matrix-$rootname.tsv.temp]} {
+				-i $workdir/transcripts-$rootname.isoforms.fa \
+				-o $workdir/counts_matrix-$rootname.tsv.temp >@ stdout 2>@ stderr
+			if {[file exists $workdir/counts_matrix-$rootname.tsv.temp]} {
 				# older versions
-				file rename -force $flairdir/counts_matrix-$rootname.tsv.temp $flairdir/counts_matrix-$rootname.tsv
+				file rename -force $workdir/counts_matrix-$rootname.tsv.temp $workdir/counts_matrix-$rootname.tsv
 			} else {
 				# newer versions
-				file rename -force $flairdir/counts_matrix-$rootname.tsv.temp.counts.tsv $flairdir/counts_matrix-$rootname.tsv
+				file rename -force $workdir/counts_matrix-$rootname.tsv.temp.counts.tsv $workdir/counts_matrix-$rootname.tsv
 			}
 		}
 		job flair_convert-$rootname {*}$skips -deps {
-			$flairdir/transcripts-$rootname.isoforms.gtf
-			$flairdir/counts_matrix-$rootname.tsv
+			$workdir/transcripts-$rootname.isoforms.gtf
+			$workdir/counts_matrix-$rootname.tsv
 			$tsvreftranscripts
 			$refseq
 		} -targets {
@@ -418,10 +462,10 @@ proc flair_job {args} {
 			$resultdir/gene_counts-$rootname.tsv
 			$resultdir/totalcounts-$rootname.tsv
 		} -vars {
-			rootname sample refseq gtfreftranscripts reftranscripts tsvreftranscripts resultfile resultdir flairdir
+			rootname sample refseq gtfreftranscripts reftranscripts tsvreftranscripts resultfile resultdir workdir
 		} -code {
-			set flairtranscripts $flairdir/transcripts-$rootname.isoforms.gtf
-			set flaircountmatrix $flairdir/counts_matrix-$rootname.tsv
+			set flairtranscripts $workdir/transcripts-$rootname.isoforms.gtf
+			set flaircountmatrix $workdir/counts_matrix-$rootname.tsv
 			set out_isoform_counts_file $resultfile
 			set out_gene_counts_file $resultdir/gene_counts-$rootname.tsv
 			set out_total_counts_file $resultdir/totalcounts-$rootname.tsv
@@ -452,17 +496,17 @@ proc flair_job {args} {
 		}
 		foreach genename $plotgenes {
 			job flair_plotisoforms-$rootname-$genename {*}$skips -deps {
-				$flairdir/transcripts-$rootname.isoforms.bed 
-				$flairdir/counts_matrix-$rootname.tsv
+				$workdir/transcripts-$rootname.isoforms.bed 
+				$workdir/counts_matrix-$rootname.tsv
 			} -targets {
 				flair_results/${genename}_isoforms.png
 			} -vars {
-				rootname flairdir
+				rootname workdir
 			} -code {
 				mkdir flair_results
 				puts "plot $rootname"
 				catch {
-					exec [flair_bin plot_isoform_usage] $flairdir/transcripts-$rootname.isoforms.bed $flairdir/counts_matrix-$rootname.tsv $genename
+					exec [flair_bin plot_isoform_usage] $workdir/transcripts-$rootname.isoforms.bed $workdir/counts_matrix-$rootname.tsv $genename
 				}
 				file rename ${genename}_isoforms.png flair_results/${genename}_isoforms.png
 			}
@@ -474,145 +518,131 @@ proc flair_job {args} {
 		cd $projectdir
 		mkdir compar
 		set exproot [file tail $projectdir]
+		set rootname flair-$exproot
+		set workdir compar/$rootname
+		set resultdir compar
 		set bedfiles [jobglob samples/*/flair-*/all_corrected-flair-*.bed]
 		job flair_compar-$exproot {*}$skips \
 		-cores $threads \
-		-deps [list_concat $bedfiles $allseq_fasqfiles] \
+		-deps [list_concat $bedfiles $allseq_fastqfiles] \
 		-targets {
-			compar/flair-$exproot/counts_matrix-flair-$exproot.tsv
-			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.tsv
-			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
-			compar/flair-$exproot/transcripts-flair-$exproot.isoforms.bed
+			$workdir/counts_matrix-$rootname.tsv
+			$workdir/transcripts-$rootname.isoforms.tsv
+			$workdir/transcripts-$rootname.isoforms.gtf
+			$workdir/transcripts-$rootname.isoforms.bed
 		} -vars {
-			bedfiles allseq_fasqfiles exproot sample refseq gtfreftranscripts threads
+			workdir rootname bedfiles allseq_fastqfiles exproot sample refseq gtfreftranscripts threads
 		} -code {
 			analysisinfo_write [lindex $bedfiles 0] $target flair [version flair]
-			analysisinfo_write [lindex $bedfiles 0] compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf flair [version flair]
+			analysisinfo_write [lindex $bedfiles 0] $workdir/transcripts-$rootname.isoforms.gtf flair [version flair]
 			set flairdir [findflair]
-			mkdir compar/flair-$exproot
-			exec cat {*}$bedfiles > compar/flair-$exproot/all_corrected-flair-$exproot.bed
+			mkdir $workdir
+			exec cat {*}$bedfiles > $workdir/all_corrected-$rootname.bed
 			# 
-			putslog "collapse transcript info -> trancripts-flair-$exproot.*"
+			putslog "collapse transcript info -> trancripts-$rootname.*"
 			catch_exec [flair_bin flair] collapse \
 				-t $threads \
 				-g $refseq \
 				--gtf $gtfreftranscripts \
-				-r [join $allseq_fasqfiles ,] \
-				-q compar/flair-$exproot/all_corrected-flair-$exproot.bed \
-				-o compar/flair-$exproot/transcripts-flair-$exproot >@ stdout 2>@ stderr
-			file delete compar/flair-$exproot/all_corrected-flair-$exproot.bed
-			cg gtf2tsv -separate 1 compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/flair-$exproot/transcripts-flair-$exproot.isoforms.tsv
-			cg gtf2tsv -separate 0 compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/flair-$exproot/transcripts-flair-$exproot.isoforms.tsv
+				-r [join $allseq_fastqfiles ,] \
+				-q $workdir/all_corrected-$rootname.bed \
+				-o $workdir/transcripts-$rootname >@ stdout 2>@ stderr
+			file delete $workdir/all_corrected-$rootname.bed
+			cg gtf2tsv -separate 1 $workdir/transcripts-$rootname.isoforms.gtf $workdir/transcripts-$rootname.isoforms.tsv
+			cg gtf2tsv -separate 0 $workdir/transcripts-$rootname.isoforms.gtf $workdir/transcripts-$rootname.isoforms.tsv
 			#
 			# make manifest (in flair.temp)
-			mkdir compar/flair-$exproot/flair.temp
+			mkdir $workdir/flair.temp
 			unset -nocomplain manifestdata
 			set condition A
 			foreach sample [dirglob samples *] {
-				set bam [lindex [glob samples/$sample/map-sminimap*.bam map-*.bam] 0]
-				set rootname [file_rootname $bam]
-				set fastq samples/$sample/allseq-$rootname.fastq.gz
+				set bam [lindex [glob samples/$sample/map-sminimap*.bam samples/$sample/map-*.bam] 0]
+				set fastq samples/$sample/allseq-[file_rootname $bam].fastq.gz
 				if {![file exists $fastq]} {
 					puts "Making $fastq"
 					exec cat {*}[glob samples/$sample/fastq/*.f*q.gz] > $fastq.temp
 					file rename $fastq.temp $fastq
 				}
-				lappend manifestdata($condition) [join [list $sample ${condition} batch1 $fastq] \t]
+				lappend manifestdata($condition) [join [list flair-$sample ${condition} batch1 $fastq] \t]
 			}
 			set c {}
 			foreach condition [array names manifestdata] {
 				append c [join $manifestdata($condition) \n]\n
 			}
-			file_write compar/flair-$exproot/flair.temp/reads_manifest-flair-$exproot.tsv $c
+			file_write $workdir/flair.temp/reads_manifest-$rootname.tsv $c
 			#
-			puts "quantify -> compar/flair-$exproot/counts_matrix-flair-$exproot.tsv"
+			puts "quantify -> $workdir/counts_matrix-$rootname.tsv"
 			catch_exec [flair_bin flair] quantify \
 				--tpm \
 				-t $threads \
-				-r compar/flair-$exproot/flair.temp/reads_manifest-flair-$exproot.tsv \
-				-i compar/flair-$exproot/transcripts-flair-$exproot.isoforms.fa \
-				-o compar/flair-$exproot/flair.temp/counts_matrix-flair-$exproot.tsv >@ stdout 2>@ stderr
+				-r $workdir/flair.temp/reads_manifest-$rootname.tsv \
+				-i $workdir/transcripts-$rootname.isoforms.fa \
+				-o $workdir/flair.temp/counts_matrix-$rootname.tsv >@ stdout 2>@ stderr
 			# remove condition/batch (A_batch1) from fields in header -> just samples
-			file delete compar/flair-$exproot/flair.temp/reads_manifest-flair-$exproot.tsv
-			file rename -force compar/flair-$exproot/flair.temp/counts_matrix-flair-$exproot.tsv compar/flair-$exproot/flair.temp/counts_matrix-flair-$exproot.tsv.ori
-			catch {close $f} ; set f [open compar/flair-$exproot/flair.temp/counts_matrix-flair-$exproot.tsv.ori]
-			catch {close $o} ; set o [open compar/flair-$exproot/flair.temp/counts_matrix-flair-$exproot.tsv w]
+			file delete $workdir/flair.temp/reads_manifest-$rootname.tsv
+			if {[file exists $workdir/flair.temp/counts_matrix-$rootname.tsv]} {
+				file rename -force $workdir/flair.temp/counts_matrix-$rootname.tsv $workdir/flair.temp/counts_matrix-$rootname.tsv.ori
+			} else {
+				file rename -force $workdir/flair.temp/counts_matrix-$rootname.tsv.counts.tsv $workdir/flair.temp/counts_matrix-$rootname.tsv.ori
+			}
+			catch {close $f} ; set f [open $workdir/flair.temp/counts_matrix-$rootname.tsv.ori]
+			catch {close $o} ; set o [open $workdir/flair.temp/counts_matrix-$rootname.tsv w]
 			set line [split [gets $f] \t]
 			puts $o [join [list_regsub -all {_A_batch1$} $line {}] \t]
 			fcopy $f $o
 			close $o
 			close $f
-			foreach file [glob compar/flair-$exproot/flair.temp/*] {
-				file rename -force $file compar/flair-$exproot/[file tail $file]
+			foreach file [glob $workdir/flair.temp/*] {
+				file rename -force $file $workdir/[file tail $file]
 			}
-			file delete compar/flair-$exproot/flair.temp
-			# puts "diffExp on compar/counts_matrix-flair-$exproot.tsv"
+			file delete $workdir/flair.temp
+			# puts "diffExp on compar/counts_matrix-$rootname.tsv"
 			# file delete -force flair-diffexp-$exproot
-			# exec flair diffExp -q compar/counts_matrix-flair-$exproot.tsv -o compar/diffexp-flair-$exproot
-			# exec python $flairdir/bin/bin/diff_iso_usage.py compar/diffiso-flair-$exproot.tsv
+			# exec flair diffExp -q compar/counts_matrix-$rootname.tsv -o compar/diffexp-$rootname
+			# exec python $flairdir/bin/bin/diff_iso_usage.py compar/diffiso-$rootname.tsv
 		}
-		if {$sqanti} {
-			set transcript_classification_file compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_classification.txt
-			set transcripts_genepred_file compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genepred.tsv
-			set counts_matrix_file compar/flair-$exproot/counts_matrix-flair-$exproot.tsv
-			job flair_sqanti_compar-$exproot {*}$skips -deps {
-				compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf
-				$gtfreftranscripts
-				$refseq
-				$counts_matrix_file
-			} -targets {
-				compar/isoform_counts-flair-$exproot.genepred.tsv
-				compar/gene_counts-flair-$exproot.genepred.tsv
-				compar/totalcounts-flair-$exproot.tsv
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_classification.txt
-				$transcript_classification_file
-				$transcripts_genepred_file
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_classification.txt
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_junctions.txt
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.gtf
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genePred
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genepred.tsv
-				compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.fasta
-			} -vars {
-				transcript_classification_file transcripts_genepred_file counts_matrix_file
-				exproot sample refseq gtfreftranscripts
-			} -code {
-				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/isoform_counts-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
-				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/gene_counts-flair-$exproot.genepred.tsv sqanti3 [version sqanti3_qc.py]
-				analysisinfo_write compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf compar/sqanti3-flair-$exproot/sqanti3-${exproot}_classification.txt sqanti3 [version sqanti3_qc.py]
-				mkdir compar/sqanti3-flair-$exproot
-				if {[catch {
-					catch_exec sqanti3_qc.py \
-						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$gtfreftranscripts \
-						$refseq \
-						-d compar/sqanti3-flair-$exproot \
-						-o sqanti3-flair-$exproot \
-						--saturation \
-						--report pdf
-				}]} {
-					catch_exec sqanti3_qc.py \
-						compar/flair-$exproot/transcripts-flair-$exproot.isoforms.gtf \
-						$gtfreftranscripts \
-						$refseq \
-						-d compar/sqanti3-flair-$exproot \
-						-o sqanti3-flair-$exproot \
-						--saturation \
-						--report skip
+		job flair_convert-compar-$exproot {*}$skips -deps {
+			$workdir/transcripts-$rootname.isoforms.gtf
+			$workdir/counts_matrix-$rootname.tsv
+			$tsvreftranscripts
+			$refseq
+		} -targets {
+			$resultdir/isoform_count-$rootname.tsv
+			$resultdir/gene_counts-$rootname.tsv
+			$resultdir/totalcounts-$rootname.tsv
+		} -vars {
+			workdir rootname sample refseq gtfreftranscripts reftranscripts tsvreftranscripts resultdir workdir
+		} -code {
+			set flairtranscripts $workdir/transcripts-$rootname.isoforms.gtf
+			set flaircountmatrix $workdir/counts_matrix-$rootname.tsv
+			set out_isoform_counts_file $resultdir/isoform_count-$rootname.tsv
+			set out_gene_counts_file $resultdir/gene_counts-$rootname.tsv
+			set out_total_counts_file $resultdir/totalcounts-$rootname.tsv
+			set extrainfo [list \
+				analysis $rootname sample $sample \
+				isocaller flair isocaller_version [version flair] \
+				reftranscripts $reftranscripts \
+			]
+			analysisinfo_write $flairtranscripts \
+				$out_isoform_counts_file \
+				{*}$extrainfo
+			analysisinfo_write $flairtranscripts \
+				$out_gene_counts_file \
+				{*}$extrainfo
+			set target $out_isoform_counts_file
+			if {[file size $flairtranscripts] == 0} {
+				foreach target $targets {
+					file_write $target ""
 				}
-				cg genepred2tsv compar/sqanti3-flair-$exproot/sqanti3-flair-${exproot}_corrected.genePred $transcripts_genepred_file 
-				# merge results
-				set isoformcounts compar/isoform_counts-flair-$exproot.genepred.tsv
-				cg_flair_mergeresults $isoformcounts \
-					$transcript_classification_file \
-					$transcripts_genepred_file \
-					$counts_matrix_file \
-					compar/totalcounts-flair-$exproot.tsv
-				#
-				# make compar/gene_counts-flair-$exproot.genepred.tsv
-				set genecounts compar/gene_counts-flair-$exproot.genepred.tsv
-				cg_flair_genecounts $isoformcounts $genecounts
+				file_write $out_isoform_counts_file [join {chromosome begin end strand exonStarts exonEnds cdsStart cdsEnd transcript gene geneid counts-flair-$sample tpm-flair-$sample} \t]\n
+				file_write $out_gene_counts_file [join [list type gene gene_type chromosome begin end strand nrtranscripts counts-flair-$sample tpm-flair-$sample] \t]\n
+				file_write total_counts-$rootname.tsv $sample\n
+			} else {
+				cg_flair_mergeresults {} \
+					$tsvreftranscripts $flairtranscripts $flaircountmatrix \
+					$out_isoform_counts_file $out_gene_counts_file $out_total_counts_file
 			}
+			file delete -force $workdir
 		}
 	} else {
 		cd $projectdir
