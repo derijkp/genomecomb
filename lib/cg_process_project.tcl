@@ -10,6 +10,7 @@ proc process_project_job {args} {
 	set aligner bwa
 	set varcallers {gatkh strelka}
 	set isocallers {}
+	set iso_joint {}
 	set iso_match {}
 	set counters {}
 	set svcallers {}
@@ -93,6 +94,9 @@ proc process_project_job {args} {
 		}
 		-isocallers {
 			set isocallers $value
+		}
+		-iso_joint {
+			set iso_joint $value
 		}
 		-reftranscripts {
 			set reftranscripts $value
@@ -348,15 +352,18 @@ proc process_project_job {args} {
 	set todo(meth) [list_remdup $todo(meth)]
 	set todo(reports) [list_remdup $todo(reports)]
 	if {![llength $reports]} {set todo(reports) {}}
-	process_multicompar_job -experiment $experiment \
+	process_multicompar_job \
+		-experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
 		-counters $counters \
 		-isocallers $isocallers \
 		-iso_match $iso_match \
-		-threads $threads -distrreg $distrreg \
+		-threads $threads \
+		-distrreg $distrreg \
 		-keepfields $keepfields \
-		-split $split -dbfiles $dbfiles -cleanup $cleanup \
+		-split $split -dbfiles $dbfiles \
+		-cleanup $cleanup \
 		-reports $todo(reports) \
 		$destdir $dbdir
 	if {$extra_reports_mastr ne ""} {
@@ -369,6 +376,16 @@ proc process_project_job {args} {
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
+	}
+	if {[llength $iso_joint]} {
+		iso_joint_job \
+			-iso_joint $iso_joint \
+			-iso_match $iso_match \
+			-threads $threads \
+			-distrreg $distrreg \
+			-dbdir $dbdir \
+			-cleanup $cleanup \
+			$destdir
 	}
 	list $todo(var)
 }

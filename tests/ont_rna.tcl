@@ -361,6 +361,48 @@ test ont_rna {isoquant_all SIRV test no ref} {
 	exec diff tmp/sirv/gene_counts-isoquant_all-minimap2-sirv.tsv data/gene_counts-isoquant_all-noref_sirv.tsv
 } {}
 
+test ont_rna {flair basic SIRV test -compar joint} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mkdir tmp/ref
+	foreach file [glob -nocomplain data/SIRV-flames/*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/ref/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/samples/sirv1/map-minimap2-sirv1.bam \
+		tmp/ref/sirv/genome_sirv.ifas \
+		tmp/samples/sirv1/sirv1 \
+		tmp/samples/sirv1/fastq/sample1.fastq.gz tmp/samples/sirv1/fastq/sample2.fastq.gz
+	exec samtools index tmp/samples/sirv1/map-minimap2-sirv1.bam
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/samples/sirv2/map-minimap2-sirv2.bam \
+		tmp/ref/sirv/genome_sirv.ifas \
+		tmp/samples/sirv2/sirv2 \
+		tmp/samples/sirv2/fastq/sample1.fastq.gz tmp/samples/sirv2/fastq/sample2.fastq.gz
+	exec samtools index tmp/samples/sirv2/map-minimap2-sirv2.bam
+	cg flair -stack 1 -compar joint \
+		-refseq tmp/ref/sirv/genome_sirv.ifas \
+		-reftranscripts tmp/ref/sirv/gene_sirv.gtf \
+		tmp
+	# check vs expected
+	exec diff tmp/compar/isoform_count-flair-tmp.tsv data/isoform_count-flair-tmp.tsv
+	exec diff tmp/compar/gene_counts-flair-tmp.tsv data/gene_counts-flair-tmp.tsv
+} {}
+
 test ont_rna {process_project multi methods} {
 	test_cleantmp
 	file mkdir tmp/samples/sirv1/fastq

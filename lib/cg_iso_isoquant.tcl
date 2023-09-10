@@ -940,7 +940,6 @@ proc iso_isoquant_job {args} {
 	set refseq {}
 	set skips {}
 	set reftranscripts {}
-	set sqanti 1
 	set threads 8
 	set data_type nanopore
 	set quantification all
