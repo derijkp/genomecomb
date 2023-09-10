@@ -86,3 +86,74 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 		}
 	}
 }
+
+proc iso_joint_job {args} {
+	upvar job_logdir job_logdir
+	set iso_joint {}
+	set iso_match {}
+	set dbdir {}
+	set threads 2
+	set distrreg 0
+	set cleanup 1
+	cg_options iso_joint args {
+		-iso_joint {
+			set iso_joint $value
+		}
+		-iso_match {
+			set iso_match $value
+		}
+		-threads {
+			set threads $value
+		}
+		-distrreg {
+			set distrreg [distrreg_checkvalue $value]
+		}
+		-dbdir - -refdir {
+			set dbdir $value
+		}
+		-c - -cleanup {
+			set cleanup $value
+		}
+	} {projectdir}
+	set dbdir [file_absolute $dbdir]
+	set refseq [refseq $dbdir]
+	# combined analysis
+	cd $projectdir
+	mkdir compar
+	set exproot [file tail $projectdir]
+	foreach isocaller $iso_joint {
+		set source [file_absolute compar/isoform_counts-$isocaller-$exproot.tsv]
+		set ref [file_absolute compar/isoform_counts-$isocaller-$exproot-ref.tsv]
+		job isojoint_ref_$isocaller -deps {
+			$source
+		} -targets {
+			$ref
+		} -vars {
+			source ref
+		} -code {
+			set fields [cg select -h $source]
+			set fields [list_sub $fields -exclude [list_find -regexp $fields ^counts]]
+			cg select -overwrite 1 -f $fields $source $ref.temp
+			file rename $ref.temp $ref
+		}
+		foreach bam [jobglob $projectdir/samples/*/*.bam $projectdir/samples/*/*.cram] {
+			set preset {}
+			foreach {baseisocaller preset} [split $isocaller _] break
+			if {![auto_load iso_${baseisocaller}_job]} {
+				error "iscaller $baseisocaller not supported"
+			}
+			set options {}
+			if {$preset ne ""} {lappend options -preset $preset}
+			set root [file_rootname $bam]
+			set resultfile [file dir $bam]/isoform_counts-${isocaller}_joint-$root.tsv
+			iso_${baseisocaller}_job \
+				-reftranscripts $ref \
+				{*}$options \
+				-cleanup $cleanup \
+				-distrreg $distrreg -threads $threads \
+				-refseq $refseq \
+				$bam $resultfile
+		}
+		iso_combine_job $projectdir ${isocaller}_joint $iso_match
+	}
+}

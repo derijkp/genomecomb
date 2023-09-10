@@ -16,6 +16,7 @@ proc cg_gtf2tsv {args} {
 	set outfile -
 	set transcripts 1
 	set ignorecodon 1
+	set sort 1
 	cg_options gtf2tsv args {
 		-separate {
 			if {[true $value]} {set transcripts 0} else {set transcripts 1}
@@ -26,14 +27,17 @@ proc cg_gtf2tsv {args} {
 		-ignorecodon {
 			set ignorecodon $value
 		}
+		-sort {
+			set sort $value
+		}
 	} {filename outfile} 0 2
 	proc gtf2tsv_parse_attr {attributes} {
 		set a [dict create {*}[string_change $attributes {; " "}]]
 	}
-	gtf2tsv $filename $outfile $transcripts $ignorecodon
+	gtf2tsv $filename $outfile $transcripts $ignorecodon $sort
 }
 
-proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
+proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1} {sort 1}} {
 	catch {close $f} ;	catch {close $fb} ; catch {close $fa}
 	set f [gzopen $filename]
 	set comment {# -- tsv converted from gtf, original comments follow --}
@@ -300,7 +304,12 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 	if {$f ne "stdin"} {catch {gzclose $f}}
 
 	putsprogress "Assembling file"
-	set o [wgzopen $outfile]
+	if {$sort} {
+		set tempout [tempfile].tsv.zst
+		set o [wgzopen $tempout]
+	} else {
+		set o [wgzopen $outfile]
+	}
 	puts $o $cheader
 	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
@@ -324,6 +333,13 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1}} {
 		puts $o $lineb\t$linea
 	}
 	catch {close $fb} ; catch {close $fa}
+	catch {gzclose $o}
 	file delete $tempbase ; file delete $tempattr
-	if {$o ne "stdout"} {catch {close $o}}
+	if {$sort} {
+		set f [open "|cg select -s - $tempout"]
+		set o [wgzopen $outfile]
+		fcopy $f $o
+		gzclose $f ; gzclose $o
+		file delete $tempout
+	}
 }

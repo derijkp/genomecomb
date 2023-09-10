@@ -13,14 +13,14 @@
 #fields	tpm	1	Float	Number of gene transcripts per million total transcripts
 #fields	type	1	String	type of element
 type	gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-minimap2-sirv
-gene	SIRV1N	known	SIRV1	995	10791	-	8	163.0
+gene	SIRV1N	known	SIRV1	995	10791	-	8	173.0
 gene	SIRV1P	known	SIRV1	10654	11602	-,+	3	154.0
-gene	SIRV2N	known	SIRV2	1000	5911	-	4	166.0
+gene	SIRV2N	known	SIRV2	1000	5911	-	4	162.0
 gene	SIRV3N	known	SIRV3	1000	9943	-	3	94.0
-gene	SIRV3P	known	SIRV3	1944	8940	+	8	148.0
+gene	SIRV3P	known	SIRV3	1944	8940	+	11	143.0
 gene	SIRV4P	known	SIRV4	1000	3403	+	2	157.0
-gene	SIRV4N	known	SIRV4	3637	15122	-	4	269.0
-gene	SIRV5P	known	SIRV5	1000	11867	+	9	256.0
-gene	novelg_SIRV5:13000	novel	SIRV5	13284	13606	+	1	6.0
-gene	SIRV6P	known	SIRV6	1000	11837	+	18	810.0
+gene	SIRV4N	known	SIRV4	3637	15122	-	5	265.0
+gene	SIRV5P	known	SIRV5	1000	11867	+	9	252.0
+gene	novelg_SIRV5:13000	novel	SIRV5	13284	13606	+	1	5.0
+gene	SIRV6P	known	SIRV6	1000	11837	+	20	844.0
 gene	SIRV7N	known	SIRV7	1000	147957	-	6	139.0

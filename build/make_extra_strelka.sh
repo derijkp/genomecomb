@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds portable clair3 binaries using the Holy build box environment
+# This script builds portable strelka binaries using the Holy build box environment
 # options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
@@ -25,8 +25,7 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-# clair3version=0.1.12
-clair3version=1.0.4
+strelkaversion=2.9.10
 
 all=1
 extra=1
@@ -42,8 +41,6 @@ esac; shift; done
 echo "Entering Holy Build Box environment"
 
 # Activate Holy Build Box environment.
-# Tk does not compile with these settings (X)
-# only use HBB for glibc compat, not static libs
 source /hbb_exe/activate
 
 # print all executed commands to the terminal
@@ -61,11 +58,9 @@ yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
 yuminstall devtoolset-9
-# yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-8 rh-python36 bash
+# scl enable devtoolset-9 bash
 source /opt/rh/devtoolset-9/enable
-#source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -99,103 +94,88 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
+# mamba
+# -----
 cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
-# clair3
-# -----
+# strelka
+# -------
 cd /build
 
-conda create -y -n clair3
-conda activate clair3
+mamba create -y -n strelka
+mamba activate strelka
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda install -y clair3=$clair3version python=3.9
+mamba install -y strelka=$strelkaversion
 
-conda deactivate
+mamba deactivate
 
 # make package
 # ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
-rm clair3.tar.gz || true
-conda pack -n clair3 -o clair3.tar.gz
-rm -rf clair3-$clair3version-$arch.old || true
-mv clair3-$clair3version-$arch clair3-$clair3version-$arch.old || true
-mkdir /build/clair3-$clair3version-$arch
-cd /build/clair3-$clair3version-$arch
-tar xvzf ../clair3.tar.gz
+mamba install -y -c conda-forge conda-pack
 
-# should be solved in v1.0.0
-## patch (for error: `np.int` was a deprecated)
-#catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
-#set c [file_read bin/preprocess/CreateTensorPileupFromCffi.py.ori]
-#regsub -all {np.int([^0-9])} $c {int\1} c2
-#file_write bin/preprocess/CreateTensorPileupFromCffi.py $c2
+rm strelka.tar.gz || true
+conda pack -n strelka -o strelka.tar.gz
+rm -rf strelka-$strelkaversion-$arch.old || true
+mv strelka-$strelkaversion-$arch strelka-$strelkaversion-$arch.old || true
 
-echo '#!/bin/bash
-script="$(readlink -f "$0")"
-dir="$(dirname "$script")"
-PATH=$dir/bin:$PATH
-LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/run_clair3.sh ${1+"$@"}
-' > run_clair3.sh
-chmod ugo+x run_clair3.sh
+mkdir /build/strelka-$strelkaversion-$arch
+cd /build/strelka-$strelkaversion-$arch
+tar xvzf ../strelka.tar.gz
+mv bin/configureStrelkaSomaticWorkflow.py bin/configureStrelkaSomaticWorkflow.py.ori || true
+cp -f /io/extern-src/configureStrelkaSomaticWorkflow.py bin/configureStrelkaSomaticWorkflow.py
+mv bin/configureStrelkaSomaticWorkflow.py bin/configureStrelkaSomaticWorkflow.py.ori || true
+cp -f /io/extern-src/configureStrelkaSomaticWorkflow.py bin/configureStrelkaSomaticWorkflow.py
+
+scriptDir=os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+scriptName=os.path.basename(os.path.realpath(__file__))
+workflowDir=os.path.abspath(os.path.join(scriptDir,"../lib/python"))
+
+
+
+cd /build/strelka-$strelkaversion-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/run_clair3.sh ${1+"$@"}
-' > clair3
-chmod ugo+x clair3
+$dir/bin/configureStrelkaGermlineWorkflow.py ${1+"$@"}
+' > configureStrelkaGermlineWorkflow.py
+chmod ugo+x configureStrelkaGermlineWorkflow.py
 
-mv bin/whatshap bin/whatshap.ori
-cat << 'EOF' > bin/whatshap
-#!/bin/sh
-'''exec' python "$0" "$@"
-' '''
-# -*- coding: utf-8 -*-
-import re
-import sys
-from whatshap.__main__ import main
-if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.exit(main())
-EOF
-chmod ugo+x bin/whatshap
-
-cd /build/clair3-$clair3version-$arch
-mkdir models
-cd models
-wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
-tar xvzf clair3_models.tar.gz
-rm clair3_models.tar.gz
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+$dir/bin/configureStrelkaSomaticWorkflow.py ${1+"$@"}
+' > configureStrelkaSomaticWorkflow.py
+chmod ugo+x configureStrelkaSomaticWorkflow.py
 
 cd /build
-ln -sf clair3-$clair3version-$arch/clair3 .
-ln -sf clair3-$clair3version-$arch/run_clair3.sh .
-rm clair3-$clair3version-$arch.tar.gz || true
-tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch clair3 run_clair3.sh
-rm -rf /io/extra$ARCH/clair3-$clair3version-$arch
-cp -ra clair3-$clair3version-$arch clair3-$clair3version-$arch clair3 run_clair3.sh /io/extra$ARCH
+ln -sf strelka-$strelkaversion-$arch/configstrelka.py .
+rm strelka-$strelkaversion-$arch.tar.gz || true
+tar cvzf strelka-$strelkaversion-$arch.tar.gz strelka-$strelkaversion-$arch configstrelka.py
+rm -rf /io/extra$ARCH/strelka-$strelkaversion-$arch
+cp -ra strelka-$strelkaversion-$arch configstrelka.py /io/extra$ARCH
+cd /io/extra$ARCH/
 
-echo "Finished building clair3-$clair3version-$arch"
+echo "Finished building strelka-$strelkaversion-$arch"

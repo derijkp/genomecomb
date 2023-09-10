@@ -36,7 +36,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 		}
 		set jobforce 1
 		putslog "Adding $file to $compar_file"
-		lappend files $file
+		lappend files [file_absolute $file]
 		lappend isreg 0
 		lappend fieldsneeded $name
 	}
@@ -156,7 +156,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					} elseif {$delete} {
 						file rename -- $dep $target.temp
 					} else {
-						mklink $dep $target.temp
+						mklink $dep $target.temp 1
 					}
 					file rename -force -- $target.temp $target
 				}

@@ -9,6 +9,11 @@ proc version_clair3 {} {
 	set version [lindex $version end]
 }
 
+proc clair3_dir {} {
+	set exe [file_resolve [exec which run_clair3.sh]]
+	set clair3dir [file dir $exe]
+}
+
 proc clair3_replacebam {finalbam oribam} {
 	file lstat $oribam a
 	set time $a(mtime)
@@ -165,7 +170,7 @@ proc var_clair3_job {args} {
 	set refseq [refseq $refseq]
 	if {$time eq ""} {set time ${threads}:00:00}
 	if {$mem eq ""} {set mem ${threads}G}
-	if {$phasing} {lappend opt	--enable_phasing --longphase_for_phasing}
+	# if {$phasing} {lappend opts	--enable_phasing --use_longphase_for_final_output_phasing}
 	if {$preset ne ""} {
 		switch $preset {
 			ont {
@@ -233,7 +238,7 @@ proc var_clair3_job {args} {
 	} -vars {
 		vcffile varfile varallfile root refseq
 		region opts index threads
-		mincoverage mingenoqual split platform model
+		mincoverage mingenoqual split platform model phasing
 	} -code {
 		if {$model eq ""} {
 			set runinfofile [gzfile [file dir $dep]/runinfo*.tsv]
@@ -310,8 +315,34 @@ proc var_clair3_job {args} {
 			empty_gvcf $varallfile [list $root]
 		}
 		if {[file exists $tempvcfdir/merge_output.vcf.gz]} {
-			cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile.s.gz
-			file rename -force -- $vcffile.s.gz $vcffile
+			if {$phasing} {
+				# check if empty -> longphase gives incorrect output on empty vcf file
+				set ft [gzopen $tempvcfdir/merge_output.vcf.gz]
+				set header [tsv_open $ft]
+				if {[gets $ft line] == -1} {set empty 1} else {set empty 0}
+				gzclose $ft
+				if {$empty} {
+					clair3_empty_vcf $vcffile
+				} else {
+					if {$platform eq "ont"} {
+						set seqplatformopt --ont
+					} else {
+						set seqplatformopt --pb
+					}
+					catch_exec [clair3_dir]/bin/longphase phase \
+						-s $tempvcfdir/merge_output.vcf.gz \
+						-b $dep \
+						-r $refseq \
+						-t $threads -o $tempvcfdir/phased-merge_output \
+						--indels \
+						$seqplatformopt
+					cg sortvcf -threads $threads $tempvcfdir/phased-merge_output.vcf $vcffile.s.gz
+					file rename -force -- $vcffile.s.gz $vcffile
+				}
+			} else {
+				cg sortvcf -threads $threads $tempvcfdir/merge_output.vcf.gz $vcffile.s.gz
+				file rename -force -- $vcffile.s.gz $vcffile
+			}
 		} else {
 			clair3_empty_vcf $vcffile
 		}

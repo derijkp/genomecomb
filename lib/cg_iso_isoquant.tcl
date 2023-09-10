@@ -232,8 +232,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				} elseif {[lindex $genebasica($geneid) 3] ne "$strand"} {
 					puts stderr "Strand does not match for transcripts of same gene $geneid: $line"
 				} elseif {$begin > $prevbegin} {
-					puts stderr "transcript not overlapping previous for same gene $geneid: $line"
+					puts stderr "warning: reftranscript not overlapping previous for same gene $geneid: $line"
 					if {[expr {$begin - $prevbegin}] < 100000} {
+						puts stderr "merge anyway (closer than 100000)"
 						lset genebasica($geneid) 2 $end
 					}
 				} elseif {$end > $prevbegin} {
@@ -1417,7 +1418,6 @@ proc iso_isoquant_job {args} {
 	set refseq {}
 	set skips {}
 	set reftranscripts {}
-	set sqanti 1
 	set threads 8
 	set data_type nanopore
 	set quantification all

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds portable clair3 binaries using the Holy build box environment
+# This script builds portable manta binaries using the Holy build box environment
 # options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
@@ -25,8 +25,7 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-# clair3version=0.1.12
-clair3version=1.0.4
+mantaversion=1.6.0
 
 all=1
 extra=1
@@ -42,8 +41,6 @@ esac; shift; done
 echo "Entering Holy Build Box environment"
 
 # Activate Holy Build Box environment.
-# Tk does not compile with these settings (X)
-# only use HBB for glibc compat, not static libs
 source /hbb_exe/activate
 
 # print all executed commands to the terminal
@@ -61,11 +58,9 @@ yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
 yuminstall devtoolset-9
-# yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-8 rh-python36 bash
+# scl enable devtoolset-9 bash
 source /opt/rh/devtoolset-9/enable
-#source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -99,103 +94,79 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
+# mamba
+# -----
 cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
-# clair3
+# manta
 # -----
 cd /build
 
-conda create -y -n clair3
-conda activate clair3
+mamba create -y -n manta
+mamba activate manta
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda install -y clair3=$clair3version python=3.9
+mamba install -y manta=$mantaversion
 
-conda deactivate
+mamba deactivate
 
 # make package
 # ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
-rm clair3.tar.gz || true
-conda pack -n clair3 -o clair3.tar.gz
-rm -rf clair3-$clair3version-$arch.old || true
-mv clair3-$clair3version-$arch clair3-$clair3version-$arch.old || true
-mkdir /build/clair3-$clair3version-$arch
-cd /build/clair3-$clair3version-$arch
-tar xvzf ../clair3.tar.gz
+mamba install -y -c conda-forge conda-pack
 
-# should be solved in v1.0.0
-## patch (for error: `np.int` was a deprecated)
-#catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
-#set c [file_read bin/preprocess/CreateTensorPileupFromCffi.py.ori]
-#regsub -all {np.int([^0-9])} $c {int\1} c2
-#file_write bin/preprocess/CreateTensorPileupFromCffi.py $c2
+rm manta.tar.gz || true
+conda pack -n manta -o manta.tar.gz
+rm -rf manta-$mantaversion-$arch.old || true
+mv manta-$mantaversion-$arch manta-$mantaversion-$arch.old || true
+
+mkdir /build/manta-$mantaversion-$arch
+cd /build/manta-$mantaversion-$arch
+tar xvzf ../manta.tar.gz
+
+cd /build/manta-$mantaversion-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/run_clair3.sh ${1+"$@"}
-' > run_clair3.sh
-chmod ugo+x run_clair3.sh
+$dir/bin/configManta.py ${1+"$@"}
+' > configManta.py
+chmod ugo+x configManta.py
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/run_clair3.sh ${1+"$@"}
-' > clair3
-chmod ugo+x clair3
-
-mv bin/whatshap bin/whatshap.ori
-cat << 'EOF' > bin/whatshap
-#!/bin/sh
-'''exec' python "$0" "$@"
-' '''
-# -*- coding: utf-8 -*-
-import re
-import sys
-from whatshap.__main__ import main
-if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.exit(main())
-EOF
-chmod ugo+x bin/whatshap
-
-cd /build/clair3-$clair3version-$arch
-mkdir models
-cd models
-wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
-tar xvzf clair3_models.tar.gz
-rm clair3_models.tar.gz
+$dir/bin/configManta.py ${1+"$@"}
+' > manta
+chmod ugo+x manta
 
 cd /build
-ln -sf clair3-$clair3version-$arch/clair3 .
-ln -sf clair3-$clair3version-$arch/run_clair3.sh .
-rm clair3-$clair3version-$arch.tar.gz || true
-tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch clair3 run_clair3.sh
-rm -rf /io/extra$ARCH/clair3-$clair3version-$arch
-cp -ra clair3-$clair3version-$arch clair3-$clair3version-$arch clair3 run_clair3.sh /io/extra$ARCH
+ln -sf manta-$mantaversion-$arch/configManta.py .
+ln -sf manta-$mantaversion-$arch/manta .
+rm manta-$mantaversion-$arch.tar.gz || true
+tar cvzf manta-$mantaversion-$arch.tar.gz manta-$mantaversion-$arch configManta.py manta
+rm -rf /io/extra$ARCH/manta-$mantaversion-$arch
+cp -ra manta-$mantaversion-$arch configManta.py /io/extra$ARCH
+cd /io/extra$ARCH/
 
-echo "Finished building clair3-$clair3version-$arch"
+echo "Finished building manta-$mantaversion-$arch"

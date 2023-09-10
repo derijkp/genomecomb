@@ -110,12 +110,14 @@ test ont_rna {flair basic SIRV test resultfile} {
 	cg flair -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam tmp/result/iso_count-result.tsv
+		tmp/sirv/map-minimap2-sirv.bam tmp/result/iso_count-flair-result.tsv
 	# check vs expected
-	cg select -overwrite 1 -f {transcript gene geneid chromosome strand begin end exonStarts exonEnds cdsStart cdsEnd exonCount type transcripttype counts-flair-result=$counts-flair-minimap2-sirv} data/isoform_counts-flair-minimap2-sirv.tsv expected.tsv 
-	exec diff tmp/result/iso_count-result.tsv expected.tsv
-	cg select -overwrite 1 -f {type	gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-result=$counts-flair-minimap2-sirv} data/gene_counts-flair-minimap2-sirv.tsv expected.tsv 
-	exec diff tmp/result/gene_counts-result.tsv expected.tsv 
+	cg select -overwrite 1 -f {transcript gene geneid chromosome strand begin end exonStarts exonEnds cdsStart cdsEnd exonCount type transcripttype counts-flair-result=$counts-flair-minimap2-sirv} \
+		data/isoform_counts-flair-minimap2-sirv.tsv expected.tsv 
+	exec diff tmp/result/iso_count-flair-result.tsv expected.tsv
+	cg select -overwrite 1 -f {type	gene	gene_type	chromosome	begin	end	strand	nrtranscripts	counts-flair-result=$counts-flair-minimap2-sirv} \
+		data/gene_counts-flair-minimap2-sirv.tsv expected.tsv 
+	exec diff tmp/result/gene_counts-flair-result.tsv expected.tsv 
 } {}
 
 test ont_rna {isoquant basic SIRV test} {
@@ -359,6 +361,48 @@ test ont_rna {isoquant_all SIRV test no ref} {
 	exec diff tmp/sirv/gene_counts-isoquant_all-minimap2-sirv.tsv data/gene_counts-isoquant_all-noref_sirv.tsv
 } {}
 
+test ont_rna {flair basic SIRV test -compar joint} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mkdir tmp/ref
+	foreach file [glob -nocomplain data/SIRV-flames/*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/ref/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/samples/sirv1/map-minimap2-sirv1.bam \
+		tmp/ref/sirv/genome_sirv.ifas \
+		tmp/samples/sirv1/sirv1 \
+		tmp/samples/sirv1/fastq/sample1.fastq.gz tmp/samples/sirv1/fastq/sample2.fastq.gz
+	exec samtools index tmp/samples/sirv1/map-minimap2-sirv1.bam
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		tmp/samples/sirv2/map-minimap2-sirv2.bam \
+		tmp/ref/sirv/genome_sirv.ifas \
+		tmp/samples/sirv2/sirv2 \
+		tmp/samples/sirv2/fastq/sample1.fastq.gz tmp/samples/sirv2/fastq/sample2.fastq.gz
+	exec samtools index tmp/samples/sirv2/map-minimap2-sirv2.bam
+	cg flair -stack 1 -compar joint \
+		-refseq tmp/ref/sirv/genome_sirv.ifas \
+		-reftranscripts tmp/ref/sirv/gene_sirv.gtf \
+		tmp
+	# check vs expected
+	exec diff tmp/compar/isoform_count-flair-tmp.tsv data/isoform_count-flair-tmp.tsv
+	exec diff tmp/compar/gene_counts-flair-tmp.tsv data/gene_counts-flair-tmp.tsv
+} {}
+
 test ont_rna {process_project multi methods} {
 	test_cleantmp
 	file mkdir tmp/samples/sirv1/fastq
@@ -394,6 +438,50 @@ test ont_rna {process_project multi methods} {
 	# check vs expected
 	exec diff tmp/compar/isoform_counts-tmp.tsv data/ontrna/isoform_counts-tmp.tsv
 	exec diff tmp/compar/gene_counts-tmp.tsv data/ontrna/gene_counts-tmp.tsv
+	cg tsvdiff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
+} {diff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
+header diff
+<extrafields: geneid gene_ori category size counts_iqall-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
+---
+>extrafields: gene_name gene_id
+
+child process exited abnormally} error
+
+test ont_rna {isoquant joint analysis} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	exec cg process_project -stack 1 -v 2 -d 4 \
+		-split 1 \
+		-threads 2 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2_splice} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-distrreg 0 \
+		-svcallers {} \
+		-varcallers {} \
+		-isocallers {isoquant} \
+		-iso_match . \
+		-iso_joint {isoquant} \
+		-reports {} \
+		-dbdir tmp/ref/sirv \
+		tmp \
+		>& tmp/ontrna.log
+	# check vs expected
+	exec diff tmp/compar/isoform_counts-isoquant_joint-tmp.tsv data/ontrna/isoform_counts-isoquant_joint-tmp.tsv
+	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-isoquant_joint-tmp.tsv
 } {}
 
 testsummarize

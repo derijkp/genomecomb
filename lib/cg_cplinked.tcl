@@ -74,11 +74,7 @@ proc cplinked_file {file destfile {absolute 0}} {
 			file rename -force -- $destfile $renamefile$num
 		}
 	}
-	if {!$absolute} {
-		mklink $file $destfile
-	} else {
-		file link -symbolic $destfile [file_absolute $file]
-	}
+	mklink -absolute $absolute $file $destfile
 }
 
 proc cg_cplinked {args} {

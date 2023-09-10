@@ -146,8 +146,8 @@ proc sv_job {args} {
 		# Produce SV calls
 		set ibam $workdir/[file tail $bamfile]
 		set indexext [indexext $bamfile]
-		mklink $bamfile $ibam
-		mklink $bamfile.$indexext $ibam.$indexext
+		mklink $bamfile $ibam 1
+		mklink $bamfile.$indexext $ibam.$indexext 1
 		defcompressionlevel 1
 		set todo {}
 		set sample [file_rootname $resultfile]
