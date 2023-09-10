@@ -25,6 +25,11 @@ source "${dir}/start_hbb3.sh"
 # Parse arguments
 # ===============
 
+#dirRversion=3.5.3
+#majorversion=3
+dirRversion=4.2.1
+majorversion=4
+
 all=1
 while [[ "$#" -gt 0 ]]; do case $1 in
 	*) echo "Unknown parameter: $1"; exit 1;;
@@ -262,10 +267,6 @@ sudo make install
 # R
 # -
 # useful hints in getting it compiled found at https://tdhock.github.io/blog/2017/compiling-R/
-#dirRversion=3.5.3
-#majorversion=3
-dirRversion=4.2.1
-majorversion=4
 
 cd /build
 rm -rf /build/R-$dirRversion
@@ -421,8 +422,8 @@ cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 yuminstall gsl-devel
 cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DirichletMultinomial")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DropletUtils")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter")'
-
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("Seurat", repos="http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("sleepwalk", repos="http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SCINA", repos="http://cran.us.r-project.org")'
@@ -450,6 +451,19 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("https://github.com/dzhang32/ggtranscript/archive/refs/tags/v0.99.3.tar.gz", repos=NULL, type="source")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("survminer", repos="http://cran.us.r-project.org")'
+
+yuminstall hdf5-devel
+wget https://hdf-wordpress-1.s3.amazonaws.com/wp-content/uploads/manual/HDF5/HDF5_1_14_1/src/hdf5-1.14.1-2.tar.gz
+tar xvzf hdf5-1.14.1-2.tar.gz
+cd hdf5-1.14.1-2
+./configure
+make
+sudo cp bin/* /usr/bin
+sudo cp -ra lib/* /usr/lib
+sudo cp -ra share/* /usr/share/
+sudo cp -ra include/* /usr/include/
+cp -ra lib/* /build/dirR-$dirRversion-$arch/lib64/R/lib
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("hdf5r", repos="http://cran.us.r-project.org")'
 
 cd /build
 ln -sf dirR-$dirRversion-$arch/R dirR-4.2.1
