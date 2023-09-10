@@ -676,7 +676,7 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 		-x *.log -x *.finished  -x *.zsti \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
-		tmp/clair3_var expected/clair3]
+		tmp/clair3_var expected/clair3_var]
 	lappend result [cg select -g chromosome tmp/clair3_var/compar.tsv]
 	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3_var/compar.tsv]
 	list_remove $result {}
