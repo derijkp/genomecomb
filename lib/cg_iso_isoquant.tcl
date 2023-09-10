@@ -232,9 +232,8 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				} elseif {[lindex $genebasica($geneid) 3] ne "$strand"} {
 					puts stderr "Strand does not match for transcripts of same gene $geneid: $line"
 				} elseif {$begin > $prevbegin} {
-					puts stderr "warning: reftranscript not overlapping previous for same gene $geneid: $line"
+					puts stderr "transcript not overlapping previous for same gene $geneid: $line"
 					if {[expr {$begin - $prevbegin}] < 100000} {
-						puts stderr "merge anyway (closer than 100000)"
 						lset genebasica($geneid) 2 $end
 					}
 				} elseif {$end > $prevbegin} {
@@ -749,7 +748,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	catch {close $o}
 	set o [open $targetisoformcountsfile.temp w]
 	puts $o $comments
-	puts $o [join $newheader \t]\tcategory\tsize\tcounts_iqall-$sample\tcounts_weighed-${root}\tcounts_unique-${root}\tcounts_strict-${root}\tcounts_aweighed-${root}\tcounts_aunique-${root}\tcounts_astrict-${root}
+	puts $o [join $newheader \t]\tcategory\tsize\tcounts_iqall-${root}\tcounts_weighed-${root}\tcounts_unique-${root}\tcounts_strict-${root}\tcounts_aweighed-${root}\tcounts_aunique-${root}\tcounts_astrict-${root}
 	if {$regreftranscripts ne ""} {
 		set keepoutputa [array get outputa]
 		while 1 {
@@ -929,7 +928,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	catch {close $f} ; catch {close $o}
 	set f [gzopen $tempreads]
 	set header [tsv_open $f comment]
-	set poss [list_cor $header {assignment_type isoform_id covered_pct polya cellbarcode umicount}]
+	set poss [list_cor $header {assignment_type isoform_id covered_pct polya inconsistency}]
 	set readpos [lsearch $header read_id]
 	set inconsistencypos [lsearch $header inconsistency]
 	set sizepos [lsearch $header aligned_size]
@@ -937,7 +936,6 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set isopos [lsearch $header isoform_id]
 	set genepos [lsearch $header gene_id]
 	set ambpos [lsearch $header ambiguity]
-	set umipos [lsearch $header umicount]
 	set pctpos [lsearch $header covered_pct]
 	set o [wgzopen $tempreads2]
 	puts $o $comment[join $header \t]\tgambiguity
@@ -975,7 +973,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 					# filter out shorter alignments
 					set sizes [list_subindex $todo $sizepos]
 					set dsizes [list_remdup $sizes]
-					if {[llength $dsizes] > 1} Tuinwijk 35, 2110 Wijnegem{
+					if {[llength $dsizes] > 1} {
 						set cutoff [expr {[lmath_max $dsizes]-100}]
 						set temp {}
 						foreach line $todo {
@@ -1058,7 +1056,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 					lappend l $gambiguity
 					puts $o [join $l \t]
 					# count
-					foreach {assignment_type iso covered_pct polya cellbarcode umicount} [list_sub $l $poss] break
+					foreach {assignment_type iso covered_pct polya inconsistency} [list_sub $l $poss] break
 					if {$inconsistency < 2 && $iso ne "."} {
 						iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount
 					}
@@ -1418,6 +1416,7 @@ proc iso_isoquant_job {args} {
 	set refseq {}
 	set skips {}
 	set reftranscripts {}
+	set sqanti 1
 	set threads 8
 	set data_type nanopore
 	set quantification all
