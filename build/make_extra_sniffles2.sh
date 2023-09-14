@@ -25,6 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+snifflesversion=2.2
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -114,8 +116,6 @@ conda init bash
 # sniffles
 # -----
 cd /build
-
-snifflesversion=2.0.7
 
 conda create -y -n sniffles
 conda activate sniffles

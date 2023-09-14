@@ -46,6 +46,7 @@ proc sv_sniffles_job {args} {
 	set skips {}
 	set min_support 2
 	set min_seq_size 300
+	set minsvlen 35
 	set snifflesopts {}
 	set resultfile {}
 	set region {}
@@ -86,6 +87,9 @@ proc sv_sniffles_job {args} {
 		}
 		-sample {
 			set sample $value
+		}
+		-minsvlen {
+			set minsvlen $value
 		}
 		-min_support {
 			if {$version2} {puts stderr "warning: given option -min_support is not used by sniffles2"}
@@ -157,7 +161,7 @@ proc sv_sniffles_job {args} {
 		$vcffile.gz $vcffile.analysisinfo $varallfile
 	} -vars {
 		bamfile sniffles opts refseq threads root sample varallfile
-		min_support min_seq_size region threads version2
+		min_support min_seq_size region threads version2 minsvlen
 	} -code {
 		analysisinfo_write $dep $target sample $sample varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
 		if {$region ne ""} {
@@ -174,6 +178,7 @@ proc sv_sniffles_job {args} {
 			if {[file exists $target.temp.gz]} {file delete $target.temp.gz}
 			if {[file exists $varallfile.temp]} {file delete $varallfile.temp}
 			exec sniffles {*}$opts --threads $threads \
+				--minsvlen $minsvlen \
 				--reference $refseq \
 				--snf $varallfile.temp \
 				--input $usebam --vcf $target.temp.gz \
@@ -184,6 +189,7 @@ proc sv_sniffles_job {args} {
 		} else {
 			if {[catch {
 				exec sniffles {*}$opts --threads $threads --skip_parameter_estimation \
+					--minsvlen $minsvlen \
 					--genotype --cluster \
 					--min_support $min_support --min_seq_size $min_seq_size \
 					-m $usebam -v $target.temp 2>@ stderr >@ stdout
