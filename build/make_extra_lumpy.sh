@@ -25,6 +25,11 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
+program=lumpy
+programversion=0.3.1
+condaname=lumpy-sv
+pythonversion=2.7
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -58,7 +63,6 @@ yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
 yuminstall devtoolset-9
-# yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
 # instead of: scl enable devtoolset-9 bash
 source /opt/rh/devtoolset-9/enable
@@ -94,64 +98,64 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
-cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
-unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
-
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
-
-conda init bash
-. ~/.bash_profile
-
-# lumpy
+# mamba
 # -----
 cd /build
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
+unset PYTHONPATH
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
-lumpyversion=0.3.1
+# bioconda
+# --------
 
-conda create -y -n lumpy
-conda activate lumpy
+PATH=/home/build/mambaforge/bin:$PATH
+
+mamba init bash
+. ~/.bash_profile
+
+# make program using conda/mamba
+# ------------------------------
+cd /build
+
+mamba create -y -n $program
+mamba activate $program
+conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda install -y python=2.7 lumpy-sv=$lumpyversion
+mamba install -y $condaname=$programversion python=$pythonversion
 
-conda deactivate
+mamba deactivate
 
-# make package
-# ------------
+# Make package
+# ============
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
-rm lumpy.tar.gz || true
-conda pack -n lumpy -o lumpy.tar.gz
-rm -rf lumpy-$lumpyversion-$arch.old || true
-mv lumpy-$lumpyversion-$arch lumpy-$lumpyversion-$arch.old || true
+mamba install -y -c conda-forge conda-pack
 
-#wget https://github.com/arq5x/lumpy-sv/archive/refs/tags/v$lumpyversion.tar.gz
-#mv v$lumpyversion.tar.gz lumpy-v$lumpyversion.tar.gz
+rm $program.tar.gz || true
+conda pack -n $program -o $program.tar.gz
+rm -rf $program-$programversion-$arch.old || true
+mv $program-$programversion-$arch $program-$programversion-$arch.old || true
 
-mkdir /build/lumpy-$lumpyversion-$arch
-cd /build/lumpy-$lumpyversion-$arch
-tar xvzf ../lumpy.tar.gz
-#tar xvzf ../lumpy-v$lumpyversion.tar.gz
-#mkdir scripts/bamkit
+mkdir /build/$program-$programversion-$arch
+cd /build/$program-$programversion-$arch
+tar xvzf ../$program.tar.gz
 
-# add libraries
-# somehow the binaries are linked to libcrypto.so.1.0.0, as we don't have this exact one in the hbb,
-# copy the 1.0* version we do have, and create 1.0.0 as a softlink
-cp -a -f /usr/lib64/libcrypto.so.1.0* /build/lumpy-$lumpyversion-$arch/lib
-cd /build/lumpy-$lumpyversion-$arch/lib
-ln -s libcrypto.so.1.0* libcrypto.so.1.0.0
+# Add libraries
+# -------------
+# no longer needed in newer version?
+## somehow the binaries are linked to libcrypto.so.1.0.0, as we don't have this exact one in the hbb,
+## copy the 1.0* version we do have, and create 1.0.0 as a softlink
+#cp -a -f /usr/lib64/libcrypto.so.1.0* /build/$program-$programversion-$arch/lib
+#cd /build/$program-$programversion-$arch/lib
+#ln -s libcrypto.so.1.0* libcrypto.so.1.0.0
 
-# add executable wrappers
-cd /build/lumpy-$lumpyversion-$arch
+# Add executable wrappers
+# -----------------------
+cd /build/$program-$programversion-$arch
 
 echo 'script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
@@ -196,20 +200,27 @@ $dir/bin/lumpy_filter ${1+"$@"}
 ' > lumpy_filter
 chmod ugo+x lumpy_filter
 
-# wrap up
-rm ../lumpy-$lumpyversion-$arch.tar.gz || true
+# links outside appdir
+# --------------------
+makelinks="$program lumpyexpress lumpy_filter"
 cd /build
-tar cvzf lumpy-$lumpyversion-$arch.tar.gz lumpy-$lumpyversion-$arch
-cp -ra lumpy-$lumpyversion-$arch /io/extra$ARCH
-cd /io/extra$ARCH/
-rm lumpy || true
-ln -s lumpy-$lumpyversion-$arch/lumpy .
-ln -s lumpy-$lumpyversion-$arch/lumpyexpress .
-ln -s lumpy-$lumpyversion-$arch/lumpy_filter .
-ln -s lumpy-$lumpyversion-$arch/lumpy lumpy-$lumpyversion
-ln -s lumpy-$lumpyversion-$arch/lumpyexpress lumpyexpress-$lumpyversion
-tar cvzf lumpy-$lumpyversion-$arch.tar.gz lumpy-$lumpyversion-$arch lumpy lumpyexpress lumpy_filter lumpy-$lumpyversion lumpyexpress-$lumpyversion
+for link in $makelinks
+do
+	rm $link || true
+	ln -sf $program-$programversion-$arch/$link $link
+	rm $link-$programversion || true
+	ln -sf $program-$programversion-$arch/$link $link-$programversion
+done
 
-echo "build in $builddir/lumpy-$lumpyversion-$arch"
-echo "installed in $srcdir/lumpy-$lumpyversion-$arch"
-echo "Finished building lumpy"
+# Make archive
+# ------------
+rm $program-$programversion-$arch.tar.gz || true
+tar cvzf $program-$programversion-$arch.tar.gz $program-$programversion-$arch $program $program-$programversion $extralinks
+
+cp -ra $program-$programversion-$arch $program $program-$programversion /io/extra$ARCH
+
+cd /io/extra$ARCH/
+
+echo "Finished building $program-$programversion-$arch"
+echo "build in $builddir/lumpy-$programversion-$arch"
+echo "installed in $srcdir/lumpy-$programversion-$arch"
