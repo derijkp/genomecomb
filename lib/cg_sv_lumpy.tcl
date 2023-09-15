@@ -1,5 +1,13 @@
 proc version_lumpy {} {
 	set version ?
+	# version 0.3 gives older version in help, try to get from application dir name
+	set lumpy [exec which lumpy]
+	set lumpy [file_resolve $lumpy]
+	set dir [file tail [file dir $lumpy]]
+	if {[regexp {^lumpy-([0-9.]+)} $dir temp version]} {
+		return $version
+	}
+	# old way if this does not work
 	catch {
 		exec lumpy
 	} c
