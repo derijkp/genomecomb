@@ -26,6 +26,7 @@ proc makerefdb_job {args} {
 	set refSeqFuncElemsurl {}
 	set mirbase {}
 	set pseudoautosomal {}
+	set organelles {}
 	set transcriptsurl {}
 	set transcriptsgtf {}
 
@@ -37,6 +38,9 @@ proc makerefdb_job {args} {
 		}
 		-pseudoautosomal {
 			set pseudoautosomal $value
+		}
+		-organelles {
+			set organelles $value
 		}
 		-genesdb {
 			set genesdb $value
@@ -447,6 +451,9 @@ proc makerefdb_job {args} {
 
 	if {$pseudoautosomal ne ""} {
 		file_write extra/reg_${build}_pseudoautosomal.tsv $pseudoautosomal
+	}
+	if {$organelles ne ""} {
+		file_write extra/reg_${build}_organelles.tsv $organelles
 	}
 
 	# mirbase

@@ -30,6 +30,9 @@ X	155701383	156030895	PAR2
 Y	10001	2781479	PAR1
 Y	56887903	57217415	PAR2
 }
+set organelles {chromosome
+chrM
+}
 set dbsnpversion 151
 # set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
@@ -141,6 +144,7 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 makerefdb_job \
 	-genomeurl $genomeurl \
 	-pseudoautosomal $par \
+	-organelles $organelles \
 	-regionsdb_collapse $regionsdb_collapse \
 	-regionsdb_join $regionsdb_join \
 	-dbsnp $dbsnpversion \
@@ -182,7 +186,6 @@ job collapsedgencodegtf -deps {
 } -vars {transcriptsgtf} -code {
 	set tempdir [tempdir]
 	wgetfile https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/TOPMed_RNAseq_v2/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
-	set gtf /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf
 	exec [findpython3] $tempdir/collapse_annotation.py $transcriptsgtf $target.temp
 	file rename -force $target.temp $target
 }

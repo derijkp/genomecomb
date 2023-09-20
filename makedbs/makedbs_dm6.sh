@@ -23,6 +23,9 @@ exec cg source "$0" "$@"
 set build dm6
 set defaultdest /complgen/refseqnew
 set par {}
+set organelles {chromosome
+chrM
+}
 set genomeurl {}
 set dbsnpversion {}
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Drosophila_melanogaster/all_assembly_versions/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.gff.gz
@@ -92,6 +95,7 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 makerefdb_job \
 	-genomeurl $genomeurl \
 	-pseudoautosomal $par \
+	-organelles $organelles \
 	-dbsnp $dbsnpversion \
 	-regionsdb_collapse $regionsdb_collapse \
 	-regionsdb_join $regionsdb_join \

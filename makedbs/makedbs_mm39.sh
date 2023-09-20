@@ -31,6 +31,9 @@ set par {chromosome	begin	end	name
 X	169969759	170931299	PAR1
 Y	90745845	91644698	PAR1
 }
+set organelles {chromosome
+chrM
+}
 set dbsnpversion 142
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/108.20200622/GCF_000001635.26_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gff.gz
 set mirbase mmu-22.1:mm39
@@ -100,6 +103,7 @@ job_logfile ${dest}/${build}/log_makedbs_${build} ${dest}/${build} $cmdline
 makerefdb_job \
 	-genomeurl $genomeurl \
 	-pseudoautosomal $par \
+	-organelles $organelles \
 	-dbsnp $dbsnpversion \
 	-regionsdb_collapse $regionsdb_collapse \
 	-regionsdb_join $regionsdb_join \

@@ -123,6 +123,26 @@ proc ref_tsvtranscripts refseq {
 	return $reftranscripts
 }
 
+proc get_transcriptsfile_tsv {reftranscripts refseq} {
+	if {$reftranscripts eq ""} {
+		set reftranscripts [ref_tsvtranscripts $refseq]
+	} elseif {$reftranscripts eq "none"} {
+	} elseif {[file extension $reftranscripts] eq ".gtf"} {
+		set reftranscripts [file_absolute $reftranscripts]
+		set reftranscriptstsv [file root $reftranscripts].tsv
+		if {![file exists $reftranscriptstsv]} {
+			cg_gtf2tsv $reftranscripts $reftranscriptstsv.temp
+			cg select -overwrite 1 -s - $reftranscriptstsv.temp $reftranscriptstsv.temp2
+			file delete $reftranscriptstsv.temp
+			file rename -force $reftranscriptstsv.temp2 $reftranscriptstsv
+		}
+		set reftranscripts $reftranscriptstsv
+	} else {
+		set reftranscripts [file_absolute $reftranscripts]
+	}
+	return $reftranscripts
+}
+
 proc ref_chrsize {refseq chr} {
 	global genomecomb_chrsizea
 	if {![info exists genomecomb_chrsizea]} {

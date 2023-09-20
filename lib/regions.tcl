@@ -125,3 +125,19 @@ proc regions_skip {region skipregions} {
 	}
 	return 0
 }
+
+proc regions_organelle {refseq region} {
+	global cache_organelles
+	if {![info exists cache_organelles)]} {
+		set cache_organelles {}
+		set ofile [gzfile [refdir $refseq]/extra/reg_*_organelles.tsv]
+		foreach o [read_tsv $ofile chromosome] {
+			lappend cache_organelles $o
+		}
+	}
+	if {$region in $cache_organelles} {return 1}
+	foreach o $cache_organelles {
+		if {[regexp ^$o\[:_\ -\] $region]} {return 1}
+	}
+	return 0
+}

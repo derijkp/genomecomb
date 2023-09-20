@@ -681,92 +681,30 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	# make isoform_counts file
 	# ------------------------
 	# read isoquant counts
-	unset -nocomplain countsa
 	set f [gzopen [gzfile $isodir/*.transcript_counts.tsv]]
 	gets $f
-	array set countsa [read $f]
+	foreach {iso value} [read $f] {
+		set tcountsa($iso,iq) $value
+	}
 	gzclose $f
 	set mfile [gzfile $isodir/*.transcript_model_counts.tsv]
 	if {[file exists $mfile]} {
 		set f [gzopen $mfile]
 		gets $f
-		array set countsa [read $f]
+		foreach {iso value} [read $f] {
+			set tcountsa($iso,iq) $value
+		}
 		gzclose $f
 	}
-	set basefields {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
-	# lappend remove {*}$basefields
-	set newheader $basefields
-	if {$regreftranscripts ne ""} {
-		catch {close $f}
-		set f [gzopen $regreftranscripts]
-		set header [tsv_open $f comments]
-		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
-		set remove [list_sub $header $poss]
-		foreach {isopos genepos geneidpos} [lrange $poss 6 end] break
-		lappend remove {*}[list_sub $header [lrange $poss 6 end]]
-		set left [list_lremove $header $remove]
-		lappend poss {*}[list_cor $header $left]
-		set temp [list_common $left $basefields]
-		foreach field $temp {
-			set pos [lsearch $left $field]
-			lset left $pos ${field}_ori
-		}
-		lappend newheader {*}$left
-	}
-	#
-	if {$comments eq ""} {
-		set comments [deindent {
-			#filetype	tsv/transcriptsfile
-			#fileversion	0.99
-			#fields	table
-			#fields	field	number	type	description
-			#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
-			#fields	chromosome	1	String	Chromosome name
-			#fields	strand	1	String	+ or - for strand
-			#fields	begin	1	Integer	Transcription start position
-			#fields	end	1	Integer	Transcription end position
-			#fields	exonCount	1	Integer	Number of exons
-			#fields	exonStarts	E	Integer	Exon start positions
-			#fields	transcript	1	String	transcript id
-			#fields	gene	1	String	gene name
-			#fields	geneid	1	String	gene id
-			#fields	cdsStart	1	Integer	Coding region start
-			#fields	cdsEnd	1	Integer	Coding region end
-			#fields	type	1	String	type of element
-			#fields	exonEnds	E	Integer	Exon end positions
-			#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
-			#fields	score	1	Float	Score
-			#fields	name2	1	String	Alternate name (e.g. gene_id from GTF)
-			#fields	length	1	Integer	isoform length
-			#fields	exons	1	Integer	Number of exons
-			#fields	category	1	String	one of the isoform categories (known, novel_in_catalog, novel_not_in_catalog, intergenic)
-			#fields	associated_gene	1	String	the reference gene name
-			#fields	associated_transcript	1	String	the reference transcript name
-			#fields	counts	1	Integer	Number of reads mapping to isoform
-		}]
-	}
-	catch {close $o}
-	set o [open $targetisoformcountsfile.temp w]
-	puts $o $comments
-	puts $o [join $newheader \t]\tcategory\tsize\tcounts_iqall-${root}\tcounts_weighed-${root}\tcounts_unique-${root}\tcounts_strict-${root}\tcounts_aweighed-${root}\tcounts_aunique-${root}\tcounts_astrict-${root}
-	if {$regreftranscripts ne ""} {
-		set keepoutputa [array get outputa]
-		while 1 {
-			if {[gets $f line] == -1} break
-			set line [split $line \t]
-			set iso [lindex $line $isopos]
-			if {$iso eq ""} continue
-			if {[info exists outputa($iso)]} {
-				unset outputa($iso)
-			}
-			set t [get tcounta($iso,t) 0]
-			if {[get countsa($iso) 0] == 0 && $t == 0} continue
-			set geneid [lindex $line $geneidpos]
-			set line [list_sub $line $poss]
-			puts $o [join $line \t]\tknown\t$sizea($iso)\t[get countsa($iso)]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
-		}
-		catch {close $f}
-	}
+	set o [iso_write_isoform_counts \
+		$targetisoformcountsfile.temp \
+		$regreftranscripts \
+		tcounta \
+		[list \
+			counts_iqall-$root iq counts_weighed-$root t counts_unique-$root u counts_strict-$root s \
+			counts_aweighed-$root a counts_aunique-$root au counts_astrict-$root as\
+		]
+	]
 	#
 	# models
 	if {[file exists $destdir/transcripts_models-$sample.tsv]} {
@@ -815,7 +753,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 		close $f
 	}
-	close $o
+	gzclose $o
 	cg select -overwrite 1 -s - $targetisoformcountsfile.temp $targetisoformcountsfile.temp2
 	file rename -force $targetisoformcountsfile.temp2 $targetisoformcountsfile
 	#
@@ -1209,6 +1147,7 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 	lappend gposs $geneidpos
 	set strandpos [lindex $gposs 2]
 	set todo {}
+	unset -nocomplain tocheck
 	set tocheck(+) {}
 	set tocheck(-) {}
 	set tocheck(.) {}
@@ -1430,7 +1369,8 @@ proc iso_isoquant_job {args} {
 	set cleanup 1
 	set resultfile {}
 	set regions {}
-	set skipregions {chrM M}
+	# set skipregions {chrM M}
+	set skipregions {}
 	set options {}
 	set singlecell 0
 	cg_options iso_isoquant args {
@@ -1535,22 +1475,7 @@ proc iso_isoquant_job {args} {
 	set resultfile [file_absolute $resultfile]
 	set sampledir [file dir $resultfile]
 	if {$gene_quantification eq ""} {set gene_quantification $quantification}
-	if {$reftranscripts eq ""} {
-		set reftranscripts [ref_tsvtranscripts $refseq]
-	} elseif {$reftranscripts eq "none"} {
-	} elseif {[file extension $reftranscripts] eq ".gtf"} {
-		set reftranscripts [file_absolute $reftranscripts]
-		set reftranscriptstsv [file root $reftranscripts].tsv
-		if {![file exists $reftranscriptstsv]} {
-			cg_gtf2tsv $reftranscripts $reftranscriptstsv.temp
-			cg select -overwrite 1 -s - $reftranscriptstsv.temp $reftranscriptstsv.temp2
-			file delete $reftranscriptstsv.temp
-			file rename -force $reftranscriptstsv.temp2 $reftranscriptstsv
-		}
-		set reftranscripts $reftranscriptstsv
-	} else {
-		set reftranscripts [file_absolute $reftranscripts]
-	}
+	set reftranscripts [get_transcriptsfile_tsv $reftranscripts $refseq]
 	# hanging problems with threads, run single
 	set threads 1
 	# set iso_isoquantdir [findiso_isoquant]
@@ -1586,7 +1511,18 @@ proc iso_isoquant_job {args} {
 			$regdir/read_assignments-${root}.tsv \
 		]
 		if {$reftranscripts eq "none"} {set depreftranscripts ""} else {set depreftranscripts $reftranscripts}
-		job isquant-${root}-$region -mem 15G -cores $threads -skip $mainskips -skip $regionskips -deps {
+		if {[regions_organelle $refseq $region]} {
+			# dont need regionsskip here, as these are the direct results of iso_organelle_job
+			iso_organelle_job \
+				-refseq $refseq \
+				-reftranscripts $depreftranscripts \
+				-region $region \
+				-skip $mainskips \
+				$bam \
+				$regdir/isoform_counts-${root}.tsv
+			continue
+		}
+		job isoquant-${root}-$region -mem 15G -cores $threads -skip $mainskips -skip $regionskips -deps {
 			$bam $bam.bai $refseq $depreftranscripts
 		} -targets {
 			$regdir/00_regali

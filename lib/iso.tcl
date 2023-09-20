@@ -157,3 +157,151 @@ proc iso_joint_job {args} {
 		iso_combine_job $projectdir ${isocaller}_joint $iso_match
 	}
 }
+
+proc cigar2exons {cigar begin} {
+	set lcigar [regsub -all {([0-9]+)([A-Z=])} $cigar {\1 \2 }]
+	set exonStarts $begin ; set exonEnds {}
+	set end $begin
+	set exons {}
+	set introns {}
+	set exonsize 0
+	set intronsize 0
+	foreach {num op} $lcigar {
+		switch $op {
+			M - D - = - X {
+				if {$intronsize > 0} {
+					lappend introns $intronsize
+					set intronsize 0
+				}
+				incr exonsize $num
+			}
+			N - D {
+				if {$exonsize > 0} {
+					lappend exons $exonsize
+					set exonsize 0
+				}
+				incr intronsize $num
+			}
+			H - S - I - P {}
+		}
+	}
+	if {$exonsize > 0} {
+		lappend exons $exonsize
+		set exonsize 0
+	}
+	set current $begin
+	set regions [list $current]
+	foreach exon $exons intron $introns {
+		incr current $exon
+		lappend regions $current
+		if {$intron eq ""} break
+		incr current $intron
+		lappend regions $current
+	}
+	return $regions
+}
+
+proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcountaVar 
+	{fields {iqall iq weighedb i unique u strict s aweighed a aunique au astrict as}} {sizeaVar {}}
+} {
+	upvar $tcountaVar tcounta
+	if {$sizeaVar ne ""} {
+		upvar $sizeaVar sizea
+	}
+	set fieldsheader [list_unmerge $fields 1 fieldsids]
+	set basefields {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
+	# lappend remove {*}$basefields
+	set newheader $basefields
+	if {$regreftranscripts ne ""} {
+		catch {close $f}
+		set f [gzopen $regreftranscripts]
+		set header [tsv_open $f comments]
+		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
+		set remove [list_sub $header $poss]
+		foreach {isopos genepos geneidpos} [lrange $poss 6 end] break
+		lappend remove {*}[list_sub $header [lrange $poss 6 end]]
+		set left [list_lremove $header $remove]
+		lappend poss {*}[list_cor $header $left]
+		set temp [list_common $left $basefields]
+		foreach field $temp {
+			set pos [lsearch $left $field]
+			lset left $pos ${field}_ori
+		}
+		lappend newheader {*}$left
+	}
+	#
+	if {$comments eq ""} {
+		set comments [deindent {
+			#filetype	tsv/transcriptsfile
+			#fileversion	0.99
+			#fields	table
+			#fields	field	number	type	description
+			#fields	name	1	String	Name of transcript (usually transcript_id from GTF)
+			#fields	chromosome	1	String	Chromosome name
+			#fields	strand	1	String	+ or - for strand
+			#fields	begin	1	Integer	Transcription start position
+			#fields	end	1	Integer	Transcription end position
+			#fields	exonCount	1	Integer	Number of exons
+			#fields	exonStarts	E	Integer	Exon start positions
+			#fields	transcript	1	String	transcript id
+			#fields	gene	1	String	gene name
+			#fields	geneid	1	String	gene id
+			#fields	cdsStart	1	Integer	Coding region start
+			#fields	cdsEnd	1	Integer	Coding region end
+			#fields	type	1	String	type of element
+			#fields	exonEnds	E	Integer	Exon end positions
+			#fields	exonFrames	E	Integer	Exon frame offsets {0,1,2}
+			#fields	score	1	Float	Score
+			#fields	name2	1	String	Alternate name (e.g. gene_id from GTF)
+			#fields	length	1	Integer	isoform length
+			#fields	exons	1	Integer	Number of exons
+			#fields	category	1	String	one of the isoform categories (known, novel_in_catalog, novel_not_in_catalog, intergenic)
+			#fields	associated_gene	1	String	the reference gene name
+			#fields	associated_transcript	1	String	the reference transcript name
+			#fields	counts	1	Integer	Number of reads mapping to isoform
+		}]
+	}
+	catch {close $o}
+	set o [wgzopen $targetisoformcountsfile]
+	puts $o $comments
+	puts $o [join $newheader \t]\tcategory\tsize\t[join $fieldsheader \t]
+	if {$regreftranscripts ne ""} {
+		set keepoutputa [array get outputa]
+		while 1 {
+			if {[gets $f line] == -1} break
+			set line [split $line \t]
+			set iso [lindex $line $isopos]
+			if {$iso eq ""} continue
+			if {[info exists outputa($iso)]} {
+				unset outputa($iso)
+			}
+			# set geneid [lindex $line $geneidpos]
+			set line [list_sub $line $poss]
+			if {![info exists sizea($iso)]} {
+				foreach {starts ends} [list_sub $line {4 5}] break
+				set size 0
+				foreach s [split [string trim $starts ,] ,] e [split [string trim $ends ,] ,] {
+					set size [expr {$size + $e - $s}]
+				}
+				set sizea($iso) $size
+			}
+			set resultline [join $line \t]\tknown\t$sizea($iso)
+			set output 0
+			foreach id $fieldsids {
+				if {![info exists tcounta($iso,$id)]} {
+					append resultline \t0
+				} elseif {![string is int $tcounta($iso,$id)]} {
+					if {$tcounta($iso,$id) > 0} {set output 1}
+					append resultline \t$tcounta($iso,$id)
+				} else {
+					if {$tcounta($iso,$id) > 0} {set output 1}
+					append resultline \t$tcounta($iso,$id)
+				}
+			}
+			if {!$output} continue
+			puts $o $resultline
+		}
+		catch {close $f}
+	}
+	return $o
+}

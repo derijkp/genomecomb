@@ -133,3 +133,22 @@ proc sclose {f} {
 	if {$f in "stdin stdout stderr"} return
 	close $f
 }
+
+proc read_tsv {file {fields {}}} {
+	set f [gzopen $file]
+	set header [tsv_open $f]
+	if {$fields eq ""} {
+		set result [list $header]
+		while {[gets $f line] != -1} {
+			lappend result [split $line \t]
+		}
+	} else {
+		set poss [list_cor $header $fields]
+		set result {}
+		while {[gets $f line] != -1} {
+			lappend result [list_sub [split $line \t] $poss]
+		}
+	}
+	gzclose $f
+	return $result
+}

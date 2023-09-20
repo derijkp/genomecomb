@@ -13,6 +13,9 @@ X	154931044	155260560	PAR2
 Y	10001	2649520	PAR1
 Y	59034050	59363566	PAR2
 }
+set organelles {chromosome
+chrM
+}
 set mirbasegenome hsa-20:hg19
 set dbsnpversion 151
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
@@ -102,6 +105,7 @@ makerefdb_job \
 	-refSeqFuncElemsurl $refSeqFuncElemsurl \
 	-genesdb $genesdb \
 	-pseudoautosomal $par \
+	-organelles $organelles \
 	-dbsnp $dbsnpversion \
 	-mirbase $mirbase \
 	/complgen/refseqnew/$build >@ stdout 2>@ stderr
