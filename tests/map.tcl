@@ -186,6 +186,41 @@ test map_minimap2 {map_minimap2 paired -.sam} {
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
 
+test map_minimap2 {map_minimap2 fastq comments} {
+	if {![file exists $::refseqdir/hg19/genome_hg19.ifas.minimap2.sr]} {
+		error "minimap2 sr index not made"
+	}
+	test_cleantmp
+	cg zcat data/seq_R1.fq.gz > tmp/seq_R1.fq
+	set c [file_read tmp/seq_R1.fq]
+	regsub @SRR792091.9203/1 $c "@SRR792091.9203/1 CB:Z:AAGC" c
+	file_write tmp/seq_R1.fq $c
+	cg map_minimap2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/seq_R1.fq
+	set otherfields {AS XS MC MQ YS YT s1 s2 cm de rl ms}
+	set removefields {AS XS MC MQ YS YT s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
+	exec samtools view --no-PG tmp/ali.bam | cg sam2tsv -fields $otherfields \
+		| cg select -f {chromosome	begin	end	strand {qname="[string range $qname 0 end-2]"} *} \
+		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
+	exec samtools view --no-PG data/minimap2-p.sam | cg sam2tsv -fields $otherfields \
+		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
+	# we have one slight difference in alignment for unpaired alignement!
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv >& tmp/diff}
+	file_write tmp/expectdiff [deindent {
+		diff tmp/ali.tsv tmp/expected.tsv
+		header
+		  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
+		4c4
+		< chr21	42735541	42735641	-	SRR792091.9203	0	100	0	0	0	0	0	100M	100	AGCCATGACCCTGCACCATGCGAGTGACATTGGGACTGGAGCAAAGGGACACAGCAGAGTGGCCCCTGGTGCCCAGGACCCGGCAGAGCTCTCGGACTGG	DDDDDDC?DDDDCCCBDDDDDDDDDEDDDDDDDDCDEEEEEFFFFFFHEHHHHJJJJJJJIIJJIJJJJJIJJJJIHGJIIJJJJJJHHHHHFFFFFCCB	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:100 CB:Z:AAGC
+		---
+		> chr21	42735541	42735641	-	SRR792091.9203	0	100	0	0	0	0	0	100M	100	AGCCATGACCCTGCACCATGCGAGTGACATTGGGACTGGAGCAAAGGGACACAGCAGAGTGGCCCCTGGTGCCCAGGACCCGGCAGAGCTCTCGGACTGG	DDDDDDC?DDDDCCCBDDDDDDDDDEDDDDDDDDCDEEEEEFFFFFFHEHHHHJJJJJJJIIJJIJJJJJIJJJJIHGJIIJJJJJJHHHHHFFFFFCCB	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:100
+		25c25
+		< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4
+		---
+		> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91
+	}]\n
+	catch {exec diff tmp/diff tmp/expectdiff}
+} 0
+
 cd $::testdir
 
 test map_minimap2 {map_minimap2 -paired 0} {

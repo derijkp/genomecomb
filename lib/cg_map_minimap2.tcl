@@ -130,7 +130,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -y -x $preset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$outpipe
@@ -155,7 +155,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -y -x $preset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
