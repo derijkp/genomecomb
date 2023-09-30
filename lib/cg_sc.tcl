@@ -150,6 +150,7 @@ proc sc_barcodes_job args {
 		      read name (as @<cellbarcode>_<umi>#originalname) as well as in the info "fields" CB CR and MI
 		* files
 	}
+	if {$whitelist ne ""} {set usewhitelist 0} else {set usewhitelist 1}
 	# logfile
 	set fastqdir [file_absolute $fastqdir]
 	if {![info exists resultdir]} {set resultdir [file dir $fastqdir]}
@@ -202,17 +203,17 @@ proc sc_barcodes_job args {
 
 		#
 		# load whitelist
-		catch {close $f}
-		set f [gzopen $whitelist]
-		unset -nocomplain wa
-		while 1 {
-			if {[gets $f barcode] == -1} break
-#			if {![info exists a($barcode)]} continue
-#			if {$a($barcode) <= 2} continue
-			set wa($barcode) 1
+		if {$whitelist ne ""} {
+			catch {close $f}
+			set f [gzopen $whitelist]
+			unset -nocomplain wa
+			while 1 {
+				if {[gets $f barcode] == -1} break
+				set wa($barcode) 1
+			}
+			close $f
+			# llength [array names wa]
 		}
-		close $f
-		# llength [array names wa]
 
 		#
 		# make mergedbarcodes
@@ -233,7 +234,9 @@ proc sc_barcodes_job args {
 			if {$barcode ne $prevbarcode} {
 				incr a($prevbarcode) $count
 				if {$count > 0 && $barcode ne ""} {
-					if {[info exists wa($prevbarcode)]} {
+					if {$whitelist eq ""} {
+						set white -1
+					} elseif {[info exists wa($prevbarcode)]} {
 						set white 1
 					} else {
 						set white 0
@@ -313,7 +316,7 @@ proc sc_barcodes_job args {
 		} -targets {
 			$target
 		} -vars {
-			part costcutoff bcparts barcodesize resultdir
+			part costcutoff bcparts barcodesize resultdir usewhitelist
 		} -procs {
 			ali_ident_matrix
 		} -code {
@@ -327,7 +330,7 @@ proc sc_barcodes_job args {
 				if {[gets $f line] == -1} break
 				foreach {barcode count umicount whitelist} [split $line \t] break
 				if {$barcode eq "" || $count <= 2 || [string length $barcode] <= $minlen} continue
-				if {$whitelist} {set wa($barcode) 1}
+				if {$whitelist == 1} {set wa($barcode) 1}
 				lappend list $barcode
 			}
 			gzclose $f
@@ -346,7 +349,7 @@ proc sc_barcodes_job args {
 			set num 0
 			foreach barcode $todo {
 				puts [incr num].$barcode
-				if {![info exists wa($barcode)]} continue
+				if {$usewhitelist && ![info exists wa($barcode)]} continue
 				set matches [ali_cost -names 0 -cutoff $costcutoff -matrix $matrix $barcode $list]
 				puts $o $barcode\t$matches
 			}
@@ -363,28 +366,20 @@ proc sc_barcodes_job args {
 		$resultdir/reads_per_cell.tsv
 	} -vars {
 		barcode_matches resultdir whitelist barcodesize threads
-		maxcells mincells mergedbarcodesfile cutoff
+		maxcells mincells mergedbarcodesfile cutoff usewhitelist
 	} -code {
-#		if 0 {
-#			set f [gzopen $mergedbarcodesfile]
-#			set h [tsv_open $f]
-#			while {[gets $f line] != -1} {
-#				foreach {barcode count umicount whitelist} [split $line \t] break
-#				set a($barcode) $count
-#				if {$whitelist} {set wa($barcode) 1}
-#			}
-#			close $f
-#		}
 
 		# load counts in a (counts) and ua (umicounts)
 		set f [gzopen $mergedbarcodesfile]
 		set header [tsv_open $f]
 		unset -nocomplain a
 		unset -nocomplain ua
+		unset -nocomplain wa
 		while {[gets $f line] != -1} {
-			foreach {barcode count umicount} [split $line \t] break
+			foreach {barcode count umicount whitelist} [split $line \t] break
 			set a($barcode) $count
 			set ua($barcode) $umicount
+			if {$whitelist == 1} {set wa($barcode) 1}
 		}
 		gzclose $f
 
@@ -416,12 +411,22 @@ proc sc_barcodes_job args {
 				if {$num > $maxcells} break
 				foreach {match temp} $matches {
 					if {![info exists a($match)]} continue
-					if {$match eq $barcode} {
-						set wmatch 2
-					} elseif {[info exists wa($match)]} {
-						set wmatch 1
+					if {![info exists wa($barcode)]} {
+						if {$match eq $barcode} {
+							set wmatch -1
+						} elseif {[info exists wa($match)]} {
+							set wmatch -2
+						} else {
+							set wmatch -3
+						}
 					} else {
-						set wmatch 0
+						if {$match eq $barcode} {
+							set wmatch 2
+						} elseif {[info exists wa($match)]} {
+							set wmatch 1
+						} else {
+							set wmatch 0
+						}
 					}
 					puts $o $match\t$barcode\t$a($match)\t$ua($match)\t$wmatch
 					unset a($match)
