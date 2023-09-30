@@ -867,6 +867,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set f [gzopen $tempreads]
 	set header [tsv_open $f comment]
 	set poss [list_cor $header {assignment_type isoform_id covered_pct polya inconsistency}]
+	set chrpos [lsearch $header chromosome]
 	set readpos [lsearch $header read_id]
 	set inconsistencypos [lsearch $header inconsistency]
 	set sizepos [lsearch $header aligned_size]
@@ -914,12 +915,12 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 					if {[llength $dsizes] > 1} {
 						set cutoff [expr {[lmath_max $dsizes]-100}]
 						set temp {}
-						foreach line $todo {
-							set size [lindex $line $sizepos]
+						foreach tline $todo {
+							set size [lindex $tline $sizepos]
 							if {$size >= $cutoff} {
-								lappend temp $line
+								lappend temp $tline
 							} else {
-								lappend remtodo $line
+								lappend remtodo $tline
 							}
 						}
 						set todo $temp
@@ -968,6 +969,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 						set dgenes [list_remdup $genes]
 					}
 				}
+				set ambiguity [llength $todo]
 				unset -nocomplain ca
 				foreach gene $dgenes {
 					set ambiguity [llength [list_find $genes $gene]]
