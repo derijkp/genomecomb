@@ -305,3 +305,13 @@ proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcounta
 	}
 	return $o
 }
+
+proc iso_polya {seq qstart qend} {
+	if {[regexp -all T [string range $seq $qstart-10 $qstart]] > 7} {
+		return -1
+	} elseif {[regexp -all A [string range $seq $qend $qend+10]] > 7} {
+		return 1
+	} else {
+		return 0
+	}
+}

@@ -1,3 +1,25 @@
+
+proc iso_organelle_removeribo {overlaps {genes {MT-RNR1 MT-RNR2 MT-TF}}} {
+	set ps {}
+	set p 0
+	set do 0
+	foreach temp [list_subindex $overlaps 4] {
+		if {$temp in $genes} {
+			lappend ps $p
+		} else {
+			set do 1
+		}
+		incr p
+	}
+	if {$do} {
+		set overlaps [list_sub $overlaps -exclude $ps]
+	}
+	return $overlaps
+}
+
+# a simplified caller for organelles (which give too many problems with normals callers because of different structure)
+# It only counts known genes based on overlap. 
+# It just picks the isoform/gene with the largest overlap, not taking into account that some organelles show some splicing/alt transcripts
 proc iso_organelle_job {args} {
 	upvar job_logdir job_logdir
 	global appdir
@@ -83,29 +105,31 @@ proc iso_organelle_job {args} {
 			set line [split $line \t]
 			foreach {chrom start end strand exonStarts exonEnds transcript gene geneid} [list_sub $line $poss] break
 			if {[regexp , [string trim $exonStarts ,]] || [regexp , [string trim $exonEnds ,]]} {
-				puts stderr "warning: $transcript ($geneid $chrom:$start-$end $exonStarts $exonEnds) has splicing (which is not supported in organelle)"
+				puts stderr "warning: $transcript ($geneid $chrom:$start-$end $exonStarts $exonEnds) has splicing (which is not really supported in iso_organelle)"
 			}
 			lappend tocheck [list $start $end $strand $transcript $gene $geneid [expr {$end-$start}]]
 		}
 		gzclose $f
 
+		set regtsvali [tempfile].tsv.zst
+		set regtsvali $regdir/map-$region.sam.tsv.zst
 		if {$region ne ""} {
 			set samregions [samregions $region $refseq]
-			set code [list | samtools view -h $bam {*}$samregions | cg sam2tsv ]
+			exec samtools view -h $bam {*}$samregions | cg sam2tsv | cg zst -c 1 > $regtsvali
 		} else {
 			set samregions {}
-			set code [list | cg sam2tsv $bam ]
+			cg sam2tsv $bam | cg zst -c 1 > $regtsvali
 		}
 		# umicount
 		catch {gzclose $f}
-		set f [open "$code"] 
+		set f [gzopen $regtsvali] 
 		set header [tsv_open $f]
 		set readpos [lsearch $header qname]
 		while 1 {
 			if {[gets $f line] == -1} break
 			set line [split $line \t]
 			set read [lindex $line $readpos]
-			if {[regexp {^([A-Z_]+)#(.*)$} $read temp umi r]} {
+			if {[regexp {^([A-Z]+)_([A-Z]+)#(.*)$} $read temp cellbarcode umi r]} {
 				if {![info exists umicount_readsa($r)]} {
 					incr umicounta($cellbarcode,$umi)
 					set umicount_readsa($r) 1
@@ -134,17 +158,18 @@ proc iso_organelle_job {args} {
 			covered_pct polya classification closest_known cellbarcode umi umicount
 		} \t]
 		catch {gzclose $f}
-		set f [open "$code"]
+		set f [gzopen $regtsvali]
 		set header [tsv_open $f]
-		set poss [list_cor $header {chromosome begin end strand qname qstart qend mapquality cigar other}]
+		set poss [list_cor $header {chromosome begin end strand qname qstart qend mapquality cigar other seq}]
 		unset -nocomplain tcounta
 		unset -nocomplain gcounta
 		set nr 0
+
 		while 1 {
 			incr nr ; if {![expr {$nr%10000}]} {puts $nr}
 			if {[gets $f line] == -1} break
 			set line [split $line \t]
-			foreach {chromosome begin end strand read_id qstart qend mapquality cigar other} [list_sub $line $poss] break
+			foreach {chromosome begin end strand read_id qstart qend mapquality cigar other seq} [list_sub $line $poss] break
 			set exonStarts $begin ; set exonEnds $end ; set aligned_size [expr {$end-$begin}]
 			set isoform_id . ; set gene_id . 
 			set assignment_type noninformative ; set assignment_events . ; set additional_info .
@@ -165,6 +190,7 @@ proc iso_organelle_job {args} {
 			}
 			set overlaps {}
 			set lmatches [llength $matches]
+			set polya [iso_polya $seq $qstart $qend]
 			foreach {begin end} $matches {
 				foreach cline $tocheck {
 					foreach {cbegin cend cstrand} $cline break
@@ -180,14 +206,48 @@ proc iso_organelle_job {args} {
 						if {$covered_pct < 5} continue
 						set assignment_events mono_exon_overlap
 					}
-					lappend cline [expr {$cend - $cbegin}] $assignment_events $covered_pct
+					set cpolya 0
+					if {$polya == -1} {
+						if {$cstrand == "-"} {set cpolya 1}
+						set polya 0
+					}
+					lappend cline $assignment_events $covered_pct $cpolya
 					lappend overlaps $cline
 				}
 			}
 			set loverlaps [llength $overlaps]
 			if {$loverlaps > 0} {
+				if {$polya == 1 && $cstrand == "+"} {
+					lset overlaps end 9 1
+				}
+				if {$loverlaps > 1} {
+#					unset -nocomplain a
+#					foreach overlap $overlaps {
+#						set transcript [lindex $overlap 3]
+#						lappend a($transcript) $overlap
+#					}
+#					set temp {}
+#					foreach transcript [array names a] {
+#						if {[llength $a($transcript)] > 1} {
+#							lappend temp [lindex [lsort -index 9 -real $a($transcript)] end]
+#						} else {
+#							lappend temp [lindex $a($transcript) 0]
+#						}
+#					}
+#					set overlaps $temp
+					# remove ribosomal genes (human specific naming) from overlaps
+					# if there are other matches
+					set overlaps [iso_organelle_removeribo $overlaps {MT-RNR1 MT-RNR2 MT-TF}]
+					# take the one with the best pct coverage (is in col 9)
+					if {$loverlaps > 1} {
+						set overlaps [list [lindex [lsort -index 9 -real $overlaps] end]]
+					}
+				}
 				foreach overlap $overlaps {
-					foreach {cbegin cend cstrand isoform_id temp gene_id size assignment_events covered_pct} $overlap break
+					foreach {
+						cbegin cend cstrand isoform_id gene gene_id size
+						assignment_events covered_pct polya
+					} $overlap break
 					set closest_known $isoform_id
 					set assignment_type unique
 					if {$loverlaps > 2} {set assignment_events mono_exon_overlap}
@@ -198,10 +258,13 @@ proc iso_organelle_job {args} {
 						$covered_pct $polya $classification $closest_known $cellbarcode $umi $umicount \
 					] \t]
 					incr tcounta($isoform_id,t)
+					if {$polya} {incr tcounta($isoform_id,t)}
 					if {$assignment_events in "mono_exon_match mono_exon_enclosed"} {
 						incr tcounta($isoform_id,u)
+						if {$polya} {incr tcounta($isoform_id,u)}
 						if {$covered_pct >= $strictpct} {
 							incr tcounta($isoform_id,s)
+							if {$polya} {incr tcounta($isoform_id,s)}
 						}
 					}
 					incr gcounta($gene_id)
@@ -291,5 +354,3 @@ proc iso_organelle_job {args} {
 		file delete $targetgenecountsfile.temp
 	}
 }
-
-
