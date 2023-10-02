@@ -468,6 +468,7 @@ proc process_sample_job {args} {
 	set counters {}
 	set reftranscripts {}
 	set isocallers {}
+	set organelles {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -547,6 +548,9 @@ proc process_sample_job {args} {
 		}
 		-isocallers {
 			set isocallers $value
+		}
+		-organelles {
+			set organelles $value
 		}
 		-s - -split {
 			set split $value

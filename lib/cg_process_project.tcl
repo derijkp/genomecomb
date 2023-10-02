@@ -4,6 +4,7 @@ proc process_project_job {args} {
 	unset -nocomplain split
 	set dbdir {}
 	set dbfiles {}
+	set organelles {}
 	set minfastqreads 0
 	set clip 1
 	set removeskew {}
@@ -94,6 +95,9 @@ proc process_project_job {args} {
 		}
 		-isocallers {
 			set isocallers $value
+		}
+		-organelles {
+			set organelles $value
 		}
 		-iso_joint {
 			set iso_joint $value

@@ -280,6 +280,10 @@ proc flair_job {args} {
 			# this option is not actually supported by flair, 
 			# but present for compatibilty with generic call from process_*
 		}
+		-organelles {
+			# this option is not actually supported by flair, 
+			# but present for compatibilty with generic call from process_*
+		}
 		-threads {
 			set threads $value
 		}

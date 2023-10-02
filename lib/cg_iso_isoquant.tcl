@@ -1372,6 +1372,7 @@ proc iso_isoquant_job {args} {
 	set resultfile {}
 	set regions {}
 	# set skipregions {chrM M}
+	set organelles {}
 	set skipregions {}
 	set options {}
 	set singlecell 0
@@ -1418,6 +1419,9 @@ proc iso_isoquant_job {args} {
 		}
 		-refseq {
 			set refseq $value
+		}
+		-organelles {
+			set organelles $value
 		}
 		-reftranscripts {
 			set reftranscripts $value
@@ -1513,7 +1517,7 @@ proc iso_isoquant_job {args} {
 			$regdir/read_assignments-${root}.tsv \
 		]
 		if {$reftranscripts eq "none"} {set depreftranscripts ""} else {set depreftranscripts $reftranscripts}
-		if {[regions_organelle $refseq $region]} {
+		if {[regions_organelle $refseq $organelles $region]} {
 			# dont need regionsskip here, as these are the direct results of iso_organelle_job
 			iso_organelle_job \
 				-refseq $refseq \

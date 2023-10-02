@@ -118,6 +118,10 @@ proc iso_flames_job {args} {
 		-referencecsv {
 			set referencecsv $value
 		}
+		-organelles {
+			# this option is not actually supported by flames, 
+			# but present for compatibilty with generic call from process_*
+		}
 		-hasumi {
 			set hasumi $value
 		}
