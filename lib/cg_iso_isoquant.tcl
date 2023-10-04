@@ -849,10 +849,10 @@ proc iso_isoquant_mergeresults_old_monmerge {isofiles genefiles readfiles strict
 }
 
 proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample root {analysisname isoquant}} {
-	set tempreads [tempfile]
-	set tempreads2 [tempfile]
-	set tempreads temp_sort_read_assignments-${root}.tsv.zst
-	set tempreads2 temp_addsort_read_assignments-${root}.tsv.zst
+	set tempreads [tempfile].tsv.zst
+	set tempreads2 [tempfile].tsv.zst
+	# set tempreads temp_sort_read_assignments-${root}.tsv.zst
+	# set tempreads2 temp_addsort_read_assignments-${root}.tsv.zst
 	# need to concat all and sort on read_id to find gambiguity
 	# (alignments to different genes can be in different regions)
 	putslog "Merging readfiles"
