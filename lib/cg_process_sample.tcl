@@ -766,14 +766,8 @@ proc process_sample_job {args} {
 		set target [file root [gzroot $file]].tsv
 		lappend todo(var) [file tail $target]
 	}
-	# single cell fastq adaptation
-	# ----------------------------
-	if {$singlecell ne ""} {
-		sc_barcodes_job -whitelist $singlecell_whitelist $fastqdir $sampledir
-		set fastqdir $sampledir/bcfastq
-	}
-	# use generic (fastq/bam source)
-	# ------------------------------
+	# get bam prefix
+	# --------------
 #	set keeppwd [pwd]
 #	cd $sampledir
 	set_job_logdir $sampledir/log_jobs
@@ -784,6 +778,36 @@ proc process_sample_job {args} {
 	if {$removeduplicates ni {0 {}}} {append resultbamprefix d}
 	# allways sort
 	append resultbamprefix s
+	# single cell fastq adaptation
+	# ----------------------------
+	if {$singlecell ne ""} {
+		# singlecell only works from fastqdir
+		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
+		# put bams in skips (don't actually run sc_barcodes if already exis)
+		set skips {}
+		set skipsresult {}
+		# make skips for clipping (do not do any of preliminaries if end product is already there)
+		# clipped fastqs are used for all aligners!
+		foreach aligner $aligners {
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+			set bamfile $sampledir/map-${aligner}-$sample.bam
+			lappend skips $bamfile [analysisinfo_file $bamfile]
+			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
+			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
+			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
+				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
+				file rename -force $bamfile $bamfile.old
+			}
+			if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
+				putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
+				file rename -force $resultbamfile $resultbamfile.old
+			}
+		}
+		sc_barcodes_job -skip $skips -skip $skipsresult -whitelist $singlecell_whitelist $fastqdir $sampledir
+		set fastqdir $sampledir/bcfastq
+	}
+	# use generic (fastq/bam source)
+	# ------------------------------
 	# find fastq files in fastq dir
 	set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 	if {![llength $fastqfiles]} {
@@ -1089,6 +1113,7 @@ proc process_sample_job {args} {
 			iso_${isocaller}_job \
 				-reftranscripts $reftranscripts \
 				{*}$options \
+				-organelles $organelles \
 				-cleanup $cleanup \
 				-distrreg $distrreg -threads $threads \
 				-refseq $refseq \

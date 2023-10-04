@@ -120,6 +120,7 @@ proc sc_barcodes_job args {
 	set maxcells 100000
 	set mincells 1000
 	set cutoff 20
+	set skips {}
 	cg_options sc_barcodes args {
 		-whitelist {
 			set whitelist $value
@@ -141,6 +142,9 @@ proc sc_barcodes_job args {
 		}
 		-bcparts {
 			set bcparts $value
+		}
+		-skip {
+			lappend skips -skip $value
 		}
 	} {fastqdir resultdir} 1 2 {
 		cg sc_barcodes finds (cell)barcodes and umis from 10x single cell sequencing in nanopore reads.
@@ -172,7 +176,7 @@ proc sc_barcodes_job args {
 		set target $resultdir/barcodes/$root.barcodes.tsv
 		set target2 $resultdir/barcodes/$root.summary_barcodes.tsv
 		lappend summaries $target2
-		job find_barcodes-$sample-[file tail $fastq] -skip [list \
+		job find_barcodes-$sample-[file tail $fastq] {*}$skips -skip [list \
 			$resultdir/mergedbarcodes.tsv.zst \
 			$resultdir/barcode2celbarcode.tsv \
 			$resultdir/reads_per_cell.tsv \
@@ -193,7 +197,7 @@ proc sc_barcodes_job args {
 	# merge barcodes and find cell barcodes
 	set barcodefiles [jobglob $resultdir/barcodes/*.barcodes.tsv]
 	set mergedbarcodesfile $resultdir/mergedbarcodes.tsv.zst
-	job merge_barcodes-$sample -deps $barcodefiles -targets {
+	job merge_barcodes-$sample {*}$skips -deps $barcodefiles -targets {
 		$resultdir/mergedbarcodes.tsv.zst
 		$resultdir/barcode_cutoff-info.tsv
 	} -vars {
@@ -309,7 +313,7 @@ proc sc_barcodes_job args {
 	for {set part 1} {$part <= $bcparts} {incr part} {
 		set target $resultdir/barcodes.temp/barcode_matches-$part.tsv.zst
 		lappend barcode_matches $target
-		job sc_findbcmatches-barcode_matches-$part -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell.tsv] \
+		job sc_findbcmatches-barcode_matches-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell.tsv] \
 		-deps {
 			$resultdir/mergedbarcodes.tsv.zst
 			$resultdir/barcode_cutoff-info.tsv
@@ -357,7 +361,7 @@ proc sc_barcodes_job args {
 			file rename $target.temp.zst $target
 		}
 	}
-	job barcode2celbarcode-$sample -deps [list \
+	job barcode2celbarcode-$sample {*}$skips -deps [list \
 		$mergedbarcodesfile \
 		$resultdir/barcode_cutoff-info.tsv \
 		{*}$barcode_matches \
@@ -441,7 +445,7 @@ proc sc_barcodes_job args {
 		# cg select -g cellbarcode barcode2celbarcode.tsv	| cg select -g all
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
 	}
-	job reads_per_cell-$sample -deps {
+	job reads_per_cell-$sample {*}$skips -deps {
 		$resultdir/barcode2celbarcode.tsv
 	} -targets {
 		$resultdir/reads_per_cell.tsv
@@ -475,7 +479,7 @@ proc sc_barcodes_job args {
 		set target2 $resultdir/barcodeinfo/$root.barcodes.tsv
 		lappend bcfastqs $target
 		lappend infofiles $target2
-		job make_bcfastq-$sample-[file tail $fastq] -deps {
+		job make_bcfastq-$sample-[file tail $fastq] {*}$skips -deps {
 			$fastq $dep2 $resultdir/barcode2celbarcode.tsv
 		} -targets {
 			$target $target2
