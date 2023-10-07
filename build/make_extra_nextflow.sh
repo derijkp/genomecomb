@@ -26,6 +26,8 @@ source "${dir}/start_hbb3.sh"
 # Parse arguments
 # ===============
 
+nextflowversion=23.04.4
+
 all=1
 extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
@@ -98,8 +100,8 @@ function download {
 # --------
 cd /build
 
-nextflowversion=22.10.0
-
+mv /build/nextflow-$nextflowversion-$arch /build/nextflow-$nextflowversion-$arch.old || true
+rm -rf /build/nextflow-$nextflowversion-$arch || true
 mkdir /build/nextflow-$nextflowversion-$arch
 cd /build/nextflow-$nextflowversion-$arch
 
@@ -114,7 +116,7 @@ chmod ugo+x nextflow-$nextflowversion-all
 
 wget https://github.com/nextflow-io/nextflow/archive/refs/tags/v$nextflowversion.tar.gz
 tar xvzf v$nextflowversion.tar.gz
-cp ./nextflow-22.10.0/README.md .
+cp ./nextflow-*/README.md .
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
@@ -122,7 +124,7 @@ dir="$(dirname "$script")"
 export JAVA_HOME=$dir/jdk-18/
 export PATH=$dir/bin:$dir/jdk-18/bin:$PATH
 export NXF_JAVA_HOME=$dir/jdk-18/
-$dir/nextflow-22.10.0-all ${1+"$@"}
+$dir/nextflow-*-all ${1+"$@"}
 ' > nextflow
 chmod ugo+x nextflow
 
