@@ -1,34 +1,34 @@
-proc shadow_clean {{shadowbase {}}} {
+proc shadow_clean {{shadowdir {}}} {
 	global env
-	if {$shadowbase ne ""} {
-		# shadowbase given directly, do nothing extra
-	} elseif {[info exists env(SHADOWBASE)]} {
-		set shadowbase $env(SHADOWBASE)
+	if {$shadowdir ne ""} {
+		# shadowdir given directly, do nothing extra
+	} elseif {[info exists env(SHADOWDIR)]} {
+		set shadowdir $env(SHADOWDIR)
 	} else {
-		error "shadowbase not given, and could not find env var SHADOWBASE"
+		error "shadowdir not given, and could not find env var SHADOWDIR"
 	}
-	set shadowbase [file_absolute $shadowbase]
-	foreach shadowdir [glob $shadowbase/*] {
-		set link [file link $shadowdir/shadow_source]
+	set shadowdir [file_absolute $shadowdir]
+	foreach shadow [glob $shadowdir/*] {
+		set link [file link $shadow/shadow_source]
 		if {
 			[file exists $link] &&
 			![catch {file link $link} linklink] &&
-			$linklink eq $shadowdir
+			$linklink eq $shadow
 		} continue
-		file delete -force $shadowdir
+		file delete -force $shadow
 	}
 }
 
 proc cg_shadow_clean {args} {
-	set shadowbase {}
+	set shadowdir {}
 	cg_options shadow_mkdir args {
-		-shadowbase {
-			set shadowbase $value
+		-shadowdir {
+			set shadowdir $value
 		}
-	} {shadowbase} 0 1 {
+	} {shadowdir} 0 1 {
 		make a shadow dir
 	}
-	shadow_clean $shadowbase
+	shadow_clean $shadowdir
 }
 
 proc shadow_delete {link} {
@@ -36,19 +36,18 @@ proc shadow_delete {link} {
 		file delete $link
 		return
 	}
-	if {[catch {file link $link} shadowdir]} {
+	if {[catch {file link $link} shadow]} {
 		file delete -force $link
 		return
 	}
-	if {![file exists $shadowdir/shadow_source]} {
-		error "$link links to $shadowdir is not a shadowdir (file $shadowdir/shadow_source does not exist)"
+	if {![file exists $shadow/shadow_source]} {
+		error "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist)"
 	}
-	file delete -force $shadowdir
+	file delete -force $shadow
 	file delete $link
 }
 
 proc cg_shadow_delete {args} {
-	set shadowbase {}
 	cg_options shadow_delete args {
 	} {link} 1 1 {
 		delete a shadow dir
@@ -59,31 +58,31 @@ proc cg_shadow_delete {args} {
 # shadow_mkdir creates a temp or workdir for distributed analysis.
 # - it can be accessed from different nodes in cluster
 # - it has to be explicitely deleted: it does not get auto-deleted when a job or program finishes
-proc shadow_mkdir {link {shadowbase {}}} {
+proc shadow_mkdir {link {shadowdir {}}} {
 	global env
 	if {[file exists $link]} {
 		return $link
 	}
-	if {$shadowbase ne ""} {
-		# shadowbase given directly, do nothing extra
-	} elseif {[info exists env(SHADOWBASE)]} {
-		set shadowbase $env(SHADOWBASE)
+	if {$shadowdir ne ""} {
+		# shadowdir given directly, do nothing extra
+	} elseif {[info exists env(SHADOWDIR)]} {
+		set shadowdir $env(SHADOWDIR)
 	} else {
-		# putslog "shadowbase not given, and could not find evn var SHADOWBASE, using $link directly"
+		# putslog "shadowdir not given, and could not find evn var SHADOWDIR, using $link directly"
 		mkdir $link
 		return $link
 	}
-	set shadowbase [file_absolute $shadowbase]
+	set shadowdir [file_absolute $shadowdir]
 	# find unused dir for shadow and create
 	for {set i 0} {$i < 20} {incr i} {
-		set shadowdir [file join $shadowbase shadow.[pid]-[Extral::randstring 20]]-[file tail $link]
-		if {[file exists $shadowdir]} continue
+		set shadow [file join $shadowdir shadow.[pid]-[Extral::randstring 20]]-[file tail $link]
+		if {[file exists $shadow]} continue
 		if {[catch {
-			file mkdir $shadowdir
+			file mkdir $shadow
 			if {$::tcl_platform(platform) eq "unix"} {
-				file attributes $shadowdir -permissions 0700
+				file attributes $shadow -permissions 0700
 			}
-			set files [glob -nocomplain $shadowdir/*]
+			set files [glob -nocomplain $shadow/*]
 			if {[llength $files]} {
 				error "Very fishy: there are files in the temporary directory I just created"
 			}
@@ -91,20 +90,20 @@ proc shadow_mkdir {link {shadowbase {}}} {
 		break
 	}
 	# create backlink (for cleaning)
-	mklink $link $shadowdir/shadow_source 1
+	mklink $link $shadow/shadow_source 1
 	# create link
-	mklink $shadowdir $link 1
+	mklink $shadow $link 1
 	return $link
 }
 
 proc cg_shadow_mkdir {args} {
-	set shadowbase {}
+	set shadowdir {}
 	cg_options shadow_mkdir args {
-		-shadowbase {
-			set shadowbase $value
+		-shadowdir {
+			set shadowdir $value
 		}
-	} {link shadowbase} 1 2 {
+	} {link shadowdir} 1 2 {
 		make a shadow dir
 	}
-	shadow_mkdir $link $shadowbase
+	shadow_mkdir $link $shadowdir
 }

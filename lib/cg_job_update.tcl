@@ -33,8 +33,9 @@ proc job_cleanlogs {logfile} {
 		set donea($job) 1
 	}
 	foreach dir [lsort -decreasing [array names dirsa]] {
-		if {[catch {glob $dir/*}]} {
-			catch {file delete $dir}
+		set content [list_remove [glob -nocomplain $dir/*] $dir/shadow_source]
+		if {![llength $content]} {
+			shadow_delete $dir
 		}
 	}
 	putslog "cleanup finished"

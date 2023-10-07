@@ -624,6 +624,27 @@ test2
 test3
 }} match
 
+test job "basic chain with error $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init
+	job_args {--force 0}
+	file_write test1.txt test1\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		error testerror
+	}
+	job_wait
+	gridwait
+	set result [list [bsort [glob *]] [file_read log_jobs/job2.err]]
+	cd $::testdir
+	set result
+} {{log.*.error log_jobs test1.txt test2.txt} {testerror*}} match
+
 test job "time chain $testname" {
 	cd $::testdir
 	test_cleantmp

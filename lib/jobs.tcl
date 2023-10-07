@@ -796,7 +796,7 @@ proc job_logdir {{logdir {}}} {
 		set logdir [file join [pwd] log_jobs]
 	}
 	set job_logdir [file_absolute $logdir]
-	file mkdir $job_logdir
+	shadow_mkdir $job_logdir
 	set ::cgjob(default_job_logdir) 0
 }
 
@@ -807,7 +807,7 @@ proc set_job_logdir {{logdir {}}} {
 		set logdir [file join [pwd] log_jobs]
 	}
 	set job_logdir [file_absolute $logdir]
-	file mkdir $job_logdir
+	shadow_mkdir $job_logdir
 	set ::cgjob(default_job_logdir) 0
 }
 

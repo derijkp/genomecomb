@@ -123,11 +123,11 @@ proc checkdiff args {
 proc test_cleantmp {} {
 	foreach file [list_remove [glob -nocomplain $::testdir/tmp/* $::testdir/tmp/.*] $::testdir/tmp/.. $::testdir/tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
-		catch {file delete -force $file}
+		catch {shadow_delete $file}
 	}
 	foreach file [list_remove [glob -nocomplain tmp/* tmp/.*] tmp/.. tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
-		catch {file delete -force $file}
+		catch {shadow_delete $file}
 	}
 	cg indexclean
 }
