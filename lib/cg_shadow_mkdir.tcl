@@ -63,6 +63,9 @@ proc shadow_mkdir {link {shadowdir {}}} {
 	if {[file exists $link]} {
 		return $link
 	}
+	if {![file exists [file dir $link]]} {
+		file mkdir [file dir $link]
+	}
 	if {$shadowdir ne ""} {
 		# shadowdir given directly, do nothing extra
 	} elseif {[info exists env(SHADOWDIR)]} {
