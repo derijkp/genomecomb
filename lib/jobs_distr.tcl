@@ -19,12 +19,12 @@ proc job_running_distr {jobnum} {
 	global cgjob cgjob_distr_running cgjob_distr_queue
 	if {![info exists cgjob_distr_running($jobnum)]} {return 0}
 	set job [lindex $cgjob_distr_running($jobnum) 1]
-	if {![catch {file_read $job.pid} pid]} {
+	if {![catch {file_read [job.file pid $job]} pid]} {
 		if {![catch {exec ps $pid}]} {
 			return 1
 		}
 		if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
-		file delete $job.pid
+		file delete [job.file pid $job]
 	}
 	unset -nocomplain cgjob_distr_running($jobnum)
 	unset -nocomplain cgjob_distr_queue($jobnum)
@@ -35,14 +35,14 @@ proc job_status_distr {job {jobloginfo {}}} {
 	global cgjob cgjob_distr_running
 	set totalduration {0 0}
 	if {$jobloginfo eq ""} {
-		if {![file exists $job.log]} {return unkown}
+		if {![file exists [job.file log $job]]} {return unkown}
 		set jobloginfo [job_parse_log $job]
 	}
 	foreach {status starttime endtime run duration} $jobloginfo break
 	if {$status ni {submitted running}} {return $status}
 	if {![info exists cgjob(pid)] || [catch {exec ps $cgjob(pid)}]} {return error}
 	if {$status eq "submitted"} {return $status}
-	if {![catch {file_read $job.pid} pid] && ![catch {exec ps $pid}]} {
+	if {![catch {file_read [job.file pid $job]} pid] && ![catch {exec ps $pid}]} {
 		return running
 	} else {
 		return error
@@ -97,8 +97,8 @@ proc job_process_distr_jobmanager {} {
 		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
 		if {!$cgjob(silent)} {puts "   -=- starting $job"}
-		set cgjob_pid [lindex [exec $runfile > $job.out 2> $job.err &] end]
-		file_write $job.pid $cgjob_pid
+		set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
+		file_write [job.file pid $job] $cgjob_pid
 		set cgjob_distr_running($jobnum) [list $cgjob_pid $job]
 		incr torun -1
 		lappend added $pos
@@ -181,12 +181,12 @@ proc job_process_submit_distr {job runfile args} {
 	# replace all invalid chars and replace invisible chars 
 	regsub -all {[^A-Za-z0-9_.-]} $name __ name
 	set dir [file dir $job]
-	catch {file delete $job.finished}
-	catch {file delete $job.ok}
+	catch {file delete [job.file finished $job]}
+	catch {file delete [job.file ok $job]}
 	if {![info exists cgjob_distr(num)]} {set cgjob_distr(num) 0}
 	set jobnum [incr cgjob_distr(num)]
-	catch {file delete $job.out}
-	catch {file delete $job.err}
+	catch {file delete [job.file out $job]}
+	catch {file delete [job.file err $job]}
 	if {$cgjob(nosubmit) || $cgjob(dry)} {
 		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
 	} else {

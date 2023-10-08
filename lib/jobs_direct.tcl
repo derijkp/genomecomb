@@ -14,7 +14,7 @@ proc job_running_direct {job} {
 # not actually used for direct jobs
 proc job_status_direct {job {jobloginfo {}}} {
 	if {$jobloginfo eq ""} {
-		if {![file exists $job.log]} {return unkown}
+		if {![file exists [job.file log $job]]} {return unkown}
 		set jobloginfo [job_parse_log $job]
 	}
 	foreach {status starttime endtime run duration} $jobloginfo break
@@ -158,15 +158,15 @@ proc job_process_direct {} {
 			set ok 0
 			job_log $job "error creating $jobname: $result"
 		}
-		catch {file delete $job.finished}
-		catch {file delete $job.ok}
-		set f [open $job.err w]; close $f
-		stderr2file $job.out $job.err
+		catch {file delete [job.file finished $job]}
+		catch {file delete [job.file ok $job]}
+		set f [open [job.file err $job] w]; close $f
+		stderr2file [job.file out $job] [job.file err $job]
 		set error [catch {job_run} result]
 		stderr2file {}
 		if {$error} {
 			set errormessage $result\n$::errorInfo
-			file_add $job.err $errormessage
+			file_add [job.file err $job] $errormessage
 			if ($cgjob(skipjoberrors)) {
 				putslog $result
 			} else {
@@ -176,11 +176,11 @@ proc job_process_direct {} {
 		set endtime [timestamp]
 		# log results
 		# ===========
-		if {![job_file_or_link_exists $job.finished] && ![job_file_or_link_exists $job.ok]} {
+		if {![job_file_or_link_exists [job.file finished $job]] && ![job_file_or_link_exists [job.file ok $job]]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 			job_logfile_add $job . error $targets $cores "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {
-			file delete $job.ok ; file delete $job.finished
+			file delete [job.file ok $job] ; file delete [job.file finished $job]
 			job_logfile_add $job . error $targets $cores $errormessage $submittime $starttime $endtime
 		} else {
 			job_log $job "-------------------- end $jobname --------------------"

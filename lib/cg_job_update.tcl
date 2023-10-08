@@ -26,17 +26,14 @@ proc job_cleanlogs {logfile} {
 		}
 		if {[info exists donea($job)]} continue
 		foreach ext {log run out err ok} {
-			file delete -force $job.$ext
+			file delete -force [job.file $ext $job]
 		}
-		catch {file delete $job.finished}
+		catch {file delete [job.file finished $job]}
 		set dirsa([file dir $job]) 1
 		set donea($job) 1
 	}
 	foreach dir [lsort -decreasing [array names dirsa]] {
-		set content [list_remove [glob -nocomplain $dir/*] $dir/shadow_source]
-		if {![llength $content]} {
-			shadow_delete $dir
-		}
+		job_delete_ifempty $dir 1
 	}
 	putslog "cleanup finished"
 }
@@ -189,13 +186,13 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} else {
 			set job $jobo
 		}
-		if {[file exists $job.jid] && [job_running [file_read $job.jid]]} {
+		if {[file exists [job.file jid $job]] && [job_running [file_read [job.file jid $job]]]} {
 			set status submitted
 		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
-			if {$status in "error skipped" && [job_file_or_link_exists $job.log]} {
+			if {$status in "error skipped" && [job_file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 			}
@@ -206,8 +203,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists $job.log])} {
-			if {[job_file_or_link_exists $job.log]} {
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists [job.file log $job]])} {
+			if {[job_file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {($starttime eq "" || $endtime eq "") && [info exists joblogcachea($job)]} {
@@ -229,13 +226,13 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				set jobloginfo [list $status $starttime $endtime $run $duration $submittime $time_seconds]
 			}
 			if {$status eq "error"} {
-				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
+				if {[catch {set msg [file_read [job.file err $job]]}]} {set msg ""}
 			} elseif {$status in {submitted running}} {
 				# still in queue, running or hang/error?
 				set status [job_status_$target $job $jobloginfo]
 				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
 				if {$status eq "error"} {
-					if {[catch {set msg [file_read $job.err]}]} {
+					if {[catch {set msg [file_read [job.file err $job]]}]} {
 						set msg "job $job no longer running, but no error message found"
 					}
 				}

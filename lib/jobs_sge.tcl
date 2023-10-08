@@ -17,7 +17,7 @@ proc job_running_sge {jobid} {
 proc job_status_sge {job {jobloginfo {}}} {
 	global cgjob_distr_running
 	if {$jobloginfo eq ""} {
-		if {![file exists $job.log]} {return unkown}
+		if {![file exists [job.file log $job]]} {return unkown}
 		set jobloginfo [job_parse_log $job]
 	}
 	foreach {status starttime endtime run duration submittime} $jobloginfo break
@@ -154,18 +154,20 @@ proc job_process_submit_sge {job runfile args} {
 	set prefix [file tail [get cgjob(prefix) "j"]]
 	set name [sge_safename $name $prefix]
 	set dir [file dir $job]
-	catch {file delete $job.finished}
-	catch {file delete $job.ok}
-	catch {file delete $job.out}
-	catch {file delete $job.err}
+	set job_out [job.file out $job]
+	set job_err [job.file err $job]
+	catch {file delete [job.file finished $job]}
+	catch {file delete [job.file ok $job]}
+	catch {file delete $job_out}
+	catch {file delete $job_err]}
 	if {[regexp , $job]} {
-		error "Cannot submit job to sge: it has a comma in the output file $job.out, which grid engine sometimes has problems with"
+		error "Cannot submit job to sge: it has a comma in the output file $job_out, which grid engine sometimes has problems with"
 	}
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
-		putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]"
-		set jnum [exec qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]
+		putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]"
+		set jnum [exec qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]
 	} else {
-		putslog "nosubmit run, would be sge_submit: [list qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]"
+		putslog "nosubmit run, would be sge_submit: [list qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]"
 		set jnum [incr cgjob(nosubmit)]
 	}
 	regexp {[0-9]+} $jnum jobnum
