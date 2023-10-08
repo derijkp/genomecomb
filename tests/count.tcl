@@ -70,7 +70,7 @@ test counters {process_project rnaseqc and qorts} {
 		#fields count_cds	1	Integer	gene counts per sample
 		#fields count_utr	1	Integer	gene counts per sample
 		#fields count_ambig_gene	1	Integer	gene counts per sample
-		gene	geneid	counts-qorts-sstar-s2	count_cds-qorts-sstar-s2	count_utr-qorts-sstar-s2	count_ambig_gene-qorts-sstar-s2	counts-qorts-sstar-s1	count_cds-qorts-sstar-s1	count_utr-qorts-sstar-s1	count_ambig_gene-qorts-sstar-s1
+		gene	geneid	counts-qorts-sstar-s1	count_cds-qorts-sstar-s1	count_utr-qorts-sstar-s1	count_ambig_gene-qorts-sstar-s1	counts-qorts-sstar-s2	count_cds-qorts-sstar-s2	count_utr-qorts-sstar-s2	count_ambig_gene-qorts-sstar-s2
 		ENSG00000100412.11	ENSG00000100412.11	2	2	0	14	2	2	0	14
 		ENSG00000100413.12	ENSG00000100413.12	1	0	1	14	1	0	1	14
 		ENSG00000183486.8	ENSG00000183486.8	78	61	17	0	78	61	17	0
@@ -86,7 +86,7 @@ test counters {process_project rnaseqc and qorts} {
 		#fields geneid	1	String	id field
 		#fields genename	1	String	name field
 		#fields counts	1	Integer	gene counts per sample
-		gene	geneid	counts-rnaseqc-sstar-s2	counts-rnaseqc-sstar-s1
+		gene	geneid	counts-rnaseqc-sstar-s1	counts-rnaseqc-sstar-s2
 		ACO2	ENSG00000100412.11	1	1
 		MX2	ENSG00000183486.8	38	38
 		POLR3H	ENSG00000100413.12	8	8
