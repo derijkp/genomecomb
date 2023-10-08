@@ -239,7 +239,7 @@ proc job_wait_sge {} {
 	append cmd {#$ -V} \n
 	append cmd {#$ -cwd} \n
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
-	append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
+	append cmd "exec `which time` -o \"[job.file time $job]\" -v $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
 	append cmd "job_init -d sge\n"
 	append cmd [list array set cgjob [array get cgjob]]\n
 	append cmd job_logfile_sge_close\n
