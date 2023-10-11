@@ -7,6 +7,7 @@ proc distrreg_job {args} {
 	set threads 1
 	set other {}
 	set skips {}
+	set regions {}
 	cg_options distrreg args {
 		-refseq {
 			set refseq $value
@@ -20,8 +21,12 @@ proc distrreg_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-	} {file resultprefix resultsuffix regions} 4 4 {
+	} {file resultprefix resultsuffix regions} 3 4 {
 		distribute (sorted) tsv files into multiple files per region
+	}
+	if {$regions eq ""} {
+		set refseq [refseq $refseq]
+		set regions [distrreg_regs distrreg_regs chr [refseq $refseq]]
 	}
 	set targets {}
 	foreach region $regions {
@@ -43,6 +48,7 @@ proc cg_distrreg {args} {
 	set refseq {}
 	set threads 1
 	set other {}
+	set regions {}
 	cg_options distrreg args {
 		-refseq {
 			set refseq $value
@@ -53,8 +59,12 @@ proc cg_distrreg {args} {
 		-other {
 			set other $value
 		}
-	} {file resultprefix resultsuffix regions} 4 4 {
+	} {file resultprefix resultsuffix regions} 3 4 {
 		distribute (sorted) tsv files into multiple files per region
+	}
+	if {$regions eq ""} {
+		set refseq [refseq $refseq]
+		set regions [distrreg_regs chr [refseq $refseq]]
 	}
 	foreach region $regions {
 		set target $resultprefix$region$resultsuffix
