@@ -41,6 +41,8 @@ proc process_project_job {args} {
 	set hap_bam 0
 	set depth_histo_max 1000
 	set reftranscripts {}
+	set singlecell {}
+	set singlecell_whitelist {}
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -70,6 +72,13 @@ proc process_project_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligner $value
+		}
+		-singlecell {
+			if {$value ni "ontr10x"} {error "Unknown value $value for -singlecell, must be one of: ontr10x"}
+			set singlecell $value
+		}
+		-singlecell-whitelist {
+			set singlecell_whitelist $value
 		}
 		-realign {
 			set realign $value
@@ -278,7 +287,9 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
+			process_sample_job -todoVar todo -clip $clip \
+				-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
@@ -296,7 +307,9 @@ proc process_project_job {args} {
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
+			process_sample_job -todoVar todo -clip $clip \
+				-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
@@ -317,7 +330,9 @@ proc process_project_job {args} {
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
 				counters isocallers reftranscripts
 			} -code {
-				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
+				cg process_sample -stack 1 -v 2 -clip $clip \
+					-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+					-datatype $datatype -aliformat $aliformat \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 					-counters $counters \
@@ -335,7 +350,9 @@ proc process_project_job {args} {
 	foreach sample $msamples {
 		putslog "Processing msample $sample"
 		set dir $destdir/msamples/$sample
-		process_sample_job -clip $clip -datatype $datatype -aliformat $aliformat \
+		process_sample_job -clip $clip \
+			-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+			-datatype $datatype -aliformat $aliformat \
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 			-counters $counters \
