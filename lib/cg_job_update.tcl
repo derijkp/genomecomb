@@ -262,8 +262,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} else {
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 		}
-		if {[file exists [job.file time $job]]} {
-			set c [file_read [job.file time $job]]
+		if {[file exists [job.file tm $job]]} {
+			set c [file_read [job.file tm $job]]
 			regexp [deindent {
 				Percent of CPU this job got: ([0-9]+)%.*
 				.*Maximum resident set size \(kbytes\): ([0-9]+)
