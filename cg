@@ -47,22 +47,27 @@ proc parse_generic_args {subcmd argslist} {
 			break
 		} elseif {$key eq "--"} {
 			break
-		} elseif {$key in "--verbose -verbose -v"} {
+		}
+		regsub ^-- $key - key
+		if {$key in "-verbose -v"} {
 			if {![isint $value]} {error "$value is not a number, only numbers are accepted as value for -v (--verbose)"}
 			logverbose $value
 			lappend remove $pos [expr {$pos + 1}]
-		} elseif {$key in "--stack -stack"} {
+		} elseif {$key eq "-stack"} {
 			if {$value in {0 1}} {
 				set ::stacktraceonerror $value
 				lappend remove $pos [expr {$pos + 1}]
 			} else {
 				error "$value is not 0 or 1, the only accepted values for --stack"
 			}
-		} elseif {$key in "--compressionlevel -compressionlevel"} {
+		} elseif {$key eq "-compressionlevel"} {
 			setdefcompressionlevel $value
 			lappend remove $pos [expr {$pos + 1}]
-		} elseif {$key in "--compressionthreads -compressionthreads"} {
+		} elseif {$key eq "-compressionthreads"} {
 			setdefcompressionthreads $value
+			lappend remove $pos [expr {$pos + 1}]
+		} elseif {$key eq "-shadowdir"} {
+			set ::env(SHADOWDIR) $value
 			lappend remove $pos [expr {$pos + 1}]
 		}
 		incr pos 2

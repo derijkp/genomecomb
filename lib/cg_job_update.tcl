@@ -9,9 +9,9 @@ proc job_cleanlogs {logfile} {
 		}
 	}
 	set header [split $line \t]
-	if {[list_remove $header time_seconds cores] ne {job jobid status submittime starttime endtime duration targets msg run}} {
+	if {[list_remove $header time_seconds cores pct_cpu maxmem bytes_read bytes_written] ne {job jobid status submittime starttime endtime duration targets msg run}} {
 		close $f
-		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run cores)"
+		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run cores pct_cpu maxmem bytes_read bytes_written)"
 	}
 	unset -nocomplain donea
 	while 1 {
@@ -25,17 +25,15 @@ proc job_cleanlogs {logfile} {
 			set job $jobo
 		}
 		if {[info exists donea($job)]} continue
-		foreach ext {log run out err ok} {
-			file delete -force $job.$ext
+		foreach ext {log run out err ok time} {
+			file delete -force [job.file $ext $job]
 		}
-		catch {file delete $job.finished}
+		catch {file delete [job.file finished $job]}
 		set dirsa([file dir $job]) 1
 		set donea($job) 1
 	}
 	foreach dir [lsort -decreasing [array names dirsa]] {
-		if {[catch {glob $dir/*}]} {
-			catch {file delete $dir}
-		}
+		job_delete_ifempty $dir 1
 	}
 	putslog "cleanup finished"
 }
@@ -84,15 +82,20 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	set oldlogfiles [lrange $oldlogfiles 0 $pos]
 	unset -nocomplain oldlogsa
 	set expectedheader "job jobid status submittime starttime endtime duration time_seconds targets msg run cores"
+	lappend expectedheader pct_cpu maxmem bytes_read bytes_written
 	foreach oldlogfile $oldlogfiles {
 		set f [gzopen $oldlogfile]
 		set header [tsv_open $f]
 		set addseconds 0
 		set addcores 0
+		set addtimeresults 0
 		if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 			set addseconds 1
 		} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
 			set addcores 1
+			set addtimeresults 1
+		} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run cores"} {
+			set addtimeresults 1
 		} elseif {$header ne $expectedheader} {
 			error "error in format of logfile $oldlogfile"
 		}
@@ -140,10 +143,14 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	}
 	set header [split $line \t]
 	set addseconds 0
+	set addcores 0
+	set addtimeresults 0
 	if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 		set addseconds 1
 	} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
 		set addcores 1
+	} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run cores"} {
+		set addtimeresults 1
 	} elseif {$header ne $expectedheader} {
 		close $o ; close $f
 		error "error in format of logfile $oldlogfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run)"
@@ -167,9 +174,21 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			}
 			set time_seconds [timebetween_inseconds $starttime $endtime]
+		} elseif {$addtimeresults} {
+			set cores {}
+			foreach {pct_cpu maxmem bytes_read bytes_written} {{} {} {} {}} break
+			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores} $sline break
+			set cs [correct_time_ms starttime] ; set ce [correct_time_ms endtime]
+			set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
+			set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
+			if {$cs || $ce} {
+				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+				set time_seconds [timebetween_inseconds $starttime $endtime]
+			}
 		} else {
 			set cores {}
-			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores} $sline break
+			foreach {pct_cpu maxmem bytes_read bytes_written} {{} {} {} {}} break
+			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores pct_cpu maxmem bytes_read bytes_written} $sline break
 			set cs [correct_time_ms starttime] ; set ce [correct_time_ms endtime]
 			set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
 			set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
@@ -180,7 +199,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		}
 		if {$jobo eq "total"} {
 			set walltime [timediff2duration [lmath_calc $totalendcode - $totalstartcode]]
-			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime "$walltime (wall) [time_seconds2duration $totalseconds] (total)" "$totalseconds (total)" $targets [job_cleanmsg $msg] $run {}] \t]
+			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime "$walltime (wall) [time_seconds2duration $totalseconds] (total)" "$totalseconds (total)" $targets [job_cleanmsg $msg] $run {} {} {} {} {}] \t]
 			break
 		}
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
@@ -188,13 +207,13 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} else {
 			set job $jobo
 		}
-		if {[file exists $job.jid] && [job_running [file_read $job.jid]]} {
+		if {[file exists [job.file jid $job]] && [job_running [file_read [job.file jid $job]]]} {
 			set status submitted
 		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
-			if {$status in "error skipped" && [job_file_or_link_exists $job.log]} {
+			if {$status in "error skipped" && [job_file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 			}
@@ -205,8 +224,9 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists $job.log])} {
-			if {[job_file_or_link_exists $job.log]} {
+		# check if we need to parse logs
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists [job.file log $job]])} {
+			if {[job_file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {($starttime eq "" || $endtime eq "") && [info exists joblogcachea($job)]} {
@@ -228,19 +248,28 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				set jobloginfo [list $status $starttime $endtime $run $duration $submittime $time_seconds]
 			}
 			if {$status eq "error"} {
-				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
+				if {[catch {set msg [file_read [job.file err $job]]}]} {set msg ""}
 			} elseif {$status in {submitted running}} {
 				# still in queue, running or hang/error?
 				set status [job_status_$target $job $jobloginfo]
 				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
 				if {$status eq "error"} {
-					if {[catch {set msg [file_read $job.err]}]} {
+					if {[catch {set msg [file_read [job.file err $job]]}]} {
 						set msg "job $job no longer running, but no error message found"
 					}
 				}
 			}
 		} else {
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+		}
+		if {[file exists [job.file time $job]]} {
+			set c [file_read [job.file time $job]]
+			regexp [deindent {
+				Percent of CPU this job got: ([0-9]+)%.*
+				.*Maximum resident set size \(kbytes\): ([0-9]+)
+				.*File system inputs: ([0-9]+)
+				.*File system outputs: ([0-9]+)
+			}] $c temp pct_cpu maxmem bytes_read bytes_written
 		}
 		if {$status in "running submitted"} {
 			set endstatus running
@@ -251,7 +280,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			if {![isint $cores]} {set cores 1}
 			set totalseconds [expr {$totalseconds + $cores * $time_seconds}]
 		}
-		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run $cores] \t]
+		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run $cores $pct_cpu $maxmem $bytes_read $bytes_written] \t]
 		if {$totalstartcode eq "" || [time_comp $startcode $totalstartcode] < 0} {
 			set totalstartcode $startcode ; set totalstarttime $starttime
 		}

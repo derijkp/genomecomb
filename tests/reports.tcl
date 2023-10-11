@@ -20,7 +20,7 @@ test reports {coverage_report} {
 	cg select -f {chromosome=chr_clip($chromosome) begin end info} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
 	mklink data/test-map-rdsbwa-NA19240part.bam tmp/test.bam
-	mklink data/test-map-rdsbwa-NA19240part.bam.bai tmp/test.bam.bai
+	exec samtools index tmp/test.bam
 	set bamfile tmp/test.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg coverage_report $regionfile $bamfile

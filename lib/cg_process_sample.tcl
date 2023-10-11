@@ -1106,7 +1106,7 @@ proc process_sample_job {args} {
 			set preset {}
 			foreach {isocaller preset} [split $isocaller _] break
 			if {![auto_load iso_${isocaller}_job]} {
-				error "iscaller $isocaller not supported"
+				error "isocaller $isocaller not supported"
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}

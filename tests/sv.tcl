@@ -111,17 +111,17 @@ test sv {cuteSV} {
 
 test sv {cuteSV -distrreg chr} {
 	cd $::smalltestdir
-	file delete -force tmp/sv-cuteSV
-	file mkdir tmp/sv-cuteSV
-	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-cuteSV/map-sngmlr-NA12878.bam
-	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-cuteSV/map-sngmlr-NA12878.bam.bai
+	file delete -force tmp/sv-cuteSV_distrreg
+	file mkdir tmp/sv-cuteSV_distrreg
+	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-cuteSV_distrreg/map-sngmlr-NA12878.bam
+	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-cuteSV_distrreg/map-sngmlr-NA12878.bam.bai
 	cg sv -method cuteSV {*}$::dopts \
 		-refseq $::smalltestdir/refseqtest/hg19 \
 		-distrreg chr \
-		tmp/sv-cuteSV/map-sngmlr-NA12878.bam
+		tmp/sv-cuteSV_distrreg/map-sngmlr-NA12878.bam
 	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi -x *.submitting -x *.zsti \
 		-ignorefields {varcaller_cg_version} \
-		tmp/sv-cuteSV expected/sv-cuteSV
+		tmp/sv-cuteSV_distrreg expected/sv-cuteSV
 } {}
 
 test sv {cuteSV NA12878 minimap2} {

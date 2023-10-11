@@ -1,10 +1,10 @@
 proc job_process_par_jobid {job} {
-	if {![job_file_or_link_exists $job.jid]} {
+	if {![job_file_or_link_exists [job.file jid $job]]} {
 		return ""
 	}
-	set jobid [file_read $job.jid]
+	set jobid [file_read [job.file jid $job]]
 	if {[catch {exec qstat -j $jobid}]} {
-		file delete $job.jid
+		file delete [job.file jid $job]
 		return ""
 	} else {
 		return $jobid
@@ -151,10 +151,10 @@ proc job_process_par_onepass {} {
 		append cmd {#$ -V} \n
 		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
-		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
+		append cmd "exec `which time` -o \"[job.file time $job]\" -v $cgjob(runcmd) \"\$0\" \"\$@\"\n"
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]\n
-		append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tending $jobname\"\n"
-		set runfile $job.run
+		append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tending $jobname\"\n"
+		set runfile [job.file run $job]
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 		# submit job
@@ -162,7 +162,7 @@ proc job_process_par_onepass {} {
 		set jobnum [job_process_submit_par $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
-		file_write $job.jid $jobnum
+		file_write [job.file jid $job] $jobnum
 		job_log $job "cgjobinfo_jobid: [list $jobid]"
 		job_logclose $job
 		job_process_par_marktargets $targets $rmtargets $jobnum

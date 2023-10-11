@@ -140,7 +140,7 @@ proc iso_joint_job {args} {
 			set preset {}
 			foreach {baseisocaller preset} [split $isocaller _] break
 			if {![auto_load iso_${baseisocaller}_job]} {
-				error "iscaller $baseisocaller not supported"
+				error "isocaller $baseisocaller not supported"
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}

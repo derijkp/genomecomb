@@ -1,3 +1,8 @@
+proc job.file {type jobfile} {
+	mkdir $jobfile
+	return $jobfile/$type
+}
+
 proc job_file_or_link_exists {file} {
 	if {[file exists $file]} {return 1}
 	if {[catch {file link $file}]} {return 0} else {return 1}
@@ -796,7 +801,7 @@ proc job_logdir {{logdir {}}} {
 		set logdir [file join [pwd] log_jobs]
 	}
 	set job_logdir [file_absolute $logdir]
-	file mkdir $job_logdir
+	shadow_mkdir $job_logdir
 	set ::cgjob(default_job_logdir) 0
 }
 
@@ -807,7 +812,7 @@ proc set_job_logdir {{logdir {}}} {
 		set logdir [file join [pwd] log_jobs]
 	}
 	set job_logdir [file_absolute $logdir]
-	file mkdir $job_logdir
+	shadow_mkdir $job_logdir
 	set ::cgjob(default_job_logdir) 0
 }
 
@@ -836,7 +841,7 @@ proc job_log {job args} {
 	}
 	if {![llength $cgjob(buffer,$job)]} return
 	if {![info exists cgjob(f,$job)]} {
-		set cgjob(f,$job) [open $job.log a]
+		set cgjob(f,$job) [open [job.file log $job] a]
 	}
 	set f $cgjob(f,$job)
 	set log [join $cgjob(buffer,$job) \n]
@@ -847,7 +852,7 @@ proc job_log {job args} {
 }
 
 proc job_getfromlog {job key} {
-	set c [file_read $job.log]
+	set c [file_read [job.file log $job]]
 	set line [lindex [regexp -all -inline "$key: \[^\\n\]+" $c] end]
 	return [lindex [string range $line [expr {[string length $key]+1}] end] 0]
 }
@@ -864,7 +869,7 @@ proc job_lognf {job args} {
 proc job_logclose {job args} {
 	global cgjob
 	if {![info exists cgjob(f,$job)]} {
-		set cgjob(f,$job) [open $job.log a]
+		set cgjob(f,$job) [open [job.file log $job] a]
 	}
 	job_log $job
 	set f $cgjob(f,$job)
@@ -992,7 +997,7 @@ proc job_parse_log {job} {
 	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentjobid {} ; set currenthost {}
 	set time_seconds ""
 	set status unkown
-	set logdata [split [file_read $job.log] \n]
+	set logdata [split [file_read [job.file log $job]] \n]
 	set failed 0
 #	set tail [file tail $job]
 	set tail .*
@@ -1051,10 +1056,11 @@ proc job_parse_log {job} {
 		set starttime $currentstarttime
 		set host $currenthost
 		set endtime {}
-		if {![file exists $job.jid] || ![job_running [file_read $job.jid]]} {
+		set job_jid [job.file jid $job]
+		if {![file exists $job_jid] || ![job_running [file_read $job_jid]]} {
 			set status error
-			if {[file exists $job.err]} {
-				set endtime [clock format [file mtime $job.err] -format "%Y-%m-%d %H:%M:%S"]
+			if {[file exists [job.file err $job]]} {
+				set endtime [clock format [file mtime [job.file err $job]] -format "%Y-%m-%d %H:%M:%S"]
 				if {[string range $starttime 0 18] eq $endtime} {set endtime $starttime}
 			} else {
 				set endtime {}
@@ -1069,10 +1075,10 @@ proc job_parse_log {job} {
 	if {$starttime eq ""} {set submittime $currentstarttime}
 	# putsvars submittime starttime endtime duration currentrun currentsubmittime currentstarttime
 	if {$run eq ""} {
-		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
+		set run [clock format [file mtime [job.file log $job]] -format "%Y-%m-%d_%H-%M-%S"]
 	}
-	set startcode [timescan starttime "error parsing $job.log (starttime)"]
-	set endcode [timescan endtime "error parsing $job.log (endtime)"]
+	set startcode [timescan starttime "error parsing [job.file log $job] (starttime)"]
+	set endcode [timescan endtime "error parsing [job.file log $job] (endtime)"]
 	if {$starttime ne ""} {
 		if {$endtime ne ""} {
 			set extratime {}
@@ -1154,7 +1160,7 @@ proc job_to_old {file} {
 proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 	set cmd ""
 	set jobname [file tail $job]
-	append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tstarting $jobname on \[exec hostname\]\"\n"
+	append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tstarting $jobname on \[exec hostname\]\"\n"
 	append cmd "[list cd $pwd]\n"
 	append cmd "[list set rootdir $pwd]\n"
 	append cmd "[list set job $job]\n"
@@ -1197,25 +1203,25 @@ proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 				set files [checkfiles $target]
 			}
 			if {[llength $files]} {
-				file_add $job.log "[job_timestamp]\ttarget ok: $target"
+				file_add [job.file log $job] "[job_timestamp]\ttarget ok: $target"
 			} else {
 				set msg "target not found: $target"
-				file_add $job.log "[job_timestamp]\t$msg"
+				file_add [job.file log $job] "[job_timestamp]\t$msg"
 				putslog $msg
 				lappend errormsg $msg
 				set ok 0
 			}
 		}
 		if {$ok} {
-			file_add $job.log "[job_timestamp]\t$jobname finished\n"
-			catch {file delete $job.pid}
-			catch {file delete $job.jid}
-			set o [open $job.err a]
+			file_add [job.file log $job] "[job_timestamp]\t$jobname finished\n"
+			catch {file delete [job.file pid $job]}
+			catch {file delete [job.file jid $job]}
+			set o [open [job.file err $job] a]
 			puts $o "\nfinished [job_timestamp]"
 			close $o
-			catch {file rename -force -- $job.err $job.ok}
+			catch {file rename -force -- [job.file err $job] [job.file ok $job]}
 		} else {
-			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
+			file_add [job.file log $job] "[job_timestamp]\tjob $jobname failed\n"
 			error $errormsg
 		}
 	} [list @PWD@ $pwd]]
@@ -1517,16 +1523,37 @@ proc job_cleanup_add_shadow {args} {
 	}
 }
 
+proc job_delete_ifempty {file {subdirs 0}} {
+	if {[file isdir $file]} {
+		set content [list_remove [glob -nocomplain $file/*] $file/shadow_source]
+		if {$subdirs} {
+			set empty 1
+			foreach subdir $content {
+				if {![file isdir $subdir] || [llength [glob -nocomplain $subdir/*]]} {
+					set empty 0
+				}
+			}
+			if {$empty} {set content {}}
+		}
+		if {![llength $content]} {
+			shadow_delete $file
+		}
+	} else {
+		shadow_delete $file
+	}
+	
+}
+
 proc job_cleanup {} {
 	global cgjob
 	foreach file $cgjob(cleanupshadowfiles) {
 		catch {shadow_delete $file}
 	}
 	foreach file $cgjob(cleanupfiles) {
-		catch {file delete -force $file}
+		catch {shadow_delete $file}
 	}
 	foreach file $cgjob(cleanupifemptyfiles) {
-		catch {file delete $file}
+		job_delete_ifempty $file
 	}
 }
 

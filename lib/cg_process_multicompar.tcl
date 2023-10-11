@@ -371,7 +371,7 @@ proc process_multicompar_job {args} {
 	# cgsv
 	# ----
 	putslog "Starting cgsv"
-	set files [jobglob $sampledir/*/cgsv-*.tsv]
+	set files [bsort [jobglob $sampledir/*/cgsv-*.tsv]]
 	if {[llength $files]} {
 		set target compar/cgsv-${experiment}.tsv.zst
 		testmultitarget $target $files
@@ -415,7 +415,7 @@ proc process_multicompar_job {args} {
 	# cgcnv
 	# ----
 	putslog "Starting cgcnv"
-	set files [jobglob $sampledir/*/cgcnv-*.tsv]
+	set files [bsort [jobglob $sampledir/*/cgcnv-*.tsv]]
 	if {[llength $files]} {
 		set target compar/cgcnv-${experiment}.tsv.zst
 		set names [list_regsub {.*/cgcnv-(.*)\.tsv.*} $files {\1}]
@@ -458,7 +458,7 @@ proc process_multicompar_job {args} {
 	# --------
 	if {[llength $counters]} {
 		foreach prefix {gene_counts exon_counts tpm gene_fpkm} {
-			set countfiles [jobglob samples/*/${prefix}-*.tsv]
+			set countfiles [bsort [jobglob samples/*/${prefix}-*.tsv]]
 			if {![llength $countfiles]} continue
 			# per analysis
 			unset -nocomplain a

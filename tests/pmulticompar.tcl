@@ -612,7 +612,7 @@ test pmulticompar$testname {error on split files without split option} {
 	# this gave an incorrectly sorted file
 	cg pmulticompar -stack 1 {*}$::jobopts -split 0 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	# no error on command for -d num, check error file
-	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv.err]
+	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv/err]
 	error $temp
 } {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running with the -split option)*} match error
 
@@ -621,7 +621,7 @@ test pmulticompar$testname {error on badly sorted files} {
 	# this gave an incorrectly sorted file
 	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.tsv data/var_annot2.tsv
 	# no error on command for -d num, check error file
-	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv.err]
+	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv/err]
 	error $temp
 } {File (*vars_sorterror1.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match error
@@ -631,7 +631,7 @@ test pmulticompar$testname {error on badly sorted files 2} {
 	# this gave an incorrectly sorted file
 	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.tsv data/vars_sorterror2.tsv
 	# no error on command for -d num, check error file
-	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv.err]
+	set temp [file_read tmp/log_jobs/multi_merge-temp.tsv.temp__multicompar__vars.tsv/err]
 	error $temp
 } {File (*vars_sorterror2.tsv) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error

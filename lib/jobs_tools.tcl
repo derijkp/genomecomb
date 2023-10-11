@@ -33,12 +33,10 @@ proc cleanup_job {args} {
 			rmtargets forcedirs delassociated
 		} -code {
 			foreach file $rmtargets {
-				if {!$forcedirs && [file isdir $file]} {
-					if {![llength [glob -nocomplain $file/*]]} {
-						catch {shadow_delete $file}
-					}
+				if {$forcedirs} {
+					shadow_delete $file
 				} else {
-					catch {shadow_delete $file}
+					job_delete_ifempty $file
 				}
 				if {$delassociated} {
 					set indexfile [index_file $file]
