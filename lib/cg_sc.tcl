@@ -367,7 +367,6 @@ proc sc_barcodes_job args {
 		{*}$barcode_matches \
 	] -targets {
 		$resultdir/barcode2celbarcode.tsv
-		$resultdir/reads_per_cell.tsv
 	} -vars {
 		barcode_matches resultdir whitelist barcodesize threads
 		maxcells mincells mergedbarcodesfile cutoff usewhitelist
