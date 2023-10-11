@@ -27,6 +27,18 @@ proc job_process_par_marktargets {targets rmtargets id} {
 	}
 }
 
+proc job_timecmd {job} {
+	global job_timecmd
+	if {![info exists job_timecmd]} {
+		if {[catch {
+			set job_timecmd [exec which time]
+		}]} {
+			set job_timecmd {}
+		}
+	}
+	return "\"$job_timecmd\" -o \"[job.file tm $job]\" -v"
+}
+
 proc job_process_par_onepass {} {
 	global cgjob cgjob_id cgjob_running
 	set currentrun [file tail [get cgjob(logfile) ""]]
@@ -151,7 +163,7 @@ proc job_process_par_onepass {} {
 		append cmd {#$ -V} \n
 		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
-		append cmd "exec `which time` -o \"[job.file time $job]\" -v $cgjob(runcmd) \"\$0\" \"\$@\"\n"
+		append cmd "exec [job_timecmd $job] $cgjob(runcmd) \"\$0\" \"\$@\"\n"
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]\n
 		append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		set runfile [job.file run $job]

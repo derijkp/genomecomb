@@ -640,7 +640,7 @@ test job "basic chain with error $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [bsort [glob *]] [file_read log_jobs/job2/err]]
+	set result [list [bsort [glob *]] [file_read log_jobs/err/job2.err]]
 	cd $::testdir
 	set result
 } {{log.*.error log_jobs test1.txt test2.txt} {testerror*}} match
@@ -747,14 +747,14 @@ test job "basic jobtest $testname" {
 	gridwait
 	set result [list \
 		[bsort [glob test/*]] \
-		[glob test/log_jobs/all.txt/log] \
+		[glob test/log_jobs/log/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
-		[string range [file_read test/log_jobs/joberror/err] 0 20] \
+		[string range [file_read test/log_jobs/err/joberror.err] 0 20] \
 	]
 	cd $::testdir
 	set result
-} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt/log {testh
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/log/all.txt.log {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -772,14 +772,14 @@ test job "basic jobtest nounknowntargets $testname" {
 	gridwait
 	set result [list \
 		[bsort [glob test/*]] \
-		[glob test/log_jobs/all.txt/log] \
+		[glob test/log_jobs/log/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
-		[string range [file_read test/log_jobs/joberror/err] 0 20] \
+		[string range [file_read test/log_jobs/err/joberror.err] 0 20] \
 	]
 	cd $::testdir
 	set result
-} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt/log {testh
+} {{test/all2.txt test/all.txt test/allp2.txt test/allp.txt test/log_jobs test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/log/all.txt.log {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -797,10 +797,10 @@ test job "basic status $testname" {
 	gridwait
 	set result [list \
 		[bsort [glob test/*]] \
-		[glob test/log_jobs/all.txt/log] \
+		[glob test/log_jobs/log/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
-		[string range [file_read test/log_jobs/joberror/err] 0 20] \
+		[string range [file_read test/log_jobs/err/joberror.err] 0 20] \
 	]
 	cd $::testdir
 	set result
@@ -1184,7 +1184,7 @@ test job "rmtargets1 $testname" {
 	}
 	job_wait
 	gridwait
-	set temp [file_read log_jobs/data2/log]
+	set temp [file_read log_jobs/log/data2.log]
 	set result [list [bsort [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result
@@ -1211,7 +1211,7 @@ test job "rmtargets2 $testname" {
 	}
 	job_wait
 	gridwait
-	set temp [file_read log_jobs/data3/log]
+	set temp [file_read log_jobs/log/data3.log]
 	set result [list [bsort [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result

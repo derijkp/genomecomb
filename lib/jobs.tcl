@@ -1,6 +1,6 @@
 proc job.file {type jobfile} {
-	mkdir $jobfile
-	return $jobfile/$type
+	mkdir [file dir $jobfile]/$type
+	return [file dir $jobfile]/$type/[file tail $jobfile].$type
 }
 
 proc job_file_or_link_exists {file} {
