@@ -313,7 +313,7 @@ proc sc_barcodes_job args {
 	for {set part 1} {$part <= $bcparts} {incr part} {
 		set target $resultdir/barcodes.temp/barcode_matches-$part.tsv.zst
 		lappend barcode_matches $target
-		job sc_findbcmatches-barcode_matches-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell.tsv] \
+		job sc_findbcmatches-barcode_matches-$sample-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell.tsv] \
 		-deps {
 			$resultdir/mergedbarcodes.tsv.zst
 			$resultdir/barcode_cutoff-info.tsv
