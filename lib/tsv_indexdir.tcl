@@ -49,7 +49,7 @@ proc indexdir {mainfile} {
 	}
 	incr num
 	set indexdir $configdir/indexdirs/${tail}/$num
-	file mkdir $indexdir
+	mkdir $indexdir
 	file_write $indexdir/info.normfilename $file
 	if {$file eq $mainfile} {
 		if {[file exists $file]} {
