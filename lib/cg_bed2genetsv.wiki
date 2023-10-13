@@ -1,0 +1,15 @@
+= Bed2genetsv =
+
+== Format ==
+cg bed2genetsv ?infile? ?outfile?
+
+== Summary ==
+Converts data in bed12 format to the [[tsv]] [[gene]] format
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Category ==
+Format Conversion
+
