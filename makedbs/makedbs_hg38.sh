@@ -99,6 +99,8 @@ set dbnsfpbuild hg38
 #set gencodegtffile extra/gene_hg38_gencode.v39.gtf
 set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_42/gencode.v42.annotation.gtf.gz
 set transcriptsgtf extra/gene_hg38_gencode.v42.gtf
+set dm_alphamissense_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_isoforms_hg38.tsv.gz
+set dm_alphamissense_canonical_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz
 
 # prepare
 # =======
@@ -182,7 +184,6 @@ job collapsedgencodegtf -deps {
 } -vars {transcriptsgtf} -code {
 	set tempdir [tempdir]
 	wgetfile https://raw.githubusercontent.com/broadinstitute/gtex-pipeline/TOPMed_RNAseq_v2/gene_model/collapse_annotation.py $tempdir/collapse_annotation.py
-	set gtf /complgen/refseq/hg38/extra/gene_hg38_gencode.v39.gtf
 	exec [findpython3] $tempdir/collapse_annotation.py $transcriptsgtf $target.temp
 	file rename -force $target.temp $target
 }
@@ -451,6 +452,95 @@ job ccr -deps {
 		file rename -force -- $target.temp.zst $target.zst
 	}
 	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
+# alphamissense
+# -------------
+job alphamissense -deps {
+} -vars {
+	build dm_alphamissense_url dest
+} -targets {
+	var_${build}_alphamissense.tsv
+} -code {
+	file_write [gzroot $target].info [subst [deindent {
+		= alphamissense (alphafold2 based prediction of pathogenic missense variants) =
+		adds am_pathogenicity (higher values are predicted to be more pathogenic) and am_class
+		
+		== Download info ==
+		dbname	alphamissense
+		version	no version given
+		citation	Jun Cheng et al., Accurate proteome-wide missense variant effect prediction with AlphaMissense.Science381,eadg7492(2023).DOI:10.1126/science.adg7492
+		license	CC BY-NC-SAL cite, non-commercial research use only
+		source	$dm_alphamissense_url
+		time	[timestamp]
+		
+		== Description ==
+		
+		More info on aphamissense in https://www.science.org/doi/10.1126/science.adg7492
+		license and desciption of files in https://storage.cloud.google.com/dm_alphamissense/README.pdf
+		
+		Predictions for all possible missense variants for 60k non-canonical transcript isoforms
+		(hg38, GENCODE V32). This file has transcript_id but no UniProt accession numbers.
+		Predictions for non-canonical isoforms were not thoroughly evaluated and should be
+		used with caution.
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\t{am_pathogenicity am_class}\n"
+	file mkdir $target.temp
+	set tail [file tail $dm_alphamissense_url]
+	wgetfile $dm_alphamissense_url $target.temp/$tail
+	cg select -overwrite 1 -hc 1 -f {
+		chromosome=$CHROM {begin=$POS - 1} end=$POS type="snp" ref=$REF alt=$ALT
+		transcript_id protein_variant am_pathogenicity am_class
+	} $target.temp/$tail | cg select -s - | cg collapsealleles | cg zst > $target.temp.zst
+	file rename -force -- $target.temp.zst $target.zst
+	cg zstindex $target.zst
+}
+
+job alphamissensecanonical -deps {
+} -vars {
+	build dm_alphamissense_canonical_url dest
+} -targets {
+	extra/var_${build}_alphamissensecanonical.tsv
+} -code {
+	file_write [gzroot $target].info [subst [deindent {
+		= alphamissense (alphafold2 based prediction of pathogenic missense variants) =
+		adds am_pathogenicity (higher values are predicted to be more pathogenic) and am_class
+		
+		== Download info ==
+		dbname	alphamissensecanonical
+		version	no version given
+		citation	Jun Cheng et al., Accurate proteome-wide missense variant effect prediction with AlphaMissense.Science381,eadg7492(2023).DOI:10.1126/science.adg7492
+		license	CC BY-NC-SAL cite, non-commercial research use only
+		source	$dm_alphamissense_canonical_url
+		time	[timestamp]
+		
+		== Description ==
+		
+		More info on aphamissense in https://www.science.org/doi/10.1126/science.adg7492
+		license and desciption of files in https://storage.cloud.google.com/dm_alphamissense/README.pdf
+		
+		Predictions for all possible single nucleotide missense variants (71M) from 19k human
+		protein-coding genes (canonical transcripts).
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\t{am_pathogenicity am_class}\n"
+	file mkdir $target.temp
+	set tail [file tail $dm_alphamissense_canonical_url]
+	file mkdir $target.temp
+	wgetfile $dm_alphamissense_canonical_url $target.temp/$tail
+	cg select -overwrite 1 -hc 1 -f {
+		chromosome=$CHROM {begin=$POS - 1} end=$POS ref=$REF alt=$ALT
+		uniprot_id transcript_id protein_variant am_pathogenicity am_class
+	} $target.temp/$tail | cg select -s - | cg collapsealleles | cg zst > $target.temp.zst
+	file rename -force -- $target.temp.zst $target.zst
+	cg zstindex $target.zst
+	# clean
 	file delete -force $target.temp
 }
 
