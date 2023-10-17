@@ -109,6 +109,11 @@ proc cg_map_minimap2 {args} {
 				lappend extraopts -y
 			}
 		}
+		-nohardclips {
+			if {[true $value]} {
+				lappend extraopts -Y
+			}
+		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using minimap2
 	}
@@ -130,7 +135,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -y -x $preset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$outpipe
@@ -155,7 +160,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -y -x $preset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe

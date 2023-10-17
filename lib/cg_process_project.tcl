@@ -251,7 +251,7 @@ proc process_project_job {args} {
 		}
 	} else {
 		set sampledir $destdir
-		foreach dir [jobglob $sampledir/*/fastq $sampledir/*/ori] {
+		foreach dir [jobglob $sampledir/*/fastq $sampledir/*/ubam $sampledir/*/ori] {
 			set sample [file tail [file dir $dir]]
 			if {[regexp {[- ]} $sample]} {
 				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"

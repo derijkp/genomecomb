@@ -123,6 +123,7 @@ proc map_job {args} {
 		align reads in fastq files to a reference genome
 	}
 	set fastqfiles [list $fastqfile1 {*}$args]
+	if {[file ext [lindex $fastqfiles 0]] in ".bam .cram .sam"} {set ubams 1} else {set ubams 0}
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	set resultdir [file dir $result]
@@ -138,13 +139,18 @@ proc map_job {args} {
 		array set a $readgroupdata
 	}
 	set readgroupdata [array get a]
+
 	#
 	dbdir [file dir $refseq]
 	set resultbase [file root $result]
 	set samfiles {}
 	set asamfiles {}
 	set num 1
-	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
+	if {
+		($paired && (($ubams && [llength $fastqfiles] == 1) || [llength $fastqfiles] == 2)) 
+		|| (!$paired && [llength $fastqfiles] == 1) 
+		|| $joinfastqs
+	} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
 		set deps [list $refseq {*}$fastqfiles]
@@ -155,25 +161,39 @@ proc map_job {args} {
 		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams
 		} -code {
 			set cleanupfiles {}
-			if {$joinfastqs} {
+			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
+			if {$joinfastqs || $ubams} {
 				set tempfastq1 [tempfile].fastq.gz
 				if {!$paired} {
-					if {[llength $fastqfiles] > 1} {
-						set tempfile [tempfile]
+					if {$ubams} {
+						set o [wgzopen $tempfastq1]
+						foreach fastq $fastqfiles {
+							catch_exec samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
+						}
+						gzclose $o
+						set fastqfiles $tempfastq1
+						lappend cleanupfiles $tempfastq1
+					} elseif {[llength $fastqfiles] > 1} {
 						exec cg zcat {*}$fastqfiles | gzip --fast > $tempfastq1
 						set fastqfiles $tempfastq1
 						lappend cleanupfiles $tempfastq1
 					}
-				} elseif {[llength $fastqfiles] > 2} {
+				} elseif {$ubams || [llength $fastqfiles] > 2} {
 					set tempfastq2 [tempfile].fastq.gz
 					set deps1 {}
 					set deps2 {}
 					foreach {dep1 dep2} $fastqfiles {
-						lappend deps1 $dep1
-						lappend deps2 $dep2
+						if {$ubams} {
+							set out1 [tempfile].fastq.gz
+							set out2 [tempfile].fastq.gz
+							catch_exec samtools fastq -c 1 -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $fastq -1 $out1 -2 $out2
+						} else {
+							lappend deps1 $dep1
+							lappend deps2 $dep2
+						}
 					}
 					set compresspipe "| gzip --fast"
 					file mkdir [file dir $target]
@@ -192,7 +212,6 @@ proc map_job {args} {
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
-				analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
@@ -227,9 +246,14 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts
+				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams
 			} -code {
 				set tempfile [filetemp $target 1 1]
+				if {$ubams} {
+					set out [tempfile].fastq.gz
+					catch_exec samtools fastq -c 1 -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $file -o $out
+					set file $out
+				}
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
@@ -247,10 +271,19 @@ proc map_job {args} {
 			}
 		}
 	} else {
-		if {[expr {[llength $fastqfiles]%2}]} {
-			error "mapping needs even number of files for paired analysis"
+		if {!$ubams} {
+			if {[expr {[llength $fastqfiles]%2}]} {
+				error "mapping needs even number of files for paired analysis"
+			}
+			set temp {}
+			foreach {file1 file2} $fastqfiles {
+				lappend temp [list $file1 $file2]
+			}
+			set fastqfiles $temp
 		}
-		foreach {file1 file2} $fastqfiles {
+		foreach files $fastqfiles {
+			set file2 {}
+			foreach {file1 file2} $files break
 			set name [file tail [file_root $file1]]
 			set target $workdir/[file_root [file tail $result]]-$name.sam.zst
 			lappend samfiles $target
@@ -266,8 +299,14 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts
+				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams
 			} -code {
+				if {$ubams} {
+					set temp [tempdir]/[file root [file tail $file]].fastq.gz
+					set file2 [tempfile].fastq.gz
+					catch_exec samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
+					set file1 $temp
+				}
 				set tempfile [filetemp_ext $target]
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\

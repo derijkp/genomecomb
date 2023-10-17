@@ -506,6 +506,8 @@ proc convert_pipe {infile outfile args} {
 			set infiledone 1
 		}
 	}
+	if {$informat eq "fq"} {set informat "fastq"}
+	if {$outformat eq "fq"} {set outformat "fastq"}
 	if {$informat eq $outformat} {
 	} elseif {$informat in "sam bam cram" && $outformat in "sam bam cram"} {
 		if {[llength $pipe]} {lappend pipe |}

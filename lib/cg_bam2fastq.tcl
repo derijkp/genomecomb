@@ -96,13 +96,13 @@ proc cg_bam2fastq {args} {
 	} elseif {$method in "sam samtools" && $sortmethod eq "collate"} {
 		putslog "Using samtools to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
-			catch_exec samtools collate {*}$samopts -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
+			catch_exec samtools collate {*}$samopts -u -O $tempbam | samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
 		} else {
-			catch_exec samtools collate {*}$samopts --threads $threads -u -O $tempbam | samtools fastq -n -N -F 0x900 - > $tempfastq1
+			catch_exec samtools collate {*}$samopts --threads $threads -u -O $tempbam | samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" -n -N -F 0x900 - > $tempfastq1
 		}
 	} elseif {$method in "sam samtools"} {
 		putslog "Using samtools to convert bam to fastq"
-		catch_exec samtools fastq {*}$samopts -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
+		catch_exec samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" {*}$samopts -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
