@@ -1,6 +1,6 @@
 
 
-p <- add_argument(p, "--percent_mito", help = "The cut-off for percentage of mitochondrial reads per cell", type = "numeric", nargs = '1', default = "2.5")
+p <- add_argument(p, "--percent_mito", help = "The cut-off for percentage of mitochondrial reads per cell", type = "numeric", nargs = '1', default = "5")
 p <- add_argument(p, "--input", help = "Path to directory containing raw files in 10X format", type = "character", nargs = '1')
 p <- add_argument(p, "--workdir", help = "Path to working directory", type = "character", nargs = '+')
 
@@ -10,8 +10,9 @@ input_df <- arg$input
 i <- input_df$samplename
 
 
-# 1. Load files
-file_path <- paste(input_df$location)
+# 1. Load sample
+cat(paste0("Loading Sample ", i), "\n")
+file_path <- paste0("~/cgsc_samples_converted_to_10x/", i, "/")
 barcodes <- paste(file_path, "barcodes.tsv.gz", sep = "")
 features <- paste(file_path, "features.tsv.gz", sep = "")
 matrix <- paste(file_path, "matrix.mtx.gz", sep = "")
@@ -21,78 +22,104 @@ barcodes <- read.delim(barcodes, header=F)
 colnames(mat) <- barcodes[,1]
 rownames(mat) <- features[,2]
 
-  
 # 2. EmptyDrops
 mito.genes <- grep(pattern = "^MT-", x = rownames(mat), value = TRUE)
 RPS.genes <- grep(pattern = "^RPS", x = rownames(mat), value = TRUE)
 qc <- c(mito.genes, RPS.genes)
 keep <- !row.names(mat) %in% unlist(qc)
 
-br.out <- barcodeRanks(mat)
-df <- data.frame(Rank = br.out$rank, Total = br.out$total, row.names = rownames(br.out))
-df$AboveInflection <- df$Total > metadata(br.out)$inflection
-e.out <- emptyDrops(mat[keep, ])
+e.out <- emptyDropsCellRanger(mat[keep, ])
 is.cell <- e.out$FDR <= 0.001
 is.cell[is.na(is.cell)] <- FALSE
-df_is.cell <- as.data.frame(is.cell)
-rownames(df_is.cell) <- rownames(e.out)
-df_is.cell <- merge(df_is.cell, df, by = "row.names")
-  
-p1 <- ggplot(df_is.cell, aes(x = Rank, y = Total, color = is.cell)) +
-    geom_point() +
-    scale_x_log10() +
-    scale_y_log10() +
-    labs(x = "Rank", y = "Total") +
-    theme_classic() +
-    geom_hline(yintercept = metadata(br.out)$knee, color = "dodgerblue", linetype = "dotted") +
-    geom_hline(yintercept = metadata(br.out)$inflection, color = "forestgreen", linetype = "dotted")+
-    scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black"), 
-                     guide = guide_legend(title = "Above Inflection"))
-
-write.table(df_is.cell, paste0(arg$workdir, "/emptyDrops_barcode_classification.tsv"), row.names = FALSE, sep = "\t", quote = F)
 filt_mat <- mat[, is.cell]
 rm(mat, barcodes, features, e.out, is.cell)
-  
-SOB <- CreateSeuratObject(filt_mat, min.cells = 3)
+
+SOB <- CreateSeuratObject(filt_mat)
 rm(filt_mat)
 
- # 3. Quality metrics check
 SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, pattern = "^MT-")
-t <- textGrob("can be filled")
-p2 <- VlnPlot(SOB, features="nCount_RNA") + theme_classic() + theme(legend.position = 'none', axis.title.x=element_blank()) + scale_fill_manual(values = alpha("red", 0.5))
-p3 <- VlnPlot(SOB, features= "nFeature_RNA") + theme_classic() + theme(legend.position = 'none', axis.title.x=element_blank()) + scale_fill_manual(values = alpha("red", 0.5))
-p4 <- VlnPlot(SOB, features= "percent.mt") + theme_classic() + theme(legend.position = 'none', axis.title.x=element_blank()) + scale_fill_manual(values = alpha("red", 0.5))
-p2$layers[[2]]$aes_params$alpha = 0.2
-p3$layers[[2]]$aes_params$alpha = 0.2
-p4$layers[[2]]$aes_params$alpha = 0.2
-p5 <- ggplot(data = SOB@meta.data) +
-    geom_point(mapping = aes(x = nCount_RNA, y = nFeature_RNA, color = percent.mt), position = 'jitter', alpha = 0.3) +
-    scale_color_viridis_b(option="magma", limits = c(0, 13)) +
-    theme_classic() + theme(legend.position = 'none')
-SOB_filtered <- subset(SOB, subset =  percent.mt < arg$percent_mt)
-p6 <- VlnPlot(SOB_filtered, features= "percent.mt") + theme_classic() + theme(legend.position = 'none', axis.title.x=element_blank()) + scale_fill_manual(values = alpha("#5ec962", 0.5))
-p6$layers[[2]]$aes_params$alpha = 0.2
-p7 <- ggplot(data = SOB_filtered@meta.data) +
-    geom_point(mapping = aes(x = nCount_RNA, y = nFeature_RNA, color = percent.mt), position = 'jitter', alpha = 0.3) +
-    scale_color_viridis_b(option="magma", limits = c(0, 13)) +
-    theme_classic() + guides(shape = guide_legend(override.aes = list(size = 2)), 
-                             color = guide_legend(override.aes = list(size = 2))) +
-    theme(legend.title = element_text(size = 10), legend.text = element_text(size = 9))
-  
-title_grob <- textGrob(paste0("QC for ",i), gp = gpar(fontsize = 16, fontface = "bold"))
-subtitle_grob <- textGrob(paste0(nrow(SOB_filtered), " features x ", ncol(SOB_filtered), " cells"), gp = gpar(fontsize = 12))
-final_plot <- gridExtra::arrangeGrob(p1, t, p2, p3, p4, p6, p5, p7, ncol = 2, nrow = 4)
-margin <- unit(0.5, "line")
-updated_plot_combined_gof <-  grid.arrange(title_grob, 
-                                           subtitle_grob, 
-                                           final_plot,
-                                           heights = unit.c(grobHeight(title_grob) + 1.2*margin, 
-                                                            grobHeight(subtitle_grob) + margin,
-                                                            unit(1,"null")))
 
-png(filename = paste0(arg$workdir, "/outdir/QualityControl_graph_", i,".png"), width = 9.5, height = 5.5, units = "in", res = 300)
-  plot(updated_plot_combined_gof)
-dev.off()
+# 3. Doublet identification
+# 3.1 scDblFinder
+sce_tmp <- as.SingleCellExperiment(SOB)
+sce_tmp <- scDblFinder(sce_tmp, dbr.sd = 1)
+seurat_tmp <- as.Seurat(sce_tmp, counts = "counts", data = NULL)
+
+SOB@meta.data <- seurat_tmp@meta.data
+rm(seurat_tmp, sce_tmp)
+SOB@meta.data$scDblFinder.class <- gsub("singlet", "Singlet", SOB@meta.data$scDblFinder.class)
+SOB@meta.data$scDblFinder.class <- gsub("doublet", "Doublet", SOB@meta.data$scDblFinder.class)
+
+# Intermezzo. Mitochondrial cut-off and standard processing (scDblFinder does not prefer this processing step first, DoubletFinder does)
+SOB_filtered <- subset(SOB, subset = percent.mt < 5)
+SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
+SOB@assays$RNA_org@key <- "newkey_"
+genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
+SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
+SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
+SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
+SOB <- ScaleData(SOB)
+SOB <- RunPCA(SOB)
+SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:50)
+SOB <- FindClusters(SOB, resolution = 0.5)
+SOB <- RunUMAP(SOB, dims = 1:50)
+
+# 3.2 DoubletFinder
+sweep.res.list_SOB <- paramSweep_v3(SOB, PCs = 1:50, sct = FALSE)
+sweep.stats_SOB <- summarizeSweep(sweep.res.list_SOB, GT = FALSE)
+bcmvn_SOB <- find.pK(sweep.stats_SOB)
+optimal_pK <- as.numeric(as.character(bcmvn_SOB$pK[which.max(bcmvn_SOB$BCmetric)]))
+homotypic.prop <- modelHomotypic(SOB$seurat_clusters)
+nExpDoublets <- estimate_doublet_rate(SOB)
+nExpDoublets.adj <- round(nExpDoublets*(1-homotypic.prop))
+
+SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets, PCs = 1:50)
+colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder"
+SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets.adj, PCs = 1:50)
+colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder.adj"
+						      
+# 3.3 Scrublet
+reticulate::use_condaenv("~/miniconda3/envs/scrublet")
+scrub <- reticulate::import(module = "scrublet", convert = FALSE,delay_load = TRUE)
+counts_matrix = reticulate::r_to_py(Seurat::GetAssayData(object = SOB[["RNA"]], slot = "counts"))$T$tocsc()
+
+scr <- eval(rlang::expr(scrub$Scrublet(counts_matrix = counts_matrix, expected_doublet_rate = expected_doublet_rate_per_10000_cells))) 
+doublet_results <- eval(rlang::expr(reticulate::py_to_r(scr$scrub_doublets())))
+doublet_score <- doublet_results[[1]]
+names(doublet_score) <- colnames(SOB)
+doublet_prediction <- doublet_results[[2]]
+names(doublet_prediction) <- colnames(SOB)
+SOB <- Seurat::AddMetaData(SOB, metadata = doublet_score, col.name = "scrublet_doublet_score")
+SOB <- Seurat::AddMetaData(SOB, metadata = doublet_prediction, col.name = "scrublet_doublet_prediction")
+SOB@meta.data$scrublet_doublet_prediction <- gsub("FALSE", "Singlet", SOB@meta.data$scrublet_doublet_prediction)
+SOB@meta.data$scrublet_doublet_prediction <- gsub("TRUE", "Doublet", SOB@meta.data$scrublet_doublet_prediction)
+
+rm(counts_matrix, scr, doublet_results, doublet_score, doublet_prediction)
+
+# Doublet Score
+SOB@meta.data <- SOB@meta.data %>% mutate(doublet_score = ifelse(scDblFinder.class == "Doublet", 1,0) + ifelse(scrublet_doublet_prediction == "Doublet", 1, 0) + ifelse(DoubletFinder == "Doublet", 0.3, 0) + ifelse(DoubletFinder.adj == "Doublet", 0.7, 0))
+
+cat(paste0("Quality control for ", i, "Completed!"), "\n")
+
+# 4. Add Metadata
+sample_info <- fread("/location/to/metadata.tsv")
+SOB@meta.data <- merge(SOB@meta.data, sample_info, by.x = "dnumber", by.y = "dnumber", all = TRUE)
+rm(sample_info)
+
+# 5. Add transcript data
+transcripts <- Read10X(paste0(sub("/$", "", file_path), "_counts_weighed/"), gene.column = 1)
+barcodes_to_keep <- colnames(transcripts) %in% colnames(SOB)
+transcripts <- transcripts[, barcodes_to_keep]
+SOB[["ISOFORM"]] <- CreateAssayObject(counts = transcripts)
+rm(transcripts)
+
+cat(paste0("Metadata and isoforms added!"), "\n")
+
+# 6. Save preprocessed object
+name <- paste("SOB_processed_", unique(SOB$Sample), sep = "")
+saveRDS(object = SOB, file = paste0(file_path, name, ".rds"))
 
 write10xCounts(SOB_filtered, (arg$workdir, "/filtered_matrix_", i, "/")
 
+cat(paste0("Object saved, next!"), "\n")
+				      
