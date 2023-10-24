@@ -171,7 +171,7 @@ proc map_job {args} {
 					if {$ubams} {
 						set o [wgzopen $tempfastq1]
 						foreach fastq $fastqfiles {
-							catch_exec samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
+							catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
 						}
 						gzclose $o
 						set fastqfiles $tempfastq1
@@ -189,7 +189,7 @@ proc map_job {args} {
 						if {$ubams} {
 							set out1 [tempfile].fastq.gz
 							set out2 [tempfile].fastq.gz
-							catch_exec samtools fastq -c 1 -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $fastq -1 $out1 -2 $out2
+							catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq -1 $out1 -2 $out2
 						} else {
 							lappend deps1 $dep1
 							lappend deps2 $dep2
@@ -251,7 +251,7 @@ proc map_job {args} {
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
 					set out [tempfile].fastq.gz
-					catch_exec samtools fastq -c 1 -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $file -o $out
+					catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file -o $out
 					set file $out
 				}
 				if {!$mergesort || $sort eq "nosort"} {
@@ -304,7 +304,7 @@ proc map_job {args} {
 				if {$ubams} {
 					set temp [tempdir]/[file root [file tail $file]].fastq.gz
 					set file2 [tempfile].fastq.gz
-					catch_exec samtools fastq -T "RG,BC,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
+					catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
 					set file1 $temp
 				}
 				set tempfile [filetemp_ext $target]
