@@ -249,9 +249,20 @@ proc findR {} {
 	return $R
 }
 
-proc R {cmd} {
+proc R {args} {
+	set vars {}
+	cg_options cat args {
+		-vars {
+			set vars $value
+		}
+	} cmd 1 1
+	set pre {}
+	foreach var $vars {
+		upvar $var uvar
+		append pre "$var=\"$uvar\"\n"
+	}
 	set tempfile [tempfile].R
-	file_write $tempfile $cmd
+	file_write $tempfile $pre$cmd
 	exec [findR] --vanilla < $tempfile >@ stdout 2>@ stderr
 }
 
