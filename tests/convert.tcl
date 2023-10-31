@@ -478,6 +478,23 @@ test format {keyvalue} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test format {keyvalue -keyname and -valuename} {
+	write_tab tmp/test.tsv {
+		test	v1	v2
+	 	id1	1	2
+	 	id2	3	3
+	}
+	exec cg keyvalue -idfields test -keyname version -valuename count tmp/test.tsv tmp/result.tsv
+	write_tab tmp/expected.tsv {
+		test	version	count
+	 	id1	v1	1
+	 	id1	v2	2
+	 	id2	v1	3
+	 	id2	v2	3
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test format {keyvalue} {
 	write_tab tmp/test.tsv {
 		test	extra	v1	v2

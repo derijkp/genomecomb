@@ -4,6 +4,8 @@ proc cg_keyvalue {args} {
 	set idfields {}
 	set infile {}
 	set outfile {}
+	set keyname key
+	set valuename value
 	cg_options keyvalue args {
 		-idfields {
 			set idfields $value
@@ -12,13 +14,19 @@ proc cg_keyvalue {args} {
 			set samplefields $value
 			set samplefieldslen [llength $samplefields]
 		}
+		-keyname {
+			set keyname $value
+		}
+		-valuename {
+			set valuename $value
+		}
 	} {file outfile} 0 2
-	if {$file eq ""} {
+	if {![info exists file] || $file eq ""} {
 		set f stdin
 	} else {
 		set f [gzopen $file]
 	}
-	if {$outfile eq ""} {
+	if {![info exists outfile] || $outfile eq ""} {
 		set o stdout
 	} else {
 		set tempoutfile [filetemp $outfile]
@@ -53,7 +61,7 @@ proc cg_keyvalue {args} {
 			lappend nh sample
 		}
 	}
-	lappend nh {*}$idfields key value
+	lappend nh {*}$idfields $keyname $valuename
 	puts $o [join $nh \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
