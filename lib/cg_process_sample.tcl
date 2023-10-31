@@ -492,6 +492,7 @@ proc process_sample_job {args} {
 	set fastqdir {}
 	set singlecell {}
 	set singlecell_whitelist {}
+	set singlecell_umisize 10
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -520,6 +521,9 @@ proc process_sample_job {args} {
 		}
 		-singlecell-whitelist {
 			set singlecell_whitelist $value
+		}
+		-singlecell-umisize {
+			set singlecell_umisize $value
 		}
 		-realign - -realign {
 			set realign $value
@@ -803,7 +807,10 @@ proc process_sample_job {args} {
 				file rename -force $resultbamfile $resultbamfile.old
 			}
 		}
-		sc_barcodes_job -skip $skips -skip $skipsresult -whitelist $singlecell_whitelist $fastqdir $sampledir
+		sc_barcodes_job -skip $skips -skip $skipsresult \
+			-whitelist $singlecell_whitelist \
+			-umisize $singlecell_umisize \
+			$fastqdir $sampledir
 		set fastqdir $sampledir/bcfastq
 	}
 	# use generic (fastq/bam source)

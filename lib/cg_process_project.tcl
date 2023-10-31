@@ -43,6 +43,7 @@ proc process_project_job {args} {
 	set reftranscripts {}
 	set singlecell {}
 	set singlecell_whitelist {}
+	set singlecell_umisize 12
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -79,6 +80,9 @@ proc process_project_job {args} {
 		}
 		-singlecell-whitelist {
 			set singlecell_whitelist $value
+		}
+		-singlecell-umisize {
+			set singlecell_umisize $value
 		}
 		-realign {
 			set realign $value
@@ -288,7 +292,9 @@ proc process_project_job {args} {
 		set dir $sampledir/$sample
 		if {!$jobsample} {
 			process_sample_job -todoVar todo -clip $clip \
-				-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+				-singlecell $singlecell \
+				-singlecell-whitelist $singlecell_whitelist \
+				-singlecell-umisize $singlecell_umisize \
 				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -308,7 +314,9 @@ proc process_project_job {args} {
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
 			process_sample_job -todoVar todo -clip $clip \
-				-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+				-singlecell $singlecell \
+				-singlecell-whitelist $singlecell_whitelist \
+				-singlecell-umisize $singlecell_umisize \
 				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -331,7 +339,9 @@ proc process_project_job {args} {
 				counters isocallers reftranscripts
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip \
-					-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+					-singlecell $singlecell \
+					-singlecell-whitelist $singlecell_whitelist \
+					-singlecell-umisize $singlecell_umisize \
 					-datatype $datatype -aliformat $aliformat \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -351,7 +361,9 @@ proc process_project_job {args} {
 		putslog "Processing msample $sample"
 		set dir $destdir/msamples/$sample
 		process_sample_job -clip $clip \
-			-singlecell $singlecell -singlecell-whitelist $singlecell_whitelist \
+			-singlecell $singlecell \
+			-singlecell-whitelist $singlecell_whitelist \
+			-singlecell-umisize $singlecell_umisize \
 			-datatype $datatype -aliformat $aliformat \
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
