@@ -19,12 +19,12 @@ proc cg_download_genes {args} {
 			}]} {
 				array set a [split [string trim [file_read $temp/ensemblToGeneName.tsv]] "\n\t"]
 			}
-		} elseif {[regexp {^(wgEncodeGencode.*V)([0-9]+)$} $geneset temp set version]} {
+		} elseif {[regexp {^wgEncodeGencode.*(V[A-Z]*[0-9]+)$} $geneset temp version]} {
 			unset -nocomplain a
 			if {![catch {
-				cg_download_ucsc $temp/wgEncodeGencodeAttrsV$version.tsv ${build} wgEncodeGencodeAttrsV$version
+				cg_download_ucsc $temp/wgEncodeGencodeAttrs$version.tsv ${build} wgEncodeGencodeAttrs$version
 			}]} {
-				array set a [split [string trim [cg select -f {transcriptId geneId} $temp/wgEncodeGencodeAttrsV$version.tsv]] "\n\t"]
+				array set a [split [string trim [cg select -f {transcriptId geneId} $temp/wgEncodeGencodeAttrs$version.tsv]] "\n\t"]
 			}
 			set extrafields {gene=$name2}
 		} else {

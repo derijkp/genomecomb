@@ -25,7 +25,7 @@ proc job_cleanlogs {logfile} {
 			set job $jobo
 		}
 		if {[info exists donea($job)]} continue
-		foreach ext {log run out err ok time} {
+		foreach ext {log run out err ok tm} {
 			file delete -force [job.file $ext $job]
 		}
 		catch {file delete [job.file finished $job]}

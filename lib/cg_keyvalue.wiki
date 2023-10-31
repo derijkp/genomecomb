@@ -25,6 +25,8 @@ The actual sample value is extracted from the fieldname (field-sample).
 ; -idfields list: which fields identify the object (default sample or id)
 ; -samplefields samplefields: Using this option, sample names that consist of several parts separated by - (as typical in 
 genomecomb output, e.g. -gatk-rdsbwa-sample1) are split up in separate fields with the field names given by **samplefields**
+; -keyname keyname: change the fieldname of the column containing the keys from the default "key" to **keyname**
+; -valuename valuename: change the fieldname of the column containing the values from the default "value" to **valuename**
 
 == Category ==
 Format Conversion

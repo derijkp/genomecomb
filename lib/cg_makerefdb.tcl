@@ -98,7 +98,7 @@ proc makerefdb_job {args} {
 	regsub {version: [0-9.]+} $c "version: [lindex [timestamp] 0]\ntime: [lindex [timestamp] 0]" c
 	file_write README_dbdir.txt $c
 
-	set refseq genome_${build}.ifas
+	set refseq $dbdir/genome_${build}.ifas
 
 	# download genome
 	job genome_${build} -targets {

@@ -1558,8 +1558,8 @@ proc job_cleanup {} {
 }
 
 # maxsize: on linux filename size is usually limited to 255 characters.
-# limit to 251 to allow for addition of the extension (.log, ...)
-proc job_relfile2name {prefix file {maxsize 251}} {
+# limit to 247 to allow for addition of the extension (.log, ...) and typedir
+proc job_relfile2name {prefix file {maxsize 247}} {
 	upvar job_logdir job_logdir
 	if {[info exists job_logdir]} {
 		set ffile [file_absolute $file]

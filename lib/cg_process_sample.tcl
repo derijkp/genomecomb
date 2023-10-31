@@ -627,7 +627,15 @@ proc process_sample_job {args} {
 	} elseif {[llength $args] == 2} {
 		foreach {oridir sampledir} $args break
 	}
-	if {$fastqdir eq ""} {set fastqdir $sampledir/fastq}
+	# If ubam dir is present, prefer this
+	# we will handle ubams "as fastqs" mostly (keep in var fastqdir, etc.)
+	if {$fastqdir eq ""} {
+		if {[file exists $sampledir/ubam]} {
+			set fastqdir $sampledir/ubam
+		} else {
+			set fastqdir $sampledir/fastq
+		}
+	}
 	set reports [reports_expand $reports]
 	set dbdir [file_absolute $dbdir]
 	set sampledir [file_absolute $sampledir]
@@ -639,30 +647,32 @@ proc process_sample_job {args} {
 	set sample [file tail $sampledir]
 	#
 	if {$minfastqreads > 0} {
-		set files [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
+		set files [bsort [jobglob \
+			$fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq \
+			$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam \
+		]]
 		if {![llength $files]} {return {}}
 		set file [lindex $files 0]
-		set f [gzopen $file]
+		set f [open "| convert_pipe $file .tsv]
+		set header [tsv_open $f]
 		set count $minfastqreads
 		while {$count} {
-			for {set i 0} {$i < 4} {incr i} {
-				if {[gets $f line] == -1} {
-					gzclose $f
-					if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
-						set num [expr {$minfastqreads-$count}]
-						file mkdir $sampledir/reports
-						file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
-							[join {sample source parameter value} \t] \
-							[join [list $sample fastq-stats fw_numreads $num] \t] \
-						] \n]\n
-						file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
-							[join {sample source parameter value} \t] \
-							[join [list $sample fastq-stats rev_numreads $num] \t] \
-						] \n]\n
-						lappend todo(reports) $sampledir/reports
-					}
-					return {}
+			if {[gets $f line] == -1} {
+				gzclose $f
+				if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
+					set num [expr {$minfastqreads-$count}]
+					file mkdir $sampledir/reports
+					file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
+						[join {sample source parameter value} \t] \
+						[join [list $sample fastq-stats fw_numreads $num] \t] \
+					] \n]\n
+					file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
+						[join {sample source parameter value} \t] \
+						[join [list $sample fastq-stats rev_numreads $num] \t] \
+					] \n]\n
+					lappend todo(reports) $sampledir/reports
 				}
+				return {}
 			}
 			incr count -1
 		}
@@ -816,7 +826,10 @@ proc process_sample_job {args} {
 	# use generic (fastq/bam source)
 	# ------------------------------
 	# find fastq files in fastq dir
-	set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
+	set fastqfiles [bsort [jobglob \
+		$fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq \
+		$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam \
+	]]
 	if {![llength $fastqfiles]} {
 		file mkdir $fastqdir
 		# if there are none in the fastq dir, check ori dir
@@ -847,19 +860,20 @@ proc process_sample_job {args} {
 			}
 		}
 		set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
-	} 
+	}
 	# create bam from fastq files (if found)
 	set cleanedbams {}
 	set processlist {}
 	# check even number of fastqs for paired analysis
-	if {$paired} {
+	if {[file ext [lindex $fastqfiles 0]] in ".bam .cram .sam"} {set ubams 1} else {set ubams 0}
+	if {$paired && !$ubams} {
 		if {[expr {[llength $fastqfiles]%2}] != 0} {
 			error "paired analysis (default, use -paired 0 to turn off), but number of fastqs is uneven ([llength $fastqfiles]) for sample $sampledir"
 		}
 	}
 	if {[isint $maxfastqdistr]} {
 		set len [llength $fastqfiles]
-		if {$paired} {
+		if {$paired && !$ubams} {
 			set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
 			if {[expr {$perbatch%2}]} {incr perbatch}
 		} else {
@@ -870,7 +884,7 @@ proc process_sample_job {args} {
 			lappend processlist [lrange $fastqfiles $pos [expr {$pos + $perbatch - 1}]]
 		}
 	} else {
-		if {$paired} {
+		if {$paired && !$ubams} {
 			foreach {fastq1 fastq2} $fastqfiles {
 				lappend processlist [list $fastq1 $fastq2]
 			}
@@ -905,8 +919,10 @@ proc process_sample_job {args} {
 			set files $pfastqfiles
 			set cleanupfiles {}
 			set cleanupdeps {}
+			# pbase takes the "root" of the filename, and will be the basis for naming results
 			set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
 			if {[llength $pfastqfiles] > 1} {
+				# if we have 2 fastqfiles (paired), and the second has a different root, add this to pbase
 				set last [file_root [file tail [lindex $pfastqfiles end]]]
 				if {$last ne $pbase} {
 					set pos 0
@@ -930,6 +946,7 @@ proc process_sample_job {args} {
 				lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
 			}
 			if {$clip} {
+				if {$ubams} {error "clipping not supported for ubams"}
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
 					-skip $skips -skip $skipsresult -skip $cleanupdeps \
 					-removeskew $removeskew \

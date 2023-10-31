@@ -14,7 +14,6 @@ proc cg_fastq2tsv {args} {
 	} else {
 		set infiles [list $infile]
 	}
-	set header [join {id sequence temp quality} \t]
 	if {$outfile ne "-"} {
 		if {[file exists $outfile]} {error "file exists: $outfile"}
 		set compresspipe [compresspipe $outfile]
@@ -27,11 +26,6 @@ proc cg_fastq2tsv {args} {
 		set o stdout
 	}
 	if {[llength $fields]} {
-		if {$outfile ne "-"} {
-			set o [open $outfile w]
-		} else {
-			set o stdout
-		}
 		puts $o [join $fields \t]
 		foreach infile $infiles {
 			if {$infile ne "-"} {
@@ -41,7 +35,9 @@ proc cg_fastq2tsv {args} {
 			}
 			set filename [file tail $infile]
 			while {![eof $f]} {
-				set nameline [gets $f]
+				set nameline [split [gets $f] \t]
+				set name [lindex $nameline 0]
+				set comments [lrange $nameline 1 end]
 				set seqline [gets $f]
 				set temp [gets $f]
 				set qualityline [gets $f]
@@ -66,26 +62,48 @@ proc cg_fastq2tsv {args} {
 						lappend result $value
 					} elseif {$field eq "file"} {
 						lappend result $filename
+					} elseif {$field eq "comments"} {
+						lappend result $comments
 					} else {
-						set value ""
+						set pos [list_find -glob $comments $field:*]
+						if {$pos == -1} {
+							lappend result ""
+						} else {
+							set value [lindex $comments $pos]
+							regsub "$field:\[^:\]*:" $value {} value
+							lappend result $value
+							set comments [list_sub $comments -exclude $pos]
+						}
 					}
 				}
 				puts $o [join $result \t]
 			}
 			if {$f ne "stdin"} {gzclose $f}
 		}
-		if {$o ne "stdout"} {close $o}
-	} elseif {$infile eq "-"} {
-		puts $header
-		exec paste - - - - <@ stdin >@ stdout
 	} else {
-		puts $o $header
+		puts $o [join {name sequence quality comments} \t]
 		foreach infile $infiles {
-			exec {*}[gzcat $infile] $infile | paste - - - - >@ $o
+			if {$infile ne "-"} {
+				set f [gzopen $infile]
+			} else {
+				set f stdin
+			}
+			set filename [file tail $infile]
+			while {![eof $f]} {
+				set nameline [split [gets $f] \t]
+				set name [lindex $nameline 0]
+				set comments [lrange $nameline 1 end]
+				set seqline [gets $f]
+				set temp [gets $f]
+				set qualityline [gets $f]
+				if {![string length $qualityline]} break
+				puts $o $name\t$seqline\t$qualityline\t$comments
+			}
+			if {$f ne "stdin"} {gzclose $f}
 		}
-		if {$outfile ne "-"} {
-			close $o
-			file rename -force -- $outfile.temp $outfile
-		}
+	}
+	if {$outfile ne "-"} {
+		gzclose $o
+		file rename -force -- $outfile.temp $outfile
 	}
 }

@@ -25,7 +25,7 @@ proc var_strelka_tools {} {
 
 proc version_strelka {} {
 	set version ?
-	set strelkadir [findstrelka]
+	strelka_env
 	set version [catch_exec configureStrelkaGermlineWorkflow.py --version]
 	return $version
 }

@@ -61,9 +61,15 @@ Type var will not use sv_* annotations and type sv will not use the var_* annota
 Variants are checked for overlap with regions in the file.
 ; **var**: variations file that must at least contain the columns chromosome,start,end,type,ref,alt 
 to annotate variants that match the given values. Typically, columns freq(p) and id are present for annotation.
-Thus, only variants that match the alleles given in alt will be annotated. If there are multiple alt 
-values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
-var databases can also be a (multivalued) bcol formatted ([[bcol]]) file instead of 
+Thus, only variants that match the alleles given in alt will be annotated. 
+If there are multiple alt alleles for the same genomic position, they
+should be all on the same line (unsplit) with the alt field containing a
+(comma separated) list of the different alt values. All information fields
+also contain a list with the values for the different alleles in the
+same order. In the typical variant file alternative alleles on the same
+position are split over different lines, you can use
+[[cg_collapsealleles]] to convert.
+Var databases can also be a (multivalued) bcol formatted ([[bcol]]) file instead of 
 a [[tsv]]; this is indicated by the extension bcol
 ; **gene**: gene files (in [[gene]] tsv format). Variants will be annotated with the effects they have on 
 the genes in these files as descibed below.

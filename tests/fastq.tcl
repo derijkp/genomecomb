@@ -89,7 +89,7 @@ test fastq2tsv {fastq2tsv} {
 	cg fastq2tsv data/seq_R1.fq.gz tmp/test.tsv
 } {}
 
-test fastq2tsv {fastq2tsv} {
+test fastq2tsv {fastq2tsv 2} {
 	file delete tmp/test.tsv
 	cg fastq2tsv data/seq_R1.fq.gz tmp/test.tsv
 	file delete tmp/test.fq.gz
@@ -97,6 +97,56 @@ test fastq2tsv {fastq2tsv} {
 	cg zcat data/seq_R1.fq.gz > tmp/seq_R1.fq
 	cg zcat tmp/test.fq.gz > tmp/test.fq
 	exec diff tmp/seq_R1.fq tmp/test.fq
+} {}
+
+test fastq2tsv {fastq2tsv comments, pipeing} {
+	file_write tmp/test.fastq [deindent {
+		@SRR792091.9203/1	RG:Z:test
+		CCAGTCCGAGAGCTCTGCCGGGTCCTGGGCACCAGGGGCCACTCTGCTGTGTCCCTTTGCTCCAGTCCCAATGTCACTCGCATGGTGCAGGGTCATGGCT
+		+
+		BCCFFFFFHHHHHJJJJJJIIJGHIJJJJIJJJJJIJJIIJJJJJJJHHHHEHFFFFFFEEEEEDCDDDDDDDDEDDDDDDDDDBCCCDDDD?CDDDDDD
+		@SRR792091.86979/1	RG:Z:test
+		TAATTTCTTTCTTGGTTGCCTCTGCCAAGCTCAGCCTGTTTGTGATCTCCTGCTGGCCCCGGCACTTCACAATCATGTAGCCCTTCTTGAGGGGGTACGT
+		+
+		@@@FDBDEHHHGHICIJEGGHIJIIJJIFCHGEGIGEG@GHIG@FBBF@DGHGGIGECDHHBBEFFFFFEECEEDDDEDDCCCDDDDDDDD<@9@99A>?
+	}]\n
+	file_write tmp/expected_test.tsv [deindent {
+		name	sequence	quality	comments
+		@SRR792091.9203/1	CCAGTCCGAGAGCTCTGCCGGGTCCTGGGCACCAGGGGCCACTCTGCTGTGTCCCTTTGCTCCAGTCCCAATGTCACTCGCATGGTGCAGGGTCATGGCT	BCCFFFFFHHHHHJJJJJJIIJGHIJJJJIJJJJJIJJIIJJJJJJJHHHHEHFFFFFFEEEEEDCDDDDDDDDEDDDDDDDDDBCCCDDDD?CDDDDDD	RG:Z:test
+		@SRR792091.86979/1	TAATTTCTTTCTTGGTTGCCTCTGCCAAGCTCAGCCTGTTTGTGATCTCCTGCTGGCCCCGGCACTTCACAATCATGTAGCCCTTCTTGAGGGGGTACGT	@@@FDBDEHHHGHICIJEGGHIJIIJJIFCHGEGIGEG@GHIG@FBBF@DGHGGIGECDHHBBEFFFFFEECEEDDDEDDCCCDDDDDDDD<@9@99A>?	RG:Z:test
+	}]\n
+	file delete tmp/test.tsv
+	cg fastq2tsv tmp/test.fastq tmp/test.tsv
+	exec diff tmp/test.tsv tmp/expected_test.tsv
+	# pipes
+	exec cg fastq2tsv < tmp/test.fastq > tmp/test.tsv
+	exec diff tmp/test.tsv tmp/expected_test.tsv
+	# 2 input
+	cg cat tmp/expected_test.tsv tmp/expected_test.tsv > tmp/expected_test2.tsv
+	file delete tmp/test.tsv
+	exec cg fastq2tsv tmp/test.fastq tmp/test.fastq tmp/test.tsv
+	exec diff tmp/test.tsv tmp/expected_test2.tsv
+} {}
+
+test fastq2tsv {fastq2tsv comments and -fields} {
+	file_write tmp/test.fastq [deindent {
+		@SRR792091.9203/1	RG:Z:test
+		CCAGTCCGAGAGCTCTGCCGGGTCCTGGGCACCAGGGGCCACTCTGCTGTGTCCCTTTGCTCCAGTCCCAATGTCACTCGCATGGTGCAGGGTCATGGCT
+		+
+		BCCFFFFFHHHHHJJJJJJIIJGHIJJJJIJJJJJIJJIIJJJJJJJHHHHEHFFFFFFEEEEEDCDDDDDDDDEDDDDDDDDDBCCCDDDD?CDDDDDD
+		@SRR792091.86979/1	RG:Z:test	MM:Z:test2
+		TAATTTCTTTCTTGGTTGCCTCTGCCAAGCTCAGCCTGTTTGTGATCTCCTGCTGGCCCCGGCACTTCACAATCATGTAGCCCTTCTTGAGGGGGTACGT
+		+
+		@@@FDBDEHHHGHICIJEGGHIJIIJJIFCHGEGIGEG@GHIG@FBBF@DGHGGIGECDHHBBEFFFFFEECEEDDDEDDCCCDDDDDDDD<@9@99A>?
+	}]\n
+	file_write tmp/expected_test.tsv [deindent {
+		name	sequence	RG	comments
+		@SRR792091.9203/1	CCAGTCCGAGAGCTCTGCCGGGTCCTGGGCACCAGGGGCCACTCTGCTGTGTCCCTTTGCTCCAGTCCCAATGTCACTCGCATGGTGCAGGGTCATGGCT	test	
+		@SRR792091.86979/1	TAATTTCTTTCTTGGTTGCCTCTGCCAAGCTCAGCCTGTTTGTGATCTCCTGCTGGCCCCGGCACTTCACAATCATGTAGCCCTTCTTGAGGGGGTACGT	test	MM:Z:test2
+	}]\n
+	file delete tmp/test.tsv
+	cg fastq2tsv -fields {name sequence RG comments} tmp/test.fastq tmp/test.tsv
+	exec diff tmp/test.tsv tmp/expected_test.tsv
 } {}
 
 testsummarize
