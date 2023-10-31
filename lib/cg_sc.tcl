@@ -115,6 +115,7 @@ proc sc_barcodes_job args {
 	set adaptorseq CTACACGACGCTCTTCCGATCT
 	set barcodesize 16
 	set umisize 12
+	# cutoff at 2 means that the actual maximum cost/difference is 1
 	set costcutoff 2
 	set bcparts 50
 	set maxcells 100000
@@ -154,7 +155,7 @@ proc sc_barcodes_job args {
 		      read name (as @<cellbarcode>_<umi>#originalname) as well as in the info "fields" CB CR and MI
 		* files
 	}
-	if {$whitelist ne ""} {set usewhitelist 0} else {set usewhitelist 1}
+	if {$whitelist ne ""} {set usewhitelist 1} else {set usewhitelist 0}
 	# logfile
 	set fastqdir [file_absolute $fastqdir]
 	if {![info exists resultdir]} {set resultdir [file dir $fastqdir]}
@@ -277,9 +278,10 @@ proc sc_barcodes_job args {
 		}
 		set max $count
 		if {$cutoff ne ""} {
+			#default cutoff is set at 20, not ""
 			set ucutoff $cutoff
 		} else {
-			# if cutoff not set directly, calc as fraction from max
+			# if cutoff set to "", calc as fraction from max
 			set ucutoff [expr {$max*0.05}]
 			# go to at least 100
 			if {$ucutoff > 100} {
