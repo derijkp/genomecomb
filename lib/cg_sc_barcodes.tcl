@@ -121,6 +121,7 @@ proc sc_barcodes_job args {
 	set maxcells 100000
 	set mincells 1000
 	set cutoff 20
+	set orphanprotection 1
 	set skips {}
 	cg_options sc_barcodes args {
 		-whitelist {
@@ -143,6 +144,9 @@ proc sc_barcodes_job args {
 		}
 		-bcparts {
 			set bcparts $value
+		}
+		-orphanprotection {
+			set orphanprotection $value
 		}
 		-skip {
 			lappend skips -skip $value
@@ -371,7 +375,7 @@ proc sc_barcodes_job args {
 		$resultdir/barcode2celbarcode.tsv
 	} -vars {
 		barcode_matches resultdir whitelist barcodesize threads
-		maxcells mincells mergedbarcodesfile cutoff usewhitelist
+		maxcells mincells mergedbarcodesfile cutoff usewhitelist orphanprotection
 	} -code {
 
 		# load counts in a (counts) and ua (umicounts)
@@ -389,10 +393,10 @@ proc sc_barcodes_job args {
 		gzclose $f
 
 		# matches with max 1 diff already done in barcodes.temp/barcode_matches-$part.tsv.zst
-		# even if a match is also in whitelist we take it as an error in the higher count barcode:
+		# even if a match is also in whitelist we take it as an error barcode in the higher count barcode:
 		# this is likely to come across, while it is highly unlikely to have 2 1-diff barcodes in actual cells
 		# unset a($match) to indicate this one is already taken (assign to highest)
-		catch {close $f} ; catch {close $o}
+		catch {close $f} ; catch {close $o} ; catch {close $or} ; catch {close $fm}
 		set o [open $resultdir/barcode2celbarcode.tsv.temp w]
 		puts $o barcode\tcellbarcode\tcount\tumicount\twhitelistmatch
 		# min size of barcode (start)
@@ -400,6 +404,7 @@ proc sc_barcodes_job args {
 		# cutoff info
 		array set infoa [file_read $resultdir/barcode_cutoff-info.tsv]
 		set max $infoa(max)
+		set or [open $resultdir/rejected_barcode2celbarcode.tsv.temp w]
 		foreach barcode_match $barcode_matches {
 			set fm [gzopen $barcode_match]
 			set header [tsv_open $fm]
@@ -414,6 +419,19 @@ proc sc_barcodes_job args {
 				set count $a($barcode)
 				if {$count < $cutoff && $num > $mincells} break
 				if {$num > $maxcells} break
+				set orphan 0
+				if {$orphanprotection} {
+					set testmax [expr {1.50*$count}]
+					foreach {match temp} $matches {
+						if {![info exists a($match)]} continue
+						if {$a($match) > $testmax} {
+							set orphan 1
+							break
+						}
+						# highest should come first anyway
+						break 
+					}
+				}
 				foreach {match temp} $matches {
 					if {![info exists a($match)]} continue
 					if {![info exists wa($barcode)]} {
@@ -433,16 +451,22 @@ proc sc_barcodes_job args {
 							set wmatch 0
 						}
 					}
-					puts $o $match\t$barcode\t$a($match)\t$ua($match)\t$wmatch
+					if {!$orphan} {
+						puts $o $match\t$barcode\t$a($match)\t$ua($match)\t$wmatch
+					} else {
+						puts $or $match\t$barcode\t$a($match)\t$ua($match)\t$wmatch
+					}
 					unset a($match)
 					unset ua($match)
 				}
 			}
 			gzclose $fm
 		}
+		close $or
 		close $o
 
 		file rename -force $resultdir/barcode2celbarcode.tsv.temp $resultdir/barcode2celbarcode.tsv
+		file rename -force $resultdir/rejected_barcode2celbarcode.tsv.temp $resultdir/rejected_barcode2celbarcode.tsv
 		# cg select -g cellbarcode barcode2celbarcode.tsv	| cg select -g all
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
 	}
