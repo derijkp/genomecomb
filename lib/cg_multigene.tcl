@@ -51,7 +51,7 @@ proc cg_multigene {args} {
 	unset -nocomplain novela
 	set f [gzopen [lindex $args 0]]
 	set header [tsv_open $f comments1]
-	close $f
+	gzclose $f
 	set poss [list_sub [tsv_basicfields $header 7 0] {0 1 2 6}]
 	set common {chromosome begin end strand}
 	set basicfieldspresent [list_sub $common -exclude [list_find $poss -1]]
@@ -70,11 +70,18 @@ proc cg_multigene {args} {
 		set geneidpos [multigene_findfield $header {gene_id geneid gene} geneid fieldname $file]
 		lappend poss $genepos $geneidpos
 		set restposs [list_find -regexp $header -]
-		set restfields [list_sub $header $restposs]
-		lappend newheader {*}$restfields
+		if {[llength $restposs] > 0} {
+			set restfields [list_sub $header $restposs]
+			lappend newheader {*}$restfields
+		} else {
+			set restfields [list_sub $header -exclude [list_remove [list_remdup $poss] -1]]
+			set restposs [list_cor $header $restfields]
+			foreach field $restfields {
+				lappend newheader ${field}-[file_rootname $file]
+			}
+		}
 		set dummya($num) {}
 		foreach field $restfields {lappend dummya($num) 0}
-#if {$file eq "tmp/gene_count-t2.tsv"} error
 		while 1 {
 			if {[gets $f line] == -1} break
 			set line [split $line \t]
@@ -117,7 +124,7 @@ proc cg_multigene {args} {
 			list_addnew geneinfoa($gene) [list_sub $line $poss]
 			set gcounta($num,$gene) [list_sub $line $restposs]
 		}
-		close $f
+		gzclose $f
 	}
 	# parray geneinfoa
 	# parray gcounta
@@ -143,8 +150,14 @@ proc cg_multigene {args} {
 				# should never get here -> solved earlier using chrgenea
 				puts stderr "error combining gene count files: gene $gene is in different chromosomes ($chr)"
 			}
-			set begin [lmath_min [list_subindex $lines 1]]
-			set end [lmath_max [list_subindex $lines 2]]
+			set begin [list_remove [list_subindex $lines 1] {}]
+			if {[llength $begin] > 1} {
+				set begin [lmath_min $begin]
+			}
+			set end [list_remove [list_subindex $lines 2] {}]
+			if {[llength $end] > 1} {
+				set end [lmath_max $end]
+			}
 			set temp [list_remove [list_subindex $lines 3] {}]
 			set strand [join [list_remdup [split $temp { ,}]] ,]
 			set line [lindex $lines 0]
