@@ -4,20 +4,32 @@
 cg multicount ?options? multicountfile countfile countfile ?countfile? ...
 
 == Summary ==
-Compare multiple count files
+Compare multiple count files that all have the same ids (depricated)
 
 == Description ==
-This command combines multiple count files into one multicount file; a
+This command combines multiple count (or other) files into one multicount file: a
 tab separated file containing a wide table used to compare genes/exon/.. (counts)
 between different samples. Each line in the table contains gene/exon/.. names
- and columns with the count info specific to each sample (count, etc.). The latter have a
+and columns with the count info specific to each sample (count, etc.). The latter have a
 column heading of the form field-<sample>.
 
 <sample> can be simply the samplename, but may also include information
 about e.g. the sequencing or analysis method in the form method-samplename, e.g.
 count_weighed-isoquant-sample1.tsv.
 
-When a transcript was not detected in a sample, the value in the table is set to 0.0
+The command matches rows in the different files based on having the same id, i.e.
+the combination of values in one or more id fields. The fields potentially
+used for this can be given using the -idfields option (defaults to any
+of the following: geneid, genename, gene, exon, exonid, id, name, cell,
+cellbarcode, spliceName, chromosome, strand, start, begin, end). Only the
+fields present in all files will actually be used (so you have to make sure at
+least one value that is unique to each row is present)
+
+If there are fields with a - in them, these will be use as data fields. If not, all
+fields not in "idfields" will be considered data fields, and the columns will be named <field>-<sample>
+where the <sample> part is extracted from the file name.
+When there is no with a certain id one (or more) of the files, it's data
+fields will be filled with 0 (by default)
 
 == Arguments ==
 ; multicountfile: resultfile, will be created if it does not exist
@@ -27,6 +39,7 @@ When a transcript was not detected in a sample, the value in the table is set to
 == Options ==
 ; -idfields list: list with fields to be used as id (default: geneid
 genename gene exon) if present in the count files.
+; -empty emptyvalue: value given for data columns in row that does not exist for the given file (default 0)
 
 == Category ==
 Variants
