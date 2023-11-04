@@ -39,6 +39,7 @@ fields will be filled with 0 (by default)
 == Options ==
 ; -idfields list: list with fields to be used as id (default: geneid
 genename gene exon) if present in the count files.
+; -clip_geneid_version 0/1: default (1) is to clip the version (. followe by a number at the end) in geneid columns
 ; -empty emptyvalue: value given for data columns in row that does not exist for the given file (default 0)
 
 == Category ==

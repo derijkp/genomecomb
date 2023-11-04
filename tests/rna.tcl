@@ -375,4 +375,34 @@ test multicount {no begin and end, no *-sample for some, -empty} {
 	exec diff tmp/gene_count-test.tsv tmp/gene_count-expected.tsv
 } {}
 
+test multicount {remove gene versions} {
+	file_write tmp/gene_count-t1.tsv [string trim [deindent {
+		geneid	chromosome	begin	end	count-t1
+		g1	chr1	1000	1200	11
+		g2	chr1	2000	2200	12
+	}]]\n
+	file_write tmp/gene_count-t2.tsv [string trim [deindent {
+		geneid	chromosome	begin	end	info	count
+		g1.1	chr1	1000	1200	i1	21
+		g3.2	chr2	1002	1204	i3	23
+		g4.1	chr3	1003	1203	i4	24
+	}]]\n
+	file_write tmp/gene_count-t3.tsv [string trim [deindent {
+		geneid	chromosome	count
+		g1.2	chr1	31
+		g4.1	chr3	34
+	}]]\n
+	file_write tmp/gene_count-expected.tsv [deindent {
+		geneid	chromosome	count-t1	info-t2	count-t2	count-t3
+		g1	1	11	i1	21	31
+		g2	1	12			
+		g3	2		i3	23	
+		g4	3		i4	24	34
+	}]\n
+	file delete tmp/gene_count-test.tsv
+	cg multicount -stack 1 -empty {} tmp/gene_count-test.tsv \
+		tmp/gene_count-t1.tsv tmp/gene_count-t2.tsv tmp/gene_count-t3.tsv >@ stdout
+	exec diff tmp/gene_count-test.tsv tmp/gene_count-expected.tsv
+} {}
+
 testsummarize

@@ -1,12 +1,16 @@
 proc cg_multicount {args} {
 	set potentialidfields {geneid genename gene exon exonid id name cell cellbarcode spliceName chromosome strand start begin end}
 	set emptyvalue 0
+	set clip_geneid_version 1
 	cg_options multicount args {
 		-idfields {
 			set idfields $value
 		}
 		-empty {
 			set emptyvalue $value
+		}
+		-clip_geneid_version {
+			set clip_geneid_version $value
 		}
 	} compar_file 2
 	set countfiles $args
@@ -27,6 +31,8 @@ proc cg_multicount {args} {
 		set commonidfields [list_common $commonidfields $idfields]
 		set a(chrfield,$file) [lindex [list_common $header {chromosome chr}] 0]
 		set a(chrpos,$file) [lsearch $header $a(chrfield,$file)]
+		set a(geneidfield,$file) [lindex [list_common $header {geneid gene_id}] 0]
+		set a(geneidpos,$file) [lsearch $header $a(geneidfield,$file)]
 		gzclose $f
 	}
 	foreach file $countfiles {catch {gzclose $a(f,$file)}}
@@ -35,13 +41,15 @@ proc cg_multicount {args} {
 	foreach file $countfiles {
 		set rootname [file_rootname $file]
 		set tempfile [tempfile].zst
+		set fields $a(h,$file)
 		if {$a(chrfield,$file) != ""} {
-			set fields $a(h,$file)
 			lset fields $a(chrpos,$file) "chromosome=chr_clip(\$$a(chrfield,$file))"
-			cg select -f $fields -s $commonidfields $file $tempfile
-		} else {
-			cg select -s $commonidfields $file $tempfile
 		}
+		if {$clip_geneid_version && $a(geneidfield,$file) != ""} {
+			set temp "geneid=regsub(\$$a(geneidfield,$file),\"\\\[.\\\]\\\[0-9\\]+\\\$\",\"\")"
+			lset fields $a(geneidpos,$file) $temp
+		}
+		cg select -stack 1 -overwrite 1 -f $fields -s $commonidfields $file $tempfile
 		set a(f,$file) [gzopen $tempfile]
 		set header [tsv_open $a(f,$file) comment]
 		set poss [list_remove [list_cor $header $commonidfields] -1]
@@ -70,7 +78,7 @@ proc cg_multicount {args} {
 	set empty [list_fill [llength $commonidfields] {}]
 
 	set tempfile $compar_file.temp[gzext $compar_file]
-	set o [open $tempfile w]
+	set o [wgzopen $tempfile]
 	if {$comment ne ""} {puts -nonewline $o $comment}
 	puts $o [join $newheader \t]
 	while 1 {
