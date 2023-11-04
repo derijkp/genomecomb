@@ -41,6 +41,7 @@ fields will be filled with 0 (by default)
 genename gene exon) if present in the count files.
 ; -clip_geneid_version 0/1: default (1) is to clip the version (. followe by a number at the end) in geneid columns
 ; -empty emptyvalue: value given for data columns in row that does not exist for the given file (default 0)
+; -limit_geneids file: limit output to geneids given in **file**, which shouls be a tsv file with at least a column "geneid" or "gene_id"
 
 == Category ==
 Variants

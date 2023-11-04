@@ -2,6 +2,7 @@ proc cg_multicount {args} {
 	set potentialidfields {geneid genename gene exon exonid id name cell cellbarcode spliceName chromosome strand start begin end}
 	set emptyvalue 0
 	set clip_geneid_version 1
+	set limit_geneids {}
 	cg_options multicount args {
 		-idfields {
 			set idfields $value
@@ -12,9 +13,24 @@ proc cg_multicount {args} {
 		-clip_geneid_version {
 			set clip_geneid_version $value
 		}
+		-limit_geneids {
+			set limit_geneids $value
+		}
 	} compar_file 2
 	set countfiles $args
 
+	if {$limit_geneids ne ""} {
+		unset -nocomplain includea
+		if {[catch {
+			set geneids [cg select -sh /dev/null -f geneid $limit_geneids]
+		}]} {
+			set geneids [cg select -sh /dev/null -f gene_id $limit_geneids]
+		}
+		foreach geneid $geneids {
+			regsub {\.[0-9]+$} $geneid {} geneid
+			set limita($geneid) 1
+		}
+	}
 	catch {gzclose $f} ; catch {gzclose $o}
 	unset -nocomplain a
 	set commonidfields $potentialidfields
@@ -71,9 +87,15 @@ proc cg_multicount {args} {
 			}
 		}
 		set a(empty,$file) [list_fill [llength $a(data,$file)] $emptyvalue]
-		set a(status,$file) [gets $a(f,$file) a(curline,$file)]
-		set a(curline,$file) [split $a(curline,$file) \t]
-		set a(curid,$file) [list_sub $a(curline,$file) $a(id,$file)]
+		while 1 {
+			set a(status,$file) [gets $a(f,$file) a(curline,$file)]
+			set a(curline,$file) [split $a(curline,$file) \t]
+			set a(curid,$file) [list_sub $a(curline,$file) $a(id,$file)]
+			if {$limit_geneids eq ""} break
+			set geneid [lindex $a(curline,$file) $a(geneidpos,$file)]
+			if {$a(status,$file) == -1 || [info exists limita($geneid)]} break
+		}
+
 	}
 	set empty [list_fill [llength $commonidfields] {}]
 
@@ -98,8 +120,14 @@ proc cg_multicount {args} {
 				continue
 			}
 			lappend line {*}[list_sub $a(curline,$file) $a(dataposs,$file)]
-			set a(status,$file) [gets $a(f,$file) a(curline,$file)]
-			set a(curline,$file) [split $a(curline,$file) \t]
+			while 1 {
+				set a(status,$file) [gets $a(f,$file) a(curline,$file)]
+				set a(curline,$file) [split $a(curline,$file) \t]
+				if {$limit_geneids eq ""} break
+				set geneid [lindex $a(curline,$file) $a(geneidpos,$file)]
+				if {$a(status,$file) == -1 || [info exists limita($geneid)]} break
+			}
+			set a(curid,$file) [list_sub $a(curline,$file) $a(id,$file)]
 			set temp [list_sub $a(curline,$file) $a(id,$file)]
 			set a(curid,$file) $temp
 		}
