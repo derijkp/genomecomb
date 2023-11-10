@@ -209,6 +209,9 @@ if (out10x != "") {
 
 cat("Writing info file", outinfofile, "\n")
 info=transform(SOB@meta.data, cell=rownames(SOB@meta.data))
+write.table(info,file=outinfofile,sep="\t",quote=FALSE,row.names = FALSE)
+cat("is_cell_method\tis_cell_lower\n",is.cell.method,"\t",is.cell.lower,"\n",sep="",file=paste0(outinfofile,".analysisinfo"))
 
 cat(paste0("Object saved, next!"), "\n")
-				      
+		      
+
