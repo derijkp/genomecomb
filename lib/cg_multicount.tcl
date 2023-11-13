@@ -1,11 +1,11 @@
 proc cg_multicount {args} {
-	set potentialidfields {geneid genename gene exon exonid id name cell cellbarcode spliceName chromosome strand start begin end}
+	set potentialidfields {}
 	set emptyvalue 0
 	set clip_geneid_version 1
 	set limit_geneids {}
 	cg_options multicount args {
 		-idfields {
-			set idfields $value
+			set potentialidfields $value
 		}
 		-empty {
 			set emptyvalue $value
@@ -18,6 +18,9 @@ proc cg_multicount {args} {
 		}
 	} compar_file 2
 	set countfiles $args
+	if {$potentialidfields eq ""} {
+		set potentialidfields {geneid genename gene exon exonid id name cell cellbarcode spliceName chromosome strand start begin end}
+	}
 
 	if {$limit_geneids ne ""} {
 		unset -nocomplain includea
