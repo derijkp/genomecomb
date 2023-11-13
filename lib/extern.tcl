@@ -251,19 +251,31 @@ proc findR {} {
 
 proc R {args} {
 	set vars {}
+	set outRfile {}
 	cg_options cat args {
 		-vars {
 			set vars $value
 		}
+		-outRfile {
+			set outRfile $value
+		}
 	} cmd 1 1
 	set pre {}
 	foreach var $vars {
-		upvar $var uvar
-		append pre "$var=\"$uvar\"\n"
+		upvar 1 $var uvar
+		if {$uvar ne "" && [string is double $uvar]} {
+			append pre "$var=$uvar\n"
+		} else {
+			append pre "$var=\"$uvar\"\n"
+		}
 	}
-	set tempfile [tempfile].R
-	file_write $tempfile $pre$cmd
-	exec [findR] --vanilla < $tempfile >@ stdout 2>@ stderr
+	if {$outRfile eq ""} {
+		set outRfile [tempfile].R
+	}
+	file_write $outRfile $pre$cmd
+	exec [findR] --vanilla < $outRfile >@ stdout 2>@ stderr
+	# ps: you can run R from script with parameters like this (but easier to include in runfile):
+	# dirR --vanilla --slave --no-restore --file=rfile --args arg1 arg2
 }
 
 proc findpython3 {} {
