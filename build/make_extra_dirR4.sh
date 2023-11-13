@@ -451,6 +451,9 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("https://github.com/dzhang32/ggtranscript/archive/refs/tags/v0.99.3.tar.gz", repos=NULL, type="source")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("survminer", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("scDblFinder")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'remotes::install_github("chris-mcginnis-ucsf/DoubletFinder")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("argparser", repos="http://cran.us.r-project.org")'
 
 yuminstall hdf5-devel
 wget https://hdf-wordpress-1.s3.amazonaws.com/wp-content/uploads/manual/HDF5/HDF5_1_14_1/src/hdf5-1.14.1-2.tar.gz

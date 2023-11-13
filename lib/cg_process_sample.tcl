@@ -493,6 +493,8 @@ proc process_sample_job {args} {
 	set singlecell {}
 	set singlecell_whitelist {}
 	set singlecell_umisize 10
+	set sc_filters {}
+	set sc_celltyping {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -518,6 +520,12 @@ proc process_sample_job {args} {
 		-singlecell {
 			if {$value ni "ontr10x"} {error "Unknown value $value for -singlecell, must be one of: ontr10x"}
 			set singlecell $value
+		}
+		-sc_filters {
+			set sc_filters $value
+		}
+		-sc_celltyping {
+			set sc_celltyping $value
 		}
 		-singlecell-whitelist {
 			set singlecell_whitelist $value
@@ -822,6 +830,12 @@ proc process_sample_job {args} {
 			-umisize $singlecell_umisize \
 			$fastqdir $sampledir
 		set fastqdir $sampledir/bcfastq
+		if {$sc_filters eq ""} {
+			set sc_filters default
+		}
+		if {$sc_celltyping eq ""} {
+			set sc_celltyping scsorter
+		}
 	}
 	# use generic (fastq/bam source)
 	# ------------------------------
@@ -1144,6 +1158,7 @@ proc process_sample_job {args} {
 				$cleanedbam
 		}
 	}
+	sc_downstream $sampledir $sc_filters $sc_celltyping
 	#calculate reports
 	if {[llength $reports]} {
 		process_reports_job -paired $paired -depth_histo_max $depth_histo_max -threads $threads $sampledir $dbdir $reports
