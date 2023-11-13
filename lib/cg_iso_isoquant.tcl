@@ -1715,23 +1715,23 @@ proc iso_isoquant_job {args} {
 			}
 		}
 		job isoquant_sc_join_gene-$root -cores 1 -deps $sc_gene_counts_files -targets {
-			sc_gene_counts-${root}.tsv.zst
+			sc_gene_counts_raw-${root}.tsv.zst
 		} -vars {
 			sc_gene_counts_files root
 		} -code {
-			analysisinfo_write [lindex $sc_gene_counts_files 0] sc_gene_counts-${root}.tsv
-			cg cat {*}$sc_gene_counts_files | cg zst > sc_gene_counts-${root}.tsv.zst.temp
-			file rename sc_gene_counts-${root}.tsv.zst.temp sc_gene_counts-${root}.tsv.zst
+			analysisinfo_write [lindex $sc_gene_counts_files 0] sc_gene_counts_raw-${root}.tsv
+			cg cat {*}$sc_gene_counts_files | cg zst > sc_gene_counts_raw-${root}.tsv.zst.temp
+			file rename sc_gene_counts_raw-${root}.tsv.zst.temp sc_gene_counts_raw-${root}.tsv.zst
 		}
-		set sc_result sc_[file tail [gzroot $resultfile]].zst
+		set sc_result sc_isoform_counts_raw-${root}.tsv.zst
 		job isoquant_sc_join_iso-$root -cores 1 -deps $sc_iso_counts_files -targets {
 			$sc_result
 		} -vars {
 			sc_iso_counts_files root sc_result
 		} -code {
-			analysisinfo_write [lindex $sc_iso_counts_files 0] sc_isoform_counts-${root}.tsv
-			cg cat {*}$sc_iso_counts_files | cg zst > sc_isoform_counts-${root}.tsv.zst.temp
-			file rename sc_isoform_counts-${root}.tsv.zst.temp $sc_result
+			analysisinfo_write [lindex $sc_iso_counts_files 0] $sc_result
+			cg cat {*}$sc_iso_counts_files | cg zst > $sc_result.temp
+			file rename $sc_result.temp $sc_result
 		}
 	}
 }
