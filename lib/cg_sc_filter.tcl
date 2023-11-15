@@ -1,5 +1,12 @@
-proc cg_sc_filter_default {scgenefile scisoformfile expectedcells} {
+proc sc_filter_default_job {args} {
 	upvar job_logdir job_logdir
+	#
+	cg_options sc_filter_default args {
+	} {scgenefile scisoformfile expectedcells} 3 3
+	if {$expectedcells eq ""} {
+		error "failed sc_filter_default: please give expected number of cells (-sc_expectedcells) for single cell analysis"
+	}
+	#
 	set scgenefile [file_absolute $scgenefile]
 	set scisoformfile [file_absolute $scisoformfile]
 	set rootname [file_rootname $scgenefile]
@@ -354,4 +361,10 @@ proc cg_sc_filter_default {scgenefile scisoformfile expectedcells} {
 		gzclose $o
 		file rename -force $dir/sc_isoform_counts_filtered-$rootname.tsv.temp.zst $dir/sc_isoform_counts_filtered-$rootname.tsv.zst
 	}
+}
+
+proc cg_sc_filter_default {scgenefile scisoformfile expectedcells} {
+	set args [job_init {*}$args]
+	sc_filter_default_job {*}$args
+	job_wait
 }
