@@ -494,7 +494,9 @@ proc process_sample_job {args} {
 	set singlecell_whitelist {}
 	set singlecell_umisize 10
 	set sc_filters {}
-	set sc_celltyping {}
+	set sc_celltypers {}
+	set sc_expectedcells {}
+	set tissue {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -524,8 +526,14 @@ proc process_sample_job {args} {
 		-sc_filters {
 			set sc_filters $value
 		}
-		-sc_celltyping {
-			set sc_celltyping $value
+		-sc_celltypers {
+			set sc_celltypers $value
+		}
+		-sc_expectedcells {
+			set sc_expectedcells $value
+		}
+		-tissue {
+			set tissue $value
 		}
 		-singlecell-whitelist {
 			set singlecell_whitelist $value
@@ -833,8 +841,8 @@ proc process_sample_job {args} {
 		if {$sc_filters eq ""} {
 			set sc_filters default
 		}
-		if {$sc_celltyping eq ""} {
-			set sc_celltyping scsorter
+		if {$sc_celltypers eq ""} {
+			set sc_celltypers sctype
 		}
 	}
 	# use generic (fastq/bam source)
@@ -1158,7 +1166,27 @@ proc process_sample_job {args} {
 				$cleanedbam
 		}
 	}
-	sc_downstream $sampledir $sc_filters $sc_celltyping
+	set sampledir [file_absolute $sampledir]
+	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_raw-*.tsv]
+	foreach scgenefile $scgenefiles {
+		set scisoformfile [file dir $scgenefile]/[regsub ^sc_gene_counts_raw- [file tail $scgenefile] sc_isoform_counts_raw-]
+		foreach sc_filter $sc_filters {
+			if {![auto_load sc_filter_${sc_filter}_job]} {
+				error "sc_filter $sc_filter not supported"
+			}
+			sc_filter_${sc_filter}_job $scgenefile $scisoformfile $sc_expectedcells
+		}
+	}
+	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_filtered-*.tsv]
+	foreach scgenefile $scgenefiles {
+		set scisoformfile [file dir $scgenefile]/[regsub ^sc_gene_counts_filtered- [file tail $scgenefile] sc_isoform_counts_filtered-]
+		foreach sc_celltyper $sc_celltypers {
+			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
+				error "sc_celltyper $sc_celltyper not supported"
+			}
+			sc_celltyper_${sc_celltyper}_job -tissue $tissue $scgenefile $scisoformfile
+		}
+	}
 	#calculate reports
 	if {[llength $reports]} {
 		process_reports_job -paired $paired -depth_histo_max $depth_histo_max -threads $threads $sampledir $dbdir $reports
