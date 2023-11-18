@@ -287,7 +287,9 @@ proc sc_filter_default_job {args} {
 		}
 		close $f
 		unset -nocomplain umia
-		array set umia [split [string trim [file_read $umis_per_cell]] \n\t]
+		set temp [file_read $umis_per_cell]
+		regsub \n\$ $temp "" temp
+		array set umia [split $temp \n\t]
 		set f [open $reads_per_cell]
 		set header [tsv_open $f]
 		set o [wgzopen $dir/sc_cellinfo_raw-$rootname.tsv.zst]
