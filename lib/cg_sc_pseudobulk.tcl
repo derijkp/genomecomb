@@ -141,7 +141,7 @@ proc sc_pseudobulk_job {args} {
 		set datafields [list_sub $header $dataposs]
 		set infofields [list_remove [list_sub $header -exclude $dataposs] ROW cell]
 		set idposs [list_cor $header {transcript cell}]
-		set infopos [list_cor $header $infofields]
+		set infoposs [list_cor $header $infofields]
 		set newheader $infofields
 		set coltypes [list_fill [llength $newheader] info]
 		lset coltypes [lsearch $newheader transcript] id
@@ -178,7 +178,7 @@ proc sc_pseudobulk_job {args} {
 					puts $o [join $resultline \t]
 				}
 				set curtranscript $transcript
-				set curisoforminfo [list_sub $line $poss]
+				set curisoforminfo [list_sub $line $infoposs]
 				foreach datafield $datafields {
 					foreach type $types {
 						set da($datafield-$type) 0
