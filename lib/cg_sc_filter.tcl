@@ -18,7 +18,7 @@ proc sc_filter_default_job {args} {
 	set scgenefile10x [file root [gzroot $scgenefile]].10x
 	set scisoformfile10x [file root [gzroot $scisoformfile]].weighed_count.10x
 	set outfile [file root [gzroot $scgenefile]].rds
-	job scgenefile10x-$rootname -deps {
+	job sc_filter_default_scgenefile10x-$rootname -deps {
 		$scgenefile
 	} -targets {
 		$scgenefile10x
@@ -28,7 +28,7 @@ proc sc_filter_default_job {args} {
 		cg tsv210x $scgenefile $scgenefile10x.temp
 		file rename $scgenefile10x.temp $scgenefile10x
 	}
-	job scisoformfile10x-$rootname -deps {
+	job sc_filter_default_scisoformfile10x-$rootname -deps {
 		$scisoformfile
 	} -targets {
 		$scisoformfile10x
@@ -41,7 +41,7 @@ proc sc_filter_default_job {args} {
 	set outinfofile $dir/sc_temp_info-$rootname.tsv
 	set umappng $dir/sc_umap-$rootname.png
 	set tsnepng $dir/sc_tsne-$rootname.png
-	job sc_filter_r-$rootname -deps {
+	job sc_filter_default_r-$rootname -deps {
 		$scgenefile10x
 		$scisoformfile10x
 	} -targets {
@@ -262,7 +262,7 @@ proc sc_filter_default_job {args} {
 	set reads_per_cell [jobgzfile $dir/reads_per_cell-$rootname.tsv $dir/reads_per_cell.tsv]
 	set umis_per_cell [jobgzfile $dir/umis_per_cell-$rootname.tsv $dir/umis_per_cell.tsv]
 	# -------------------
-	job sc_filter_r-$rootname -deps {
+	job sc_filter_write_cellinfo-$rootname -deps {
 		$outinfofile
 		$reads_per_cell $umis_per_cell
 	} -targets {
@@ -363,6 +363,7 @@ proc sc_filter_default_job {args} {
 		gzclose $o
 		file rename -force $dir/sc_isoform_counts_filtered-$rootname.tsv.temp.zst $dir/sc_isoform_counts_filtered-$rootname.tsv.zst
 	}
+	return $dir/sc_cellinfo_filtered-$rootname.tsv.zst
 }
 
 proc cg_sc_filter_default {scgenefile scisoformfile expectedcells} {

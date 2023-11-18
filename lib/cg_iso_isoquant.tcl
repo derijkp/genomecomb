@@ -1685,9 +1685,15 @@ proc iso_isoquant_job {args} {
 		# parallelize sc analysis
 		# will redistribute the merge at bulk level (which added e.g. gambiguity)
 		mkdir $workdir/gene_counts
-		set sc_gene_counts_files [distrreg_job -refseq $refseq gene_counts-${root}.tsv $workdir/gene_counts/gene_counts- .tsv $regions]
+		set sc_gene_counts_files [distrreg_job -refseq $refseq \
+			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
+			gene_counts-${root}.tsv $workdir/gene_counts/gene_counts- .tsv $regions \
+		]
 		mkdir $workdir/isoform_counts
-		set sc_iso_counts_files [distrreg_job -refseq $refseq $resultfile $workdir/isoform_counts/isoform_counts- .tsv $regions]
+		set sc_iso_counts_files [distrreg_job -refseq $refseq \
+			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
+			$resultfile $workdir/isoform_counts/isoform_counts- .tsv $regions \
+		]
 		mkdir $workdir/readassignments
 		distrreg_job -refseq $refseq read_assignments-${root}.tsv.zst $workdir/readassignments/readassignments- .tsv $regions
 		set sc_gene_counts_files {}
@@ -1703,7 +1709,9 @@ proc iso_isoquant_job {args} {
 			set target2 $workdir/sc_isoform_counts_long/sc_isoform_counts_long-$root-$region.tsv.zst
 			lappend sc_gene_counts_files $target
 			lappend sc_iso_counts_files $target2
-			job isquant_sc_count-$region-$root -deps {
+			job isquant_sc_count-$region-$root \
+			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
+			-deps {
 				$readfile $genefile reads_per_cell.tsv
 			} -targets {
 				$target $target2
