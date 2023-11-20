@@ -129,7 +129,7 @@ proc cg_multigene {args} {
 	# parray geneinfoa
 	# parray gcounta
 	catch {close $o}
-	set o [open $genecounts.temp w]
+	set o [wgzopen $genecounts.temp[gzext $genecounts]]
 	set basicfieldspresent [list_sub $basicfieldspresent [list_remove [list_cor $basicfieldspresent $common] -1]]
 	set poss [list_cor $common $basicfieldspresent]
 	if {[llength $basicfieldspresent]} {
@@ -199,7 +199,7 @@ proc cg_multigene {args} {
 		}
 	}
 	close $o
-	cg select -overwrite 1 -s - $genecounts.temp $genecounts.temp2
+	cg select -overwrite 1 -s - $genecounts.temp[gzext $genecounts] $genecounts.temp2[gzext $genecounts]
 	file delete $genecounts.temp
-	file rename -force $genecounts.temp2 $genecounts
+	file rename -force $genecounts.temp2[gzext $genecounts] $genecounts
 }

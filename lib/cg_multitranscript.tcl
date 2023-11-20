@@ -112,7 +112,7 @@ proc cg_multitranscript {args} {
 	set header [multitranscript_open $isoformfiles a]
 	# open result file
 	catch {close $o}
-	set o [open $compar_file.temp w]
+	set o [wgzopen $compar_file.temp[gzext $compar_file]]
 	if {$a(comment,0) ne ""} {puts -nonewline $o $a(comment,0)}
 	puts $o [join $header \t]
 	while 1 {
@@ -329,5 +329,5 @@ proc cg_multitranscript {args} {
 	foreach file $isoformfiles {
 		catch {close $a(f,$file)}
 	}
-	file rename -force $compar_file.temp $compar_file
+	file rename -force $compar_file.temp[gzext $compar_file] $compar_file
 }

@@ -39,7 +39,7 @@ sizes)
 == Options ==
 ; -exact 0/1: use exact matching
 ; -match pattern: For all transcripts whose id/name matches
-**pattern** approximate matching will be used. (overruling the value in
+**pattern** (using regexp) approximate matching will be used. (overruling the value in
 category, though this will still be used to see which name will be given
 to the result; known preferred)
 ; -skipempty 0/1: skip isoform files which are empty (size = 0) (default 1)
