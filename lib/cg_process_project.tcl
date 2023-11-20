@@ -44,6 +44,11 @@ proc process_project_job {args} {
 	set singlecell {}
 	set singlecell_whitelist {}
 	set singlecell_umisize 12
+	set sc_filters {}
+	set sc_celltypers {}
+	set sc_expectedcells {}
+	set cellmarkerfile {}
+	set tissue {}
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -83,6 +88,21 @@ proc process_project_job {args} {
 		}
 		-singlecell-umisize {
 			set singlecell_umisize $value
+		}
+		-sc_filters {
+			set sc_filters $value
+		}
+		-sc_celltypers {
+			set sc_celltypers $value
+		}
+		-sc_expectedcells {
+			set sc_expectedcells $value
+		}
+		-cellmarkerfile {
+			set cellmarkerfile [file_absolute $value]
+		}
+		-tissue {
+			set tissue $value
 		}
 		-realign {
 			set realign $value
@@ -295,6 +315,11 @@ proc process_project_job {args} {
 				-singlecell $singlecell \
 				-singlecell-whitelist $singlecell_whitelist \
 				-singlecell-umisize $singlecell_umisize \
+				-sc_filters $sc_filters \
+				-sc_celltypers $sc_celltypers \
+				-sc_expectedcells $sc_expectedcells \
+				-cellmarkerfile $cellmarkerfile \
+				-tissue $tissue \
 				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -317,6 +342,11 @@ proc process_project_job {args} {
 				-singlecell $singlecell \
 				-singlecell-whitelist $singlecell_whitelist \
 				-singlecell-umisize $singlecell_umisize \
+				-sc_filters $sc_filters \
+				-sc_celltypers $sc_celltypers \
+				-sc_expectedcells $sc_expectedcells \
+				-cellmarkerfile $cellmarkerfile \
+				-tissue $tissue \
 				-datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -342,6 +372,11 @@ proc process_project_job {args} {
 					-singlecell $singlecell \
 					-singlecell-whitelist $singlecell_whitelist \
 					-singlecell-umisize $singlecell_umisize \
+					-sc_filters $sc_filters \
+					-sc_celltypers $sc_celltypers \
+					-sc_expectedcells $sc_expectedcells \
+					-cellmarkerfile $cellmarkerfile \
+					-tissue $tissue \
 					-datatype $datatype -aliformat $aliformat \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -364,6 +399,11 @@ proc process_project_job {args} {
 			-singlecell $singlecell \
 			-singlecell-whitelist $singlecell_whitelist \
 			-singlecell-umisize $singlecell_umisize \
+			-sc_filters $sc_filters \
+			-sc_celltypers $sc_celltypers \
+			-sc_expectedcells $sc_expectedcells \
+			-cellmarkerfile $cellmarkerfile \
+			-tissue $tissue \
 			-datatype $datatype -aliformat $aliformat \
 			-aligner $aligner -realign $realign \
 			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
@@ -392,6 +432,7 @@ proc process_project_job {args} {
 		-counters $counters \
 		-isocallers $isocallers \
 		-iso_match $iso_match \
+		-sc_celltypers $sc_celltypers \
 		-threads $threads \
 		-distrreg $distrreg \
 		-keepfields $keepfields \

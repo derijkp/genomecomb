@@ -73,6 +73,9 @@ proc process_multicompar_job {args} {
 		-iso_match {
 			set iso_match $value
 		}
+		-sc_celltypers {
+			set sc_celltypers $value
+		}
 		-experiment {
 			set experiment $value
 		}
@@ -514,6 +517,14 @@ proc process_multicompar_job {args} {
 			iso_combine_job $destdir $isocaller $iso_match
 		}
 		iso_combine_job $destdir * $iso_match
+	}
+	# pseudobulk
+	# ----------
+	if {[llength $sc_celltypers]} {
+		foreach sc_celltyper $sc_celltypers {
+			pb_combine_job $destdir $sc_celltyper $iso_match
+		}
+		pb_combine_job $destdir * $iso_match
 	}
 	# reports
 	# -------

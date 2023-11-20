@@ -496,6 +496,7 @@ proc process_sample_job {args} {
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
+	set cellmarkerfile {}
 	set tissue {}
 	cg_options process_sample args {
 		-oridir {
@@ -523,6 +524,12 @@ proc process_sample_job {args} {
 			if {$value ni "ontr10x"} {error "Unknown value $value for -singlecell, must be one of: ontr10x"}
 			set singlecell $value
 		}
+		-singlecell-whitelist {
+			set singlecell_whitelist $value
+		}
+		-singlecell-umisize {
+			set singlecell_umisize $value
+		}
 		-sc_filters {
 			set sc_filters $value
 		}
@@ -532,14 +539,11 @@ proc process_sample_job {args} {
 		-sc_expectedcells {
 			set sc_expectedcells $value
 		}
+		-cellmarkerfile {
+			set cellmarkerfile [file_absolute $value]
+		}
 		-tissue {
 			set tissue $value
-		}
-		-singlecell-whitelist {
-			set singlecell_whitelist $value
-		}
-		-singlecell-umisize {
-			set singlecell_umisize $value
 		}
 		-realign - -realign {
 			set realign $value
@@ -1184,7 +1188,7 @@ proc process_sample_job {args} {
 			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
 				error "sc_celltyper $sc_celltyper not supported"
 			}
-			sc_celltyper_${sc_celltyper}_job -tissue $tissue $scgenefile $scisoformfile
+			sc_celltyper_${sc_celltyper}_job -cellmarkerfile $cellmarkerfile -tissue $tissue $scgenefile $scisoformfile
 		}
 	}
 	#calculate reports
