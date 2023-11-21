@@ -1,8 +1,10 @@
 proc sc_celltyper_sctype_job {args} {
 	upvar job_logdir job_logdir
+	set cellmarkerfile ""
 	set tissue ""
 	# tissue can be e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
 	cg_options sc_celltyper_sctype args {
+		-cellmarkerfile {set cellmarkerfile [file_absolute $value]}
 		-tissue {set tissue $value}
 	} {scgenefile scisoformfile} 2 2
 	#
@@ -21,7 +23,7 @@ proc sc_celltyper_sctype_job {args} {
 		scgenefile scgenefile10x
 	} -code {
 		cg tsv210x $scgenefile $scgenefile10x.temp
-		file rename $scgenefile10x.temp $scgenefile10x
+		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
 	set umappng $dir/sc_celltype_umap-$rootname.png
 	set R [file_resolve [findR]]
@@ -32,21 +34,28 @@ proc sc_celltyper_sctype_job {args} {
 	} -targets {
 		$groupfile $umappng
 	} -vars {
-		sctypedir scgenefile10x tissue umappng tempresult groupfile
+		sctypedir scgenefile10x tissue umappng tempresult groupfile cellmarkerfile tissue
 	} -code {
 		set out10x {}
 		set metadatafile {}
 		set outRfile ~/tmp/sc_celltyper.R
 		set outRfile {}
 		R -outRfile $outRfile -vars {
-			scgenefile10x tissue umappng tempresult sctypedir
+			scgenefile10x cellmarkerfile tissue umappng tempresult sctypedir
 		} {
 			library(Seurat)
 			library(tidyverse)
 			library(sleepwalk)
-			theme_set(theme_bw(base_size = 14))
+			library(HGNChelper)
+			# theme_set(theme_bw(base_size = 14))
 			
 			data = Read10X(scgenefile10x)
+			mito.genes <- grep(pattern = "^MT-", x = rownames(data), value = TRUE)
+			RPS.genes <- grep(pattern = "^RPS", x = rownames(data), value = TRUE)
+			qc <- c(mito.genes, RPS.genes)
+			keep <- !row.names(data) %in% unlist(qc)
+			data <- data[keep, ]
+
 			SOB <- CreateSeuratObject(data)
 			SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, pattern = "^MT-")
 			SOB_filtered <- subset(SOB, subset = percent.mt < 5)
@@ -56,8 +65,8 @@ proc sc_celltyper_sctype_job {args} {
 			SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
 			SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
 			SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
-			SOB <- ScaleData(SOB)
-			SOB <- RunPCA(SOB)
+			SOB <- ScaleData(SOB, features = rownames(SOB))
+			SOB <- RunPCA(SOB,features = VariableFeatures(object = SOB)))
 			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:50)
 			SOB <- FindClusters(SOB, resolution = 0.5)
 			SOB <- RunUMAP(SOB, dims = 1:50)
@@ -69,39 +78,54 @@ proc sc_celltyper_sctype_job {args} {
 			source(paste0(sctypedir,"/R/gene_sets_prepare.R"))
 			# load cell type annotation function
 			source(paste0(sctypedir,"/R/sctype_score_.R"))
-			# DB file
-			db_ = paste0(sctypedir,"/ScTypeDB_full.xlsx");
-			
-			# tissue can be e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
-			db_read = openxlsx::read.xlsx(db_); tissues_ = unique(db_read$tissueType); result_ = c()
-			if (tissue == "") {
-				for(tissue in tissues_){
-					print(paste0("Checking...", tissue));
-					# prepare gene sets
-					gs_list = gene_sets_prepare(db_, tissue);
-					# prepare obj
-					obj = as.matrix(SOB[["RNA"]]@scale.data)
-					es.max = sctype_score(scRNAseqData = obj, scaled = TRUE, gs = gs_list$gs_positive, gs2 = gs_list$gs_negative, 
-						marker_sensitivity = gs_list$marker_sensitivity, verbose=!0);
-					cL_results = do.call("rbind", lapply(unique(SOB@meta.data$seurat_clusters), function(cl){
-						es.max.cl = sort(rowSums(es.max[ ,rownames(SOB@meta.data[SOB@meta.data$seurat_clusters==cl, ])]), decreasing = !0)
-						head(data.frame(cluster = cl, type = names(es.max.cl), scores = es.max.cl), 10)
-					}))
-					dt_out = cL_results %>% group_by(cluster) %>% top_n(n = 1)
-					# return mean score for tissue
-					result_ = rbind(result_, data.frame(tissue = tissue, score = mean(dt_out$scores)))
+			if (cellmarkerfile == "") {
+				# DB file
+				db_ = paste0(sctypedir,"/ScTypeDB_full.xlsx");
+				# tissue can be e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
+				db_read = openxlsx::read.xlsx(db_); tissues_ = unique(db_read$tissueType); result_ = c()
+				if (tissue == "") {
+					for(tissue in tissues_){
+						print(paste0("Checking...", tissue));
+						# prepare gene sets
+						gs_list = gene_sets_prepare(db_, tissue);
+						# prepare obj
+						obj = as.matrix(SOB[["RNA"]]@scale.data)
+						es.max = sctype_score(scRNAseqData = obj, scaled = TRUE, gs = gs_list$gs_positive, gs2 = gs_list$gs_negative, 
+							marker_sensitivity = gs_list$marker_sensitivity, verbose=!0);
+						cL_results = do.call("rbind", lapply(unique(SOB@meta.data$seurat_clusters), function(cl){
+							es.max.cl = sort(rowSums(es.max[ ,rownames(SOB@meta.data[SOB@meta.data$seurat_clusters==cl, ])]), decreasing = !0)
+							head(data.frame(cluster = cl, type = names(es.max.cl), scores = es.max.cl), 10)
+						}))
+						dt_out = cL_results %>% group_by(cluster) %>% top_n(n = 1)
+						# return mean score for tissue
+						result_ = rbind(result_, data.frame(tissue = tissue, score = mean(dt_out$scores)))
+					}
+					# order by mean score
+					result_ = result_[order(-result_$score),]
+					tissue = result_[1,1]
 				}
-				# order by mean score
-				result_ = result_[order(-result_$score),]
-				tissue = result_[1,1]
+				if (!(tissue %in% tissues_)) {
+					stop(paste0("tissue not supported by sctype, must be one of: ",paste0(tissues_,collapse=",")))
+				}
+	
+				# prepare gene sets
+				gs_list = gene_sets_prepare(db_, tissue)
+			} else {
+				cellmarkers <- read.table(cellmarkerfile,sep='\t',header=TRUE)
+				if (tissue != "") {
+					cellmarkers = cellmarkers[cellmarkers$tissue == tissue,]
+				}
+				if(!"markertype" %in% colnames(cellmarkers)) {
+					cellmarkers$markertype = rep("up",nrow(cellmarkers))
+				}
+				celltypes=unique(cellmarkers$celltype)
+				cgs=list() ; cgs2 = list()
+				for(celltype in celltypes) {
+					cgs[[celltype]] = cellmarkers$marker[cellmarkers$celltype == celltype & cellmarkers$markertype == "up"]
+					cgs2[[celltype]] = cellmarkers$marker[cellmarkers$celltype == celltype & cellmarkers$markertype == "down"]
+				}
+				gs_list = list(gs_positive = cgs, gs_negative = cgs2)
 			}
-			
-			if (!(tissue %in% tissues_)) {
-				stop(paste0("tissue not supported by sctype, must be one of: ",paste0(tissues_,collapse=",")))
-			}
-
-			# prepare gene sets
-			gs_list = gene_sets_prepare(db_, tissue)
 			
 			# get cell-type by cell matrix
 			es.max = sctype_score(scRNAseqData = SOB[["RNA"]]@scale.data, scaled = TRUE, 
@@ -131,7 +155,7 @@ proc sc_celltyper_sctype_job {args} {
 				}
 			}
 			DimPlot(SOB, reduction = "umap", label = TRUE, repel = TRUE, group.by = 'customclassif')
-			ggsave(umappng)
+			ggsave(umappng,width = 12, height = 8, dpi = 300)
 			qc_data <- FetchData(SOB, vars = c("ident", "UMAP_1", "UMAP_2"))
 			out=data.frame(
 				cell=rownames(SOB@meta.data),
@@ -157,7 +181,7 @@ proc sc_celltyper_sctype_job {args} {
 			}
 			write.table(out,file=tempresult,sep="\t",quote=FALSE,row.names = FALSE)
 		}
-		file rename $tempresult $groupfile
+		file rename -force $tempresult $groupfile
 	}
 	sc_pseudobulk_job $scgenefile $scisoformfile $groupfile
 }
@@ -167,3 +191,4 @@ proc cg_sc_celltyper_sctype {args} {
 	sc_celltyper_sctype_job {*}$args
 	job_wait
 }
+
