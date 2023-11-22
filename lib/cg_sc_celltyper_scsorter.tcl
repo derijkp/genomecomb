@@ -26,7 +26,7 @@ proc sc_celltyper_scsorter_job {args} {
 		scgenefile scgenefile10x
 	} -code {
 		cg tsv210x $scgenefile $scgenefile10x.temp
-		file rename $scgenefile10x.temp $scgenefile10x
+		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
 	job sc_celltyper_$extrarootname-$rootname -mem 10G -deps {
 		$scgenefile10x
@@ -92,8 +92,8 @@ proc sc_celltyper_scsorter_job {args} {
 				markers$Weight = cellmarkers$weight
 				markers$Weight[which(is.na(markers$Weight))] = 1
 			}
-			if ("type" %in% colnames(cellmarkers)) {
-				markers = markers[cellmarkers$type == "up" | cellmarkers$type == "",]
+			if ("markertype" %in% colnames(cellmarkers)) {
+				markers = markers[cellmarkers$markertype == "up" | cellmarkers$markertype == "",]
 			}
 			unique_values <- unique(markers$Type)
 			num_colors <- length(unique_values)
@@ -136,9 +136,8 @@ proc sc_celltyper_scsorter_job {args} {
 			final_plot <- p2 + p3
 			final_plot <- final_plot + plot_layout(guides = "collect")
 			#
-			png(filename = umappng, width = 9.5, height = 5.5, units = "in", res = 300)
-			  plot(final_plot)
-			dev.off()
+			final_plot
+			ggsave(umappng, width = 9.5, height = 5.5, units = "in", dpi = 300)
 			#
 			saveRDS(SOB_filtered, outrds)
 			# output tsv
@@ -162,7 +161,7 @@ proc sc_celltyper_scsorter_job {args} {
 			}
 			write.table(out,file=tempresult,sep="\t",quote=FALSE,row.names = FALSE)
 		}
-		file rename $tempresult $groupfile
+		file rename -force $tempresult $groupfile
 	}
 	sc_pseudobulk_job $scgenefile $scisoformfile $groupfile
 }
