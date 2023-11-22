@@ -115,7 +115,7 @@ proc sc_pseudobulk_job {args} {
 		set o [wgzopen [file root [gzroot $pb_genefile]].colinfo.tsv]
 		set sample [lindex [split $rootname -] end]
 		puts $o [join [list field fieldtype group {*}$colinfofields total sample rootname] \t]
-		set empty [list_fill [expr {2+[llength $ga([lindex [array names ga] 0])]}] {}]
+		set empty [list_fill [expr {4+[llength $colinfofields]}] {}]
 		foreach field $newheader coltype $coltypes {
 			if {$coltype eq ""} break
 			puts $o [join [list $field $coltype {*}$empty] \t]
