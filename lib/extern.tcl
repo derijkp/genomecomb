@@ -263,6 +263,9 @@ proc R {args} {
 	set pre {}
 	foreach var $vars {
 		upvar 1 $var uvar
+		if {![info exists uvar]} {
+			error "error running R with -vars: variable $var does not exist"
+		}
 		if {$uvar ne "" && [string is double $uvar]} {
 			append pre "$var=$uvar\n"
 		} else {
