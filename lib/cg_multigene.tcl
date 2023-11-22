@@ -200,6 +200,6 @@ proc cg_multigene {args} {
 	}
 	close $o
 	cg select -overwrite 1 -s - $genecounts.temp[gzext $genecounts] $genecounts.temp2[gzext $genecounts]
-	file delete $genecounts.temp
+	file delete $genecounts.temp[gzext $genecounts]
 	file rename -force $genecounts.temp2[gzext $genecounts] $genecounts
 }
