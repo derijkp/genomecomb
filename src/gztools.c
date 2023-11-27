@@ -19,6 +19,12 @@
 #include "bgzf.h"
 #include "gztools.h"
 
+#ifdef WIN32
+#include <io.h>
+#define F_OK 0
+#define access _access
+#endif
+
 GZFILE *gz_open(char *filename) {
 	GZFILE *result = (GZFILE *)malloc(sizeof(GZFILE));
 	int type = UNCOMPRESSED, len = strlen(filename);
@@ -49,6 +55,10 @@ GZFILE *gz_open(char *filename) {
 				type = RZ;
 			}
 		}
+	}
+	if (type != IN && access(filename, F_OK) != 0) {
+		fprintf(stderr,"file %s does not exist",filename);
+		exit(1);
 	}
 	if (type == IN) {
 		result->fun = (FILE *)stdin;
