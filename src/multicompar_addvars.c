@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 	orid->start = -1, orid->end = -1, orid->zyg = 2;
 
 	if ((argc < 7)) {
-		fprintf(stderr,"Format is: pmulticompar_addvars split allvarsfile varsfile sregfile varallfile numbcolannot ?bcoannotpos bcolaannotfile? ... keepfieldspos1 ...\n");
+		fprintf(stderr,"Format is: pmulticompar_addvars split allvarsfile varsfile sregfile varallfile numbcolannot numregfiles ?bcoannotpos bcolaannotfile? ... keepfieldspos1 ...\n");
 		exit(EXIT_FAILURE);
 	}
 	DStringSetS(ds_r,"r",1); DStringSetS(ds_v,"v",1); DStringSetS(ds_u,"u",1);

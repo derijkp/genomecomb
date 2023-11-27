@@ -163,6 +163,70 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	exec diff tmp/result.txt tmp/expected.txt
 } {}
 
+test pmulticompar {multicompar_addvars non called vars in gvcf} {
+	# GenotypeGVCFs does not call these as variants
+	# in the gvcf they look like variants -> unexpected -> now get zyg "t" and variant allele calls, but sequenced = "r"
+	# should these be dealt with differently? -> set to "u" maybe
+	test_cleantmp
+	# file copy data/av.tsv tmp/var-sample.tsv
+	# make manual with one region changed to check if it properly makes a u of 42775303	42775304	snp
+	file_write tmp/sreg-sample.tsv [deindent {
+		chromosome	begin	end
+		chr1	9899600	9988240
+	}]\n
+	file_write tmp/allvars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	9899606	9899607	snp	C	T
+		1	9899616	9899617	snp	C	T
+		1	9988231	9988232	snp	T	A
+	}]\n
+	file_write tmp/var-sample.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	filter	phased	genotypes	genoqual	GQX	coverage	DPF	MIN_DP	alleledepth_ref	alleledepth	ADF	ADR	gfilter	DPI	PL	phaseset	SB	BLOCKAVG_min30p3a	SNVHPOL	CIGAR	REFREP	IDREP	MQ	cluster
+	}]\n
+	file copy data/av.gvcf tmp/varall-sample.gvcf
+	write_gvcf tmp/varall-sample.gvcf {
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample
+		chr1	9899600	.	A	<NON_REF>	.	.	END=9899604	GT:DP:GQ:MIN_DP:PL	0/0:22:60:21:0,60,900
+		chr1	9899605	.	T	<NON_REF>	.	.	END=9899606	GT:DP:GQ:MIN_DP:PL	0/0:20:57:20:0,57,855
+		chr1	9899607	.	C	T,<NON_REF>	.	.	AS_RAW_BaseQRankSum=|0.7,1|NaN;AS_RAW_MQ=64800.00|4516.00|0.00;AS_RAW_MQRankSum=|-4.3,1|NaN;AS_RAW_ReadPosRankSum=|-0.6,1|NaN;AS_SB_TABLE=8,10|2,0|0,0;BaseQRankSum=0.733;DP=20;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-4.232;NDA=2;RAW_MQandDP=69316,20;ReadPosRankSum=-0.568	GT:AD:DP:GQ:PGT:PID:PL:PS:SB	0|1:18,2,0:20:30:0|1:9899607_C_T:30,0,730,84,736,820:9899607:8,10,2,0
+		chr1	9899608	.	T	<NON_REF>	.	.	END=9899609	GT:DP:GQ:MIN_DP:PL	0/0:20:57:20:0,57,855
+		chr1	9899610	.	C	<NON_REF>	.	.	END=9899612	GT:DP:GQ:MIN_DP:PL	0/0:20:54:20:0,54,810
+		chr1	9899613	.	G	<NON_REF>	.	.	END=9899616	GT:DP:GQ:MIN_DP:PL	0/0:20:57:19:0,57,718
+		chr1	9899617	.	C	T,<NON_REF>	.	.	AS_RAW_BaseQRankSum=|0.8,1|NaN;AS_RAW_MQ=64800.00|4516.00|0.00;AS_RAW_MQRankSum=|-4.3,1|NaN;AS_RAW_ReadPosRankSum=|-0.6,1|NaN;AS_SB_TABLE=7,11|2,0|0,0;BaseQRankSum=0.809;DP=20;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-4.232;NDA=2;RAW_MQandDP=69316,20;ReadPosRankSum=-0.567	GT:AD:DP:GQ:PGT:PID:PL:PS:SB	0|1:18,2,0:20:30:0|1:9899607_C_T:30,0,750,84,756,840:9899607:7,11,2,0
+		chr1	9988230	.	A	AG,<NON_REF>	6	.	AS_RAW_BaseQRankSum=|0.7,1|NaN;AS_RAW_MQ=46800.00|2225.00|0.00;AS_RAW_MQRankSum=|-3.6,1|NaN;AS_RAW_ReadPosRankSum=|-0.5,1|NaN;AS_SB_TABLE=6,7|0,2|0,0;BaseQRankSum=0.757;DP=15;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-3.589;NDA=2;RAW_MQandDP=49025,15;ReadPosRankSum=-0.457	GT:AD:DP:GQ:PGT:PID:PL:PS:SB	0|1:13,2,0:15:45:0|1:9988230_A_AG:45,0,540,84,546,630:9988230:6,7,0,2
+		chr1	9988231	.	A	<NON_REF>	.	.	END=9988231	GT:DP:GQ:MIN_DP:PL	0/0:15:39:15:0,39,585
+		chr1	9988232	.	T	G,<NON_REF>	.	.	AS_RAW_BaseQRankSum=|0.4,1|NaN;AS_RAW_MQ=57600.00|2225.00|0.00;AS_RAW_MQRankSum=|-4.0,1|NaN;AS_RAW_ReadPosRankSum=|-0.8,1|NaN;AS_SB_TABLE=8,8|0,2|0,0;BaseQRankSum=0.443;DP=18;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-3.987;NDA=2;RAW_MQandDP=59825,18;ReadPosRankSum=-0.766	GT:AD:DP:GQ:PGT:PID:PL:PS:SB	0|1:16,2,0:18:36:0|1:9988230_A_AG:36,0,666,84,672,756:9988230:8,8,0,2
+	}
+	if 0 {
+		# GenotypeGVCFs test
+		gatkexec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} GenotypeGVCFs \
+			-R $gatkrefseq \
+			-V tmp/varall-sample.gvcf \
+			-O tmp/var-sample.vcf \
+			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
+	}
+	set sregfile tmp/sreg-sample.tsv
+	set split 1
+	set allvarsfile tmp/allvars.tsv
+	set samplevarsfile tmp/var-sample.tsv
+	set sregfile tmp/sreg-sample.tsv
+	set varallfile tmp/varall-sample.gvcf
+	set numbcolannot 0 ; set bcolannot {}
+	set numregfiles 0 ; set regfiles {}
+	# get: genoqual GQX coverage
+	set keepposs {14 15 16}
+	cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
+	# puts [list ../bin/multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
+	exec cat $varallfile.tsv | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
+	file_write tmp/expected.txt [deindent {
+		x
+		r	t	C	T	30	?	20
+		r	t	C	T	30	?	20
+		r	o	T	G	36	?	18
+	}]\n
+	exec diff tmp/result.txt tmp/expected.txt
+} {}
+
 # test for different jobopts
 # --------------------------
 foreach {testname jobopts} $tests {
