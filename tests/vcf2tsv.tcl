@@ -9,7 +9,12 @@ test vcf2tsv {vcf2tsv} {
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv} {
+test vcf2tsv {vcf2tsv in pipe} {
+	exec cat data/test1000glow.vcf | cg vcf2tsv > tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
+} {}
+
+test vcf2tsv {vcf2tsv 2} {
 	file copy -force data/vars1.vcf tmp/vars1.vcf
 	exec cg vcf2tsv -split 1 tmp/vars1.vcf tmp/temp.tsv
 	exec cg checktsv tmp/temp.tsv
