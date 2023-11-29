@@ -636,7 +636,7 @@ proc process_sample_job {args} {
 		]]
 		if {![llength $files]} {return {}}
 		set file [lindex $files 0]
-		set f [open "| convert_pipe $file .tsv]
+		set f [open "| [convert_pipe $file .tsv]"]
 		set header [tsv_open $f]
 		set count $minfastqreads
 		while {$count} {
