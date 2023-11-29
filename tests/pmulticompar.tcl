@@ -168,7 +168,6 @@ test pmulticompar {multicompar_addvars non called vars in gvcf} {
 	# in the gvcf they look like variants -> unexpected -> now get zyg "t" and variant allele calls, but sequenced = "r"
 	# should these be dealt with differently? -> set to "u" maybe
 	test_cleantmp
-	# file copy data/av.tsv tmp/var-sample.tsv
 	# make manual with one region changed to check if it properly makes a u of 42775303	42775304	snp
 	file_write tmp/sreg-sample.tsv [deindent {
 		chromosome	begin	end
@@ -183,9 +182,7 @@ test pmulticompar {multicompar_addvars non called vars in gvcf} {
 	file_write tmp/var-sample.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	filter	phased	genotypes	genoqual	GQX	coverage	DPF	MIN_DP	alleledepth_ref	alleledepth	ADF	ADR	gfilter	DPI	PL	phaseset	SB	BLOCKAVG_min30p3a	SNVHPOL	CIGAR	REFREP	IDREP	MQ	cluster
 	}]\n
-	file copy data/av.gvcf tmp/varall-sample.gvcf
 	write_gvcf tmp/varall-sample.gvcf {
-		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample
 		chr1	9899600	.	A	<NON_REF>	.	.	END=9899604	GT:DP:GQ:MIN_DP:PL	0/0:22:60:21:0,60,900
 		chr1	9899605	.	T	<NON_REF>	.	.	END=9899606	GT:DP:GQ:MIN_DP:PL	0/0:20:57:20:0,57,855
 		chr1	9899607	.	C	T,<NON_REF>	.	.	AS_RAW_BaseQRankSum=|0.7,1|NaN;AS_RAW_MQ=64800.00|4516.00|0.00;AS_RAW_MQRankSum=|-4.3,1|NaN;AS_RAW_ReadPosRankSum=|-0.6,1|NaN;AS_SB_TABLE=8,10|2,0|0,0;BaseQRankSum=0.733;DP=20;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-4.232;NDA=2;RAW_MQandDP=69316,20;ReadPosRankSum=-0.568	GT:AD:DP:GQ:PGT:PID:PL:PS:SB	0|1:18,2,0:20:30:0|1:9899607_C_T:30,0,730,84,736,820:9899607:8,10,2,0
@@ -220,9 +217,9 @@ test pmulticompar {multicompar_addvars non called vars in gvcf} {
 	exec cat $varallfile.tsv | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
 	file_write tmp/expected.txt [deindent {
 		x
-		r	t	C	T	30	?	20
-		r	t	C	T	30	?	20
-		r	o	T	G	36	?	18
+		r	t	C	T	30		20
+		r	t	C	T	30		20
+		r	o	T	G	36		18
 	}]\n
 	exec diff tmp/result.txt tmp/expected.txt
 } {}
