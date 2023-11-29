@@ -29,5 +29,5 @@ pairhits 2 ucschits 1 asize 555 hits 4 m 314 fts {{repeat 0 22 completerepeat,mu
 pairhits 2 ucschits 1 asize 555 hits 10 m 199 fts {{repeat 0 22 completerepeat,multi L2a} {dbsnp 6 6 rs2260721}}	22-16108919-16108960r	TGCTCTTGAGTGAGAGGGACAGC					1	Hs	22				16109159	65.514
 pairhits 1 ucschits 1 asize 488 hits 4 m 152	M-16151-16192f	TCCACCATTAGCACCCAAAGCTA					1	Hs	M				15977	64.890
 pairhits 1 ucschits 1 asize 488 hits 2 m 294	M-16151-16192r	GGAACCAGATGTCGGATACAGTTCA					1	Hs	M				16486	65.500
-pairhits 2 ucschits 2 asize 476 hits 4 m 234	X-302426-302467f	CAGGGAGAGCTTCACAGGAACG					1	Hs	X				302171	65.685
-pairhits 2 ucschits 2 asize 476 hits 2 m 200	X-302426-302467r	CATCAACCGCATTCCTTTCCAG					1	Hs	X				302667	65.923
+pairhits 2 ucschits 1 asize 476 hits 4 m 234	X-302426-302467f	CAGGGAGAGCTTCACAGGAACG					1	Hs	X				302171	65.685
+pairhits 2 ucschits 1 asize 476 hits 2 m 200	X-302426-302467r	CATCAACCGCATTCCTTTCCAG					1	Hs	X				302667	65.923

@@ -413,7 +413,9 @@ proc ucsc_epcr {p1 p2} {
 		return [file_read $cachedir/$p1-$p2.epcr]
 	}
 	package require http
-	set h [http::geturl "http://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&org=Human&db=hg18&wp_target=genome&wp_f=$p1&wp_r=$p2&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0"]
+	package require tls
+	http::register https 443 tls::socket
+	set h [http::geturl "https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&amp;org=Human&amp;db=hg38&amp;wp_target=genome&amp;wp_f=$p1&amp;wp_r=$p2&amp;Submit=submit&amp;wp_size=4000&amp;wp_perfect=15&amp;wp_good=15&amp;boolshad.wp_flipReverse=0"]
 	set data [http::data $h]
 	http::cleanup $h
 	regexp {<PRE>(.*)</PRE>} $data temp pre
@@ -699,7 +701,7 @@ proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 
 			lappend margins [expr {$aend-$cend}]
 			if {[catch {
 				set ucschits [llength [ucsc_epcr [lindex $lp 1] [lindex $rp 1]]]
-			}]} {set ucschits ?}
+			} msg]} {set ucschits ?}
 			foreach p [list $lp $rp] d {f r} m $margins {
 				set seq [lindex $p 1]
 				set start [lindex $p 2]
