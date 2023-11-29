@@ -58,6 +58,7 @@ proc cg_map_ngmlr {args} {
 	set threads 2
 	set aliformat bam
 	set extraopts {}
+	set keepcomments 1
 	cg_options map_ngmlr args {
 		-paired {
 			if {$value} {error "ngmlr does not support paired read alignment"}
@@ -70,6 +71,10 @@ proc cg_map_ngmlr {args} {
 		}
 		-fixmate {
 			# not used
+		}
+		-keepcomments {
+			# not used yet
+			set keepcomments [true $value]
 		}
 		-threads - -t {
 			set threads $value

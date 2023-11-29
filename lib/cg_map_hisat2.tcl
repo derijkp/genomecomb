@@ -55,6 +55,7 @@ proc cg_map_hisat2 {args} {
 	set mem 5G
 	set fixmate 1
 	set aliformat bam
+	set keepcomments 1
 	cg_options map_hisat2 args {
 		-paired - -p {
 			set paired $value
@@ -64,6 +65,10 @@ proc cg_map_hisat2 {args} {
 		}
 		-fixmate {
 			set fixmate $value
+		}
+		-keepcomments {
+			# not used yet
+			set keepcomments [true $value]
 		}
 		-threads - -t {
 			set threads $value
