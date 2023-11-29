@@ -578,13 +578,13 @@ test process_small {process_project cg_mx2} {
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename} expected/${basename}]
-	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
+	foreach cgsample {cgNA19240mx2} {
 		lappend result [checkdiff -I finished \
-			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
+			tmp/$basename/samples/$cgsample/summary-$cgsample.txt expected/$basename/samples/$cgsample/summary-$cgsample.txt]
 	}
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+	foreach file1 [glob tmp/$basename/compar/info_analysis.tsv tmp/$basename/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			-I param_adapterfile \
@@ -614,7 +614,7 @@ test process_small {process_project mixed_yri_mx2} {
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
-		-x colinfo -x *.stats.zst -x summary-*.txt \
+		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x *dupmetrics \
 		{*}[get ::optx {}] \
@@ -627,13 +627,9 @@ test process_small {process_project mixed_yri_mx2} {
 		} \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
-	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -I finished \
-			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
-	}
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+	foreach file1 [glob tmp/$basename/compar/info_analysis.tsv tmp/$basename/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			-I param_adapterfile \
@@ -675,13 +671,9 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		} \
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
-	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -I finished \
-			tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt]
-	}
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
-	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+	foreach file1 [glob tmp/$basename/compar/info_analysis.tsv tmp/$basename/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
 			-I param_adapterfile \
