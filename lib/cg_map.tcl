@@ -62,6 +62,7 @@ proc map_job {args} {
 	set compressionlevel {}
 	set joinfastqs 0
 	set extraopts {}
+	set keepcomments 1
 	cg_options map args {
 		-method {
 			set method [methods_map $value]
@@ -97,6 +98,9 @@ proc map_job {args} {
 		}
 		-keepsams {
 			set keepsams $value
+		}
+		-keepcomments {
+			set keepcomments [true $value]
 		}
 		-threads - -t {
 			set threads $value
@@ -161,7 +165,7 @@ proc map_job {args} {
 		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams keepcomments
 		} -code {
 			set cleanupfiles {}
 			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
@@ -209,12 +213,14 @@ proc map_job {args} {
 			if {$sort eq "nosort"} {
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
+					-keepcomments $keepcomments \
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
+					-keepcomments $keepcomments \
 					-threads $threads \
 					-.sam $refseq $sample {*}$fastqfiles \
 					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 \
@@ -246,7 +252,7 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams
+				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams keepcomments
 			} -code {
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
@@ -256,12 +262,14 @@ proc map_job {args} {
 				}
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+						-keepcomments $keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
 					exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+						-keepcomments $keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file \
@@ -299,7 +307,7 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams
+				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams keepcomments
 			} -code {
 				if {$ubams} {
 					set temp [tempdir]/[file root [file tail $file]].fastq.gz
@@ -310,12 +318,14 @@ proc map_job {args} {
 				set tempfile [filetemp_ext $target]
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
+						-keepcomments $keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file1 $file2
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
+						-keepcomments $keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file1 $file2 \

@@ -82,6 +82,7 @@ proc cg_map_star {args} {
 	set mem 30G
 	set fixmate 1
 	set aliformat bam
+	set keepcomments 1
 	set preset {}
 	cg_options map_star args {
 		-paired - -p {
@@ -101,6 +102,10 @@ proc cg_map_star {args} {
 		}
 		-threads - -t {
 			set threads $value
+		}
+		-keepcomments {
+			# not used yet
+			set keepcomments [true $value]
 		}
 		-extraopts {
 			set extraopts $value

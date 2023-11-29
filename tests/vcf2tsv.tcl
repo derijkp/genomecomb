@@ -416,13 +416,13 @@ test vcf2tsv {blocked gvcf 2} {
 		chr21	9452837	.	T	<NON_REF>	.	.	END=9452838	GT:DP:GQ:MIN_DP:PL	0/0:7:21:7:0,21,296
 	}]\n
 	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	GQX	MIN_DP	PGT	PID	PL	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
-		chr21	9452820	9452821	snp	T	.	.	.	.	T	T	r	0	0;0			7	12		7			0,12,180																				
-		chr21	9452821	9452826	ref	5	.	.	.	.	5	5	r	0	0;0			7	9		7			0,9,135																				
-		chr21	9452826	9452831	ref	5	.	.	.	.	5	5	r	0	0;0			8	12		8			0,12,180																				
-		chr21	9452832	9452835	del	ATC		.	76.73	.	ATC		t	0	0;1	4	3	7	99					114,0,159,126,168,294	0,4,0,3			|1.5,1|NaN	11797.00|5840.00|0.00	|-1.4,1|NaN	|1.0,1|NaN	0,4|0,3|0,0	1.579	8		3.0103		1	0.500		-1.368	2	20038.00	1.006
-		chr21	9452835	9452836	snp	A	.	.	.	.	A	A	r	0	0;0			7	0		7			0,0,28																				
-		chr21	9452836	9452838	ref	2	.	.	.	.	2	2	r	0	0;0			7	21		7			0,21,296																				
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	GQX	MIN_DP	PGT	PID	PL	phaseset	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
+		chr21	9452820	9452821	snp	T	.	.	.	.	T	T	r	0	0;0			7	12		7			0,12,180																					
+		chr21	9452821	9452826	ref	5	.	.	.	.	5	5	r	0	0;0			7	9		7			0,9,135																					
+		chr21	9452826	9452831	ref	5	.	.	.	.	5	5	r	0	0;0			8	12		8			0,12,180																					
+		chr21	9452832	9452835	del	ATC		.	76.73	.	ATC		t	0	0;1	4	3	7	99					114,0,159,126,168,294		0,4,0,3			|1.5,1|NaN	11797.00|5840.00|0.00	|-1.4,1|NaN	|1.0,1|NaN	0,4|0,3|0,0	1.579	8		3.0103		1	0.500		-1.368	2	20038.00	1.006
+		chr21	9452835	9452836	snp	A	.	.	.	.	A	A	r	0	0;0			7	0		7			0,0,28																					
+		chr21	9452836	9452838	ref	2	.	.	.	.	2	2	r	0	0;0			7	21		7			0,21,296																					
 	}]\n
 	cg vcf2tsv tmp/temp.vcf tmp/temp.tsv
 	cg select -overwrite 1 -rc 1 tmp/temp.tsv tmp/temp2.tsv
@@ -436,10 +436,10 @@ test vcf2tsv {blocked gvcf no GQ in ref (strelka)} {
 		chr21	42775181	.	T	.	.	PASS	END=42775188;BLOCKAVG_min30p3a	GT:GQX:DP:DPF:MIN_DP	0/0:15:6:0:6
 	}]\n
 	file_write tmp/expected.tsv [deindent {
-		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	GQX	MIN_DP	PGT	PID	PL	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
-		chr21	42775174	42775179	ref	5	.	.	.	PASS	5	5	r	0	0;0			6	15	15	6																							
-		chr21	42775179	42775180	snp	C	T	.	112	LowGQX	T	T	m	0	1;1	0	6	6	15	0				149,18,0	-9.2															60				
-		chr21	42775180	42775188	ref	8	.	.	.	PASS	8	8	r	0	0;0			6	15	15	6																							
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	GQX	MIN_DP	PGT	PID	PL	phaseset	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
+		chr21	42775174	42775179	ref	5	.	.	.	PASS	5	5	r	0	0;0			6	15	15	6																								
+		chr21	42775179	42775180	snp	C	T	.	112	LowGQX	T	T	m	0	1;1	0	6	6	15	0				149,18,0		-9.2															60				
+		chr21	42775180	42775188	ref	8	.	.	.	PASS	8	8	r	0	0;0			6	15	15	6																								
 	}]\n
 	cg vcf2tsv tmp/temp.vcf tmp/temp.tsv
 	cg select -overwrite 1 -rc 1 tmp/temp.tsv tmp/temp2.tsv

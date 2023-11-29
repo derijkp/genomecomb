@@ -85,8 +85,8 @@ test bam2fastq {bam2fastq} {
 	cg bam2fastq $bamfile tmp/out_1.fq tmp/out_2.fq
 	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
 	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
-	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
-	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
+	cg fastq2tsv tmp/out_1.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_1.fq
+	cg fastq2tsv tmp/out_2.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
 	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}
@@ -98,8 +98,8 @@ test bam2fastq {bam2fastq gz} {
 	exec gunzip tmp/out_1.fq.gz tmp/out_2.fq.gz
 	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
 	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
-	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
-	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
+	cg fastq2tsv tmp/out_1.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_1.fq
+	cg fastq2tsv tmp/out_2.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
 	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}
@@ -111,8 +111,8 @@ test bam2fastq {bam2fastq -sortmethod collate gz} {
 	exec gunzip tmp/out_1.fq.gz tmp/out_2.fq.gz
 	cg zcat data/test-NA19240chr2122_1.fq.zst > tmp/expected1.fq
 	cg zcat data/test-NA19240chr2122_2.fq.zst > tmp/expected2.fq
-	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
-	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
+	cg fastq2tsv tmp/out_1.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_1.fq
+	cg fastq2tsv tmp/out_2.fq | cg select -s name -rf comments | cg tsv2fastq > tmp/sout_2.fq
 	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
 	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}

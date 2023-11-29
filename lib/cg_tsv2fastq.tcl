@@ -31,11 +31,15 @@ proc cg_tsv2fastq {args} {
 	if {$qualpos == -1} {
 		set qualpos [lsearch $header quality]
 	}
-	set poss [list $idpos $seqpos $qualpos]
+	set commentspos [lsearch $header comments]
+	set poss [list $idpos $seqpos $qualpos $commentspos]
 	while {[gets $f line] != -1} {
-		foreach {id seq qual} [list_sub [split $line \t] $poss] break
+		foreach {id seq qual comments} [list_sub [split $line \t] $poss] break
 		if {$qual eq ""} {
 			set qual [string_fill ! [string length $seq]]
+		}
+		if {$comments ne ""} {
+			set id "$id\t$comments"
 		}
 		puts $o $id\n$seq\n+\n$qual
 	}

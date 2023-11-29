@@ -161,6 +161,8 @@ chmod ugo+x gff3ToGenePred
 mv gtfToGenePred bin
 mv gff3ToGenePred bin
 
+ln -sf bin/match_cell_barcode match_cell_barcode
+
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
@@ -205,6 +207,7 @@ ln -sf flames-$flamesversion-$arch/flames .
 ln -sf flames-$flamesversion-$arch/flames flames-$flamesversion
 ln -sf flames-$flamesversion-$arch/bulk_long_pipeline.py flames_bulk_long_pipeline.py
 ln -sf flames-$flamesversion-$arch/sc_long_pipeline.py flames_sc_long_pipeline.py
+ln -sf flames-$flamesversion-$arch/bin/match_cell_barcode match_cell_barcode
 tar cvzf flames-$flamesversion-$arch.tar.gz flames-$flamesversion-$arch flames flames-$flamesversion flames_bulk_long_pipeline.py flames_sc_long_pipeline.py
 cp -ra flames-$flamesversion-$arch flames flames-$flamesversion flames_bulk_long_pipeline.py flames_sc_long_pipeline.py /io/extra$ARCH
 cd /io/extra$ARCH/
