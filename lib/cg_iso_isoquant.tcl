@@ -90,20 +90,20 @@ proc iso_isoquant_add_tcounts {tcountaVar iso assignment_type ambiguity polya co
 	convert_isoquant_add tcounta($iso,t) $ambigcount
 	if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
 		# unique
-		convert_isoquant_add tcounta($iso,u) $count
+		convert_isoquant_add tcounta($iso,u) $ambigcount
 		if {$covered_pct >= $strictpct} {
 			# strict
-			convert_isoquant_add tcounta($iso,s) $count
+			convert_isoquant_add tcounta($iso,s) $ambigcount
 		}
 	}
 	if {$polya eq "True"} {
 		convert_isoquant_add tcounta($iso,a) $ambigcount
 		if {$ambiguity == 1 && $assignment_type ne "inconsistent"} {
 			# unique
-			convert_isoquant_add tcounta($iso,au) $count
+			convert_isoquant_add tcounta($iso,au) $ambigcount
 			if {$covered_pct >= $strictpct} {
 				# strict
-				convert_isoquant_add tcounta($iso,as) $count
+				convert_isoquant_add tcounta($iso,as) $ambigcount
 			}
 		}
 	}
