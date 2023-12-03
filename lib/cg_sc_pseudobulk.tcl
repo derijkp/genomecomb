@@ -159,7 +159,7 @@ proc sc_pseudobulk_job {args} {
 			}
 		}
 		while 1 {
-			if {[gets $f line] == -1} break
+			set read [gets $f line]
 			set line [split $line \t]
 			foreach {transcript cell} [list_sub $line $idposs] break
 			if {$transcript ne $curtranscript} {
@@ -185,11 +185,24 @@ proc sc_pseudobulk_job {args} {
 					}
 				}
 			}
-			set type $a($cell)
-			foreach datafield $datafields value [list_sub $line $dataposs] {
-				set da($datafield-$type) [expr {$da($datafield-$type)+$value}]
+			if {$read == -1} break
+			if {[info exists a($cell)]} {
+				set type $a($cell)
+				foreach datafield $datafields value [list_sub $line $dataposs] {
+					set da($datafield-$type) [expr {$da($datafield-$type)+$value}]
+				}
+			} else {
+				set type untyped
+				foreach datafield $datafields value [list_sub $line $dataposs] {
+					if {![info exists da($datafield-$type)]} {
+						set da($datafield-$type) $value
+					} else {					
+						set da($datafield-$type) [expr {$da($datafield-$type)+$value}]
+					}
+				}
 			}
 		}
+
 		gzclose $o
 		gzclose $f
 		set temppb_isoformfile2 $pb_isoformfile.temp2[gzext $pb_isoformfile]
