@@ -552,10 +552,20 @@ proc write_gvcf {file data} {
 proc diffanalysisinfo {file1 file2} {
 	set file1 [lindex [glob $file1] 0]
 	set file2 [lindex [glob $file2] 0]
-	catch {exec cg tsvdiff -t xl $file1 $file2 | grep -v _version} temp
+	catch {exec cg tsvdiff -t xl $file1 $file2 | grep -v _version | grep -v version_} temp
 	set len [llength [split $temp \n]]
 	if {$len != 3 && $len != 1} {return "files differ: $file1 $file2"}
 	return ""
+}
+
+proc diffinfoanalysis {file1 file2} {
+	set file1 [lindex [glob $file1] 0]
+	set file2 [lindex [glob $file2] 0]
+	checkdiff \
+		-I version_os -I param_dbfiles -I param_dbdir -I command \
+		-I version_genomecomb -I version_java -I maxopenfiles \
+		-I param_adapterfile \
+		$file1 $file2
 }
 
 proc diffhtmlreport {file1 file2 {error 0}} {

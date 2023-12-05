@@ -110,8 +110,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles -I maxopenfiles \
-		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
@@ -163,8 +162,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I command -I param_dbdir -I version_genomecomb \
-		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
@@ -195,7 +193,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 #		$mastrdir $expected
 #	lappend result [diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo]
 #	lappend result [checkdiff -y --suppress-common-lines "$mastrdir/mastr_mx2 space.html" "$expected/mastr_mx2 space.html" | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
-#	lappend result [checkdiff -y --suppress-common-lines $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+#	lappend result [diffinfoanalysis $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv]
 #	join [list_remove $result {}] \n
 #} {}
 
@@ -241,8 +239,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-		tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	join [list_remove $result {}] \n
@@ -281,8 +278,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
+	lappend result [diffinfoanalysis tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
@@ -318,8 +314,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		} \
 		{*}[get ::optx {}] \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
-	lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-		tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
+	lappend result [diffinfoanalysis tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
 	join [list_remove $result {}] \n
 } {}
 
@@ -360,9 +355,7 @@ test process_small {process_project exomes_yri_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -404,9 +397,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -430,7 +421,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
-		-x *log_jobs -x *.finished -x *.submitting \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
 		-x *bam.dupmetrics -x info_analysis.tsv -x projectinfo.tsv -x *.analysisinfo \
 		-x colinfo -x *.stats.zst -x fastqc_report.html -x *.vcf.gz \
 		{*}[get ::optx {}] \
@@ -447,9 +438,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/${basename}/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -541,9 +530,7 @@ test process_small {process_project genomes_yri_mx2} {
 	}
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -586,9 +573,7 @@ test process_small {process_project cg_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -635,9 +620,7 @@ test process_small {process_project mixed_yri_mx2} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -683,9 +666,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -I version_os -I param_dbfiles -I param_dbdir -I command -I version_genomecomb -I maxopenfiles \
-			-I param_adapterfile \
-			$file1 $file2]
+		lappend result [diffinfoanalysis $file1 $file2]
 	}
 	join [list_remove $result {}] \n
 } {}
