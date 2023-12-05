@@ -66,7 +66,7 @@ proc sc_celltyper_sctype_job {args} {
 			SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
 			SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
 			SOB <- ScaleData(SOB, features = rownames(SOB))
-			SOB <- RunPCA(SOB,features = VariableFeatures(object = SOB)))
+			SOB <- RunPCA(SOB,features = VariableFeatures(object = SOB))
 			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:50)
 			SOB <- FindClusters(SOB, resolution = 0.5)
 			SOB <- RunUMAP(SOB, dims = 1:50)
