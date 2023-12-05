@@ -49,10 +49,13 @@ proc shadow_delete {link} {
 
 proc cg_shadow_delete {args} {
 	cg_options shadow_delete args {
-	} {link} 1 1 {
+	} {link} 1 ... {
 		delete a shadow dir
 	}
 	shadow_delete $link
+	foreach link args {
+		shadow_delete $link
+	}
 }
 
 # shadow_mkdir creates a temp or workdir for distributed analysis.
