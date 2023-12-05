@@ -274,7 +274,8 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
+			process_sample_job -todoVar todo \
+				-clip $clip -datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
@@ -292,17 +293,19 @@ proc process_project_job {args} {
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
+			process_sample_job -todoVar todo \
+				-clip $clip -datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign \
 				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-counters $counters \
 				-reftranscripts $reftranscripts \
 				-isocallers $isocallers \
 				-hap_bam $hap_bam \
-				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
+				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+				-threads $threads -distrreg $distrreg -keepsams $keepsams \
+				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
 				$dir
 			foreach {deps targets} [job_getinfo 0] break
 			logverbose $verbose
@@ -311,18 +314,21 @@ proc process_project_job {args} {
 				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
-				counters isocallers reftranscripts
+				counters isocallers reftranscripts aliformat hap_bam threads distrreg keepsams
 			} -code {
-				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
+				cg process_sample -stack 1 -v 2 \
+					-clip $clip -datatype $datatype -aliformat $aliformat \
 					-aligner $aligner -realign $realign \
 					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 					-counters $counters \
 					-reftranscripts $reftranscripts \
 					-isocallers $isocallers \
-					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
+					-hap_bam $hap_bam \
+					-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
-					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+					-threads $threads -distrreg $distrreg -keepsams $keepsams \
+					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
 					$dir >@ stdout 2>@ stderr
 			}
 		}
