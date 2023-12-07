@@ -14,7 +14,7 @@ The command expects a basic genomecomb sample directory (as described
 extensively in [[projectdir]]) It generates all kinds of result data
 (variant calls, sequenced regions, ...) analyses and reports. 
 
-Several types of source data (fastq files, Complete Genomics analysis dir,
+Several types of source data (fastq files, unaligned bams, Complete Genomics analysis dir,
 ...) are supported. The directory containing the original starting data
 can be given as an option, an argument, or it can be present in a dir
 named ori in the sample dir. If given as an argument, a link named ori to
@@ -68,8 +68,8 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, 
 ; -svcallers svcallers: (space separated) list of structural variant callers to be used (default empty).
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
-; -methcallers svcallers: (space separated) list of methylation callers to be used (default empty).
-Currently supported are: nanopolish
+; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
+Currently supported are: nanopolish remora (actual remora analysis must have been done before, with methylation data present in the source unaligned bams)
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.
 Currently supported are: rnaseqc, qorts
 ; -split 1/0 (-s): split multiple alternative genotypes over different line
@@ -114,8 +114,8 @@ doing some analyses (variantcalling, annotations) split by region
 == Sample types ==
 Several types of sample data are supported:
 
-=== (Illumina) (targeted) shotgun sequencing ===
-In this case the starting raw data for the sample is fastq files. These
+=== (targeted) shotgun sequencing ===
+For Illumina sequencing the starting raw data for the sample is fastq files. These
 should be in a subdirectory of the sampledir named fastq. They can also be
 in a directory ori in the sampledir, in which case the fastq dir will be
 made and links to the fastq files made in it.
@@ -157,15 +157,22 @@ files later.
 ; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
 (which are less reliable)
 
-For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
-these result files are named var-sam-rdsbwa-sample1.tsv,
-sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
-reg_cluster-sam-rdsbwa-S0489.tsv
+For strelka variant calling on the same bamfile (map-rdsbwa-sample1.bam),
+these result files are named var-strelka-rdsbwa-sample1.tsv,
+sreg-strelka-rdsbwa-sample1.tsv, varall-strelka-rdsbwa-sample1.tsv,
+reg_cluster-strelka-rdsbwa-S0489.tsv
 
 If the experiment used e.g. exome capture, this can be indicated by the
 presence of a file named reg_targets.tsv (or matching reg_*_targets*.tsv)
 in the sampledir (or the option -targetfile). If present, coverage
 statistics will be calculated for this region.
+
+For ONT genome/targeted sequencing analysis a similar steps are performed,
+but you select other programs and settings, e.g. minimap2 for alignment,
+clair3 for (small) variant calling. It can start from fastq files in
+the fastq directory, but can also use unaligned bam files (in a direcory
+named ubam). You would typically use ubams to include methylation calling
+data produced by remora/dorado at the basecalling step.
 
 === Amplicon sequencing ===
 Amplicon sequencing samples are indicated by the presence of a file named
@@ -186,7 +193,7 @@ It must have the following fields:
 Amplicon sequencing samples can also start from the fastq files and are processed similarly
 to shotgun sequencing, but analysis is different in a few ways:
 
-Variants will only be called in the sequenceneable part of the amplicons
+Variants will only be called in the sequenceable part of the amplicons
 (i.e. between begin and end). (off-target mappings are not called)
 To avoid wrong results by "sequencing" primers, the primer parts of
 amplicons will be clipped based on their mapping on the expected amplicons

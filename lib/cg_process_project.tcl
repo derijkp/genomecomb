@@ -384,7 +384,7 @@ proc process_project_job {args} {
 				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
-				counters isocallers reftranscripts
+				counters isocallers reftranscripts aliformat hap_bam threads distrreg keepsams
 			} -code {
 				cg process_sample -stack 1 -v 2 {*}$sampleargs >@ stdout 2>@ stderr
 			}

@@ -1024,7 +1024,7 @@ proc process_sample_job {args} {
 			} else {
 				file mkdir $resultbamfile.temp
 				job_cleanup_add $resultbamfile.temp
-				set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.bam
+				set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.$aliformat
 			}
 			set compressionlevel [defcompressionlevel 5]
 			setdefcompressionlevel 1

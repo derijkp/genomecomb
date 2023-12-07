@@ -189,12 +189,16 @@ proc map_job {args} {
 					set tempfastq2 [tempfile].fastq.gz
 					set deps1 {}
 					set deps2 {}
-					foreach {dep1 dep2} $fastqfiles {
-						if {$ubams} {
+					if {$ubams} {
+						foreach ubam $fastqfiles {
 							set out1 [tempfile].fastq.gz
 							set out2 [tempfile].fastq.gz
-							catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq -1 $out1 -2 $out2
-						} else {
+							catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $ubam -1 $out1 -2 $out2
+							lappend deps1 $out1
+							lappend deps2 $out2
+						}
+					} else {
+						foreach {dep1 dep2} $fastqfiles {
 							lappend deps1 $dep1
 							lappend deps2 $dep2
 						}
