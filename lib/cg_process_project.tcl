@@ -49,6 +49,7 @@ proc process_project_job {args} {
 	set sc_expectedcells {}
 	set cellmarkerfile {}
 	set tissue {}
+	set optionsfile options.tsv
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -80,7 +81,7 @@ proc process_project_job {args} {
 			set aligner $value
 		}
 		-singlecell {
-			if {$value ni "ontr10x"} {error "Unknown value $value for -singlecell, must be one of: ontr10x"}
+			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
 			set singlecell $value
 		}
 		-singlecell-whitelist {
@@ -233,6 +234,23 @@ proc process_project_job {args} {
 	set destdir [file_absolute $destdir]
 	set adapterfile [adapterfile $adapterfile]
 	set experimentname [file tail $destdir]
+	if {[file pathtype $optionsfile] ne "absolute"} {
+		set optionsfile [file join $destdir $optionsfile]
+	}
+	unset -nocomplain optionsa
+	if {[file exists $optionsfile]} {
+		set f [gzopen $optionsfile]
+		set header [tsv_open $f]
+		if {$header ne "sample option value"} {error "wrong fields in optionsfile $optionsfile: must be: sample option value"}
+		while {[gets $f line] != -1} {
+			set sline [split $line \t]
+			if {[llength $sline] != 3} {error "format error in optionsfile $optionsfile at line:$line"}
+			foreach {sample option value} $sline break
+			set optionsa($sample,$option) $value
+			puts "sample options: $sample\t$option\t$value"
+		}
+		gzclose $f
+	}
 	# check projectinfo
 	set dbdir [dbdir $dbdir]
 	projectinfo $destdir dbdir {split 1}
@@ -310,55 +328,55 @@ proc process_project_job {args} {
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
+		set sampleargs [list \
+			-clip [get optionsa($sample,clip) $clip] \
+			-singlecell [get optionsa($sample,singlecell) $singlecell] \
+			-singlecell-whitelist [get optionsa($sample,singlecell-whitelist) $singlecell_whitelist] \
+			-singlecell-umisize [get optionsa($sample,singlecell-umisize) $singlecell_umisize] \
+			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
+			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
+			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
+			-cellmarkerfile [get optionsa($sample,cellmarkerfile) $cellmarkerfile] \
+			-tissue [get optionsa($sample,tissue) $tissue] \
+			-datatype [get optionsa($sample,datatype) $datatype] \
+			-aliformat [get optionsa($sample,aliformat) $aliformat] \
+			-aligner [get optionsa($sample,aligner) $aligner] \
+			-realign [get optionsa($sample,realign) $realign] \
+			-varcallers [get optionsa($sample,varcallers) $varcallers] \
+			-svcallers [get optionsa($sample,svcallers) $svcallers] \
+			-methcallers [get optionsa($sample,methcallers) $methcallers] \
+			-counters [get optionsa($sample,counters) $counters] \
+			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
+			-isocallers [get optionsa($sample,isocallers) $isocallers] \
+			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
+			-dbdir [get optionsa($sample,dbdir) $dbdir] \
+			-split [get optionsa($sample,split) $split] \
+			-paired [get optionsa($sample,paired) $paired] \
+			-maxfastqdistr [get optionsa($sample,maxfastqdistr) $maxfastqdistr] \
+			-adapterfile [get optionsa($sample,adapterfile) $adapterfile] \
+			-reports [get optionsa($sample,reports) $reports] \
+			-samBQ [get optionsa($sample,samBQ) $samBQ] \
+			-cleanup [get optionsa($sample,cleanup) $cleanup] \
+			-removeduplicates [get optionsa($sample,removeduplicates) $removeduplicates] \
+			-amplicons [get optionsa($sample,amplicons) $amplicons] \
+			-threads [get optionsa($sample,threads) $threads] \
+			-distrreg [get optionsa($sample,distrreg) $distrreg] \
+			-keepsams [get optionsa($sample,keepsams) $keepsams] \
+			-removeskew [get optionsa($sample,removeskew) $removeskew] \
+			-dt [get optionsa($sample,dt) $dt] \
+			-targetfile [get optionsa($sample,targetfile) $targetfile] \
+			-minfastqreads [get optionsa($sample,minfastqreads) $minfastqreads] \
+			-depth_histo_max [get optionsa($sample,depth_histo_max) $depth_histo_max] \
+			$dir \
+		]
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -clip $clip \
-				-singlecell $singlecell \
-				-singlecell-whitelist $singlecell_whitelist \
-				-singlecell-umisize $singlecell_umisize \
-				-sc_filters $sc_filters \
-				-sc_celltypers $sc_celltypers \
-				-sc_expectedcells $sc_expectedcells \
-				-cellmarkerfile $cellmarkerfile \
-				-tissue $tissue \
-				-datatype $datatype -aliformat $aliformat \
-				-aligner $aligner -realign $realign \
-				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
-				-counters $counters \
-				-reftranscripts $reftranscripts \
-				-isocallers $isocallers \
-				-hap_bam $hap_bam \
-				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
-				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
-				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-threads $threads -distrreg $distrreg -keepsams $keepsams \
-				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
-				$dir
+			process_sample_job -todoVar todo {*}$sampleargs
 		} else {
 			# find deps and targets by running the process_sample_job with job_getinfo set to 1
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo -clip $clip \
-				-singlecell $singlecell \
-				-singlecell-whitelist $singlecell_whitelist \
-				-singlecell-umisize $singlecell_umisize \
-				-sc_filters $sc_filters \
-				-sc_celltypers $sc_celltypers \
-				-sc_expectedcells $sc_expectedcells \
-				-cellmarkerfile $cellmarkerfile \
-				-tissue $tissue \
-				-datatype $datatype -aliformat $aliformat \
-				-aligner $aligner -realign $realign \
-				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
-				-counters $counters \
-				-reftranscripts $reftranscripts \
-				-isocallers $isocallers \
-				-hap_bam $hap_bam \
-				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
-				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
-				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
-				$dir
+			process_sample_job -todoVar todo {*}$sampleargs
 			foreach {deps targets} [job_getinfo 0] break
 			logverbose $verbose
 			# run the actual job with deps and targets found
@@ -368,26 +386,7 @@ proc process_project_job {args} {
 				removeskew dt targetfile minfastqreads dir keepsams datatype maxfastqdistr
 				counters isocallers reftranscripts
 			} -code {
-				cg process_sample -stack 1 -v 2 -clip $clip \
-					-singlecell $singlecell \
-					-singlecell-whitelist $singlecell_whitelist \
-					-singlecell-umisize $singlecell_umisize \
-					-sc_filters $sc_filters \
-					-sc_celltypers $sc_celltypers \
-					-sc_expectedcells $sc_expectedcells \
-					-cellmarkerfile $cellmarkerfile \
-					-tissue $tissue \
-					-datatype $datatype -aliformat $aliformat \
-					-aligner $aligner -realign $realign \
-					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
-					-counters $counters \
-					-reftranscripts $reftranscripts \
-					-isocallers $isocallers \
-					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
-					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
-					-removeduplicates $removeduplicates -amplicons $amplicons \
-					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
-					$dir >@ stdout 2>@ stderr
+				cg process_sample -stack 1 -v 2 {*}$sampleargs >@ stdout 2>@ stderr
 			}
 		}
 	}
@@ -395,28 +394,45 @@ proc process_project_job {args} {
 	foreach sample $msamples {
 		putslog "Processing msample $sample"
 		set dir $destdir/msamples/$sample
-		process_sample_job -clip $clip \
-			-singlecell $singlecell \
-			-singlecell-whitelist $singlecell_whitelist \
-			-singlecell-umisize $singlecell_umisize \
-			-sc_filters $sc_filters \
-			-sc_celltypers $sc_celltypers \
-			-sc_expectedcells $sc_expectedcells \
-			-cellmarkerfile $cellmarkerfile \
-			-tissue $tissue \
-			-datatype $datatype -aliformat $aliformat \
-			-aligner $aligner -realign $realign \
-			-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
-			-counters $counters \
-			-reftranscripts $reftranscripts \
-			-isocallers $isocallers \
-			-hap_bam $hap_bam \
-			-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
-			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
-			-removeduplicates $removeduplicates -amplicons $amplicons \
-			-threads $threads -distrreg $distrreg -keepsams $keepsams \
-			-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
-			-depth_histo_max $depth_histo_max \
+		process_sample_job \
+			-clip [get optionsa($sample,clip) $clip] \
+			-singlecell [get optionsa($sample,singlecell) $singlecell] \
+			-singlecell-whitelist [get optionsa($sample,singlecell-whitelist) $singlecell_whitelist] \
+			-singlecell-umisize [get optionsa($sample,singlecell-umisize) $singlecell_umisize] \
+			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
+			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
+			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
+			-cellmarkerfile [get optionsa($sample,cellmarkerfile) $cellmarkerfile] \
+			-tissue [get optionsa($sample,tissue) $tissue] \
+			-datatype [get optionsa($sample,datatype) $datatype] \
+			-aliformat [get optionsa($sample,aliformat) $aliformat] \
+			-aligner [get optionsa($sample,aligner) $aligner] \
+			-realign [get optionsa($sample,realign) $realign] \
+			-varcallers [get optionsa($sample,varcallers) $varcallers] \
+			-svcallers [get optionsa($sample,svcallers) $svcallers] \
+			-methcallers [get optionsa($sample,methcallers) $methcallers] \
+			-counters [get optionsa($sample,counters) $counters] \
+			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
+			-isocallers [get optionsa($sample,isocallers) $isocallers] \
+			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
+			-dbdir [get optionsa($sample,dbdir) $dbdir] \
+			-split [get optionsa($sample,split) $split] \
+			-paired [get optionsa($sample,paired) $paired] \
+			-maxfastqdistr [get optionsa($sample,maxfastqdistr) $maxfastqdistr] \
+			-adapterfile [get optionsa($sample,adapterfile) $adapterfile] \
+			-reports [get optionsa($sample,reports) $reports] \
+			-samBQ [get optionsa($sample,samBQ) $samBQ] \
+			-cleanup [get optionsa($sample,cleanup) $cleanup] \
+			-removeduplicates [get optionsa($sample,removeduplicates) $removeduplicates] \
+			-amplicons [get optionsa($sample,amplicons) $amplicons] \
+			-threads [get optionsa($sample,threads) $threads] \
+			-distrreg [get optionsa($sample,distrreg) $distrreg] \
+			-keepsams [get optionsa($sample,keepsams) $keepsams] \
+			-removeskew [get optionsa($sample,removeskew) $removeskew] \
+			-dt [get optionsa($sample,dt) $dt] \
+			-targetfile [get optionsa($sample,targetfile) $targetfile] \
+			-minfastqreads [get optionsa($sample,minfastqreads) $minfastqreads] \
+			-depth_histo_max [get optionsa($sample,depth_histo_max) $depth_histo_max] \
 			$dir
 	}
 	set_job_logdir $destdir/log_jobs
