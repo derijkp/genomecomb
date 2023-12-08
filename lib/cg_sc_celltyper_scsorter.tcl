@@ -16,7 +16,7 @@ proc sc_celltyper_scsorter_job {args} {
 	set scgenefile10x [file root [gzroot $scgenefile]].10x
 	set groupfile $dir/sc_group-$extrarootname-$rootname.tsv
 	set umappng $dir/sc_celltype_umap-$extrarootname-$rootname.png
-	set outrds $dir/sc_celltype_tsne-$rootname.rds
+	set outrds $dir/sc_celltype-$extrarootname-$rootname.rds
 	set tempresult $groupfile.temp
 	job sc_celltyper_scsorter_scgenefile10x-$extrarootname-$rootname -deps {
 		$scgenefile

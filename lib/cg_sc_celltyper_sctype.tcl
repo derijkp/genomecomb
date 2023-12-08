@@ -2,10 +2,12 @@ proc sc_celltyper_sctype_job {args} {
 	upvar job_logdir job_logdir
 	set cellmarkerfile ""
 	set tissue ""
+	set extrarootname sctype
 	# tissue can be e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
 	cg_options sc_celltyper_sctype args {
 		-cellmarkerfile {set cellmarkerfile [file_absolute $value]}
 		-tissue {set tissue $value}
+		-extrarootname {set extrarootname $value}
 	} {scgenefile scisoformfile} 2 2
 	#
 	set scgenefile [file_absolute $scgenefile]
@@ -13,9 +15,9 @@ proc sc_celltyper_sctype_job {args} {
 	set rootname [file_rootname $scgenefile]
 	set dir [file dir $scgenefile]
 	set scgenefile10x [file root [gzroot $scgenefile]].10x
-	set groupfile $dir/sc_group-sctype-$rootname.tsv
+	set groupfile $dir/sc_group-$extrarootname-$rootname.tsv
 	set tempresult $groupfile.temp
-	job sctype_scgenefile10x-$rootname -deps {
+	job sctype_scgenefile10x-$extrarootname-$rootname -deps {
 		$scgenefile
 	} -targets {
 		$scgenefile10x
@@ -25,11 +27,11 @@ proc sc_celltyper_sctype_job {args} {
 		cg tsv210x $scgenefile $scgenefile10x.temp
 		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
-	set umappng $dir/sc_celltype_umap-$rootname.png
+	set umappng $dir/sc_celltype_umap-$extrarootname-$rootname.png
 	set R [file_resolve [findR]]
 	set dirR [file dir $R]
 	set sctypedir [lindex [bsort [glob $dirR/lib64/R/library/sc-type-*]] end]
-	job sc_celltyper_sctype-$rootname -deps {
+	job sc_celltyper_$extrarootname-$rootname -deps {
 		$scgenefile10x
 	} -targets {
 		$groupfile $umappng
