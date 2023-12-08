@@ -28,8 +28,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		set root ${sc_celltyper}-$exproot
 	}
 	set pbisoformfiles [bsort [jobglob samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv]]
-	set pbisoformcolinfofiles [jobglob samples/*/pb_isoform_counts-${sc_celltyper}-*.colinfo.tsv]
-	set pbisoformfiles [list_lremove $pbisoformfiles $pbisoformcolinfofiles]	
+	set pbisoformcolinfofiles [jobglob samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv.colinfo]
 	if {[llength $pbisoformfiles]} {
 		job pb_compar-pb_isoform_counts-$root \
 		-deps $pbisoformfiles \
@@ -45,17 +44,16 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		job pb_compar-pb_isoform_counts_colinfo-$root \
 		-deps $pbisoformcolinfofiles \
 		-targets {
-			compar/pb_isoform_counts-$root.colinfo.tsv
+			compar/pb_isoform_counts-$root.tsv.colinfo
 		} -vars {
 			pbisoformcolinfofiles exproot root sc_celltyper iso_match
 		} -code {
-			set isoformcounts_colinfo compar/pb_isoform_counts-$root.colinfo.tsv
+			set isoformcounts_colinfo compar/pb_isoform_counts-$root.tsv.colinfo
 			pb_combine_cat_colinfo $isoformcounts_colinfo $pbisoformcolinfofiles
 		}
 	}
 	set pbgenefiles [bsort [jobglob samples/*/pb_gene_counts-${sc_celltyper}-*.tsv]]
-	set pbgenecolinfofiles [jobglob samples/*/pb_gene_counts-${sc_celltyper}-*.colinfo.tsv]
-	set pbgenefiles [list_lremove $pbgenefiles $pbgenecolinfofiles]	
+	set pbgenecolinfofiles [jobglob samples/*/pb_gene_counts-${sc_celltyper}-*.tsv.colinfo]
 	if {[llength $pbgenefiles]} {
 		job pb_compar-gene_counts-$root \
 		-deps $pbgenefiles \
@@ -71,11 +69,11 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		job pb_compar-pb_gene_counts_colinfo-$root \
 		-deps $pbgenecolinfofiles \
 		-targets {
-			compar/pb_gene_counts-$root.colinfo.tsv
+			compar/pb_gene_counts-$root.tsv.colinfo
 		} -vars {
 			pbgenecolinfofiles exproot root sc_celltyper iso_match
 		} -code {
-			set genecounts_colinfo compar/pb_gene_counts-$root.colinfo.tsv
+			set genecounts_colinfo compar/pb_gene_counts-$root.tsv.colinfo
 			pb_combine_cat_colinfo $genecounts_colinfo $pbgenecolinfofiles
 		}
 	}

@@ -112,7 +112,7 @@ proc sc_pseudobulk_job {args} {
 		cg select -s - $temppb_genefile $temppb_genefile2
 		file delete $temppb_genefile
 		#
-		set o [wgzopen [file root [gzroot $pb_genefile]].colinfo.tsv]
+		set o [wgzopen [gzroot $pb_genefile].colinfo]
 		set sample [lindex [split $rootname -] end]
 		puts $o [join [list field fieldtype group {*}$colinfofields total sample rootname] \t]
 		set empty [list_fill [expr {4+[llength $colinfofields]}] {}]
@@ -209,7 +209,7 @@ proc sc_pseudobulk_job {args} {
 		cg select -s - $temppb_isoformfile $temppb_isoformfile2
 		file delete $temppb_isoformfile
 		#
-		set o [wgzopen [file root [gzroot $pb_isoformfile]].colinfo.tsv]
+		set o [wgzopen [gzroot $pb_isoformfile].colinfo]
 		set sample [lindex [split $rootname -] end]
 		puts $o [join [list field fieldtype group {*}$colinfofields total sample rootname] \t]
 		set empty [list_fill [expr {2+[llength $ga([lindex [array names ga] 0])]}] {}]
