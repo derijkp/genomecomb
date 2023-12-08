@@ -45,7 +45,7 @@ proc sc_filter_default_job {args} {
 		$scgenefile10x
 		$scisoformfile10x
 	} -targets {
-		$outinfofile $outrds $umappng $tsnepng
+		$outinfofile $outrds $umappng
 	} -vars {
 		scgenefile10x scisoformfile10x expectedcells metadatafile outrds out10x outkneeplot outinfofile
 		umappng tsnepng
@@ -102,7 +102,6 @@ proc sc_filter_default_job {args} {
 			# not very clean, but on some data emptyDropsCellRanger gives an error (that I could not easily patch)
 			# so use emptyDrops as a fallback where this is the case
 			emptydrops.error=0
-			rm(e.out) ; rm(is.cell)
 			e.out <- tryCatch({
 				emptyDropsCellRanger(mat[keep, ],n.expected.cells=expectedcells)
 			}, error = function(err) {
@@ -148,14 +147,18 @@ proc sc_filter_default_job {args} {
 			# 3. Doublet identification
 			# 3.1 scDblFinder
 			cat("running scDblFinder\n")
-			sce_tmp <- as.SingleCellExperiment(SOB)
-			sce_tmp <- scDblFinder(sce_tmp, dbr.sd = 1)
-			seurat_tmp <- as.Seurat(sce_tmp, counts = "counts", data = NULL)
-			#
-			SOB@meta.data <- seurat_tmp@meta.data
-			rm(seurat_tmp, sce_tmp)
-			SOB@meta.data$scDblFinder.class <- gsub("singlet", "Singlet", SOB@meta.data$scDblFinder.class)
-			SOB@meta.data$scDblFinder.class <- gsub("doublet", "Doublet", SOB@meta.data$scDblFinder.class)
+			e.out <- tryCatch({
+				sce_tmp <- as.SingleCellExperiment(SOB)
+				sce_tmp <- scDblFinder(sce_tmp, dbr.sd = 1)
+				seurat_tmp <- as.Seurat(sce_tmp, counts = "counts", data = NULL)
+				#
+				SOB@meta.data <- seurat_tmp@meta.data
+				rm(seurat_tmp, sce_tmp)
+				SOB@meta.data$scDblFinder.class <- gsub("singlet", "Singlet", SOB@meta.data$scDblFinder.class)
+				SOB@meta.data$scDblFinder.class <- gsub("doublet", "Doublet", SOB@meta.data$scDblFinder.class)
+			}, error = function(err) {
+				cat("warning: scDblFinder failed\n")
+			})
 			#
 			# Mitochondrial cut-off and standard processing (scDblFinder does not prefer this processing step first, DoubletFinder does)
 			cat("running Mitochondrial cutoff")
@@ -167,33 +170,42 @@ proc sc_filter_default_job {args} {
 			SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
 			SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
 			SOB <- ScaleData(SOB)
-			SOB <- RunPCA(SOB)
-			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:50)
+			if (ncol(SOB) > 50) {npcs = 50} else {npcs=ncol(SOB)-1}
+			SOB <- RunPCA(SOB, npcs = npcs)
+			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:npcs)
 			SOB <- FindClusters(SOB, resolution = 0.5)
-			SOB <- RunUMAP(SOB, dims = 1:50)
-			SOB <- RunTSNE(SOB, dims = 1:50)
+			SOB <- RunUMAP(SOB, dims = 1:npcs)
 			ggsave(umappng,DimPlot(SOB))
-			ggsave(tsnepng,DimPlot(SOB,reduction="tsne"))
+			e.out <- tryCatch({
+				SOB <- RunTSNE(SOB, dims = 1:npcs)
+				ggsave(tsnepng,DimPlot(SOB,reduction="tsne"))
+			}, error = function(err) {
+				cat("warning: RunTSNE failed\n")
+			})
 			# plot=DimPlot(SOB)
 			# htmlwidgets::saveWidget(ggplotly(plot),umapplot)
 			# HoverLocator(plot = plot, information = FetchData(SOB, vars = c("ident", "nCount_RNA", "nFeature_RNA", "DoubletFinder")))
 			#
 			# 3.2 DoubletFinder
 			cat("running DoubletFinder")
-			sweep.res.list_SOB <- paramSweep_v3(SOB, PCs = 1:50, sct = FALSE)
-			sweep.stats_SOB <- summarizeSweep(sweep.res.list_SOB, GT = FALSE)
-			bcmvn_SOB <- find.pK(sweep.stats_SOB)
-			optimal_pK <- as.numeric(as.character(bcmvn_SOB$pK[which.max(bcmvn_SOB$BCmetric)]))
-			homotypic.prop <- modelHomotypic(SOB$seurat_clusters)
-			expected_doublet_rate_per_10000_cells <- 0.075
-			total_cells <- ncol(SOB)
-			nExpDoublets <- (expected_doublet_rate_per_10000_cells * (total_cells))
-			nExpDoublets.adj <- round(nExpDoublets*(1-homotypic.prop))
-			#
-			SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets, PCs = 1:50)
-			colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder"
-			SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets.adj, PCs = 1:50)
-			colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder.adj"
+			e.out <- tryCatch({
+				sweep.res.list_SOB <- paramSweep_v3(SOB, PCs = 1:npcs, sct = FALSE)
+				sweep.stats_SOB <- summarizeSweep(sweep.res.list_SOB, GT = FALSE)
+				bcmvn_SOB <- find.pK(sweep.stats_SOB)
+				optimal_pK <- as.numeric(as.character(bcmvn_SOB$pK[which.max(bcmvn_SOB$BCmetric)]))
+				homotypic.prop <- modelHomotypic(SOB$seurat_clusters)
+				expected_doublet_rate_per_10000_cells <- 0.075
+				total_cells <- ncol(SOB)
+				nExpDoublets <- (expected_doublet_rate_per_10000_cells * (total_cells))
+				nExpDoublets.adj <- round(nExpDoublets*(1-homotypic.prop))
+				#
+				SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets, PCs = 1:npcs)
+				colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder"
+				SOB <- doubletFinder_v3(SOB, pN = 0.25, pK = optimal_pK, nExp = nExpDoublets.adj, PCs = 1:npcs)
+				colnames(SOB@meta.data)[colnames(SOB@meta.data) == grep("^DF.classifications_", colnames(SOB@meta.data), value = TRUE)] <- "DoubletFinder.adj"
+			}, error = function(err) {
+				cat("warning: DoubletFinder failed\n")
+			})
 			#
 			if (usescrublet == 1)	{
 				# 3.3 Scrublet
