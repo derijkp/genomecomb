@@ -10,10 +10,13 @@ proc sc_pseudobulk_job {args} {
 	set dir [file dir $scgenefile]
 	set pb_genefile $dir/pb_gene_counts-$rootname.tsv.zst
 	set pb_isoformfile $dir/pb_isoform_counts-$rootname.tsv.zst
+	set pb_genefile_colinfo $dir/pb_gene_counts-$rootname.tsv.colinfo
+	set pb_isoformfile_colinfo $dir/pb_isoform_counts-$rootname.tsv.colinfo
 	job sc_pseudobulk-$rootname -deps {
 		$scgenefile $scisoformfile $groupfile
 	} -targets {
-		$pb_genefile $pb_isoformfile
+		$pb_genefile $pb_genefile_colinfo
+		$pb_isoformfile $pb_isoformfile_colinfo
 	} -vars {
 		scgenefile scisoformfile groupfile pb_genefile pb_isoformfile rootname
 	} -code {
