@@ -393,3 +393,13 @@ proc list_replace {list replacelist} {
 	}
 	return $list
 }
+
+proc putsrvars {args} {
+	foreach var $args {
+		if {[catch {uplevel [list set $var]} value]} {
+			puts "rm($var)"
+		} else {
+			puts $var=\"$value\"
+		}
+	}
+}
