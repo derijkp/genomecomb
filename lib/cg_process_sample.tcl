@@ -462,6 +462,7 @@ proc process_sample_job {args} {
 	set minfastqreads 0
 	set clip 1
 	set aligners bwa
+	set ali_keepcomments {}
 	set varcallers {gatk sam}
 	set svcallers {}
 	set methcallers {}
@@ -519,6 +520,9 @@ proc process_sample_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligners $value
+		}
+		-ali_keepcomments {
+			set ali_keepcomments [true $value]
 		}
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
@@ -1005,6 +1009,7 @@ proc process_sample_job {args} {
 					-paired $paired \
 					-sort coordinate \
 					-compressionlevel 1 \
+					-ali_keepcomments $ali_keepcomments \
 					$target $refseq $sample {*}$files
 			}
 			if {$cleanup} {

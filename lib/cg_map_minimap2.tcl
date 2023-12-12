@@ -71,7 +71,7 @@ proc cg_map_minimap2 {args} {
 	set threads 2
 	set fixmate 1
 	set aliformat bam
-	set keepcomments 1
+	set ali_keepcomments {}
 	cg_options map_minimap2 args {
 		-paired - -p {
 			set paired $value
@@ -105,8 +105,8 @@ proc cg_map_minimap2 {args} {
 		-extraopts {
 			lappend extraopts {*}$value
 		}
-		-keepcomments {
-			set keepcomments [true $value]
+		-ali_keepcomments {
+			set ali_keepcomments [true $value]
 		}
 		-nohardclips {
 			if {[true $value]} {
@@ -116,7 +116,10 @@ proc cg_map_minimap2 {args} {
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using minimap2
 	}
-	if {$keepcomments} {
+	if {$ali_keepcomments eq ""} {
+		if {[file extension $fastqfile1] in ".bam .ubam"} {set ali_keepcomments 1} else {set ali_keepcomments 0}
+	}
+	if {$ali_keepcomments} {
 		lappend extraopts -y
 	}
 	if {$preset eq ""} {

@@ -9,6 +9,7 @@ proc process_project_job {args} {
 	set clip 1
 	set removeskew {}
 	set aligner bwa
+	set ali_keepcomments {}
 	set varcallers {gatkh strelka}
 	set isocallers {}
 	set iso_joint {}
@@ -79,6 +80,9 @@ proc process_project_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligner $value
+		}
+		-ali_keepcomments {
+			set ali_keepcomments [true $value]
 		}
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
@@ -341,6 +345,7 @@ proc process_project_job {args} {
 			-datatype [get optionsa($sample,datatype) $datatype] \
 			-aliformat [get optionsa($sample,aliformat) $aliformat] \
 			-aligner [get optionsa($sample,aligner) $aligner] \
+			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
 			-realign [get optionsa($sample,realign) $realign] \
 			-varcallers [get optionsa($sample,varcallers) $varcallers] \
 			-svcallers [get optionsa($sample,svcallers) $svcallers] \
@@ -404,6 +409,7 @@ proc process_project_job {args} {
 			-datatype [get optionsa($sample,datatype) $datatype] \
 			-aliformat [get optionsa($sample,aliformat) $aliformat] \
 			-aligner [get optionsa($sample,aligner) $aligner] \
+			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
 			-realign [get optionsa($sample,realign) $realign] \
 			-varcallers [get optionsa($sample,varcallers) $varcallers] \
 			-svcallers [get optionsa($sample,svcallers) $svcallers] \

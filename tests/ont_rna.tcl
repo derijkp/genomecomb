@@ -19,7 +19,7 @@ test ont_rna {flames basic SIRV test} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -76,7 +76,7 @@ test ont_rna {flair basic SIRV test} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -104,7 +104,7 @@ test ont_rna {flair basic SIRV test resultfile} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -137,7 +137,7 @@ test ont_rna {isoquant basic SIRV test} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -166,7 +166,7 @@ test ont_rna {flames SIRV test no ref} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -203,7 +203,7 @@ test ont_rna {flair SIRV test no ref} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -239,7 +239,7 @@ test ont_rna {isoquant SIRV test no ref} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -274,7 +274,7 @@ test ont_rna {isoquant SIRV test no ref -skipregions} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -313,7 +313,7 @@ test ont_rna {isoquant_sens SIRV test no ref} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -349,7 +349,6 @@ test ont_rna {isoquant_all SIRV test no ref} {
 	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
@@ -392,7 +391,7 @@ test ont_rna {flair basic SIRV test -compar joint} {
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/samples/sirv1/map-minimap2-sirv1.bam \
 		tmp/ref/sirv/genome_sirv.ifas \
 		tmp/samples/sirv1/sirv1 \
@@ -400,7 +399,7 @@ test ont_rna {flair basic SIRV test -compar joint} {
 	exec samtools index tmp/samples/sirv1/map-minimap2-sirv1.bam
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
-		-keepcomments 0 \
+		-ali_keepcomments 0 \
 		tmp/samples/sirv2/map-minimap2-sirv2.bam \
 		tmp/ref/sirv/genome_sirv.ifas \
 		tmp/samples/sirv2/sirv2 \

@@ -79,7 +79,7 @@ proc cg_map_bwa {args} {
 	set threads 2
 	set fixmate 1
 	set extraopts {}
-	set keepcomments 1
+	set ali_keepcomments {}
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
@@ -93,9 +93,9 @@ proc cg_map_bwa {args} {
 		-fixmate {
 			set fixmate $value
 		}
-		-keepcomments {
+		-ali_keepcomments {
 			# not used yet
-			set keepcomments [true $value]
+			set ali_keepcomments [true $value]
 		}
 		-threads - -t {
 			set threads $value

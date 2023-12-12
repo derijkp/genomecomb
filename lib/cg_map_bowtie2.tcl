@@ -39,7 +39,7 @@ proc map_bowtie2_job {args} {
 	set threads 2
 	set fixmate 1
 	set extraopts {}
-	set keepcomments 1
+	set ali_keepcomments {}
 	cg_options map_bowtie2 args {
 		-paired {
 			set paired $value
@@ -57,9 +57,9 @@ proc map_bowtie2_job {args} {
 			set threads $value
 			# not used (yet)
 		}
-		-keepcomments {
+		-ali_keepcomments {
 			# not used yet
-			set keepcomments [true $value]
+			set ali_keepcomments [true $value]
 		}
 		-extraopts {
 			set extraopts $value
