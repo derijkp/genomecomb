@@ -19,6 +19,7 @@ proc process_multicompar_job {args} {
 	set counters {}
 	set isocallers {}
 	set iso_match {}
+	set sc_celltypers {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
