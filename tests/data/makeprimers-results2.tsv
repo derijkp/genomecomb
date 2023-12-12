@@ -1,33 +1,33 @@
 remark	label	sequence	modification	scale	purification	project	pair	species	chromosome	cyto	target	contig	pos	temperature	mg
-pairhits 1 ucschits 1 asize 483 hits 3 m 350	1-69432-69531f	GGAATGAATCAACGAGTGAAACGA					1	Hs	1				69059	64.499
-pairhits 1 ucschits 1 asize 483 hits 9 m 33	1-69432-69531r	CCTCATTGGGACCACAGAAGAGTAAG					1	Hs	1				69564	65.334
-pairhits 1 ucschits 1 asize 464 hits 1 m 115	1-231830471-231830512f	CAGGCCGCAAGGAACAGC					1	Hs	1				231830339	65.395
-pairhits 1 ucschits 1 asize 464 hits 1 m 307	1-231830471-231830512r	CTGCATGAACCACGTCTCACCTA					1	Hs	1				231830819	64.637
-pairhits 1 ucschits 1 asize 444 hits 2 m 52 fts {{repeat 0 14 completerepeat,multi AluSx1}}	2-145425380-145425421f	CCACTGCGTCTGGCCTACACT					1	Hs	2				145425308	64.916
-pairhits 1 ucschits 1 asize 444 hits 1 m 350	2-145425380-145425421r	CCCTCCCTGAGCTAATTACCAACAC					1	Hs	2				145425771	65.109
-pairhits 1 ucschits 1 asize 444 hits 2 m 322	2-145427682-145427723f	CTTGGGCATGGGCATGACTT					1	Hs	2				145427341	65.469
-pairhits 1 ucschits 1 asize 444 hits 1 m 80 fts {{repeat 0 24 completerepeat,multi LTR16A1}}	2-145427682-145427723r	CAAGTACCAGCCACTGAAGCGTATC					1	Hs	2				145427803	65.251
-pairhits 1 ucschits 1 asize 450 hits 4 m 167 fts {{repeat 0 23 completerepeat,multi MIRb}}	2-145671333-145671387f	AGCACATGGTAAGTGCCTGAGCTA					1	Hs	2				145671143	64.428
-pairhits 1 ucschits 1 asize 450 hits 4 m 228	2-145671333-145671387r	TGTGTTCTTGCCTCTGCCTATCTTAC					1	Hs	2				145671615	64.024
-pairhits 1 ucschits 1 asize 347 hits 2 m 171	2-177497796-177497837f	CTTTGCAGTGGGAGCATAAGGATT					1	Hs	2				177497602	64.705
-pairhits 1 ucschits 1 asize 347 hits 1 m 134	2-177497796-177497837r	AGCAACTGGTGCCAAATGTACG					1	Hs	2				177497971	64.390
-pairhits 1 ucschits 1 asize 522 hits 4 m 224	2-178087144-178087185f	CACCATTTGTTTCCCTGCAAGTCTAC					1	Hs	2				178086895	65.906
-pairhits 1 ucschits 1 asize 522 hits 1 m 256 fts {{repeat 0 18 completerepeat,multi AluJo}}	2-178087144-178087185r	GCAGCCTCGACTGCCTGAT					1	Hs	2				178087441	64.045
-pairhits 1 ucschits 1 asize 458 hits 1 m 167	4-2069711-2069752f	AGTCGCGCACCCTGTGTTG					1	Hs	4				2069526	65.837
-pairhits 1 ucschits 1 asize 458 hits 1 m 249 fts {{repeat 0 23 completerepeat,multi (TG)n}}	4-2069711-2069752r	CTCACGCATGTACACAACTCATGC					1	Hs	4				2070001	65.008
-pairhits 1 ucschits 1 asize 462 hits 1 m 370 fts {{repeat 0 20 completerepeat,multi MER66C}}	4-5527095-5527135f	CCGAGAGCGTCCAGAACCATA					1	Hs	4				5526705	64.727
-pairhits 1 ucschits 1 asize 462 hits 1 m 51 fts {{repeat 0 22 completerepeat,multi MER31-int}}	4-5527095-5527135r	TGGATTTCCGTCCATAGTGTCCA					1	Hs	4				5527186	65.725
-pairhits 1 ucschits 1 asize 456 hits 1 m 331	4-24981668-24981709f	GAAACCAGAGTGCAACGGAAAGAA					1	Hs	4				24981314	65.773
-pairhits 1 ucschits 1 asize 456 hits 1 m 83	4-24981668-24981709r	AATCCGCGATTGCGTACTAGAGA					1	Hs	4				24981792	64.282
-pairhits 1 ucschits 1 asize 459 hits 1 m 355	7-26416392-26416433f	GGGAACAACGACCGCAAAGA					1	Hs	7				26416018	65.566
-pairhits 1 ucschits 1 asize 459 hits 1 m 62	7-26416392-26416433r	TAACTAATGTGTGCGATGCGTGTG					1	Hs	7				26416495	65.143
-pairhits 1 ucschits 1 asize 441 hits 1 m 303	8-1949105-1949146f	CACAGCCGGTCTCAGCTTTCT					1	Hs	8				1948782	64.186
-pairhits 1 ucschits 1 asize 441 hits 1 m 96	8-1949105-1949146r	TTTCCTGGCACGCGATCA					1	Hs	8				1949242	64.979
-pairhits 1 ucschits 1 asize 423 hits 8 m 208 fts {{repeat 0 21 completerepeat,multi AluY}}	18-103991-104038f	CCGAGGCTAGCAGATCATGAGG					1	Hs	18				103762	65.532
-pairhits 1 ucschits 1 asize 423 hits 7 m 167 fts {{repeat 0 25 completerepeat,multi L2c}}	18-103991-104038r	CAGAGGGAGAGCATGAGAATGTTAGG					1	Hs	18				104205	65.539
-pairhits 2 ucschits 1 asize 555 hits 4 m 314 fts {{repeat 0 22 completerepeat,multi L2a}}	22-16108919-16108960f	CATTGGCACGTAAATCCAGTCCT					1	Hs	22				16108583	64.394
-pairhits 2 ucschits 1 asize 555 hits 10 m 199 fts {{repeat 0 22 completerepeat,multi L2a}}	22-16108919-16108960r	TGCTCTTGAGTGAGAGGGACAGC					1	Hs	22				16109159	65.514
-pairhits 1 ucschits 1 asize 467 hits 1 m 216	M-16151-16192f	CCAGTCTTGTAAACCGGAGACGA					1	Hs	M				15913	64.720
-pairhits 1 ucschits 1 asize 467 hits 1 m 209	M-16151-16192r	TGATTTCACGGAGGATGGTGGT					1	Hs	M				16401	65.927
-pairhits 2 ucschits 1 asize 464 hits 2 m 41	X-302426-302467f	CCAGCGCCCGACAAGAAC					1	Hs	X				302368	65.270
-pairhits 2 ucschits 1 asize 464 hits 2 m 381	X-302426-302467r	CTGGACTTGGCTCTGCTCGAC					1	Hs	X				302848	64.802
+pairhits 1 ucschits 1 asize 483 hits 3 m 350	1-69432-69531f	GGAATGAATCAACGAGTGAAACGA					1	Hs	1				69059	64.499	
+pairhits 1 ucschits 1 asize 483 hits 9 m 33	1-69432-69531r	CCTCATTGGGACCACAGAAGAGTAAG					1	Hs	1				69564	65.334	
+pairhits 1 ucschits 1 asize 464 hits 1 m 115	1-231830471-231830512f	CAGGCCGCAAGGAACAGC					1	Hs	1				231830339	65.395	
+pairhits 1 ucschits 1 asize 464 hits 1 m 307	1-231830471-231830512r	CTGCATGAACCACGTCTCACCTA					1	Hs	1				231830819	64.637	
+pairhits 1 ucschits 1 asize 444 hits 2 m 52 fts {{repeat 0 14 completerepeat,multi AluSx1}}	2-145425380-145425421f	CCACTGCGTCTGGCCTACACT					1	Hs	2				145425308	64.916	
+pairhits 1 ucschits 1 asize 444 hits 1 m 350	2-145425380-145425421r	CCCTCCCTGAGCTAATTACCAACAC					1	Hs	2				145425771	65.109	
+pairhits 1 ucschits 1 asize 444 hits 2 m 322	2-145427682-145427723f	CTTGGGCATGGGCATGACTT					1	Hs	2				145427341	65.469	
+pairhits 1 ucschits 1 asize 444 hits 1 m 80 fts {{repeat 0 24 completerepeat,multi LTR16A1}}	2-145427682-145427723r	CAAGTACCAGCCACTGAAGCGTATC					1	Hs	2				145427803	65.251	
+pairhits 1 ucschits 1 asize 450 hits 4 m 167 fts {{repeat 0 23 completerepeat,multi MIRb}}	2-145671333-145671387f	AGCACATGGTAAGTGCCTGAGCTA					1	Hs	2				145671143	64.428	
+pairhits 1 ucschits 1 asize 450 hits 4 m 228	2-145671333-145671387r	TGTGTTCTTGCCTCTGCCTATCTTAC					1	Hs	2				145671615	64.024	
+pairhits 1 ucschits 1 asize 347 hits 2 m 171	2-177497796-177497837f	CTTTGCAGTGGGAGCATAAGGATT					1	Hs	2				177497602	64.705	
+pairhits 1 ucschits 1 asize 347 hits 1 m 134	2-177497796-177497837r	AGCAACTGGTGCCAAATGTACG					1	Hs	2				177497971	64.390	
+pairhits 1 ucschits 1 asize 522 hits 4 m 224	2-178087144-178087185f	CACCATTTGTTTCCCTGCAAGTCTAC					1	Hs	2				178086895	65.906	
+pairhits 1 ucschits 1 asize 522 hits 1 m 256 fts {{repeat 0 18 completerepeat,multi AluJo}}	2-178087144-178087185r	GCAGCCTCGACTGCCTGAT					1	Hs	2				178087441	64.045	
+pairhits 1 ucschits 1 asize 458 hits 1 m 167	4-2069711-2069752f	AGTCGCGCACCCTGTGTTG					1	Hs	4				2069526	65.837	
+pairhits 1 ucschits 1 asize 458 hits 1 m 249 fts {{repeat 0 23 completerepeat,multi (TG)n}}	4-2069711-2069752r	CTCACGCATGTACACAACTCATGC					1	Hs	4				2070001	65.008	
+pairhits 1 ucschits 1 asize 462 hits 1 m 370 fts {{repeat 0 20 completerepeat,multi MER66C}}	4-5527095-5527135f	CCGAGAGCGTCCAGAACCATA					1	Hs	4				5526705	64.727	
+pairhits 1 ucschits 1 asize 462 hits 1 m 51 fts {{repeat 0 22 completerepeat,multi MER31-int}}	4-5527095-5527135r	TGGATTTCCGTCCATAGTGTCCA					1	Hs	4				5527186	65.725	
+pairhits 1 ucschits 1 asize 456 hits 1 m 331	4-24981668-24981709f	GAAACCAGAGTGCAACGGAAAGAA					1	Hs	4				24981314	65.773	
+pairhits 1 ucschits 1 asize 456 hits 1 m 83	4-24981668-24981709r	AATCCGCGATTGCGTACTAGAGA					1	Hs	4				24981792	64.282	
+pairhits 1 ucschits 1 asize 459 hits 1 m 355	7-26416392-26416433f	GGGAACAACGACCGCAAAGA					1	Hs	7				26416018	65.566	
+pairhits 1 ucschits 1 asize 459 hits 1 m 62	7-26416392-26416433r	TAACTAATGTGTGCGATGCGTGTG					1	Hs	7				26416495	65.143	
+pairhits 1 ucschits 1 asize 441 hits 1 m 303	8-1949105-1949146f	CACAGCCGGTCTCAGCTTTCT					1	Hs	8				1948782	64.186	
+pairhits 1 ucschits 1 asize 441 hits 1 m 96	8-1949105-1949146r	TTTCCTGGCACGCGATCA					1	Hs	8				1949242	64.979	
+pairhits 1 ucschits 1 asize 423 hits 8 m 208 fts {{repeat 0 21 completerepeat,multi AluY}}	18-103991-104038f	CCGAGGCTAGCAGATCATGAGG					1	Hs	18				103762	65.532	
+pairhits 1 ucschits 1 asize 423 hits 7 m 167 fts {{repeat 0 25 completerepeat,multi L2c}}	18-103991-104038r	CAGAGGGAGAGCATGAGAATGTTAGG					1	Hs	18				104205	65.539	
+pairhits 2 ucschits 1 asize 555 hits 4 m 314 fts {{repeat 0 22 completerepeat,multi L2a}}	22-16108919-16108960f	CATTGGCACGTAAATCCAGTCCT					1	Hs	22				16108583	64.394	
+pairhits 2 ucschits 1 asize 555 hits 10 m 199 fts {{repeat 0 22 completerepeat,multi L2a}}	22-16108919-16108960r	TGCTCTTGAGTGAGAGGGACAGC					1	Hs	22				16109159	65.514	
+pairhits 1 ucschits 1 asize 467 hits 1 m 216	M-16151-16192f	CCAGTCTTGTAAACCGGAGACGA					1	Hs	M				15913	64.720	
+pairhits 1 ucschits 1 asize 467 hits 1 m 209	M-16151-16192r	TGATTTCACGGAGGATGGTGGT					1	Hs	M				16401	65.927	
+pairhits 2 ucschits 1 asize 464 hits 2 m 41	X-302426-302467f	CCAGCGCCCGACAAGAAC					1	Hs	X				302368	65.270	
+pairhits 2 ucschits 1 asize 464 hits 2 m 381	X-302426-302467r	CTGGACTTGGCTCTGCTCGAC					1	Hs	X				302848	64.802	

@@ -10,7 +10,7 @@ source tools.tcl
 test makeprimers {basic} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
 	exec cg makeprimers tmp/valregs.tsv 600 500 $::refseqdir/hg19 > tmp/primersvalregs.tsv
-	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
+	cg tsvdiff -x ucschits tmp/primersvalregs.tsv data/makeprimers-results.tsv
 } {} 
 
 test makeprimers {basic freqp} {

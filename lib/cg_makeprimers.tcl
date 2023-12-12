@@ -711,7 +711,7 @@ proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 
 				set info [lindex $p end]
 				set comment "pairhits $numhits ucschits $ucschits asize $asize hits $num m $m"
 				if {$info ne ""} {lappend comment fts $info}
-				puts $o $comment\t${name}$d\t$seq\t\t\t\t\t1\tHs\t$cchr\t\t\t\t$start\t$ptemp
+				puts $o [join [list $comment ${name}$d $seq {} {} {} {} 1 Hs $cchr {} {} {} $start $ptemp {}] \t]
 			}
 		}
 		flush $o
