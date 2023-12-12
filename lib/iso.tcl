@@ -201,10 +201,11 @@ proc cigar2exons {cigar begin} {
 	return $regions
 }
 
-proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcountaVar 
+proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcountaVar newheaderVar
 	{fields {iqall iq weighedb i unique u strict s aweighed a aunique au astrict as}} {sizeaVar {}}
 } {
 	upvar $tcountaVar tcounta
+	upvar $newheaderVar newheader
 	if {$sizeaVar ne ""} {
 		upvar $sizeaVar sizea
 	}
@@ -217,17 +218,16 @@ proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcounta
 		set f [gzopen $regreftranscripts]
 		set header [tsv_open $f comments]
 		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 7 8 11 12 13}]
-		set remove [list_sub $header $poss]
 		foreach {isopos genepos geneidpos} [lrange $poss 6 end] break
-		lappend remove {*}[list_sub $header [lrange $poss 6 end]]
-		set left [list_lremove $header $remove]
-		lappend poss {*}[list_cor $header $left]
-		set temp [list_common $left $basefields]
+		set remove [list_sub $header $poss]
+		set extrafields [list_lremove $header $remove]
+		lappend poss {*}[list_cor $header $extrafields]
+		set temp [list_common $extrafields $basefields]
 		foreach field $temp {
-			set pos [lsearch $left $field]
-			lset left $pos ${field}_ori
+			set pos [lsearch $extrafields $field]
+			lset extrafields $pos ${field}_ori
 		}
-		lappend newheader {*}$left
+		lappend newheader {*}$extrafields
 	}
 	#
 	if {$comments eq ""} {

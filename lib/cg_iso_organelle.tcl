@@ -290,6 +290,7 @@ proc iso_organelle_job {args} {
 			$regdir/isoform_counts-${root}.tsv.temp \
 			$regreftranscripts \
 			tcounta \
+			newheader \
 			[list \
 				counts_iqall-$root iq counts_weighed-$root t counts_unique-$root u counts_strict-$root s \
 				counts_aweighed-$root a counts_aunique-$root au counts_astrict-$root as\
