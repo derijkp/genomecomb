@@ -53,7 +53,7 @@ proc cg_shadow_delete {args} {
 		delete a shadow dir
 	}
 	shadow_delete $link
-	foreach link args {
+	foreach link $args {
 		shadow_delete $link
 	}
 }
