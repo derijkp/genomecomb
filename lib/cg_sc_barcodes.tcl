@@ -22,7 +22,7 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	catch {close $f} ; catch {close $o}
 	unset -nocomplain a
 	set f [open "|cg sam2tsv $sam"]
-	set o [wgzopen $resultfile w]
+	set o [wgzopen $resultfile]
 	puts $o [join {id barcode umi start strand polyA} \t]
 	set header [tsv_open $f]
 	set poss [list_cor $header {chromosome begin end strand qname qstart qend cigar seq supplementary}]
@@ -175,10 +175,11 @@ proc sc_barcodes_job args {
 		{*}[versions minimap2]
 	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
 	set summaries {}
-	mkdir $resultdir/barcodes
+	shadow_mkdir $resultdir/barcodes
+	job_cleanup_add_shadow $resultdir/barcodes
 	foreach fastq $fastqs {
 		set root [file root [gzroot [file tail $fastq]]]
-		set target $resultdir/barcodes/$root.barcodes.tsv
+		set target $resultdir/barcodes/$root.barcodes.tsv.zst
 		set target2 $resultdir/barcodes/$root.summary_barcodes.tsv
 		lappend summaries $target2
 		job find_barcodes-$sample-[file tail $fastq] {*}$skips -skip [list \
@@ -186,7 +187,7 @@ proc sc_barcodes_job args {
 			$resultdir/barcode2celbarcode.tsv \
 			$resultdir/reads_per_cell.tsv \
 			$resultdir/bcfastq/$root-sc.fastq.gz \
-			$resultdir/barcodeinfo/$root.barcodes.tsv \
+			$resultdir/barcodeinfo/$root.barcodes.tsv.zst \
 		] -deps {
 			$fastq
 		} -targets {
@@ -200,7 +201,7 @@ proc sc_barcodes_job args {
 		}
 	}
 	# merge barcodes and find cell barcodes
-	set barcodefiles [jobglob $resultdir/barcodes/*.barcodes.tsv]
+	set barcodefiles [jobglob $resultdir/barcodes/*.barcodes.tsv.zst]
 	set mergedbarcodesfile $resultdir/mergedbarcodes.tsv.zst
 	job merge_barcodes-$sample {*}$skips -deps $barcodefiles -targets {
 		$resultdir/mergedbarcodes.tsv.zst
@@ -314,7 +315,8 @@ proc sc_barcodes_job args {
 			whitenum\t$whitenum \
 		] \n]
 	}
-	mkdir $resultdir/barcodes.temp
+	shadow_mkdir $resultdir/barcodes.temp
+	job_cleanup_add_shadow $resultdir/barcodes.temp
 	set barcode_matches {}
 	for {set part 1} {$part <= $bcparts} {incr part} {
 		set target $resultdir/barcodes.temp/barcode_matches-$part.tsv.zst
@@ -469,6 +471,7 @@ proc sc_barcodes_job args {
 		file rename -force $resultdir/rejected_barcode2celbarcode.tsv.temp $resultdir/rejected_barcode2celbarcode.tsv
 		# cg select -g cellbarcode barcode2celbarcode.tsv	| cg select -g all
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
+		shadow_delete $resultdir/barcodes.temp
 	}
 	job reads_per_cell-$sample {*}$skips -deps {
 		$resultdir/barcode2celbarcode.tsv
@@ -491,7 +494,8 @@ proc sc_barcodes_job args {
 	}
 
 	# apply found barcodes to make barcodeinfo and bcfastq
-	mkdir $resultdir/bcfastq
+	shadow_mkdir $resultdir/bcfastq
+	job_cleanup_add_shadow $resultdir/bcfastq
 	mkdir $resultdir/barcodeinfo
 	# add cell barcodes to per fastq files
 	# set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
@@ -499,9 +503,9 @@ proc sc_barcodes_job args {
 	set newfastqs {}
 	foreach fastq $fastqs {
 		set root [file root [gzroot [file tail $fastq]]]
-		set dep2 $resultdir/barcodes/$root.barcodes.tsv
+		set dep2 $resultdir/barcodes/$root.barcodes.tsv.zst
 		set target $resultdir/bcfastq/$root-sc.fastq.gz
-		set target2 $resultdir/barcodeinfo/$root.barcodes.tsv
+		set target2 $resultdir/barcodeinfo/$root.barcodes.tsv.zst
 		lappend bcfastqs $target
 		lappend infofiles $target2
 		job make_bcfastq-$sample-[file tail $fastq] {*}$skips -deps {
