@@ -598,6 +598,7 @@ test process_small {process_project mixed_yri_mx2} {
 	lappend result [tsvdiff -q 1 \
 		-x *.bam -x *.bai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index \
 		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x summary-*.txt \
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
