@@ -452,7 +452,7 @@ test ont_rna {process_project multi methods} {
 	cg tsvdiff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 } {diff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 header diff
-<extrafields: geneid gene_ori category size counts_iqall-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
+<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
 ---
 >extrafields: gene_name gene_id
 
