@@ -454,12 +454,38 @@ proc process_sample_cgi_job {workdir split} {
 	cd $keepdir
 }
 
+proc checkminreads {fastqdir minfastqreads numVar} {
+	upvar $numVar num
+	set files [bsort [jobglob \
+		$fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq \
+		$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam \
+	]]
+	if {![llength $files]} {
+		set num 0
+		return 0
+	}
+	set file [lindex $files 0]
+	set f [open "| [convert_pipe $file .tsv]"]
+	set header [tsv_open $f]
+	set count $minfastqreads
+	while {$count} {
+		if {[gets $f line] == -1} {
+			gzclose $f
+			set num [expr {$minfastqreads-$count}]
+			return 0
+		}
+		incr count -1
+	}
+	gzclose $f
+	return 1
+}
+
 proc process_sample_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg process_sample {*}$args]
 	set keepargs $args
 	set dbdir {}
-	set minfastqreads 0
+	set minfastqreads 1
 	set clip 1
 	set aligners bwa
 	set ali_keepcomments {}
@@ -671,36 +697,22 @@ proc process_sample_job {args} {
 	set sample [file tail $sampledir]
 	#
 	if {$minfastqreads > 0} {
-		set files [bsort [jobglob \
-			$fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq \
-			$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam \
-		]]
-		if {![llength $files]} {return {}}
-		set file [lindex $files 0]
-		set f [open "| [convert_pipe $file .tsv]"]
-		set header [tsv_open $f]
-		set count $minfastqreads
-		while {$count} {
-			if {[gets $f line] == -1} {
-				gzclose $f
-				if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
-					set num [expr {$minfastqreads-$count}]
-					file mkdir $sampledir/reports
-					file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
-						[join {sample source parameter value} \t] \
-						[join [list $sample fastq-stats fw_numreads $num] \t] \
-					] \n]\n
-					file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
-						[join {sample source parameter value} \t] \
-						[join [list $sample fastq-stats rev_numreads $num] \t] \
-					] \n]\n
-					lappend todo(reports) $sampledir/reports
-				}
-				return {}
+		# check if we have the minimum number of reads required (default 1)
+		# if not, write minimum nr of reports, and return (quit processing this sample)
+		if {![checkminreads $fastqdir $minfastqreads num]} {
+			if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
+				file mkdir $sampledir/reports
+				file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
+					[join {sample source parameter value} \t] \
+					[join [list $sample fastq-stats fw_numreads $num] \t] \
+				] \n]\n
+				file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
+					[join {sample source parameter value} \t] \
+					[join [list $sample fastq-stats rev_numreads $num] \t] \
+				] \n]\n
+				lappend todo(reports) $sampledir/reports
 			}
-			incr count -1
 		}
-		gzclose $f
 	}
 	putslog "Making $sampledir"
 	catch {file mkdir $sampledir}

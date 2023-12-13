@@ -440,14 +440,23 @@ proc process_reports_job {args} {
 				analysisinfo_write $dep $target fastqc_version [version fastqc]
 				file mkdir $target.temp
 				set gzcat [gzcat [lindex $deps 0]]
-				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
-				exec unzip -o $target.temp/stdin_fastqc.zip -d $target.temp
-				file rename -force -- {*}[glob $target.temp/stdin_fastqc/*] $target.temp
-				file delete $target.temp/stdin_fastqc
-				file delete $target.temp/stdin_fastqc.zip
-				file delete $target.temp/stdin_fastqc.html
-				if {[file exists $target]} {file delete -force $target}
-				file rename -force -- $target.temp $target
+				set foundreads 0
+				foreach fastq $deps {
+					if {[fastq_size $fastq 1]} {set foundreads 1 ; break}
+				}
+				if {!$foundreads} {
+					file rename -force -- $target.temp $target
+					file_write $target2 ""
+				} else {
+					exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
+					exec unzip -o $target.temp/stdin_fastqc.zip -d $target.temp
+					file rename -force -- {*}[glob $target.temp/stdin_fastqc/*] $target.temp
+					file delete $target.temp/stdin_fastqc
+					file delete $target.temp/stdin_fastqc.zip
+					file delete $target.temp/stdin_fastqc.html
+					if {[file exists $target]} {file delete -force $target}
+					file rename -force -- $target.temp $target
+				}
 			}
 		}
 	}
@@ -460,42 +469,52 @@ proc process_reports_job {args} {
 			job reports_fastq-stats-$dir-$sample -time 5:00:00 -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
 				analysisinfo_write $dep $target2 fastq_stats_version [version fastq-stats]
 				analysisinfo_write $dep $target3 fastq_stats_version [version fastq-stats]
-				set gzcat [gzcat [lindex $deps 0]]
-				if {[llength $deps] >= 1000} {
-					set o [open [list | fastq-stats -x $target3 > $target2] w]
-					foreach file $deps {
-						exec {*}$gzcat $file >@ $o
-					}
-					close $o
+				set foundreads 0
+				foreach fastq $deps {
+					if {[fastq_size $fastq 1]} {set foundreads 1 ; break}
+				}
+				if {!$foundreads} {
+					file_write $target1 ""
+					file_write $target2 ""
+					file_write $target3 ""
 				} else {
-					exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
-				}
-				analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
-				set o [open $target.temp w]
-				puts $o [join {sample source parameter value} \t]
-				set f [open $target2]
-				set dups {}
-				while {[gets $f line] != -1} {
-					set line [split $line \t]
-					foreach {parameter value} $line break
-					set parameter [string_change [string trim $parameter] {% pct_}]
-					regsub -all {[^a-zA-z]} $parameter _ parameter
-					switch $parameter {
-						reads {
-							puts $o [join [list $sample fastq-stats ${dir}_numreads $value] \t]
+					set gzcat [gzcat [lindex $deps 0]]
+					if {[llength $deps] >= 1000} {
+						set o [open [list | fastq-stats -x $target3 > $target2] w]
+						foreach file $deps {
+							exec {*}$gzcat $file >@ $o
 						}
-						dup_seq {
-							lappend dups [lindex $line 2] [lindex $line 3]
-						}
-						default {
-							puts $o [join [list $sample fastq-stats ${dir}_$parameter $value] \t]
+						close $o
+					} else {
+						exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+					}
+					analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
+					set o [open $target.temp w]
+					puts $o [join {sample source parameter value} \t]
+					set f [open $target2]
+					set dups {}
+					while {[gets $f line] != -1} {
+						set line [split $line \t]
+						foreach {parameter value} $line break
+						set parameter [string_change [string trim $parameter] {% pct_}]
+						regsub -all {[^a-zA-z]} $parameter _ parameter
+						switch $parameter {
+							reads {
+								puts $o [join [list $sample fastq-stats ${dir}_numreads $value] \t]
+							}
+							dup_seq {
+								lappend dups [lindex $line 2] [lindex $line 3]
+							}
+							default {
+								puts $o [join [list $sample fastq-stats ${dir}_$parameter $value] \t]
+							}
 						}
 					}
+					close $f
+					puts $o [join [list $sample fastq-stats ${dir}_dups $dups] \t]
+					close $o
+					file rename -force -- $target.temp $target
 				}
-				close $f
-				puts $o [join [list $sample fastq-stats ${dir}_dups $dups] \t]
-				close $o
-				file rename -force -- $target.temp $target
 			}
 		}
 	}

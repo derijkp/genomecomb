@@ -105,22 +105,27 @@ proc fastq_clipadapters_job {args} {
 				set tempfile2 [tempfile]
 				set tempout1 [filetemp $target]
 				set tempout2 [filetemp $target2]
-				exec fastq-mcf -k $removeskew -a -o $tempfile1 -o $tempfile2 $adapterfile $dep $dep2 2>@ stderr
-				if {$compress eq "gz"} {
-					exec gzip --fast -c $tempfile1 > $tempout1
-					exec gzip --fast -c $tempfile2 > $tempout2
-					file delete $tempfile1
-					file delete $tempfile2
-					file rename -force -- $tempout1 $target
-					file rename -force -- $tempout2 $target2
-				} elseif {$compress eq "zst"} {
-					exec cg zst -k 0 -compressionlevel 1 -o $tempout1 $tempfile1
-					exec cg zst -k 0 -compressionlevel 1 -o $tempout2 $tempfile2
-					file rename -force -- $tempout1 $target
-					file rename -force -- $tempout2 $target2
+				if {![fastq_size $dep 1]} {
+					mklink $dep $target1
+					mklink $dep2 $target2
 				} else {
-					file rename -force -- $tempfile1 $target
-					file rename -force -- $tempfile2 $target2
+					exec fastq-mcf -k $removeskew -a -o $tempfile1 -o $tempfile2 $adapterfile $dep $dep2 2>@ stderr
+					if {$compress eq "gz"} {
+						exec gzip --fast -c $tempfile1 > $tempout1
+						exec gzip --fast -c $tempfile2 > $tempout2
+						file delete $tempfile1
+						file delete $tempfile2
+						file rename -force -- $tempout1 $target
+						file rename -force -- $tempout2 $target2
+					} elseif {$compress eq "zst"} {
+						exec cg zst -k 0 -compressionlevel 1 -o $tempout1 $tempfile1
+						exec cg zst -k 0 -compressionlevel 1 -o $tempout2 $tempfile2
+						file rename -force -- $tempout1 $target
+						file rename -force -- $tempout2 $target2
+					} else {
+						file rename -force -- $tempfile1 $target
+						file rename -force -- $tempfile2 $target2
+					}
 				}
 			}
 		}
