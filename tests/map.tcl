@@ -195,7 +195,10 @@ test map_minimap2 {map_minimap2 fastq comments} {
 	set c [file_read tmp/seq_R1.fq]
 	regsub @SRR792091.9203/1 $c "@SRR792091.9203/1 CB:Z:AAGC" c
 	file_write tmp/seq_R1.fq $c
-	cg map_minimap2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/seq_R1.fq
+	cg map_minimap2 -stack 1 \
+		-paired 0 \
+		-ali_keepcomments 1 \
+		tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/seq_R1.fq
 	set otherfields {AS XS MC MQ YS YT s1 s2 cm de rl ms}
 	set removefields {AS XS MC MQ YS YT s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
 	exec samtools view --no-PG tmp/ali.bam | cg sam2tsv -fields $otherfields \
