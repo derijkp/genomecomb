@@ -185,7 +185,7 @@ proc sc_barcodes_job args {
 		job find_barcodes-$sample-[file tail $fastq] {*}$skips -skip [list \
 			$resultdir/mergedbarcodes.tsv.zst \
 			$resultdir/barcode2celbarcode.tsv \
-			$resultdir/reads_per_cell.tsv \
+			$resultdir/reads_per_cell_raw.tsv \
 			$resultdir/bcfastq/$root-sc.fastq.gz \
 			$resultdir/barcodeinfo/$root.barcodes.tsv.zst \
 		] -deps {
@@ -321,7 +321,7 @@ proc sc_barcodes_job args {
 	for {set part 1} {$part <= $bcparts} {incr part} {
 		set target $resultdir/barcodes.temp/barcode_matches-$part.tsv.zst
 		lappend barcode_matches $target
-		job sc_findbcmatches-barcode_matches-$sample-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell.tsv] \
+		job sc_findbcmatches-barcode_matches-$sample-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell_raw.tsv] \
 		-deps {
 			$resultdir/mergedbarcodes.tsv.zst
 			$resultdir/barcode_cutoff-info.tsv
@@ -476,17 +476,17 @@ proc sc_barcodes_job args {
 	job reads_per_cell-$sample {*}$skips -deps {
 		$resultdir/barcode2celbarcode.tsv
 	} -targets {
-		$resultdir/reads_per_cell.tsv
-		$resultdir/umis_per_cell.tsv
+		$resultdir/reads_per_cell_raw.tsv
+		$resultdir/umis_per_cell_raw.tsv
 	} -vars {
 		resultdir
 	} -code {
 		# readcounts
-		cg select -g cellbarcode -gc {sum(count)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_count} -s -sum_count > $resultdir/reads_per_cell.tsv.temp
-		file rename -force $resultdir/reads_per_cell.tsv.temp $resultdir/reads_per_cell.tsv
+		cg select -g cellbarcode -gc {sum(count)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_count} -s -sum_count > $resultdir/reads_per_cell_raw.tsv.temp
+		file rename -force $resultdir/reads_per_cell_raw.tsv.temp $resultdir/reads_per_cell_raw.tsv
 		# umicounts
-		cg select -g cellbarcode -gc {sum(umicount)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_umicount} -s -sum_umicount > $resultdir/umis_per_cell.tsv.temp
-		file rename -force $resultdir/umis_per_cell.tsv.temp $resultdir/umis_per_cell.tsv
+		cg select -g cellbarcode -gc {sum(umicount)} $resultdir/barcode2celbarcode.tsv | cg select -f {cellbarcode count=$sum_umicount} -s -sum_umicount > $resultdir/umis_per_cell_raw.tsv.temp
+		file rename -force $resultdir/umis_per_cell_raw.tsv.temp $resultdir/umis_per_cell_raw.tsv
 		unset -nocomplain a ; unset -nocomplain wa
 		# foreach barcode_match $barcode_matches {
 		# file delete $barcode_match

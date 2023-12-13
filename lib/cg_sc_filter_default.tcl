@@ -271,8 +271,8 @@ proc sc_filter_default_job {args} {
 	}
 	#
 	# make cell info file (sc_cellinfo_raw-$rootname.tsv.zst and sc_cellinfo_filtered-$rootname.tsv.zst)
-	set reads_per_cell [jobgzfile $dir/reads_per_cell_raw-$rootname.tsv $dir/reads_per_cell-$rootname.tsv $dir/reads_per_cell.tsv]
-	set umis_per_cell [jobgzfile $dir/umis_per_cell_raw-$rootname.tsv $dir/umis_per_cell-$rootname.tsv $dir/umis_per_cell.tsv]
+	set reads_per_cell [jobgzfile $dir/reads_per_cell_raw-$rootname.tsv $dir/reads_per_cell-$rootname.tsv $dir/reads_per_cell_raw.tsv]
+	set umis_per_cell [jobgzfile $dir/umis_per_cell_raw-$rootname.tsv $dir/umis_per_cell-$rootname.tsv $dir/umis_per_cell_raw.tsv]
 	# -------------------
 	job sc_filter_write_cellinfo-$rootname -deps {
 		$outinfofile
