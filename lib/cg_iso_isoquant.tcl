@@ -1317,9 +1317,9 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 				set ucount 0
 			}
 			# append resultline \t$count
-			if {$count > 0 || $icount > 0 || $maxcount > 0} {
+			if {$count > 0 || $nicount > 0 || $maxcount > 0} {
 				set count [format %.2f $count]
-				set icount [format %.2f $icount]
+				set nicount [format %.2f $nicount]
 				puts $o2 $temp\t$cell\t$count\t$nicount\t$maxcount\t$ucount
 			}
 		}
