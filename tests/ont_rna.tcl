@@ -410,7 +410,7 @@ test ont_rna {flair basic SIRV test -compar joint} {
 		-reftranscripts tmp/ref/sirv/gene_sirv.gtf \
 		tmp
 	# check vs expected
-	exec diff tmp/compar/isoform_count-flair-tmp.tsv data/isoform_count-flair-tmp.tsv
+	exec diff tmp/compar/isoform_counts-flair-tmp.tsv data/isoform_counts-flair-tmp.tsv
 	exec diff tmp/compar/gene_counts-flair-tmp.tsv data/gene_counts-flair-tmp.tsv
 } {}
 

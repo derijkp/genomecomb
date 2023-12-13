@@ -525,7 +525,7 @@ proc flair_job {args} {
 		set rootname flair-$exproot
 		set workdir compar/$rootname
 		set resultdir compar
-		set bedfiles [jobglob samples/*/flair-*/all_corrected-flair-*.bed]
+		set bedfiles [bsort [jobglob samples/*/flair-*/all_corrected-flair-*.bed]]
 		job flair_compar-$exproot {*}$skips \
 		-cores $threads \
 		-deps [list_concat $bedfiles $allseq_fastqfiles] \
@@ -559,7 +559,7 @@ proc flair_job {args} {
 			mkdir $workdir/flair.temp
 			unset -nocomplain manifestdata
 			set condition A
-			foreach sample [dirglob samples *] {
+			foreach sample [bsort [dirglob samples *]] {
 				set bam [lindex [glob samples/$sample/map-sminimap*.bam samples/$sample/map-*.bam] 0]
 				set fastq samples/$sample/allseq-[file_rootname $bam].fastq.gz
 				if {![file exists $fastq]} {
@@ -611,7 +611,7 @@ proc flair_job {args} {
 			$tsvreftranscripts
 			$refseq
 		} -targets {
-			$resultdir/isoform_count-$rootname.tsv
+			$resultdir/isoform_counts-$rootname.tsv
 			$resultdir/gene_counts-$rootname.tsv
 			$resultdir/totalcounts-$rootname.tsv
 		} -vars {
@@ -619,7 +619,7 @@ proc flair_job {args} {
 		} -code {
 			set flairtranscripts $workdir/transcripts-$rootname.isoforms.gtf
 			set flaircountmatrix $workdir/counts_matrix-$rootname.tsv
-			set out_isoform_counts_file $resultdir/isoform_count-$rootname.tsv
+			set out_isoform_counts_file $resultdir/isoform_counts-$rootname.tsv
 			set out_gene_counts_file $resultdir/gene_counts-$rootname.tsv
 			set out_total_counts_file $resultdir/totalcounts-$rootname.tsv
 			set extrainfo [list \
