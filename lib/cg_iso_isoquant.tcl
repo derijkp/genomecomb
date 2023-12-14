@@ -1282,7 +1282,8 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 	# write sc_gene_counts
 	catch {gzclose $o2}
 	set o2 [wgzopen $target.temp.zst]
-	puts $o2 [join [lrange $gheader 0 end-1] \t]\tcell\tcount\tnicount\tmaxcount\tuniquecount
+	# end-2 to remove the counts
+	puts $o2 [join [lrange $gheader 0 end-2] \t]\tcell\tcount\tnicount\tmaxcount\tuniquecount
 	# set rcells [list_common $cells [array names cellsa]]
 	set len [llength $todo]
 	set num 0
@@ -1291,7 +1292,8 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 		set gene [lindex $line $geneidpos]
 		if {![info exists genea($gene)]} continue
 		set rcells [list_remdup $genea($gene)]
-		set temp [join [lrange $line 0 end-1] \t]
+		# end-2 to remove the counts
+		set temp [join [lrange $line 0 end-2] \t]
 		# set resultline $temp
 		foreach cell $rcells {
 			# default count includes introns
