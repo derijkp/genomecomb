@@ -526,6 +526,17 @@ proc process_sample_job {args} {
 	set cellmarkerfile {}
 	set tissue {}
 	cg_options process_sample args {
+		-preset {
+			if {$value ne ""} {
+				if {![command_exists preset_$value]} {
+					error "preset $value does not exist, must be one of: [presets]"
+				}
+				foreach {var val} [preset_$value] {
+					set $var $val
+				}
+				set preset $value
+			}
+		}
 		-oridir {
 			set oridir $value
 		}
@@ -554,10 +565,10 @@ proc process_sample_job {args} {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
 			set singlecell $value
 		}
-		-singlecell-whitelist {
+		-sc_whitelist {
 			set singlecell_whitelist $value
 		}
-		-singlecell-umisize {
+		-sc_umisize {
 			set singlecell_umisize $value
 		}
 		-sc_filters {

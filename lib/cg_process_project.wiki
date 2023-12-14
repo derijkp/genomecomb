@@ -68,6 +68,14 @@ As different types of original data are processed differently, not all options
 are applicable. Options that are not applicable to the given type of data are 
 ignored.
 
+By default options are set for short read genomic sequencing (genome/exome/targeted).
+Presets can be used to set a number of options to the defaults for a given
+analysis. These options can still be changed by specifically giving them a
+value after the -preset option (options given later overrule previous
+ones). 
+
+; -preset preset: sets a number of options to the defaults for the given "preset",
+must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), ont (ont genomic sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell rna-seq)
 ; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
 ; -minfastqreads num: fastq based samples with less than **num** reads in the fastq files are 
 not processed and not added to the final compar. 

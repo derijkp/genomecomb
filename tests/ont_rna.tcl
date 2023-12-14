@@ -458,6 +458,42 @@ header diff
 
 child process exited abnormally} error
 
+test ont_rna {process_project multi methods using -preset} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	exec cg process_project -stack 1 -v 2 \
+		-preset ontr \
+		-d 4 \
+		-threads 2 \
+		-isocallers {isoquant flair flames} \
+		-iso_match . \
+		-reports {} \
+		-dbdir tmp/ref/sirv \
+		tmp \
+		>& tmp/ontrna.log
+	# check vs expected
+	exec diff tmp/compar/isoform_counts-tmp.tsv data/ontrna/isoform_counts-tmp.tsv
+	exec diff tmp/compar/gene_counts-tmp.tsv data/ontrna/gene_counts-tmp.tsv
+	cg tsvdiff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
+} {diff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
+header diff
+<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
+---
+>extrafields: gene_name gene_id
+
+child process exited abnormally} error
+
 test ont_rna {isoquant joint analysis} {
 	test_cleantmp
 	file mkdir tmp/samples/sirv1/fastq

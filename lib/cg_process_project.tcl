@@ -2,6 +2,7 @@ proc process_project_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg process_project {*}$args]
 	unset -nocomplain split
+	set preset {}
 	set dbdir {}
 	set dbfiles {}
 	set organelles {}
@@ -52,6 +53,17 @@ proc process_project_job {args} {
 	set tissue {}
 	set optionsfile options.tsv
 	cg_options process_project args {
+		-preset {
+			if {$value ne ""} {
+				if {![command_exists preset_$value]} {
+					error "preset $value does not exist, must be one of: [presets]"
+				}
+				foreach {var val} [preset_$value] {
+					set $var $val
+				}
+				set preset $value
+			}
+		}
 		-ori {
 			set oridir $value
 		}
@@ -88,10 +100,10 @@ proc process_project_job {args} {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
 			set singlecell $value
 		}
-		-singlecell-whitelist {
+		-sc_whitelist {
 			set singlecell_whitelist $value
 		}
-		-singlecell-umisize {
+		-sc_umisize {
 			set singlecell_umisize $value
 		}
 		-sc_filters {
@@ -333,10 +345,11 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		set sampleargs [list \
+			-preset [get optionsa($sample,preset) $preset] \
 			-clip [get optionsa($sample,clip) $clip] \
 			-singlecell [get optionsa($sample,singlecell) $singlecell] \
-			-singlecell-whitelist [get optionsa($sample,singlecell-whitelist) $singlecell_whitelist] \
-			-singlecell-umisize [get optionsa($sample,singlecell-umisize) $singlecell_umisize] \
+			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
+			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
 			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
 			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
 			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
@@ -397,10 +410,11 @@ proc process_project_job {args} {
 		putslog "Processing msample $sample"
 		set dir $destdir/msamples/$sample
 		process_sample_job \
+			-preset [get optionsa($sample,preset) $preset] \
 			-clip [get optionsa($sample,clip) $clip] \
 			-singlecell [get optionsa($sample,singlecell) $singlecell] \
-			-singlecell-whitelist [get optionsa($sample,singlecell-whitelist) $singlecell_whitelist] \
-			-singlecell-umisize [get optionsa($sample,singlecell-umisize) $singlecell_umisize] \
+			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
+			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
 			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
 			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
 			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \

@@ -403,3 +403,15 @@ proc putsrvars {args} {
 		}
 	}
 }
+
+proc command_exists {command} {
+	set len [llength [info commands $command]]
+	if {$len} {return $len}
+	auto_load $command
+	llength [info commands $command]
+}
+
+proc command_list {pattern} {
+	list_union [array names ::auto_index $pattern] [info commands $pattern]
+}
+
