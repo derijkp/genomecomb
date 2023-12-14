@@ -62,6 +62,7 @@ proc fastqc_readtable {file pattern {headerVar {}}} {
 		if {[regexp $pattern $line]} break
 	}
 	set header [split [string range [gets $f] 1 end] \t]
+	set result {}
 	while {[gets $f line] != -1} {
 		if {[regexp {END_MODULE} $line]} break
 		set line [split $line \t]
