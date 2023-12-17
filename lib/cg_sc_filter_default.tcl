@@ -289,7 +289,7 @@ proc sc_filter_default_job {args} {
 		set newfields [list cell {*}[list_remove $header orig.ident ident cell]]
 		set poss [list_cor $header $newfields]
 		set newfields [lrange $newfields 1 end]
-		set empty [list_fill [llength $poss] {}]
+		set empty [list_fill [llength $newfields] {}]
 		unset -nocomplain a
 		while 1 {
 			if {[gets $f line] == -1} break
