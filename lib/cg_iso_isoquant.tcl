@@ -1608,7 +1608,6 @@ proc iso_isoquant_job {args} {
 					--reference $refseq \
 					--bam $tempbam \
 					--keep_tmp \
-					--report_novel_unspliced true \
 					{*}$options \
 					-o $regdir.temp 2>@ stderr >@ stdout
 				file delete $tempbam
