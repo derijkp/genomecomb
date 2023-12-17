@@ -260,7 +260,7 @@ proc R {args} {
 			set outRfile $value
 		}
 	} cmd 1 1
-	set pre {}
+	set pre "setwd(\"[pwd]\")\n"
 	foreach var $vars {
 		upvar 1 $var uvar
 		if {![info exists uvar]} {
@@ -276,6 +276,7 @@ proc R {args} {
 		set outRfile [tempfile].R
 	}
 	file_write $outRfile $pre$cmd
+	puts "running R from $outRfile"
 	exec [findR] --vanilla < $outRfile >@ stdout 2>@ stderr
 	# ps: you can run R from script with parameters like this (but easier to include in runfile):
 	# dirR --vanilla --slave --no-restore --file=rfile --args arg1 arg2
