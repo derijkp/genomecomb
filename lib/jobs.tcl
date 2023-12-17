@@ -26,11 +26,19 @@ proc job_distribute {{type {}}} {
 			set target distr
 		}
 	} else {
+		if {$type eq "distr"} {
+			set options [list_remove [list_regsub ^job_process_init_ [command_list job_process_init_*] {}] distr]
+			error "$type is not a valid option for job distribution, must be an integer (numbner of cores/threads) or one of: sge slurm direct status"
+		}
 		set target $type
 	}
 	if {[info commands job_process_init_${target}] eq ""} {auto_load job_process_init_${target}}
 #	interp alias {} job_process {} job_process_$target
 #	interp alias {} job_wait {} job_wait_${target}
+	if {![command_exists job_process_init_${target}]} {
+		set options [list_remove [list_regsub ^job_process_init_ [command_list job_process_init_*] {}] distr]
+		error "$target is not a valid option for job distribution, must be an integer (numbner of cores/threads) or one of: sge slurm direct status"
+	}
 	job_process_init_${target}
 }
 
