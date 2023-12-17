@@ -60,7 +60,7 @@ the sample is not processed.
 ; -paired 1/0 (-p): sequenced are paired/unpaired
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
-; -aligner aligner (-a): use the given aligner for mapping to the reference genome (default bwa)
+; -aligners aligner (-a): use the given aligner for mapping to the reference genome (default bwa)
 Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, ngmlr ; for rna-seq: star, star_2p, hisat2, minimap2_splice
 ; -ali_keepcomments 1/0: set to 1 to transfer sequence comments in the source fastq or ubams to the alignment (default don't keep for fastq, keep for ubams). 
 This option currently only works for minimap2 aligner

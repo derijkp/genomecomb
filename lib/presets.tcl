@@ -4,7 +4,7 @@ proc preset_scywalker {} {
 		paired 0
 		clip 0
 		removeduplicates 0
-		aligner minimap2_splice
+		aligners minimap2_splice
 		realign 0
 		varcallers {}
 		svcallers {}

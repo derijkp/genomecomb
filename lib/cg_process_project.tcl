@@ -9,7 +9,7 @@ proc process_project_job {args} {
 	set minfastqreads 1
 	set clip 1
 	set removeskew {}
-	set aligner bwa
+	set aligners bwa
 	set ali_keepcomments {}
 	set varcallers {gatkh strelka}
 	set isocallers {}
@@ -91,7 +91,7 @@ proc process_project_job {args} {
 			set removeskew $value
 		}
 		-a - -aligner - -aligners {
-			set aligner $value
+			set aligners $value
 		}
 		-ali_keepcomments {
 			set ali_keepcomments [true $value]
@@ -357,7 +357,7 @@ proc process_project_job {args} {
 			-tissue [get optionsa($sample,tissue) $tissue] \
 			-datatype [get optionsa($sample,datatype) $datatype] \
 			-aliformat [get optionsa($sample,aliformat) $aliformat] \
-			-aligner [get optionsa($sample,aligner) $aligner] \
+			-aligners [get optionsa($sample,aligners) $aligners] \
 			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
 			-realign [get optionsa($sample,realign) $realign] \
 			-varcallers [get optionsa($sample,varcallers) $varcallers] \
@@ -422,7 +422,7 @@ proc process_project_job {args} {
 			-tissue [get optionsa($sample,tissue) $tissue] \
 			-datatype [get optionsa($sample,datatype) $datatype] \
 			-aliformat [get optionsa($sample,aliformat) $aliformat] \
-			-aligner [get optionsa($sample,aligner) $aligner] \
+			-aligners [get optionsa($sample,aligners) $aligners] \
 			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
 			-realign [get optionsa($sample,realign) $realign] \
 			-varcallers [get optionsa($sample,varcallers) $varcallers] \
