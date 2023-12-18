@@ -1574,14 +1574,16 @@ proc iso_isoquant_job {args} {
 				isocaller_reference $refseq \
 				isocaller $analysisname isocaller_version [version isoquant]
 			# region bamfile
-			# set tempbam [tempfile].bam
-			set tempbam $regdir.temp/regali.bam
+			set tempbam [tempfile].bam
+			# set tempbam $regdir.temp/regali.bam
 			if {$region ne ""} {
 				set samregions [samregions $region $refseq]
 				exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
 			} else {
 				set samregions {}
-				mklink $bam $tempbam
+				# use absolute link, as this may be in a shadowdir (testing version $regdir.temp/regali.bam)
+				# and relative links caanot cross that
+				mklink $bam $tempbam 1
 			}
 			if {![catch {exec samtools view $tempbam | head -1} out]} {
 				# only one read aligned -> skip running isoquant
