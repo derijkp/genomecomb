@@ -271,6 +271,11 @@ proc process_project_job {args} {
 	set dbdir [dbdir $dbdir]
 	projectinfo $destdir dbdir {split 1}
 	set ref [file tail $dbdir]
+	if {$cellmarkerfile ne ""} {
+		if {$sc_celltypers eq ""} {set sc_celltypers {scsorter sctype}}
+	} elseif {$tissue ne ""} {
+		if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
+	}
 	# logfile
 	# -------
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \

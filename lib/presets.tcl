@@ -14,7 +14,7 @@ proc preset_scywalker {} {
 		singlecell ontr10x
 		sc_umisize 12
 		sc_filters default
-		sc_celltypers {scsorter sctype}
+		sc_celltypers {}
 		distrreg g5000000
 		iso_match novel
 		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo}

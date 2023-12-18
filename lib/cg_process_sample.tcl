@@ -1212,6 +1212,11 @@ proc process_sample_job {args} {
 	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_filtered-*.tsv]
 	foreach scgenefile $scgenefiles {
 		set scisoformfile [file dir $scgenefile]/[regsub ^sc_gene_counts_filtered- [file tail $scgenefile] sc_isoform_counts_filtered-]
+		if {$cellmarkerfile ne ""} {
+			if {$sc_celltypers eq ""} {set sc_celltypers {scsorter sctype}}
+		} elseif {$tissue ne ""} {
+			if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
+		}
 		foreach sc_celltyper $sc_celltypers {
 			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
 				error "sc_celltyper $sc_celltyper not supported"
