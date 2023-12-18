@@ -27,7 +27,7 @@ proc preset_ont {} {
 		paired 0
 		clip 0
 		removeduplicates 0
-		aligner minimap2
+		aligners minimap2
 		realign 0
 		varcallers {clair3}
 		svcallers {sniffles npinv cuteSV}
@@ -46,7 +46,7 @@ proc preset_ontr {} {
 		paired 0
 		clip 0
 		removeduplicates 0
-		aligner minimap2_splice
+		aligners minimap2_splice
 		realign 0
 		varcallers {clair3}
 		svcallers {}
@@ -67,7 +67,7 @@ proc preset_srs {} {
 		paired 1
 		clip 1
 		removeduplicates {}
-		aligner bwa
+		aligners bwa
 		realign 0
 		varcallers {gatkh strelka}
 		svcallers {manta lumpy}
@@ -88,7 +88,7 @@ proc preset_rseq {} {
 		paired 1
 		clip 1
 		removeduplicates {}
-		aligner star_2p
+		aligners star_2p
 		realign 0
 		varcallers {gatkh strelka}
 		svcallers {}
