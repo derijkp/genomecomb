@@ -723,6 +723,7 @@ proc process_sample_job {args} {
 				] \n]\n
 				lappend todo(reports) $sampledir/reports
 			}
+			return {}
 		}
 	}
 	putslog "Making $sampledir"
