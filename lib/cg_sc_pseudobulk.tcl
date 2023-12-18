@@ -5,9 +5,21 @@ proc sc_pseudobulk_job {args} {
 	#
 	set scgenefile [file_absolute $scgenefile]
 	set scisoformfile [file_absolute $scisoformfile]
-	set groupfile [file_absolute $groupfile]
-	set rootname [file_rootname $groupfile]
+	set rootname [file_rootname $scgenefile]
 	set dir [file dir $scgenefile]
+	set scgenefile10x [file root [gzroot $scgenefile]].10x
+	job sctype_scgenefile10x-$rootname -deps {
+		$scgenefile
+	} -targets {
+		$scgenefile10x
+	} -vars {
+		scgenefile scgenefile10x
+	} -code {
+		cg tsv210x $scgenefile $scgenefile10x.temp
+		file rename -force $scgenefile10x.temp $scgenefile10x
+	}
+	set rootname [file_rootname $groupfile]
+	set groupfile [file_absolute $groupfile]
 	set pb_genefile $dir/pb_gene_counts-$rootname.tsv.zst
 	set pb_isoformfile $dir/pb_isoform_counts-$rootname.tsv.zst
 	set pb_genefile_colinfo $dir/pb_gene_counts-$rootname.tsv.colinfo

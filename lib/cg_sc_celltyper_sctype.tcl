@@ -17,7 +17,7 @@ proc sc_celltyper_sctype_job {args} {
 	set scgenefile10x [file root [gzroot $scgenefile]].10x
 	set groupfile $dir/sc_group-$extrarootname-$rootname.tsv
 	set tempresult $groupfile.temp
-	job sctype_scgenefile10x-$extrarootname-$rootname -deps {
+	job sctype_scgenefile10x-$rootname -deps {
 		$scgenefile
 	} -targets {
 		$scgenefile10x
