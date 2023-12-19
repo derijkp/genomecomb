@@ -6,7 +6,7 @@ proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
 	set organelles {}
-	set minfastqreads 1
+	set minfastqreads 0
 	set clip 1
 	set removeskew {}
 	set aligners bwa
