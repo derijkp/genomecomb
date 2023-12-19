@@ -1720,7 +1720,12 @@ proc iso_isoquant_job {args} {
 			$resultfile $workdir/isoform_counts/isoform_counts- .tsv $regions \
 		]
 		mkdir $workdir/readassignments
-		distrreg_job -refseq $refseq read_assignments-${root}.tsv.zst $workdir/readassignments/readassignments- .tsv $regions
+		# distributed readassignments are only made for making the sc_gene and sc_isoforms results
+		# so those are the skip targets here
+		distrreg_job \
+			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
+			-refseq $refseq \
+			read_assignments-${root}.tsv.zst $workdir/readassignments/readassignments- .tsv $regions
 		set sc_gene_counts_files {}
 		set sc_iso_counts_files {}
 		foreach region $regions {
@@ -1747,7 +1752,9 @@ proc iso_isoquant_job {args} {
 				iso_isoquant_sc_counts $genefile $isofile $readfile $target $target2 $strictpct $reads_per_cell_file
 			}
 		}
-		job isoquant_sc_join_gene-$root -cores 1 -deps $sc_gene_counts_files -targets {
+		job isoquant_sc_join_gene-$root -cores 1 \
+		-deps [list {*}$sc_gene_counts_files {*}$sc_iso_counts_files] \
+		-targets {
 			sc_gene_counts_raw-${root}.tsv.zst
 		} -vars {
 			sc_gene_counts_files root
