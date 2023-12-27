@@ -399,7 +399,11 @@ proc putsrvars {args} {
 		if {[catch {uplevel [list set $var]} value]} {
 			puts "rm($var)"
 		} else {
-			puts $var=\"$value\"
+			if {$value ne "" && [string is double $value]} {
+				puts $var=$value
+			} else {
+				puts $var=\"$value\"
+			}
 		}
 	}
 }
