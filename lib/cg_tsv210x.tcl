@@ -46,6 +46,9 @@ proc tsv210x {tsvfile 10xdir {genefields {geneid gene_id gene}} {cellbarcodefiel
 		set barcode [lindex $line $barcodepos]
 		set count [lindex $line $countpos]
 		set geneinfo [list_sub $line $geneposs]
+		if {[lindex $geneinfo end] eq ""} {
+			lset geneinfo end [lindex $geneinfo 0]
+		}
 		if {![info exists barcodea($barcode)]} {
 			set barcodea($barcode) [incr barcodenum]
 			puts $ob $barcode
