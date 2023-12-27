@@ -14,6 +14,9 @@ proc cg_tsv2gtf {args} {
 	if {[llength $args] > 2} {
 		errorformat tsv2gtf
 	}
+	if {![file exists $file]} {
+		error "error converting \"$file\" to gtf: file does not exist"
+	}
 	catch {sclose $f} ; catch {sclose $o}
 	if {$file eq ""} {
 		set f stdin
