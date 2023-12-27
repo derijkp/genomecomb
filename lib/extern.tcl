@@ -251,10 +251,14 @@ proc findR {} {
 
 proc R {args} {
 	set vars {}
+	set listvars {}
 	set outRfile {}
 	cg_options cat args {
 		-vars {
 			set vars $value
+		}
+		-listvars {
+			set listvars $value
 		}
 		-outRfile {
 			set outRfile $value
@@ -270,6 +274,21 @@ proc R {args} {
 			append pre "$var=$uvar\n"
 		} else {
 			append pre "$var=\"$uvar\"\n"
+		}
+	}
+	foreach var $listvars {
+		upvar 1 $var uvar
+		if {![info exists uvar]} {
+			error "error running R with -vars: variable $var does not exist"
+		}
+		set type num
+		foreach el $uvar {
+			if {![string is double $el]} {set type string ; break}
+		}
+		if {$type eq "num"} {
+			append pre "$var=c([join $uvar ,])\n"
+		} else {
+			append pre "$var=c(\"[join $uvar \",\"]\")\n"
 		}
 	}
 	if {$outRfile eq ""} {

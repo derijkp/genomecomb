@@ -1,7 +1,14 @@
 proc sc_filter_default_job {args} {
 	upvar job_logdir job_logdir
 	#
+	set organelles {}
 	cg_options sc_filter_default args {
+		-reftranscripts {
+			set reftranscripts $value
+		}
+		-organelles {
+			set organelles $value
+		}
 	} {scgenefile scisoformfile expectedcells} 3 3
 	if {$expectedcells eq ""} {
 		error "failed sc_filter_default: please give expected number of cells (-sc_expectedcells) for single cell analysis"
@@ -41,6 +48,16 @@ proc sc_filter_default_job {args} {
 	set outinfofile $dir/sc_temp_info-$rootname.tsv
 	set umappng $dir/sc_umap-$rootname.png
 	set tsnepng $dir/sc_tsne-$rootname.png
+	ref_transcripts_convert $reftranscripts tsvreftranscripts gtfreftranscripts
+	set theader [cg select -h $tsvreftranscripts]
+	set cfield [lindex $theader [tsv_basicfields $theader 1]]
+	if {[llength $organelles] <= 1} {
+		set mitchr [lindex $organelles 0]
+	} else {
+		set pos [list_find -regexp $organelles M]
+		set mitchr [lindex $organelles [lindex $pos 0]]
+	}
+	set mitgenes [cg select -sh /dev/null -f gene -q "\$$cfield eq \"$mitchr\"" $tsvreftranscripts]
 	job sc_filter_default_r-$rootname -deps {
 		$scgenefile10x
 		$scisoformfile10x
@@ -48,7 +65,7 @@ proc sc_filter_default_job {args} {
 		$outinfofile $outrds $umappng
 	} -vars {
 		scgenefile10x scisoformfile10x expectedcells metadatafile outrds out10x outkneeplot outinfofile
-		umappng tsnepng
+		umappng tsnepng mitgenes
 	} -code {
 		# clear output
 		foreach out [list $out10x $outinfofile $outrds] {
@@ -57,12 +74,13 @@ proc sc_filter_default_job {args} {
 				file rename $out $out.old
 			}
 		}
-	
 		set out10x {}
 		set metadatafile {}
 		set outRfile ~/tmp/sc_filter.R
 		set outRfile {}
-		R -outRfile $outRfile -vars {
+		R -outRfile $outRfile -listvars {
+			mitgenes
+		} -vars {
 			scgenefile10x scisoformfile10x expectedcells metadatafile outrds out10x outkneeplot outinfofile
 			umappng tsnepng
 		} {
@@ -139,10 +157,14 @@ proc sc_filter_default_job {args} {
 			filt_mat <- mat[, is.cell]
 			rm(mat, barcodes, features, e.out, is.cell)
 			#
-			# Seurat object		
+			# Seurat object
+			# to avoid "Feature names of counts matrix cannot be empty" error, remove these rows
+			emptynames=which(rownames(filt_mat) == '')
+			filt_mat =filt_mat[-emptynames,]
+			# create seurat object
 			SOB <- CreateSeuratObject(filt_mat)
 			rm(filt_mat)
-			SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, pattern = "^MT-")
+			SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, features = mitgenes)
 			#
 			# 3. Doublet identification
 			# 3.1 scDblFinder
@@ -157,12 +179,14 @@ proc sc_filter_default_job {args} {
 				SOB@meta.data$scDblFinder.class <- gsub("singlet", "Singlet", SOB@meta.data$scDblFinder.class)
 				SOB@meta.data$scDblFinder.class <- gsub("doublet", "Doublet", SOB@meta.data$scDblFinder.class)
 			}, error = function(err) {
-				cat("warning: scDblFinder failed\n")
+				cat("warning: scDblFinder failed, error was:\n")
+				print(err)
 			})
 			#
 			# Mitochondrial cut-off and standard processing (scDblFinder does not prefer this processing step first, DoubletFinder does)
 			cat("running Mitochondrial cutoff")
-			SOB_filtered <- subset(SOB, subset = percent.mt < 5)
+			# error if no mitochondrial genes were found
+			# SOB_filtered <- subset(SOB, subset = percent.mt < 5)
 			SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
 			SOB@assays$RNA_org@key <- "newkey_"
 			genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
@@ -259,7 +283,8 @@ proc sc_filter_default_job {args} {
 			#
 			if (out10x != "") {
 				cat("Writing 10x output to", out10x, "\n")
-				write10xCounts(out10x,SOB_filtered@assays$RNA@counts,version="3")
+				# was SOB_filtered (only mt filter added), but as everything else is done on SOB. use that for output here
+				write10xCounts(out10x,SOB@assays$RNA@counts,version="3")
 			}
 			#
 			cat("Writing info file", outinfofile, "\n")
@@ -375,6 +400,7 @@ proc sc_filter_default_job {args} {
 		gzclose $o
 		file rename -force $dir/sc_isoform_counts_filtered-$rootname.tsv.temp.zst $dir/sc_isoform_counts_filtered-$rootname.tsv.zst
 	}
+puts okHEPA+KoolstoffilterHEPA+KoolstoffilterHEPA+Koolstoffilter
 	return $dir/sc_cellinfo_filtered-$rootname.tsv.zst
 }
 

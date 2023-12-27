@@ -706,6 +706,10 @@ proc process_sample_job {args} {
 		set todo(reports) {}
 	}
 	set sample [file tail $sampledir]
+	if {$reftranscripts eq ""} {
+		set reftranscripts [ref_tsvtranscripts $dbdir]
+	}
+	set organelles [getorganelles $dbdir $organelles]
 	#
 	if {$minfastqreads > 0} {
 		# check if we have the minimum number of reads required (default 1)
@@ -1207,7 +1211,10 @@ proc process_sample_job {args} {
 			if {![auto_load sc_filter_${sc_filter}_job]} {
 				error "sc_filter $sc_filter not supported"
 			}
-			sc_filter_${sc_filter}_job $scgenefile $scisoformfile $sc_expectedcells
+			sc_filter_${sc_filter}_job \
+				-reftranscripts $reftranscripts \
+				-organelles $organelles \
+				$scgenefile $scisoformfile $sc_expectedcells
 		}
 	}
 	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_filtered-*.tsv]
