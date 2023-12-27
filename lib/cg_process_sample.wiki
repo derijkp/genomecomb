@@ -80,6 +80,12 @@ Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
 Currently supported are: nanopolish remora (actual remora analysis must have been done before, with methylation data present in the source unaligned bams)
+; -reftranscripts reftranscripts: file with reference transcripts for isoform calling. (default empty -> finds default in refdb)
+Currently supported are: flair, isoquant, flames
+; -isocallers isocallers: (space separated) list of isofrom calling (and counting) programs to be used for rna-seq data.
+Currently supported are: flair, isoquant, flames
+; -organelles organelles: (space separated) list of chromosomes that are organelles (that are treated differently in some analysis)
+If not given explicitely, the ones indicated in the file $refdb/extra/reg_*_organelles.tsv (if present) will be used
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.
 Currently supported are: rnaseqc, qorts
 ; -split 1/0 (-s): split multiple alternative genotypes over different line

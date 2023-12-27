@@ -371,6 +371,7 @@ proc process_project_job {args} {
 			-counters [get optionsa($sample,counters) $counters] \
 			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
 			-isocallers [get optionsa($sample,isocallers) $isocallers] \
+			-organelles [get optionsa($sample,organelles) $organelles] \
 			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
 			-dbdir [get optionsa($sample,dbdir) $dbdir] \
 			-split [get optionsa($sample,split) $split] \
@@ -436,6 +437,7 @@ proc process_project_job {args} {
 			-counters [get optionsa($sample,counters) $counters] \
 			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
 			-isocallers [get optionsa($sample,isocallers) $isocallers] \
+			-organelles [get optionsa($sample,organelles) $organelles] \
 			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
 			-dbdir [get optionsa($sample,dbdir) $dbdir] \
 			-split [get optionsa($sample,split) $split] \
