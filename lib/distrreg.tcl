@@ -192,7 +192,11 @@ proc distrreg_norep100000file {refdir} {
 	return $norep100000file
 }
 
-proc distrreg_nolowgene {refdir {cutoff 200000} {name 200k}} {
+proc distrreg_nolowgene {refdir {cutoff 200000} {name {}}} {
+	if {$name eq ""} {
+		set name $cutoff
+		regsub {000$} $name k name
+	}
 	set ref [file tail $refdir]
 	set nolowgenefile [gzfile $refdir/extra/reg_${ref}_nolowgene$name.tsv.zst]
 	if {![file exists $nolowgenefile]} {
@@ -217,6 +221,10 @@ proc distrreg_nolowgene {refdir {cutoff 200000} {name 200k}} {
 		cg zstindex $nolowgenefile
 	}
 	return $nolowgenefile
+}
+
+proc cg_distrreg_nolowgene {args} {
+	distrreg_nolowgene {*}$args
 }
 
 proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
