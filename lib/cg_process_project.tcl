@@ -116,6 +116,7 @@ proc process_project_job {args} {
 			set sc_expectedcells $value
 		}
 		-cellmarkerfile {
+			if {$value ne "" && ![file exists $value]} {error "cellmarkerfile $value does not exists"}
 			set cellmarkerfile [file_absolute $value]
 		}
 		-tissue {

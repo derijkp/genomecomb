@@ -10,6 +10,9 @@ proc sc_celltyper_sctype_job {args} {
 		-extrarootname {set extrarootname $value}
 	} {scgenefile scisoformfile} 2 2
 	#
+	if {$cellmarkerfile eq "" && $tissue eq ""} {
+		error "celmarkerfile or tissue has to be given for sc_celltyper_scsorter"
+	}
 	set scgenefile [file_absolute $scgenefile]
 	set scisoformfile [file_absolute $scisoformfile]
 	set rootname [file_rootname $scgenefile]
