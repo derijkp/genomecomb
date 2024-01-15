@@ -1231,6 +1231,9 @@ proc process_sample_job {args} {
 		}
 	}
 	#calculate reports
+	if {$singlecell eq "ontr10x"} {
+		scywalker_report_job $sampledir
+	}
 	if {[llength $reports]} {
 		process_reports_job -paired $paired -depth_histo_max $depth_histo_max -threads $threads $sampledir $dbdir $reports
 		lappend todo(reports) $sampledir/reports
