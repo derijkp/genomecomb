@@ -204,13 +204,7 @@ proc distrreg_nolowgene {refdir {cutoff 200000} {name 200k}} {
 	if {![file exists $nolowgenefile]} {
 		set fullgenomefile [gzfile $refdir/extra/reg_*_fullgenome.tsv]
 		set temp [tempfile]
-		set genedbtsv [gzfile \
-			$refdir/gene_*_intGene.tsv.zst \
-			$refdir/extra/gene_*_gencode.tsv.zst \
-			$refdir/gene_*.tsv.zst \
-			$refdir/extra/gene_*.tsv.zst \
-			$refdir/gene_*_refGene.tsv.zst \
-		]
+		set genedbtsv [ref_tsvtranscripts $refdir]
 		cg regjoin $genedbtsv > $temp
 		set temp2 [tempfile]
 		cg regsubtract $fullgenomefile $temp > $temp2

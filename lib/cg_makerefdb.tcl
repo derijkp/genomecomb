@@ -510,12 +510,7 @@ proc makerefdb_job {args} {
 		distrreg_norep100000file $dbdir
 	}
 
-	set genefile [jobgzfile \
-		$dbdir/gene_*_intGene.tsv.zst \
-		$dbdir/extra/gene_*_gencode.tsv.zst \
-		$dbdir/extra/gene_*.tsv.zst \
-		$dbdir/gene_*_refGene.tsv.zst \
-	]
+	set genefile [ref_tsvtranscripts $dbdir]
 	job nolowgene -optional 1 -deps {
 		$fullgenome
 		$genefile
