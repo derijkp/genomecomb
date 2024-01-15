@@ -408,6 +408,25 @@ proc putsrvars {args} {
 	}
 }
 
+proc putsrvars_list {args} {
+	foreach var $args {
+		upvar 1 $var uvar
+		if {![info exists uvar]} {
+			error "error running R with -vars: variable $var does not exist"
+		}
+		set type num
+		foreach el $uvar {
+			if {![string is double $el]} {set type string ; break}
+		}
+		if {$type eq "num"} {
+			append pre "$var=c([join $uvar ,])\n"
+		} else {
+			append pre "$var=c(\"[join $uvar \",\"]\")\n"
+		}
+	}
+	puts $pre
+}
+
 proc command_exists {command} {
 	set len [llength [info commands $command]]
 	if {$len} {return $len}
