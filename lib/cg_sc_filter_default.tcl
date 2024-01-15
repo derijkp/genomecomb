@@ -160,7 +160,9 @@ proc sc_filter_default_job {args} {
 			# Seurat object
 			# to avoid "Feature names of counts matrix cannot be empty" error, remove these rows
 			emptynames=which(rownames(filt_mat) == '')
-			filt_mat =filt_mat[-emptynames,]
+			if (length(emptynames) > 0) {
+				filt_mat = filt_mat[-emptynames,]
+			}
 			# create seurat object
 			SOB <- CreateSeuratObject(filt_mat)
 			rm(filt_mat)
