@@ -178,6 +178,8 @@ proc iso_flames_job {args} {
 		set reftranscripts [ref_gtftranscripts $refseq]
 	} else {
 		set reftranscripts [file_absolute $reftranscripts]
+		ref_transcripts_convert $reftranscripts tsvreftranscripts gtfreftranscripts
+		set reftranscripts $gtfreftranscripts
 	}
 	# 
 	job_logfile $destdir/flames_[file tail $destdir] $destdir $cmdline \
@@ -251,7 +253,16 @@ proc iso_flames_job {args} {
 			}
 		}]]
 		mklink $refseq [file tail $refseq]
-		mklink $reftranscripts [file tail $reftranscripts]
+		# mklink $reftranscripts [file tail $reftranscripts]
+		set f [gzopen $reftranscripts]
+		file delete [file tail $reftranscripts]
+		set o [wgzopen [file tail $reftranscripts]]
+		while {[gets $f line] != -1} {
+			if {[lindex [split $line \t] 2] eq "transcript"} continue
+			puts $o $line
+		}
+		gzclose $o
+		gzclose $f
 		mkdir fastq
 		set mergedfastqfile fastq/$root.fastq
 		if {$preset eq "sc"} {
