@@ -211,6 +211,12 @@ proc job_logfile_distr_close {} {
 		# only keep result logfile if -d option was given explicitely
 		if {!$cgjob(hasargs)} {file delete $result}
 	}
+	if {$statusok} {
+		putslog "all jobs finished"
+	} else {
+		set nrerrors [lindex [cg select -g all -q {$status eq "error"} $cgjob(logfile).error] end]
+		puts stderr "\nAnalysis ended with $nrerrors errors"
+	}
 }
 
 proc job_wait_distr {} {
