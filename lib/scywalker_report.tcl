@@ -1,4 +1,5 @@
 proc scywalker_report_job {sampledir} {
+	upvar job_logdir job_logdir
 	set sample [file tail $sampledir]
 	set bam [lindex [jobglob $sampledir/map-sminimap2_splice-*.bam $sampledir/map-sminimap2*.bam] 0]
 	set target $sampledir/reports/report_scywalker-$sample.html
@@ -11,7 +12,7 @@ proc scywalker_report_job {sampledir} {
 	} -targets {
 		$target
 	} -vars {
-		$bam
+		sampledir sample bam
 	} -code {
 		exec cramino $bam > $sampledir/cramino-output.tsv
 		exec scywalker-report -o $target.temp $sampledir
