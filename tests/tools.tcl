@@ -565,6 +565,7 @@ proc diffinfoanalysis {file1 file2} {
 		-I version_os -I param_dbfiles -I param_dbdir -I command \
 		-I version_genomecomb -I version_java -I maxopenfiles \
 		-I param_adapterfile \
+		-I param_reftranscripts \
 		$file1 $file2
 }
 
