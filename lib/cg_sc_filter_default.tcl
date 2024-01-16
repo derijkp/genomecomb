@@ -155,7 +155,7 @@ proc sc_filter_default_job {args} {
 				}
 			}
 			filt_mat <- mat[, is.cell]
-			rm(mat, barcodes, features, e.out, is.cell)
+			rm(mat, e.out, is.cell)
 			#
 			# Seurat object
 			# to avoid "Feature names of counts matrix cannot be empty" error, remove these rows
@@ -166,7 +166,12 @@ proc sc_filter_default_job {args} {
 			# create seurat object
 			SOB <- CreateSeuratObject(filt_mat)
 			rm(filt_mat)
-			SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, features = mitgenes)
+			mitgenes=mitgenes[mitgenes %in% rownames(GetAssayData(SOB))]
+			if (length(mitgenes) > 0) {
+				SOB[["percent.mt"]] <- PercentageFeatureSet(SOB, features = mitgenes)
+			} else {
+				SOB[["percent.mt"]] <- 0
+			}
 			#
 			# 3. Doublet identification
 			# 3.1 scDblFinder
