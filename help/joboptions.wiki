@@ -27,7 +27,7 @@ specifically specified -d direct or -d 1.
 An analysis can be run faster by running multiple jobs at the same
 time using multiple cores/threads on one machine (by giving the number of
 cores/threads that may be used to the -d option) or nodes on a cluster
-managed by the grid engine (option **sge**)
+managed by the grid engine (option **sge**) or slurm (option **slurm**)
 
 Some jobs depend on results of previous jobs, and have to wait for these
 to finish first, so the entire capacity is not allways filled. If an error
