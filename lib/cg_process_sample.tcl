@@ -480,6 +480,22 @@ proc checkminreads {fastqdir minfastqreads numVar} {
 	return 1
 }
 
+proc process_sample_reports_minfastqreads {sampledir sample reports num todoVar} {
+	upvar $todoVar todo
+	if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
+		file mkdir $sampledir/reports
+		file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
+			[join {sample source parameter value} \t] \
+			[join [list $sample fastq-stats fw_numreads $num] \t] \
+		] \n]\n
+		file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
+			[join {sample source parameter value} \t] \
+			[join [list $sample fastq-stats rev_numreads $num] \t] \
+		] \n]\n
+		lappend todo(reports) $sampledir/reports
+	}
+}
+
 proc process_sample_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg process_sample {*}$args]
@@ -712,25 +728,6 @@ proc process_sample_job {args} {
 	}
 	set organelles [getorganelles $dbdir $organelles]
 	#
-	if {$minfastqreads > 0} {
-		# check if we have the minimum number of reads required (default 1)
-		# if not, write minimum nr of reports, and return (quit processing this sample)
-		if {![checkminreads $fastqdir $minfastqreads num]} {
-			if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
-				file mkdir $sampledir/reports
-				file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
-					[join {sample source parameter value} \t] \
-					[join [list $sample fastq-stats fw_numreads $num] \t] \
-				] \n]\n
-				file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
-					[join {sample source parameter value} \t] \
-					[join [list $sample fastq-stats rev_numreads $num] \t] \
-				] \n]\n
-				lappend todo(reports) $sampledir/reports
-			}
-			return {}
-		}
-	}
 	putslog "Making $sampledir"
 	catch {file mkdir $sampledir}
 	set ref [file tail $dbdir]
@@ -849,6 +846,13 @@ proc process_sample_job {args} {
 	# ----------------------------
 	if {$singlecell ne ""} {
 		# singlecell only works from fastqdir
+		# check if we have the minimum number of reads required (at least 1)
+		# if not, write minimum nr of reports, and return (quit processing this sample)
+		set minreads [max 1 $minfastqreads]
+		if {![checkminreads $fastqdir $minreads num]} {
+			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
+			return {}
+		}
 		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
 		# put bams in skips (don't actually run sc_barcodes if already exis)
 		set skips {}
@@ -921,6 +925,15 @@ proc process_sample_job {args} {
 			}
 		}
 		set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
+	}
+	# put check here, because fastqs might be generated from bams, etc.
+	if {$minfastqreads > 0} {
+		# check if we have the minimum number of reads required (default 1)
+		# if not, write minimum nr of reports, and return (quit processing this sample)
+		if {![checkminreads $fastqdir $minfastqreads num]} {
+			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
+			return {}
+		}
 	}
 	# create bam from fastq files (if found)
 	set cleanedbams {}
