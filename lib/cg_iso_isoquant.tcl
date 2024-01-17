@@ -1703,7 +1703,7 @@ proc iso_isoquant_job {args} {
 		analysisinfo_write [lindex $genefiles 0] gene_counts-${root}.tsv isocaller_skipregions $skipregions
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv isocaller_skipregions $skipregions
 		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
-		cg tsv2gtf $resultfile isoforms-${root}.gtf.gz
+		cg tsv2gtf $resultfile isoforms-${root}.gtf
 		# if {!$singlecell} {catch {shadow_delete $workdir}}
 	}
 	if {$singlecell} {
