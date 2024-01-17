@@ -222,7 +222,7 @@ proc process_reports_job {args} {
 	set targetfile [targetfile_job $sampledir $dbdir]
 	# logfile
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
+		{*}[versions dbdir fastq-stats samtools gnusort8 zst os]
 	# start
 	# get bamfiles; do not include hlongshot- ones if source exists (are the same anyway except one tag that is not used here)
 	unset -nocomplain a
