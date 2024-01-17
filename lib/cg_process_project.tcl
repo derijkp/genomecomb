@@ -46,6 +46,8 @@ proc process_project_job {args} {
 	set singlecell {}
 	set singlecell_whitelist {}
 	set singlecell_umisize 12
+	set singlecell_barcodesize 16
+	set singlecell_adaptorseq CTACACGACGCTCTTCCGATCT
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
@@ -105,6 +107,12 @@ proc process_project_job {args} {
 		}
 		-sc_umisize {
 			set singlecell_umisize $value
+		}
+		-sc_barcodesize {
+			set singlecell_barcodesize $value
+		}
+		-sc_adaptorseq {
+			set singlecell_adaptorseq $value
 		}
 		-sc_filters {
 			set sc_filters $value
@@ -280,7 +288,7 @@ proc process_project_job {args} {
 	# logfile
 	# -------
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa samtools gatk gatk3 picard java gnusort8 zst os]
+		{*}[versions dbdir fastq-stats samtools gnusort8 zst os]
 	# amplicons settings
 	# ------------------
 	if {$amplicons ne ""} {
@@ -356,6 +364,8 @@ proc process_project_job {args} {
 			-singlecell [get optionsa($sample,singlecell) $singlecell] \
 			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
 			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
+			-sc_barcodesize [get optionsa($sample,sc_barcodesize) $singlecell_barcodesize] \
+			-sc_adaptorseq [get optionsa($sample,sc_adaptorseq) $singlecell_adaptorseq] \
 			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
 			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
 			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
@@ -422,6 +432,8 @@ proc process_project_job {args} {
 			-singlecell [get optionsa($sample,singlecell) $singlecell] \
 			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
 			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
+			-sc_barcodesize [get optionsa($sample,sc_barcodesize) $singlecell_barcodesize] \
+			-sc_adaptorseq [get optionsa($sample,sc_adaptorseq) $singlecell_adaptorseq] \
 			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
 			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
 			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \

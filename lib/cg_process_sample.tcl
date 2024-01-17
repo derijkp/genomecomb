@@ -536,6 +536,8 @@ proc process_sample_job {args} {
 	set singlecell {}
 	set singlecell_whitelist {}
 	set singlecell_umisize 10
+	set singlecell_barcodesize 16
+	set singlecell_adaptorseq 16
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
@@ -586,6 +588,12 @@ proc process_sample_job {args} {
 		}
 		-sc_umisize {
 			set singlecell_umisize $value
+		}
+		-sc_barcodesize {
+			set singlecell_barcodesize $value
+		}
+		-sc_adaptorseq {
+			set singlecell_adaptorseq $value
 		}
 		-sc_filters {
 			set sc_filters $value
@@ -877,6 +885,8 @@ proc process_sample_job {args} {
 		sc_barcodes_job -skip $skips -skip $skipsresult \
 			-whitelist $singlecell_whitelist \
 			-umisize $singlecell_umisize \
+			-barcodesize $singlecell_barcodesize \
+			-adaptorseq $singlecell_adaptorseq \
 			$fastqdir $sampledir
 		set fastqdir $sampledir/bcfastq
 		if {$sc_filters eq ""} {

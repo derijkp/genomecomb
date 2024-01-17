@@ -13,6 +13,8 @@ proc preset_scywalker {} {
 		isocallers isoquant_sc
 		singlecell ontr10x
 		sc_umisize 12
+		sc_barcodesize 16
+		sc_adaptorseq CTACACGACGCTCTTCCGATCT
 		sc_filters default
 		sc_celltypers {}
 		distrreg g5000000
