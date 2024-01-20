@@ -9,12 +9,18 @@ proc shadow_clean {{shadowdir {}}} {
 	}
 	set shadowdir [file_absolute $shadowdir]
 	foreach shadow [glob $shadowdir/*] {
-		set link [file link $shadow/shadow_source]
+		# if link exists, but points to non-existing file, file exists wil return 0
+		# so check with file link as well for that
+		if {[catch {file link $shadow/shadow_source} link] && ![file exists $shadow/shadow_source]} {
+			puts "\nskipping $shadow : does not have shadow_source"
+			continue
+		}
 		if {
 			[file exists $link] &&
 			![catch {file link $link} linklink] &&
 			$linklink eq $shadow
 		} continue
+		puts -nonewline .
 		file delete -force $shadow
 	}
 }
@@ -28,7 +34,7 @@ proc cg_shadow_clean {args} {
 	} {shadowdir} 0 1 {
 		make a shadow dir
 	}
-	shadow_clean $shadowdir
+	shadow_clean $shadowdir 
 }
 
 proc shadow_delete {link} {
