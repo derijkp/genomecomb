@@ -100,7 +100,7 @@ proc map_job {args} {
 			set keepsams $value
 		}
 		-ali_keepcomments {
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-threads - -t {
 			set threads $value
@@ -150,6 +150,13 @@ proc map_job {args} {
 	set samfiles {}
 	set asamfiles {}
 	set num 1
+	if {$ali_keepcomments ne ""} {
+		set use_ali_keepcomments $ali_keepcomments
+	} elseif {$ubams} {
+		set use_ali_keepcomments 1
+	} else {
+		set use_ali_keepcomments 0
+	}
 	if {
 		($paired && (($ubams && [llength $fastqfiles] == 1) || [llength $fastqfiles] == 2)) 
 		|| (!$paired && [llength $fastqfiles] == 1) 
@@ -165,7 +172,7 @@ proc map_job {args} {
 		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams ali_keepcomments
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams use_ali_keepcomments
 		} -code {
 			set cleanupfiles {}
 			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
@@ -217,14 +224,14 @@ proc map_job {args} {
 			if {$sort eq "nosort"} {
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
-					-ali_keepcomments $ali_keepcomments \
+					-ali_keepcomments $use_ali_keepcomments \
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
 				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
-					-ali_keepcomments $ali_keepcomments \
+					-ali_keepcomments $use_ali_keepcomments \
 					-threads $threads \
 					-.sam $refseq $sample {*}$fastqfiles \
 					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 \
@@ -256,7 +263,7 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams ali_keepcomments
+				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams use_ali_keepcomments
 			} -code {
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
@@ -266,14 +273,14 @@ proc map_job {args} {
 				}
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
-						-ali_keepcomments $ali_keepcomments \
+						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
 					exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
-						-ali_keepcomments $ali_keepcomments \
+						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file \
@@ -311,7 +318,7 @@ proc map_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams ali_keepcomments
+				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams use_ali_keepcomments
 			} -code {
 				if {$ubams} {
 					set temp [tempdir]/[file root [file tail $file]].fastq.gz
@@ -322,14 +329,14 @@ proc map_job {args} {
 				set tempfile [filetemp_ext $target]
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
-						-ali_keepcomments $ali_keepcomments \
+						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file1 $file2
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
-						-ali_keepcomments $ali_keepcomments \
+						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file1 $file2 \

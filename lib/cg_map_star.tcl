@@ -105,7 +105,7 @@ proc cg_map_star {args} {
 		}
 		-ali_keepcomments {
 			# not used yet
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-extraopts {
 			set extraopts $value

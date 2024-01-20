@@ -577,7 +577,7 @@ proc process_sample_job {args} {
 			set aligners $value
 		}
 		-ali_keepcomments {
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}

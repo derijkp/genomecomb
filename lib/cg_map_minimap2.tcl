@@ -106,7 +106,7 @@ proc cg_map_minimap2 {args} {
 			lappend extraopts {*}$value
 		}
 		-ali_keepcomments {
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-nohardclips {
 			if {[true $value]} {

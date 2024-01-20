@@ -95,7 +95,7 @@ proc cg_map_bwa {args} {
 		}
 		-ali_keepcomments {
 			# not used yet
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-threads - -t {
 			set threads $value

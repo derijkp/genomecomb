@@ -59,7 +59,7 @@ proc map_bowtie2_job {args} {
 		}
 		-ali_keepcomments {
 			# not used yet
-			set ali_keepcomments [true $value]
+			set ali_keepcomments $value
 		}
 		-extraopts {
 			set extraopts $value
