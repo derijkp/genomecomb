@@ -16,7 +16,7 @@ poscol parameter, which indicates which field will contain the position. A
 default value will be added in the bcol file for positions skipped in the
 input file. If the endcol parameter is also given, all values between
 first pos ition and end will be set to the value in the value column. The
-optional chromsomecol parameter can be used to indicate which field must
+optional chromosomecol parameter can be used to indicate which field must
 be used to assign values to a specific chromosome.
 If the input file contains fields with names recognized for chromosome,
 begin or end, these will be automatically used for these parameters. If these

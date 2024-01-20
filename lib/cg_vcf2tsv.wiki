@@ -75,7 +75,7 @@ You can use the -typelist option to specify what to do with them.
 ; -split 0/1/ori: produce a [[tsv]] with split (1), multiallelic (0) alleles or keep the original layout
 ; -sort 0/1: By default (1) cg vcf2tsv will sort the file during conversion. 
 Explicit sorting is not always needed (e.g. if the vcf is sorted and uses 
-a natural sort order for chromsomes, or if sorting will happen later in
+a natural sort order for chromosomes, or if sorting will happen later in
 the workflow anyway) and can be turned of using -sort 0 to save
 processing time.
 ; -t typelist (-typelist): Determines what to do with fields indicated with Number=. in the vcf.

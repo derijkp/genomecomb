@@ -43,7 +43,7 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	set poss [tsv_basicfields $header 6 0]
 	set poss [list_sub $poss {0 1 2 3 5}]
 	if {[inlist $poss -1]} {
-		error "Cannot annotate $file using $dbfile: wrong fields, must contain fields chromsome,begin,end,alt"
+		error "Cannot annotate $file using $dbfile: wrong fields, must contain fields chromosome,begin,end,alt"
 	}
 	set fields [list_sub $header $poss]
 	set f [open $dbfile]

@@ -106,7 +106,7 @@ proc meth_remora_job {args} {
 		cg gzip $target.temp
 		file rename $target.temp.gz $target
 		set o [wgzopen $target2]
-		puts $o [join {chromsome begin end modification_code score strand thickstart thickend color coverage modified_frequency n_mod n_canonical n_othermod n_delete n_fail n_diff n_nocall} \t]
+		puts $o [join {chromosome begin end modification_code score strand thickstart thickend color coverage modified_frequency n_mod n_canonical n_othermod n_delete n_fail n_diff n_nocall} \t]
 		set f [gzopen $target]
 		while {[gets $f line] != -1} {
 			regsub -all " " $line \t line

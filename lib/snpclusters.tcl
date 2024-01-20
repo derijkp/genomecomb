@@ -23,7 +23,7 @@ proc cg_clusters_distgraph {} {
 			set dist [expr {$begin - $pbegin}]
 			puts $o $pbegin\t$dist
 		} else {
-			error "only one chromsome at the time"
+			error "only one chromosome at the time"
 		}
 		foreach {pchr pbegin pend} [list $chr $begin $end] break
 	}

@@ -206,7 +206,7 @@ proc makeprimers_annotate {line shift} {
 	return $line
 }
 
-# db: must point to a dir with cindex chromsome files
+# db: must point to a dir with cindex chromosome files
 # pseq: is the sequence to be found
 # add: will be added to each position where pseq was found in the results
 # nummax: maximum number of hits, if more are encountered, an error will be generated
