@@ -80,7 +80,6 @@ proc meth_remora_job {args} {
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
-	file mkdir $resultfile.temp
 	set destdir [file dir $resultfile]
 	job_logfile $destdir/meth_nanopolish_[file root $bamtail] $destdir $cmdline \
 		{*}[versions samtools gnusort8 modkit os]
@@ -94,11 +93,14 @@ proc meth_remora_job {args} {
 	# -------------------
 	set target $resultfile
 	set target2 [file root [gzroot $resultfile]].tsv.zst
-	job [job_relfile2name seqmeth_nanopolish_index- $bamfile] {*}$skips -cores $threads -deps $deps -targets {
+	job [job_relfile2name meth_remora_modkit- $bamfile] {*}$skips -cores $threads -deps {
+		$bamfile $bamfile.bai
+	} -targets {
 		$target $target2
 	} -vars {
 		bamfile refseq
 	} -code {
+		file delete -force $target.temp
 		exec modkit pileup $bamfile $target.temp \
 			--ref $refseq \
 			--preset traditional \
