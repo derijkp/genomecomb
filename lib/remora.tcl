@@ -104,6 +104,7 @@ proc meth_remora_job {args} {
 		exec modkit pileup $bamfile $target.temp \
 			--ref $refseq \
 			--preset traditional \
+			--only-tabs \
 			>@ stdout 2>@ stderr
 		cg gzip $target.temp
 		file rename $target.temp.gz $target
