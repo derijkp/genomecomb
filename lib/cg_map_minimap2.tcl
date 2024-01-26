@@ -72,6 +72,7 @@ proc cg_map_minimap2 {args} {
 	set fixmate 1
 	set aliformat bam
 	set ali_keepcomments {}
+	set platform ONT
 	cg_options map_minimap2 args {
 		-paired - -p {
 			set paired $value
@@ -81,12 +82,15 @@ proc cg_map_minimap2 {args} {
 				set value splice:hq
 			} elseif {$value in "pb pacbio"} {
 				set value map-pb
+				set platform PACBIO
 			} elseif {$value in "ont"} {
 				set value map-ont
 			} elseif {$value in "avapb"} {
 				set value ava-pb
+				set platform PACBIO
 			} elseif {$value in "pb avaont"} {
 				set value ava-ont
+				set platform PACBIO
 			} elseif {$value eq "splicesmall"} {
 				set value splice
 				lappend extraopts -B3 -O3,6
@@ -123,7 +127,16 @@ proc cg_map_minimap2 {args} {
 		lappend extraopts -y
 	}
 	if {$preset eq ""} {
-		if {$paired} {set preset sr} else {set preset map-ont}
+		if {$paired} {
+			set preset sr
+			set platform illumina
+		} else {
+			set preset map-ont
+			set platform ONT
+		}
+	}
+	if {![dict exists $readgroupdata PL]} {
+		dict set readgroupdata PL $platform
 	}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]

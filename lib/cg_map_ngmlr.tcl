@@ -86,6 +86,14 @@ proc cg_map_ngmlr {args} {
 		align reads in fastq files to a reference genome using ngmlr
 	}
 	if {$preset eq ""} {set preset ont}
+	if {![dict exists $readgroupdata PL]} {
+		if {$preset eq "ont"} {
+			set platform ONT
+		} else {
+			set platform PACBIO
+		}
+		dict set readgroupdata PL $platform
+	}
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
