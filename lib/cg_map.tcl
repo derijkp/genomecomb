@@ -175,7 +175,6 @@ proc map_job {args} {
 			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams use_ali_keepcomments
 		} -code {
 			set cleanupfiles {}
-			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 			if {$joinfastqs || $ubams} {
 				set tempfastq1 [tempfile].fastq.gz
 				if {!$paired} {
@@ -238,6 +237,7 @@ proc map_job {args} {
 					{*}[convert_pipe -.sam $tempfile -compressionlevel $compressionlevel -refseq $refseq -threads $threads -endpipe 1]
 			}
 			result_rename $tempfile $result
+			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 			foreach file $cleanupfiles {
 				file delete $file
 			}
