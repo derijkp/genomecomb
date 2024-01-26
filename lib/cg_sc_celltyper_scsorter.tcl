@@ -49,10 +49,30 @@ proc sc_celltyper_scsorter_job {args} {
 			suppressMessages(library(tidyverse))
 			suppressMessages(library(scSorter))
 			suppressMessages(library(patchwork))
-			# suppressMessages(library(argparser))
-			# suppressMessages(library(DropletUtils))
-			# suppressMessages(library(DoubletFinder))
-			# suppressMessages(library(scDblFinder))
+			ggplotColours <- function(n = 6, h = c(0, 360) + 15){
+			  if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
+			  hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
+			}
+			#
+			# read markers (and flagh errors if present)
+			cellmarkers <- read.table(cellmarkerfile,sep='\t',header=TRUE)
+			if (tissue != "") {
+				if (length(cellmarkers$tissue) == 0) {
+					stop("cellmarker file has no column named tissue")
+				}
+				cellmarkers = cellmarkers[cellmarkers$tissue == tissue]
+			}
+			markergenes=cellmarkers$marker
+			if (length(markergenes) == 0) {
+				markergenes=cellmarkers$gene
+			}
+			if (length(markergenes) == 0) {
+				stop("cellmarker file has no column named marker (or gene)")
+			}
+			if (length(cellmarkers$celltype) == 0) {
+				stop("cellmarker file has no column named celltype")
+			}
+			markers <- data.frame(Type=cellmarkers$celltype,Marker=markergenes)
 			#
 			# 1. Load sample
 			mat=Read10X(scgenefile10x)
@@ -86,11 +106,6 @@ proc sc_celltyper_scsorter_job {args} {
 			SOB_filtered <- SOB
 			
 			# 6. Cell type annotation
-			cellmarkers <- read.table(cellmarkerfile,sep='\t',header=TRUE)
-			if (tissue != "") {
-				cellmarkers = cellmarkers[cellmarkers$tissue == tissue]
-			}
-			markers <- data.frame(Type=cellmarkers$celltype,Marker=cellmarkers$marker)
 			if ("weight" %in% colnames(cellmarkers)) {
 				markers$Weight = cellmarkers$weight
 				markers$Weight[which(is.na(markers$Weight))] = 1
@@ -98,11 +113,6 @@ proc sc_celltyper_scsorter_job {args} {
 			if ("markertype" %in% colnames(cellmarkers)) {
 				markers = markers[cellmarkers$markertype == "up" | cellmarkers$markertype == "",]
 			}
-			unique_values <- unique(markers$Type)
-			num_colors <- length(unique_values)
-			color_palette <- c("mediumblue", "#762a83", "turquoise1", "#e31a1c", "#ff7f00","#33a02c", "#b2df8a", "yellow", "#c51b7d")
-			color_palette <- color_palette[1:num_colors]
-			color_list <- setNames(color_palette, unique_values)
 			#
 			varFeats <- FindVariableFeatures(SOB_filtered, selection.method = "vst", nfeatures = 5000)
 			topgenes <- head(VariableFeatures(varFeats), 5000)
@@ -114,7 +124,26 @@ proc sc_celltyper_scsorter_job {args} {
 			#
 			picked_genes <- unique(c(markers$Marker, topgenes))
 			expr <- expr[rownames(expr) %in% picked_genes, ]
-			rts <- scSorter(expr, markers)
+			markerspresent = markers$Marker %in% rownames(expr)
+			if (!all(markerspresent)) {
+				missing = markers$Marker[!markerspresent]
+				warning(paste("skipping markers missing in data set:",paste(missing,collapse=",")))
+				cmarkers = markers[markers$Marker %in% rownames(expr), ]
+				cmarkers=droplevels(cmarkers)
+				rownames(cmarkers) = 1:nrow(cmarkers)
+			} else {
+				cmarkers = markers
+			}
+			rts <- scSorter(expr, cmarkers)
+			unique_values <- unique(cmarkers$Type)
+			num_colors <- length(unique_values)
+			color_palette <- c("mediumblue", "#762a83", "turquoise1", "#e31a1c", "#ff7f00","#33a02c", "#b2df8a", "yellow", "#c51b7d")
+			if (num_colors <= length(color_palette)) {
+				color_palette <- color_palette[1:num_colors]
+			} else {
+				color_palette <- ggplotColours(n=num_colors)
+			}
+			color_list <- setNames(color_palette, unique_values)
 			rm(expr, varFeats, topgenes, topgene_filter, picked_genes)
 			df <- data.frame(rbind(table(as.character(rts$Pred_Type))), check.names = FALSE) %>% gather(key = "CellType", value = "CellNumber")
 			df$Percentage <- round((df$CellNumber / sum(df$CellNumber)) * 100, 1)
@@ -135,7 +164,6 @@ proc sc_celltyper_scsorter_job {args} {
 				labs(title = paste0("UMAP plot ", rootname))  + theme_classic() + 
 				guides(shape = guide_legend(override.aes = list(size = 2)), color = guide_legend(override.aes = list(size = 2))) +
 				theme(legend.title = element_text(size = 10), legend.text = element_text(size = 9))
-			  
 			final_plot <- p2 + p3
 			final_plot <- final_plot + plot_layout(guides = "collect")
 			#
