@@ -16,6 +16,7 @@ proc plotly_colors {num} {
 	lrange $result 0 [expr {$num-1}]
 }
 
+# chartdata: elementname xs ys elementname2 xs2 ys2 ...
 proc plotly {name chartdata title xaxis yaxis {xmax {}} {ymax {}}} {
 	set resulthtml "\n<div class = \"nobreak\">\n<h2>$title</h2>\n"
 	append resulthtml "<div id=\"$name\" class=\"nobreak\" style=\"height: 400px; width: 100%\"></div>\n"

@@ -167,6 +167,122 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 	}
 }
 
+proc reports_singlecell {sampledir} {
+	set sample [file tail $sampledir]
+	set rootname $sample
+	if {[file exists $sampledir/reports/report_fastq_fw-$rootname.tsv]} {
+		set total_reads [lindex [exec grep fw_numreads $sampledir/reports/report_fastq_fw-$rootname.tsv] end]
+	} else {
+		set total_reads NA
+	}
+	set countfile [gzfile $sampledir/umis_per_cell_raw-*$rootname.tsv $sampledir/umis_per_cell_raw*.tsv]
+	if {[file exists $countfile]} {
+		set cellbarcoded_reads [lindex [cg select -g all -gc sum(count) $countfile] end]
+		set pct_cellbarcoded [format %.2f [expr {100.0*$cellbarcoded_reads/$total_reads}]]
+	} else {
+		set cellbarcoded_reads NA
+		set pct_cellbarcoded NA
+	}
+	set countfile [gzfile $sampledir/sc_gene_counts_raw-*$rootname.tsv]
+	if {[file exists $countfile]} {
+		set temp [cg select -g all -gc sum(count) $countfile]
+		set rawgenecount_reads [lindex $temp end]
+		set pct_rawgenecount_reads [format %.2f [expr {100.0*$rawgenecount_reads/$total_reads}]]
+	} else {
+		set rawgenecount_reads NA
+		set pct_rawgenecount_reads NA
+	}
+	set countsfile [gzfile $sampledir/sc_gene_counts_filtered-*$rootname.tsv]
+	if {[file exists $countsfile]} {
+		set temp [cg select -g all -gc sum(count) $countsfile]
+		set filteredgenecount_reads [lindex $temp end]
+		set pct_filteredgenecount_reads [format %.2f [expr {100.0*$filteredgenecount_reads/$total_reads}]]
+		set genes_percell [cg select -g {cell * gene *} $countsfile | cg select -g cell]
+		set temp [lrange [list_subindex [split $genes_percell \n] 1] 1 end]
+		set mean_genes_percell [lmath_average $temp]
+		set mediangenes [median $temp]
+	} else {
+		set filteredgenecount_reads NA
+		set pct_filteredgenecount_reads NA
+		set mean_genes_percell NA
+		set mediangenes NA
+	}
+	set countsfile [gzfile $sampledir/sc_isoform_counts_filtered-*$rootname.tsv]
+	if {[file exists $countsfile]} {
+		set temp [cg select -g all -gc sum(counts_weighed) $countsfile]
+		set filteredisoformcount_reads [lindex $temp end]
+		set pct_filteredisoformcount_reads [format %.2f [expr {100.0*$filteredisoformcount_reads/$total_reads}]]
+		set isoforms_percell [cg select -g {cell * transcript *} $countsfile | cg select -g cell]
+		set temp [lrange [list_subindex [split $isoforms_percell \n] 1] 1 end]
+		set mean_isoforms_percell [lmath_average $temp]
+		set median_isoforms_percell [median $temp]
+	} else {
+		set filteredisoformcount_reads NA
+		set pct_filteredisoformcount_reads NA
+		set mean_isoforms_percell NA
+		set median_isoforms_percell NA
+	}
+	set countsfile [gzfile $sampledir/sc_cellinfo_filtered-*$rootname.tsv sc_cellinfo_filtered-*.tsv]
+	if {[file exists $countsfile]} {
+		set readcounts [cg select -sh /dev/null -q {$is_cell} -f readcount $countsfile]
+		set mean_readcounts [lmath_average $readcounts]
+		set median_readcounts [median $readcounts]
+	} else {
+		set mean_readcounts NA
+		set median_readcounts NA
+	}
+	#
+	set countsfile [gzfile $sampledir/sc_gene_counts_filtered-*$rootname.tsv sc_gene_counts_filtered-*.tsv]
+	set nrcells [lindex [cg select -g cell $countsfile | cg select -g all ] end]
+	# write file
+	set o [open $sampledir/reports/report_singlecell-$sample.tsv w]
+	puts $o [join {sample source parameter value} \t]
+	puts $o [join [list $sample genomecomb sc_total_reads $total_reads] \t]
+	puts $o [join [list $sample genomecomb sc_cellbarcoded_reads $cellbarcoded_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_cellbarcoded $pct_cellbarcoded] \t]
+	puts $o [join [list $sample genomecomb sc_rawgenecount_reads $rawgenecount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_rawgenecount_reads $pct_rawgenecount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_filteredgenecount_reads $filteredgenecount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_filteredgenecount_reads $pct_filteredgenecount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_filteredisoformcount_reads $filteredisoformcount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_filteredisoformcount_reads $pct_filteredisoformcount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_nrcells $nrcells] \t]
+	puts $o [join [list $sample genomecomb sc_mean_readcounts $mean_readcounts] \t]
+	puts $o [join [list $sample genomecomb sc_median_readcounts $median_readcounts] \t]
+	puts $o [join [list $sample genomecomb sc_mean_genes_percell $mean_genes_percell] \t]
+	puts $o [join [list $sample genomecomb sc_median_genes_percell $mediangenes] \t]
+	puts $o [join [list $sample genomecomb sc_mean_isoforms_percell $mean_isoforms_percell] \t]
+	puts $o [join [list $sample genomecomb sc_median_isoforms_percell $median_isoforms_percell] \t]
+	close $o
+	set o [open $sampledir/reports/report_singlecell-cellgrouping-$sample.tsv w]
+	puts $o [join {sample source parameter group value} \t]
+	foreach groupfile [gzfiles $sampledir/sc_group-*.tsv] {
+		set data [string trim [cg select -g group $groupfile | cg select -sh /dev/null]]
+		set root [join [lrange [split [file_rootname $groupfile] -] 0 end-1] -]
+		foreach {type count} [split $data \n\t] {
+			puts $o [join [list $sample $root sc_nrcells $type $count] \t]
+		}
+	}
+	close $o
+	set o [open $sampledir/reports/singlecell-pseudobulk_isoforms-$sample.tsv w]
+	puts $o [join {sample source group nrisoforms count} \t]
+	foreach pbfile [gzfiles $sampledir/pb_isoform_counts-*.tsv] {
+		set data [cg long $pbfile \
+			| cg select -q {$counts_weighed > 0} \
+			| cg select -g {sample * gene *} \
+			| cg select -g {sample * count *} \
+		]
+		set root [join [lrange [split [file_rootname $pbfile] -] 0 end-1] -]
+		foreach line [lrange [split $data \n] 1 end] {
+			foreach {sample nrisoforms count} [split $line \t] break
+			set group [lindex [split $sample -] 0]
+			set sample [lindex [split $sample -] end]
+			puts $o [join [list $sample $root $group $nrisoforms $count] \t]
+		}
+	}
+	close $o
+}
+
 proc reports_expand {reports} {
 	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender}
 	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
@@ -516,6 +632,24 @@ proc process_reports_job {args} {
 					file rename -force -- $target.temp $target
 				}
 			}
+		}
+	}
+	if {[inlist $reports singlecell]} {
+		set deps [list]
+		lappend deps [jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv]
+		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
+		lappend deps [jobgzfile $sampledir/sc_gene_counts_raw-*$sample.tsv]
+		lappend deps [jobgzfile $sampledir/sc_gene_counts_filtered-*$sample.tsv sc_gene_counts_filtered-*.tsv]
+		lappend deps [jobgzfile $sampledir/sc_cellinfo_filtered-*$sample.tsv sc_cellinfo_filtered-*.tsv]
+		# set deps "([join $deps ") ("])"
+		job reports_singlecell-$sample -deps $deps -targets {
+			$sampledir/reports/report_singlecell-$sample.tsv
+			$sampledir/reports/report_singlecell-cellgrouping-$sample.tsv
+			$sampledir/reports/singlecell-pseudobulk_isoforms-$sample.tsv
+		} -vars {
+			sampledir
+		} -code {
+			reports_singlecell $sampledir
 		}
 	}
 	if {[inlist $reports vars]} {

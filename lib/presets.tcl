@@ -19,7 +19,7 @@ proc preset_scywalker {} {
 		sc_celltypers {}
 		distrreg g5000000
 		iso_match novel
-		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo}
+		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
 	}
 }
 

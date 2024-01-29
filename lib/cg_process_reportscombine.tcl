@@ -320,6 +320,105 @@ table th.sort-up:before {
 }
 }
 
+proc reportscombine_singlecell {reportdirs dataVar} {
+#putsvars reportdirs
+#error stop
+	upvar $dataVar data
+	
+	set html "\n<h2>Single cell overview</h2>\n"
+	# singlecell summary
+	set fields {
+		nrcells
+		mean_readcounts
+		median_readcounts
+		mean_genes_percell
+		median_genes_percell
+		mean_isoforms_percell
+		median_isoforms_percell
+		total_reads
+		cellbarcoded_reads
+		pct_cellbarcoded
+		rawgenecount_reads
+		pct_rawgenecount_reads
+		filteredgenecount_reads
+		pct_filteredgenecount_reads
+		filteredisoformcount_reads
+		pct_filteredisoformcount_reads
+	}
+	set table [list [list sample {*}$fields]]
+	foreach dir $reportdirs {
+		set sample [file tail [file dir $dir]]
+		set file [glob -nocomplain $dir/report_singlecell-$sample.tsv]
+		if {![file exists $file]} continue
+		unset -nocomplain a
+		array set a [split [string trim [cg select -f {parameter value} $file]] \n\t]
+		set line {}
+		lappend line $sample
+		foreach field $fields {
+			set value [get a(sc_$field) ?]
+			if {[regexp \\. $value]} {
+				set value [format %.2f $value]
+			}
+			lappend line $value
+		}
+		lappend table $line
+	}
+	append html [report_htmltable singlecellinfo $table]
+	append html "\n<h2>Single cell celltyping overview (nrcells)</h2>\n"
+	#
+	# celltyping
+	unset -nocomplain samplea
+	unset -nocomplain groupa
+	unset -nocomplain sourcea
+	unset -nocomplain a
+	foreach dir $reportdirs {
+		set sample [file tail [file dir $dir]]
+		set file [glob -nocomplain $dir/report_singlecell-cellgrouping-$sample.tsv]
+		if {![file exists $file]} continue
+		foreach {sample source group value} [split [string trim [cg select -sh /dev/null -f {sample source group value} $file]] \n\t] {
+if {$group eq "group"} error
+			set a($sample,$source,$group) $value
+			set samplea($sample) 1
+			set groupa($group) 1
+			set sourcea($source) 1
+		}
+	}
+	set groups [bsort [array names groupa]]
+	set samples [bsort [array names samplea]]
+	set sources [bsort [array names sourcea]]
+	set table [list [list source sample {*}$groups]]
+	foreach source $sources {
+		foreach sample $samples {
+			set line [list $source $sample]
+			foreach group $groups {
+				lappend line [get a($sample,$source,$group) 0]
+			}
+			lappend table $line
+		}
+	}
+	append html [report_htmltable celltyping $table]
+	#
+	# isoforms
+	unset -nocomplain xsa
+	unset -nocomplain ysa
+	foreach dir $reportdirs {
+		set sample [file tail [file dir $dir]]
+		set file [glob -nocomplain $dir/singlecell-pseudobulk_isoforms-$sample.tsv]
+		if {![file exists $file]} continue
+		foreach {sample source group nrisoforms count} [split [string trim [cg select -sh /dev/null -f {sample source group nrisoforms count} $file]] \n\t] {
+			set element $source-$group-$sample
+			lappend xsa($element) $nrisoforms
+			lappend ysa($element) $count
+		}
+	}
+	set tabledata {}
+	foreach element [bsort [array names xsa]] {
+		lappend tabledata $element $xsa($element) $ysa($element)
+	}
+	append html [plotly nrisoforms $tabledata "Number of genes with given nr of isoforms" "nr of isoforms" "nr of genes"]\n
+	return $html
+}
+
 proc reportscombine_table_yield {samples dataVar} {
 	upvar $dataVar data
 	set html "\n<h2>Yield and quality overview</h2>\n"
@@ -1016,6 +1115,7 @@ proc process_reportscombine_job {args} {
 	set uastatsqualityfiles {}
 	set statsgcfiles {}
 	set uastatsgcfiles {}
+	set singlecellfiles {}
 	foreach dir $reportstodo {
 		if {[file extension [gzroot $dir]] eq ".txt"} {
 			if {[regexp ^fastqc $dir]} {
@@ -1056,6 +1156,9 @@ proc process_reportscombine_job {args} {
 				$dir/alignedsamstats_GCF-*.tsv.zst $dir/unalignedsamstats_GCF-*.tsv.zst \
 				$dir/alignedsamstats_GCL-*.tsv.zst $dir/unalignedsamstats_GCL-*.tsv.zst \
 			]
+			lappend singlecellfiles {*}[jobglob \
+				$dir/*singlecell*.tsv \
+			]
 		}
 	}
 	set reports [bsort [list_remdup $reports]]
@@ -1067,7 +1170,8 @@ proc process_reportscombine_job {args} {
 	set uastatsqualityfiles [bsort [list_remdup $uastatsqualityfiles]]
 	set statsgcfiles [bsort [list_remdup $statsgcfiles]]
 	set uastatsgcfiles [bsort [list_remdup $uastatsgcfiles]]
-	set deps [list_concat $reports $histofiles $fastqcfiles $statsrlfiles $uastatsrlfiles $statsqualityfiles $statsgcfiles $uastatsgcfiles]
+	set singlecellfiles [bsort [list_remdup $singlecellfiles]]
+	set deps [list_concat $reports $histofiles $fastqcfiles $statsrlfiles $uastatsrlfiles $statsqualityfiles $statsgcfiles $uastatsgcfiles $singlecellfiles]
 
 	if {[llength $deps]} {
 		set target $destdir/report_stats-${experimentname}.tsv
@@ -1078,7 +1182,7 @@ proc process_reportscombine_job {args} {
 		}
 		job reportscombine_stats-$experimentname -deps $deps -vars {
 			reportdirs reports histofiles fastqcfiles experimentname dbdir 
-			statsrlfiles statsqualityfiles uastatsqualityfiles uastatsrlfiles statsgcfiles uastatsgcfiles
+			statsrlfiles statsqualityfiles uastatsqualityfiles uastatsrlfiles statsgcfiles uastatsgcfiles singlecellfiles
 		} -targets {
 			$target $target2 $target3
 		} -code {
@@ -1170,8 +1274,8 @@ proc process_reportscombine_job {args} {
 				if {$pct_pf_reads ne ""} {set data($sample,pct_pf_reads) $pct_pf_reads}
 				if {$pf_unique_reads ne ""} {set data($sample,pf_unique_reads) $pf_unique_reads}
 				if {$pct_pf_unique_reads ne ""} {set data($sample,pct_pf_unique_reads) $pct_pf_unique_reads}
-				if {$pf_mapped ne ""} {set data$sample,pf_mapped) $pf_mapped}
-				if {$pct_pf_aligned_reads ne ""} {set data$sample,pct_pf_aligned_reads) $pct_pf_aligned_reads}
+				if {$pf_mapped ne ""} {set data($sample,pf_mapped) $pf_mapped}
+				if {$pct_pf_aligned_reads ne ""} {set data($sample,pct_pf_aligned_reads) $pct_pf_aligned_reads}
 				# rest
 				lappend resultline [get data($bamname,histodepth,targetbases) {}]
 				lappend resultline [get data($bamname,histodepth,pct_target_bases_2X) {}]
@@ -1325,6 +1429,12 @@ proc process_reportscombine_job {args} {
 			# ----------------------
 			puts $o [reportscombine_table_alignment $alignments data $dbdir]
 			#
+			# singlecell info table
+			# ---------------------
+			if {[llength $singlecellfiles]} {
+				puts $o [reportscombine_singlecell $reportdirs data]
+			}
+			#
 			# Variant info table
 			# ------------------
 			puts $o [reportscombine_table_variant $alignments data $vcallers]
@@ -1404,8 +1514,8 @@ proc process_reportscombine_job {args} {
 			}]] [list <GENOMECOMBVERSION> [version genomecomb]]]
 			close $o
 
+			puts "Created $target3"
 		}
-		puts "Created $target3"
 	}
 }
 
