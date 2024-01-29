@@ -870,8 +870,8 @@ proc process_sample_job {args} {
 		foreach aligner $aligners {
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
-			lappend skips $bamfile [analysisinfo_file $bamfile]
-			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
+			lappend skips $bamfile
+			lappend skipsresult $resultbamfile
 			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
 			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
 				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
@@ -986,8 +986,8 @@ proc process_sample_job {args} {
 		foreach aligner $aligners {
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
-			lappend skips $bamfile [analysisinfo_file $bamfile]
-			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
+			lappend skips $bamfile
+			lappend skipsresult $resultbamfile
 			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
 			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
 				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
