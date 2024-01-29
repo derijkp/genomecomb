@@ -298,7 +298,29 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		# outputa: all transcripts that must be output separately from known (oriname -> newname)
 		unset -nocomplain converta
 		unset -nocomplain outputa
-		cg_gtf2tsv $mfile $destdir/transcripts_models-$sample.tsv
+		cg_gtf2tsv $mfile $destdir/transcripts_models-$sample.tsv.temp
+		# check for and fix transcript out of gene area error
+		# these were double assignments (one wrong), so wrong ones can be filtered out
+		set f [gzopen $destdir/transcripts_models-$sample.tsv.temp]
+		set header [tsv_open $f]
+		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 11 12 13}]
+		set o [wgzopen $destdir/transcripts_models-$sample.tsv.temp2]
+		puts $o [join $header \t]
+		while {[gets $f line] != -1} {
+			foreach {c b e s iso g gid} [list_sub [split $line \t] $poss] break
+			if {[info exists genebasica($g)]} {
+				foreach {gc gb ge gs} $genebasica($g) break
+				if {$s ne $gs || $c ne $gc || $e < $gb || $b >= $ge} {
+					puts "skipping $iso ($g) because not in gene region $genebasica($g): $line"
+					continue
+				}
+			}
+			puts $o $line
+		}
+		gzclose $o
+		close $f
+		file rename -force $destdir/transcripts_models-$sample.tsv.temp2 $destdir/transcripts_models-$sample.tsv
+		#
 		catch {close $f}
 		set f [open $destdir/transcripts_models-$sample.tsv]
 		set header [tsv_open $f comments]
