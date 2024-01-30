@@ -937,7 +937,7 @@ proc process_sample_job {args} {
 		set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 	}
 	# put check here, because fastqs might be generated from bams, etc.
-	if {$minfastqreads > 0} {
+	if {$singlecell eq "" && $minfastqreads > 0} {
 		# check if we have the minimum number of reads required (default 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		if {![checkminreads $fastqdir $minfastqreads num]} {
