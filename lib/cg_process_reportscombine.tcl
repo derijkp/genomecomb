@@ -383,7 +383,6 @@ proc reportscombine_singlecell {reportdirs dataVar} {
 		set file [glob -nocomplain $dir/report_singlecell-cellgrouping-$sample.tsv]
 		if {![file exists $file]} continue
 		foreach {sample source group value} [split [string trim [cg select -sh /dev/null -f {sample source group value} $file]] \n\t] {
-if {$group eq "group"} error
 			set a($sample,$source,$group) $value
 			set samplea($sample) 1
 			set groupa($group) 1
@@ -404,6 +403,28 @@ if {$group eq "group"} error
 		}
 	}
 	append html [report_htmltable celltyping $table]
+	#
+	# isoform pct_covered
+	set tabledata {}
+	foreach dir $reportdirs {
+		set sampledir [file dir $dir]
+		set sample [file tail $sampledir]
+		set file [glob -nocomplain $sampledir/reports/singlecell-isoform_pctcovered-$sample.tsv]
+		if {![file exists $file]} continue
+		set xs {}
+		set ys {}
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		while {[gets $f line] != -1} {
+			foreach {x y} [split $line \t] break
+			if {$x == 0} continue
+			lappend xs $x
+			lappend ys $y
+		}
+		gzclose $f
+		lappend tabledata $sample $xs $ys
+	}
+	append html [plotly isoform_pct_covered $tabledata "Read coverage of isoforms" "pct of isoform covered" "nr of umi corrected reads"]\n
 	#
 	# isoforms
 	unset -nocomplain xsa
