@@ -336,14 +336,21 @@ proc reportscombine_singlecell {reportdirs dataVar} {
 		mean_isoforms_percell
 		median_isoforms_percell
 		total_reads
-		cellbarcoded_reads
-		pct_cellbarcoded
-		rawgenecount_reads
-		pct_rawgenecount_reads
-		filteredgenecount_reads
-		pct_filteredgenecount_reads
-		filteredisoformcount_reads
-		pct_filteredisoformcount_reads
+		barcoded_reads
+		pct_barcoded_reads
+		validbarcoded_reads
+		pct_validbarcoded_reads
+		total_umis
+		barcoded_umis
+		pct_barcoded_umis
+		validbarcoded_umis
+		pct_validbarcoded_umis
+		rawgenecount
+		pct_rawgenecount
+		filteredgenecount
+		pct_filteredgenecount
+		filteredisoformcount
+		pct_filteredisoformcount
 	}
 	set table [list [list sample {*}$fields]]
 	foreach dir $reportdirs {

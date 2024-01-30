@@ -175,50 +175,68 @@ proc reports_singlecell {sampledir} {
 	} else {
 		set total_reads NA
 	}
-	set countfile [gzfile $sampledir/umis_per_cell_raw-*$rootname.tsv $sampledir/umis_per_cell_raw*.tsv]
+	set countfile [gzfile $sampledir/mergedbarcodes.tsv.zst]
 	if {[file exists $countfile]} {
-		set cellbarcoded_reads [lindex [cg select -g all -gc sum(count) $countfile] end]
-		set pct_cellbarcoded [format %.2f [expr {100.0*$cellbarcoded_reads/$total_reads}]]
+		set temp [cg select -f {{group=if($whitelist == 1,"valid",$barcode eq "","nobc","invalid")}} -g group -gc sum(count),sum(umicount) $countfile]
+		foreach {
+			na invalidreads invalidumis na nobcreads na na validreads validumis
+		} [lrange [split $temp \n\t] 3 end] break
+		set barcoded_reads [expr {$invalidreads + $validreads}]
+		set pct_barcoded_reads [format %.2f [expr {100.0*$barcoded_reads/$total_reads}]]
+		set validbarcoded_reads $validreads
+		set pct_validbarcoded_reads [format %.2f [expr {100.0*$validbarcoded_reads/$total_reads}]]
+		set total_umis [expr {$invalidumis + $validumis + $nobcreads}]
+		set barcoded_umis [expr {$invalidumis + $validumis}]
+		set pct_barcoded_umis [format %.2f [expr {100.0*$barcoded_umis/$total_umis}]]
+		set validbarcoded_umis $validumis
+		set pct_validbarcoded_umis [format %.2f [expr {100.0*$validbarcoded_umis/$total_umis}]]
 	} else {
-		set cellbarcoded_reads NA
-		set pct_cellbarcoded NA
+		set barcoded_reads NA
+		set pct_barcoded_reads NA
+		set validbarcoded_reads NA
+		set pct_validbarcoded_reads NA
+		set total_umis NA
+		set barcoded_umis NA
+		set pct_barcoded_umis NA
+		set validbarcoded_umis NA
+		set pct_validbarcoded_umis NA
 	}
 	set countfile [gzfile $sampledir/sc_gene_counts_raw-*$rootname.tsv]
 	if {[file exists $countfile]} {
 		set temp [cg select -g all -gc sum(count) $countfile]
-		set rawgenecount_reads [lindex $temp end]
-		set pct_rawgenecount_reads [format %.2f [expr {100.0*$rawgenecount_reads/$total_reads}]]
+		set rawgenecount [lindex $temp end]
+		set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
 	} else {
-		set rawgenecount_reads NA
-		set pct_rawgenecount_reads NA
+		set rawgenecount NA
+		set pct_rawgenecount NA
 	}
 	set countsfile [gzfile $sampledir/sc_gene_counts_filtered-*$rootname.tsv]
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(count) $countsfile]
-		set filteredgenecount_reads [lindex $temp end]
-		set pct_filteredgenecount_reads [format %.2f [expr {100.0*$filteredgenecount_reads/$total_reads}]]
+		set filteredgenecount [lindex $temp end]
+		set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
 		set genes_percell [cg select -g {cell * gene *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $genes_percell \n] 1] 1 end]
 		set mean_genes_percell [lmath_average $temp]
 		set mediangenes [median $temp]
 	} else {
-		set filteredgenecount_reads NA
-		set pct_filteredgenecount_reads NA
+		set filteredgenecount NA
+		set pct_filteredgenecount NA
 		set mean_genes_percell NA
 		set mediangenes NA
 	}
 	set countsfile [gzfile $sampledir/sc_isoform_counts_filtered-*$rootname.tsv]
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(counts_weighed) $countsfile]
-		set filteredisoformcount_reads [lindex $temp end]
-		set pct_filteredisoformcount_reads [format %.2f [expr {100.0*$filteredisoformcount_reads/$total_reads}]]
+		set filteredisoformcount [lindex $temp end]
+		set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
 		set isoforms_percell [cg select -g {cell * transcript *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $isoforms_percell \n] 1] 1 end]
 		set mean_isoforms_percell [lmath_average $temp]
 		set median_isoforms_percell [median $temp]
 	} else {
-		set filteredisoformcount_reads NA
-		set pct_filteredisoformcount_reads NA
+		set filteredisoformcount NA
+		set pct_filteredisoformcount NA
 		set mean_isoforms_percell NA
 		set median_isoforms_percell NA
 	}
@@ -238,14 +256,21 @@ proc reports_singlecell {sampledir} {
 	set o [open $sampledir/reports/report_singlecell-$sample.tsv w]
 	puts $o [join {sample source parameter value} \t]
 	puts $o [join [list $sample genomecomb sc_total_reads $total_reads] \t]
-	puts $o [join [list $sample genomecomb sc_cellbarcoded_reads $cellbarcoded_reads] \t]
-	puts $o [join [list $sample genomecomb sc_pct_cellbarcoded $pct_cellbarcoded] \t]
-	puts $o [join [list $sample genomecomb sc_rawgenecount_reads $rawgenecount_reads] \t]
-	puts $o [join [list $sample genomecomb sc_pct_rawgenecount_reads $pct_rawgenecount_reads] \t]
-	puts $o [join [list $sample genomecomb sc_filteredgenecount_reads $filteredgenecount_reads] \t]
-	puts $o [join [list $sample genomecomb sc_pct_filteredgenecount_reads $pct_filteredgenecount_reads] \t]
-	puts $o [join [list $sample genomecomb sc_filteredisoformcount_reads $filteredisoformcount_reads] \t]
-	puts $o [join [list $sample genomecomb sc_pct_filteredisoformcount_reads $pct_filteredisoformcount_reads] \t]
+	puts $o [join [list $sample genomecomb sc_barcoded_reads $barcoded_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_barcoded_reads $pct_barcoded_reads] \t]
+	puts $o [join [list $sample genomecomb sc_validbarcoded_reads $validbarcoded_reads] \t]
+	puts $o [join [list $sample genomecomb sc_pct_validbarcoded_reads $pct_validbarcoded_reads] \t]
+	puts $o [join [list $sample genomecomb sc_total_umis $total_umis] \t]
+	puts $o [join [list $sample genomecomb sc_barcoded_umis $barcoded_umis] \t]
+	puts $o [join [list $sample genomecomb sc_pct_barcoded_umis $pct_barcoded_umis] \t]
+	puts $o [join [list $sample genomecomb sc_validbarcoded_umis $validbarcoded_umis] \t]
+	puts $o [join [list $sample genomecomb sc_pct_validbarcoded_umis $pct_validbarcoded_umis] \t]
+	puts $o [join [list $sample genomecomb sc_rawgenecount $rawgenecount] \t]
+	puts $o [join [list $sample genomecomb sc_pct_rawgenecount $pct_rawgenecount] \t]
+	puts $o [join [list $sample genomecomb sc_filteredgenecount $filteredgenecount] \t]
+	puts $o [join [list $sample genomecomb sc_pct_filteredgenecount $pct_filteredgenecount] \t]
+	puts $o [join [list $sample genomecomb sc_filteredisoformcount $filteredisoformcount] \t]
+	puts $o [join [list $sample genomecomb sc_pct_filteredisoformcount $pct_filteredisoformcount] \t]
 	puts $o [join [list $sample genomecomb sc_nrcells $nrcells] \t]
 	puts $o [join [list $sample genomecomb sc_mean_readcounts $mean_readcounts] \t]
 	puts $o [join [list $sample genomecomb sc_median_readcounts $median_readcounts] \t]
@@ -281,6 +306,12 @@ proc reports_singlecell {sampledir} {
 		}
 	}
 	close $o
+	set countfile [gzfile $sampledir/read_assignments-*$sample.tsv]
+	cg select -overwrite 1 -f {
+		{rcovered_pct=round($covered_pct)}
+		{ccount=if($ambiguity <= 1,if($umicount <= 1,1,1.0/$umicount),1.0/($ambiguity * $umicount))}
+	} -g rcovered_pct -gc sum(ccount) $countfile $sampledir/reports/singlecell-isoform_pctcovered-$sample.tsv.temp
+	file rename -force $sampledir/reports/singlecell-isoform_pctcovered-$sample.tsv.temp $sampledir/reports/singlecell-isoform_pctcovered-$sample.tsv
 }
 
 proc reports_expand {reports} {
@@ -646,6 +677,7 @@ proc process_reports_job {args} {
 			$sampledir/reports/report_singlecell-$sample.tsv
 			$sampledir/reports/report_singlecell-cellgrouping-$sample.tsv
 			$sampledir/reports/singlecell-pseudobulk_isoforms-$sample.tsv
+			$sampledir/reports/singlecell-isoform_pctcovered-$sample.tsv
 		} -vars {
 			sampledir
 		} -code {
