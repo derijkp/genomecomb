@@ -42,7 +42,7 @@ if {![info exists basetestdir]} {
 	}
 }
 file mkdir $basetestdir
-cd $basetestdir
+# cd $basetestdir
 set testdir $basetestdir
 
 puts "Using as testdir: $basetestdir"
