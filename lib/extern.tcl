@@ -182,6 +182,31 @@ proc gatkexec {args} {
 
 proc gatk3exec {args} {
 	global gatk3
+	# first check for portable dir via link
+	if {![info exists gatk3(version)]} {
+		if {![catch {exec which gatk3} binary]} {
+			set link [file link $binary]
+			set gatk3(dir) [file join [file dir $binary] [file dir $link]]
+			set gatk3(jar) [glob $gatk3(dir)/GenomeAnalysisTK*/*.jar]
+			set gatk3(java) [glob $gatk3(dir)/java-*/jre/bin/java]
+			if {![catch {exec $gatk3(java) -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
+				set gatk3(version) $version
+			}
+		}
+	}
+	# check for portable dir directly
+	if {![info exists gatk3(version)]} {
+		set path [searchpath GATK3 gatk3-*-*]
+		if {[file exists $path]} {
+			set gatk3(dir) $path
+			set gatk3(jar) [glob $gatk3(dir)/GenomeAnalysisTK*/*.jar]
+			set gatk3(java) [glob $gatk3(dir)/java-*/jre/bin/java]
+			if {![catch {exec $gatk3(java) -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
+				set gatk3(version) $version
+			}
+		}
+	}
+	# old system
 	if {![info exists gatk3(version)]} {
 		if {[catch {
 			set gatk3(jar) [searchpath GATK3 gatk3 GenomeAnalysisTK*]/GenomeAnalysisTK.jar
@@ -194,12 +219,12 @@ proc gatk3exec {args} {
 		}
 		
 		if {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
-			set ::gatkjava java1.8
+			set gatk3(java) java1.8
 		} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
-			set ::gatkjava java1.7
+			set gatk3(java) java1.7
 		} elseif {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} msg]} {
 			set version $msg
-			set ::gatkjava java
+			set gatk3(java) java
 		} else {
 			error "Cannot determine gatk3 version:\n$msg"
 		}
@@ -207,7 +232,7 @@ proc gatk3exec {args} {
 	}
 	if {[lindex $args 0] eq "version"} {return $gatk3(version)}
 	set javaopts [list_pop args 0]
-	catch_exec $::gatkjava {*}$javaopts -jar $gatk3(jar) -T {*}$args
+	catch_exec $gatk3(java) {*}$javaopts -jar $gatk3(jar) -T {*}$args
 }
 
 proc gatk_IndexFeatureFile_job {file {name {}}} {
