@@ -301,8 +301,8 @@ proc reports_singlecell {sampledir} {
 		foreach line [lrange [split $data \n] 1 end] {
 			foreach {sample nrisoforms count} [split $line \t] break
 			set group [lindex [split $sample -] 0]
-			set sample [lindex [split $sample -] end]
-			puts $o [join [list $sample $root $group $nrisoforms $count] \t]
+			set lsample [lindex [split $sample -] end]
+			puts $o [join [list $lsample $root $group $nrisoforms $count] \t]
 		}
 	}
 	close $o
