@@ -731,6 +731,9 @@ proc process_sample_job {args} {
 		set todo(reports) {}
 	}
 	set sample [file tail $sampledir]
+	if {[regexp -- - $sample]} {
+		error "samplename $sample contains a -, which is not allowed; please rename the sample dir $sampledir"
+	}
 	if {$reftranscripts eq ""} {
 		set reftranscripts [ref_tsvtranscripts $dbdir]
 	}
