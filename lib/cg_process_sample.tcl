@@ -537,7 +537,7 @@ proc process_sample_job {args} {
 	set singlecell_whitelist {}
 	set singlecell_umisize 10
 	set singlecell_barcodesize 16
-	set singlecell_adaptorseq 16
+	set singlecell_adaptorseq CTACACGACGCTCTTCCGATCT
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
