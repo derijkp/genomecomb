@@ -159,7 +159,8 @@ proc sc_celltyper_sctype_job {args} {
 					SOB@meta.data$customclassif[SOB@meta.data$seurat_clusters == j] = paste(as.character(cl_type$type[1]),"(Unknown)")
 				}
 			}
-			DimPlot(SOB, reduction = "umap", label = TRUE, repel = TRUE, group.by = 'customclassif')
+			DimPlot(SOB, reduction = "umap", label = TRUE, repel = TRUE, group.by = 'customclassif') \
+				+ ggtitle("ScType cell types")
 			ggsave(umappng,width = 12, height = 8, dpi = 300)
 			qc_data <- FetchData(SOB, vars = c("ident", "UMAP_1", "UMAP_2"))
 			out=data.frame(
