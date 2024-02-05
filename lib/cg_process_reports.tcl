@@ -299,9 +299,9 @@ proc reports_singlecell {sampledir} {
 		]
 		set root [join [lrange [split [file_rootname $pbfile] -] 0 end-1] -]
 		foreach line [lrange [split $data \n] 1 end] {
-			foreach {sample nrisoforms count} [split $line \t] break
-			set group [lindex [split $sample -] 0]
-			set lsample [lindex [split $sample -] end]
+			foreach {lsample nrisoforms count} [split $line \t] break
+			set group [lindex [split $lsample -] 0]
+			set lsample [lindex [split $lsample -] end]
 			puts $o [join [list $lsample $root $group $nrisoforms $count] \t]
 		}
 	}
