@@ -1767,13 +1767,13 @@ proc iso_isoquant_job {args} {
 			job isquant_sc_count-$region-$root \
 			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
 			-deps {
-				$readfile $genefile reads_per_cell_raw.tsv
+				$readfile $genefile $sampledir/reads_per_cell_raw.tsv
 			} -targets {
 				$target $target2
 			} -vars {
-				readfile genefile strictpct isofile
+				readfile genefile strictpct isofile sampledir
 			} -code {
-				set reads_per_cell_file reads_per_cell_raw.tsv
+				set reads_per_cell_file $sampledir/reads_per_cell_raw.tsv
 				iso_isoquant_sc_counts $genefile $isofile $readfile $target $target2 $strictpct $reads_per_cell_file
 			}
 		}
