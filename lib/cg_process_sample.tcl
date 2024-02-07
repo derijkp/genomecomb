@@ -897,6 +897,19 @@ proc process_sample_job {args} {
 		}
 		if {$cellmarkerfile ne ""} {
 			if {$sc_celltypers eq ""} {set sc_celltypers {scsorter sctype}}
+			set f [gzopen $cellmarkerfile]
+			set h [tsv_open $f]
+			if {$tissue ne ""} {
+				if {marker ni $h} {
+					error "cellmarkerfile $cellmarkerfile has no field named marker (or gene) (case sensitive)"
+				}
+				if {celltype ni $h} {
+					error "cellmarkerfile $cellmarkerfile has no field named celltype (case sensitive)"
+				}
+				if {tissue ni $h} {
+					error "-tissue option is given, but cellmarkerfile $cellmarkerfile has no field named tissue"
+				}
+			}
 		} elseif {$tissue ne ""} {
 			if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
 		}
