@@ -92,7 +92,7 @@ proc cg_tsv210x {args} {
 	set cellbarcodefield {} 
 	set countfield {}
 	cg_options tsv210x args {
-		-genefields {set genefields $value}
+		-featurefields - -genefields {set genefields $value}
 		-cellbarcodefield {set cellbarcodefield $value}
 		-countfield {set countfield $value}
 	} {tsvfile 10xdir} 1 2

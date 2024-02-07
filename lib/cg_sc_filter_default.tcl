@@ -42,7 +42,7 @@ proc sc_filter_default_job {args} {
 	} -vars {
 		scisoformfile scisoformfile10x
 	} -code {
-		cg tsv210x -countfield counts_weighed $scisoformfile $scisoformfile10x.temp
+		cg tsv210x -featurefields {gene transcript} -countfield counts_weighed $scisoformfile $scisoformfile10x.temp
 		file rename $scisoformfile10x.temp $scisoformfile10x
 	}
 	set outinfofile $dir/sc_temp_info-$rootname.tsv
@@ -274,7 +274,7 @@ proc sc_filter_default_job {args} {
 			#
 			# 5. Add transcript data
 			cat("Add transcript data")
-			transcripts <- Read10X(scisoformfile10x, gene.column = 1)
+			transcripts <- Read10X(scisoformfile10x)
 			barcodes_to_keep <- colnames(transcripts) %in% colnames(SOB)
 			transcripts <- transcripts[, barcodes_to_keep]
 			SOB[["ISOFORM"]] <- CreateAssayObject(counts = transcripts)
