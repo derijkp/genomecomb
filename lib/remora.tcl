@@ -93,8 +93,9 @@ proc meth_remora_job {args} {
 	# -------------------
 	set target $resultfile
 	set target2 [file root [gzroot $resultfile]].tsv.zst
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job [job_relfile2name meth_remora_modkit- $bamfile] {*}$skips -cores $threads -deps {
-		$bamfile $bamfile.bai
+		$bamfile $bamfileindex
 	} -targets {
 		$target $target2
 	} -vars {

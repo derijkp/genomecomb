@@ -50,6 +50,7 @@ proc iso_organelle_job {args} {
 		error "region cannot be left empty for iso_organelle"
 	}
 	set bam [file_absolute $bam]
+	set bamindex $bam.[indexext $bam]
 	set refseq [refseq $refseq]
 	set reftranscripts [get_transcriptsfile_tsv $reftranscripts $refseq]
 	if {$reftranscripts eq "none"} {
@@ -68,7 +69,7 @@ proc iso_organelle_job {args} {
 	set regdir [file dir $resultfile]
 	mkdir $regdir
 	job iso_organelle-${root}-$region -mem 15G {*}$skips -deps {
-		$bam $bam.bai $refseq $reftranscripts
+		$bam $bamindex $refseq $reftranscripts
 	} -targets {
 		$regdir/isoform_counts-${root}.tsv
 		$regdir/gene_counts-${root}.tsv

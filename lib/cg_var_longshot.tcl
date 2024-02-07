@@ -14,19 +14,19 @@ proc longshot_replacebam {finalbam oribam} {
 	file lstat $oribam a
 	set time $a(mtime)
 	catch {
-		file lstat $oribam.bai a
+		file lstat $oribam.[indexext $oribam] a
 		set btime $a(mtime)
 	}
         file rename -force $oribam $oribam.old
-	catch {file rename -force $oribam.bai $oribam.bai.old}
+	catch {file rename -force $oribam.[indexext $oribam] $oribam.[indexext $oribam].old}
         mklink $finalbam $oribam
         exec touch -h -d [clock format $time] $oribam
 	if {[info exists btime]} {
-	        mklink $finalbam.bai $oribam.bai
-	        exec touch -h -d [clock format $btime] $oribam.bai
+	        mklink $finalbam.[indexext $finalbam] $oribam.[indexext $oribam]
+	        exec touch -h -d [clock format $btime] $oribam.[indexext $oribam]
 	}
 	file delete $oribam.old
-	file delete $oribam.bai.old
+	file delete $oribam.[indexext $oribam].old
 }
 
 proc longshot_empty_vcf {vcffile} {
@@ -205,7 +205,7 @@ proc var_longshot_job {args} {
 			exec samtools view -h -b -f 4 $dep > $tempoutbam
 			exec samtools index $tempoutbam
 			file rename -force -- $tempoutbam $outbam
-			file rename -force -- $tempoutbam.bai $outbam.bai
+			file rename -force -- $tempoutbam.[indexext $tempoutbam] $outbam.[indexext $outbam]
 		} elseif {[llength $regions] > 1} {
 			set todo {}
 			set todobams {}

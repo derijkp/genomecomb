@@ -46,7 +46,7 @@ proc mergesamples_job {result args} {
 		}
 		return
 	}
-	set bams [glob -nocomplain $result/orisamples/*/*.bam]
+	set bams [glob -nocomplain $result/orisamples/*/*.bam $result/orisamples/*/*.cram]
 	if {[llength $bams]} {
 		puts "merge bams"
 		unset -nocomplain a

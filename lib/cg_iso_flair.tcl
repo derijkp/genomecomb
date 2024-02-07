@@ -339,6 +339,7 @@ proc flair_job {args} {
 	# analysis per sample
 	set allseq_fastqfiles {}
 	foreach bam $bams {
+		set bamindex $bam.[indexext $bam]
 		set sampledir [file dir $bam]
 		if {$useresultfile} {
 			set rootname [file_rootname $resultfile]
@@ -355,7 +356,7 @@ proc flair_job {args} {
 		job flair_correct-$rootname {*}$skips -skip $workdir/counts_matrix-$rootname.tsv \
 		-cores $threads \
 		-deps {
-			$bam $bam.bai $refseq $gtfreftranscripts
+			$bam $bamindex $refseq $gtfreftranscripts
 		} -targets {
 			$workdir/all_corrected-$rootname.bed
 		} -vars {

@@ -724,7 +724,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		$regreftranscripts \
 		tcounta \
 		newheader \
-		$fields
+		$fields \
 	]
 	#
 	# models
@@ -765,6 +765,8 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {[info exists geneconva($gene)]} {
 				lset line $genepos $geneconva($gene)
 				lset line $geneidpos $geneconva($gene)
+			} else {
+				lset line $genepos [get geneid2genea($geneid) $gene]
 			}
 			set line [list_sub $line $poss]
 			# set genebasica($geneid) [list_sub $line {0 1 2 3}]
@@ -1513,6 +1515,7 @@ proc iso_isoquant_job {args} {
 		}
 	} {bam resultfile} 1 2
 	set bam [file_absolute $bam]
+	set bamindex $bam.[indexext $bam]
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root ${analysisname}-[file_rootname $bam]
@@ -1541,7 +1544,7 @@ proc iso_isoquant_job {args} {
 	}
 	cd $sampledir
 	set sample [file tail $sampledir]
-	set bam [lindex [jobglob map-sminimap*.bam map-*.bam] 0]
+	set bam [lindex [jobglob map-sminimap*.bam map-sminimap*.cram map-*.bam map-*.cram] 0]
 	if {![llength $regions]} {
 		set regions {{}}
 	}
@@ -1574,7 +1577,7 @@ proc iso_isoquant_job {args} {
 			continue
 		}
 		job isoquant-${root}-$region -mem 15G -cores $threads -skip $mainskips -skip $regionskips -deps {
-			$bam $bam.bai $refseq $depreftranscripts
+			$bam $bamindex $refseq $depreftranscripts
 		} -targets {
 			$regdir/00_regali
 		} -vars {

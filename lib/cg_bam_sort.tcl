@@ -127,11 +127,11 @@ proc cg_sam_sort {args} {
 			}
 		}
 		if {$sort eq "coordinate" && $resultfile ne "-"} {
-			lappend opts index=1 indexfilename=$tempresult.bai
+			lappend opts index=1 indexfilename=$tempresult.[indexext $tempresult]
 		}
 		catch_exec bamsort inputformat=$inputformat SO=$sort tmpfile=[scratchfile] {*}$opts {*}$optsio
 		if {[info exists tempresult]} {
-			catch {file rename -force -- $tempresult.bai $resultfile.bai}
+			catch {file rename -force -- $tempresult.[indexext $tempresult] $resultfile.[indexext $resultfile]}
 			file rename -force -- $tempresult $resultfile
 		}
 	} elseif {$method eq "samtools"} {	
