@@ -473,7 +473,7 @@ proc sc_barcodes_job args {
 		# cg select -g all -gc 'sum(count)' barcode2celbarcode.tsv
 		shadow_delete $resultdir/barcodes.temp
 	}
-	job reads_per_cell-$sample {*}$skips -deps {
+	job reads_per_cell-$sample -deps {
 		$resultdir/barcode2celbarcode.tsv
 	} -targets {
 		$resultdir/reads_per_cell_raw.tsv
