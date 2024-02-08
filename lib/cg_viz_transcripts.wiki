@@ -1,0 +1,43 @@
+= Gtf2tsv =
+
+== Format ==
+cg viz_transcripts ?options? isoform_counts_file gene output_file
+
+== Summary ==
+Creates a visual presentation of isoform usage
+
+== Description ==
+cg viz_transcripts creates a graphical representation of the isoforms
+present in a file for a given gene (using the R package ggtranscript)
+together with their counts, percentages, etc.
+
+The result consists of two (linked) panels, the left showing the isoforms,
+and the right showing matching numerical fields in a grid (with cells coloured
+according to size of number). By default, all fields in the file starting
+with count are added to this panel, but there are options to change/limit
+this.
+
+By default the isoforms are rescaled, reducing the size of the much larger
+introns so they are not obscuring the differences in exon use (thus
+intron/exon sizes are not proportional, and numbers on X axis are not
+actual location). Optionally this rescaling can be turned of.
+
+== Arguments ==
+; isoform_counts_file: a file containing isoforms (in the [[gene]] tsv format) with numerical info (counts) about the isoforms
+; gene: selected gene of which isoforms will be visualized
+; output_file: name of output file to be generated (the file extension deternmines the type of file, .e.g .pdf)
+
+== Options ==
+; -countfields 'shortname1 field1 shortname2 field2 ..': specify the (numerical) fields to be displayed (field1, field2, ..) and the names they should be given (shortname1. shortname2, ..)
+; -countfieldpatterns 'pattern1 ..': if -countfields is not given, all fields matching one of the patterns (regular expression) given here
+will be displayed in the numerical panel. Standard the field name will be used to name a column in the grid, but if the pattern
+has parts between parenthesis, these will be extracted to make the name, example of such a pattern: counts_weighed-(Excitatory_neurons).*_splice-(.*)_v6.5
+; -rescale 0/1: rescale to reduce effect large introns (1) or give a proportional visualization (0)
+; -textsize: text size of the numbers in the grid (default 10, set to 0 to remove numbers)
+; -panelwidths 'w1 w2': list of panel widths (default '3 1'). determines the relative size of left and right panel
+; -width: width in mm of the results
+; -height: height in mm of the results
+; -referencetranscript: Which transcript can be seen as a reference
+
+== Category ==
+Visualization
