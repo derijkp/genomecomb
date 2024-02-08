@@ -325,6 +325,10 @@ proc helptext_overview {} {
 		are to be compressed
 		; -compressionthreads number: Use **number** threads (default 1) to compress the result 
 		file (if the result needs to be compressed, and the compression method supports threads)
+
+		; -shadowdir: alternative location (e.g. a faster disk or disk without snapshots) to store some of the intermediate files
+		that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
+		Can also be specified using the environment variable SHADOWDIR.
 		
 		== Available subcommands ==
 	}]] \n
