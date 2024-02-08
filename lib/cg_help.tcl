@@ -116,6 +116,7 @@ proc help_formatw {foutput text width mode indent {format 1}} {
 #foreach var {text width indent format mode} {
 #	puts $foutput [list set $var [get $var]]
 #}
+	set newtemp {}
 	if {$text eq ""} {return ""}
 	if {$format} {
 		set green "\033\[1;32m"
@@ -168,11 +169,76 @@ proc help_formatw {foutput text width mode indent {format 1}} {
 	puts -nonewline $foutput $newtemp
 }
 
-proc help {action {format 1}} {
-	set help [help_get $action]
+proc help_formatw_md {foutput text width mode indent {format 1}} {
+# putsvars text width indent format mode
+#foreach var {text width indent format mode} {
+#	puts $foutput [list set $var [get $var]]
+#}
+	set newtemp {}
+	if {$text eq ""} {return ""}
+	if {$format} {
+		set green "\033\[1;32m"
+		set yellow "\033\[1;33m"
+		set cyan "\033\[1;36m"
+		set normal "\033\[0m"
+	} else {
+		set green ""
+		set yellow ""
+		set cyan ""
+		set normal ""
+	}
+	set w [expr {$width - $indent}]
+	set pre [string_fill " " $indent]
+	set collect {}
+	foreach line [split [string trim $text] \n] {
+		# keep {{{literals}}} to put back in later
+		set list [regexp -inline -all {\{\{\{.*?\}\}\}} $line]
+		regsub -all {```.*?```} $line {{{{}}}} line
+		# `code`
+		regsub -all {\`([^\n`]+)\`} $line "${green}\\1$normal" line
+		# **bold**
+		regsub -all {\*\*([^\n*]+)\*\*} $line "${yellow}\\1$normal" line
+		# \ escaped characters
+		regsub -all {\\([^A-Za-z0-9])} $line {\1} line
+		# [[link]]
+		regsub -all {\[\[([^|]*)\]\]} $line "${cyan}\\1$normal" line
+		# [[link|text]]
+		regsub -all {\[\[([^|]*)\|([^|]*)\]\]} $line "${cyan}\\2$normal" line
+		# place extracted literals back
+		foreach value $list {
+			regsub {```.*?```} $line ${green}[string range $value 3 end-3]$normal line
+		}
+		if {$collect ne ""} {append collect " "}
+		append collect [string trim $line]
+		# format (separate lines and indent)
+		while {[string length $collect] >= $w} {
+			set pos [string last " " $collect $w]
+			if {$pos == -1} {set pos [string last "\t" $collect $w]}
+			if {$pos == -1} {set pos $w}
+			append newtemp "$pre[string range $collect 0 [expr {$pos-1}]]\n"
+			incr pos
+			set collect [string range $collect $pos end]
+			if {$mode eq "l"} {
+				set w [expr {$width - $indent - 2}]
+				set pre "$pre  "
+				set mode {}
+			}
+		}
+	}
+	if {$collect ne ""} {append newtemp "$pre$collect\n"}
+	puts -nonewline $foutput $newtemp
+}
+
+proc help {action {format 1} {help {}}} {
 	if {$format eq "md"} {
-		puts $help
-		return
+		# puts $help
+		set bold "\033\[1;1m"
+		set underline "\033\[1;4m"
+		set green "\033\[1;32m"
+		set yellow "\033\[1;33m"
+		set cyan "\033\[1;36m"
+		set normal "\033\[0m"
+		set foutput [open "| less -r" w]
 	} elseif {$format} {
 		set bold "\033\[1;1m"
 		set underline "\033\[1;4m"
@@ -190,6 +256,9 @@ proc help {action {format 1}} {
 		set normal ""
 		set foutput stdout
 	}
+	if {$help eq ""} {
+		set help [help_get $action]
+	}
 	set width 80
 	if {![catch {exec stty -a} result] && [regexp {columns (\d+)} $result temp cols]} {
 		if {$cols > 10} {set width $cols}
@@ -199,6 +268,147 @@ proc help {action {format 1}} {
 	set mode {}
 	set output {}
 	set collect {}
+	if {$format eq "md"} {
+		set format 1
+		set skip 0
+		set split [split $help \n]
+		lappend split {}
+		set line [lindex $split 0]
+		foreach nextline [lrange $split 1 end] {
+			if {$skip} {
+				set skip 0
+				set line $nextline
+				continue
+			}
+			# puts $foutput [list set line [get line]]
+#puts ----
+#putsvars line collect mode indent nextline
+			set fchr [string index $line 0]
+			if {$mode eq "b"} {
+				if {$line eq "```"} {
+					puts -nonewline $foutput $normal
+					set mode $model
+				} else {
+					puts -nonewline $foutput [string_fill " " $indent]${line}\n
+				}
+			} elseif {[regexp -- {^[=]+$} [string trim $nextline]]} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				# = heading1 =
+				puts -nonewline $foutput \n${underline}${green}$line$normal\n
+				set collect {}
+				set mode {}
+				set indent 0
+				set skip 1
+			} elseif {[regexp -- {^[-][-]+$} [string trim $nextline]]} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				# == heading2 ==
+				puts -nonewline $foutput \n${underline}${yellow}$line$normal\n
+				set collect {}
+				set mode {}
+				set indent 0
+				set skip 1
+			} elseif {[regexp -- {^####} $line]} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				# == heading4 ==
+				puts -nonewline $foutput \n${bold}[string trimleft $line {# }]$normal\n
+				set collect {}
+				set mode {}
+				set indent 0
+			} elseif {[regexp -- {^###} $line]} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				# == heading3 ==
+				puts -nonewline $foutput \n${underline}[string trimleft $line {# }]$normal\n
+				set collect {}
+				set mode {}
+				set indent 0
+			} elseif {$line eq ""} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				# == heading2 ==
+				set collect {}
+				set mode {}
+				set indent 0
+			} elseif {$fchr eq "="} {
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set mode {}
+				set indent 0
+				if {[string index $line 3] eq "="} {
+					# == heading4 ==
+					puts -nonewline $foutput [string trim $line " ="]\n
+				} elseif {[string index $line 2] eq "="} {
+					# == heading3 ==
+					puts -nonewline $foutput ${cyan}[string trim $line " ="]$normal\n
+				} elseif {[string index $line 1] eq "="} {
+					# == heading2 ==
+					puts -nonewline $foutput ${underline}[string trim $line " ="]$normal\n
+				} else {
+					# = heading1 =
+					puts -nonewline $foutput ${underline}${green}[string trim $line " ="]$normal\n
+				}
+			} elseif {[regexp {^\; } $line]} {
+				# ; terms : definitions
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set indent 5
+				if {[regexp {;? *([^\n]+?) *: +(.*)} $line tmp term def]} {
+					regsub {\[\[[^\|]+\|(.*)\]\]} $term {\1} term
+					set mode d
+					regsub -all {\*\*([^\n*]+)\*\*} $term "${yellow}\\1$normal" term
+					puts -nonewline $foutput "  ${yellow}$term$normal\n"
+					append collect $def\n
+				} else {
+					append collect "  * $line\n"
+				}
+			} elseif {[regexp {^\* } $line]} {
+				# ; terms : definitions
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set indent 2
+				set mode l
+				append collect $line\n
+			} elseif {[regexp {^\- } $line]} {
+				# ; terms : definitions
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set indent 2
+				set mode l
+				append collect $line\n
+			} elseif {[regexp {^\*+ } $line]} {
+				# ; terms : definitions
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set indent 5
+				set mode l
+				append collect "-[string range $line 2 end]\n"
+			} elseif {[regexp {^  } $line]} {
+				# ; terms : definitions
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set indent 5
+				set mode l
+				append collect "[string trimleft $line]\n"
+			} elseif {$line eq "```"} {
+				# {{{literal}}}
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+				set model $mode
+				set mode b
+				puts -nonewline $foutput ${green}
+			} elseif {[string range $line end-1 end] eq "  "} {
+				append collect $line\n
+				help_formatw_md $foutput $collect $width $mode $indent $format
+				set collect {}
+			} else {
+				append collect $line\n
+			}
+			set line $nextline
+		}
+		help_formatw_md $foutput $collect $width $mode $indent $format
+		if {$format} {
+			close $foutput
+		}
+		return
+	}
 	foreach line [split $help \n] {
 # puts $foutput [list set line [get line]]
 		set fchr [string index $line 0]
