@@ -22,7 +22,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 source "${dir}/start_hbb.sh"
 
-longshotversion=0.4.1
+longshotversion=0.4.5
 
 # Parse arguments
 # ===============
@@ -98,35 +98,49 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# mamba
+# -----
+cd /build
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda || true
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda install -y -c conda-forge conda-pack
+mamba init bash
+. ~/.bash_profile
 
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda init bash
-. ~/.bash_profile
+
+
 # longshot
 # --------
 cd /build
 
-conda create -y -n longshot
-conda activate longshot
-conda install -y longshot=$longshotversion
+mamba create -y -n longshot
+mamba activate longshot
+mamba install -y longshot=$longshotversion
+
+mamba deactivate
+
+# make package
+# ------------
+
+cd /build
+# installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
+mamba install -y -c conda-forge conda-pack
 
 rm longshot.tar.gz || true
 conda pack -n longshot -o longshot.tar.gz
+rm -rf longshot-$longshotversion-$arch.old || true
+mv longshot-$longshotversion-$arch longshot-$longshotversion-$arch.old || true
 mkdir longshot-$longshotversion-$arch
 cd longshot-$longshotversion-$arch
 tar xvzf ../longshot.tar.gz
@@ -138,6 +152,6 @@ tar cvzf longshot-$longshotversion-$arch.tar.gz longshot-$longshotversion-$arch 
 cp -ra longshot-$longshotversion-$arch longshot longshot-$longshotversion /io/extra$ARCH
 cd /io/extra$ARCH/
 
-conda deactivate
+mamba deactivate
 
-echo "Finished building longshot"
+echo "Finished building longshot $longshotversion"

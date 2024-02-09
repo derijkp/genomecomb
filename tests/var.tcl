@@ -271,7 +271,7 @@ test var {var_longshot basic giab ont} {
 		$workdir/var-truth_HG002_hg38.tsv
 	cg benchmarkvars -refcurve_cutoffs {{} 10 20 30 40 50 60} $workdir/compar.tsv truth_HG002_hg38 $workdir/benchmark.tsv
 	set result {}
-	lappend result [tsvdiff -x *.log -x *.finished  -x *.zsti \
+	lappend result [tsvdiff -q 1 -x *.log -x *.finished  -x *.zsti \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
 		$workdir expected/[file tail $workdir]]
@@ -279,17 +279,18 @@ test var {var_longshot basic giab ont} {
 	lappend result [cg select -g {zyg-longshot-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} $workdir/compar.tsv]
 	list_remove $result {}
 } {{chromosome	count
-1	285
-6	120
+1	286
+6	121
 10	222} {zyg-longshot-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
 m	m	23
 m	u	150
+o	o	1
 r	c	2
 r	m	1
 r	t	2
 t	r	1
 t	t	58
-t	u	390}}
+t	u	391}}
 
 test var {var_longshot basic} {
 	cd $::smalltestdir
@@ -301,7 +302,7 @@ test var {var_longshot basic} {
 	cg var_longshot {*}$::dopts tmp/longshot/pacbio_reads_30x.bam tmp/longshot/genome.fa
 	cg vcf2tsv tmp/longshot/ground_truth_variants.vcf tmp/longshot/ground_truth_variants.tsv
 	cg multicompar tmp/longshot/compar.tsv tmp/longshot/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot/ground_truth_variants.tsv
-	cg tsvdiff -x *.log -x *.finished  -x *.zsti \
+	cg tsvdiff -q 1 -x *.log -x *.finished  -x *.zsti \
 		-ignorefields {varcaller_cg_version} \
 		tmp/longshot expected/longshot
 	list [cg select -g chromosome tmp/longshot/compar.tsv] [cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv]
@@ -428,10 +429,10 @@ test var {var_longshot distrreg with -hap_bam 1 option} {
 	if {$temp ne [string trim [deindent {
 		chromosome	bases
 		contig1	185941
-		contig2	179545
-		contig3	176005
+		contig2	174729
+		contig3	175492
 		
-		total	541491
+		total	536162
 	}]]} {
 		error "error in haplotyped bams"
 	}
@@ -536,10 +537,10 @@ test var {var_longshot distrreg with -hap_bam 1 option with multicontig (contig1
 	if {$temp ne [string trim [deindent {
 		chromosome	bases
 		contig1	185941
-		contig1_a	179545
-		contig1_b	176005
+		contig1_a	174729
+		contig1_b	175492
 		
-		total	541491
+		total	536162
 	}]]} {
 		error "error in haplotyped bams"
 	}

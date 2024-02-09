@@ -7,6 +7,11 @@ proc version_longshot {} {
 	catch {exec longshot -V} version
 	set version [string trim $version]
 	regsub {Longshot *} $version {} version
+	if {![regexp {^[0-9.]+$} $version]} {
+		set script [file_resolve [exec which longshot]]
+		set dir [file tail [file dir [file dir $script]]]
+		regexp {^longshot-([0-9.]+)-} $dir temp version
+	}
 	return $version
 }
 
