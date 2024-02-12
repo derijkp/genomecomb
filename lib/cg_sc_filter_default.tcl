@@ -407,7 +407,6 @@ proc sc_filter_default_job {args} {
 		gzclose $o
 		file rename -force $dir/sc_isoform_counts_filtered-$rootname.tsv.temp.zst $dir/sc_isoform_counts_filtered-$rootname.tsv.zst
 	}
-puts okHEPA+KoolstoffilterHEPA+KoolstoffilterHEPA+Koolstoffilter
 	return $dir/sc_cellinfo_filtered-$rootname.tsv.zst
 }
 
