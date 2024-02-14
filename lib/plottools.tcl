@@ -51,7 +51,15 @@ proc plotly {name chartdata title xaxis yaxis {xmax {}} {ymax {}}} {
 			paper_bgcolor: 'rgba(0,0,0,0)',
 			plot_bgcolor: 'rgba(0,0,0,0)',
 		},
-		{responsive: true}
+		{responsive: true,
+		  modeBarButtonsToAdd: [{
+		    name: 'tosvg',
+		    icon: Plotly.Icons.camera,
+		    click: function(gd) {
+		      Plotly.downloadImage(gd, {format: 'svg'})
+		    }
+		  }]
+		}
 		);
 	}] [list \
 		@NAME@ $name <DATA> [join $fmtdata ,\n] @XAXIS@ $xaxis @YAXIS@ $yaxis @XMAX@ $xmax @YMAX@ $ymax \

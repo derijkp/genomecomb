@@ -725,7 +725,15 @@ proc report_fastc_perposqual {dir files} {
 				line: {width: 0}				
 			}]
 		},
-		{responsive: true}
+		{responsive: true,
+		  modeBarButtonsToAdd: [{
+		    name: 'tosvg',
+		    icon: Plotly.Icons.camera,
+		    click: function(gd) {
+		      Plotly.downloadImage(gd, {format: 'svg'})
+		    }
+		  }]
+		}
 		);
 		</script>
 		</div>
@@ -776,7 +784,15 @@ proc report_fastc_perseqqual {dir files} {
 			paper_bgcolor: 'rgba(0,0,0,0)',
 			plot_bgcolor: 'rgba(0,0,0,0)',
 		},
-		{responsive: true}
+		{responsive: true,
+		  modeBarButtonsToAdd: [{
+		    name: 'tosvg',
+		    icon: Plotly.Icons.camera,
+		    click: function(gd) {
+		      Plotly.downloadImage(gd, {format: 'svg'})
+		    }
+		  }]
+		}
 		);
 		</script>
 		</div>
@@ -832,7 +848,15 @@ proc report_fastc_chart {dir files id title pattern xfield yfield} {
 			paper_bgcolor: 'rgba(0,0,0,0)',
 			plot_bgcolor: 'rgba(0,0,0,0)',
 		},
-		{responsive: true}
+		{responsive: true,
+		  modeBarButtonsToAdd: [{
+		    name: 'tosvg',
+		    icon: Plotly.Icons.camera,
+		    click: function(gd) {
+		      Plotly.downloadImage(gd, {format: 'svg'})
+		    }
+		  }]
+		}
 		);
 		</script>
 		</div>
