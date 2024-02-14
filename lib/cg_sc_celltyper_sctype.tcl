@@ -31,22 +31,23 @@ proc sc_celltyper_sctype_job {args} {
 		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
 	set umappng $dir/sc_celltype_umap-$extrarootname-$rootname.png
+	set outrds $dir/sc_celltype-$extrarootname-$rootname.rds
 	set R [file_resolve [findR]]
 	set dirR [file dir $R]
 	set sctypedir [lindex [bsort [glob $dirR/lib64/R/library/sc-type-*]] end]
 	job sc_celltyper_$extrarootname-$rootname -deps {
 		$scgenefile10x
 	} -targets {
-		$groupfile $umappng
+		$groupfile $umappng $outrds
 	} -vars {
-		sctypedir scgenefile10x tissue umappng tempresult groupfile cellmarkerfile tissue
+		sctypedir scgenefile10x tissue umappng tempresult groupfile cellmarkerfile tissue outrds
 	} -code {
 		set out10x {}
 		set metadatafile {}
 		set outRfile ~/tmp/sc_celltyper.R
 		set outRfile {}
 		R -outRfile $outRfile -vars {
-			scgenefile10x cellmarkerfile tissue umappng tempresult sctypedir
+			scgenefile10x cellmarkerfile tissue umappng tempresult sctypedir outrds
 		} {
 			library(Seurat)
 			library(tidyverse)
@@ -162,6 +163,7 @@ proc sc_celltyper_sctype_job {args} {
 			DimPlot(SOB, reduction = "umap", label = TRUE, repel = TRUE, group.by = 'customclassif') \
 				+ ggtitle("ScType cell types")
 			ggsave(umappng,width = 12, height = 8, dpi = 300)
+			saveRDS(SOB, outrds)
 			qc_data <- FetchData(SOB, vars = c("ident", "UMAP_1", "UMAP_2"))
 			out=data.frame(
 				cell=rownames(SOB@meta.data),
