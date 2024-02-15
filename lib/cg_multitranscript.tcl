@@ -115,6 +115,7 @@ proc cg_multitranscript {args} {
 	set o [wgzopen $compar_file.temp[gzext $compar_file]]
 	if {$a(comment,0) ne ""} {puts -nonewline $o $a(comment,0)}
 	puts $o [join $header \t]
+	# process by groups of overlapping transcripts
 	while 1 {
 		# find earliest transcript to start region
 		set curids {}
@@ -129,7 +130,7 @@ proc cg_multitranscript {args} {
 		foreach {curchr curbegin curend} $curid break
 		# load all transcripts (from all files) that overlap
 		# loop until no files have overlapping transcripts
-		# seta will contain all known, setma all novel models
+		# seta will contain all known, setma all novel models, key is strand+junctions
 		unset -nocomplain seta
 		unset -nocomplain setma
 		while 1 {
@@ -197,10 +198,12 @@ proc cg_multitranscript {args} {
 			if {!$num} break
 		}
 		if {[info exists setma(single)]} {
+			# hande single exon transcripts
 			# join $setma(single) \n
 			# check for matches to known
 			set knowns [array names seta]
 			if {[llength $knowns]} {
+				# if it matches known transcript -> add there
 				set list {}
 				foreach line [bsort $setma(single)] {
 					foreach {chromosome begin end strand exonStarts exonEnds} $line break
@@ -230,6 +233,7 @@ proc cg_multitranscript {args} {
 				set id [list $begin $end $strand $exonStarts $exonEnds]
 				lappend seta($id) $line
 			} else {
+				# merge overlapping (take min begin and max end)
 				set line [lindex $list 0]
 				set result [list $line]
 				foreach {curchr curbegin curend} $line break
@@ -259,6 +263,7 @@ proc cg_multitranscript {args} {
 		foreach id [array names setma] {
 			set list $setma($id)
 			if {[llength $list] > 1} {
+				# calculate min begin and max end for merged transcript
 				set begin [lmath_min [list_subindex $list 1]]
 				set end [lmath_max [list_subindex $list 2]]
 				foreach {strand starts ends} [list_sub [lindex $list 0] {3 4 5}] break
