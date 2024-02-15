@@ -375,12 +375,12 @@ job enc_RegTfbsClustered -targets {
 }
 
 # link local data in dir
-foreach file [glob -nocomplain ../${build}-local/*] {
-	catch {
-		file delete extra/[file tail $file]
-		cplinked $file [file tail $file]
-	}
-}
+#foreach file [glob -nocomplain ../${build}-local/*] {
+#	catch {
+#		file delete extra/[file tail $file]
+#		cplinked $file [file tail $file]
+#	}
+#}
 
 # extra dir
 cd ${dest}/${build}

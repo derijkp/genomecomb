@@ -326,9 +326,9 @@ job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClustered.tsv reg
 }
 
 # link local data in dir
-catch {
-	cplinked {*}[glob ../hg18-local/*] .
-}
+#catch {
+#	cplinked {*}[glob ../hg18-local/*] .
+#}
 
 # extra
 
