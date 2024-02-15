@@ -8,10 +8,8 @@ proc cg_viz_transcripts {args} {
 	set panelwidths {3 1}
 	set width 397
 	set height 210
+	set proportions 0
 	cg_options viz_transcripts args {
-		-referencetranscript {
-			set referencetranscript $value
-		}
 		-rescale {
 			set rescale $value
 		}
@@ -29,6 +27,12 @@ proc cg_viz_transcripts {args} {
 				error "option -panelwidths should be a list of 2 numbers"
 			}
 			set panelwidths $value
+		}
+		-sortcol {
+			set sortcol $value
+		}
+		-proportions {
+			set proportions $value
 		}
 		-width {
 			set width $value
@@ -64,14 +68,10 @@ proc cg_viz_transcripts {args} {
 		}
 		# join $countfields \n
 	}
-	if {$referencetranscript eq ""} {
-		set referencetranscript [lindex [split [cg select -sh /dev/null -s -exonCount -f transcript $tempiso] \n] 0]
-	}
 	set cmd [subst {
 		gtffile="$tempgtf"
 		tsvfile="$tempiso"
 		output_file="$output_file"
-		maintranscript="$referencetranscript"
 		rescale=$rescale
 		textsize=$textsize
 		panelwidths=c([join $panelwidths ,])
@@ -87,31 +87,31 @@ proc cg_viz_transcripts {args} {
 		
 		tsv=read.table(tsvfile,header = T, sep = '\t')
 		# sort transcipts on counts_weight
-		weighed = grep("counts_weighed.",colnames(tsv))
-		sortcol = colnames(tsv)[weighed[1]]
-		transcripts = tsv$transcript[order(tsv[[sortcol]])]
+	}
+	if {![info exists sortcol]} {
+		set sortcol [lindex $countfields 1]
+	}
+	if {$sortcol ne ""} {
+		append cmd [subst -nocommands {
+			transcripts = tsv\$transcript[order(tsv\$$sortcol)]
+		}]
+	}
+	if {$proportions} {
+		foreach {shortname countfield} $countfields {
+			append cmd [subst -nocommands {
+				tsv\$$countfield = 100*tsv\$$countfield/sum(tsv\$$countfield)
+			}]
+		}
+	}
+	append cmd {
 		gtf=rtracklayer::import(gtffile)
 		gtf = gtf %>% dplyr::as_tibble()
 		exons = gtf %>% dplyr::filter(type == "exon")
 		exons$novel = grepl("^novel",exons$transcript_id)
 		if (!rescale) {
-#			exons %>%
-#			    ggplot(aes(
-#			        xstart = start,
-#			        xend = end,
-#			        y = transcript_id
-#			    )) +
-#			    geom_range(
-#			        aes(fill = novel)
-#			    ) +
-#			    geom_intron(
-#			        data = to_intron(exons, "transcript_id"),
-#			        aes(strand = strand)
-#			    )
-			not_main <- exons %>% 
-			  dplyr::filter(transcript_id != maintranscript)
+			# want to add locations of all potential exons everywhere
 			diffs = to_diff(
-			    exons = not_main,
+			    exons = exons,
 			    ref_exons = exons,
 			    group_var = "transcript_id"
 			)
@@ -145,26 +145,9 @@ proc cg_viz_transcripts {args} {
 			# let's split these for plotting 
 			rescaled_exons <- rescaled %>% dplyr::filter(type == "exon") 
 			rescaled_introns <- rescaled %>% dplyr::filter(type == "intron") 
-#			rescaled_exons %>% 
-#			    ggplot(aes(
-#			        xstart = start,
-#			        xend = end,
-#			        y = transcript_id
-#			    )) +
-#			    geom_range(
-#			        aes(fill = novel)
-#			    ) +
-#			    geom_intron(
-#			        data = rescaled_introns,
-#			        aes(strand = strand), 
-#			        arrow.min.intron.length = 300
-#			    )
-			
-			not_main <- rescaled_exons %>% 
-			  dplyr::filter(transcript_id != maintranscript)
-			
+			# want to add locations of all potential exons everywhere
 			rescaled_diffs = to_diff(
-			    exons = not_main,
+			    exons = rescaled_exons,
 			    ref_exons = rescaled_exons,
 			    group_var = "transcript_id"
 			)
@@ -207,14 +190,19 @@ proc cg_viz_transcripts {args} {
 		)
 		count_types = c("[join $count_types \",\"]")
 	}]
-	append cmd {
+	if {$proportions} {
+		set output percent
+	} else {
+		set output count
+	}
+	append cmd [string_change {
 		counts = temp %>%
 		  as_tibble() %>%
-		  pivot_longer(-transcript_id, names_to = "count_type", values_to = "count")
+		  pivot_longer(-transcript_id, names_to = "count_type", values_to = "@OUTPUT@")
 		
 		c = ggplot(counts, aes(y=transcript_id, x=count_type)) +
-		  geom_tile(aes(fill = count)) +
-		  geom_text(aes(label = round(count, 2)),size=textsize/.pt) +
+		  geom_tile(aes(fill = @OUTPUT@)) +
+		  geom_text(aes(label = round(@OUTPUT@, 2)),size=textsize/.pt) +
 		  scale_fill_gradient(low = "white", high = "steelblue") +
 		  scale_y_discrete(limits = transcripts,label=function(x) return("")) +
 		  scale_x_discrete(limits = count_types) + 
@@ -222,7 +210,7 @@ proc cg_viz_transcripts {args} {
 		
 		p = ggarrange(t+rremove("ylab"),c+rremove("xlab"),align="h",widths=panelwidths)
 		ggsave(output_file,p,width=width,height=height,units="mm")
-	}
-# file_write ~/tmp/temp.R $cmd
+	} [list @OUTPUT@ $output]]
+
 	R $cmd
 }

@@ -33,11 +33,12 @@ actual location). Optionally this rescaling can be turned of.
 will be displayed in the numerical panel. Standard the field name will be used to name a column in the grid, but if the pattern
 has parts between parenthesis, these will be extracted to make the name, example of such a pattern: counts_weighed-(Excitatory_neurons).*_splice-(.*)_v6.5
 ; -rescale 0/1: rescale to reduce effect large introns (1) or give a proportional visualization (0)
+; -sortcol colname: sort on the given column, default is to sort on the first, set to '' to not sort
+; -proportions 0/1: convert the values to proportions (in percent)
 ; -textsize: text size of the numbers in the grid (default 10, set to 0 to remove numbers)
 ; -panelwidths 'w1 w2': list of panel widths (default '3 1'). determines the relative size of left and right panel
 ; -width: width in mm of the results
 ; -height: height in mm of the results
-; -referencetranscript: Which transcript can be seen as a reference
 
 == Category ==
 Visualization
