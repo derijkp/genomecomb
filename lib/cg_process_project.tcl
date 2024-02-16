@@ -54,6 +54,7 @@ proc process_project_job {args} {
 	set cellmarkerfile {}
 	set tissue {}
 	set optionsfile options.tsv
+	set process_msamples 0
 	cg_options process_project args {
 		-preset {
 			if {$value ne ""} {
@@ -252,6 +253,9 @@ proc process_project_job {args} {
 				set ::cgextraopts($k) $v
 			}
 		}
+		-process_msamples {
+			set process_msamples $value
+		}
 		-*-* {
 			set ::specialopt($key) $value
 		}
@@ -327,12 +331,14 @@ proc process_project_job {args} {
 			}
 			set a($sample) 1
 		}
-		foreach dir [jobglob $destdir/msamples/*] {
-			set sample [file tail $dir]
-			if {[regexp {[- ]} $sample]} {
-				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
+		if {$process_msamples} {
+			foreach dir [jobglob $destdir/msamples/*] {
+				set sample [file tail $dir]
+				if {[regexp {[- ]} $sample]} {
+					error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
+				}
+				lappend msamples $sample
 			}
-			lappend msamples $sample
 		}
 	} else {
 		set sampledir $destdir
