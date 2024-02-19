@@ -9,6 +9,7 @@ proc cg_viz_transcripts {args} {
 	set width 397
 	set height 210
 	set proportions 0
+	set round_digits {}
 	cg_options viz_transcripts args {
 		-rescale {
 			set rescale $value
@@ -33,6 +34,9 @@ proc cg_viz_transcripts {args} {
 		}
 		-proportions {
 			set proportions $value
+		}
+		-round_digits {
+			set round_digits $value
 		}
 		-width {
 			set width $value
@@ -100,6 +104,13 @@ proc cg_viz_transcripts {args} {
 		foreach {shortname countfield} $countfields {
 			append cmd [subst -nocommands {
 				tsv\$$countfield = 100*tsv\$$countfield/sum(tsv\$$countfield)
+			}]
+		}
+	}
+	if {$round_digits != ""} {
+		foreach {shortname countfield} $countfields {
+			append cmd [subst -nocommands {
+				tsv\$$countfield = round(tsv\$$countfield,$round_digits)
 			}]
 		}
 	}
