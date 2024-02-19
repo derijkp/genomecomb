@@ -53,6 +53,7 @@ option. **groupcols** has the following format: "field1 filter1 field2
 filter2 ... functions". For more information, see further (Summaries using
 -g and -gc)
 ; -rowfield: field that will contain the (current) row number (default ROW)
+; -optim fast/memory: setting to **memory** minimizes memory use when making summaries (-g) with very large output but is significantly slower
 
 == Fields (option -f) ==
 With the -f option, the output can be limited to the fields given (whitespace
@@ -400,7 +401,9 @@ The resulting summaries are again in the [[tsv]] format and can be queried again
 
 Warning: This option will use memory proportional to the size of the
 resulting summary!, so grouping on e.g. position in a file with millions
-of lines may exaust the memory.
+of lines may exaust the memory. You can use the option **-optim memory**
+to use a method which uses litle memory, but is significantly slower.
+
 
 === groupfields ===
 The **groupfields** option is used to enter the field(s) to aggregate upon

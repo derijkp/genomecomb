@@ -30,7 +30,7 @@ test select_group {group filter sample} {
 		s2	1
 		s1	2
 	}
-	cg select -overwrite 1 -g {sample s1} tmp/temp.tsv
+	cg select -stack 1 -overwrite 1 -g {sample s1} tmp/temp.tsv
 } {sample	count
 s1	2}
 
@@ -57,6 +57,20 @@ sub	GGG	1}
 
 test select_group {group 2 fields, one calculated} {
 	cg select -overwrite 1 -g {type {} {altx="${alt}x"} {}} data/expected-annotate-vars_annottest-gene_test.tsv
+} {type	altx	count
+del	x	4
+ins	GGx	3
+snp	A,Tx	1
+snp	Ax	11
+snp	C,Tx	1
+snp	Cx	6
+snp	Gx	6
+snp	T,C,Ax	1
+snp	Tx	15
+sub	GGGx	1}
+
+test select_group {group 2 fields, one calculated -optim memory} {
+	cg select -optim memory -overwrite 1 -g {type {} {altx="${alt}x"} {}} data/expected-annotate-vars_annottest-gene_test.tsv
 } {type	altx	count
 del	x	4
 ins	GGx	3
@@ -358,6 +372,24 @@ test select_group {group with wildcard calc col and sampleinfo} {
 		sample2	f
 	}
 	exec cg select -overwrite 1 -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
+} {sample	typex	count
+sample1	Am	1
+sample1	Bm	1
+sample2	Bf	2}
+
+test select_group {group with wildcard calc col and sampleinfo -optim memory} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2
+		1	A	B
+		2	B	B
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select -optim memory -overwrite 1 -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
 } {sample	typex	count
 sample1	Am	1
 sample1	Bm	1
@@ -690,7 +722,6 @@ A	2	4
 B	1	5}
 
 test select_group "long format -g with sampleinfo" {
-	global dbopt
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		sample id	freq
@@ -705,6 +736,24 @@ test select_group "long format -g with sampleinfo" {
 		sample3	f
 	}
 	exec cg select -overwrite 1 -q {$gender eq "f"} -g all tmp/temp.tsv
+} {all	count
+all	2}
+
+test select_group "long format -g with sampleinfo -optim memory" {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -optim memory -overwrite 1 -q {$gender eq "f"} -g all tmp/temp.tsv
 } {all	count
 all	2}
 

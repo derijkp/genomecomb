@@ -425,7 +425,106 @@ proc tsv_select_combinations {list} {
 	return $temp
 }
 
-proc tsv_select_group {header query qposs qfields group groupcols neededfields sortfields} {
+proc tsv_select_group_memfields {header query qposs qfields group groupcols neededfields sortfields} {
+	regsub -all \n [string trim $group] { } usegroup
+	set groupcol [lindex $groupcols 0]
+	regsub -all \n [string trim $groupcol] { } groupcol
+	if {![llength $groupcol]} {
+		set groupcol count
+	}
+	set grouptypelist [split [list_pop groupcol] ,]
+	# outfields is used to make output of preprocessing
+	# newqfields will give the new inputfields for actual code
+	set sortfields {}
+	set newqfields {}
+	set outfields {}
+	set newgroup {}
+	set newgroupcol {}
+	foreach field $qfields qpos $qposs {
+		set pos [string first = $field]
+		if {$pos != -1} {
+			lappend outfields $field
+			lappend newqfields [string range $el 0 [expr {$pos-1}]]
+		} elseif {[lindex $qpos 0] eq "code"} {
+			lappend outfields $field=[lindex $qpos 1]
+			lappend newqfields $field
+		}
+	}
+	# parse grouptypes (aggregate results), and see which functions are needed
+	set grouptypes [select_parse_grouptypes $grouptypelist $header]
+	# check for calculated fields in group, groupcol and grouptypes, add to qposs and qfields for making precalc
+	foreach {el values} $usegroup {
+		set pos [string first = $el]
+		if {$pos != -1} {
+			set field [string range $el 0 [expr {$pos-1}]]
+			lappend outfields $el
+			lappend sortfields $field
+			lappend newqfields $field
+			lappend newgroup $field $values
+		} else {
+			lappend newgroup $el $values
+			set found 0
+			foreach field [list_sub $newqfields [list_find -glob $newqfields $el-*]] {
+				set found 1
+			}
+			foreach field [list_sub $header [list_find -glob $header $el-*]] {
+				lappend outfields $field
+				lappend newqfields $field
+				set found 1
+			}
+			if {$el in $header} {
+				lappend outfields $el
+				lappend sortfields $el
+				lappend newqfields $el
+			} elseif {$el in {all - _}} {
+				lappend outfields $el="all"
+				lappend sortfields $el
+				lappend newqfields $el
+			} elseif {!$found && $el ni "sample analysis"} {
+				# error "could not find needed field \"$el\""
+			}
+		}
+	}
+	foreach {el values} $groupcol {
+		lappend outfields $el
+		set pos [string first = $el]
+		if {$pos != -1} {
+			set field [string range $el 0 [expr {$pos-1}]]
+			lappend newgroupcol $field $values
+			lappend newqfields $field
+		} else {
+			lappend newgroupcol $el $values
+			foreach field [list_sub $header [list_find -glob $header $el-*]] {
+				lappend newqfields $field
+			}
+			if {$el in $header} {
+				lappend newqfields $el
+			}
+		}
+	}
+	lappend newgroupcol [lindex [lindex $groupcols 0] end]
+	foreach {func el} $grouptypes {
+		if {$el ne ""} {
+			foreach field [list_sub $header [list_find -glob $header $el-*]] {
+				lappend outfields $field
+				lappend newqfields $field
+			}
+			if {$el in $header} {
+				lappend outfields $el
+				lappend newqfields $el
+			}
+		}
+	}
+	set outfields [list_remdup $outfields]
+	set newqfields [list_remdup $newqfields]
+	set extra [list_lremove $header $outfields]
+	lappend outfields {*}$extra
+	lappend newqfields {*}$extra
+	set sortfields [list_remdup $sortfields]
+	list $outfields $sortfields $newqfields $newgroup $newgroupcol
+}
+
+proc tsv_select_group {header query qposs qfields group groupcols neededfields sortfields optimization memgroupcode} {
 # putsvars header query qposs qfields group groupcols neededfields sortfields
 	global typetodoa calccols
 	# outcols not used in group
@@ -769,74 +868,155 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 			}
 		}
 	}
-	if {[info exists pregroup]} {
-		foreach _group [tsv_select_combinations $pregroup] {
-			append tclcode "[list set resultgroups([join $_group \t]) 1]\n"
-		}
-	}
-	set precol {}
-	foreach {el values} $groupcol {
-		if {[info exists precol]} {
-			if {$el eq "all"} {
-				lappend precol all
-			} elseif {$el eq "sample"} {
-				if {$gsamples eq {{}}} {
-					if {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
-						lappend precol $temp
-					} else {
-						unset precol; break
-					}
-				} else {
-					lappend precol $gsamples
-				}
-			} elseif {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
-				lappend precol $temp
-			} else {
-				unset precol; break
+	if {$optimization eq "m"} {
+		if {[info exists pregroup]} {
+			foreach _group [tsv_select_combinations $pregroup] {
+				append tclcode "[list set preresultgroups([join $_group \t]) 1]\n"
 			}
 		}
-	}
-	if {[info exists precol]} {
-		foreach _cols [tsv_select_combinations $precol] {
-			append tclcode "[list set resultdatacols([join $_cols -]) 1]\n"
+	} else {
+		if {[info exists pregroup]} {
+			foreach _group [tsv_select_combinations $pregroup] {
+				append tclcode "[list set resultgroups([join $_group \t]) 1]\n"
+			}
+		}
+		set precol {}
+		foreach {el values} $groupcol {
+			if {[info exists precol]} {
+				if {$el eq "all"} {
+					lappend precol all
+				} elseif {$el eq "sample"} {
+					if {$gsamples eq {{}}} {
+						if {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+							lappend precol $temp
+						} else {
+							unset precol; break
+						}
+					} else {
+						lappend precol $gsamples
+					}
+				} elseif {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+					lappend precol $temp
+				} else {
+					unset precol; break
+				}
+			}
+		}
+		if {[info exists precol]} {
+			foreach _cols [tsv_select_combinations $precol] {
+				append tclcode "[list set resultdatacols([join $_cols -]) 1]\n"
+			}
 		}
 	}
 	# add rest to tclcode (tsv_selectc_query, calculate aggregates)
-	append tclcode {
-		proc tsv_selectc_query {@neededfields@} {
-			global resultdata resultgroups resultcount resultdatacols
-			@prequery@
-			if {@pquery@} {
+	set @cols@ {{}}
+	if {$optimization eq "m"} {
+		set @cols@ {{}}
+		append tclcode {
+			global o
+			# todo (can onlt add cols if possible values known up front)
+			set header [list @grouph@]
+			foreach col @cols@ {
+				foreach {func val} @grouptypes@ {
+					if {$val ne ""} {append func _$val} 
+					lappend header [join [list $func {*}${col}] -]
+				}
+			}
+			if {![llength @sortfields@]} {
+				set o stdout
+			} else {
+				set tempfile [tempfile]
+				set o [open $tempfile w]
+			}
+			puts $o [join $header \t]
+			proc tsv_selectc_query {@neededfields@} {
+				global resultdata resultgroups resultcount resultdatacols resultprevgroup
+				set group @memgroupcode@
+				if {![info exists resultprevgroup]} {
+					set resultprevgroup $group
+				}
+				if {$group ne $resultprevgroup} {
+					foreach _groupname [bsort [array names resultgroups]] {
+						unset -nocomplain ::preresultgroups($_groupname)
+						set result {}
+						# puts $o "$name\t$resultdata($name)"
+						foreach col @cols@ {
+							@calcresults@
+						}
+						puts $::o "$_groupname\t[join $result \t]"
+					}
+					unset -nocomplain resultdata resultgroups resultcount resultdatacols
+					set resultprevgroup $group
+				}
+				@prequery@
+				if {@pquery@} {
 @precalc@
 @addcols@
+				}
+				return 0
 			}
-			return 0
-		}
-		tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
-		set cols [bsort [array names resultdatacols]]
-		if {![llength $cols]} {set cols {{}}}
-		set header [list @grouph@]
-		foreach col $cols {
-			foreach {func val} @grouptypes@ {
-				if {$val ne ""} {append func _$val} 
-				lappend header [join [list $func {*}${col}] -]
+			tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
+			# print out last (previous) line
+			global resultdata resultgroups resultcount resultdatacols resultprevgroup
+			if {[info exists resultprevgroup]} {
+				foreach _groupname [bsort [array names resultgroups]] {
+					unset -nocomplain ::preresultgroups($_groupname)
+					set result {}
+					# puts $o "$name\t$resultdata($name)"
+					foreach col @cols@ {
+						@calcresults@
+					}
+					puts $o "$_groupname\t[join $result \t]"
+				}
+			}
+			foreach _groupname [bsort [array names preresultgroups]] {
+				set result {}
+				# puts $o "$name\t$resultdata($name)"
+				foreach col @cols@ {
+					@calcresults@
+				}
+				puts $o "$_groupname\t[join $result \t]"
 			}
 		}
-		if {![llength @sortfields@]} {
-			set o stdout
-		} else {
-			set tempfile [tempfile]
-			set o [open $tempfile w]
-		}
-		puts $o [join $header \t]
-		foreach _groupname [bsort [array names resultgroups]] {
-			set result {}
-			# puts $o "$name\t$resultdata($name)"
+	} else {
+		append tclcode {
+			proc tsv_selectc_query {@neededfields@} {
+				global resultdata resultgroups resultcount resultdatacols
+				@prequery@
+				if {@pquery@} {
+@precalc@
+@addcols@
+				}
+				return 0
+			}
+			tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
+			set cols [bsort [array names resultdatacols]]
+			if {![llength $cols]} {set cols {{}}}
+			set header [list @grouph@]
 			foreach col $cols {
-				@calcresults@
+				foreach {func val} @grouptypes@ {
+					if {$val ne ""} {append func _$val} 
+					lappend header [join [list $func {*}${col}] -]
+				}
 			}
-			puts $o "$_groupname\t[join $result \t]"
+			if {![llength @sortfields@]} {
+				set o stdout
+			} else {
+				set tempfile [tempfile]
+				set o [open $tempfile w]
+			}
+			puts $o [join $header \t]
+			foreach _groupname [bsort [array names resultgroups]] {
+				set result {}
+				# puts $o "$name\t$resultdata($name)"
+				foreach col $cols {
+					@calcresults@
+				}
+				puts $o "$_groupname\t[join $result \t]"
+			}
 		}
+	}
+	append tclcode {
 		if {[llength @sortfields@]} {
 			close $o
 			cg select -s @sortfields@ $tempfile >@ stdout
@@ -851,12 +1031,13 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 	set neededfields [list_remdup $neededfields]
 	set neededcols [list_cor $header $neededfields]
 	set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\} \
+		@memgroupcode@ $memgroupcode @cols@ [list ${@cols@}] \
 		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
 		@grouptypes@ [list $grouptypes] @grouph@ $groupheader @verbose@ [get ::verbose 0] \
 		@sortfields@ [list $sortfields]]
 	]]
-	# file_write /tmp/temp.txt $tclcode\n
+	 file_write /tmp/temp.txt $tclcode\n
 	return $tclcode
 }

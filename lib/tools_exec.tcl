@@ -18,6 +18,34 @@ proc chanexec {in out pipe} {
 	if {$o ne "stdout"} {gzcloseout $o}
 }
 
+proc dbg_chanexec {in out pipe} {
+	puts stderr "chanexec_open: [list $in $out $pipe]"
+	if {$pipe eq ""} {
+		set o $out
+	} else {
+		set o [open [list | {*}$pipe >@ $out 2>@ stderr] w]
+	}
+	# puts stderr "::filebuffer($in): [get ::filebuffer($in) NULL]"
+	if {[info exists ::filebuffer($in)]} {
+		foreach line $::filebuffer($in) {
+			puts stderr "chanexec_buffer:$line"
+			puts $o $line
+		}
+		unset ::filebuffer($in)
+	}
+	catch_fileaccess {
+		while {[gets $in line] != -1} {
+			puts stderr "chanexec:$line"
+			puts $o $line
+		}
+	} $in $o
+	if {$in ne "stdin"} {gzclose $in}
+	# gzclose would catch error "child process exited abnormally", which would cause us to miss errors in the pipe
+	# we only want to do this for input (interupted decompression)
+	# gzcloseout only removes the "child process exited abnormally" from the error, but propagates the exit error
+	if {$o ne "stdout"} {gzcloseout $o}
+}
+
 # catch_exec does exec "catching" errors caused by output to stderr
 # it only generates an error if the cmd returns an error exit code.
 proc catch_exec {args} {

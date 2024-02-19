@@ -1316,6 +1316,7 @@ proc cg_select {args} {
 	set usesort 0
 	set useaddrow 0
 	set fieldorder 0
+	set optimization f
 	cg_options select args {
 		-q {
 			set query $value
@@ -1323,10 +1324,12 @@ proc cg_select {args} {
 			regsub -all {\\=} $query = query
 		}
 		-si {
-			if {![file exists $value]} {
-				error "sampleinfofile \"$value\" does not exist"
+			if {$value ne ""} {
+				if {![file exists $value]} {
+					error "sampleinfofile \"$value\" does not exist"
+				}
+				tsv_select_sampleinfo_setfile $value
 			}
-			tsv_select_sampleinfo_setfile $value
 		}
 		-qf {
 			set f [gzopen $value]
@@ -1427,6 +1430,9 @@ proc cg_select {args} {
 		}
 		-rowfield {
 			set ::rowfield $value
+		}
+		-optimization - -optim {
+			set optimization [string index $value 0]
 		}
 	}
 	if {$showheader} {
@@ -1611,8 +1617,38 @@ proc cg_select {args} {
 	set tclcode {}
 	set sampleinfo_long 0
 	if {$group ne ""} {
-		append tclcode \n [tsv_select_group $header $query $qposs $qfields $group $groupcols $neededfields $sortfields]
-		#file_write /tmp/temp.tcl $tclcode\n
+		set memgroupcode {}
+		if {$optimization eq "m"} {
+			if {[llength [lindex $groupcols 0]] > 1} {set optimization f}
+			foreach el $qfields {
+				set pos [string first = $el]
+				if {$pos != -1} {
+				}
+			}
+		}
+# putsvars header query qposs qfields group groupcols neededfields sortfields optimization ::tsv_select_sampleinfofile
+		if {$optimization eq "m"} {
+			foreach {mgoutfields mgsortfields qfields group groupcols} [tsv_select_group_memfields $header $query $qposs $qfields $group $groupcols $neededfields $sortfields] break
+			set qposs [list_fill [llength $qfields] 1 1]
+			if {[regexp = $mgoutfields]} {
+				lappend pipe [list cg select -si $::tsv_select_sampleinfofile -f $mgoutfields -q $query]
+				lappend pipe [list cg select -sh /dev/null -s $mgsortfields]
+			} else {
+				lappend pipe [list cg select -sh /dev/null -si $::tsv_select_sampleinfofile -f $mgoutfields -s $mgsortfields -q $query]
+			}
+# lappend pipe {tee /tmp/tempdata}
+			set ::filebuffer($f) [list [join $header \t]]
+			set query {}
+			set header $qfields
+			set memgroupcode "\"\$[join $mgsortfields \t\$]\""
+			set neededfields $qfields
+# puts --
+# putsvars mgoutfields mgsortfields qfields groupcols qposs pipe group groupcols neededfields
+		}
+		append tclcode \n [tsv_select_group $header $query $qposs $qfields $group $groupcols $neededfields $sortfields $optimization $memgroupcode]
+# puts stderr ok
+# puts stderr "pipe: [join $pipe " | "]"
+# file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 	} elseif {$query ne "" || [llength $qfields]} {
 		set outcols {}
@@ -1763,8 +1799,10 @@ proc cg_select {args} {
 		# set pipe [list addrow {tee /tmp/tee} {*}$pipe]
 		set pipe [list addrow {*}$pipe]
 	}
+
 # file_write /tmp/temp.txt $tclcode\n
-	if {[string length $tclcode] > 2000} {
+
+	if {[string length $tclcode] > 20} {
 		set tempfile [tempfile]
 		file_write $tempfile $tclcode\n
 		lappend pipe [list cg source $tempfile]
@@ -1773,7 +1811,7 @@ proc cg_select {args} {
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-# puts stderr -------------pipe-------------------
+# puts stderr "-------------pipe qfields=\"$qfields\" group=\"$group\" sortfields=\"$sortfields\"-------------------"
 # puts stderr "pipe: [join $pipe " | "]"
 # puts stderr ------------------------------------
 	if {$qfields ne ""} {
@@ -1799,12 +1837,18 @@ proc cg_select {args} {
 			unset ::filebuffer($f)
 		}
 		fcopy $f $out
+		# dbg_chanexec $f $out {}
 	} elseif {$index ne ""} {
 		exec {*}[join $pipe " | "] >@ $out 2>@ stderr
 	} else {
 		chanexec $f $out [join $pipe " | "]
+		# dbg_chanexec $f $out [join $pipe " | "]
 	}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 	if {$out ne "stdout"} {catch {close $out}}
+# puts stderr ===-------------pipe-------------------
+# puts stderr "pipe: [join $pipe " | "]"
+# puts stderr ===------------------------------------
+#puts stderr ok
+# file_write /tmp/temp.txt $tclcode\n
 }
-
