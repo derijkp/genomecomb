@@ -580,7 +580,11 @@ proc diffhtmlreport {file1 file2 {error 0}} {
 		| grep -v {diff -r -y --suppress-common-lines}
 	} msg]} {
 		if {![string match {child process exited abnormally} $msg]} {
-			if {$error} {error $msg} else {return $msg}
+			if {$error} {
+				error $msg
+			} else {
+				return "files differ: $file1 $file2"
+			}
 		}
 	}
 	return ""

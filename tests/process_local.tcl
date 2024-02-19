@@ -177,6 +177,7 @@ test process_project {process_project include msamples directory (analyse, but n
 	mkdir tmp/msamples
 	file rename tmp/samples/msample tmp/msamples/msample
 	cg process_project -stack 1 \
+		-process_msamples 1 \
 		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
 		-distrreg chr -dbdir $::refseqdir/hg19 \
 		tmp >& tmp/startup.log
