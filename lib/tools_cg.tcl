@@ -9,6 +9,11 @@ proc cg {cmd args} {
 	catch_exec cg $cmd {*}$args
 }
 
+proc sw {cmd args} {
+	# puts "sw $cmd $args"
+	catch_exec sw $cmd {*}$args
+}
+
 # default command line argument parsing for subcommands in genomecomb
 # cmd: name of the subcommand it is being used in -> used for error messages and finding the help
 # argsVar: variable name with arguments (usually args); This command changes the contrent of args: options that are recognized are removed from args
