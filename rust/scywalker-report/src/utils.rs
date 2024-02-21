@@ -25,8 +25,10 @@ pub fn histogram_to_bar<T>(values: Vec<T>) -> Box<plotly::Bar<T, usize>>
 where
     T: Integer + Serialize + Clone + num_traits::FromPrimitive + std::fmt::Debug,
 {
-    let values = Array::from_shape_vec((values.len(), 1), values).unwrap();
-    let grid = GridBuilder::<Auto<_>>::from_array(&values).unwrap().build();
+    let values = Array::from_shape_vec((values.len(), 1), values).expect("Failed to create array");
+    let grid = GridBuilder::<Auto<_>>::from_array(&values)
+        .expect("Problem when constructing grid for histogram")
+        .build();
 
     let histogram = values.histogram(grid);
     let mut bin_edges = vec![];
@@ -39,12 +41,16 @@ where
     Bar::new(bin_edges, hist_counts).name("Read length")
 }
 
-pub fn find_file(directory: &str, pattern: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn find_file(directory: &str, pattern: &str) -> Option<PathBuf> {
     let mut glob_pattern = PathBuf::from(directory);
     glob_pattern.push(pattern);
-    let mut glob_iter = glob(glob_pattern.to_str().unwrap())?;
-    let file_path = glob_iter
+    let mut glob_iter = glob(
+        glob_pattern
+            .to_str()
+            .expect("Failed to convert glob to str"),
+    )
+    .expect("Failed to read glob pattern");
+    glob_iter
         .next()
-        .unwrap_or_else(|| panic!("Could not find file {pattern}"))?;
-    Ok(file_path)
+        .map(|x| x.expect(format!("Failed to glob path {pattern}", pattern = pattern).as_str()))
 }

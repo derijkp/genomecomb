@@ -17,11 +17,10 @@ pub struct KneeMetrics {
 }
 
 pub fn knee_plot(directory: &str) -> Result<KneePlot, Box<dyn std::error::Error>> {
-    let cellinfo_file = crate::utils::find_file(
-        directory,
-        "sc_cellinfo_raw-isoquant_sc-sminimap2_splice-*.tsv.zst",
-    )?;
-    let (good_umis, bad_umis) = get_umis(&cellinfo_file)?;
+    let pattern = "sc_cellinfo_raw-isoquant_sc-sminimap2_splice-*.tsv.zst";
+    let cellinfo_file = crate::utils::find_file(directory, pattern)
+        .unwrap_or_else(|| panic!("Failed to find cellinfo file {pattern}"));
+    let (good_umis, bad_umis) = get_umis(&cellinfo_file).expect("Failed to get umis");
     let good_umis_only = good_umis.iter().flatten().copied().collect::<Vec<u32>>();
     let bad_umis_only = bad_umis.iter().flatten().copied().collect::<Vec<u32>>();
     // for filtered cells
@@ -56,7 +55,7 @@ pub fn knee_plot(directory: &str) -> Result<KneePlot, Box<dyn std::error::Error>
         .iter()
         .enumerate()
         .filter(|(i, c)| cell_rank_index.contains(i) && c.is_some())
-        .map(|(i, c)| (i + 1, c.unwrap()))
+        .map(|(i, c)| (i + 1, c.expect("Problem when iterating over good umis")))
         .collect::<Vec<_>>()
         .into_iter()
         .unzip();
@@ -64,7 +63,7 @@ pub fn knee_plot(directory: &str) -> Result<KneePlot, Box<dyn std::error::Error>
         .iter()
         .enumerate()
         .filter(|(i, c)| cell_rank_index.contains(i) && c.is_some())
-        .map(|(i, c)| (i + 1, c.unwrap()))
+        .map(|(i, c)| (i + 1, c.expect("Problem when iterating over bad umis")))
         .collect::<Vec<_>>()
         .into_iter()
         .unzip();
@@ -102,7 +101,8 @@ type UmiVec = Vec<Option<u32>>;
 
 fn get_umis(file: &PathBuf) -> Result<(UmiVec, UmiVec), Box<dyn std::error::Error>> {
     info!("Reading file {:?}...", file);
-    let decoder = zstd::Decoder::new(std::fs::File::open(file)?)?;
+    let decoder = zstd::Decoder::new(std::fs::File::open(file)?)
+        .unwrap_or_else(|_| panic!("Failed to open file {:?}", file));
     let reader = BufReader::new(decoder);
     let mut good_umis = Vec::new();
     let mut bad_umis = Vec::new();
