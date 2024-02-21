@@ -26,3 +26,4 @@
 tclIndex
 /extra
 /extra-ix86
+/rust/scywalker-report/target/*

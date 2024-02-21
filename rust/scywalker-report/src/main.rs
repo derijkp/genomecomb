@@ -45,6 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cell_info::genes(&args.directory, knee.metrics).expect("Failed to get cell info");
     let read_assignment =
         read_assignment::plot(&args.directory).expect("Failed to plot read assignment");
+    let umaptype = get_umaptype(&args.directory).expect("Failed to get umap");
     let umap = get_umap(&args.directory).expect("Failed to get umap");
     let report = format!(
         "<html>
@@ -64,6 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     {exons_vs_length_exons}
                     {cell_info_plot}
                     {read_assignment}
+                    {umaptype}
                     {umap}
             </body>
         </html>",
@@ -79,13 +81,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn get_umap(directory: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn get_umaptype(directory: &str) -> Result<String, Box<dyn std::error::Error>> {
     // this function converts the umap png to a base64 string
     // so that it can be embedded in the html
     // this output is optional, so the file is not guaranteed to exist
     let path = utils::find_file(
         directory,
-        "sc_celltype_umap-scsorter-isoquant_sc-sminimap2_splice*.png",
+        "sc_celltype_umap-sctype-isoquant_sc-sminimap2_splice*.png",
     );
     if path.is_none() {
         info!("No umap produced");
@@ -101,5 +103,30 @@ fn get_umap(directory: &str) -> Result<String, Box<dyn std::error::Error>> {
         ); // Pass the PathBuf as a reference
         info!("Gathered umap");
         Ok(format!("<div class=\"plot\"><h2>Cell type classification</h2><img class=\"img\" src=\"{b64}\"></div>"))
+    }
+}
+
+fn get_umap(directory: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // this function converts the umap png to a base64 string
+    // so that it can be embedded in the html
+    // this output is optional, so the file is not guaranteed to exist
+    let path = utils::find_file(
+        directory,
+        "sc_umap-isoquant_sc-sminimap2_splice*.png",
+    );
+    if path.is_none() {
+        info!("No umap produced");
+        Ok("".to_string())
+    } else {
+        info!("Found umap");
+        let b64 = image_base64::to_base64(
+            &path
+                .expect("Weirdly enough, no umap was found. This should not happen.")
+                .as_path()
+                .display()
+                .to_string(),
+        ); // Pass the PathBuf as a reference
+        info!("Gathered umap");
+        Ok(format!("<div class=\"plot\"><h2>Cell clustering (Seurat UMAP)</h2><img class=\"img\" src=\"{b64}\"></div>"))
     }
 }
