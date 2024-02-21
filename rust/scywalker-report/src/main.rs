@@ -37,12 +37,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         panic!("Provided directory {} does not exist", args.directory);
     }
     info!("Gathering information");
-    let cramino_table = parse_cramino::parse_cramino(&args.directory)?;
-    let knee = knee::knee_plot(&args.directory)?;
-    let exons_vs_length = exons_vs_length::plot(&args.directory)?;
-    let cell_info = cell_info::genes(&args.directory, knee.metrics)?;
-    let read_assignment = read_assignment::plot(&args.directory)?;
-    let umap = get_umap(&args.directory)?;
+    let cramino_table =
+        parse_cramino::parse_cramino(&args.directory).expect("Failed to parse cramino");
+    let knee = knee::knee_plot(&args.directory).expect("Failed to create knee plot");
+    let exons_vs_length = exons_vs_length::plot(&args.directory).expect("Failed to plot exons");
+    let cell_info =
+        cell_info::genes(&args.directory, knee.metrics).expect("Failed to get cell info");
+    let read_assignment =
+        read_assignment::plot(&args.directory).expect("Failed to plot read assignment");
+    let umap = get_umap(&args.directory).expect("Failed to get umap");
     let report = format!(
         "<html>
             <head>
@@ -79,11 +82,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn get_umap(directory: &str) -> Result<String, Box<dyn std::error::Error>> {
     // this function converts the umap png to a base64 string
     // so that it can be embedded in the html
+    // this output is optional, so the file is not guaranteed to exist
     let path = utils::find_file(
         directory,
         "sc_celltype_umap-scsorter-isoquant_sc-sminimap2_splice*.png",
-    )?;
-    let b64 = image_base64::to_base64(&path.as_path().display().to_string()); // Pass the PathBuf as a reference
-    info!("Gathered umap");
-    Ok(format!("<div class=\"plot\"><h2>Cell type classification</h2><img class=\"img\" src=\"{b64}\"></div>"))
+    );
+    if path.is_none() {
+        info!("No umap produced");
+        Ok("".to_string())
+    } else {
+        info!("Found umap");
+        let b64 = image_base64::to_base64(
+            &path
+                .expect("Weirdly enough, no umap was found. This should not happen.")
+                .as_path()
+                .display()
+                .to_string(),
+        ); // Pass the PathBuf as a reference
+        info!("Gathered umap");
+        Ok(format!("<div class=\"plot\"><h2>Cell type classification</h2><img class=\"img\" src=\"{b64}\"></div>"))
+    }
 }
