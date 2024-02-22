@@ -1,6 +1,6 @@
 proc sc_pseudobulk_job {args} {
 	upvar job_logdir job_logdir
-	cg_options sc_pseudobulk_job args {
+	cg_options sc_pseudobulk args {
 	} {scgenefile scisoformfile groupfile} 3 3
 	#
 	set scgenefile [file_absolute $scgenefile]

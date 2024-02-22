@@ -72,7 +72,16 @@ By default options are set for short read genomic sequencing (genome/exome/targe
 Presets can be used to set a number of options to the defaults for a given
 analysis. These options can still be changed by specifically giving them a
 value after the -preset option (options given later overrule previous
-ones). 
+ones).
+
+Different options can be given to different samples within the same
+experiment run by storing a file named options.tsv in the
+experiment/project dir with the following fields: sample option value
+For each sample (that differs from the general option if given) you add a
+line with the samplename, the option (without the -, e.g. sc_expectedcells) and
+the value (the number of expected cells in the case of sc_expectedcells).
+You can use the preset option this way, allowing the analysis of different
+technologies (e.g. ont and srs) in one run.
 
 ; -preset preset: sets a number of options to the defaults for the given "preset",
 must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), ont (ont genomic sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell rna-seq)

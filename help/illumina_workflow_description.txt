@@ -11,7 +11,7 @@ unsequenced. Structural variants were called using manta (9) and lumpy
 (10). The resulting variant sets of different individuals were combined
 and annotated using genomecomb (1).
 
-(1) genomecomb 0.107.0, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
+(1) genomecomb 0.108.0, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
 (2) fastq-mcf 1.1.2-537, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
 (3) hg38 (GRCh38) downloaded from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz on 2020-06-06, Schneider V.A. et al. (2017) Evaluation of GRCh38 and de novo haploid genome assemblies demonstrates the enduring quality of the reference assembly. Genome Res. 2017 May; 27(5): 849\u2013864. [PMID: 28396521]
 (4) bwa 0.7.15-r1140, Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168] 

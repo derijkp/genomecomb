@@ -108,4 +108,4 @@ not counted for an isoform)
 
 
 == Category ==
-Rna-seq
+RNA

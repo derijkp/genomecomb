@@ -1,0 +1,23 @@
+= Gtf2tsv =
+
+== Format ==
+cg sc_pseudobulk scgenefile scisoformfile groupfile
+
+== Summary ==
+make pseudobulk files of sc_gene and sc_transcript files based on an sc_group file
+
+== Description ==
+cg sc_pseudobulk creates pseudobulk files at the gene and transcript
+level starting from the single cell gene and transcript files,
+and a grouping file that assigns each cell/barcode to a group (e.g. celltype)
+The resulting pseudobulk files will be named pb_gene_counts-rootname.tsv.zst
+pb_isoform_counts-rootname.tsv.zst where rootname is based on the filename
+of the given groupfile
+
+== Arguments ==
+; scgenefile: tab separated file with gene information (output of e.g. scywalker) and UMI counts per gene/per cell
+; scisoformfile: tab separated file with transcript information (in the [[transcript]] tsv format, output of e.g. scywalker) and UMI counts per gene/per cell
+; groupfile: tsv file containing assignement of cells/barcodes to cell-types (or any other grouping)
+
+== Category ==
+RNA

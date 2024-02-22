@@ -1,0 +1,18 @@
+Analysis was performed in-house with a standardized pipeline integrated in
+genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
+were aligned to the hg38 genome reference (3) using STAR (4) in 2-pass mode
+and the resulting sam file converted to cram using samtools (5). Bam files were
+sorted. Variants were called at all positions with a totalcoverage >= 5
+using both GATK haplotype caller (6) and strelka (7). At the initial stage
+positions with a coverage < 8 or a genotype quality score < 25 were
+considered unsequenced. Gene counts were obtained using rnaseqc (8) and qorts (9).
+
+(1) genomecomb 0.108.0, Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
+(2) fastq-mcf 1.1.2-537, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
+(3) hg38 (GRCh38) downloaded from ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz on 2020-06-06, Schneider V.A. et al. (2017) Evaluation of GRCh38 and de novo haploid genome assemblies demonstrates the enduring quality of the reference assembly. Genome Res. 2017 May; 27(5): 849\u2013864. [PMID: 28396521]
+(4) STAR 2.7.9a, Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR. (2013) STAR: ultrafast universal RNA-seq aligner. Bioinformatics, 29(1):15-21. [PMID: 23104886]
+(5) samtools 1.11, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943] 
+(6) GATK 4.1.8.1, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(7) strelka 2.9.10, Kim S. et al. (2018) Strelka2: fast and accurate calling of germline and somatic variants.  Nat Methods. 15(8):591-594. [PMID: 30013048]
+(8) RNA-SeQC 2.4.2, Graubert A, Aguet F, Ravi A, Ardlie KG, Getz G. (2021) RNA-SeQC 2: efficient RNA-seq quality control and quantification for large cohorts. Bioinformatics, 37(18):3048-3050. [PMID: 33677499]
+(9) QoRTs 1.3.6, Hartley SW, Mullikin JC. (2015). QoRTs: a comprehensive toolset for quality control and data processing of RNA-Seq experiments. BMC Bioinformatics, 16(1):224. [PMID: 26187896]
