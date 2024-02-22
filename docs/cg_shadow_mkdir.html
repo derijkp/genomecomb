@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_shadow_mkdir</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">shadow_mkdir</h1>
+<h2 id="h20">Format</h2>
+<p>cg shadow_mkdir ?options? dir ?shadowdir?</p>
+<h2 id="h76">Summary</h2>
+<p>create a shadowed dir</p>
+<h2 id="h114">Description</h2>
+<p>cg shadow_mkdir creates a directory <b>dir</b> that is actually a
+softlink pointing to a (generated) storage directory (shadow) in
+another location, typically on another (file)system.</p>
+<p>The shadow is made as a subdirectory of the directory
+<b>shadowdir</b>: This can be given using the option -shadowdir or
+else the environment variable SHADOWDIR is used. If -shadowdir is not
+specified, nor the environment variable SHADOWDIR defined, a normal
+directory will be made instead (i.e. like a simple &quot;mkdir
+$dir&quot;)</p>
+<h2 id="h636">Arguments</h2>
+
+<dl>
+  <dt>dir</dt>
+  <dd>&quot;directory&quot; to be made</dd>
+</dl>
+<h2 id="h683">Options</h2>
+
+<dl>
+  <dt>-shadowdir shadowdir</dt>
+  <dd>The actual storage directory (shadow) wil be generated in
+  <b>shadowdir</b></dd>
+</dl>
+<h2 id="h794">Use</h2>
+<p>Shadow dirs are esp. usefull to provide a faster and/or untracked
+(by e.g. zfs snapshots or backups) storage location for making
+temporary/intermediate files that should still be accessible from
+different jobs and nodes in the original data structure.</p>
+<p>genomecomb e.g. uses workdirs to temporarily store the the
+temporary results from separate jobs aligning fastqs, variant calling
+of separate regions, etc. and combines the results (in yet another
+job). If SHADOWDIR is defined, shadows are used for these workdirs;
+these can be located on a fast ssd server separate from the
+experiment directory, while not filling up space (and potentially
+being snapshot or synced to backup) on the experiment storage.</p>
+<h2 id="h1514">Deletion</h2>
+<p>To delete a shadow, use</p>
+<pre>
+cg shadow_delete dir
+</pre>
+<p>shadow_delete will delete both the link and the shadow storage,
+after checking it is actually a shadow dir (It will give an error if
+the shadow dir contains a softlink named shadow_source, which
+shadow_mkdir makes to point to dir). If dir is not a link, the
+directory will be deleted.</p>
+<h2 id="h1868">Clean</h2>
+<p>If you would use e.g. ```rm dir``` only the link would be deleted;
+the actual (orphaned now) storage dir would remain. You can clean out
+orphaned storage dirs from shadowdir using</p>
+<pre>
+cg shadow_clean ?shadowdir?
+</pre>
+<p>To see if a shadow is orphaned, shadow_clean checks the link named
+shadow_source in the shadow dir. If shadow_source no longer exists,
+the shadow is deleted; Beware that if you moved shadow_source (by
+e.g. moving the directory in which it is located), it will not be
+found, and the shadow dir deleted on shadow_clean.</p>
+<h2 id="h2416">Category</h2>
+<p>Tools</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

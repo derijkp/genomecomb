@@ -77,7 +77,8 @@ local database.</p>
 <h2 id="h1409">region file format</h2>
 <p>Region files are used to indicate regions on the genome, and
 potentially associate some name, score, annotation, ... to it. Region
-files contain at least the following fields:
+files contain at least the following fields:</p>
+
 <dl>
   <dt>chromosome</dt>
   <dd>a string indicating the chromosome name.</dd>
@@ -107,7 +108,8 @@ can sort files using the -s option of <a href="cg_select.html">cg
 select</a>. Use -s - to sort using the default expected sort order:
 cg select -s - file sortedfile</p>
 <p>If the normal chromosome, begin, end fields are not present, the
-following alternative fieldnames are also recognized:
+following alternative fieldnames are also recognized:</p>
+
 <dl>
   <dt>chromosome</dt>
   <dd>&quot;chrom&quot;, &quot;chr&quot;, &quot;chr1&quot;,
@@ -127,7 +129,8 @@ following alternative fieldnames are also recognized:
 chromosome, begin and end fields indicate the location of the variant
 in the same way as in region files, while other fields define the
 variant at the location: The following basic fields are present in a
-variant file:
+variant file:</p>
+
 <dl>
   <dt>chromosome</dt>
   <dd>chromosome name.</dd>
@@ -152,7 +155,8 @@ begin, end, type, alt (in that order).</p>
 sample or annotation information, many depending on the variant
 caller used (e.g. <a href="gatk_vars.html">gatk_vars</a> and <a
 href="sam_vars.html">sam_vars</a>). The following fields have
-specific meanings in genomecomb:
+specific meanings in genomecomb:</p>
+
 <dl>
   <dt>sequenced</dt>
   <dd>single letter code describing sequencing status (described
@@ -177,7 +181,8 @@ specific meanings in genomecomb:
   of coverage can differ between different callers</dd>
 </dl>
 <p>genomecomb has 2 options to deal with the presence of multiple
-alternative alleles on the same position:
+alternative alleles on the same position:</p>
+
 <dl>
   <dt>split</dt>
   <dd>Each alternative allele is on a seperate line. e.g. A to G,C
@@ -196,7 +201,8 @@ alternative alleles on the same position:
 </dl>
 <h3 id="h6113">sequenced field</h3>
 <p>The sequenced field indicates sequenig status of the variant in
-the sample. The following codes can be found:
+the sample. The following codes can be found:</p>
+
 <dl>
   <dt>u</dt>
   <dd>the position is considered unsequenced in the sample (e.g.
@@ -217,7 +223,8 @@ for considering variants unsequenced (sensitiviy over specificity).
 You can allways apply more stringent quality filtering on the result
 using <a href="cg_select.html">cg select</a>.</p>
 <h3 id="h7045">zyg</h3>
-<p>Possible zyg codes are:
+<p>Possible zyg codes are:</p>
+
 <dl>
   <dt>m</dt>
   <dd>homozygous; the sample has two times the given alternative
@@ -254,7 +261,8 @@ for an insertion). The alt is indicated by the following patterns,
 where <b>chr:pos</b> gives the location the variant location is
 linked to. (AS for insertions, pos here points to a location between
 bases) <b>s</b> can be pesent to indicate inserted bases in the
-breakpoint:
+breakpoint:</p>
+
 <ul>
   <li>.s[chr:pos[ The sequence starting after <b>chr:pos</b> is added
   after the variant location</li>
@@ -275,7 +283,8 @@ different methods (aligners, variant callers). This is indicated
 using fieldname-methods-sample. (The methods-sample part is called
 the anlysis.)</p>
 <p>A small example multicompar variant file with two samples would
-contain the following fields
+contain the following fields</p>
+
 <dl>
   <dt>chromosome</dt>
   <dd>chromosome name.</dd>
@@ -315,7 +324,8 @@ contain the following fields
 <p>Some formats used in bioinformatics contain data in a tab
 separated format where the header does not conform to the tsv specs.
 Most Genomecomb commands will detect and support some of these
-alternative comments/header styles:
+alternative comments/header styles:</p>
+
 <dl>
   <dt>sam</dt>
   <dd>starts with &quot;@HD VN&quot;, header lines start with @,

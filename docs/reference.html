@@ -73,7 +73,8 @@ cg subcommand -h
 <h2 id="h561">Options</h2>
 <p>The following options are generic and available for all
 subcommands. They must however always preceed the subcommand specific
-options.
+options.</p>
+
 <dl>
   <dt>-v number (--verbose)</dt>
   <dd>Setting this to 1 or 2 (instead of the default 0) makes some
@@ -90,7 +91,8 @@ options.
 </dl>
 <p>Many commands will transparantly compress a result file if it
 has an extension indicating this (.zst, .gz, ...). Following options
-are for this case:
+are for this case:</p>
+
 <dl>
   <dt>-compressionlevel number</dt>
   <dd>number indicating the level of compression (1 for fast
@@ -109,22 +111,30 @@ are for this case:
  
  
   href="cg_threads_(default_1)_to_compress_the_result_file_(if_the_result_needs_to_be_compressed,_and_the_compression_method_supports_threads).html">cg_threads
-  (default 1) to compress the result file (if the result needs to be
-  compressed, and the compression method supports threads)</a></dd>
+  (default 1) to compress the result 
+file (if the result needs to be compressed, and the compression
+  method supports threads)</a></dd>
 </dl>
-<h2 id="h1821">Available subcommands</h2>
-<h3 id="h1851">Process</h3>
 
 <dl>
-  <dt><a href="cg_process_project.html">process_project</a>|threads
-  (default 1) to compress the result file (if the result needs to be
-  compressed, and the compression method supports threads)</dt>
+  <dt>-shadowdir|threads (default 1) to compress the result file (if
+  the result needs to be compressed, and the compression method
+  supports threads)</dt>
 </dl>
-<h2 id="h2041">Available subcommands</h2>
-<h3 id="h2071">Process</h3>
 
 <dl>
-  <dt><a href="cg_process_project.html">process_project</a>]]</dt>
+  <dt>-shadowdir]]</dt>
+  <dd>alternative location (e.g. a faster disk or disk without
+  snapshots) to store some of the intermediate files that must be
+  accessible to multiple jobs (will be made using <a
+  href="shadow_mkdir.html">shadow_mkdir</a>). Can also be specified
+  using the environment variable SHADOWDIR.</dd>
+</dl>
+<h2 id="h2239">Available subcommands</h2>
+<h3 id="h2269">Process</h3>
+
+<dl>
+  <dt><a href="cg_process_project.html">process_project</a></dt>
   <dd>process a sequencing project directory (<a
   href="projectdir.html">projectdir</a>), generating full analysis
   information (variant calls, multicompar, reports, ...) starting
@@ -152,7 +162,7 @@ are for this case:
   <dd>Converts the sample names in a file or entire directory to
   other names.</dd>
 </dl>
-<h3 id="h3233">Query</h3>
+<h3 id="h3429">Query</h3>
 
 <dl>
   <dt><a href="cg_select.html">select</a></dt>
@@ -168,7 +178,7 @@ are for this case:
   <dd>Group lines in a tsv file, based on 1 or more identical
   fields</dd>
 </dl>
-<h3 id="h3675">Analysis</h3>
+<h3 id="h3871">Analysis</h3>
 
 <dl>
   <dt><a href="cg_exportplink.html">exportplink</a></dt>
@@ -179,7 +189,7 @@ are for this case:
   <dt><a href="cg_homwes_compare.html">homwes_compare</a></dt>
   <dd>finds regions of homozygosity based on a variant file</dd>
 </dl>
-<h3 id="h3954">Regions</h3>
+<h3 id="h4150">Regions</h3>
 
 <dl>
   <dt><a href="cg_multireg.html">multireg</a></dt>
@@ -202,7 +212,7 @@ are for this case:
   <dt><a href="cg_regsubtract.html">regsubtract</a></dt>
   <dd>subtract regions in region_file2 from region_file1</dd>
 </dl>
-<h3 id="h4684">Annotation</h3>
+<h3 id="h4880">Annotation</h3>
 
 <dl>
   <dt><a href="cg_annotate.html">annotate</a></dt>
@@ -215,7 +225,7 @@ are for this case:
   <dd>Creates a (region) annotation file based on a genelist with
   annotations.</dd>
 </dl>
-<h3 id="h5060">Validation</h3>
+<h3 id="h5256">Validation</h3>
 
 <dl>
   <dt><a href="cg_genome_seq.html">genome_seq</a></dt>
@@ -230,7 +240,7 @@ are for this case:
   <dd>check primer sets for multiple amplicons and snps</dd>
   <dt><a href="cg_validatesv.html">validatesv</a></dt>
 </dl>
-<h3 id="h5510">Variants</h3>
+<h3 id="h5706">Variants</h3>
 
 <dl>
   <dt><a href="cg_multicompar.html">multicompar</a></dt>
@@ -238,7 +248,8 @@ are for this case:
   <dt><a href="cg_multicompar_reannot.html">multicompar_reannot</a></dt>
   <dd>Reannotate multicompar file</dd>
   <dt><a href="cg_multicount.html">multicount</a></dt>
-  <dd>Compare multiple count files</dd>
+  <dd>Compare multiple count files that all have the same ids
+  (depricated)</dd>
   <dt><a href="cg_pmulticompar.html">pmulticompar</a></dt>
   <dd>Compare multiple variant files</dd>
   <dt><a href="cg_process_sv.html">process_sv</a></dt>
@@ -253,7 +264,7 @@ are for this case:
   <dd>generic command to call variants based on the alignment in
   bamfile.</dd>
 </dl>
-<h3 id="h6172">tsv</h3>
+<h3 id="h6408">tsv</h3>
 
 <dl>
   <dt><a href="cg_cat.html">cat</a></dt>
@@ -276,9 +287,9 @@ are for this case:
   <dd>split a tab separated file in multiple tab separated files
   based on the content of a (usually chromosome) field.</dd>
   <dt><a href="cg_tsvjoin.html">tsvjoin</a></dt>
-  <dd>join two tsv files based on common fields (must be sorted).</dd>
+  <dd>join two tsv files based on common fields</dd>
 </dl>
-<h3 id="h7002">Conversion</h3>
+<h3 id="h7220">Conversion</h3>
 
 <dl>
   <dt><a href="cg_sam_clipamplicons.html">sam_clipamplicons</a></dt>
@@ -306,7 +317,7 @@ are for this case:
   <dt><a href="cg_fastq_split.html">fastq_split</a></dt>
   <dd>split a (large) fastq file in multiple smaller ones</dd>
 </dl>
-<h3 id="h7970">Format Conversion</h3>
+<h3 id="h8188">Format Conversion</h3>
 
 <dl>
   <dt><a href="cg_bam2fastq.html">bam2fastq</a></dt>
@@ -330,6 +341,9 @@ are for this case:
   tab-separated</dd>
   <dt><a href="cg_bcol_update.html">bcol_update</a></dt>
   <dd>updates bcol file(s) in the old format to the new</dd>
+  <dt><a href="cg_bed2genetsv.html">bed2genetsv</a></dt>
+  <dd>Converts data in bed12 format to the <a
+  href="tsv.html">tsv</a> <a href="gene.html">gene</a> format</dd>
   <dt><a href="cg_bed2tsv.html">bed2tsv</a></dt>
   <dd>Converts data in bed format to <a href="tsv.html">tsv</a>
   format</dd>
@@ -405,7 +419,7 @@ are for this case:
   sample in separate lines) to wide format (data for each sample in
   separate columns)</dd>
 </dl>
-<h3 id="h11879">Report</h3>
+<h3 id="h12192">Report</h3>
 
 <dl>
   <dt><a href="cg_bam_histo.html">bam_histo</a></dt>
@@ -422,7 +436,7 @@ are for this case:
   <dt><a href="cg_predictgender.html">predictgender</a></dt>
   <dd>predicts gender for a sample</dd>
 </dl>
-<h3 id="h12420">Info</h3>
+<h3 id="h12733">Info</h3>
 
 <dl>
   <dt><a href="cg_help.html">help</a></dt>
@@ -432,15 +446,20 @@ are for this case:
   <dt><a href="cg_versions.html">versions</a></dt>
   <dd>return version information as a tsv</dd>
 </dl>
-<h3 id="h12584">RNA</h3>
+<h3 id="h12897">RNA</h3>
 
 <dl>
+  <dt><a href="cg_iso_isoquant.html">iso_isoquant</a></dt>
+  <dd>Call and count isoforms and genes using isoquant.</dd>
   <dt><a href="cg_multigene.html">multigene</a></dt>
   <dd>Compare multiple gene files</dd>
   <dt><a href="cg_multitranscript.html">multitranscript</a></dt>
   <dd>Compare multiple transcript files</dd>
+  <dt><a href="cg_sc_pseudobulk.html">sc_pseudobulk</a></dt>
+  <dd>make pseudobulk files of sc_gene and sc_transcript files
+  based on an sc_group file</dd>
 </dl>
-<h3 id="h12731">Compression</h3>
+<h3 id="h13251">Compression</h3>
 
 <dl>
   <dt><a href="cg_bgzip.html">bgzip</a></dt>
@@ -464,20 +483,14 @@ are for this case:
   <dt><a href="cg_zst.html">zst</a></dt>
   <dd>Compresses files using zstd</dd>
 </dl>
-<h3 id="h13293">Mapping</h3>
+<h3 id="h13813">Mapping</h3>
 
 <dl>
   <dt><a href="cg_map.html">map</a></dt>
   <dd>align reads in fastq files to a reference genome using a
   variety of methods</dd>
 </dl>
-<h3 id="h13404">Rna-seq</h3>
-
-<dl>
-  <dt><a href="cg_iso_isoquant.html">iso_isoquant</a></dt>
-  <dd>Call and count isoforms and genes using isoquant.</dd>
-</dl>
-<h3 id="h13507">Dev</h3>
+<h3 id="h13924">Dev</h3>
 
 <dl>
   <dt><a href="cg_qsub.html">qsub</a></dt>
@@ -491,7 +504,7 @@ are for this case:
   <dt><a href="cg_tsvdiff.html">tsvdiff</a></dt>
   <dd>compare tsv files</dd>
 </dl>
-<h3 id="h13830">Tools</h3>
+<h3 id="h14247">Tools</h3>
 
 <dl>
   <dt><a href="cg_cplinked.html">cplinked</a></dt>
@@ -501,6 +514,14 @@ are for this case:
   <dd>creates a hardlinked copy of a directory in another location</dd>
   <dt><a href="cg_mklink.html">mklink</a></dt>
   <dd>Create softlinks (improved)</dd>
+  <dt><a href="cg_shadow_mkdir.html">shadow_mkdir</a></dt>
+  <dd>create a shadowed dir</dd>
+</dl>
+<h3 id="h14566">Visualization</h3>
+
+<dl>
+  <dt><a href="cg_viz_transcripts.html">viz_transcripts</a></dt>
+  <dd>Creates a visual presentation of isoform usage</dd>
 </dl>
 </div>
 

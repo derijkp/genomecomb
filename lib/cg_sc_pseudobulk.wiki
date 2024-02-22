@@ -1,4 +1,4 @@
-= Gtf2tsv =
+= sc_pseudobulk =
 
 == Format ==
 cg sc_pseudobulk scgenefile scisoformfile groupfile

@@ -53,13 +53,13 @@
 <h2 id="h15">Format</h2>
 <p>cg tsvjoin ?options? file1 file2 ?outfile?</p>
 <h2 id="h72">Summary</h2>
-<p>join two tsv files based on common fields (must be sorted).</p>
-<h2 id="h147">Description</h2>
+<p>join two tsv files based on common fields</p>
+<h2 id="h129">Description</h2>
 <p>tsvjoin creates a new tsv file joining the two given input tsv
 files. The new tsv adds extra fields from the second tsv to the first
 where the idfields are the same between the two. Both files must be
 sorted on their respective id fields.</p>
-<h2 id="h405">Arguments</h2>
+<h2 id="h387">Arguments</h2>
 
 <dl>
   <dt><b>file1</b></dt>
@@ -69,7 +69,7 @@ sorted on their respective id fields.</p>
   <dt><b>outfile</b></dt>
   <dd>write results to outfile, if not given, uses stdout</dd>
 </dl>
-<h2 id="h541">Options</h2>
+<h2 id="h523">Options</h2>
 
 <dl>
   <dt>-idfields list</dt>
@@ -85,20 +85,24 @@ sorted on their respective id fields.</p>
   <dt>-pre2 string</dt>
   <dd>prefix all fieldnames (except the idfields) coming from file2
   with <b>string</b></dd>
+  <dt>-sorted 0/1</dt>
+  <dd>tsvjoin will by default () sort the input files properly to
+  do the join, you can use -sorted 1 if the files are already
+  properly sorted (avoiding the extra sort)</dd>
   <dt>-type inner/full/left/right</dt>
   <dd>determines the type of join: In an <b>inner</b> join only
   lines are present where the id was found in both files. A
   <b>left</b> join shows all lines of file1; if the id values where
   not found in file2, the file2 based fields are empty. A
   <b>right</b> join contains all lines in file2 and a <b>full</b>
-  join has data for all lines in both files, putting empty values
-  where needed.</dd>
+  join (default) has data for all lines in both files, putting empty
+  values where needed.</dd>
   <dt>-comments 0/1/2</dt>
   <dd>by default comments (start of tsv file) from file1 will be
   included in the result (1), select 2 to include comments from
   file2, or 0 to not include comments</dd>
 </dl>
-<h2 id="h1630">Category</h2>
+<h2 id="h1802">Category</h2>
 <p>tsv</p>
 </div>
 

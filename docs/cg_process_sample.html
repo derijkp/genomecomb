@@ -62,19 +62,19 @@ raw sample data that can come from various sources.</p>
 described extensively in <a href="projectdir.html">projectdir</a>) It
 generates all kinds of result data (variant calls, sequenced regions,
 ...) analyses and reports.</p>
-<p>Several types of source data (fastq files, Complete Genomics
-analysis dir, ...) are supported. The directory containing the
-original starting data can be given as an option, an argument, or it
-can be present in a dir named ori in the sample dir. If given as an
-argument, a link named ori to the original data will be made. The
-results (which analyses, etc.) differ according to the type of
-original data, the parameters given (e.g. use -amplicons for amplicon
-sequencing) and files in the sampledir.</p>
+<p>Several types of source data (fastq files, unaligned bams,
+Complete Genomics analysis dir, ...) are supported. The directory
+containing the original starting data can be given as an option, an
+argument, or it can be present in a dir named ori in the sample dir.
+If given as an argument, a link named ori to the original data will
+be made. The results (which analyses, etc.) differ according to the
+type of original data, the parameters given (e.g. use -amplicons for
+amplicon sequencing) and files in the sampledir.</p>
 <p>By default, process_sample will only create files that do no exist
 yet, or update ones that are older than files they depend on. This
 way an analysis that was interupted, can be simply restarted (giving
 the same command), and it will proceed from where it was.</p>
-<h2 id="h1271">Arguments</h2>
+<h2 id="h1287">Arguments</h2>
 
 <dl>
   <dt>oridir</dt>
@@ -88,12 +88,23 @@ the same command), and it will proceed from where it was.</p>
   <dd>name of the sample directory to be created (or completed if
   it already exists)</dd>
 </dl>
-<h2 id="h1729">Options</h2>
+<h2 id="h1745">Options</h2>
 <p>As different types of original data are processed differently, not
 all options are allways applicable. Options that are not applicable
 to the given type of data are ignored.</p>
+<p>By default options are set for short read genomic sequencing
+(genome/exome/targeted). Presets can be used to set a number of
+options to the defaults for a given analysis. These options can still
+be changed by specifically giving them a value after the -preset
+option (options given later overrule previous ones).</p>
 
 <dl>
+  <dt>-preset preset</dt>
+  <dd>sets a number of options to the defaults for the given
+  &quot;preset&quot;, must be one of: srs (short read genomic
+  sequencing), rseq (short read rna-seq), ont (ont genomic
+  sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell
+  rna-seq)</dd>
   <dt>-dbdir dbdir</dt>
   <dd>Some of the analysis require a reference genome and
   databases; <b>dbdir</b> gives the directory where to find these</dd>
@@ -115,11 +126,15 @@ to the given type of data are ignored.</p>
   <dt>-removeskew num</dt>
   <dd>-k parameter for sequence clipping using fastq-mcf: sKew
   percentage-less-than causing cycle removal</dd>
-  <dt>-aligner aligner (-a)</dt>
+  <dt>-aligners aligner (-a)</dt>
   <dd>use the given aligner for mapping to the reference genome
   (default bwa) Currently supported are: bwa, bowtie2, minimap2_sr,
   minimap2, ngmlr ; for rna-seq: star, star_2p, hisat2,
   minimap2_splice</dd>
+  <dt>-ali_keepcomments 1/0</dt>
+  <dd>set to 1 to transfer sequence comments in the source fastq or
+  ubams to the alignment (default don't keep for fastq, keep for
+  ubams). This option currently only works for minimap2 aligner</dd>
   <dt>-aliformat format</dt>
   <dd>format of the (final) alignment (map) file, this is by
   default bam, but can be set to cram</dd>
@@ -144,9 +159,24 @@ to the given type of data are ignored.</p>
   <dd>(space separated) list of structural variant callers to be
   used (default empty). Currently supported are: manta, lumpy, gridds
   sniffles, cuteSV, npinv</dd>
-  <dt>-methcallers svcallers</dt>
+  <dt>-methcallers methcallers</dt>
   <dd>(space separated) list of methylation callers to be used
-  (default empty). Currently supported are: nanopolish</dd>
+  (default empty). Currently supported are: nanopolish remora (actual
+  remora analysis must have been done before, with methylation data
+  present in the source unaligned bams)</dd>
+  <dt>-reftranscripts reftranscripts</dt>
+  <dd>file with reference transcripts for isoform calling. (default
+  empty -&gt; finds default in refdb) Currently supported are: flair,
+  isoquant, flames</dd>
+  <dt>-isocallers isocallers</dt>
+  <dd>(space separated) list of isofrom calling (and counting)
+  programs to be used for rna-seq data. Currently supported are:
+  flair, isoquant, flames</dd>
+  <dt>-organelles organelles</dt>
+  <dd>(space separated) list of chromosomes that are organelles
+  (that are treated differently in some analysis) If not given
+  explicitely, the ones indicated in the file
+  $refdb/extra/reg_*_organelles.tsv (if present) will be used</dd>
   <dt>-counters counters</dt>
   <dd>(space separated) list of counter programs to be used for
   rna-seq data. Currently supported are: rnaseqc, qorts</dd>
@@ -214,13 +244,14 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combinfing the results</p>
-<h2 id="h7600">Sample types</h2>
+<h2 id="h9116">Sample types</h2>
 <p>Several types of sample data are supported:</p>
-<h3 id="h7665">(Illumina) (targeted) shotgun sequencing</h3>
-<p>In this case the starting raw data for the sample is fastq files.
-These should be in a subdirectory of the sampledir named fastq. They
-can also be in a directory ori in the sampledir, in which case the
-fastq dir will be made and links to the fastq files made in it.</p>
+<h3 id="h9181">(targeted) shotgun sequencing</h3>
+<p>For Illumina sequencing the starting raw data for the sample is
+fastq files. These should be in a subdirectory of the sampledir named
+fastq. They can also be in a directory ori in the sampledir, in which
+case the fastq dir will be made and links to the fastq files made in
+it.</p>
 <p>The names of matching fastq files of paired reads should be
 consecutive when sorted naturaly,the forward reads first. The usual
 naming of these files (same name, except for a 1 and 2) is ok. The
@@ -267,15 +298,23 @@ following type:</p>
   <dd>regions with many clustered variants (which are less
   reliable)</dd>
 </dl>
-<p>For samtools variant calling on the same bamfile
+<p>For strelka variant calling on the same bamfile
 (map-rdsbwa-sample1.bam), these result files are named
-var-sam-rdsbwa-sample1.tsv, sreg-sam-rdsbwa-sample1.tsv,
-varall-sam-rdsbwa-sample1.tsv, reg_cluster-sam-rdsbwa-S0489.tsv</p>
+var-strelka-rdsbwa-sample1.tsv, sreg-strelka-rdsbwa-sample1.tsv,
+varall-strelka-rdsbwa-sample1.tsv,
+reg_cluster-strelka-rdsbwa-S0489.tsv</p>
 <p>If the experiment used e.g. exome capture, this can be indicated
 by the presence of a file named reg_targets.tsv (or matching
 reg_*_targets*.tsv) in the sampledir (or the option -targetfile). If
 present, coverage statistics will be calculated for this region.</p>
-<h3 id="h10583">Amplicon sequencing</h3>
+<p>For ONT genome/targeted sequencing analysis a similar steps are
+performed, but you select other programs and settings, e.g. minimap2
+for alignment, clair3 for (small) variant calling. It can start from
+fastq files in the fastq directory, but can also use unaligned bam
+files (in a direcory named ubam). You would typically use ubams to
+include methylation calling data produced by remora/dorado at the
+basecalling step.</p>
+<h3 id="h12535">Amplicon sequencing</h3>
 <p>Amplicon sequencing samples are indicated by the presence of a
 file named reg_amplicons.tsv (or matching reg_*_amplicons*.tsv) in
 the sampledir. If the option -amplicons is given to the command, a
@@ -284,7 +323,8 @@ used. If an ampliconfile (or link) already exists in the sampledir,
 it will NOT be overwritten! (only a warning given).</p>
 <p>An amplicon file is a <a href="tsv.html">tsv</a> file indicating
 the genomic location of the amplicons It must have the following
-fields:
+fields:</p>
+
 <dl>
   <dt>chromosome</dt>
   <dd>chromosome of amplicon</dd>
@@ -304,7 +344,7 @@ fields:
 <p>Amplicon sequencing samples can also start from the fastq files
 and are processed similarly to shotgun sequencing, but analysis is
 different in a few ways:</p>
-<p>Variants will only be called in the sequenceneable part of the
+<p>Variants will only be called in the sequenceable part of the
 amplicons (i.e. between begin and end). (off-target mappings are not
 called) To avoid wrong results by &quot;sequencing&quot; primers, the
 primer parts of amplicons will be clipped based on their mapping on
@@ -312,11 +352,12 @@ the expected amplicons in the bam file. (This is done by replacing
 the sequence by Ns and reducing quality to 0 for these positions)</p>
 <p>Several options use different defaults when amplicon sequencing is
 specified (-removeduplicates 0 -removeskew 0 -dt NONE).</p>
-<h3 id="h12218">Complete Genomics sequencing</h3>
+<h3 id="h14168">Complete Genomics sequencing</h3>
 <p>Complete Genomics source data is already aligned and variant
 called. The region and variant information is converted to a similar
 format as use for (Illumina) shotgun sequencing, with some
-differences:
+differences:</p>
+
 <ul>
   <li>Naming uses a cg-cg- prefix: var-cg-cg-sample1.tsv,
   sreg-cg-cg-sample1.tsv, reg_cluster-cg-cg-S0489.tsv, ...</li>
@@ -327,13 +368,13 @@ differences:
   <li>CG data can include structural variant (cgsv-sample.tsv) and
   CNV (cgcnv-sample.tsv) calls</li>
 </ul>
-<h3 id="h12842">Precalculated data</h3>
+<h3 id="h14792">Precalculated data</h3>
 <p>The sampledir may contain precalculated data data from other
 pipelines. If these are in the correct format, they will be
 integrated in the project. vcf files (var-*.vcf) in the ori
 subdirectory of the sample will be converted to tsv files, and their
 variants included in the multicompar.</p>
-<h2 id="h13157">Category</h2>
+<h2 id="h15107">Category</h2>
 <p>Process</p>
 </div>
 

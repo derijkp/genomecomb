@@ -54,20 +54,34 @@
 <p>cg multicount ?options? multicountfile countfile countfile
 ?countfile? ...</p>
 <h2 id="h107">Summary</h2>
-<p>Compare multiple count files</p>
-<h2 id="h151">Description</h2>
-<p>This command combines multiple count files into one multicount
-file; a tab separated file containing a wide table used to compare
-genes/exon/.. (counts) between different samples. Each line in the
-table contains gene/exon/.. names and columns with the count info
-specific to each sample (count, etc.). The latter have a column
+<p>Compare multiple count files that all have the same ids
+(depricated)</p>
+<h2 id="h191">Description</h2>
+<p>This command combines multiple count (or other) files into one
+multicount file: a tab separated file containing a wide table used to
+compare genes/exon/.. (counts) between different samples. Each line
+in the table contains gene/exon/.. names and columns with the count
+info specific to each sample (count, etc.). The latter have a column
 heading of the form field-&lt;sample&gt;.</p>
 <p>&lt;sample&gt; can be simply the samplename, but may also include
 information about e.g. the sequencing or analysis method in the form
 method-samplename, e.g. count_weighed-isoquant-sample1.tsv.</p>
-<p>When a transcript was not detected in a sample, the value in the
-table is set to 0.0</p>
-<h2 id="h810">Arguments</h2>
+<p>The command matches rows in the different files based on having
+the same id, i.e. the combination of values in one or more id fields.
+The fields potentially used for this can be given using the -idfields
+option (defaults to any of the following: geneid, genename, gene,
+exon, exonid, id, name, cell, cellbarcode, spliceName, chromosome,
+strand, start, begin, end). Only the fields present in all files will
+actually be used (so you have to make sure at least one value that is
+unique to each row is present)</p>
+<p>If there are fields with a - in them, these will be use as data
+fields. If not, all fields not in &quot;idfields&quot; will be
+considered data fields, and the columns will be named
+&lt;field&gt;-&lt;sample&gt; where the &lt;sample&gt; part is
+extracted from the file name. When there is no with a certain id one
+(or more) of the files, it's data fields will be filled with 0 (by
+default)</p>
+<h2 id="h1644">Arguments</h2>
 
 <dl>
   <dt>multicountfile</dt>
@@ -76,14 +90,24 @@ table is set to 0.0</p>
   <dd>file containing count data of a new sample to be added More
   than one can added in one command</dd>
 </dl>
-<h2 id="h1003">Options</h2>
+<h2 id="h1837">Options</h2>
 
 <dl>
   <dt>-idfields list</dt>
   <dd>list with fields to be used as id (default: geneid genename
   gene exon) if present in the count files.</dd>
+  <dt>-clip_geneid_version 0/1</dt>
+  <dd>default (1) is to clip the version (. followe by a number at
+  the end) in geneid columns</dd>
+  <dt>-empty emptyvalue</dt>
+  <dd>value given for data columns in row that does not exist for
+  the given file (default 0)</dd>
+  <dt>-limit_geneids file</dt>
+  <dd>limit output to geneids given in <b>file</b>, which shouls be
+  a tsv file with at least a column &quot;geneid&quot; or
+  &quot;gene_id&quot;</dd>
 </dl>
-<h2 id="h1138">Category</h2>
+<h2 id="h2334">Category</h2>
 <p>Variants</p>
 </div>
 

@@ -68,7 +68,8 @@ respectively. If genotype data is present, the normal genocomb fields
 <p>All other information in the FORMAT or INFO data is converted into
 extra columns in the result file. These get the ID code in the
 original vcf file as a name, except for the following (common) fields
-that get a longer (more informative) name:
+that get a longer (more informative) name:</p>
+
 <dl>
   <dt>AD</dt>
   <dd>alleledepth (Allelic depths for the ref and alt alleles in
@@ -117,7 +118,8 @@ substition with several alleles. By default vcf2tsv will split these
 up into the separate types (and alleles) and adapt the resulting
 variant lines accordingly as far as possible (some fields contain
 lists correlated with the alleles). The way of handling this is set
-by the -split option
+by the -split option</p>
+
 <dl>
   <dt>ori</dt>
   <dd>Using ori for -split will recreate the orignal setup,
@@ -135,7 +137,8 @@ by the -split option
   href="tsv.html">tsv</a> format)</dd>
 </dl>
 <p>The vcf fields containing lists that have to be handled
-specially are indicated in the vcf file with:
+specially are indicated in the vcf file with:</p>
+
 <dl>
   <dt>Number=A</dt>
   <dd>These contain a list of values corresponding to the
@@ -176,7 +179,7 @@ specially are indicated in the vcf file with:
   <dt>-sort 0/1</dt>
   <dd>By default (1) cg vcf2tsv will sort the file during
   conversion. Explicit sorting is not always needed (e.g. if the vcf
-  is sorted and uses a natural sort order for chromsomes, or if
+  is sorted and uses a natural sort order for chromosomes, or if
   sorting will happen later in the workflow anyway) and can be turned
   of using -sort 0 to save processing time.</dd>
   <dt>-t typelist (-typelist)</dt>
@@ -203,7 +206,7 @@ specially are indicated in the vcf file with:
   <dd>list of key value pairs that will be added to meta data in
   the comment lines</dd>
 </dl>
-<h2 id="h5744">Category</h2>
+<h2 id="h5745">Category</h2>
 <p>Format Conversion</p>
 </div>
 

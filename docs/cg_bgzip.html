@@ -59,7 +59,8 @@
 uncompressed files are removed (by default). Files already compressed
 using another method, are recompressed using bgzip.</p>
 <h2 id="h301">Options</h2>
-<p>supports options:
+<p>supports options:</p>
+
 <dl>
   <dt>-k 0/1 (--keep)</dt>
   <dd>keep the original uncompressed file if 1 (default 0)</dd>
@@ -82,14 +83,17 @@ using another method, are recompressed using bgzip.</p>
   the --keep option is not explicitely given, using -o will change
   the &quot;default&quot; for -k to 1.</dd>
 </dl>
-<p>supports job options:
+<p>supports job options:</p>
+
 <dl>
   <dt><b>-d x</b></dt>
   <dd>distribute subjobs of command over x processes</dd>
   <dt><b>-d sge</b></dt>
   <dd>use grid engine to distribute subjobs</dd>
+  <dt><b>-d slurm</b></dt>
+  <dd>use slurm to distribute subjobs</dd>
 </dl>
-<h2 id="h1219">Category</h2>
+<h2 id="h1267">Category</h2>
 <p>Compression</p>
 </div>
 

@@ -39,16 +39,17 @@ are to be compressed
 ; -compressionthreads number: Use **number** [[cg_threads (default 1) to compress the result 
 file (if the result needs to be compressed, and the compression method supports threads)
 
-== Available subcommands ==
-
-=== Process ===
-; [[cg_process_project|process_project]]|threads (default 1) to compress the result 
+; -shadowdir|threads (default 1) to compress the result 
 file (if the result needs to be compressed, and the compression method supports threads)
 
+; -shadowdir]]: alternative location (e.g. a faster disk or disk without snapshots) to store some of the intermediate files
+that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
+Can also be specified using the environment variable SHADOWDIR.
+
 == Available subcommands ==
 
 === Process ===
-; [[cg_process_project|process_project]]]]: process a sequencing project directory ([[projectdir]]), generating full
+; [[cg_process_project|process_project]]: process a sequencing project directory ([[projectdir]]), generating full
 analysis information (variant calls, multicompar, reports, ...) starting
 from raw sample data from various sources.
 ; [[cg_makerefdb|makerefdb]]: Create a reference sequence and annotation databases directory
@@ -101,7 +102,7 @@ sample data that can come from various sources.
 === Variants ===
 ; [[cg_multicompar|multicompar]]: Compare multiple variant files
 ; [[cg_multicompar_reannot|multicompar_reannot]]: Reannotate multicompar file
-; [[cg_multicount|multicount]]: Compare multiple count files
+; [[cg_multicount|multicount]]: Compare multiple count files that all have the same ids (depricated)
 ; [[cg_pmulticompar|pmulticompar]]: Compare multiple variant files
 ; [[cg_process_sv|process_sv]]: Do all steps on a Complete Genomics sample to generate structural variant calls
 ; [[cg_sv|sv]]: generic command to call structural variants based on the alignment in bamfile.
@@ -118,7 +119,7 @@ other than the first).
 ; [[cg_less|less]]: view a (possibly compressed) file using the pager less.
 ; [[cg_paste|paste]]: merge lines of tab separated files.
 ; [[cg_split|split]]: split a tab separated file in multiple tab separated files based on the content of a (usually chromosome) field.
-; [[cg_tsvjoin|tsvjoin]]: join two tsv files based on common fields (must be sorted).
+; [[cg_tsvjoin|tsvjoin]]: join two tsv files based on common fields
 
 === Conversion ===
 ; [[cg_sam_clipamplicons|sam_clipamplicons]]: Clip primers from aligned sequences in a sam file (by changing bases to N
@@ -144,6 +145,7 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 ; [[cg_bcol_make|bcol_make]]: Creates a [[bcol]] file
 ; [[cg_bcol_table|bcol_table]]: Outputs the data in a [[bcol]] file as tab-separated
 ; [[cg_bcol_update|bcol_update]]: updates bcol file(s) in the old format to the new
+; [[cg_bed2genetsv|bed2genetsv]]: Converts data in bed12 format to the [[tsv]] [[gene]] format
 ; [[cg_bed2tsv|bed2tsv]]: Converts data in bed format to [[tsv]] format
 ; [[cg_cg2sreg|cg2sreg]]: Extracts sequenced region data from a Complete Genomics format file in tsv (tab separated, simple feature table) format.
 The command will also sort the tsv appropriately.
@@ -197,8 +199,10 @@ A histo file is generated at the location of the bam file
 ; [[cg_versions|versions]]: return version information as a tsv
 
 === RNA ===
+; [[cg_iso_isoquant|iso_isoquant]]: Call and count isoforms and genes using isoquant.
 ; [[cg_multigene|multigene]]: Compare multiple gene files
 ; [[cg_multitranscript|multitranscript]]: Compare multiple transcript files
+; [[cg_sc_pseudobulk|sc_pseudobulk]]: make pseudobulk files of sc_gene and sc_transcript files based on an sc_group file
 
 === Compression ===
 ; [[cg_bgzip|bgzip]]: Compresses files using bgzip
@@ -214,9 +218,6 @@ A histo file is generated at the location of the bam file
 === Mapping ===
 ; [[cg_map|map]]: align reads in fastq files to a reference genome using a variety of methods
 
-=== Rna-seq ===
-; [[cg_iso_isoquant|iso_isoquant]]: Call and count isoforms and genes using isoquant.
-
 === Dev ===
 ; [[cg_qsub|qsub]]: submit a command to the cluster (grid engine).
 ; [[cg_sh|sh]]: runs a shell in which genomecomb commands can be input and executed interactively.
@@ -227,3 +228,7 @@ A histo file is generated at the location of the bam file
 ; [[cg_cplinked|cplinked]]: create a copy of a directory where each file in it is a softlink to the src.
 ; [[cg_hardsync|hardsync]]: creates a hardlinked copy of a directory in another location
 ; [[cg_mklink|mklink]]: Create softlinks (improved)
+; [[cg_shadow_mkdir|shadow_mkdir]]: create a shadowed dir
+
+=== Visualization ===
+; [[cg_viz_transcripts|viz_transcripts]]: Creates a visual presentation of isoform usage

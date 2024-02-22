@@ -58,7 +58,8 @@
 <p>The command can be used to call and count isoforms and genes using
 a method based on isoquant (https://github.com/ablab/IsoQuant).</p>
 <p>Following adaptations are done when running isoquant within
-genomecomb
+genomecomb</p>
+
 <ul>
   <li>running is (can be) heavily parallelised in a way that
   distribution over a cluster is also possible</li>
@@ -153,8 +154,88 @@ read_assignments-isoquant-$root.tsv).</p>
   <dt>-cleanup</dt>
   <dd></dd>
 </dl>
-<h2 id="h3719">Category</h2>
-<p>Rna-seq</p>
+<h2 id="h3720">Results</h2>
+<h3 id="h3735">read_asignments</h3>
+<p>The read_assignment files returns for each read where it aligns
+and which genes/isoforms it supports. For reads that could have come
+from multiple isoforms/genes, multiple lines are present (one for
+each isoform/gene). In this case the ambiguity and gambiguity fields
+indicate how many isoforms and genes are supported.</p>
+
+<dl>
+  <dt>read_id</dt>
+  <dd></dd>
+  <dt>chromosome</dt>
+  <dd></dd>
+  <dt>begin</dt>
+  <dd></dd>
+  <dt>end</dt>
+  <dd></dd>
+  <dt>strand</dt>
+  <dd></dd>
+  <dt>exonStarts</dt>
+  <dd></dd>
+  <dt>exonEnds</dt>
+  <dd></dd>
+  <dt>aligned_size</dt>
+  <dd></dd>
+  <dt>isoform_id</dt>
+  <dd></dd>
+  <dt>gene_id</dt>
+  <dd></dd>
+  <dt>assignment_type</dt>
+  <dd>how does the read match the assigned transcript (unique,
+  inconsistent, ..)</dd>
+  <dt>assignment_events</dt>
+  <dd>lists noted differences with the asigned transcript</dd>
+  <dt>inconsistency</dt>
+  <dd>level of inconsistency of the read with the assigned
+  transcript based on assignment_events (reads with inconsistency
+  &gt;= 2 are not counted for an isoform) <b> 0: unique or no
+  inconsistencies of note </b> 1: minor differences such as probable
+  alignment artifacts, alternative transcription start / end <b> 2:
+  (incomplete) intron retentions </b> 3: major inconsistencies
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  (major_exon_elongation,alternative_structure,alt_donor_site,alt_acceptor_site,
+  ...)</dd>
+  <dt>additional_info</dt>
+  <dd></dd>
+  <dt>ambiguity</dt>
+  <dd>number of isoforms the read supports (could come from),
+  isoforms from different genes are included</dd>
+  <dt>gambiguity</dt>
+  <dd>number of genes the read supports (&lt; ambiguity: multiple
+  isoforms from one gene are counted as one)</dd>
+  <dt>covered_pct</dt>
+  <dd>size of the (aligned) read vs the total size of the isoform
+  (in percent)</dd>
+  <dt>polya</dt>
+  <dd>&quot;True&quot; if a polyA was detected in the read,
+  &quot;False&quot; if no polyA was detected on the read (empty if
+  read does not support any isoform)</dd>
+  <dt>classification</dt>
+  <dd></dd>
+  <dt>closest_known</dt>
+  <dd></dd>
+  <dt>cellbarcode</dt>
+  <dd></dd>
+  <dt>umi</dt>
+  <dd></dd>
+  <dt>umicount</dt>
+  <dd></dd>
+</dl>
+<h2 id="h5390">Category</h2>
+<p>RNA</p>
 </div>
 
 <div id="right">

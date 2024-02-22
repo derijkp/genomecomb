@@ -229,16 +229,9 @@ proc help_formatw_md {foutput text width mode indent {format 1}} {
 	puts -nonewline $foutput $newtemp
 }
 
-proc help {action {format 1} {help {}}} {
+proc help {action {informat wiki} {help {}} {format 1}} {
 	if {$format eq "md"} {
 		# puts $help
-		set bold "\033\[1;1m"
-		set underline "\033\[1;4m"
-		set green "\033\[1;32m"
-		set yellow "\033\[1;33m"
-		set cyan "\033\[1;36m"
-		set normal "\033\[0m"
-		set foutput [open "| less -r" w]
 	} elseif {$format} {
 		set bold "\033\[1;1m"
 		set underline "\033\[1;4m"
@@ -259,6 +252,10 @@ proc help {action {format 1} {help {}}} {
 	if {$help eq ""} {
 		set help [help_get $action]
 	}
+	if {$format eq "md"} {
+		puts $help
+		return
+	}
 	set width 80
 	if {![catch {exec stty -a} result] && [regexp {columns (\d+)} $result temp cols]} {
 		if {$cols > 10} {set width $cols}
@@ -268,7 +265,7 @@ proc help {action {format 1} {help {}}} {
 	set mode {}
 	set output {}
 	set collect {}
-	if {$format eq "md"} {
+	if {$informat eq "md"} {
 		set format 1
 		set skip 0
 		set split [split $help \n]
@@ -591,7 +588,7 @@ proc cg_help {args} {
 		-format {set format $value}
 	} item 0 1
 	if {$item ne ""} {
-		help $item $format
+		help $item wiki {} $format
 	} else {
 		help overview
 	}
