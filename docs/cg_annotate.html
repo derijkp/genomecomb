@@ -148,10 +148,16 @@ underscore)</p>
   chromosome,start,end,type,ref,alt to annotate variants that match
   the given values. Typically, columns freq(p) and id are present for
   annotation. Thus, only variants that match the alleles given in alt
-  will be annotated. If there are multiple alt values (separated by
-  commas), the freq annotation will also contain multiple fields
-  (separated by commas). var databases can also be a (multivalued)
-  bcol formatted (<a href="bcol.html">bcol</a>) file instead of a <a
+  will be annotated. If there are multiple alt alleles for the same
+  genomic position, they should be all on the same line (unsplit)
+  with the alt field containing a (comma separated) list of the
+  different alt values. All information fields also contain a list
+  with the values for the different alleles in the same order. In the
+  typical variant file alternative alleles on the same position are
+  split over different lines, you can use <a
+  href="cg_collapsealleles.html">cg collapsealleles</a> to convert.
+  Var databases can also be a (multivalued) bcol formatted (<a
+  href="bcol.html">bcol</a>) file instead of a <a
   href="tsv.html">tsv</a>; this is indicated by the extension bcol</dd>
   <dt><b>gene</b></dt>
   <dd>gene files (in <a href="gene.html">gene</a> tsv format).
@@ -179,11 +185,12 @@ underscore)</p>
 </dl>
 <p>If a database filename does not start with one of these types,
 it will be considered a regions database.</p>
-<h2 id="h5683">database parameters</h2>
+<h2 id="h6016">database parameters</h2>
 <p>If a file dbfile.opt exists, it will be scanned for database
 parameters. It should be a tab separated list, where each line
 contains a key and a value (separated by a tab)</p>
-<p>Possible keys are:
+<p>Possible keys are:</p>
+
 <dl>
   <dt><b>name</b></dt>
   <dd>this will be the base for names of added columns (in stead of
@@ -194,10 +201,11 @@ contains a key and a value (separated by a tab)</p>
   name2, freq and score, depending on the type and name of the
   database)</dd>
 </dl>
-<h2 id="h6225">Gene annotation</h2>
+<h2 id="h6558">Gene annotation</h2>
 <p>Annotation with a gene database will add the three columns
 describing the effect of the variant on transcripts and resulting
-proteins.
+proteins.</p>
+
 <dl>
   <dt>dbname_impact</dt>
   <dd>short code indicating impact/severity of the effect</dd>
@@ -212,7 +220,8 @@ indicate different effects on different transcripts. If all values in
 such a list would be the same (e.g. gene name in case of multiple
 transcripts of the same gene), only this one value is shown (not a
 list).</p>
-<p>Possible <b>impact</b> codes are:
+<p>Possible <b>impact</b> codes are:</p>
+
 <dl>
   <dt>downstream</dt>
   <dd>downstream of gene (up to 2000 bases)</dd>
@@ -292,7 +301,8 @@ href="http://varnomen.hgvs.org/recommendations">http://varnomen.hgvs.org/recomme
 href="http://www.ncbi.nlm.nih.gov/pubmed/26931183">http://www.ncbi.nlm.nih.gov/pubmed/26931183</a>, <a
 href="http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf">http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf</a>).
 There are some (useful or necessary) deviations from from the
-recommendations:
+recommendations:</p>
+
 <ul>
   <li>The reference is allways the transcript name given in the
   database used; if a variant affects multiple transcripts, a
@@ -311,7 +321,8 @@ recommendations:
   <li>For brevity, single letter AA codes are used.</li>
 </ul>
 <p>The description consists of the following elements, separated by
-colons
+colons</p>
+
 <dl>
   <dt>transcript</dt>
   <dd>name or id of the affected transcript, prefixed with a + if
@@ -339,8 +350,9 @@ colons
   <dd>description of the variant effect at the protein level (p.).
   This is only present if the protein is affected.</dd>
 </dl>
-<h2 id="h11266">miRNA annotation</h2>
-<p>A miRNA gene file is a tsv file containing the following fields:
+<h2 id="h11599">miRNA annotation</h2>
+<p>A miRNA gene file is a tsv file containing the following fields:</p>
+
 <dl>
   <dt>chromosome,begin,end,strand</dt>
   <dd>indicate the location of the hairpin in the genome</dd>
@@ -363,7 +375,8 @@ colons
   <dd>(optional) field indicating the status of the miRNA gene</dd>
 </dl>
 <p>Based on this miRNA gene file, the genomecomb miRNA annotation
-adds the following fields:
+adds the following fields:</p>
+
 <dl>
   <dt>dbname_impact</dt>
   <dd>indicates which transcript is affected and the functional
@@ -378,7 +391,8 @@ adds the following fields:
   annotation file If multiple miRNA genes are affected, the fields
   will contain a semi-colon separated list of impacts and genes.</dd>
 </dl>
-<p>Potential annotation elements are
+<p>Potential annotation elements are</p>
+
 <dl>
   <dt>mature5p</dt>
   <dd>variant in the sequence that ends up in the mature miRNA of
@@ -420,7 +434,7 @@ indicate that the location is at either end of the given element. A
 deletion of the complete miRNA genes is indicated by the impact
 GENEDEL. Deletions spanning several (but not all) elements list the
 affected elements joined by &amp;.</p>
-<h2 id="h14641">Category</h2>
+<h2 id="h14974">Category</h2>
 <p>Annotation</p>
 </div>
 

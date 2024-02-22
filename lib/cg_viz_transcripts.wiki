@@ -1,4 +1,4 @@
-= Gtf2tsv =
+= viz_transcripts =
 
 == Format ==
 cg viz_transcripts ?options? isoform_counts_file gene output_file

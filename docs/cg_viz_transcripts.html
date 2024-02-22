@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_viz_transcripts</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">viz_transcripts</h1>
+<h2 id="h23">Format</h2>
+<p>cg viz_transcripts ?options? isoform_counts_file gene output_file</p>
+<h2 id="h103">Summary</h2>
+<p>Creates a visual presentation of isoform usage</p>
+<h2 id="h165">Description</h2>
+<p>cg viz_transcripts creates a graphical representation of the
+isoforms present in a file for a given gene (using the R package
+ggtranscript) together with their counts, percentages, etc.</p>
+<p>The result consists of two (linked) panels, the left showing the
+isoforms, and the right showing matching numerical fields in a grid
+(with cells coloured according to size of number). By default, all
+fields in the file starting with count are added to this panel, but
+there are options to change/limit this.</p>
+<p>By default the isoforms are rescaled, reducing the size of the
+much larger introns so they are not obscuring the differences in exon
+use (thus intron/exon sizes are not proportional, and numbers on X
+axis are not actual location). Optionally this rescaling can be
+turned of.</p>
+<h2 id="h955">Arguments</h2>
+
+<dl>
+  <dt>isoform_counts_file</dt>
+  <dd>a file containing isoforms (in the <a
+  href="gene.html">gene</a> tsv format) with numerical info (counts)
+  about the isoforms</dd>
+  <dt>gene</dt>
+  <dd>selected gene of which isoforms will be visualized</dd>
+  <dt>output_file</dt>
+  <dd>name of output file to be generated (the file extension
+  deternmines the type of file, .e.g .pdf)</dd>
+</dl>
+<h2 id="h1270">Options</h2>
+
+<dl>
+  <dt>-countfields 'shortname1 field1 shortname2 field2 ..'</dt>
+  <dd>specify the (numerical) fields to be displayed (field1,
+  field2, ..) and the names they should be given (shortname1.
+  shortname2, ..)</dd>
+  <dt>-countfieldpatterns 'pattern1 ..'</dt>
+  <dd>if -countfields is not given, all fields matching one of the
+  patterns (regular expression) given here will be displayed in the
+  numerical panel. Standard the field name will be used to name a
+  column in the grid, but if the pattern has parts between
+  parenthesis, these will be extracted to make the name, example of
+  such a pattern:
+  counts_weighed-(Excitatory_neurons).*_splice-(.*)_v6.5</dd>
+  <dt>-rescale 0/1</dt>
+  <dd>rescale to reduce effect large introns (1) or give a
+  proportional visualization (0)</dd>
+  <dt>-sortcol colname</dt>
+  <dd>sort on the given column, default is to sort on the first,
+  set to '' to not sort</dd>
+  <dt>-proportions 0/1</dt>
+  <dd>convert the values to proportions (in percent)</dd>
+  <dt>-textsize</dt>
+  <dd>text size of the numbers in the grid (default 10, set to 0 to
+  remove numbers)</dd>
+  <dt>-panelwidths 'w1 w2'</dt>
+  <dd>list of panel widths (default '3 1'). determines the relative
+  size of left and right panel</dd>
+  <dt>-width</dt>
+  <dd>width in mm of the results</dd>
+  <dt>-height</dt>
+  <dd>height in mm of the results</dd>
+</dl>
+<h2 id="h2446">Category</h2>
+<p>Visualization</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

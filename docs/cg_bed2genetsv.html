@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_multigene</title>
+<title>/home/peter/dev/genomecomb/lib/cg_bed2genetsv</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,50 +49,23 @@
 
 <div id="middle">
 
-<h1 id="h1">Multigene</h1>
-<h2 id="h17">Format</h2>
-<p>cg multigene ?options? multigenefile genefile genefile ?genefile?
-...</p>
-<h2 id="h101">Summary</h2>
-<p>Compare multiple gene files</p>
-<h2 id="h144">Description</h2>
-<p>This command combines multiple gene files into one multigene file;
-a tab separated file containing a wide table used to compare gene
-(counts) between different samples. Each line in the table contains
-general gene info (chromosome, begin, end, strand, ?gene?, ?geneid?)
-and columns with gene info specific to each sample (count, etc.). The
-latter have a column heading of the form field-&lt;sample&gt;.</p>
-<p>&lt;sample&gt; can be simply the samplename, but may also include
-information about e.g. the sequencing or analysis method in the form
-method-samplename, e.g. count-isoquant-sample1.</p>
-<p>When a gene was not detected in a sample, the value in the table
-is set to 0.0.</p>
-<p>By default multigene will match based on the gene name (or
-geneid), For novel samples (identified based on the presence of a
-pattern in the gene name, default containing &quot;novel&quot;)
-approximate matching is used: Novel genes will be matched if they
-overlap. The resulting gene will have the lowest start and highest
-end position of these matches. The id of these result genes will be
-changed to one unique for that gene and consistent over different
-experiments (based on location and strand)</p>
-<h2 id="h1310">Arguments</h2>
+<h1 id="h1">Bed2genetsv</h1>
+<h2 id="h19">Format</h2>
+<p>cg bed2genetsv ?infile? ?outfile?</p>
+<h2 id="h67">Summary</h2>
+<p>Converts data in bed12 format to the <a href="tsv.html">tsv</a> <a
+href="gene.html">gene</a> format</p>
+<h2 id="h143">Arguments</h2>
 
 <dl>
-  <dt>multigenefile</dt>
-  <dd>resultfile, will be created if it does not exist</dd>
-  <dt>genefile</dt>
-  <dd>file containing gene (counts) of a new sample to be added
-  More than one can added in one command</dd>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given, uses stdin. File may be
+  compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
 </dl>
-<h2 id="h1504">Options</h2>
-
-<dl>
-  <dt>-novelpattern pattern</dt>
-  <dd>For all genes whose id/name matches <b>pattern</b> (default:
-  novel) approximate matching will be used.</dd>
-</dl>
-<h2 id="h1644">Category</h2>
-<p>RNA</p>
+<h2 id="h313">Category</h2>
+<p>Format Conversion</p>
 </div>
 
 <div id="right">
