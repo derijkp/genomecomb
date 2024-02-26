@@ -306,7 +306,7 @@ proc reports_singlecell {sampledir} {
 		}
 	}
 	close $o
-	set countfile [gzfile $sampledir/read_assignments-*$sample.tsv]
+	set countfile [gzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv]
 	cg select -overwrite 1 -f {
 		{rcovered_pct=round($covered_pct)}
 		{ccount=if($ambiguity <= 1,if($umicount <= 1,1,1.0/$umicount),1.0/($ambiguity * $umicount))}
