@@ -343,9 +343,9 @@ close $f
 regsub {# Shell wrapper for R executable.} $c {# Shell wrapper for R executable.
 script="$(readlink -f "$0")"
 R_BASEDIR="$(dirname "$(dirname "$script")")"
-export R_LIBS=
-export R_LIBS_USER=
-export R_LIBS_SITE=
+export R_LIBS="${R_BASEDIR}/lib64/R/library"
+export R_LIBS_USER="${R_BASEDIR}/lib64/R/library"
+export R_LIBS_SITE="${R_BASEDIR}/lib64/R/library"
 } c
 regsub -all $basedir $c {${R_BASEDIR}} c
 regsub {export R_DOC_DIR
