@@ -83,12 +83,28 @@ proc cg_cplinked {args} {
 		-absolute {
 			set absolute $value
 		}
-	} {src dest} 2 2 {
+	} {src dest} 2 ... {
 		create a copy of a directory where each file in it is a softlink to the src.
 	}
-	if {[file isdir $dest]} {
-		set tail [file tail $src]
-		set dest $dest/$tail
+	if {[llength $args]} {
+		if {![file isdir $dest]} {
+			error "when giving multiple sources, dest must be a directory"
+		}
+		set sources [list $src $dest]
+		set dest [list_pop args]
+		foreach src $args {
+			lappend sources $src
+		}
+	} else {
+		set sources [list $src]
 	}
-	cplinked $src $dest $absolute
+	foreach src $sources {
+		if {[file isdir $dest]} {
+			set tail [file tail $src]
+			set fulldest $dest/$tail
+		} else {
+			set fulldest $dest
+		}
+		cplinked $src $fulldest $absolute
+	}
 }

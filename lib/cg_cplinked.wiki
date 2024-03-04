@@ -1,10 +1,10 @@
 = cplinked =
 
 == Format ==
-cg cplinked ?options? source dest
+cg cplinked ?options? source ... dest
 
 == Summary ==
-create a copy of a directory where each file in it is a softlink to the src.
+create a copy of a directory (or directories) where each file in it is a softlink to the src.
 
 == Arguments ==
 ; source: directory to be copied
