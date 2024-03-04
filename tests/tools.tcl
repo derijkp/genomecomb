@@ -48,7 +48,7 @@ set testdir $basetestdir
 puts "Using as testdir: $basetestdir"
 
 if {![file exists $basetestdir/data]} {
-	mklink $appdir/tests/data data
+	mklink $appdir/tests/data $basetestdir/data
 }
 if {![file exists $basetestdir/tmp]} {
 	file mkdir $basetestdir/tmp
@@ -87,7 +87,9 @@ proc test {args} {
 	file mkdir $::testdir
 	file mkdir $::testdir/tmp
 	cd $::testdir
-	mklink $::appdir/tests/data data
+	if {![file exists $::testdir/data]} {
+		mklink $::appdir/tests/data $::testdir/data
+	}
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
 	set description [lindex $args 1]
