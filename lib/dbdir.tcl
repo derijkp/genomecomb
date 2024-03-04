@@ -66,11 +66,15 @@ proc ref_transcripts_convert {reftranscripts tsvreftranscriptsVar gtfreftranscri
 	if {[file extension [gzroot $reftranscripts]] in ".gtf .gtf"} {
 		set gtfreftranscripts $reftranscripts
 		set tsvreftranscripts [file root [gzroot $reftranscripts]].tsv
-		cg gtf2tsv $reftranscripts $tsvreftranscripts
+		if {![file exists $tsvreftranscripts]} {
+			cg gtf2tsv $reftranscripts $tsvreftranscripts
+		}
 	} else {
 		set tsvreftranscripts $reftranscripts
 		set gtfreftranscripts [file root [gzroot $reftranscripts]].gtf
-		cg tsv2gtf $reftranscripts $gtfreftranscripts
+		if {![file exists $gtfreftranscripts]} {
+			cg tsv2gtf $reftranscripts $gtfreftranscripts
+		}
 	}
 }
 
