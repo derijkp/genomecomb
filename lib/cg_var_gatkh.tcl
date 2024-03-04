@@ -119,7 +119,7 @@ proc var_gatkh_job {args} {
 	set varallfile $destdir/${pre}varall-$root.gvcf.gz
 	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
-	set regclusterfile $destdir/reg_cluster-$root.tsv
+	set regclusterfile $destdir/reg_cluster-$root.tsv.zst
 	set resultlist [list $varfile $sregfile $varallfile $vcffile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist

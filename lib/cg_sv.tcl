@@ -190,7 +190,7 @@ proc sv_job {args} {
 			if {$tail eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
-			job sv_combineresults-$tail {*}$skips -deps $list -rmtargets $list -targets {
+			job sv_combineresults-$tail -checkcompressed 1 {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list method regfile distrreg sample
@@ -213,14 +213,14 @@ proc sv_job {args} {
 				}
 				if {$ext in ".vcf .gvcf"} {
 					set sample [file_sample $target]
-					cg vcfcat -i 0 -s $sort -o $target -sample $sample {*}[bsort [jobglob {*}$list]]
+					cg vcfcat -i 0 -s $sort -o $target -sample $sample {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
 				} elseif {$ext in ".analysisinfo"} {
 					analysisinfo_copy $dep $target [list \
 						svcaller_region [file tail $regfile] \
 						svcaller_distrreg [file tail $distrreg] \
 						sample $sample]
 				} else {
-					cg cat -c m -m 1 -sample $sample {*}[bsort [jobglob {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
+					cg cat -c m -m 1 -sample $sample {*}[bsort [jobglob -checkcompressed 1 {*}$list]] {*}$sortpipe {*}[compresspipe $target] > $target.temp
 					file rename -force $target.temp $target
 					cg_zindex $target
 				}

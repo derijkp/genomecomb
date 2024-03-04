@@ -1096,11 +1096,28 @@ test job "no -targets dep not found not optional $testname" {
 } {error trying to run job testnotarget:
 missing dependency "dep.txt"} error
 
-test job "no -checkcompressed 1 (default) dep $testname" {
+test job "-checkcompressed 1 dep $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
+	file_write dep.txt test
+	cg razip dep.txt
+	job testcheckcompressed -checkcompressed 1 -deps {dep.txt} -targets result.txt -code {
+		file_write result.txt test
+	}
+	job_wait
+	gridwait
+	set result [bsort [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt.rz log.*.finished result.txt} match
+
+test job "no -checkcompressed 0 (default) dep $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
 	file_write dep.txt test
 	cg razip dep.txt
 	job testcheckcompressed -deps {dep.txt} -targets result.txt -code {
@@ -1111,27 +1128,10 @@ test job "no -checkcompressed 1 (default) dep $testname" {
 	set result [bsort [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt.rz log.*.finished result.txt} match
-
-test job "no -checkcompressed 0 dep $testname" {
-	cd $::testdir
-	test_cleantmp
-	cd $::testdir/tmp
-	test_job_init -skipjoberrors 0
-	file_write dep.txt test
-	cg razip dep.txt
-	job testcheckcompressed -checkcompressed 0 -deps {dep.txt} -targets result.txt -code {
-		file_write result.txt test
-	}
-	job_wait
-	gridwait
-	set result [bsort [glob *]]
-	cd $::testdir
-	set result
 } {error trying to run job testcheckcompressed:
 missing dependency "dep.txt"} error
 
-test job "no -checkcompressed 1 (default) targets $testname" {
+test job "-checkcompressed 1 targets $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -1139,7 +1139,7 @@ test job "no -checkcompressed 1 (default) targets $testname" {
 	file_write dep.txt test
 	file_write target.txt test
 	cg razip target.txt
-	job testcheckcompressed -deps {dep.txt} -targets target.txt -code {
+	job testcheckcompressed -checkcompressed 1 -deps {dep.txt} -targets target.txt -code {
 		file_write result.txt test
 		file_write target.txt test
 	}
@@ -1150,7 +1150,7 @@ test job "no -checkcompressed 1 (default) targets $testname" {
 	set result
 } {dep.txt log.*.finished target.txt.rz} match
 
-test job "no -checkcompressed 1 (default) dep $testname" {
+test job "no -checkcompressed 0 (default) dep $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -1252,7 +1252,7 @@ test job "rmtargets with gzip $testname" {
 	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		exec gzip data.txt
 	}
-	job result -deps {data.txt} -targets result.txt -code {
+	job result -checkcompressed 1 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
@@ -1270,14 +1270,14 @@ test job "rmtargets with gzip exists $testname" {
 	test_job_init
 	file_write data.txt testpre
 	exec gzip data.txt
-	job makedata -targets data.txt -skip data.txt -code {
+	job makedata -checkcompressed 1 -targets data.txt -skip data.txt -code {
 		after 1000
 		file_write data.txt test1
 	}
 	job compress -optional 1 -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		exec gzip data.txt
 	}
-	job result -deps {data.txt} -targets result.txt -code {
+	job result -checkcompressed 1 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
@@ -1300,7 +1300,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.rz -rmtargets data.txt -code {
 		cg razip data.txt
 	}
-	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
+	job result -checkcompressed 1 -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
@@ -1318,7 +1318,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets write one first $
 	test_job_init
 	file_write data.txt testpre
 	cg razip data.txt
-	job makedata -targets data.txt -code {
+	job makedata -checkcompressed 1 -targets data.txt -code {
 		after 1000
 		file_write data.txt test1
 	}
@@ -1343,15 +1343,15 @@ test job "rmtargets afterwards with gzip exists $testname" {
 	file_write data.txt testpre
 	exec gzip data.txt
 	test_job_init
-	job makedata -targets data.txt -code {
+	job makedata -checkcompressed 1 -targets data.txt -code {
 		after 1000
 		file_write data.txt test1
 	}
-	job result -deps {data.txt} -targets result.txt -code {
+	job result -checkcompressed 1 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
-	job compress -optional 1 -checkcompressed 0 -deps {data.txt result.txt} -targets data.txt.gz -rmtargets data.txt -code {
+	job compress -checkcompressed 1 -optional 1 -checkcompressed 0 -deps {data.txt result.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		exec gzip data.txt
 	}
 	job_wait

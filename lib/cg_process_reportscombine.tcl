@@ -1138,7 +1138,7 @@ proc process_reportscombine_job {args} {
 	# combine hsmetrics (if found)
 	set deps {}
 	foreach dir $reportstodo {
-		lappend deps {*}[jobglob $dir/hsmetrics-*.hsmetrics $dir/reports/hsmetrics-*.hsmetrics]
+		lappend deps {*}[jobglob -checkcompressed 1 $dir/hsmetrics-*.hsmetrics $dir/reports/hsmetrics-*.hsmetrics]
 		if {[file extension $dir] eq ".hsmetrics"} {
 			lappend deps {*}[jobglob $dir]
 		}
@@ -1181,34 +1181,34 @@ proc process_reportscombine_job {args} {
 			}
 			lappend reportdirs [file dir $dir]
 		} else {
-			set temp [jobglob $dir/reports/report_*.tsv]
+			set temp [jobglob -checkcompressed 1 $dir/reports/report_*.tsv]
 			if {[llength $temp]} {
 				lappend reportdirs $dir/reports
 				lappend reports {*}$temp
 			} else {
 				lappend reportdirs $dir
-				lappend reports {*}[jobglob $dir/report_*.tsv]
+				lappend reports {*}[jobglob -checkcompressed 1 $dir/report_*.tsv]
 			}
-			lappend histofiles {*}[jobglob $dir/histodepth-*.tsv $dir/reports/histodepth-*.tsv]
-			lappend fastqcfiles {*}[jobglob $dir/fastqc_*.fastqc/fastqc_data.txt $dir/reports/fastqc_*.fastqc/fastqc_data.txt]
-			lappend statsrlfiles {*}[jobglob $dir/samstats_RL-*.tsv.zst]
-			lappend uastatsrlfiles {*}[jobglob $dir/alignedsamstats_RL-*.tsv.zst $dir/unalignedsamstats_RL-*.tsv.zst]
-			lappend statsqualityfiles {*}[jobglob $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
-			lappend uastatsqualityfiles {*}[jobglob \
+			lappend histofiles {*}[jobglob -checkcompressed 1 $dir/histodepth-*.tsv $dir/reports/histodepth-*.tsv]
+			lappend fastqcfiles {*}[jobglob -checkcompressed 1 $dir/fastqc_*.fastqc/fastqc_data.txt $dir/reports/fastqc_*.fastqc/fastqc_data.txt]
+			lappend statsrlfiles {*}[jobglob -checkcompressed 1 $dir/samstats_RL-*.tsv.zst]
+			lappend uastatsrlfiles {*}[jobglob -checkcompressed 1 $dir/alignedsamstats_RL-*.tsv.zst $dir/unalignedsamstats_RL-*.tsv.zst]
+			lappend statsqualityfiles {*}[jobglob -checkcompressed 1 $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
+			lappend uastatsqualityfiles {*}[jobglob -checkcompressed 1 \
 				$dir/alignedsamstats_FFQs-*.tsv.zst $dir/unalignedsamstats_FFQs-*.tsv.zst \
 				$dir/alignedsamstats_LFQs-*.tsv.zst $dir/unalignedsamstats_LFQs-*.tsv.zst \
 			]
-			lappend statsqualityfiles {*}[jobglob $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
-			lappend uastatsqualityfiles {*}[jobglob \
+			lappend statsqualityfiles {*}[jobglob -checkcompressed 1 $dir/samstats_FFQs-*.tsv.zst $dir/samstats_LFQs-*.tsv.zst]
+			lappend uastatsqualityfiles {*}[jobglob -checkcompressed 1 \
 				$dir/alignedsamstats_FFQs-*.tsv.zst $dir/unalignedsamstats_FFQs-*.tsv.zst \
 				$dir/alignedsamstats_LFQs-*.tsv.zst $dir/unalignedsamstats_LFQs-*.tsv.zst \
 			]
-			lappend statsgcfiles {*}[jobglob $dir/samstats_GCF-*.tsv.zst $dir/samstats_GCL-*.tsv.zst]
-			lappend uastatsgcfiles {*}[jobglob \
+			lappend statsgcfiles {*}[jobglob -checkcompressed 1 $dir/samstats_GCF-*.tsv.zst $dir/samstats_GCL-*.tsv.zst]
+			lappend uastatsgcfiles {*}[jobglob -checkcompressed 1 \
 				$dir/alignedsamstats_GCF-*.tsv.zst $dir/unalignedsamstats_GCF-*.tsv.zst \
 				$dir/alignedsamstats_GCL-*.tsv.zst $dir/unalignedsamstats_GCL-*.tsv.zst \
 			]
-			lappend singlecellfiles {*}[jobglob \
+			lappend singlecellfiles {*}[jobglob -checkcompressed 1 \
 				$dir/*singlecell*.tsv \
 			]
 		}

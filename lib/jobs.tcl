@@ -288,7 +288,7 @@ proc job_expandvarslist {list {level 0}} {
 }
 
 proc jobglob {args} {
-	set checkcompressed 1
+	set checkcompressed 0
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -353,7 +353,7 @@ proc jobglob1 {args} {
 }
 
 proc jobfileexists {args} {
-	set checkcompressed 1
+	set checkcompressed 0
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -387,7 +387,7 @@ proc jobfileexists {args} {
 # returns 1 if target exists, and non of the dependencies (args) is newer than target (or being made)
 # if -checkdepexists is 0 (default), dependencies are only checked if they exist
 proc jobtargetexists {args} {
-	set checkcompressed 1
+	set checkcompressed 0
 	set checkdepexists 0
 	set pos 0
 	while 1 {
@@ -1159,6 +1159,7 @@ proc job_backup {file {rename 0}} {
 proc job_to_old {file} {
 	if {$::cgjob(dry)} {
 		set cgjob_rm($file) old
+		return
 	}
 	if {![job_file_or_link_exists $file]} return
 	file delete -force $file.old
@@ -1262,7 +1263,7 @@ proc job {jobname args} {
 	set precode {}
 	set skiplist {}
 	set submitopts {}
-	set checkcompressed 1
+	set checkcompressed 0
 	set jobforce 0
 	set optional 0
 	set cores 1

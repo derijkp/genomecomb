@@ -68,7 +68,7 @@ proc annotvar_clusters_job {args} {
 			file_write $target.zsti ""
 		}
 	}
-	job annotvar-annotclusters-$resultroot {*}$skips -deps {
+	job annotvar-annotclusters-$resultroot -checkcompressed 1 {*}$skips -deps {
 		$file $destdir/reg_cluster-$root.tsv
 	} -targets {
 		$resultfile

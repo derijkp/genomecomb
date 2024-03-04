@@ -122,7 +122,7 @@ proc var_sam_job {args} {
 	set varallvcf $destdir/${pre}varall-$root.vcf.zst
 	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
-	set regclusterfile $destdir/reg_cluster-$root.tsv
+	set regclusterfile $destdir/reg_cluster-$root.tsv.zst
 	set resultlist [list $varfile $sregfile $varallfile $vcffile $regclusterfile]
 	if {$resultfiles} {
 		return $resultlist

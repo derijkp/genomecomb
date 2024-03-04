@@ -526,7 +526,7 @@ proc flair_job {args} {
 		set rootname flair-$exproot
 		set workdir compar/$rootname
 		set resultdir compar
-		set bedfiles [bsort [jobglob samples/*/flair-*/all_corrected-flair-*.bed]]
+		set bedfiles [bsort [jobglob -checkcompressed 1 samples/*/flair-*/all_corrected-flair-*.bed]]
 		job flair_compar-$exproot {*}$skips \
 		-cores $threads \
 		-deps [list_concat $bedfiles $allseq_fastqfiles] \
@@ -653,8 +653,8 @@ proc flair_job {args} {
 		cd $projectdir
 		mkdir compar
 		set exproot [file tail $projectdir]
-		set isoformfiles [bsort [jobglob samples/*/isoform_counts-flair-*.tsv]]
-		set totalcountsfiles [bsort [jobglob samples/*/totalcounts-flair-*.tsv]]
+		set isoformfiles [bsort [jobglob -checkcompressed 1 samples/*/isoform_counts-flair-*.tsv]]
+		set totalcountsfiles [bsort [jobglob -checkcompressed 1 samples/*/totalcounts-flair-*.tsv]]
 		job flair_compar-$exproot {*}$skips \
 		-cores $threads \
 		-deps [list_concat $isoformfiles $totalcountsfiles] \

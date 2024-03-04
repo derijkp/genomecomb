@@ -2,7 +2,7 @@
 proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job altcompar-$experiment -deps {
+	job altcompar-$experiment -checkcompressed 1 -deps {
 		$destdir/compar/annot_compar-$experiment.tsv
 	} -vars {
 		varcaller
@@ -50,7 +50,9 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 proc analysis_complete_job {experiment {destdir {}} {varcaller gatk}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job analysis_complete-$experiment -deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv $destdir/${experiment}.html] \
+	job analysis_complete-$experiment \
+	-checkcompressed 1 \
+	-deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv $destdir/${experiment}.html] \
 	-targets {$destdir/analysis_complete} -vars destdir -code {
 		file delete $destdir/analysis_running
 		exec touch $target
@@ -125,7 +127,7 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 proc generate_html_report_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job html_report-$experiment -deps {
+	job html_report-$experiment -checkcompressed 1 -deps {
 		$destdir/compar/compar-${experiment}.tsv
 		$destdir/coverage_${experiment}_avg.tsv
 		$destdir/coverage_${experiment}_frac_above_20.tsv

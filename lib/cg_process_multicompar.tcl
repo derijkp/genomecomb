@@ -135,16 +135,16 @@ proc process_multicompar_job {args} {
 		set sampledir $destdir
 	}
 	if {![info exists varfiles]} {
-		set varfiles [bsort [jobglob ${sampledir}/*/var-*.tsv]]
+		set varfiles [bsort [jobglob -checkcompressed 1 ${sampledir}/*/var-*.tsv]]
 	} else {
 		set tempvarfiles {}
 		foreach varfile $varfiles {
-			set temp [jobglob $sampledir/*/$varfile]
+			set temp [jobglob -checkcompressed 1 $sampledir/*/$varfile]
 			if {$temp eq ""} {
-				set temp [jobglob $varfile]
+				set temp [jobglob -checkcompressed 1 $varfile]
 			}
 			if {$temp eq ""} {
-				set temp [jobglob $sampledir/*/[file tail $varfile]]
+				set temp [jobglob -checkcompressed 1 $sampledir/*/[file tail $varfile]]
 			}
 			if {$temp eq ""} {error "varfile $varfile not found"}
 			lappend tempvarfiles {*}[bsort $temp]
@@ -152,14 +152,14 @@ proc process_multicompar_job {args} {
 		set varfiles $tempvarfiles
 	}
 	if {![info exists svfiles]} {
-		set svfiles [bsort [jobglob ${sampledir}/*/sv-*.tsv]]
+		set svfiles [bsort [jobglob -checkcompressed 1 ${sampledir}/*/sv-*.tsv]]
 	} else {
 		set tempsvfiles {}
 		foreach svfile $svfiles {
 			if {![jobfileexists $svfile]} {
-				set temp [jobglob $sampledir/*/$svfile]
+				set temp [jobglob -checkcompressed 1 $sampledir/*/$svfile]
 				if {$temp eq ""} {
-					set temp [jobglob $svfile]
+					set temp [jobglob -checkcompressed 1 $svfile]
 				}
 				if {$temp eq ""} {error "svfile $svfile not found"}
 				lappend tempsvfiles {*}[bsort $temp]
@@ -170,14 +170,14 @@ proc process_multicompar_job {args} {
 		set svfiles $tempsvfiles
 	}
 	if {![info exists methfiles]} {
-		set methfiles [bsort [jobglob ${sampledir}/*/meth-*.tsv]]
+		set methfiles [bsort [jobglob -checkcompressed 1 ${sampledir}/*/meth-*.tsv]]
 	} else {
 		set tempmethfiles {}
 		foreach methfile $methfiles {
 			if {![jobfileexists $methfile]} {
-				set temp [jobglob $sampledir/*/$methfile]
+				set temp [jobglob -checkcompressed 1 $sampledir/*/$methfile]
 				if {$temp eq ""} {
-					set temp [jobglob $methfile]
+					set temp [jobglob -checkcompressed 1 $methfile]
 				}
 				if {$temp eq ""} {error "methfile $methfile not found"}
 				lappend tempmethfiles {*}[bsort $temp]
@@ -237,7 +237,7 @@ proc process_multicompar_job {args} {
 		# --------------------
 		putslog "Starting annotation"
 		cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.zst $dbdir {*}$dbfiles
-		job indexannotcompar-$experiment \
+		job indexannotcompar-$experiment -checkcompressed 1 \
 		-deps {compar/annot_compar-$experiment.tsv} \
 		-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {
 			cg index -colinfo $dep
@@ -251,7 +251,7 @@ proc process_multicompar_job {args} {
 			set analysis [file_analysis $varfile]
 			set name [lindex [split $analysis -] end]
 			set file $sampledir/$name/sreg-$analysis.tsv
-			if {![jobfileexists $file]} {
+			if {![jobfileexists -checkcompressed 1 $file]} {
 				if {!$skipincomplete} {
 					error "file $file not found"
 				} else {
@@ -375,7 +375,7 @@ proc process_multicompar_job {args} {
 	# cgsv
 	# ----
 	putslog "Starting cgsv"
-	set files [bsort [jobglob $sampledir/*/cgsv-*.tsv]]
+	set files [bsort [jobglob -checkcompressed 1 $sampledir/*/cgsv-*.tsv]]
 	if {[llength $files]} {
 		set target compar/cgsv-${experiment}.tsv.zst
 		testmultitarget $target $files
@@ -405,7 +405,7 @@ proc process_multicompar_job {args} {
 			file rename -force -- $target.temp2.zst $target
 			file delete $target.temp
 		}
-		job cgsv_annotate -optional 1 \
+		job cgsv_annotate -checkcompressed 1 -optional 1 \
 		-deps {compar/cgsv-$experiment.tsv} \
 		-targets {compar/annot_cgsv-$experiment.tsv.zst} -vars {dbdir} -code {
 			cg annotate $dep $target $dbdir
@@ -419,7 +419,7 @@ proc process_multicompar_job {args} {
 	# cgcnv
 	# ----
 	putslog "Starting cgcnv"
-	set files [bsort [jobglob $sampledir/*/cgcnv-*.tsv]]
+	set files [bsort [jobglob -checkcompressed 1 $sampledir/*/cgcnv-*.tsv]]
 	if {[llength $files]} {
 		set target compar/cgcnv-${experiment}.tsv.zst
 		set names [list_regsub {.*/cgcnv-(.*)\.tsv.*} $files {\1}]
@@ -462,7 +462,7 @@ proc process_multicompar_job {args} {
 	# --------
 	if {[llength $counters]} {
 		foreach prefix {gene_counts exon_counts tpm gene_fpkm} {
-			set countfiles [bsort [jobglob samples/*/${prefix}-*.tsv]]
+			set countfiles [bsort [jobglob -checkcompressed 1 samples/*/${prefix}-*.tsv]]
 			if {![llength $countfiles]} continue
 			# per analysis
 			unset -nocomplain a
@@ -535,7 +535,7 @@ proc process_multicompar_job {args} {
 	if {[llength $reports]} {
 		process_reportscombine_job -dbdir $dbdir $destdir/reports {*}$reports
 		mkdir $destdir/reports
-		foreach file [jobglob $destdir/reports/report_hsmetrics-*.tsv] {
+		foreach file [jobglob -checkcompressed 1 $destdir/reports/report_hsmetrics-*.tsv] {
 			if {![regexp {report_hsmetrics-(.*)\.tsv} [file tail $file] temp experimentname]} continue
 			set destfile $destdir/${experimentname}_hsmetrics_report.tsv
 			mklink $file $destdir/${experimentname}_hsmetrics_report.tsv

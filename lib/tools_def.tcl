@@ -12,14 +12,14 @@ proc ampliconsfile {sampledir {ref {}}} {
 	if {$ref ne {}} {
 		append ref _
 	}
-	lindex [jobglob $sampledir/reg_${ref}amplicons*.tsv $sampledir/reg_amplicons*.tsv $sampledir/reg_*_amplicons*.tsv] 0
+	lindex [jobglob -checkcompressed 1 $sampledir/reg_${ref}amplicons*.tsv $sampledir/reg_amplicons*.tsv $sampledir/reg_*_amplicons*.tsv] 0
 }
 
 proc targetfile {sampledir {ref {}}} {
 	if {$ref ne {}} {
 		append ref _
 	}
-	lindex [jobglob $sampledir/reg_${ref}targets*.tsv $sampledir/reg_targets*.tsv $sampledir/reg_*_targets*.tsv] 0
+	lindex [jobglob -checkcompressed 1 $sampledir/reg_${ref}targets*.tsv $sampledir/reg_targets*.tsv $sampledir/reg_*_targets*.tsv] 0
 }
 
 proc targetfile_job {sampledir {dbdir {}}} {
@@ -77,5 +77,5 @@ proc targetfile_job {sampledir {dbdir {}}} {
 		}
 		return $targetfile
 	}
-	jobglob $sampledir/reg_${ref}_targets.tsv
+	jobglob -checkcompressed 1 $sampledir/reg_${ref}_targets.tsv
 }

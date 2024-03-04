@@ -522,7 +522,7 @@ proc pmulticompar_job {args} {
 		if {[file isdir $dir]} {
 			# a directory is given, look for the variant file(s)
 			set sample [file tail $dir]
-			set file [lindex [jobglob $dir/fannotvar-$sample.tsv] 0]
+			set file [lindex [jobglob -checkcompressed 1 -checkcompressed 1 $dir/fannotvar-$sample.tsv] 0]
 			if {$file ne ""} {
 				lappend files $file
 				if {[info exists samplesa($sample)]} {
@@ -532,9 +532,9 @@ proc pmulticompar_job {args} {
 				set samplesa($sample) $file
 				lappend samples $sample
 			} else {
-				set tempfiles [jobglob $dir/var-*-$sample.tsv]
+				set tempfiles [jobglob -checkcompressed 1 $dir/var-*-$sample.tsv]
 				if {![llength $tempfiles]} {
-					set tempfiles [jobglob $dir/var-$sample.tsv]
+					set tempfiles [jobglob -checkcompressed 1 $dir/var-$sample.tsv]
 				}
 				if {![llength $tempfiles]} {error "no variant files found in dir $dir"}
 				foreach file $tempfiles {
@@ -594,7 +594,7 @@ proc pmulticompar_job {args} {
 	# todo: check for concurrency
 	set workdir [shadow_workdir $compar_file]/multicompar
 	file mkdir $workdir
-	set real_compar_file [jobglob $compar_file]
+	set real_compar_file [jobglob -checkcompressed 1 $compar_file]
 	if {$real_compar_file ne ""} {
 		set allfiles [list $real_compar_file {*}$files]
 	} else {
@@ -631,14 +631,14 @@ proc pmulticompar_job {args} {
 		set varallfile $sampledir/varall-$sample.tsv
 		if {![jobfileexists $varallfile]} {
 			set varallfile $sampledir/varall-$sample.gvcf
-			if {![jobfileexists $varallfile]} {
+			if {![jobfileexists -checkcompressed 1 $varallfile]} {
 				# back to original for error
 				set varallfile $sampledir/varall-$sample.tsv
 			}
 		}
 		set target $workdir/avars-$sample.tsv.zst
 		lappend pastefiles $target
-		if {![jobfileexists $sregfile] && ![jobfileexists $varallfile]} {
+		if {![jobfileexists -checkcompressed 1 $sregfile] && ![jobfileexists -checkcompressed 1 $varallfile]} {
 			set msg "no sorted region file ($sregfile) or varallfile ($varallfile) found: not properly processed sample"
 			if {!$skipincomplete} {
 				error $msg
@@ -647,14 +647,14 @@ proc pmulticompar_job {args} {
 			}
 		}
 		set deps [list $allvarsfile $samplevarsfile]
-		if {[jobfileexists $sregfile]} {lappend deps $sregfile}
-		if {[jobfileexists $varallfile]} {lappend deps $varallfile}
+		if {[jobfileexists -checkcompressed 1 $sregfile]} {lappend deps $sregfile}
+		if {[jobfileexists -checkcompressed 1 $varallfile]} {lappend deps $varallfile}
 		# add all possibly usefull files to deps, which ones are actually used is decided in the job
 		lappend deps {*}[jobglob $sampledir/*-$sample.bcol]
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.bcol]
-		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.tsv]
-		lappend deps {*}[jobglob $sampledir/reg_*-$sample.tsv]
-		job multicompar_addvars-$sample -force $force -deps $deps -targets {
+		lappend deps {*}[jobglob -checkcompressed 1 $sampledir/coverage*/*-$sample.tsv]
+		lappend deps {*}[jobglob -checkcompressed 1 $sampledir/reg_*-$sample.tsv]
+		job multicompar_addvars-$sample -checkcompressed 1 -force $force -deps $deps -targets {
 			$target
 		} -vars {
 			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields limitreg type

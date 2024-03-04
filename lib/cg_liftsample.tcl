@@ -37,7 +37,7 @@ proc liftsample_job {args} {
 	file mkdir $destdir
 	set newsample [file tail $destdir]
 	infofile_write $destdir/sampleinfo.tsv [array get infoa]
-	foreach file [jobglob $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
+	foreach file [jobglob -checkcompressed 1 $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
 		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
 		set target $destdir/$temp
 		if {[regexp {(.*)fannotvar-(.*)\.tsv$} $file temp temp1 temp2]} {
@@ -55,7 +55,7 @@ proc liftsample_job {args} {
 			} else {
 				putslog "converting $file"
 				file delete $target.temp
-				set regionfile [jobglob $regionfile]
+				set regionfile [jobglob -checkcompressed 1 $regionfile]
 				if {$regionfile ne ""} {
 					cg liftover -regionfile $regionfile -split $split $file $target.temp $liftoverfile 2>@ stderr
 				} else {
@@ -66,7 +66,7 @@ proc liftsample_job {args} {
 			}
 		}
 	}
-	foreach file [jobglob $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
+	foreach file [jobglob -checkcompressed 1 $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
 		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
 		set target $destdir/$temp
 		job [job_relfile2name liftreg- $file] -deps {$file $liftoverfile} \
@@ -84,7 +84,7 @@ proc liftsample_job {args} {
 			}
 		}
 	}
-	foreach file [jobglob $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
+	foreach file [jobglob -checkcompressed 1 $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
 		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
 		set target $destdir/$temp
 		job [job_relfile2name liftreg- $file] -deps {$file $liftoverfile} \

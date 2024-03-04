@@ -338,7 +338,7 @@ job var_${build}_dbnsfp -targets {extra/var_${build}_dbnsfp.tsv extra/var_${buil
 }
 
 # compress
-foreach file [jobglob *.tsv] {
+foreach file [jobglob -checkcompressed 1 *.tsv] {
 	job zst_${build}_[file tail $file] -deps {$file} -targets {$file.zst} -vars {dest build} -code {
 		cg zst -c 12 -i 1 $dep
 	}

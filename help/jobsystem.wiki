@@ -43,6 +43,9 @@ dependent on the the job with an error)
 ; -dnosubmit 0/1: (debugging, only for sge, slurm) when set to 1 (default 0) Go over startup,
 generating logging output, but without actually submitting jobs to the cluster. 
 WARNING: Files older than dependencies are renamed to file.old
+; -dry 0/1: (debugging, only for sge, slurm) when set to 1 (default 0) Go over startup,
+generating logging output, but without actually submitting jobs to the cluster. 
+Files older than dependencies are not renamed to file.old
 
 Typical use:
 {{{
@@ -173,10 +176,9 @@ to a final goal  (where the files resulting from this substep are removed after 
 The -skip option can be given multiple times. The job is skipped if any of the given skiplists is complete.
 ; -force 0/1: If 1, this job will be run even if the target files already exist. This is usefull
 if e.g. an existing files needs to be adapted.
-; -checkcompressed 0/1: dependencies (and targets) are normally
-searched regardless of compression status (e.g. either test.tsv as
-test.tsv.zst will match test.tsv). Use this option for the job 
-specifically targetting compression
+; -checkcompressed 0/1: set to 1 to search dependencies (and targets) 
+regardless of compression status (e.g. either test.tsv as
+test.tsv.zst will match test.tsv). (default 0)
 ; -rmtargets rmtargets: This job will have the removal of given files as target
 ; -io io: give value > 1 if job is heavy on io (in sge, translates to (soft) job options: -l io=$value) 
 ; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)

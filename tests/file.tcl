@@ -68,4 +68,14 @@ test shadow {cg shadow_clean env var} {
 	lappend result [file exists $shadowdir1] [file exists $shadowdir2]
 } {*/tmp/shadow/shadow.*-dir*/tmp/shadow/shadow.*-dir2 1 1 0 1} match
 
+test gzfiles {gzfiles basic} {
+	test_cleantmp
+	file_write tmp/test1 test1
+	cg zst -stack 1 tmp/test1
+	file_write tmp/test1 test1
+	cg lz4 tmp/test1
+	file_write tmp/test2 test2
+	gzfiles tmp/test1
+} {tmp/test1.zst}
+
 testsummarize

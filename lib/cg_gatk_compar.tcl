@@ -58,7 +58,7 @@ proc gatk_compar_job args {
 			Mills_and_1000G_gold_standard.indels*.vcf mills,known=false,training=true,truth=true,prior=12.0
 			dbsnp*.vcf dbsnp,known=true,training=false,truth=false,prior=2.0
 		} {
-			set file [jobglob1 $gatkres/$pattern]
+			set file [jobglob1 -checkcompressed 1 $gatkres/$pattern]
 			if {[file exists $file]} {
 				set iresfound 1
 			}
@@ -71,7 +71,7 @@ proc gatk_compar_job args {
 			1000G_phase1.snps.high_confidence.*.sites.vcf 1000G,known=false,training=true,truth=false,prior=10.0
 			dbsnp*.vcf dbsnp,known=true,training=false,truth=false,prior=2.0
 		} {
-			set file [jobglob1 $gatkres/$pattern]
+			set file [jobglob1 -checkcompressed 1 $gatkres/$pattern]
 			if {[file exists $file]} {
 				set sresfound 1
 			}

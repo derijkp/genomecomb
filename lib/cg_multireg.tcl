@@ -45,7 +45,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		set target $compar_file
-		job [job_relfile2name multireg- $compar_file] -force $jobforce -deps $files -targets {$target} -vars {isreg limitreg} -code {
+		job [job_relfile2name multireg- $compar_file] -checkcompressed 1 -force $jobforce -deps $files -targets {$target} -vars {isreg limitreg} -code {
 			if {$limitreg ne ""} {
 				set templist {}
 				foreach file $deps {
@@ -83,7 +83,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 	while 1 {
 		if {$len <= $maxfiles} {
 			set target $compar_file
-			job [job_relfile2name multireg- $compar_file] -force $jobforce -deps $todo -targets {
+			job [job_relfile2name multireg- $compar_file] -checkcompressed 1 -force $jobforce -deps $todo -targets {
 				$target
 			} -vars {
 				todoisreg delete workdir limitreg
@@ -118,7 +118,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 				incr num
 				lappend newtodo $target
 				lappend newisreg 1
-				job [job_relfile2name multireg- $target] -deps $deps -targets {
+				job [job_relfile2name multireg- $target] -checkcompressed 1 -deps $deps -targets {
 					$target
 				} -vars {
 					partisreg delete limitreg
@@ -146,7 +146,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 				set target $workdir/[file tail $dep]
 				lappend newtodo $target
 				lappend newisreg [lindex $partisreg 0]
-				job [job_relfile2name multireg- $target] -deps $deps -targets {
+				job [job_relfile2name multireg- $target] -checkcompressed 1 -deps $deps -targets {
 					$target
 				} -vars {
 					partisreg delete limitreg

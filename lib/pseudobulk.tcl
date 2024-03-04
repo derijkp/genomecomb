@@ -27,8 +27,8 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 	} else {
 		set root ${sc_celltyper}-$exproot
 	}
-	set pbisoformfiles [bsort [jobglob samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv]]
-	set pbisoformcolinfofiles [jobglob samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv.colinfo]
+	set pbisoformfiles [bsort [jobglob -checkcompressed 1 samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv]]
+	set pbisoformcolinfofiles [jobglob -checkcompressed 1 samples/*/pb_isoform_counts-${sc_celltyper}-*.tsv.colinfo]
 	if {[llength $pbisoformfiles]} {
 		job pb_compar-pb_isoform_counts-$root \
 		-deps $pbisoformfiles \
@@ -52,7 +52,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 			pb_combine_cat_colinfo $isoformcounts_colinfo $pbisoformcolinfofiles
 		}
 	}
-	set pbgenefiles [bsort [jobglob samples/*/pb_gene_counts-${sc_celltyper}-*.tsv]]
+	set pbgenefiles [bsort [jobglob -checkcompressed 1 samples/*/pb_gene_counts-${sc_celltyper}-*.tsv]]
 	set pbgenecolinfofiles [jobglob samples/*/pb_gene_counts-${sc_celltyper}-*.tsv.colinfo]
 	if {[llength $pbgenefiles]} {
 		job pb_compar-gene_counts-$root \

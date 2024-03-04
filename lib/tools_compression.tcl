@@ -292,13 +292,42 @@ proc gzfile_multi {filelist} {
 	return $result
 }
 
+#proc gzfiles {args} {
+#	foreach filename $args {
+#		set list [glob -nocomplain $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+#		foreach file $list {
+#			set root [gzroot $file]
+#			if {[info exists a($root)]} continue
+#			set a($root) $file
+#		}
+#	}
+#	set result {}
+#	foreach file [array names a] {
+#		lappend result $a($file)
+#	}
+#	return $result
+#}
+
 proc gzfiles {args} {
 	foreach filename $args {
-		set list [glob -nocomplain $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
-		foreach file $list {
-			set root [gzroot $file]
-			if {[info exists a($root)]} continue
-			set a($root) $file
+		if {[string first * $filename] != -1} {
+			foreach ext {{} .zst .lz4 .rz .bgz .gz .bz2} {
+				set list [glob -nocomplain $filename$ext]
+				foreach file $list {
+					set root [gzroot $file]
+					if {[info exists a($root)]} continue
+					set a($root) $file
+				}
+			}
+		} else {
+			foreach ext {{} .zst .lz4 .rz .bgz .gz .bz2} {
+				set file $filename$ext
+				if {[file exists $file]} {
+					set root [gzroot $file]
+					set a($root) $file
+					break
+				}
+			}
 		}
 	}
 	set result {}
@@ -475,7 +504,7 @@ proc razip_job {file args} {
 
 proc lz4_job {file args} {
 	upvar job_logdir job_logdir
-	set deps [jobglob $file]
+	set deps [jobglob -checkcompressed 1 $file]
 	set defcompressionlevel [defcompressionlevel]
 	job lz4-$file -checkcompressed 0 -deps $deps -targets {$file.lz4} -rmtargets {$file} -vars {
 		args defcompressionlevel
@@ -502,7 +531,7 @@ proc lz4index_job {args} {
 
 proc zst_job {file args} {
 	upvar job_logdir job_logdir
-	set deps [jobglob $file]
+	set deps [jobglob -checkcompressed 1 $file]
 	set defcompressionlevel [defcompressionlevel]
 	job zst-$file -checkcompressed 0 -deps $deps -targets {$file.zst} -rmtargets {$file} -vars {
 		args defcompressionlevel
