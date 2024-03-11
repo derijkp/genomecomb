@@ -15,12 +15,12 @@ proc cleanup_job {args} {
 	foreach temp $rmtargets {
 		if {[jobfileexists $temp]} {set todo 1}
 		set analysisinfo [analysisinfo_file $temp]
-		if {[jobfileexists $analysisinfo]} {
+		if {[jobfileexists -checkcompressed 1 $analysisinfo]} {
 			set todo 1
 			lappend rmtargets $analysisinfo
 		}
 		set indexfile [index_file $temp]
-		if {[jobfileexists $indexfile]} {
+		if {[jobfileexists -checkcompressed 1 $indexfile]} {
 			set todo 1
 			lappend rmtargets $indexfile
 		}
@@ -29,7 +29,8 @@ proc cleanup_job {args} {
 	set num 1
 	foreach deps $args {
 		set deps [list_remove $deps {}]
-		job cleanup-$name-deps$num -optional 1 -deps [list {*}$deps] -rmtargets $rmtargets -vars {
+		set deps \([join $deps "\)\ \("]\)
+		job cleanup-$name-deps$num -optional 1 -checkcompressed 1 -deps [list {*}$deps] -rmtargets $rmtargets -vars {
 			rmtargets forcedirs delassociated
 		} -code {
 			foreach file $rmtargets {
