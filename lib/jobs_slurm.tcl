@@ -34,8 +34,8 @@ proc job_status_slurm {job {jobloginfo {}}} {
 	}
 }
 
-proc job_process_submit_slurm {job runfile args} {
-	global cgjob
+proc job_process_submit_slurm {job cmd args} {
+	global cgjob cgjob_id cgjob_running
 	set options {}
 	set soft {}
 	set hard {}
@@ -139,6 +139,17 @@ proc job_process_submit_slurm {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to slurm: it has a comma in the output file $job_out"
 	}
+	# make runscript
+	set runcmd {}
+	append runcmd {#!/bin/sh}
+	append runcmd \n
+	append runcmd {#$ -S /bin/bash} \n
+	append runcmd {#$ -V} \n
+	append runcmd {#$ -cwd} \n
+	append runcmd $cmd
+	set runfile [job.file run $job]
+	file_write $runfile $runcmd
+	file attributes $runfile -permissions u+x
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]"
 		set jnum [exec sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]

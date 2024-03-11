@@ -124,7 +124,7 @@ proc job_process_distr_jobmanager {} {
 	}
 }
 
-proc job_process_submit_distr {job runfile args} {
+proc job_process_submit_distr {job cmd args} {
 #set jobnum [incr cgjob_distr(num)]
 #return $jobnum
 	global cgjob cgjob_distr cgjob_distr_queue
@@ -187,6 +187,15 @@ proc job_process_submit_distr {job runfile args} {
 	set jobnum [incr cgjob_distr(num)]
 	catch {file delete [job.file out $job]}
 	catch {file delete [job.file err $job]}
+	# make runscript
+	set runcmd {}
+	append runcmd {#!/bin/sh}
+	append runcmd \n
+	append runcmd $cmd
+	set runfile [job.file run $job]
+	file_write $runfile $runcmd
+	file attributes $runfile -permissions u+x
+	# submit
 	if {$cgjob(nosubmit) || $cgjob(dry)} {
 		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
 	} else {

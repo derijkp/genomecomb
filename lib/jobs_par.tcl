@@ -157,21 +157,14 @@ proc job_process_par_onepass {} {
 		if {$joberror ne ""} {error $joberror}
 		# job_log $job "-------------------- submitting $jobname --------------------"
 		# run code
-		set cmd {#!/bin/sh}
-		append cmd \n
-		append cmd {#$ -S /bin/bash} \n
-		append cmd {#$ -V} \n
-		append cmd {#$ -cwd} \n
+		set cmd {}
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 		append cmd "exec [job_timecmd $job] $cgjob(runcmd) \"\$0\" \"\$@\"\n"
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]\n
 		append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tending $jobname\"\n"
-		set runfile [job.file run $job]
-		file_write $runfile $cmd
-		file attributes $runfile -permissions u+x
 		# submit job
 		set ids [list_remove [list_remdup $ids] {}]
-		set jobnum [job_process_submit_par $job $runfile -deps $ids {*}$submitopts]
+		set jobnum [job_process_submit_par $job $cmd -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
 		file_write [job.file jid $job] $jobnum

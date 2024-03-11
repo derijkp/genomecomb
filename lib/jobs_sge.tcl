@@ -30,8 +30,8 @@ proc job_status_sge {job {jobloginfo {}}} {
 	}
 }
 
-proc job_process_submit_sge {job runfile args} {
-	global cgjob
+proc job_process_submit_sge {job cmd args} {
+	global cgjob cgjob_id cgjob_running
 	set options {}
 	set soft {}
 	set hard {}
@@ -41,12 +41,14 @@ proc job_process_submit_sge {job runfile args} {
 	set time {}
 	set pos 0
 	set dqueue [get cgjob(dqueue) all.q]
+	set scriptoptions {}
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
 				set value [list_remove $value {} q]
 				if {[llength $value]} {
-					lappend options -hold_jid [join $value ,]
+					# lappend options -hold_jid [join $value ,]
+					lappend scriptoptions [list -hold_jid [join $value ,]]
 					set cgjob(endjobids) [list_lremove $cgjob(endjobids) $value]
 				}
 				incr pos 2
@@ -163,6 +165,21 @@ proc job_process_submit_sge {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to sge: it has a comma in the output file $job_out, which grid engine sometimes has problems with"
 	}
+	# make runscript
+	set runcmd {}
+	append runcmd {#!/bin/sh}
+	append runcmd \n
+	append runcmd {#$ -S /bin/bash} \n
+	append runcmd {#$ -V} \n
+	append runcmd {#$ -cwd} \n
+	foreach line $scriptoptions {
+		append runcmd "\#\$ $line" \n
+	}
+	append runcmd $cmd
+	set runfile [job.file run $job]
+	file_write $runfile $runcmd
+	file attributes $runfile -permissions u+x
+	# submit
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]"
 		set jnum [exec qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]
@@ -238,6 +255,10 @@ proc job_wait_sge {} {
 	append cmd {#$ -S /bin/bash} \n
 	append cmd {#$ -V} \n
 	append cmd {#$ -cwd} \n
+	if {[llength $cgjob(endjobids)]} {
+		# lappend options -hold_jid [join $cgjob(endjobids) ,]
+		append cmd "\#\$ -hold_jid [join $cgjob(endjobids) ,]"
+	}
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 	append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
 	append cmd "job_init -d sge\n"
@@ -246,9 +267,6 @@ proc job_wait_sge {} {
 	file_write $runfile $cmd
 	file attributes $runfile -permissions u+x
 	set options {}
-	if {[llength $cgjob(endjobids)]} {
-		lappend options -hold_jid [join $cgjob(endjobids) ,]
-	}
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "sge_submit: [list qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile]"
 		exec qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile

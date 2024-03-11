@@ -529,41 +529,76 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 		return [job_findregexpdep $pattern ids time timefile $checkcompressed]
 	}
 	set pattern [file_absolute $pattern]
-	unset -nocomplain filesa
-	if {$checkcompressed} {
-		set list [bsort [gzfiles $pattern]]
+	if {[string first * $pattern] == -1} {
+		# no wildcard, we are looking for one file: 
+		# can stop without checking filesystem if present in cgjobs targets
+		if {$checkcompressed} {
+			set exts {{} .zst .lz4 .rz .bgz .gz .bz2}
+		} else {
+			set exts {{}}
+		}
+		foreach ext $exts {
+			set file $pattern$ext
+			if {[info exists cgjob_id($file)]} {
+				if {[info exists cgjob_rm($file)]} continue
+				if {[job_running $cgjob_id($file)]} {
+					set time now
+					set timefile $file
+				} elseif {$cgjob_id($file) eq "q" && ![catch {file lstat $file finfo}]} {
+					maxfiletime $file time timefile
+				}
+				lappend ids [list $cgjob_id($file)]
+				return [list $file]
+			}
+		}
+		foreach ext $exts {
+			set file $pattern$ext
+			if {![catch {file lstat $file finfo}]} {
+				if {[info exists cgjob_rm($file)]} continue
+				maxfiletime $file time timefile
+				lappend ids {}
+				return [list $file]
+			}
+		}
+		return {}
 	} else {
-		set list [bsort [checkfiles $pattern]]
-	}
-	foreach file $list {
-		if {[info exists cgjob_rm($file)]} continue
-		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
-			continue
+		# wildcard, a lot more complicated: need to check both filesystem and cgjob targets
+		unset -nocomplain filesa
+		if {$checkcompressed} {
+			set list [bsort [gzfiles $pattern]]
+		} else {
+			set list [bsort [checkfiles $pattern]]
 		}
-		set filesa($file) 1
-		lappend ids {}
-		maxfiletime $file time timefile
-	}
-	set filelist [cgjob_files cgjob_id $pattern $checkcompressed]
-	foreach file $filelist {
-		if {[info exists cgjob_rm($file)]} continue
-		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
-			continue
+		foreach file $list {
+			if {[info exists cgjob_rm($file)]} continue
+			if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
+				continue
+			}
+			set filesa($file) 1
+			lappend ids {}
+			maxfiletime $file time timefile
 		}
-# do not remove job, we want to keep the dependency chain intact,
-# even if one job stops prematurely
-#		if {![job_running $cgjob_id($file)]} {
-#			unset cgjob_id($file)
-#			continue
-#		}
-		set filesa($file) 1
-		lappend ids $cgjob_id($file)
-		if {[job_running $cgjob_id($file)]} {
-			set time now
-			set timefile $file
+		set filelist [cgjob_files cgjob_id $pattern $checkcompressed]
+		foreach file $filelist {
+			if {[info exists cgjob_rm($file)]} continue
+			if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
+				continue
+			}
+			# do not remove job, we want to keep the dependency chain intact,
+			# even if one job stops prematurely
+			#		if {![job_running $cgjob_id($file)]} {
+			#			unset cgjob_id($file)
+			#			continue
+			#		}
+			set filesa($file) 1
+			lappend ids $cgjob_id($file)
+			if {[job_running $cgjob_id($file)]} {
+				set time now
+				set timefile $file
+			}
 		}
+		return [array names filesa]
 	}
-	return [array names filesa]
 }
 
 proc maxfiletime {file timeVar timefileVar} {
