@@ -88,6 +88,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(priority)]} {
 		set cgjob(priority) 0
 	}
+	if {![info exists cgjob(submitoptions)]} {
+		set cgjob(submitoptions) {}
+	}
 	if {![info exists cgjob(dmem)]} {
 		set cgjob(dmem) {}
 	}
@@ -113,6 +116,10 @@ proc job_args {jobargs} {
 				job_distribute [lindex $jobargs $pos]
 				incr pos
 				set cgjob(hasargs) 1
+			}
+			-submitoptions {
+				set cgjob(submitoptions) [lindex $jobargs $pos]
+				incr pos
 			}
 			-dpriority {
 				set cgjob(priority) [lindex $jobargs $pos]
@@ -1400,6 +1407,9 @@ proc job {jobname args} {
 		append newcode [list proc $proc [info args $proc] [info body $proc]]\n
 	}
 	append newcode $code
+	if {[info exists cgjob(submitoptions)] && $cgjob(submitoptions) ne ""} {
+		lappend submitopts {*}$cgjob(submitoptions)
+	}
 	if {[get ::job_getinfo 0]} {
 		# do not actually run if just gathering info
 		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
