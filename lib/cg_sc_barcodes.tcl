@@ -186,6 +186,7 @@ proc sc_barcodes_job args {
 			$resultdir/mergedbarcodes.tsv.zst \
 			$resultdir/barcode2celbarcode.tsv \
 			$resultdir/reads_per_cell_raw.tsv \
+			$resultdir/umis_per_cell_raw.tsv \
 			$resultdir/bcfastq/$root-sc.fastq.gz \
 			$resultdir/barcodeinfo/$root.barcodes.tsv.zst \
 		] -deps {
@@ -321,7 +322,11 @@ proc sc_barcodes_job args {
 	for {set part 1} {$part <= $bcparts} {incr part} {
 		set target $resultdir/barcodes.temp/barcode_matches-$part.tsv.zst
 		lappend barcode_matches $target
-		job sc_findbcmatches-barcode_matches-$sample-$part {*}$skips -skip [list $resultdir/barcode2celbarcode.tsv $resultdir/reads_per_cell_raw.tsv] \
+		job sc_findbcmatches-barcode_matches-$sample-$part {*}$skips -skip [list \
+			$resultdir/barcode2celbarcode.tsv \
+			$resultdir/reads_per_cell_raw.tsv \
+			$resultdir/umis_per_cell_raw.tsv \
+		] \
 		-deps {
 			$resultdir/mergedbarcodes.tsv.zst
 			$resultdir/barcode_cutoff-info.tsv
