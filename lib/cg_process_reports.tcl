@@ -686,7 +686,7 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports vars]} {
 		set refcodingfile [gzfile $dbdir/extra/reg_*_refcoding.tsv]
-		foreach varfile [jobglob -checkcompressed 1 -checkcompressed 1 $sampledir/var-*.tsv] {
+		foreach varfile [jobglob -checkcompressed 1 $sampledir/var-*.tsv] {
 			set sample [file root [file tail [gzroot $varfile]]]
 			regsub ^var- $sample {} sample
 			set target $sampledir/reports/report_vars-$sample.tsv
@@ -704,7 +704,7 @@ proc process_reports_job {args} {
 		}
 	}
 	if {[inlist $reports covered]} {
-		foreach dep [jobglob -checkcompressed 1 -checkcompressed 1 $sampledir/sreg-*.tsv] {
+		foreach dep [jobglob -checkcompressed 1 $sampledir/sreg-*.tsv] {
 			set sample [file root [file tail [gzroot $dep]]]
 			regsub ^sreg- $sample {} sample
 			set target $sampledir/reports/report_covered-$sample.tsv

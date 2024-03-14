@@ -522,7 +522,7 @@ proc pmulticompar_job {args} {
 		if {[file isdir $dir]} {
 			# a directory is given, look for the variant file(s)
 			set sample [file tail $dir]
-			set file [lindex [jobglob -checkcompressed 1 -checkcompressed 1 $dir/fannotvar-$sample.tsv] 0]
+			set file [lindex [jobglob -checkcompressed 1 $dir/fannotvar-$sample.tsv] 0]
 			if {$file ne ""} {
 				lappend files $file
 				if {[info exists samplesa($sample)]} {
