@@ -33,7 +33,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		job pb_compar-pb_isoform_counts-$root \
 		-deps $pbisoformfiles \
 		-targets {
-			compar/pb_isoform_counts-$root.tsv
+			compar/pb_isoform_counts-$root.tsv.zst
 		} -vars {
 			pbisoformfiles exproot root sc_celltyper iso_match
 		} -code {
@@ -58,7 +58,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		job pb_compar-gene_counts-$root \
 		-deps $pbgenefiles \
 		-targets {
-			compar/pb_gene_counts-$root.tsv
+			compar/pb_gene_counts-$root.tsv.zst
 		} -vars {
 			pbgenefiles exproot root sc_celltyper iso_match
 		} -code {
