@@ -41,6 +41,7 @@ test process_small {process_project mastr_mx2} {
 		-amplicons tmp/${basename}/samplicons-wgs2.tsv \
 		-extra_reports_mastr 1 \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
 	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
@@ -87,6 +88,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		-varcallers {gatkh} -extra_reports_mastr gatkh \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
 	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
@@ -138,6 +140,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-aliformat cram \
 		-extra_reports_mastr gatkh \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
 	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
@@ -216,6 +219,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		-amplicons tmp/${basename}/samplicons-wgs2.tsv \
 		-extra_reports_mastr 1 \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	# filter out blanco hsmetrics results (are not deterministic)
 	cg select -q {$sample ne "crsbwa-blanco2_8485"} tmp/${basename}/reports/report_hsmetrics-${basename}.tsv tmp/${basename}/reports/filtered_report_hsmetrics-${basename}.tsv
@@ -333,6 +337,7 @@ test process_small {process_project exomes_yri_mx2} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -375,6 +380,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -417,6 +423,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatkh freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -454,6 +461,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 #		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 #	}
 #	cg process_project --stack 1 --verbose 2 {*}$::runopts {*}$::dopts -split 1 -dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
+#	grid_wait
 #	# check vs expected
 #	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
 #	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *.stats.zst -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
@@ -504,6 +512,7 @@ test process_small {process_project genomes_yri_mx2} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -547,6 +556,7 @@ test process_small {process_project cg_mx2} {
 		-dbdir $::refseqdir/hg19 \
 		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -593,6 +603,7 @@ test process_small {process_project mixed_yri_mx2} {
 		-dbdir $::refseqdir/hg19 \
 		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -637,6 +648,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		-dbdir $::refseqdir/hg19 \
 		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \

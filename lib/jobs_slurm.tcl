@@ -257,6 +257,16 @@ proc job_wait_slurm {} {
 	}
 }
 
+proc grid_wait_slurm {} {
+	while 1 {
+		after 500
+		puts -nonewline .
+		flush stdout
+		if {[llength [split [string trim [exec squeue]] \n]] == 1} break
+	}
+	puts ""
+}
+
 # https://slurm.schedmd.com/sbatch.html
 # https://vlaams-supercomputing-centrum-vscdocumentation.readthedocs-hosted.com/en/latest/antwerp/SLURM_UAntwerp.html
 # https://curc.readthedocs.io/en/latest/running-jobs/slurm-commands.html

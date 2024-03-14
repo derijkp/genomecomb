@@ -5,6 +5,20 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+#set testsge 0
+#set pos [lsearch $dopts -d]
+#if {$pos != -1} {
+#	set testsge 1
+#	puts "Testing sge"
+#	set testopts "-d sge"
+#	interp alias {} job_wait {} job_wait_sge
+#	interp alias {} grid_wait {} grid_wait_sge
+#} else {
+#	set testopts ""
+#	proc job_wait {} {}
+#	proc grid_wait {} {}
+#}
+
 proc splitfastqs {fastq1 pre1 post1 {perfile 20}} {
 	set num 1
 	catch {close $o1 ; close $f1}
@@ -32,6 +46,7 @@ test process_sample {bwa distrreg} {
 	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
 	exec cg process_sample {*}$::dopts -threads 1 -aligners bwa -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
+	grid_wait
 	# chr21:42730799-42762826
 	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [subst [deindent {
@@ -51,6 +66,7 @@ test process_sample {bwa distrreg ubam source} {
 	exec samtools import data/seq_R1.fq.gz data/seq_R2.fq.gz > tmp/NA19240m/ubam/seq.bam
 	exec cg process_sample {*}$::dopts -clip 0 -threads 1 -aligners bwa -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
+	grid_wait
 	# chr21:42730799-42762826
 	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [subst [deindent {
@@ -68,8 +84,9 @@ test process_sample {bwa distrreg cram} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
 	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	exec cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr \
+	exec cg process_sample {*}$::dopts -threads 1 -aligners bwa -aliformat cram -distrreg chr \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >& tmp/NA19240m.startuplog
+	grid_wait
 	# chr21:42730799-42762826
 	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent [subst {
@@ -94,7 +111,8 @@ test process_sample {bwa distrreg -removeduplicates 0 cram} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -aligners bwa -varcallers {} -removeduplicates 0 -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	cg process_sample {*}$::dopts -aligners bwa -varcallers {} -removeduplicates 0 -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	grid_wait
 	# chr21:42730799-42762826
 	dbdir $::refseqdir/hg19
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rsbwa-NA19240m.cram > tmp/ali.sam
@@ -109,7 +127,8 @@ test process_sample {bwa distrreg -removeduplicates picard bam} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -stack 1 -aligners bwa -varcallers {} -removeduplicates picard -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	cg process_sample {*}$::dopts -stack 1 -aligners bwa -varcallers {} -removeduplicates picard -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	grid_wait
 	# chr21:42730799-42762826
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf other -s {chromosome begin end qname} > tmp/ali.sam.tsv
@@ -126,8 +145,9 @@ test process_sample {map bwa distrreg mutiple fastq} {
 	splitfastqs data/seq_R1.fq.gz tmp/NA19240m/fastq/seq _R1.fq 20
 	splitfastqs data/seq_R2.fq.gz tmp/NA19240m/fastq/seq _R2.fq 20
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
-	cg process_sample -clip 0 -aligners bwa -varcallers {} -distrreg chr -varcallers {} \
+	cg process_sample {*}$::dopts -clip 0 -aligners bwa -varcallers {} -distrreg chr -varcallers {} \
 		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
+	grid_wait
 	# chr21:42730799-42762826
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
@@ -144,7 +164,8 @@ test process_sample {map bwa distrreg mutiple fastq -maxfastqdistr 2} {
 	splitfastqs data/seq_R1.fq.gz tmp/NA19240m/fastq/seq _R1.fq 20
 	splitfastqs data/seq_R2.fq.gz tmp/NA19240m/fastq/seq _R2.fq 20
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
-	cg process_sample -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
+	cg process_sample {*}$::dopts -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
+	grid_wait
 	# chr21:42730799-42762826
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
@@ -160,7 +181,8 @@ test process_project {process_project bwa distrreg multiple fastq -maxfastqdistr
 	# make split up fastq
 	splitfastqs data/seq_R1.fq.gz tmp/samples/NA19240m/fastq/seq _R1.fq 20
 	splitfastqs data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq _R2.fq 20
-	cg process_project -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp >@ stdout 2>@ stderr
+	cg process_project {*}$::dopts -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp >@ stdout 2>@ stderr
+	grid_wait
 	# chr21:42730799-42762826
 	exec samtools sort --no-PG -O sam tmp/samples/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
@@ -176,11 +198,12 @@ test process_project {process_project include msamples directory (analyse, but n
 	cg project_addsample -transfer rel tmp msample data/seq_R1.fq.gz data/seq_R2.fq.gz
 	mkdir tmp/msamples
 	file rename tmp/samples/msample tmp/msamples/msample
-	cg process_project -stack 1 \
+	cg process_project {*}$::dopts -stack 1 \
 		-process_msamples 1 \
 		-clip 0 -maxfastqdistr 2 -aligners bwa -varcallers bcf \
 		-distrreg chr -dbdir $::refseqdir/hg19 \
 		tmp >& tmp/startup.log
+	grid_wait
 	# chr21:42730799-42762826
 	set result {}
 	exec samtools sort --no-PG -O sam tmp/samples/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam

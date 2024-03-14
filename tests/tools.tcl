@@ -8,11 +8,25 @@ if {![info exists refseqdir]} {
 	set refseqdir $smalltestdir/refseqtest
 }
 
+proc job_wait {} {}
+proc grid_wait {} {}
 if {[info exists argv]} {
 	set pos [lsearch $argv -smalltestdir]
 	if {$pos != -1} {
 		set smalltestdir [lindex $argv [expr {$pos + 1}]]
 		set argv [lreplace $argv $pos [expr {$pos + 1}]]
+	}
+	set pos [lsearch $argv -d]
+	if {$pos != -1} {
+		if {[lindex $argv [expr {$pos+1}]] eq "sge"} {
+			puts "Testing sge"
+			interp alias {} job_wait {} job_wait_sge
+			interp alias {} grid_wait {} grid_wait_sge
+		} elseif {[lindex $argv [expr {$pos+1}]] eq "slurm"} {
+			puts "Testing slurm"
+			interp alias {} job_wait {} job_wait_slurm
+			interp alias {} grid_wait {} grid_wait_slurm
+		}
 	}
 	set dopts $argv
 } else {

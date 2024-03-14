@@ -275,3 +275,13 @@ proc job_wait_sge {} {
 		set jnum [incr cgjob(nosubmit)]
 	}
 }
+
+proc grid_wait_sge {} {
+	while 1 {
+		after 500
+		puts -nonewline .
+		flush stdout
+		if {[exec qstat] eq ""} break
+	}
+	puts ""
+}

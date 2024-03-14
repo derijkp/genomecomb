@@ -96,14 +96,7 @@ if 0 {
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_sge
-	proc gridwait {} {
-		while 1 {
-			after 500
-			puts -nonewline .
-			flush stdout
-			if {[exec qstat] eq ""} break
-		}
-	}
+	interp alias {} gridwait {} grid_wait_sge
 
 	set testname "-d slurm"
 	proc test_job_init {args} {
@@ -111,14 +104,7 @@ if 0 {
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_slurm
-	proc gridwait {} {
-		while 1 {
-			after 500
-			puts -nonewline .
-			flush stdout
-			if {[llength [split [string trim [exec squeue]] \n]] == 1} break
-		}
-	}
+	interp alias {} gridwait {} grid_wait_slurm
 }
 
 proc writetestfiles {args} {
