@@ -313,7 +313,6 @@ cp -a -f /usr/lib64/libpng*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libtiff*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 #cp -a -f /usr/local/lib/libpixman*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libpixman*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
-#cp -a -f /usr/local/lib/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libcairo*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libfribidi*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 #cp -a -f /usr/local/lib/libxml2*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
@@ -331,7 +330,23 @@ cp -a -f /usr/lib64/libicui18n.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libicudata.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libpcre2-8.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 cp -a -f /usr/lib64/libtinfo.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# undefined symbol: g_log_structured_standard
+cp -a -f /usr/lib64/libglib* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# undefined symbol: FcWeightFromOpenTypeDouble
+cp -a -f /usr/lib64/libfontconfig* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# undefined symbol: hb_variation_from_string
+cp -a -f /usr/lib64/libharfbuzz* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# undefined symbol: FT_Get_Var_Design_Coordinates
+cp -a -f /usr/lib64/libfreetype* /build/dirR-$dirRversion-$arch/lib64/R/lib
+# other deps
+cd /usr/lib64
+cp -a -f libgobject* libthai* libpcre.so libpcre.so.1 libpcre.so.1.2.0 \
+    libffi* libgraphite2* libexpat* libuuid* libbz2* \
+    libpixman* libEGL* libxcb-shm.* libxcb.so* libxcb-render.* \
+    libXrender.* libX11* libXext* libGL* libXau* \
+	/build/dirR-$dirRversion-$arch/lib64/R/lib
 
+cd /build/R-$dirRversion
 
 echo '
 puts [list set argv $argv]
