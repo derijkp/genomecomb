@@ -41,15 +41,15 @@ proc bam2reg_job {args} {
 	}
 	bam_index_job {*}$skips $bamfile
 	set bamindexfile [index_file $bamfile]
-	analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 	if {$distrreg in {0 {}}} {
 		job cov$mincoverage-$root -optional 1 {*}$skips -deps {
 			$bamfile ($bamindexfile)
 		} -targets {
 			$target
 		} -vars {
-			mincoverage
+			bamfile mincoverage
 		} -code {
+			analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 			set compress [compresspipe $target]
 			set temptarget [filetemp $target]
 			exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
@@ -88,7 +88,9 @@ proc bam2reg_job {args} {
 		job cov$mincoverage-$root-merge -optional 1 {*}$skips -deps $todo -targets {
 			$target
 		} -vars {
+			bamfile
 		} -code {
+			analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 			set compress [compresspipe $target]
 			cg cat -c 0 {*}$deps {*}$compress > $target.temp
 			file rename -- $target.temp $target
