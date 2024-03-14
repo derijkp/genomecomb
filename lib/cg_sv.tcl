@@ -234,7 +234,7 @@ proc sv_job {args} {
 			}
 		}
 		if {[llength $regfiles]} {
-			cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles
+			cleanup_job {*}$skips cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles
 		}
 		cd $keeppwd
 		return $resultfiles

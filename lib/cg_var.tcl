@@ -266,7 +266,7 @@ proc var_job {args} {
 			lappend cleanupfiles {*}$list
 		}
 		lappend cleanupfiles $workdir
-		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
+		cleanup_job {*}$skips -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
 		return $resultfiles
 	}
 }

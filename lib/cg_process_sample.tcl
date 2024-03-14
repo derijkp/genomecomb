@@ -400,7 +400,7 @@ proc process_sample_cgi_job {workdir split} {
 		cg covered $dep > $target.temp
 		file rename -force -- $target.temp $target
 	}
-	job cg_process_cleanup-$sample -checkcompressed 1 -checkcompressed 1 -optional 1 \
+	job cg_process_cleanup-$sample -checkcompressed 1 -optional 1 \
 		-deps {
 			(svar-$sample.tsv) (annotvar-$sample.tsv) (annotvar-$sample.tsv.index) (sgene-$sample.tsv)
 			var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv
@@ -1106,7 +1106,7 @@ proc process_sample_job {args} {
 			}
 			if {$cleanup} {
 				# clean up no longer needed intermediate files
-				cleanup_job [job_relfile2name cleanupclipped- $target] $cleanupfiles $cleanupdeps
+				cleanup_job -skip $skips -skip $skipsresult [job_relfile2name cleanupclipped- $target] $cleanupfiles $cleanupdeps
 			}
 		}
 		set cleanupdeps {}
