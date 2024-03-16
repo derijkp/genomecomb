@@ -213,7 +213,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
-			if {$status in "error skipped" && [job_file_or_link_exists [job.file log $job]]} {
+			if {$status in "error skipped" && [file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 			}
@@ -225,8 +225,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}
 		# check if we need to parse logs
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [job_file_or_link_exists [job.file log $job]])} {
-			if {[job_file_or_link_exists [job.file log $job]]} {
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force | ($status eq "error" && [file_or_link_exists [job.file log $job]])} {
+			if {[file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
 				if {($starttime eq "" || $endtime eq "") && [info exists joblogcachea($job)]} {

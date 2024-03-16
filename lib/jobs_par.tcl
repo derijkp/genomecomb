@@ -1,5 +1,5 @@
 proc job_process_par_jobid {job} {
-	if {![job_file_or_link_exists [job.file jid $job]]} {
+	if {![file_or_link_exists [job.file jid $job]]} {
 		return ""
 	}
 	set jobid [file_read [job.file jid $job]]

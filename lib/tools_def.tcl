@@ -28,7 +28,7 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	set ref [dbdir_ref $dbdir]
 	set targetfile [targetfile $sampledir]
 	if {[jobfileexists $targetfile]} {
-		if {[job_file_or_link_exists $targetfile]} {
+		if {[file_or_link_exists $targetfile]} {
 			set link [getlink $targetfile]
 			if {[file exists $link] && [gzext $link] ne [gzext $targetfile]} {
 				# correct if linking to uncompressed where actual regfile is compressed

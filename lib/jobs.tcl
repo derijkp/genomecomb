@@ -3,11 +3,6 @@ proc job.file {type jobfile} {
 	return [file dir $jobfile]/$type/[file tail $jobfile].$type
 }
 
-proc job_file_or_link_exists {file} {
-	if {[file exists $file]} {return 1}
-	if {[catch {file link $file}]} {return 0} else {return 1}
-}
-
 proc job_file_mtime {file} {
 	file lstat $file a
 	return $a(mtime)
@@ -1185,10 +1180,10 @@ proc job_logfile_add {job jobid status {targets {}} {cores 1} {msg {}} {submitti
 }
 
 proc job_backup {file {rename 0}} {
-	if {![job_file_or_link_exists $file]} return
+	if {![file_or_link_exists $file]} return
 	set num 1
 	while 1 {
-		if {![job_file_or_link_exists $file.old$num]} break
+		if {![file_or_link_exists $file.old$num]} break
 		incr num
 	}
 	if {$rename} {
@@ -1203,7 +1198,7 @@ proc job_to_old {file} {
 		set cgjob_rm($file) old
 		return
 	}
-	if {![job_file_or_link_exists $file]} return
+	if {![file_or_link_exists $file]} return
 	file delete -force $file.old
 	file rename -force -- $file $file.old
 }
@@ -1226,7 +1221,7 @@ proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 		}
 		incr num
 		if {$dep ne ""} {
-			append cmd "if \{!\[[list job_file_or_link_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
+			append cmd "if \{!\[[list file_or_link_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
 		}
 	}
 	set num 1

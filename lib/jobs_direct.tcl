@@ -176,7 +176,7 @@ proc job_process_direct {} {
 		set endtime [timestamp]
 		# log results
 		# ===========
-		if {![job_file_or_link_exists [job.file finished $job]] && ![job_file_or_link_exists [job.file ok $job]]} {
+		if {![file_or_link_exists [job.file finished $job]] && ![file_or_link_exists [job.file ok $job]]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 			job_logfile_add $job . error $targets $cores "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {

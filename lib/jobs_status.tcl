@@ -116,7 +116,7 @@ proc job_process_parstatus {} {
 		set submittime ""
 		# get job log information -> duration
 		set duration {}
-		if {[job_file_or_link_exists [job.file log $job]]} {
+		if {[file_or_link_exists [job.file log $job]]} {
 			set jobloginfo [job_parse_log $job]
 			foreach {status time endtime run duration submittime} $jobloginfo break
 			if {$time eq ""} {unset time}
@@ -183,7 +183,7 @@ proc job_process_parstatus {} {
 		# indicate targets
 		set job_err [job.file err $job]
 		job_process_par_marktargets $targets $rmtargets $jobnum
-		if {[job_file_or_link_exists $job_err]} {
+		if {[file_or_link_exists $job_err]} {
 			puts "error\t$jobname\t$jobnum\t\terror file available\t$job_err"
 			job_logfile_add $job $jobnum error $targets $cores [job_cleanmsg [file_read $job_err]] $submittime
 			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets

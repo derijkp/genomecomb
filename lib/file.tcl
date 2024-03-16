@@ -152,3 +152,8 @@ proc read_tsv {file {fields {}}} {
 	gzclose $f
 	return $result
 }
+
+proc file_or_link_exists {file} {
+	if {[file exists $file]} {return 1}
+	if {[catch {file link $file}]} {return 0} else {return 1}
+}
