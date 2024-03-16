@@ -39,18 +39,18 @@ proc cg_shadow_clean {args} {
 
 proc shadow_delete {link} {
 	if {![file isdir $link]} {
-		file delete $link
+		rm $link
 		return
 	}
 	if {[catch {file link $link} shadow]} {
-		file delete -force $link
+		rm -force $link
 		return
 	}
 	if {![file exists $shadow/shadow_source]} {
 		error "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist)"
 	}
-	file delete -force $shadow
-	file delete $link
+	rm -force $shadow
+	rm $link
 }
 
 proc cg_shadow_delete {args} {

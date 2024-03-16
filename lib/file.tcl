@@ -61,6 +61,23 @@ proc mkdir {dir} {
 	if {![file exists $dir]} {file mkdir $dir}	
 }
 
+proc rm {args} {
+	set opts {}
+	if {[lindex $args 0] in "-f -force"} {
+		lappend opts -force
+		set args [lrange $args 1 end]
+	} elseif {[lindex $args] eq "--"} {
+		set args [lrange $args 1 end]
+	}
+	foreach file $args {
+		if {[catch {file delete {*}$opts $file} msg]} {
+			if {![regexp "no such file or directory" $msg]} {
+				error "error deleting file $file: $msg"
+			}
+		}
+	}
+}
+
 proc file_mtime {file} {
 	file lstat $file a
 	return $a(mtime)
