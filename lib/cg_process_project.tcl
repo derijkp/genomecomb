@@ -419,6 +419,7 @@ proc process_project_job {args} {
 			set ::deps {} ; set ::targets {}
 			process_sample_job -todoVar todo {*}$sampleargs
 			foreach {deps targets} [job_getinfo 0] break
+			if {$targetfile ne ""} {lappend deps $targetfile}
 			logverbose $verbose
 			# run the actual job with deps and targets found
 			job process_sample-$sample -deps $deps -targets $targets -vars {
