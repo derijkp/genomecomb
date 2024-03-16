@@ -1203,7 +1203,7 @@ proc job_to_old {file} {
 	file rename -force -- $file $file.old
 }
 
-proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
+proc job_generate_code {job pwd adeps targetvars targets checkcompressed code {optional 0}} {
 	set cmd ""
 	set jobname [file tail $job]
 	append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tstarting $jobname on \[exec hostname\]\"\n"
@@ -1220,7 +1220,7 @@ proc job_generate_code {job pwd adeps targetvars targets checkcompressed code} {
 			append cmd "[list set dep$num $dep]\n"
 		}
 		incr num
-		if {$dep ne ""} {
+		if {$dep ne "" && $optional != 2} {
 			append cmd "if \{!\[[list file_or_link_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
 		}
 	}

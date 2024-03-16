@@ -160,7 +160,7 @@ proc job_process_par_onepass {} {
 		set cmd {}
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 		append cmd "exec [job_timecmd $job] $cgjob(runcmd) \"\$0\" \"\$@\"\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code]\n
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $checkcompressed $code $optional]\n
 		append cmd "file_add \{[job.file log $job]\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		# submit job
 		set ids [list_remove [list_remdup $ids] {}]
