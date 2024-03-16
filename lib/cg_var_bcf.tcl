@@ -106,6 +106,7 @@ proc var_bcf_job {args} {
 	# resultfiles
 	set varfile $resultfile
 	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set uvarfileanalysisinfo [analysisinfo_file $uvarfile]
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
 	set varallfile $destdir/${pre}varall-$root.tsv.zst
 	set regclusterfile $destdir/reg_cluster-$root.tsv.zst
@@ -178,7 +179,7 @@ proc var_bcf_job {args} {
 	job ${pre}var-$root {*}$skips -deps {
 		$varallfile
 	} -targets {
-		$uvarfile
+		$uvarfile $uvarfileanalysisinfo
 	} -skip {
 		${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo
 	} -vars {
@@ -198,19 +199,10 @@ proc var_bcf_job {args} {
 		result_rename $tempfile $target
  	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $uvarfile $resultfile
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $uvarfile $resultfile
 	# find regions
 	sreg_sam_job ${pre}sreg-$root $varallfile $sregfile $mincoverage $minqual $skips
 	# cleanup
-	if {$cleanup} {
-		set cleanupfiles [list \
-			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
-			[file root $varallfile].vcf \
-			[file root $varallfile].vcf.idx \
-		]
-		set cleanupdeps [list $resultfile $varallfile]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
-	}
 	return $resultlist
 }
 

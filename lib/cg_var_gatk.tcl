@@ -43,9 +43,13 @@ proc gatk_refseq refseq {
 proc annotvar_clusters_job {args} {
 	upvar job_logdir job_logdir
 	set skips {}
+	set deletesrc 0
 	cg_options annotvar_clusters args {
 		-skip {
 			lappend skips -skip $value
+		}
+		-deletesrc {
+			set deletesrc $value
 		}
 	} {file resultfile} 2 2 {
 		find clusters of variants
@@ -53,10 +57,21 @@ proc annotvar_clusters_job {args} {
 	set destdir [file dir $resultfile]
 	set resultroot [file_rootname $resultfile]
 	set root [file_rootname $file]
-	job annotvar-clusters-$resultroot {*}$skips -skip [list [gzroot $resultfile]] -deps {
+	if {$deletesrc eq "0"} {
+		set rmtargets {}
+	} elseif {$deletesrc eq "1"} {
+		set rmtargets [list $file [analysisinfo_file $file] [gzroot $file].index [gzroot $file].temp]
+	} elseif {[llength $deletesrc]} {
+		set rmtargets $deletesrc
+	}
+	job annotvar-clusters-$resultroot {*}$skips \
+	-rmtargets $rmtargets \
+	-deps {
 		$file
 	} -targets {
-		$destdir/reg_cluster-$root.tsv.zst $destdir/reg_cluster-$root.tsv.zst.zsti
+		$destdir/reg_cluster-$root.tsv.zst $destdir/reg_cluster-$root.tsv.zst.zsti $resultfile
+	} -vars {
+		resultfile deletesrc rmtargets destdir root
 	} -code {
 		analysisinfo_write $dep $target
 		if {[file size $dep]} {
@@ -67,18 +82,16 @@ proc annotvar_clusters_job {args} {
 			file_write $target ""
 			file_write $target.zsti ""
 		}
-	}
-	job annotvar-annotclusters-$resultroot -checkcompressed 1 {*}$skips -deps {
-		$file $destdir/reg_cluster-$root.tsv
-	} -targets {
-		$resultfile
-	} -code {
 		if {[file size $dep]} {
-			cg annotate -stack 1 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
+			cg annotate -stack 1 $dep $resultfile $destdir/reg_cluster-$root.tsv.zst 2>@ stderr >@ stdout
 		} else {
-			file_write $target ""
+			file_write $resultfile ""
 		}
-		analysisinfo_write $dep $target
+		analysisinfo_write $dep $resultfile
+		foreach rmfile $rmtargets {
+			rm -force $rmfile
+			rm -force [analysisinfo_file $rmfile]
+		}
 	}
 }
 
@@ -340,20 +353,17 @@ proc var_gatk_job {args} {
 		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $destdir/${pre}uvar-$root.tsv $varfile
+	if {$cleanup} {
+		set cleanup [list \
+			$destdir/${pre}uvar-$root.tsv $destdir/${pre}uvar-$root.tsv.index/var.tsv $destdir/${pre}uvar-$root.tsv.index \
+			$destdir/${pre}varall-$root.vcf $destdir/${pre}delvar-$root.vcf $destdir/${pre}delvar-$root.tsv \
+		]
+	}
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $destdir/${pre}uvar-$root.tsv $varfile
 	# make sreg
 	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile $skips
 	## filter SNPs (according to seqanswers exome guide)
 	# java -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
-	# cleanup
-	if {$cleanup} {
-		set cleanupfiles [list \
-			$destdir/${pre}uvar-$root.tsv $destdir/${pre}uvar-$root.tsv.index/var.tsv $destdir/${pre}uvar-$root.tsv.index \
-			$destdir/${pre}varall-$root.vcf $destdir/${pre}delvar-$root.vcf $destdir/${pre}delvar-$root.tsv \
-		]
-		set cleanupdeps [list $varfile $varallfile]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
-	}
 	return $resultlist
 }
 

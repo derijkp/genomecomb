@@ -100,6 +100,7 @@ proc var_freebayes_job {args} {
 	# resultfiles
 	set varfile $resultfile
 	set uvarfile $destdir/${pre}uvar-$root.tsv.zst
+	set uvarfileanalysisinfo [analysisinfo_file $uvarfile]
 	set sregfile $destdir/${pre}sreg-$root.tsv.zst
 	set varallfile $destdir/${pre}varall-$root.tsv.zst
 	set regclusterfile $destdir/reg_cluster-$root.tsv.zst
@@ -173,7 +174,7 @@ proc var_freebayes_job {args} {
 	job ${pre}uvar-$root {*}$skips -deps {
 		$varallfile
 	} -targets {
-		$uvarfile
+		$uvarfile $uvarfileanalysisinfo
 	} -skip {
 		$varfile
 	} -vars {
@@ -192,17 +193,9 @@ proc var_freebayes_job {args} {
 		file delete $target.temp
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $uvarfile $varfile
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $uvarfile $varfile
 	# make sreg
 	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile $skips
-	if {$cleanup} {
-		set cleanupfiles [list \
-			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
-			${pre}varall-$root.vcf \
-		]
-		set cleanupdeps [list $varfile $varallfile]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
-	}
 	return $resultlist
 }
 

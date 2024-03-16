@@ -215,19 +215,17 @@ proc var_sam_job {args} {
 		file rename -force -- $tempfile $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $uvarfile $varfile
-	# find regions
-	sreg_sam_job ${pre}sreg-$root $varallfile $sregfile 5 30 $skips
-	# cleanup
 	if {$cleanup} {
-		set cleanupfiles [list \
+		set cleanup [list \
 			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
 			$varallvcf \
 			[gzroot $varallvcf].idx \
 		]
-		set cleanupdeps [list $varfile $varallfile]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $uvarfile $varfile
+	# find regions
+	sreg_sam_job ${pre}sreg-$root $varallfile $sregfile 5 30 $skips
+	# cleanup
 	return $resultlist
 }
 

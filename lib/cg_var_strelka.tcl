@@ -260,17 +260,9 @@ proc var_strelka_job {args} {
 		file rename -force -- $uvarfile.temp $uvarfile
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $uvarfile $varfile
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $uvarfile $varfile
 	# make sreg
 	sreg_strelka_job ${pre}sreg-$root $varallfile $sregfile $mincoverage $mingenoqual $skips
-	# cleanup
-	if {$cleanup} {
-		set cleanupfiles [list \
-			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
-		]
-		set cleanupdeps [list $varfile $resultgvcf]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
-	}
 	return $resultlist
 	# return [file join $destdir $varfile]
 }

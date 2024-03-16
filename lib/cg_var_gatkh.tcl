@@ -206,17 +206,9 @@ proc var_gatkh_job {args} {
 	}
 	maketabix_job $vcffile
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips $uvarfile $varfile
+	annotvar_clusters_job {*}$skips -deletesrc $cleanup $uvarfile $varfile
 	# make sreg
 	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile $mincoverage $mingenoqual $skips
-	# cleanup
-	if {$cleanup} {
-		set cleanupfiles [list \
-			$uvarfile [gzroot $uvarfile].index [gzroot $uvarfile].temp \
-		]
-		set cleanupdeps [list $varfile $varallfile]
-		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
-	}
 	return $resultlist
 }
 
