@@ -53,6 +53,7 @@ test process_small {process_project mastr_mx2} {
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x reg_hg19_targets.tsv.zst \
 		-x *-blanco2_8485* \
 		-x *.html \
 		-ignorefields {
@@ -100,6 +101,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x reg_hg19_targets.tsv.zst \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
 		-x *.html \
@@ -154,6 +156,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x report_stats-${basename}.tsv \
 		{*}[get ::optx {}] \
 		-x *.html \
+		-x reg_hg19_targets.tsv.zst \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
 			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
@@ -231,6 +234,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
 		-x colinfo -x *.stats.zst \
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x reg_hg19_targets.tsv.zst \
 		-x *-blanco2_8485* \
 		{*}[get ::optx {}] \
 		-x *.html \
@@ -265,6 +269,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 		-dbdir $::refseqdir/hg19 \
 		tmp/${basename}/samples/NA19240mx2 >& tmp/${basename}.log
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/${basename}/samples/NA19240mx2 | less -S
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -302,6 +307,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		-dbdir $::refseqdir/hg19 -distrreg 1 \
 		tmp/${basename}/samples/NA19240mx2 >& tmp/${basename}.log
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/${basename}/samples/NA19240mx2 | less -S
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
@@ -478,6 +484,7 @@ test process_small {process_sample one_genome_yri_mx2} {
 	mklink ori/genomes_yri_mx2.start/samples/NA19240cgmx2/ori tmp/${basename}/samples/NA19240cgmx2/ori
 	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $ref tmp/${basename}/samples/NA19240cgmx2 >& tmp/${basename}.log
+	grid_wait
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 \
