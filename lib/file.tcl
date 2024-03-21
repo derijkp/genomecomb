@@ -174,3 +174,12 @@ proc file_or_link_exists {file} {
 	if {[file exists $file]} {return 1}
 	if {[catch {file link $file}]} {return 0} else {return 1}
 }
+
+proc file_write {args} {
+	set list [list_pop args]
+	set filename [list_pop args]
+	set f [wgzopen $filename]
+	eval fconfigure $f -buffersize 100000 $args
+	puts -nonewline $f $list
+	close $f
+}
