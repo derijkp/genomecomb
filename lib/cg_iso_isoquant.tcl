@@ -194,7 +194,6 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	set read_assignmentsfile [gzfile $isodir/*.read_assignments.tsv]
 	set targetisoformcountsfile $destdir/isoform_counts-${root}.tsv
 	set targetgenecountsfile $destdir/gene_counts-${root}.tsv
-	set targetreadassignmentsfile $destdir/read_assignments-${root}.tsv
 	# info from known isos
 	# --------------------
 	# transcriptidsa gets the transcripts that are actually in the results (from readassignment file)
@@ -692,7 +691,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	gzclose $o
 	gzclose $f
 	cg select -overwrite 1 -s - $temptarget ${temptarget}2.zst
-	file rename -force ${temptarget}2.zst $targetreadassignmentsfile.zst
+	file rename -force ${temptarget}2.zst $destdir/read_assignments-${root}.tsv.zst
 	file delete $temptarget
 
 	#
@@ -1553,7 +1552,7 @@ proc iso_isoquant_job {args} {
 	set mainskips [list \
 		$resultfile \
 		$sampledir/gene_counts-${root}.tsv \
-		$sampledir/read_assignments-${root}.tsv \
+		$sampledir/read_assignments-${root}.tsv.zst \
 		$sampledir/totalcounts-${root}.tsv \
 	]
 	foreach region $regions {
@@ -1562,7 +1561,7 @@ proc iso_isoquant_job {args} {
 		set regionskips [list \
 			$regdir/isoform_counts-${root}.tsv \
 			$regdir/gene_counts-${root}.tsv \
-			$regdir/read_assignments-${root}.tsv \
+			$regdir/read_assignments-${root}.tsv.zst \
 		]
 		if {$reftranscripts eq "none"} {set depreftranscripts ""} else {set depreftranscripts $reftranscripts}
 		if {[regions_organelle $refseq $organelles $region]} {
