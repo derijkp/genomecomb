@@ -592,6 +592,27 @@ test tsv_cat {cg cat -m 1 -c m -sample testsample} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test tsv_cat {cg cat empty file} {
+	write_deindent tmp/var1.tsv {
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv {
+	}
+	exec cg cat tmp/var1.tsv tmp/var2.tsv > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/var1.tsv
+} {}
+
+test tsv_cat {cg cat compressed empty file} {
+	write_deindent tmp/var1.tsv {
+		chromosome	test	begin	end
+		chr1	test	15	25
+	}
+	write_deindent tmp/var2.tsv.zst {}
+	exec cg cat tmp/var1.tsv tmp/var2.tsv.zst > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/var1.tsv
+} {}
+
 test check_sort {sort error 1 in vars} {
 	exec cg checksort data/vars_sorterror1.tsv
 } {error in file data/vars_sorterror1.tsv: file is not correctly sorted (sort correctly using "cg select -s -")

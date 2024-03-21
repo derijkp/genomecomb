@@ -69,6 +69,10 @@ proc cg_cat {args} {
 		if {[file size $file] == 0} continue
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
+		if {[llength $header] == 0 && [eof $f]} {
+			gzclose $f
+			continue
+		}
 		if {-1 in [list_cor $header $fields]} {
 			error "$file does not have all fields: $fields"
 		}
