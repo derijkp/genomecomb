@@ -13,9 +13,9 @@ proc job_analysisinfo_files args {
 	return $result
 }
 
-proc analysisinfo_combine {target deps} {
+proc analysisinfo_combine {target analysefiles} {
 	set adeps {}
-	foreach file [bsort $deps] {
+	foreach file [bsort $analysefiles] {
 		set analysisinfo_file [analysisinfo_file $file]
 		if {[file exists $analysisinfo_file]} {
 			lappend adeps $analysisinfo_file
@@ -26,7 +26,7 @@ proc analysisinfo_combine {target deps} {
 		cg cat -c 0 -m 1 {*}$adeps > $targetanalysisinfo.temp
 		file rename -force -- $targetanalysisinfo.temp $targetanalysisinfo
 	} else {
-		file_write $target ""
+		file_write $targetanalysisinfo ""
 	}
 }
 

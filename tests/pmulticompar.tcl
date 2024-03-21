@@ -69,6 +69,9 @@ proc multicompartest {num} {
 	return $files
 }
 
+set testname _d4
+set jobopts {-d 4}
+
 set testname _direct
 set jobopts {}
 
@@ -257,8 +260,8 @@ test pmulticompar$testname {add to existing} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.tsv tmp/var-$sample.tsv
 	}
-	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
-	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot3.tsv
+	exec cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
+	exec cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot3.tsv
 	reorder data/expected-multicompar-var_annotvar_annot3.tsv tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 

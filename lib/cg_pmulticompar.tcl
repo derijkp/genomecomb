@@ -596,25 +596,38 @@ proc pmulticompar_job {args} {
 	file mkdir $workdir
 	set real_compar_file [jobglob -checkcompressed 1 $compar_file]
 	if {$real_compar_file ne ""} {
-		set allfiles [list $real_compar_file {*}$files]
+		set allfiles [list $real_compar_file {*}[bsort $files]]
 	} else {
 		set allfiles $files
 	}
 	# analysisinfo
 	set deps {}
+	set analysefiles {}
 	foreach file [bsort $files] {
-		lappend deps "([analysisinfo_file $file])"
+		if {$file eq $real_compar_file && [file exists $file]} {
+			set wfile $workdir/real_compar_file_[file tail $file]
+			set afile [analysisinfo_file $file]
+			set wafile $workdir/real_compar_file_[file tail $afile]
+			if {[file exists $afile]} {
+				hardcopy $file $wfile
+				hardcopy $afile $wafile
+				lappend deps "($wafile)" "($wafile)"
+				lappend analysefiles $afile
+			}
+		} else {
+			lappend deps "($file)" "([analysisinfo_file $file])"
+			lappend analysefiles $file
+		}
 	}
 	set target [analysisinfo_file $compar_file]
-	job [job_relfile2name multicompar_analysisinfo- $compar_file] -deps $deps -optional 1 \
-	-targets {$target} -code {
-		set deps [list_remove $deps {}]
-		if {[llength $deps]} {
-			cg cat -c 0 -m 1 {*}$deps > $target.pmulticompar.temp
-			file rename -- $target.pmulticompar.temp $target
-		} else {
-			file_write $target ""
-		}
+	job [job_relfile2name multicompar_analysisinfo- $compar_file] -optional 1 \
+	-deps $deps \
+	-targets {
+		$target
+	} -vars {
+		analysefiles compar_file
+	} -code {
+		analysisinfo_combine $compar_file $analysefiles
 	}
 	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
