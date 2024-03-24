@@ -8,7 +8,7 @@ pub struct Lengths {
 }
 
 pub fn plot(directory: &str) -> Result<Lengths, Box<dyn std::error::Error>> {
-    let mut bam = glob(&format!("{directory}/map*.bam"))?;
+    let mut bam = glob(&format!("{directory}/map*am"))?;
     let path = bam.next().expect("Could not find bam file")?;
     // only returning 1000 reads from the bam file to make the plot lighter
     // I would prefer to use a violin plot, though

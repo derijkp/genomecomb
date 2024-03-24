@@ -1,4 +1,4 @@
-proc scywalker_report_job {sampledir} {
+proc scywalker_report_job {sampledir refseq} {
 	upvar job_logdir job_logdir
 	set sample [file tail $sampledir]
 	set bam [lindex [jobglob \
@@ -18,9 +18,9 @@ proc scywalker_report_job {sampledir} {
 	} -targets {
 		$target
 	} -vars {
-		sampledir sample bam
+		sampledir sample bam refseq
 	} -code {
-		exec cramino $bam > $sampledir/cramino-output.tsv
+		exec cramino --reference $refseq $bam > $sampledir/cramino-output.tsv
 		exec scywalker-report -o $target.temp $sampledir
 		file rename -force $target.temp $target
 		mklink $sampledir/reports/report_scywalker-$sample.html $sampledir/report_scywalker-$sample.html
