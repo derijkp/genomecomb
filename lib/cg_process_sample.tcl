@@ -1181,9 +1181,11 @@ proc process_sample_job {args} {
 	if {$singlecell ne ""} {
 		# clean up bcfastq
 		set bcfastqs [jobglob -checkcompressed 1 $sampledir/bcfastq/*]
-		job delete_bcfastq-$sample -optional 1 \
-		-deps $cleanedbams -vars {sampledir} -rmtargets $bcfastqs -code {
-			shadow_delete $sampledir/bcfastq
+		if {[llength $bcfastqs]} {
+			job delete_bcfastq-$sample -optional 1 \
+			-deps $cleanedbams -vars {sampledir} -rmtargets $bcfastqs -code {
+				shadow_delete $sampledir/bcfastq
+			}
 		}
 	}
 	# make sure the bams are indexed
