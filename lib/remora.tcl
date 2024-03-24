@@ -25,12 +25,20 @@ proc modkit_job {args} {
 	set refseq [refseq $refseq]
 	set rootname [file_rootname $bamfile]
 	set target $destdir/meth-$methodused-$rootname.bed.gz
+	if {[file extension $bamfile] eq ".cram"} {
+		# modkit does not work very well with cram ("detected non-BAM input format, please consider using BAM, CRAM may be unstable")
+		set tempfile [tempfile].bam
+		exec samtools view -T [refseq $refseq] -b -1 --no-PG $bamfile > $tempfile
+		set bamfile $tempfile
+	}
 	exec modkit pileup $bamfile $target.temp.gz \
 		--ref $refseq \
 		--preset traditional \
 		>@ stdout 2>@ stderr
 	file rename $target.temp.gz $target
-	
+	if {[file extension $bamfile] eq ".cram"} {
+		file delete $tempfile
+	}
 }
 
 proc meth_remora_job {args} {
