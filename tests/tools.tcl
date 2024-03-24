@@ -49,8 +49,10 @@ putsvars script
 set appdir [file dir [file dir [file normalize $script]]]
 if {![info exists basetestdir]} {
 	if {![info exists argv]} {
-		set basetestdir [pwd]/tmp
+		set test_interactive 1
+		set basetestdir [pwd]
 	} else {
+		set test_interactive 0
 		# set basetestdir [file dir [file normalize $script]]
 		set basetestdir [file dir $appdir]/tests_genomecomb
 	}
@@ -74,12 +76,16 @@ package require genomecomb
 if {![info exists ::genomecombdir]} {genomecombenv}
 
 proc testdir {args} {
+#	if {$::test_interactive} {
+#		return $::basetestdir
+#	}
 	set testname [join [lrange $args 0 1] __]
 	set testname [string_change $testname {{ } _ : _ / _ \\ _ \; _ * _ ? _ \} _ \{ _ \n _ \t _ \[ _ \] _ ( _ ) _}]
 	return $::basetestdir/$testname
 }
 
 proc test {args} {
+	set ::testdir [testdir {*}$args]
 	set numargs [llength $args]
 	if {$numargs == 0} {
 		set ::testdir $::appdir/tests
@@ -97,7 +103,6 @@ proc test {args} {
 		error "wrong # parameters, format is : test group description script expected ..."
 		group description script expected args
 	}
-	set ::testdir [testdir {*}$args]
 	file mkdir $::testdir
 	file mkdir $::testdir/tmp
 	cd $::testdir
