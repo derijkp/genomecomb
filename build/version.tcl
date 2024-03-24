@@ -2,8 +2,8 @@
 # the next line restarts using tclsh \
 exec tclsh "$0" "$@"
 
-set version 0.108.0
-set extversion 0.108.0
+set version 0.109.0
+set extversion 0.109.0
 
 # standard
 # --------
