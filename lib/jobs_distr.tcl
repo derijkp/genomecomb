@@ -225,6 +225,8 @@ proc job_logfile_distr_close {} {
 	} else {
 		set nrerrors [lindex [cg select -g all -q {$status eq "error"} $cgjob(logfile).error] end]
 		puts stderr "\nAnalysis ended with $nrerrors errors"
+		puts stderr "You can use the following command for an overview of failed jobs and their error messages:"
+		puts stderr "cg error_report $cgjob(logfile).error"
 	}
 }
 

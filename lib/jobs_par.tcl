@@ -221,5 +221,13 @@ proc job_logfile_par_close {} {
 	file rename $cgjob(logfile).submitting $cgjob(logfile).running
 	# job_update must be managed by the actual close (e.g. job_logfile_distr_close)
 	# job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold)
+	puts stderr "All jobs are submitted. You can follow the status based on the logfile $cgjob(logfile).running"
+	puts stderr "You can (manually, while still running) update the status (of jobs) in the log file using:
+	puts stderr "cg job_update $cgjob(logfile).running"
+	puts stderr "When all jobs are finished, the log file will be automatically updated"
+	puts stderr "and renamed to $cgjob(logfile).finished after a succesful run
+	puts stderr "or $cgjob(logfile).error in case there were jobs with errors"
+	puts stderr "In the latter case, you can use the following command for an overview of failed jobs and their error messages:"
+	puts stderr "cg error_report $cgjob(logfile).error"
 }
 
