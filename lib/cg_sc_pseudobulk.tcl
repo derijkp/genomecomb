@@ -116,6 +116,10 @@ proc sc_pseudobulk_job {args} {
 					}
 				}
 			}
+			if {![info exists a($cell)]} {
+				puts stderr "skipping cell $cell: not assigned (in $groupfile),"
+				continue
+			}
 			set type $a($cell)
 			foreach datafield $datafields value [list_sub $line $dataposs] {
 				set da($datafield-$type) [expr {$da($datafield-$type)+$value}]
