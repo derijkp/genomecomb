@@ -132,23 +132,37 @@ proc cg_bam_markduplicates {args} {
 		if {$outputformat eq "cram"} {
 			lappend outputfmtoption reference=[refseq $refseq]
 		}
-		if {$compressionlevel != -1} {lappend outputfmtoption level=$compressionlevel}
 		if {$outputfmtoption ne ""} {
 			lappend opts --output-fmt-option [join $outputfmtoption ,]
 		}
 		if {$resultfile ne "-"} {
 			set tempresult [filetemp $resultfile 0 1]
+			if {[file extension [gzroot -.$outputformat]] eq ".sam"} {
+				lappend optsio {*}[convert_pipe -.sam $tempresult -endpipe 1]
+				set outputformat sam
+				set output -
+			} else {
+				set output $tempresult
+			}
 		} else {
-			set tempresult -
-			lappend optsio >@ stdout
+			set output -
+			if {[file extension [gzroot -.$outputformat]] eq ".sam"} {
+				lappend optsio {*}[convert_pipe -.sam -.$outputformat -endpipe 1]
+				set outputformat sam
+			} else {
+				lappend optsio >@ stdout
+			}
+		}
+		if {$compressionlevel != -1 && $outputformat ne "sam"} {
+			lappend outputfmtoption level=$compressionlevel
 		}
 		if {$sourcefile eq "-"} {
 			lappend optsio <@ stdin
 		}
-		# puts stderr [list samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
-			{*}$opts $sourcefile $tempresult {*}$optsio]
+		 puts stderr [list samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
+			{*}$opts $sourcefile $output {*}$optsio]
 		catch_exec samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
-			{*}$opts $sourcefile $tempresult {*}$optsio 2>@ stderr
+			{*}$opts $sourcefile $output {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
 			file rename -force -- $tempresult $resultfile
 		}
