@@ -179,6 +179,9 @@ proc job_process_submit_sge {job cmd args} {
 	set runfile [job.file run $job]
 	file_write $runfile $runcmd
 	file attributes $runfile -permissions u+x
+	if {[info exists cgjob(submitoptions)] && $cgjob(submitoptions) ne ""} {
+		lappend options {*}$cgjob(submitoptions)
+	}
 	# submit
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job_out -e $job_err -p $priority {*}$options $runfile]"

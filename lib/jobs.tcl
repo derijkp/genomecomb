@@ -1437,9 +1437,6 @@ proc job {jobname args} {
 		append newcode [list proc $proc [info args $proc] [info body $proc]]\n
 	}
 	append newcode $code
-	if {[info exists cgjob(submitoptions)] && $cgjob(submitoptions) ne ""} {
-		lappend submitopts {*}$cgjob(submitoptions)
-	}
 	if {[get ::job_getinfo 0]} {
 		# do not actually run if just gathering info
 		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps {} $etargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores

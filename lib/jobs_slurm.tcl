@@ -44,6 +44,7 @@ proc job_process_submit_slurm {job cmd args} {
 	set mem {}
 	set time {}
 	set pos 0
+	set dqueue {}
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
@@ -88,10 +89,6 @@ proc job_process_submit_slurm {job cmd args} {
 				incr pos 2
 			}
 			-dqueue {
-				# not used (yet)
-				if {$value ne ""} {
-					lappend options --partition=[join $value ,]
-				}
 				set dqueue $value
 			}
 			-- {
@@ -150,6 +147,18 @@ proc job_process_submit_slurm {job cmd args} {
 	set runfile [job.file run $job]
 	file_write $runfile $runcmd
 	file attributes $runfile -permissions u+x
+	if {$dqueue eq "" && [info exists cgjob(dqueue)]} {
+		set dqueue $cgjob(dqueue)
+	}
+	if {$dqueue ne ""} {
+		lappend options --partition=[join $dqueue ,]
+	}
+	if {$priority != 0} {
+		lappend options --nice=$priority
+	}
+	if {[info exists cgjob(submitoptions)] && $cgjob(submitoptions) ne ""} {
+		lappend options {*}$cgjob(submitoptions)
+	}
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
 		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]"
 		set jnum [exec sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]
