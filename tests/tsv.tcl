@@ -1257,7 +1257,7 @@ test mergesorted {error in gz_popen test} {
 		1	8	9	a2
 	}
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
-} {error reading header of file tmp/reg1.tsv.zst: error closing file */reg1.tsv.zst: zstd-mt: */reg1.tsv.zst: Malformed input} match error
+} {error reading header of file tmp/reg1.tsv.zst: error closing file "*/reg1.tsv.zst": zstd-mt: */reg1.tsv.zst: Malformed input} match error
 
 test mergesorted {error file does not exist} {
 	write_deindent tmp/reg2.tsv {

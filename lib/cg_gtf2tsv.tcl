@@ -339,7 +339,7 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1} {sort 1}} {
 		set f [open "|cg select -s - $tempout"]
 		set o [wgzopen $outfile]
 		fcopy $f $o
-		gzclose $f ; gzclose $o
+		close $f ; gzclose $o
 		file delete $tempout
 	}
 }
