@@ -48,10 +48,16 @@ fully filled sampledir/projectdir
 ;fastq: If the original data is in the form of fastq files, the fastq
 files for that sample are present in a subdirectory named **fastq**. (If
 fastq files are found in the ori directory, a fastq dir is made, and the
-files linked.)
+files linked.) Any of the commonly used file name extensions (.fastq.gz,
+.fq.gz, .fastq, .fq) are recognised
 The names of matching fastq files of paired reads should be consecutive
 when sorted naturaly,the forward reads first. The usual naming of these
-files (same name, except for a 1 and 2) is ok. 
+files (same name, except for a 1 and 2) is ok.
+
+;ubam: sequencing data as ubams (unaligned bams) is also accepted. These
+should be typically in a directory named ubam instead of fastq, although
+they will be detected in a fastq directory as well. If both a ubam and 
+fastq directory are present, the ubam gets priority.
 
 === sample results ===
 All files generated have names following the convention of using hyphen-minus
