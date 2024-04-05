@@ -74,17 +74,9 @@ analysis. These options can still be changed by specifically giving them a
 value after the -preset option (options given later overrule previous
 ones).
 
-Different options can be given to different samples within the same
-experiment run by storing a file named options.tsv in the
-experiment/project dir with the following fields: sample option value
-For each sample (that differs from the general option if given) you add a
-line with the samplename, the option (without the -, e.g. sc_expectedcells) and
-the value (the number of expected cells in the case of sc_expectedcells).
-You can use the preset option this way, allowing the analysis of different
-technologies (e.g. ont and srs) in one run.
-
 ; -preset preset: sets a number of options to the defaults for the given "preset",
 must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), ont (ont genomic sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell rna-seq)
+; -samplesheet samplesheet: create **projectdir** based on the data in the given **sampleheet** as described in [[cg_make_project]]
 ; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
 ; -minfastqreads num: fastq based samples with less than **num** reads in the fastq files are 
 not processed and not added to the final compar. 
@@ -174,6 +166,24 @@ This command can be distributed on a cluster or using multiple cores with
 The option -distrreg can be used to allow a greater distribution by
 doing some analyses (variantcalling, annotations) split by region
 (chromosomes) and combining the results
+
+== Sample specific options ==
+Different options can be given to different samples within the same
+experiment run by storing a file named **options.tsv** in the
+experiment/project dir with the following fields: 
+{{{sample option value}}}
+
+For each sample (that differs from the general option if given) you add a
+line with the samplename, the option (without the -, e.g. sc_expectedcells) and
+the value (the number of expected cells in the case of sc_expectedcells).
+Sample specific options given this way overrule the general options given
+on the process_project commandline (for that sample)
+
+You can also use the preset option this way, allowing the analysis of different
+technologies (e.g. ont and srs) in one run. Beware that presets just
+change base/default settings; Options explicitely given on the
+process_project commandline will overrule settings from a preset, even if
+sample specific).
 
 == Dependencies ==
 Some of the programs used in this workflow are not distributed with genomecomb. 

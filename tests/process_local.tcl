@@ -227,8 +227,9 @@ test process_project {make_project, different tech} {
 		sample2 data/seq_R2.fq.gz	
 		ont	data/expected-pass_group_0.fastq.gz	ont	clair3	sniffles
 	}]
-	cg make_project -stack 1 -transfer rel tmp tmp/samplesheet.tsv 
+	# cg make_project -stack 1 -transfer rel tmp tmp/samplesheet.tsv 
 	cg process_project {*}$::dopts -stack 1 \
+		-samplesheet tmp/samplesheet.tsv \
 		-clip 0 -maxfastqdistr 2 \
 		-distrreg chr -dbdir $::refseqdir/hg19 \
 		tmp >& tmp/startup.log

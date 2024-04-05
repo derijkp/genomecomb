@@ -55,6 +55,7 @@ proc process_project_job {args} {
 	set tissue {}
 	set optionsfile options.tsv
 	set process_msamples 0
+	set samplesheet {}
 	cg_options process_project args {
 		-preset {
 			if {$value ne ""} {
@@ -256,11 +257,17 @@ proc process_project_job {args} {
 		-process_msamples {
 			set process_msamples $value
 		}
+		-samplesheet {
+			set samplesheet $value
+		}
 		-*-* {
 			set ::specialopt($key) $value
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
+	if {$samplesheet ne ""} {
+		cg make_project $destdir $samplesheet
+	}
 	set adapterfile [adapterfile $adapterfile]
 	set experimentname [file tail $destdir]
 	if {[file pathtype $optionsfile] ne "absolute"} {
