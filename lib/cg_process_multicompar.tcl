@@ -302,7 +302,7 @@ proc process_multicompar_job {args} {
 		putslog "Starting annotation"
 		cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.zst $dbdir {*}$dbfiles
 		job indexannotsvcompar-$experiment -deps {
-			compar/annot_sv-$experiment.tsv
+			compar/annot_sv-$experiment.tsv.zst
 		} -targets {
 			compar/annot_sv-$experiment.tsv.index/info.tsv
 		} -vars dbdir -code {
