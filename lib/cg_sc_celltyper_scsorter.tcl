@@ -54,7 +54,7 @@ proc sc_celltyper_scsorter_job {args} {
 			  hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
 			}
 			#
-			# read markers (and flagh errors if present)
+			# read markers (and flag errors if present)
 			cellmarkers <- read.table(cellmarkerfile,sep='\t',header=TRUE)
 			if (tissue != "") {
 				if (length(cellmarkers$tissue) == 0) {
