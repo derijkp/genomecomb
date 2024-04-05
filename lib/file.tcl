@@ -175,7 +175,7 @@ proc file_or_link_exists {file} {
 	if {[catch {file link $file}]} {return 0} else {return 1}
 }
 
-proc file_write {args} {
+proc file_write_gz {args} {
 	set list [list_pop args]
 	set filename [list_pop args]
 	set f [wgzopen $filename]

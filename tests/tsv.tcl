@@ -608,7 +608,8 @@ test tsv_cat {cg cat compressed empty file} {
 		chromosome	test	begin	end
 		chr1	test	15	25
 	}
-	write_deindent tmp/var2.tsv.zst {}
+	file_write tmp/var2.tsv {}
+	cg zst tmp/var2.tsv
 	exec cg cat tmp/var1.tsv tmp/var2.tsv.zst > tmp/result.tsv
 	exec diff tmp/result.tsv tmp/var1.tsv
 } {}
@@ -733,7 +734,7 @@ test indexdir_cache {tsv_varsfile compressed use plain filename} {
 
 test indexdir_cache {tsv_varsfile fix hang compressed but empty} {
 	test_cleantmp
-	file_write tmp/vars1.tsv.zst {}
+	file_write_gz tmp/vars1.tsv.zst {}
 	set varsfile [tsv_varsfile tmp/vars1.tsv.zst]
 	file_read $varsfile
 } {chromosome	begin	end	type	ref	alt
@@ -741,7 +742,7 @@ test indexdir_cache {tsv_varsfile fix hang compressed but empty} {
 
 test indexdir_cache {varsfile fix hang compressed but empty} {
 	test_cleantmp
-	file_write tmp/vars1.tsv.zst {}
+	file_write_gz tmp/vars1.tsv.zst {}
 	exec varsfile tmp/vars1.tsv.zst
 	file_write tmp/vars1.tsv.gz {}
 	exec varsfile tmp/vars1.tsv.gz
@@ -1247,11 +1248,12 @@ test mergesorted {compressed (gz_popen test)} {
 1	90	100	b1}
 
 test mergesorted {error in gz_popen test} {
-	write_deindent tmp/reg1.tsv.zst {
+	write_deindent tmp/reg1.tsv {
 		chromosome	begin	end	test
 		1	10	20	a1
 		1	90	100	b1
 	}
+	file rename tmp/reg1.tsv tmp/reg1.tsv.zst
 	write_deindent tmp/reg2.tsv {
 		chromosome	begin	end	test
 		1	8	9	a2
