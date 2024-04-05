@@ -11,7 +11,7 @@ proc configdir {{app cg}} {
 	set configdir $basedir/.$app
 	set makedir_err [catch {file mkdir $configdir}]
 	if {!$makedir_err} {return $configdir}
-	if {($tcl_platform(platform) eq "windows") && $makedir_err} {
+	if {($::tcl_platform(platform) eq "windows") && $makedir_err} {
 		package require registry
 		set mydocuments [registry get "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" Personal]
 		string_change $mydocuments [list $ \\$ \\ \\\\]
