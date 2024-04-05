@@ -555,10 +555,10 @@ proc process_sample_job {args} {
 	set depth_histo_max 1000
 	set fastqdir {}
 	set singlecell {}
-	set singlecell_whitelist {}
-	set singlecell_umisize 10
-	set singlecell_barcodesize 16
-	set singlecell_adaptorseq CTACACGACGCTCTTCCGATCT
+	set sc_whitelist {}
+	set sc_umisize 10
+	set sc_barcodesize 16
+	set sc_adaptorseq CTACACGACGCTCTTCCGATCT
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
@@ -605,16 +605,16 @@ proc process_sample_job {args} {
 			set singlecell $value
 		}
 		-sc_whitelist {
-			set singlecell_whitelist $value
+			set sc_whitelist $value
 		}
 		-sc_umisize {
-			set singlecell_umisize $value
+			set sc_umisize $value
 		}
 		-sc_barcodesize {
-			set singlecell_barcodesize $value
+			set sc_barcodesize $value
 		}
 		-sc_adaptorseq {
-			set singlecell_adaptorseq $value
+			set sc_adaptorseq $value
 		}
 		-sc_filters {
 			set sc_filters $value
@@ -784,6 +784,8 @@ proc process_sample_job {args} {
 	if {$amplicons ne ""} {
 		if {$removeduplicates eq ""} {set removeduplicates 0}
 		if {$removeskew eq ""} {set removeskew 0}
+		if {$dt eq ""} {set dt NONE}
+		list_addnew dbfiles $amplicons
 	} else {
 		if {$removeduplicates eq ""} {set removeduplicates 1}
 		if {$removeskew eq ""} {set removeskew 1}
@@ -807,6 +809,11 @@ proc process_sample_job {args} {
 		mklink $targetfile $sampledir/$filename 1
 		set targetfile $sampledir/$filename
 		if {$datatype eq ""} {set datatype exome}
+	} elseif {$temp eq "" && $targetfile eq "" && $amplicons ne ""} {
+		set targetfile $sampledir/reg_${ref}_targets.tsv.zst
+		job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile} -vars {sample dbdir ref} -code {
+			cg regcollapse $dep | cg zst > $target
+		}
 	}
 	# check projectinfo
 	projectinfo $sampledir dbdir {split 1}
@@ -907,10 +914,10 @@ proc process_sample_job {args} {
 			}
 		}
 		sc_barcodes_job -skip $skips -skip $skipsresult \
-			-whitelist $singlecell_whitelist \
-			-umisize $singlecell_umisize \
-			-barcodesize $singlecell_barcodesize \
-			-adaptorseq $singlecell_adaptorseq \
+			-whitelist $sc_whitelist \
+			-umisize $sc_umisize \
+			-barcodesize $sc_barcodesize \
+			-adaptorseq $sc_adaptorseq \
 			$fastqdir $sampledir
 		set fastqdir $sampledir/bcfastq
 		if {$sc_filters eq ""} {
@@ -974,8 +981,18 @@ proc process_sample_job {args} {
 		}
 		set fastqfiles [bsort [jobglob $fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq]]
 	}
+	set cleanedbams {}
+	if {![llength $fastqfiles]} {
+		# check for existing bam files
+		foreach aligner $aligners {
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+			if {[file exists $resultbamfile]} {
+				lappend cleanedbams $resultbamfile
+			}
+		}
+	}
 	# put check here, because fastqs might be generated from bams, etc.
-	if {$singlecell eq "" && $minfastqreads > 0} {
+	if {$singlecell eq "" && $minfastqreads > 0 && ![llength $cleanedbams]} {
 		# check if we have the minimum number of reads required (default 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		if {![checkminreads $fastqdir $minfastqreads num]} {
@@ -984,197 +1001,198 @@ proc process_sample_job {args} {
 		}
 	}
 	# create bam from fastq files (if found)
-	set cleanedbams {}
-	set processlist {}
-	# check even number of fastqs for paired analysis
-	if {[file ext [lindex $fastqfiles 0]] in ".bam .cram .sam"} {set ubams 1} else {set ubams 0}
-	if {$paired && !$ubams} {
-		if {[expr {[llength $fastqfiles]%2}] != 0} {
-			error "paired analysis (default, use -paired 0 to turn off), but number of fastqs is uneven ([llength $fastqfiles]) for sample $sampledir"
-		}
-	}
-	if {[isint $maxfastqdistr]} {
-		set len [llength $fastqfiles]
+	if {[llength $fastqfiles]} {
+		set processlist {}
+		# check even number of fastqs for paired analysis
+		if {[file ext [lindex $fastqfiles 0]] in ".bam .cram .sam"} {set ubams 1} else {set ubams 0}
 		if {$paired && !$ubams} {
-			set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
-			if {[expr {$perbatch%2}]} {incr perbatch}
-		} else {
-			set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+			if {[expr {[llength $fastqfiles]%2}] != 0} {
+				error "paired analysis (default, use -paired 0 to turn off), but number of fastqs is uneven ([llength $fastqfiles]) for sample $sampledir"
+			}
 		}
-		set pos 0
-		for {set pos 0} {$pos < $len} {incr pos $perbatch} {
-			lappend processlist [lrange $fastqfiles $pos [expr {$pos + $perbatch - 1}]]
-		}
-	} else {
-		if {$paired && !$ubams} {
-			foreach {fastq1 fastq2} $fastqfiles {
-				lappend processlist [list $fastq1 $fastq2]
+		if {[isint $maxfastqdistr]} {
+			set len [llength $fastqfiles]
+			if {$paired && !$ubams} {
+				set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+				if {[expr {$perbatch%2}]} {incr perbatch}
+			} else {
+				set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+			}
+			set pos 0
+			for {set pos 0} {$pos < $len} {incr pos $perbatch} {
+				lappend processlist [lrange $fastqfiles $pos [expr {$pos + $perbatch - 1}]]
 			}
 		} else {
-			foreach {fastq} $fastqfiles {
-				lappend processlist [list $fastq]
-			}
-		}
-	}
-	if {[llength $processlist]} {
-		set skips {}
-		set skipsresult {}
-		# make skips for clipping (do not do any of preliminaries if end product is already there)
-		# clipped fastqs are used for all aligners!
-		foreach aligner $aligners {
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			set bamfile $sampledir/map-${aligner}-$sample.bam
-			lappend skips $bamfile
-			lappend skipsresult $resultbamfile
-			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
-			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
-				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
-				file rename -force $bamfile $bamfile.old
-			}
-			if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
-				putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
-				file rename -force $resultbamfile $resultbamfile.old
-			}
-		}
-		unset -nocomplain partsa
-		foreach pfastqfiles $processlist {
-			set files $pfastqfiles
-			set cleanupfiles {}
-			set cleanupdeps {}
-			# pbase takes the "root" of the filename, and will be the basis for naming results
-			set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
-			if {[llength $pfastqfiles] > 1} {
-				# if we have 2 fastqfiles (paired), and the second has a different root, add this to pbase
-				set last [file_root [file tail [lindex $pfastqfiles end]]]
-				if {$last ne $pbase} {
-					set pos 0
-					string_foreach c1 $pbase c2 $last {
-						if {$c1 ne $c2} break
-						incr pos
-					}
-					incr pos -1
-					set size [string length $pbase]
-					set lastlen [string length $last]
-					# -2 for cnnector (__), -30 for extensions and prefix
-					set minpos [expr {$lastlen - (255-2-30-$size)}]
-					if {$minpos > $pos} {set pos $minpos}
-					append pbase __[string range $last $pos end]
+			if {$paired && !$ubams} {
+				foreach {fastq1 fastq2} $fastqfiles {
+					lappend processlist [list $fastq1 $fastq2]
+				}
+			} else {
+				foreach {fastq} $fastqfiles {
+					lappend processlist [list $fastq]
 				}
 			}
+		}
+		if {[llength $processlist]} {
+			set skips {}
+			set skipsresult {}
+			# make skips for clipping (do not do any of preliminaries if end product is already there)
+			# clipped fastqs are used for all aligners!
 			foreach aligner $aligners {
-				set bamfile $sampledir/map-${aligner}-$sample.bam
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-				set target $resultbamfile.temp/[file_root [file tail [lindex $files 0]]].sam.zst
-				lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
-			}
-			if {$clip} {
-				if {$ubams} {error "clipping not supported for ubams"}
-				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
-					-skip $skips -skip $skipsresult -skip $cleanupdeps \
-					-removeskew $removeskew \
-					{*}$files]
-				foreach file $files {
-					lappend cleanupfiles $file [analysisinfo_file $file]
+				set bamfile $sampledir/map-${aligner}-$sample.bam
+				lappend skips $bamfile
+				lappend skipsresult $resultbamfile
+				# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
+				if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
+					putslog "$bamfile older than one of fastqfiles (renaming to .old)"
+					file rename -force $bamfile $bamfile.old
 				}
-				lappend cleanupfiles [file dir [lindex $files 0]]
+				if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
+					putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
+					file rename -force $resultbamfile $resultbamfile.old
+				}
 			}
+			unset -nocomplain partsa
+			foreach pfastqfiles $processlist {
+				set files $pfastqfiles
+				set cleanupfiles {}
+				set cleanupdeps {}
+				# pbase takes the "root" of the filename, and will be the basis for naming results
+				set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
+				if {[llength $pfastqfiles] > 1} {
+					# if we have 2 fastqfiles (paired), and the second has a different root, add this to pbase
+					set last [file_root [file tail [lindex $pfastqfiles end]]]
+					if {$last ne $pbase} {
+						set pos 0
+						string_foreach c1 $pbase c2 $last {
+							if {$c1 ne $c2} break
+							incr pos
+						}
+						incr pos -1
+						set size [string length $pbase]
+						set lastlen [string length $last]
+						# -2 for cnnector (__), -30 for extensions and prefix
+						set minpos [expr {$lastlen - (255-2-30-$size)}]
+						if {$minpos > $pos} {set pos $minpos}
+						append pbase __[string range $last $pos end]
+					}
+				}
+				foreach aligner $aligners {
+					set bamfile $sampledir/map-${aligner}-$sample.bam
+					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+					set target $resultbamfile.temp/[file_root [file tail [lindex $files 0]]].sam.zst
+					lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
+				}
+				if {$clip} {
+					if {$ubams} {error "clipping not supported for ubams"}
+					set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
+						-skip $skips -skip $skipsresult -skip $cleanupdeps \
+						-removeskew $removeskew \
+						{*}$files]
+					foreach file $files {
+						lappend cleanupfiles $file [analysisinfo_file $file]
+					}
+					lappend cleanupfiles [file dir [lindex $files 0]]
+				}
+				foreach aligner $aligners {
+					# alignment per fastq per aligner
+					# do not do any of preliminaries if end product is already there
+					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+					set bamfile $sampledir/map-${aligner}-$sample.bam
+					file mkdir $resultbamfile.temp
+					job_cleanup_add $resultbamfile.temp
+					set target $resultbamfile.temp/$pbase.sam.zst
+					lappend partsa($aligner) $target
+					# map using ${aligner}
+					set opts {}
+					if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
+						lappend opts -preset $alipreset
+					} else {
+						set aliprog $aligner
+					}
+					map_job -method $aliprog {*}$opts -threads $threads \
+						-skip $skips \
+						-joinfastqs 1 \
+						-skip $skipsresult \
+						-paired $paired \
+						-sort coordinate \
+						-compressionlevel 1 \
+						-ali_keepcomments $ali_keepcomments \
+						$target $refseq $sample {*}$files
+				}
+				if {$cleanup} {
+					# clean up no longer needed intermediate files
+					cleanup_job -skip $skips -skip $skipsresult [job_relfile2name cleanupclipped- $target] $cleanupfiles $cleanupdeps
+				}
+			}
+			set cleanupdeps {}
 			foreach aligner $aligners {
-				# alignment per fastq per aligner
+				# mergesort sams from individual fastq files
+				# and distribute again over if -distrreg i set (for distributed cleaning)
 				# do not do any of preliminaries if end product is already there
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 				set bamfile $sampledir/map-${aligner}-$sample.bam
-				file mkdir $resultbamfile.temp
-				job_cleanup_add $resultbamfile.temp
-				set target $resultbamfile.temp/$pbase.sam.zst
-				lappend partsa($aligner) $target
-				# map using ${aligner}
-				set opts {}
-				if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
-					lappend opts -preset $alipreset
+				if {$distrreg in {0 ""}} {
+					set tempbamfile $bamfile
 				} else {
-					set aliprog $aligner
+					file mkdir $resultbamfile.temp
+					job_cleanup_add $resultbamfile.temp
+					set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.$aliformat
 				}
-				map_job -method $aliprog {*}$opts -threads $threads \
-					-skip $skips \
-					-joinfastqs 1 \
-					-skip $skipsresult \
-					-paired $paired \
-					-sort coordinate \
-					-compressionlevel 1 \
-					-ali_keepcomments $ali_keepcomments \
-					$target $refseq $sample {*}$files
-			}
-			if {$cleanup} {
-				# clean up no longer needed intermediate files
-				cleanup_job -skip $skips -skip $skipsresult [job_relfile2name cleanupclipped- $target] $cleanupfiles $cleanupdeps
-			}
-		}
-		set cleanupdeps {}
-		foreach aligner $aligners {
-			# mergesort sams from individual fastq files
-			# and distribute again over if -distrreg i set (for distributed cleaning)
-			# do not do any of preliminaries if end product is already there
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			set bamfile $sampledir/map-${aligner}-$sample.bam
-			if {$distrreg in {0 ""}} {
-				set tempbamfile $bamfile
-			} else {
-				file mkdir $resultbamfile.temp
-				job_cleanup_add $resultbamfile.temp
-				set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.$aliformat
-			}
-			set compressionlevel [defcompressionlevel 5]
-			setdefcompressionlevel 1
-			set udistrreg [distrreg_use $distrreg chr chr]
-			set bamfiles [sam_catmerge_job \
-				-skip [list $bamfile [analysisinfo_file $bamfile]] \
-				-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
-				-name mergesams-$aligner-$sample -refseq $refseq \
-				-sort coordinate -mergesort 1 \
-				-distrreg $udistrreg \
-				-deletesams [string is false $keepsams] -threads $threads \
-				$tempbamfile {*}$partsa($aligner)]
-			setdefcompressionlevel $compressionlevel
-			
-			# clean bamfile (mark duplicates, realign)
-			# bam is already sorted, just add the s (-sort 2)
-			if {[llength $bamfiles] == 1} {
-				set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
-					-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-					-regionfile 5 -refseq $refseq -threads $threads \
-					 $bamfile]
-				lappend cleanedbams $cleanbam
-			} else {
-				# distributed cleaning
-				set cleanbams {}
 				set compressionlevel [defcompressionlevel 5]
 				setdefcompressionlevel 1
-				foreach bam $bamfiles {
-					lappend cleanbams [bam_clean_job -sort 2 -outputformat sam.zst -distrreg $distrreg \
-						-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
+				set udistrreg [distrreg_use $distrreg chr chr]
+				set bamfiles [sam_catmerge_job \
+					-skip [list $bamfile [analysisinfo_file $bamfile]] \
+					-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
+					-name mergesams-$aligner-$sample -refseq $refseq \
+					-sort coordinate -mergesort 1 \
+					-distrreg $udistrreg \
+					-deletesams [string is false $keepsams] -threads $threads \
+					$tempbamfile {*}$partsa($aligner)]
+				setdefcompressionlevel $compressionlevel
+				
+				# clean bamfile (mark duplicates, realign)
+				# bam is already sorted, just add the s (-sort 2)
+				if {[llength $bamfiles] == 1} {
+					set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
 						-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 						-regionfile 5 -refseq $refseq -threads $threads \
-						 $bam]
+						 $bamfile]
+					lappend cleanedbams $cleanbam
+				} else {
+					# distributed cleaning
+					set cleanbams {}
+					set compressionlevel [defcompressionlevel 5]
+					setdefcompressionlevel 1
+					foreach bam $bamfiles {
+						lappend cleanbams [bam_clean_job -sort 2 -outputformat sam.zst -distrreg $distrreg \
+							-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
+							-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
+							-regionfile 5 -refseq $refseq -threads $threads \
+							 $bam]
+					}
+					# join $cleanbams \n
+					setdefcompressionlevel $compressionlevel
+					sam_catmerge_job \
+						-name merge2bam-$aligner-$sample -refseq $refseq \
+						-sort nosort \
+						-index 1 \
+						-deletesams [string is false $keepsams] -threads $threads \
+						$resultbamfile {*}$cleanbams
+					lappend cleanedbams $resultbamfile
 				}
-				# join $cleanbams \n
-				setdefcompressionlevel $compressionlevel
-				sam_catmerge_job \
-					-name merge2bam-$aligner-$sample -refseq $refseq \
-					-sort nosort \
-					-index 1 \
-					-deletesams [string is false $keepsams] -threads $threads \
-					$resultbamfile {*}$cleanbams
-				lappend cleanedbams $resultbamfile
 			}
-		}
-	} else {
-		# check if result bam file exists (without fastq), and use that if so
-		foreach aligner $aligners {
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			if {[file exists $resultbamfile]} {
-				lappend cleanedbams $resultbamfile
-			} else {
-				putslog "no fastqs for $sample and file $resultbamfile does not exist"
+		} else {
+			# check if result bam file exists (without fastq), and use that if so
+			foreach aligner $aligners {
+				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+				if {[file exists $resultbamfile]} {
+					lappend cleanedbams $resultbamfile
+				} else {
+					putslog "no fastqs for $sample and file $resultbamfile does not exist"
+				}
 			}
 		}
 	}

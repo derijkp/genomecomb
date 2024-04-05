@@ -15,8 +15,8 @@ proc process_multicompar_job {args} {
 	set distrreg 0
 	set keepfields *
 	set limitreg {}
-	set reports 1
-	set counters {}
+	set reports {}
+	set counters 1
 	set isocallers {}
 	set iso_match {}
 	set sc_celltypers {}
@@ -517,21 +517,19 @@ proc process_multicompar_job {args} {
 		foreach isocaller $isocallers {
 			iso_combine_job $destdir $isocaller $iso_match
 		}
-		iso_combine_job $destdir * $iso_match
 	}
+	iso_combine_job $destdir * $iso_match
 	# pseudobulk
 	# ----------
 	if {[llength $sc_celltypers]} {
 		foreach sc_celltyper $sc_celltypers {
 			pb_combine_job $destdir $sc_celltyper $iso_match
 		}
-		pb_combine_job $destdir * $iso_match
 	}
+	pb_combine_job $destdir * $iso_match
 	# reports
 	# -------
-	if {$reports eq "1"} {
-		set reports [bsort [jobglob ${sampledir}/*/reports]]
-	}
+	set reports [bsort [jobglob $destdir/samples/*/reports]]
 	if {[llength $reports]} {
 		process_reportscombine_job -dbdir $dbdir $destdir/reports {*}$reports
 		mkdir $destdir/reports

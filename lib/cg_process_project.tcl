@@ -6,48 +6,48 @@ proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
 	set organelles {}
-	set minfastqreads 0
-	set clip 1
+	set minfastqreads {}
+	set clip {}
 	set removeskew {}
 	set aligners bwa
 	set ali_keepcomments {}
-	set varcallers {gatkh strelka}
+	set varcallers {}
 	set isocallers {}
 	set iso_joint {}
 	set iso_match {}
 	set counters {}
 	set svcallers {}
 	set methcallers {}
-	set realign 1
-	set cleanup 1
-	set paired 1
+	set realign {}
+	set cleanup {}
+	set paired {}
 	set adapterfile {}
 	set conv_nextseq 0
 	set targetfile {}
 	set targetvarsfile {}
-	set reports basic
-	set samBQ 0
+	set reports {}
+	set samBQ {}
 	set dt {}
 	set removeduplicates {}
 	set amplicons {}
 	set extra_reports_mastr {}
 	set jobsample 0
-	set distrreg 0
-	set threads 2
-	set keepsams 0
+	set distrreg {}
+	set threads {}
+	set keepsams {}
 	set keepfields *
 	set datatype {}
-	set aliformat bam
+	set aliformat {}
 	set samplesdir samples
 	set maxfastqdistr {}
-	set hap_bam 0
-	set depth_histo_max 1000
+	set hap_bam {}
+	set depth_histo_max {}
 	set reftranscripts {}
 	set singlecell {}
-	set singlecell_whitelist {}
-	set singlecell_umisize 12
-	set singlecell_barcodesize 16
-	set singlecell_adaptorseq CTACACGACGCTCTTCCGATCT
+	set sc_whitelist {}
+	set sc_umisize {}
+	set sc_barcodesize {}
+	set sc_adaptorseq {}
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
@@ -104,16 +104,16 @@ proc process_project_job {args} {
 			set singlecell $value
 		}
 		-sc_whitelist {
-			set singlecell_whitelist $value
+			set sc_whitelist $value
 		}
 		-sc_umisize {
-			set singlecell_umisize $value
+			set sc_umisize $value
 		}
 		-sc_barcodesize {
-			set singlecell_barcodesize $value
+			set sc_barcodesize $value
 		}
 		-sc_adaptorseq {
-			set singlecell_adaptorseq $value
+			set sc_adaptorseq $value
 		}
 		-sc_filters {
 			set sc_filters $value
@@ -361,71 +361,50 @@ proc process_project_job {args} {
 	set todo(sv) {}
 	set todo(meth) {}
 	set todo(reports) {}
+	set keys {
+		clip 
+		singlecell sc_whitelist sc_umisize sc_barcodesize sc_adaptorseq 
+		sc_filters sc_celltypers sc_expectedcells cellmarkerfile tissue 
+		datatype aliformat aligners ali_keepcomments realign 
+		varcallers svcallers methcallers counters reftranscripts isocallers 
+		organelles hap_bam dbdir split paired maxfastqdistr adapterfile 
+		reports samBQ cleanup removeduplicates amplicons threads distrreg 
+		keepsams removeskew dt targetfile minfastqreads depth_histo_max 
+	}
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		set sampleargs [list \
 			-preset [get optionsa($sample,preset) $preset] \
-			-clip [get optionsa($sample,clip) $clip] \
-			-singlecell [get optionsa($sample,singlecell) $singlecell] \
-			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
-			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
-			-sc_barcodesize [get optionsa($sample,sc_barcodesize) $singlecell_barcodesize] \
-			-sc_adaptorseq [get optionsa($sample,sc_adaptorseq) $singlecell_adaptorseq] \
-			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
-			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
-			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
-			-cellmarkerfile [get optionsa($sample,cellmarkerfile) $cellmarkerfile] \
-			-tissue [get optionsa($sample,tissue) $tissue] \
-			-datatype [get optionsa($sample,datatype) $datatype] \
-			-aliformat [get optionsa($sample,aliformat) $aliformat] \
-			-aligners [get optionsa($sample,aligners) $aligners] \
-			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
-			-realign [get optionsa($sample,realign) $realign] \
-			-varcallers [get optionsa($sample,varcallers) $varcallers] \
-			-svcallers [get optionsa($sample,svcallers) $svcallers] \
-			-methcallers [get optionsa($sample,methcallers) $methcallers] \
-			-counters [get optionsa($sample,counters) $counters] \
-			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
-			-isocallers [get optionsa($sample,isocallers) $isocallers] \
-			-organelles [get optionsa($sample,organelles) $organelles] \
-			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
-			-dbdir [get optionsa($sample,dbdir) $dbdir] \
-			-split [get optionsa($sample,split) $split] \
-			-paired [get optionsa($sample,paired) $paired] \
-			-maxfastqdistr [get optionsa($sample,maxfastqdistr) $maxfastqdistr] \
-			-adapterfile [get optionsa($sample,adapterfile) $adapterfile] \
-			-reports [get optionsa($sample,reports) $reports] \
-			-samBQ [get optionsa($sample,samBQ) $samBQ] \
-			-cleanup [get optionsa($sample,cleanup) $cleanup] \
-			-removeduplicates [get optionsa($sample,removeduplicates) $removeduplicates] \
-			-amplicons [get optionsa($sample,amplicons) $amplicons] \
-			-threads [get optionsa($sample,threads) $threads] \
-			-distrreg [get optionsa($sample,distrreg) $distrreg] \
-			-keepsams [get optionsa($sample,keepsams) $keepsams] \
-			-removeskew [get optionsa($sample,removeskew) $removeskew] \
-			-dt [get optionsa($sample,dt) $dt] \
-			-targetfile [get optionsa($sample,targetfile) $targetfile] \
-			-minfastqreads [get optionsa($sample,minfastqreads) $minfastqreads] \
-			-depth_histo_max [get optionsa($sample,depth_histo_max) $depth_histo_max] \
-			$dir \
 		]
+		foreach key $keys {
+			if {[info exists optionsa($sample,$key)]} {
+				lappend sampleargs -$key $optionsa($sample,$key)
+			} else {
+				set value [get $key]
+				if {$value ne ""} {
+					if {$value ne ""} {
+						lappend sampleargs -$key $value
+					}
+				}
+			}
+		}
 		if {!$jobsample} {
-			process_sample_job -todoVar todo {*}$sampleargs
+			process_sample_job -todoVar todo {*}$sampleargs $dir
 		} else {
 			# find deps and targets by running the process_sample_job with job_getinfo set to 1
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo {*}$sampleargs
+			process_sample_job -todoVar todo {*}$sampleargs $dir
 			foreach {deps targets} [job_getinfo 0] break
 			if {$targetfile ne ""} {lappend deps $targetfile}
 			logverbose $verbose
 			# run the actual job with deps and targets found
 			job process_sample-$sample -deps $deps -targets $targets -vars {
-				sampleargs
+				sampleargs dir
 			} -code {
-				cg process_sample -stack 1 -v 2 {*}$sampleargs >@ stdout 2>@ stderr
+				cg process_sample -stack 1 -v 2 {*}$sampleargs $dir >@ stdout 2>@ stderr
 			}
 		}
 	}
@@ -433,51 +412,20 @@ proc process_project_job {args} {
 	foreach sample $msamples {
 		putslog "Processing msample $sample"
 		set dir $destdir/msamples/$sample
-		process_sample_job \
+		set sampleargs [list \
 			-preset [get optionsa($sample,preset) $preset] \
-			-clip [get optionsa($sample,clip) $clip] \
-			-singlecell [get optionsa($sample,singlecell) $singlecell] \
-			-sc_whitelist [get optionsa($sample,sc_whitelist) $singlecell_whitelist] \
-			-sc_umisize [get optionsa($sample,sc_umisize) $singlecell_umisize] \
-			-sc_barcodesize [get optionsa($sample,sc_barcodesize) $singlecell_barcodesize] \
-			-sc_adaptorseq [get optionsa($sample,sc_adaptorseq) $singlecell_adaptorseq] \
-			-sc_filters [get optionsa($sample,sc_filters) $sc_filters] \
-			-sc_celltypers [get optionsa($sample,sc_celltypers) $sc_celltypers] \
-			-sc_expectedcells [get optionsa($sample,sc_expectedcells) $sc_expectedcells] \
-			-cellmarkerfile [get optionsa($sample,cellmarkerfile) $cellmarkerfile] \
-			-tissue [get optionsa($sample,tissue) $tissue] \
-			-datatype [get optionsa($sample,datatype) $datatype] \
-			-aliformat [get optionsa($sample,aliformat) $aliformat] \
-			-aligners [get optionsa($sample,aligners) $aligners] \
-			-ali_keepcomments [get optionsa($sample,ali_keepcomments) $ali_keepcomments] \
-			-realign [get optionsa($sample,realign) $realign] \
-			-varcallers [get optionsa($sample,varcallers) $varcallers] \
-			-svcallers [get optionsa($sample,svcallers) $svcallers] \
-			-methcallers [get optionsa($sample,methcallers) $methcallers] \
-			-counters [get optionsa($sample,counters) $counters] \
-			-reftranscripts [get optionsa($sample,reftranscripts) $reftranscripts] \
-			-isocallers [get optionsa($sample,isocallers) $isocallers] \
-			-organelles [get optionsa($sample,organelles) $organelles] \
-			-hap_bam [get optionsa($sample,hap_bam) $hap_bam] \
-			-dbdir [get optionsa($sample,dbdir) $dbdir] \
-			-split [get optionsa($sample,split) $split] \
-			-paired [get optionsa($sample,paired) $paired] \
-			-maxfastqdistr [get optionsa($sample,maxfastqdistr) $maxfastqdistr] \
-			-adapterfile [get optionsa($sample,adapterfile) $adapterfile] \
-			-reports [get optionsa($sample,reports) $reports] \
-			-samBQ [get optionsa($sample,samBQ) $samBQ] \
-			-cleanup [get optionsa($sample,cleanup) $cleanup] \
-			-removeduplicates [get optionsa($sample,removeduplicates) $removeduplicates] \
-			-amplicons [get optionsa($sample,amplicons) $amplicons] \
-			-threads [get optionsa($sample,threads) $threads] \
-			-distrreg [get optionsa($sample,distrreg) $distrreg] \
-			-keepsams [get optionsa($sample,keepsams) $keepsams] \
-			-removeskew [get optionsa($sample,removeskew) $removeskew] \
-			-dt [get optionsa($sample,dt) $dt] \
-			-targetfile [get optionsa($sample,targetfile) $targetfile] \
-			-minfastqreads [get optionsa($sample,minfastqreads) $minfastqreads] \
-			-depth_histo_max [get optionsa($sample,depth_histo_max) $depth_histo_max] \
-			$dir
+		]
+		foreach key $keys {
+			set value [get $key]
+			if {$value ne ""} {
+				if {[info exists optionsa($sample,$key)]} {
+					lappend sampleargs -$key $optionsa($sample,$key)
+				} elseif {$value ne ""} {
+					lappend sampleargs -$key $value
+				}
+			}
+		}
+		process_sample_job {*}$sampleargs $dir
 	}
 	set_job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]
@@ -485,11 +433,10 @@ proc process_project_job {args} {
 	set todo(meth) [list_remdup $todo(meth)]
 	set todo(reports) [list_remdup $todo(reports)]
 	if {![llength $reports]} {set todo(reports) {}}
+	if {$cleanup eq ""} {set cleanup 1}
 	process_multicompar_job \
 		-experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
-		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
-		-counters $counters \
 		-isocallers $isocallers \
 		-iso_match $iso_match \
 		-sc_celltypers $sc_celltypers \
@@ -498,15 +445,10 @@ proc process_project_job {args} {
 		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles \
 		-cleanup $cleanup \
-		-reports $todo(reports) \
 		$destdir $dbdir
 	if {$extra_reports_mastr ne ""} {
 		make_alternative_compar_job $experiment $destdir $extra_reports_mastr
-		set histofiles {}
-		foreach dir $todo(reports) {
-			set list [jobglob $dir/*.histo]
-			if {[llength $list]} {lappend histofiles {*}$list}
-		}
+		set histofiles [jobglob $destdir/samples/*/reports/*.histo]
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
