@@ -108,7 +108,7 @@ if [ "$1" = "stage2" ] ; then
 	fi
 	echo "preparing user build with uid=$uid and gid=$gid"
 	groupadd build --gid $gid
-	useradd build --uid $uid --gid $gid
+	useradd build --uid $uid --gid $gid -s /usr/bin/bash
 	# usermod -a -G wheel build
 	echo "build ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-build
 	# default nr of processes (for user build) is sometimes not enough
