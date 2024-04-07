@@ -584,7 +584,7 @@ proc process_reports_job {args} {
 			job reports_fastqc-$dir-$sample -time 2:00:00 -deps $deps -targets {
 				$target $sampledir/reports/fastqc_$dir-$sample.fastqc/fastqc_data.txt
 			} -code {
-				analysisinfo_write $dep $target fastqc_version [version fastqc]
+				analysisinfo_write $dep $target fastqc_prog falco falco_version [version falco]
 				file mkdir $target.temp
 				set gzcat [gzcat [lindex $deps 0]]
 				set foundreads 0
@@ -595,12 +595,15 @@ proc process_reports_job {args} {
 					file rename -force -- $target.temp $target
 					file_write $target2 ""
 				} else {
-					exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
-					exec unzip -o $target.temp/stdin_fastqc.zip -d $target.temp
-					file rename -force -- {*}[glob $target.temp/stdin_fastqc/*] $target.temp
-					file delete $target.temp/stdin_fastqc
-					file delete $target.temp/stdin_fastqc.zip
-					file delete $target.temp/stdin_fastqc.html
+					if {[llength $deps] == 1} {
+						set src [lindex $deps 0]
+						set format fastq[gzext $src]
+					} else {
+						set src [tempdir]/stdin
+						exec -ignorestderr {*}$gzcat {*}$deps > $src
+						set format fastq
+					}
+					exec -ignorestderr falco -f $format -o $target.temp $src
 					if {[file exists $target]} {file delete -force $target}
 					file rename -force -- $target.temp $target
 				}
