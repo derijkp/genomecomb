@@ -70,6 +70,7 @@ yuminstall readline-devel
 yuminstall xz
 yuminstall libtool
 yuminstall pcre2-devel
+yuminstall atlas
 #yuminstall java
 #yuminstall texlive
 yuminstall texlive-latex
@@ -344,6 +345,11 @@ cp -a -f libgobject* libthai* libpcre.so libpcre.so.1 libpcre.so.1.2.0 \
     libffi* libgraphite2* libexpat* libuuid* libbz2* \
     libpixman* libEGL* libxcb-shm.* libxcb.so* libxcb-render.* \
     libXrender.* libX11* libXext* libGL* libXau* \
+	/build/dirR-$dirRversion-$arch/lib64/R/lib
+# docker test ubuntu:20.04
+yuminstall libSM
+cp -a -f libSM.* libgobject* \
+	libXt.so.* libXft.so.* atlas/libsatlas.so.* libjbig.so.* libICE.so.* \
 	/build/dirR-$dirRversion-$arch/lib64/R/lib
 
 cd /build/R-$dirRversion

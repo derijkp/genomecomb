@@ -16,6 +16,11 @@ if {[info exists argv]} {
 		set smalltestdir [lindex $argv [expr {$pos + 1}]]
 		set argv [lreplace $argv $pos [expr {$pos + 1}]]
 	}
+	set pos [lsearch $argv -testdir]
+	if {$pos != -1} {
+		set basetestdir [lindex $argv [expr {$pos + 1}]]
+		set argv [lreplace $argv $pos [expr {$pos + 1}]]
+	}
 	set pos [lsearch $argv -d]
 	if {$pos != -1} {
 		if {[lindex $argv [expr {$pos+1}]] eq "sge"} {

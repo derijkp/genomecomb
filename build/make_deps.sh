@@ -205,6 +205,10 @@ if [ ! -f "/build/lib/libbz2.a" ] ; then
 		make
 	cp /build/bzip2-$bzip2version/libbz2.a /build/lib
 	cp /build/bzip2-$bzip2version/*.h /build/include
+	cp bzip2 /io/extern$ARCH/bzip2
+	strip /io/extern$ARCH/bzip2
+	ln -s bzip2 bzcat
+	cp bzcat /io/extern$ARCH/bzcat
 	source /hbb_exe/activate
 fi
 
@@ -239,9 +243,23 @@ if [ ! -f "/build/lib/libssh2.a" ] ; then
 	make install
 fi
 
+# libcares
+# --------
+
+if [ ! -f "/build/lib/libcares.a" ] ; then
+	caresversion=1.28.1
+	download https://github.com/c-ares/c-ares/releases/download/cares-1_28_1/c-ares-$caresversion.tar.gz
+	cd /build/c-ares-$caresversion
+	make distclean
+               ./configure --prefix=/build --enable-static
+	make
+	make install
+	source /hbb_exe/activate
+fi
+
 # libcurl, used by samtools
 # -------------------------
-if [ ! -f "/build/lib/liblzma.a" ] ; then
+if [ ! -f "/build/lib/libcurl.a" ] ; then
 	curlversion=7.80.0
 	source /hbb_shlib/activate
 	download https://curl.se/download/curl-$curlversion.tar.gz
@@ -255,16 +273,15 @@ if [ ! -f "/build/lib/liblzma.a" ] ; then
 	make distclean
 	env CFLAGS="$STATICLIB_CFLAGS -fPIC -ldl" CXXFLAGS="$STATICLIB_CXXFLAGS -fPIC" \
              PKG_CONFIG="pkg-config --static" \
-             ./configure --prefix=/build --with-ssl --disable-shared --enable-static --disable-ldap --enable-ipv6 --enable-unix-sockets --with-libssh2
-
-	make curl_LDFLAGS=-all-static
+             ./configure --prefix=/build --with-ssl --enable-static --disable-ldap --enable-ipv6 --enable-unix-sockets --with-libssh2 --enable-ares=/build
+	make
 	make install
 	source /hbb_exe/activate
 fi
 
 # ncurses, used by samtools
 # -------------------------
-if [ ! -f "/build/lib/liblzma.a" ] ; then
+if [ ! -f "/build/lib/libncurses.a" ] ; then
 	source /hbb_shlib/activate
 	download http://ftp.gnu.org/gnu/ncurses/ncurses-6.1.tar.gz
 	cd /build/ncurses-6.1
@@ -280,17 +297,21 @@ fi
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
 
-	htsversion=1.15
+	htsversion=1.15.1
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
 	cd /build/htslib-$htsversion
 	make distclean
 	env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
-		./configure --prefix=/build --enable-libcurl
+                ./configure --prefix=/build --enable-libcurl
 	make
+	gcc -L/build/lib -L/hbb_shlib/lib -static-libstdc++ -fvisibility=hidden -o tabix tabix.o libhts.a \
+                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -Wl,-Bdynamic -ldl -lrt -lm -lpthread
+	gcc -L/build/lib -L/hbb_shlib/lib -static-libstdc++ -fvisibility=hidden -o bgzip bgzip.o libhts.a \
+                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -Wl,-Bdynamic -ldl -lrt -lm -lpthread
 	make install
-	rm /build/lib/libhts.so*
+	# rm /build/lib/libhts.so*
 	cp /build/bin/tabix /io/extern$ARCH/tabix
 	cp /build/bin/bgzip /io/extern$ARCH/bgzip
 	strip /io/extern$ARCH/tabix
@@ -301,15 +322,19 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.15
+	samversion=1.15.1
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
 	env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
-		./configure --prefix=/build --disable-shared --enable-static --enable-libcurl
+                ./configure --prefix=/build --disable-shared --enable-static --enable-libcurl
 	make
+	gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
+                -o samtools bam.o bam_aux.o bam_index.o bam_plcmd.o sam_view.o bam_fastq.o bam_cat.o bam_md.o bam_plbuf.o bam_reheader.o bam_sort.o bam_rmdup.o bam_rmdupse.o bam_mate.o bam_stat.o bam_color.o bamtk.o bam2bcf.o sample.o cut_target.o phase.o bam2depth.o coverage.o padding.o bedcov.o bamshuf.o faidx.o dict.o stats.o stats_isize.o bam_flags.o bam_split.o bam_tview.o bam_tview_curses.o bam_tview_html.o bam_lpileup.o bam_quickcheck.o bam_addrprg.o bam_markdup.o tmp_file.o bam_ampliconclip.o amplicon_stats.o bam_import.o bam_samples.o bam_consensus.o consensus_pileup.o \
+                ./lz4/lz4.o libst.a htslib-1.15.1/libhts.a \
+                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
 	make install
-	cp /build/bin/samtools /io/extern$ARCH
+	cp samtools /io/extern$ARCH
 	strip /io/extern$ARCH/samtools
 fi
 
@@ -366,8 +391,42 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH ] ; then
 	cp fastq-mcf fastq-stats $dest
 	strip $dest/fastq-mcf $dest/fastq-stats
 	cp /io/extern-src/ea-utils-changes/README $dest
-	cd /io/extern
+	cd /io/extern$ARCH
 	ln -sf ea-utils/fastq-* .
 fi
+
+# graphviz
+# --------
+yuminstall cairo
+yuminstall gd
+cd /build
+wget https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/10.0.1/graphviz-10.0.1.tar.gz
+tar xvzf graphviz-10.0.1.tar.gz
+cd /build/graphviz-10.0.1
+# ./configure --help
+./configure --prefix=/build/graphviz-bin --enable-shared=no --enable-static=yes
+make
+make install
+cp /build/graphviz-bin/bin/dot_static /io/extern$ARCH/dot
+
+# less
+# ----
+# https://www.greenwoodsoftware.com/less/
+# yuminstall ncurses-devel
+yuminstall ncurses-static
+cd /build
+wget https://www.greenwoodsoftware.com/less/less-643.tar.gz
+tar xvzf less-643.tar.gz
+cd /build/less-643
+make distclean || true
+./configure --prefix=/build
+make
+gcc -o less main.o screen.o brac.o ch.o charset.o cmdbuf.o command.o cvt.o decode.o edit.o filename.o forwback.o help.o ifile.o input.o jump.o line.o linenum.o lsystem.o mark.o optfunc.o option.o opttbl.o os.o output.o pattern.o position.o prompt.o search.o signal.o tags.o ttyin.o version.o xbuf.o lesskey_parse.o \
+    -Wl,-Bstatic -ltinfo -Wl,-Bdynamic
+cp less /io/extern$ARCH
+
+# which
+# -----
+cp /usr/bin/which /io/extern$ARCH
 
 echo "Finished building external binaries"

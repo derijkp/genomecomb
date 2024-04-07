@@ -272,7 +272,7 @@ test var {var_longshot basic giab ont} {
 	cg benchmarkvars -refcurve_cutoffs {{} 10 20 30 40 50 60} $workdir/compar.tsv truth_HG002_hg38 $workdir/benchmark.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 -x *.log -x *.finished  -x *.zsti \
-		-x compar.tsv.reannot \
+		-x compar.tsv.reannot -x *.bai \
 		-ignorefields {varcaller_cg_version} \
 		$workdir expected/[file tail $workdir]]
 	lappend result [cg select -g chromosome $workdir/compar.tsv]
