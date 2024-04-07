@@ -9,7 +9,7 @@ proc process_project_job {args} {
 	set minfastqreads {}
 	set clip {}
 	set removeskew {}
-	set aligners bwa
+	set aligners {}
 	set ali_keepcomments {}
 	set varcallers {}
 	set isocallers {}
@@ -303,9 +303,6 @@ proc process_project_job {args} {
 	# amplicons settings
 	# ------------------
 	if {$amplicons ne ""} {
-		if {$removeduplicates eq ""} {set removeduplicates 0}
-		if {$removeskew eq ""} {set removeskew 0}
-		if {$dt eq ""} {set dt NONE}
 		list_addnew dbfiles $amplicons
 		if {$targetfile eq ""} {
 			set targetfile $destdir/reg_${ref}_targets.tsv.zst
@@ -313,9 +310,6 @@ proc process_project_job {args} {
 				cg regcollapse $dep | cg zst > $target
 			}
 		}
-	} else {
-		if {$removeduplicates eq ""} {set removeduplicates 1}
-		if {$removeskew eq ""} {set removeskew 1}
 	}
 	# start
 	# -----
