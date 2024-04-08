@@ -633,7 +633,7 @@ test var {var_clair3 basic giab data} {
 		tmp/clair3/benchmark.tsv
 	set result {}
 	lappend result [tsvdiff -q 1\
-		-x *.log -x *.finished  -x *.zsti \
+		-x *.log -x *.finished  -x *.zsti -x *.bai \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
 		tmp/clair3 expected/clair3]
@@ -674,7 +674,7 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 		tmp/clair3_var/benchmark.tsv
 	set result {}
 	lappend result [tsvdiff -q 1\
-		-x *.log -x *.finished  -x *.zsti -x *.tbi \
+		-x *.log -x *.finished  -x *.zsti -x *.tbi -x *.bai \
 		-x compar.tsv.reannot \
 		-ignorefields {varcaller_cg_version} \
 		tmp/clair3_var expected/clair3_var]

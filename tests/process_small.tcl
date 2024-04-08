@@ -561,7 +561,7 @@ test process_small {process_project cg_mx2} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
-		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		-dbfile [gzfile $::refseqdir/hg19_extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
 	grid_wait
 	# check vs expected
@@ -608,7 +608,7 @@ test process_small {process_project mixed_yri_mx2} {
 	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
-		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		-dbfile [gzfile $::refseqdir/hg19_extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
 	grid_wait
 	# check vs expected
@@ -653,7 +653,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 		-varcallers {gatk sam} \
 		-dbdir $::refseqdir/hg19 \
-		-dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
+		-dbfile [gzfile $::refseqdir/hg19_extra/var_hg19_dbnsfp.tsv] \
 		tmp/${basename} >& tmp/${basename}.log
 	grid_wait
 	# check vs expected
