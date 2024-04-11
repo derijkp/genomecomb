@@ -1,0 +1,16 @@
+= tsvjoin =
+
+== Format ==
+cg fixtsv ?options? file outfile
+
+== Summary ==
+fix erors in a tsv file
+
+== Description ==
+cg fixtsv fixes errors in tsv files:
+* lines that have too many fields (compared to the header)
+* lines that do not have enough fields (compared to the header)
+* duplicate fields: the last field(s) (with same fieldname as previous) will be removed
+
+== Category ==
+tsv
