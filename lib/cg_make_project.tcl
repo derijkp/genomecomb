@@ -57,7 +57,7 @@ proc cg_make_project {args} {
 	mkdir $projectdir/samples
 	while 1 {
 		if {[gets $f line] == -1} break
-		set line [split $line]
+		set line [split $line \t]
 		foreach {samplename seqfiles} [list_sub $line $poss] break
 		# if {[regexp -- - $samplename]} {error "$samplename contains a - character (which is not allowed in a samplename)"}
 #		if {$preset ne ""} {
