@@ -192,7 +192,7 @@ job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
 	file rename -force -- $target.temp $target
 }
 
-job reg_refcoding \
+job reg_refcoding -checkcompressed 1 \
 -deps {gene_${build}_refGene.tsv} \
 -targets {extra/reg_${build}_refcoding.tsv} \
 -code {

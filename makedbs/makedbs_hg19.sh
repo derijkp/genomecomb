@@ -534,7 +534,9 @@ proc gnomadfields {file} {
 	catchchildkilled_exec zcat $file | head -10000 | cg vcf2tsv -split 1 > $tempfile
 	set header [cg select -header $tempfile]
 	set fields {chromosome begin end type ref alt}
-	lappend fields {max_freqp=if(isnum($AF_popmax),format("%.3f",100.0*$AF_popmax),"-")}
+	if {[llength [list_common $header {AF_popmax}]] == 1} {
+		lappend fields {max_freqp=if(isnum($AF_popmax),format("%.3f",100.0*$AF_popmax),"-")}
+	}
 	# homfreqp is percentage of sindividuals that are homozygous -> so should divide count by (AN_popmax/2), do this by *200.0 instead of *100.0
 	lappend fields {max_homfreqp=if(isnum($nhomalt_popmax),format("%.3f",200.0*$nhomalt_popmax/$AN_popmax),"-")}
 	lappend fields {controls_max_freqp=if(isnum($controls_AF_popmax),format("%.3f",100.0*$controls_AF_popmax),"-")}
@@ -839,7 +841,7 @@ foreach {srcbuild targetname url file} {
 
 # combine twist core and refseq
 cd ${dest}/${build}
-job reg_exome_twistfull -deps {
+job reg_exome_twistfull -checkcompressed 1 -deps {
 	extra/reg_${build}_exome_twistcore.tsv extra/reg_${build}_exome_twistrefseq.tsv
 } -targets {
 	extra/reg_${build}_exome_twistfull.tsv

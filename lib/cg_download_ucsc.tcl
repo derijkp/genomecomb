@@ -105,13 +105,13 @@ proc cg_download_ucsc {args} {
 	set sqlfile $dbname.sql
 	if {![file exists $temp/$dbname.txt.gz]} {
 		putslog "Downloading $dbname.txt.gz ....."
-		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz $temp/$dbname.txt.gz
+		wgetfile http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz $temp/$dbname.txt.gz
 	} else {
 		putslog "Skipping download $dbname.txt.gz (already there)"
 	}
 	if {![file exists $temp/$dbname.txt.gz]} {
 		set single 0
-		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr*_$dbname.txt.gz $temp
+		wgetfiles http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr*_$dbname.txt.gz $temp
 		set files [bsort [glob -nocomplain $temp/chr*_$dbname.txt.gz]]
 		if {![llength $files]} {
 			error "Could not download $dbname.txt.gz"
@@ -120,7 +120,7 @@ proc cg_download_ucsc {args} {
 	}
 	if {![file exists $temp/$sqlfile]} {
 		putslog "Downloading $dbname.sql ....."
-		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile $temp/$sqlfile
+		wgetfile http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile $temp/$sqlfile
 	} else {
 		putslog "Skipping download $dbname.sql (already there)"
 	}

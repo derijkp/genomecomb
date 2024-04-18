@@ -98,7 +98,7 @@ proc ref_gtftranscripts refseq {
 	return $reftranscripts
 }
 
-proc ref_tsvtranscripts refseq {
+proc ref_tsvtranscripts {refseq {job 0}} {
 	set refdir [refdir $refseq]
 	set reftranscripts {}
 	foreach pattern [list \
@@ -110,8 +110,8 @@ proc ref_tsvtranscripts refseq {
 		$refdir/extra/*.gtf \
 		$refdir/*.gtf \
 	] {
-		set reftranscripts [lindex [bsort [gzfiles $pattern]] end]
-		if {[file exists $reftranscripts]} {
+		set reftranscripts [lindex [bsort [jobgzfiles $pattern]] end]
+		if {[file exists $reftranscripts] || ($job && $reftranscripts ne "")} {
 			break
 		}
 	}
@@ -121,7 +121,7 @@ proc ref_tsvtranscripts refseq {
 		file rename -force $reftranscriptstsv.temp $reftranscriptstsv
 		set reftranscripts $reftranscriptstsv
 	}
-	if {![file exists $reftranscripts]} {
+	if {!$job && ![file exists $reftranscripts]} {
 		error "no tsv (or gtf) reference transcripts found in $refdir"
 	}
 	return $reftranscripts

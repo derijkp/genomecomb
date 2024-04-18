@@ -113,9 +113,74 @@ proc cg_download_dbsnp {resultfile build dbname} {
 		if {[eof $f]} break
 	}
 	close $f ; close $o
-	file rename -force -- $resultfile.ucsc.info [gzroot $resultfile].info
+	snp/snp/file rename -force -- $resultfile.ucsc.info [gzroot $resultfile].info
 	puts "Sorting $resultfile"
 	cg select -s - $resultfile.temp $resultfile.temp2[file extension $resultfile]
 	file rename -force -- $resultfile.temp2[file extension $resultfile] $resultfile
 	file delete $resultfile.temp $resultfile.ucsc
+}
+
+proc cg_download_dbsnp_new {resultfile build dbname} {
+	regsub ^snp $dbname {} dbsnpversion
+	file_write [gzroot $resultfile].info [subst [deindent {
+		= dbsnp =
+		
+		== Download info ==
+		dbname	dbsnp
+		version	$dbsnpversion
+		source	https://hgdownload.soe.ucsc.edu/gbdb/hg38/snp/dbSnp$dbsnpversion.bb
+		time	[timestamp]
+		
+		== Description ==
+		
+		This track shows short genetic variants (up to approximately 50 base pairs) 
+		from dbSNP build $dbsnpversion: single-nucleotide variants (SNVs), small insertions, deletions, 
+		and complex deletion/insertions (indels), relative to the reference genome assembly. 
+		Most variants in dbSNP are rare, not true polymorphisms, and some variants are known 
+		to be pathogenic. 
+		
+		== Category ==
+		Annotation
+	}]]
+	wgetfile https://hgdownload.soe.ucsc.edu/gbdb/hg38/snp/dbSnp$dbsnpversion.bb
+	wgetfile http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/bigBedToBed
+	chmod u+x bigBedToBed
+	exec ./bigBedToBed dbSnp$dbsnpversion.bb dbSnp$dbsnpversion.bb.bed
+	file delete bigBedToBed dbSnp$dbsnpversion.bb
+	#
+	catch {gzclose $f} ; catch {gzclose $o}
+	set f [open dbSnp$dbsnpversion.bb.bed]
+	set o [wgzopen $resultfile.temp.zst]
+	puts $o [join {chromosome begin end type ref alt name} \t]
+	array set typea {snv snp mnv sub}
+	set num 0 ; set fnum 0
+	while {[gets $f line] != -1} {
+		if {[incr num] >= 1000000} {
+			incr fnum 1
+			set num 0
+			puts $fnum
+		}
+		foreach {chromosome begin end name ref numalt alt shiftBases freqSourceCount minorAlleleFreq majorAllele minorAllele maxFuncImpact type ucscNotes} [split $line \t] break
+		set alt [string trimright $alt ,]
+		if {$type eq "identity"} continue
+		if {$type eq "snv"} {
+			set type snp
+		} elseif {$type eq "mnv"} {
+			set type sub
+		} elseif {$type eq "del"} {
+			set len [string length $ref]
+			if {$len > 1} {set ref $len}
+		}
+#		if {$numalt > 1} {
+#			set name [join [list_fill $numalt $name] ,]
+#		}
+		puts $o [join [list $chromosome $begin $end $type $ref $alt $name] \t]
+	}
+	gzclose $f ; gzclose $o
+	file rename $resultfile.temp.zst $resultfile
+	# file rename -force -- $resultfile.ucsc.info [gzroot $resultfile].info
+	puts "Sorting $resultfile"
+	cg select -s - $resultfile.temp.zst $resultfile.temp2[file extension $resultfile]
+	file rename -force -- $resultfile.temp2[file extension $resultfile] $resultfile
+	file delete $resultfile.temp.zst dbSnp$dbsnpversion.bb.bed
 }

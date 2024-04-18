@@ -30,13 +30,13 @@ proc downloaddb {path build dbname} {
 	set sqlfile $dbname.sql
 	if {![file exists $temp/$dbname.txt.gz]} {
 		puts "Downloading $dbname.txt.gz ....."
-		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz $temp/$dbname.txt.gz
+		wgetfile http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz $temp/$dbname.txt.gz
 	} else {
 		puts "Skipping download $dbname.txt.gz (already there)"
 	}
 	if {![file exists $temp/$dbname.txt.gz]} {
 		set single 0
-		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr*_$dbname.txt.gz $temp
+		wgetfiles http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr*_$dbname.txt.gz $temp
 		set files [bsort [glob -nocomplain $temp/chr*_$dbname.txt.gz]]
 		if {![llength $files]} {
 			error "Could not download $dbname.txt.gz"
@@ -45,7 +45,7 @@ proc downloaddb {path build dbname} {
 	}
 	if {![file exists $temp/$sqlfile]} {
 		puts "Downloading $dbname.sql ....."
-		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile $temp/$sqlfile
+		wgetfile http://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile $temp/$sqlfile
 	} else {
 		puts "Skipping download $dbname.sql (already there)"
 	}

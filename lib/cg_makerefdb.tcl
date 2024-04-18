@@ -104,7 +104,7 @@ proc makerefdb_job {args} {
 	job genome_${build} -targets {
 		genome_${build}.ifas
 		genome_${build}.ifas.fai
-		extra/reg_${build}_fullgenome.tsv
+		extra/reg_${build}_fullgenome.tsv.zst
 		genome_${build}.ifas.index
 	} -vars {
 		build genomeurl
@@ -159,13 +159,13 @@ proc makerefdb_job {args} {
 		genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
 		extra/genome_${build}.ssa
 	} -code {
-		mklink -matchtime 0 genome_${build}.ifas extra/genome_${build}.ifas
-		mklink -matchtime 0 genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
-		mklink -matchtime 0 genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-		mklink -matchtime 0 genome_${build}.ifas genome_${build}.fa
-		mklink -matchtime 0 genome_${build}.ifas.fai genome_${build}.fa.fai
-		mklink -matchtime 0 genome_${build}.ifas.index genome_${build}.fa.index 
-		mklink -matchtime 0 genome_${build}.ssa extra/genome_${build}.ssa
+		mklink genome_${build}.ifas extra/genome_${build}.ifas
+		mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
+		mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
+		mklink genome_${build}.ifas genome_${build}.fa
+		mklink genome_${build}.ifas.fai genome_${build}.fa.fai
+		mklink genome_${build}.ifas.index genome_${build}.fa.index 
+		mklink genome_${build}.ssa extra/genome_${build}.ssa
 	}
 
 	job genome_${build}_dict -deps {
@@ -213,7 +213,7 @@ proc makerefdb_job {args} {
 			continue
 		}
 		job reg_${build}_$db -targets {
-			reg_${build}_${db}.tsv
+			reg_${build}_${db}.tsv.zst
 		} -vars {dest build db} -code {
 			set target [gzroot $target].zst
 			cg download_ucsc $target.ucsc ${build} $db
@@ -228,7 +228,7 @@ proc makerefdb_job {args} {
 		rmsk simpleRepeat
 	} {
 		job maketabix_${build}_$db -optional 1 -deps {
-			reg_${build}_${db}.tsv
+			reg_${build}_${db}.tsv.zst
 		} -targets {
 			reg_${build}_${db}.tsv.gz.tbi
 			reg_${build}_${db}.tsv.gz
@@ -244,7 +244,7 @@ proc makerefdb_job {args} {
 			continue
 		}
 		job reg_${build}_$db -targets {
-			reg_${build}_${db}.tsv
+			reg_${build}_${db}.tsv.zst
 		} -vars {dest build db} -code {
 			set target [gzroot $target].zst
 			cg download_ucsc $target.ucsc ${build} $db
@@ -262,7 +262,7 @@ proc makerefdb_job {args} {
 		} -vars {
 			dest build refSeqFuncElemsurl
 		} -code {
-			set target [gzroot $target].zst
+			# set target [gzroot $target].zst
 			file mkdir $target.temp
 			set tail [file tail $refSeqFuncElemsurl]
 			wgetfile $refSeqFuncElemsurl $target.temp/$tail
@@ -370,7 +370,7 @@ proc makerefdb_job {args} {
 	}
 
 	job reg_${build}_genes -deps $regdeps -targets {
-		extra/reg_${build}_genes.tsv
+		extra/reg_${build}_genes.tsv.zst
 	} -code {
 		set target [gzroot $target].zst
 		exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse {*}[compresspipe $target 12] > $target.temp
@@ -379,16 +379,16 @@ proc makerefdb_job {args} {
 	}
 
 	set dep gene_${build}_refGene.tsv
-	if {![jobfileexists $dep]} {
+	if {![jobfileexists -checkcompressed 1 $dep]} {
 		set dep gene_${build}_ncbiRefSeq.tsv
 	}
-	if {![jobfileexists $dep]} {
+	if {![jobfileexists -checkcompressed 1 $dep]} {
 		set dep extra/gene_${build}_ncbiRefSeq.tsv
 	}
-	job reg_refcoding -deps {
+	job reg_refcoding -checkcompressed 1 -deps {
 		$dep
 	} -targets {
-		extra/reg_${build}_refcoding.tsv
+		extra/reg_${build}_refcoding.tsv.zst
 	} -vars {
 		build
 	} -code {
@@ -401,10 +401,10 @@ proc makerefdb_job {args} {
 		cg zindex $target
 	}
 
-	job reg_exome_refGene -deps {
+	job reg_exome_refGene -checkcompressed 1 -deps {
 		$dep
 	} -targets {
-		extra/reg_${build}_exome_refGene.tsv
+		extra/reg_${build}_exome_refGene.tsv.zst
 	} -vars {
 		build
 	} -code {
@@ -418,9 +418,9 @@ proc makerefdb_job {args} {
 	}
 
 	job reg_intcoding -deps {
-		gene_${build}_intGene.tsv
+		gene_${build}_intGene.tsv.zst
 	} -targets {
-		extra/reg_${build}_intcoding.tsv
+		extra/reg_${build}_intcoding.tsv.zst
 	} -vars {
 		build
 	} -code {
@@ -434,9 +434,9 @@ proc makerefdb_job {args} {
 	}
 
 	job reg_exome_intGene -deps {
-		gene_${build}_intGene.tsv
+		gene_${build}_intGene.tsv.zst
 	} -targets {
-		extra/reg_${build}_exome_intGene.tsv
+		extra/reg_${build}_exome_intGene.tsv.zst
 	} -vars {
 		build
 	} -code {
@@ -459,7 +459,7 @@ proc makerefdb_job {args} {
 	# mirbase
 	if {$mirbase ne ""} {
 		foreach {mirbasegenome mirbaserelease mirbasebuild} [split $mirbase -:] break
-		job mir_${build}_mirbase -targets {
+		job mir_${build}_mirbase -checkcompressed 1 -targets {
 			mir_${build}_mirbase$mirbaserelease.tsv
 			mir_${build}_mirbase$mirbaserelease.tsv.info
 		} -vars {mirbasegenome mirbaserelease mirbasebuild dest build db} -code {
@@ -471,35 +471,33 @@ proc makerefdb_job {args} {
 	
 	# dbsnp
 	if {$dbsnp ne ""} {
-		job dbsnp -targets {
+		job dbsnp -checkcompressed 1 -targets {
 			var_${build}_dbsnp.tsv.zst
 			var_${build}_dbsnp.tsv.opt
-			var_${build}_dbsnp.tsv.gz
-			var_${build}_dbsnp.tsv.gz.tbi
 		} -vars {dest build dbsnp} -code {
 			set target [gzroot $target].zst
 			file_write [gzroot $target].opt "fields\t{name}\n"
-			cg download_dbsnp $target ${build} snp$dbsnp 2>@ stderr
+			cg download_dbsnp_new $target ${build} snp$dbsnp 2>@ stderr
 			cg zindex $target
-			cg maketabix $target
+			# cg maketabix $target
 		}
 	
-		job dbsnpCommon -optional 1 -targets {
-			var_${build}_dbsnpCommon.tsv.zst
-			var_${build}_dbsnpCommon.tsv.gz
-			var_${build}_dbsnpCommon.tsv.gz.tbi
-		} -vars {dest build dbsnp} -code {
-			set target [gzroot $target].zst
-			file_write [gzroot $target].opt "fields\t{freqp}\n"
-			cg download_dbsnp $target ${build} snp${dbsnp}Common 2>@ stderr
-			cg zindex $target
-			cg maketabix $target
-		}
+#		job dbsnpCommon -checkcompressed 1 -optional 1 -targets {
+#			var_${build}_dbsnpCommon.tsv.zst
+#			var_${build}_dbsnpCommon.tsv.gz
+#			var_${build}_dbsnpCommon.tsv.gz.tbi
+#		} -vars {dest build dbsnp} -code {
+#			set target [gzroot $target].zst
+#			file_write [gzroot $target].opt "fields\t{freqp}\n"
+#			cg download_dbsnp $target ${build} snp${dbsnp}Common 2>@ stderr
+#			cg zindex $target
+#			cg maketabix $target
+#		}
 	}
 
 	set fullgenome [list [jobgzfile $dbdir/extra/reg_*_fullgenome.tsv]]
 	set rmskfile [jobgzfile $dbdir/reg_*_rmsk.tsv]
-	job norep100000file -optional 1 -deps {
+	job norep100000file -checkcompressed 1 -optional 1 -deps {
 		$fullgenome
 		$rmskfile
 	} -targets {
@@ -510,8 +508,8 @@ proc makerefdb_job {args} {
 		distrreg_norep100000file $dbdir
 	}
 
-	set genefile [ref_tsvtranscripts $dbdir]
-	job nolowgene -optional 1 -deps {
+	set genefile [ref_tsvtranscripts $dbdir 1]
+	job nolowgene -checkcompressed 1 -optional 1 -deps {
 		$fullgenome
 		$genefile
 	} -targets {
@@ -524,7 +522,7 @@ proc makerefdb_job {args} {
 
 	if {$transcriptsgtf ne ""} {
 		if {$transcriptsurl eq ""} {error "-transcriptsurl empty"}
-		job gtf -targets {
+		job gtf -checkcompressed 1 -targets {
 			$transcriptsgtf
 		} -vars {transcriptsurl transcriptsgtf} -code {
 			set ext [file ext $transcriptsurl]

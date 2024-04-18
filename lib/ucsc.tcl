@@ -40,7 +40,7 @@ proc ucsc_wibfile {file dir} {
 		return [file tail $file]
 	}
 	puts "Downloading $file"
-	wgetfile ftp://hgdownload.cse.ucsc.edu/$file $testfile
+	wgetfile http://hgdownload.cse.ucsc.edu/$file $testfile
 	return $testfile
 }
 

@@ -26,7 +26,7 @@ proc cg_download_genome {args} {
 		cg_fas2ifas [file tail $source] $tail
 		file rename -force -- $tail $tail.index ..
 	} elseif {[llength $chromosomes]} {
-		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
+		set source http://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
 		set files {}
 		foreach chr $chromosomes {
 			lappend files chr$chr.fa.gz
@@ -35,13 +35,13 @@ proc cg_download_genome {args} {
 				continue
 			}
 			putslog "Downloading chromosome chr$chr.fa.gz"
-			wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz
+			wgetfile http://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
 		file rename -force -- {*}[glob $tail*] ..
 	} elseif {!$alt && ![catch {
-		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
+		set source http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
 		wgetfile $source 
 		if {![file exists $build.analysisSet.chroms.tar.gz]} {error "Could not download $build chromosomes"}
 	} msg]} {
@@ -55,7 +55,7 @@ proc cg_download_genome {args} {
 		file rename -force -- {*}[glob $tail*] ..
 		file delete $build.analysisSet.chroms.tar.gz
 	} elseif {![catch {
-		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
+		set source http://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
 		wgetfiles $source goldenPath-$build-chromosomes
 		if {![llength [glob goldenPath-$build-chromosomes/*.fa.gz]]} {error "Could not download $build chromosomes"}
 	} msg]} {
@@ -67,7 +67,7 @@ proc cg_download_genome {args} {
 		exec zcat {*}$files | cg genome_indexfasta $tail
 		file rename -force -- {*}[glob $tail*] ..
 	} else {
-		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/$build.fa.gz
+		set source http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/$build.fa.gz
 		wgetfile $source
 		cg_fas2ifas $build.fa.gz $tail
 		file rename -force -- $tail $tail.index ..
