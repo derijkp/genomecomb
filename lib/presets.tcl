@@ -32,7 +32,7 @@ proc preset_ont {} {
 		aligners minimap2
 		realign 0
 		varcallers {clair3}
-		svcallers {sniffles npinv cuteSV}
+		svcallers {sniffles cuteSV}
 		methcallers {}
 		counters {}
 		isocallers {}
