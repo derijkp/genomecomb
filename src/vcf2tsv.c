@@ -484,7 +484,9 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 				if (curalt[1] == 'B') {
 					altvar->type = bndtype;
 					if (pos2pos != -1) {
-						svend=atoi(outinfo[pos2pos].string);
+						if (outinfo[pos2pos].size > 0) {
+							svend=atoi(outinfo[pos2pos].string);
+						}
 					}
 				} else {
 					altvar->type = transtype;
