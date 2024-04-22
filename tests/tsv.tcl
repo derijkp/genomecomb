@@ -1280,4 +1280,24 @@ test renamesamples {basic renamesamples test} {
 1	8	9	a	b	c
 }
 
+test fixtsv {basic fixtsv} {
+	write_deindent tmp/test.tsv {
+		chromosome	begin	end	test-sample1	test-sample2	begin	test-sample3
+		1	8	9	a	b	8	c
+		2	8	9	a	b
+		3	8	9	a	b	8	c	d
+	}
+	write_deindent tmp/expected.tsv {
+		chromosome	begin	end	test-sample1	test-sample2	test-sample3
+		1	8	9	a	b	c
+		2	8	9	a	b	
+		3	8	9	a	b	c
+	}
+	catch {cg fixtsv tmp/test.tsv tmp/test2.tsv} msg
+	exec diff tmp/test2.tsv tmp/expected.tsv
+	set msg
+} {header shows duplicate fields begin, removing
+line 1 is of wrong length: 5 iso 7	2 8 9 a b, fixing
+line 2 is of wrong length: 8 iso 7	3 8 9 a b 8 c d, fixing}
+
 testsummarize
