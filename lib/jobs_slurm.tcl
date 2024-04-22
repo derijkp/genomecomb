@@ -160,10 +160,10 @@ proc job_process_submit_slurm {job cmd args} {
 		lappend options {*}$cgjob(submitoptions)
 	}
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
-		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]"
-		set jnum [exec sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]
+		putslog "slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err --export=ALL {*}$options $runfile]"
+		set jnum [exec sbatch --job-name=j$name --output=$job_out --error=$job_err --export=ALL {*}$options $runfile]
 	} else {
-		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err {*}$options $runfile]"
+		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name --output=$job_out --error=$job_err --export=ALL {*}$options $runfile]"
 		set jnum [incr cgjob(nosubmit)]
 	}
 	regexp {[0-9]+} $jnum jobnum
@@ -257,11 +257,14 @@ proc job_wait_slurm {} {
 	if {$priority != 0} {
 		lappend options --nice=$priority
 	}
+	if {[info exists cgjob(submitoptions)] && $cgjob(submitoptions) ne ""} {
+		lappend options {*}$cgjob(submitoptions)
+	}
 	if {!$cgjob(nosubmit) && !$cgjob(dry)} {
-		putslog "slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]"
-		exec sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile
+		putslog "slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile --export=ALL {*}$options $runfile]"
+		exec sbatch --job-name=j$name -o $outfile -e $errfile --export=ALL {*}$options $runfile
 	} else {
-		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile {*}$options $runfile]"
+		putslog "nosubmit run, would be slurm_submit: [list sbatch --job-name=j$name -o $outfile -e $errfile --export=ALL {*}$options $runfile]"
 		set jnum [incr cgjob(nosubmit)]
 	}
 }

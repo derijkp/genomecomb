@@ -98,6 +98,9 @@ proc job_args {jobargs} {
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
+	if {[info exists ::env(CG_SUBMITOPTIONS)]} {
+		set cgjob(submitoptions) $::env(CG_SUBMITOPTIONS)
+	}
 	while {$pos < [llength $jobargs]} {
 		set key [lindex $jobargs $pos]
 		incr pos

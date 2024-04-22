@@ -8,6 +8,20 @@ proc cg_qjobs {args} {
 		returns running and waiting jobs on a grid engine cluster in tsv format (so they can by analysed using cg select)
 	}
 	set result {}
+	set type [job_distribute]
+	if {$type ni "sge slurm"} {
+		if {![catch {
+			exec which qstat
+		}]} {
+			set type sge
+		} elseif {![catch {
+			exec which squeue
+		}]} {
+			set type slurm
+		} else {
+			error "could not determine job manager (supported: sge, slurm)"
+		}
+	}
 	if {![catch {
 		exec which qstat
 	}]} {
@@ -43,12 +57,14 @@ proc cg_qjobs {args} {
 			puts [join [lrange $line 1 end] \t]
 		}
 	} else {
-package require json
+		package require json
 		if {$user ne ""} {
 			lappend options -u $value
 		}
 		set json [exec squeue --json {*}$options]
 		set d [json::json2dict $json]
+		set result {}
+		set header {id tasks state submissiontime starttime priority JAT_prio owner queue slots run runversion name standard_error standard_output	}
 		set list [dict get $d jobs]
 		foreach el $list {
 			unset -nocomplain a
@@ -58,16 +74,22 @@ package require json
 			set a(JAT_prio) ?
 			array set a $el
 			if {$a(submit_time) eq ""} {
-				set a(submit_time) ""
+				set a(submissiontime) ""
 			} else {
-				set a(submit_time) [clock format $a(submit_time) -format "%Y-%m-%d %H:%M:%S"]
+				set a(submissiontime) [clock format $a(submit_time) -format "%Y-%m-%d %H:%M:%S"]
 			}
 			if {$a(start_time) eq ""} {
-				set a(start_time) ""
+				set a(starttime) ""
 			} else {
-				set a(start_time) [clock format $a(start_time) -format "%Y-%m-%d %H:%M:%S"]
+				set a(starttime) [clock format $a(start_time) -format "%Y-%m-%d %H:%M:%S"]
 			}
-			set resultline $a(job_id),$a(array_task_id)
+			set a(id) $a(job_id),[lindex $a(array_task_id) end]
+			set a(tasks) [lindex $a(tasks) end]
+			set a(state) $a(job_state)
+			set a(owner) $a(user_name)
+			set a(queue) $a(partition)
+			set a(slots) [lindex $a(cpus) end]
+			set a(priority) [lindex $a(priority) end]
 			if {[regexp {^j([^#]+)\.([0-9_-]+)\#} $a(name) temp a(run) a(runversion)]} {
 			} elseif {[regexp {^j([^#]+)\.([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9-]+)\.\.\.\.} $a(name) temp a(run) a(runversion)]} {
 			} elseif {[regexp {^j(.+)\.([0-9_-]+)$} [file root $a(name)] temp a(run) a(runversion)]} {
@@ -75,15 +97,16 @@ package require json
 			} else {
 				regexp {^j(.+)\.([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9])\.} $a(name) temp a(run) a(runversion)
 			}
-			foreach field {job_id tasks job_state submit_time start_time priority JAT_prio user_name partition cpus run runversion name standard_error standard_output} {
+			set resultline {}
+			foreach field $header {
 				lappend resultline [get a($field) .]
 			}
 			lappend result $resultline
 		}
 		set result [bsort -index 0 $result]
-		puts [join {id tasks state submissiontime starttime priority JAT_prio owner queue slots run runversion name standard_error standard_output} \t]
+		puts [join $header \t]
 		foreach line $result {
-			puts [join [lrange $line 1 end] \t]
+			puts [join $line \t]
 		}
 	}
 }
