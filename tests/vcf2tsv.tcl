@@ -870,4 +870,13 @@ test vcf2tsv {MIN_DP} {
 	exec diff tmp/cresult.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {gnomadsv-problem.vcf} {
+	mklink data/gnomadsv-problem.vcf tmp/gnomadsv-problem.vcf
+	mklink data/gnomadsv-problem.tsv tmp/gnomadsv-problem.tsv
+	# ../bin/vcf2tsv 1 '. AD R RPA R AC A AF A' - - '' 0 * error 0 < tmp/gnomadsv-problem.vcf
+	cg vcf2tsv -split 1 tmp/gnomadsv-problem.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	cg tsvdiff tmp/cresult.tsv tmp/gnomadsv-problem.tsv
+} {}
+
 testsummarize

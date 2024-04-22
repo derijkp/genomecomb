@@ -250,7 +250,10 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1} {sort 1}} {
 			set transa($key) attr_$key
 		}
 		while 1 {
-			if {[string index $line 0] eq "#"} continue
+			if {[string index $line 0] eq "#"} {
+				if {[gets $f line] == -1} break
+				continue
+			}
 			set line [split $line \t]
 			if {![llength $line]} continue
 			foreach {chrom source type start end score strand phase attributes comments} $line break
