@@ -3,9 +3,16 @@ proc cg_tsv2sam {args} {
 	set samfile -
 	set namecol name
 	set outformat sam
+	set refseq {}
 	set threads 1
 	cg_options tsv2sam args {
-		-outformat {set outformat $value}
+		-outformat {
+			if {$value ni "sam bam cram"} {error "tsv2sam error: unknown format $value for -outformat"}
+			set outformat $value
+		}
+		-refseq {
+			set refseq [refseq $value]
+		}
 		-threads {set threads $value}
 	} {tsvfile samfile} 0
 	if {[file extension $samfile] eq ".bam"} {
@@ -22,6 +29,9 @@ proc cg_tsv2sam {args} {
 	lappend pipe tsv2sam
 	if {$outformat eq "bam"} {
 		lappend pipe \| samtools view --threads $threads --no-PG -h -b --no-PG
+	} elseif {$outformat eq "cram"} {
+		if {$refseq eq ""} {error "tsv2sam error: outformat cram requires a reference sequence (user -refseq option)"}
+		lappend pipe \| samtools view --threads $threads --no-PG -h -C -T $refseq --no-PG
 	}
 	if {$samfile eq "-"} {
 		lappend pipe >@ stdout
