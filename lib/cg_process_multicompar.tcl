@@ -355,19 +355,19 @@ proc process_multicompar_job {args} {
 					-limitreg $limitreg \
 					-skipincomplete $skipincomplete \
 					$methcompar_file {*}$stilltodo
+				# annotate methmulticompar
+				# --------------------
+				putslog "Starting annotation"
+				cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth${type}-$experiment.tsv.zst $dbdir {*}$dbfiles
+				job indexannotcompar-$experiment -deps {
+					$methcompar_file
+				} -targets {
+					compar/annot_meth${type}-$experiment.tsv.index/info.tsv
+				} -vars dbdir -code {
+					cg index -colinfo $dep
+				}
 			} else {
 				putslog "skipping meth multicompar (no update needed)"
-			}
-			# annotate methmulticompar
-			# --------------------
-			putslog "Starting annotation"
-			cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth${type}-$experiment.tsv.zst $dbdir {*}$dbfiles
-			job indexannotcompar-$experiment -deps {
-				compar/annot_meth${type}-$experiment.tsv
-			} -targets {
-				compar/annot_meth${type}-$experiment.tsv.index/info.tsv
-			} -vars dbdir -code {
-				cg index -colinfo $dep
 			}
 		}
 	}
