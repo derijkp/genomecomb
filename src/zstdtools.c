@@ -109,9 +109,12 @@ debug_printprogress(res,"readheader");
 	return(res->contentsize);
 }
 
+typedef enum { bt_raw, bt_rle, bt_compressed, bt_reserved } blockType_e;
+
 uint32_t zstd_readblockheader(ZSTDres *res) {
 	uint32_t cBlockHeader;
 	uint32_t blocksize;
+	blockType_e blockType;
 	char *blockbuffer;
 	if (feof(res->finput)) return(0);
 	NODPRINT("---- readblockheader at ftello: %zu ----",ftello(res->finput));
@@ -122,8 +125,10 @@ uint32_t zstd_readblockheader(ZSTDres *res) {
 	blockbuffer = res->buffer + res->bufferpos;
 	READ(res->finput,3,blockbuffer,"error in file: incomplete zstd block header");
 	cBlockHeader = ZSTDIO_readLE24(blockbuffer);
-       blocksize = cBlockHeader >> 3;
-       res->lastblock = cBlockHeader & 1;
+	blocksize = cBlockHeader >> 3;
+	res->lastblock = cBlockHeader & 1;
+	blockType = (blockType_e)((cBlockHeader >> 1) & 3);
+	if (blockType == bt_rle) {return 1;}
 	return(blocksize);
 }
 
@@ -161,6 +166,7 @@ debug_printprogress(res,"readframe");
 	}
 	res->inframepos = 0;
 	res->frameread = 1;
+	res->contentsize = ZSTD_getFrameContentSize(res->buffer, res->bufferpos);
 	if (res->outbuffersize < res->contentsize) {
 		res->outbuffer = realloc(res->outbuffer,res->contentsize);
 		res->outbuffersize = res->contentsize;

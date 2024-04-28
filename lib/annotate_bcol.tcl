@@ -1,6 +1,6 @@
 proc annotatebcol {file dbfile name annotfile} {
-#putslog [list annotatebcol $file $dbfile $name $annotfile]
-#putsvars file dbfile name annotfile
+# putslog [list annotatebcol $file $dbfile $name $annotfile]
+# putsvars file dbfile name annotfile
 	catch {close $f}
 	set f [gzopen $file]
 	set header [tsv_open $f]
