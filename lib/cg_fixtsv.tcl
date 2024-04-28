@@ -4,7 +4,8 @@ proc cg_fixtsv {args} {
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	# set poss [tsv_basicfields $header 4 0]
-	set o [open $outfile.temp w]
+	set outtemp $outfile.temp[gzext $outfile]
+	set o [wgzopen $outtemp]
 	puts -nonewline $o $comment
 	set rheader [list_remdup $header]
 	if {[llength $rheader] < [llength $header]} {
@@ -51,5 +52,5 @@ proc cg_fixtsv {args} {
 	gzclose $f
 	close $o
 	if {[file exists $outfile]} {catch {file rename -- $outfile $outfile.old}}
-	file rename -force -- $outfile.temp $outfile
+	file rename -force -- $outtemp $outfile
 }
