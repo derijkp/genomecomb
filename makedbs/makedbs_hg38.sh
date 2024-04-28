@@ -84,9 +84,9 @@ set gnomadbaseurl https://storage.googleapis.com/gcp-public-data--gnomad/release
 set gnomadexbuild hg38
 set gnomadexversion 4.1
 set gnomadexurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadexversion/vcf/exomes
-set gnomadlofbuild hg19
-set gnomadlofversion 2.1.1
-set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.lof_metrics.by_gene.txt.bgz
+set gnomadlofbuild hg38
+set gnomadlofversion 4.1
+set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.constraint_metrics.tsv
 set gnomadsvbuild hg38
 set gnomadsvversion 4.1
 set gnomadsv https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadsvversion/genome_sv/gnomad.v$gnomadsvversion.sv.sites.vcf.gz
@@ -564,6 +564,7 @@ job lofgnomad -deps {
 		== Download info ==
 		dbname	lofgnomad
 		version	$gnomadlofversion
+		citation	Karczewski KJ, Francioli LC, Tiao G, Cummings BB, Alföldi J, Wang Q, Collins RL, Laricchia KM, Ganna A, Birnbaum DP, Gauthier LD, Brand H, Solomonson M, Watts NA, Rhodes D, Singer-Berk M, England EM, Seaby EG, Kosmicki JA, Walters RK, Tashman K, Farjoun Y, Banks E, Poterba T, Wang A, Seed C, Whiffin N, Chong JX, Samocha KE, Pierce-Hoffman E, Zappala Z, O'Donnell-Luria AH, Minikel EV, Weisburd B, Lek M, Ware JS, Vittal C, Armean IM, Bergelson L, Cibulskis K, Connolly KM, Covarrubias M, Donnelly S, Ferriera S, Gabriel S, Gentry J, Gupta N, Jeandet T, Kaplan D, Llanwarne C, Munshi R, Novod S, Petrillo N, Roazen D, Ruano-Rubio V, Saltzman A, Schleicher M, Soto J, Tibbetts K, Tolonen C, Wade G, Talkowski ME; Genome Aggregation Database Consortium; Neale BM, Daly MJ, MacArthur DG. The mutational constraint spectrum quantified from variation in 141,456 humans. Nature. 2020 May;581(7809):434-443. doi: 10.1038/s41586-020-2308-7. Epub 2020 May 27. Erratum in: Nature. 2021 Feb;590(7846):E53. Erratum in: Nature. 2021 Sep;597(7874):E3-E4. PMID: 32461654; PMCID: PMC7334197.
 		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
 		license	cite
 		source	$gnomadlof
@@ -571,30 +572,91 @@ job lofgnomad -deps {
 		
 		== Description ==
 		
-		The probability of being loss-of-function (LoF) intolerant (pLI) separates
-		genes of sufficient length into LoF intolerant (pLI >= 0.9, n=3,230) or
-		LoF tolerant (pLI <= 0.1, n=10,374) categories
+		This region annotation assigns two gene constraint metrics (pLI and LOEUF) to all
+		variants in the region covered by the gene (including intronic, etc.)
 
-		More info on https://gnomad.broadinstitute.org/faq
+		pLI is the the probability of being loss-of-function (LoF) intolerant. It separates
+		genes of sufficient length into LoF intolerant (pLI >= 0.9) or LoF tolerant (pLI <= 0.1) categories
+
+		Low LOEUF (loss-of-function observed/expected upper bound fraction) values are indicative of strong intolerance.
+		It is suggested to use LOEUF < 0.6 if a hard threshold is needed
+
+		As different metrics are available for each gene (per transcript), the one given here is the maximum pLI
+		and lowest LOEUF.
+
+		More info on https://gnomad.broadinstitute.org/help/constraint
 		and in https://www.nature.com/articles/nature19057
 		
 		== Category ==
 		Annotation
 	}]]
-	file_write [gzroot $target].opt "fields\tpLI\n"
+	file_write [gzroot $target].opt "fields\tpLI\tLOEUF\n"
 	file mkdir $target.temp
 	set tail [file tail $gnomadlof]
 	wgetfile $gnomadlof $target.temp/$tail
-	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
-	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
-	if {$build ne $gnomadlofbuild} {
-		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
-		liftover_refdb $target.temp/temp3.tsv $target $dest $gnomadlofbuild $build
-	} else {
-		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
-		file rename -force -- $target.temp2.zst $target
+	unset -nocomplain pLIa
+	unset -nocomplain LOEUFa
+	set f [gzopen $target.temp/$tail]
+	set header [tsv_open $f]
+	set poss [list_cor $header {gene gene_id lof.pLI lof.oe_ci.upper}]
+	while 1 {
+		if {[gets $f line] == -1} break
+		foreach {gene geneid pLI LOEUF} [list_sub [split $line \t] $poss] break
+		if {$pLI ne "NA" && (![info exists pLIa($gene)] || $pLIa($gene) < $pLI)} {
+			set pLIa($gene) $pLI
+		}
+		if {$LOEUF ne "NA" && (![info exists LOEUFa($gene)] || $LOEUFa($gene) > $LOEUF)} {
+			set LOEUFa($gene) $LOEUF
+		}
 	}
-	cg zstindex $target
+	gzclose $f
+	set f [gzopen [gzfile gene_${build}_intGene.tsv]]
+	set header [tsv_open $f]
+	set poss [list_cor $header {chrom start end gene geneid name2}]
+	unset -nocomplain genea
+	set genes {}
+	while 1 {
+		if {[gets $f line] == -1} break
+		foreach {chrom start end gene geneid name2} [list_sub [split $line \t] $poss] break
+		if {[regexp {_alt$} $chrom] || [regexp {_fix$} $chrom] || [regexp {_random$} $chrom]} continue
+		if {![info exists pLIa($gene)]} {
+			set gene $name2
+			if {![info exists pLIa($gene)]} {
+				set gene $name2
+				if {![info exists pLIa($gene)]} {
+					set gene $geneid
+					if {![info exists pLIa($gene)]} continue
+				}
+			}
+		}
+		if {![info exists genea($gene)]} {
+			set genea($gene) [list $chrom $start $end $gene]
+			lappend genes $gene
+		} else {
+			if {$chrom != [lindex $genea($gene) 0]} {
+				error "gene $gene on 2 chromosomes ($chrom and [lindex $genea($gene) 0])"
+			}
+			if {$start < [lindex $genea($gene) 1]} {
+				lset genea($gene) 1 $start
+			}
+			if {$end > [lindex $genea($gene) 2]} {
+				lset genea($gene) 2 $end
+			}
+		}
+		
+	}
+	gzclose $f
+	set o [wgzopen $target.temp/reg_${build}_lofgnomad.tsv.zst]
+	puts $o [join {chromosome begin end gene pLI LOEUF} \t]
+	foreach gene $genes {
+		set resultline $genea($gene)
+		lappend resultline $pLIa($gene) $LOEUFa($gene)
+		puts $o [join $resultline \t]
+	}
+	gzclose $o
+	cg select -s - $target.temp/reg_${build}_lofgnomad.tsv.zst $target.temp/reg_${build}_lofgnomad2.tsv.zst
+	file rename -force $target.temp/reg_${build}_lofgnomad2.tsv.zst reg_${build}_lofgnomad.tsv.zst
+	cg zstindex reg_${build}_lofgnomad.tsv.zst
 	file delete -force $target.temp
 }
 
@@ -844,7 +906,7 @@ job svgnomad -deps {
 		== Category ==
 		Annotation
 	}]]
-	file_write [gzroot $target].opt "fields\t{max_freqp nfe_freqp}\n"
+	file_write [gzroot $target].opt "fields\t{max_freqp eur_freqp}\n"
 	file mkdir $target.temp
 	set tail [file tail $gnomadsv]
 	wgetfile $gnomadsv $target.temp/$tail
