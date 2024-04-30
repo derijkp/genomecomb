@@ -122,7 +122,8 @@ proc ref_tsvtranscripts {refseq {job 0}} {
 		set reftranscripts $reftranscriptstsv
 	}
 	if {!$job && ![file exists $reftranscripts]} {
-		error "no tsv (or gtf) reference transcripts found in $refdir"
+		puts stderr "no tsv (or gtf) reference transcripts found in $refdir"
+		return ""
 	}
 	return $reftranscripts
 }
