@@ -223,6 +223,7 @@ VarFile *OpenVarfile(char *filename,int split) {
 	varfile->line = DStringNew();
 	varfile->headerline = DStringNew();
 	varfile->prevline = DStringNew();
+	varfile->numfields = 0;
 	gz_skip_header(varfile->f,varfile->headerline,&varfile->numfields,&varfile->pos);
 	varfile->header = DStringArrayNew(varfile->numfields+2);
 	varfile->result = DStringArrayNew(varfile->numfields+2);
