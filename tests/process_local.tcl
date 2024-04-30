@@ -222,9 +222,9 @@ test process_project {make_project, different tech} {
 	test_cleantmp
 	file_write tmp/samplesheet.tsv [deindent {
 		sample	seqfiles	preset	varcallers	svcallers
-		NA19240m data/seq_*.fq.gz	
-		sample2 data/seq_R1.fq.gz	srs	bcf	-
-		sample2 data/seq_R2.fq.gz	
+		NA19240m	data/seq_*.fq.gz	
+		sample2	data/seq_R1.fq.gz	srs	bcf	-
+		sample2	data/seq_R2.fq.gz	
 		ont	data/expected-pass_group_0.fastq.gz	ont	clair3	sniffles
 	}]
 	# cg make_project -stack 1 -transfer rel tmp tmp/samplesheet.tsv 
@@ -242,11 +242,11 @@ test process_project {make_project, different tech} {
 	lappend result [tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv]
 	#
 	lappend result [tsvdiff tmp/samples/sample2/var-bcf-dsbwa-sample2.tsv.zst data/var-bcf-bwa.tsv]
-	lappend result [glob tmp/samples/ont/var-clair3-dsbwa-ont.tsv.zst tmp/samples/ont/sv-sniffles-dsbwa-ont.tsv.zst]
+	lappend result [glob tmp/samples/ont/var-clair3-sminimap2-ont.tsv.zst tmp/samples/ont/sv-sniffles-sminimap2-ont.tsv.zst]
 	#
 	lappend result [cg select -n tmp/compar/annot_compar-tmp.tsv.zst]
 	join [list_remove $result {}] \n
-} {tmp/samples/ont/var-clair3-dsbwa-ont.tsv.zst tmp/samples/ont/sv-sniffles-dsbwa-ont.tsv.zst
+} {tmp/samples/ont/var-clair3-sminimap2-ont.tsv.zst tmp/samples/ont/sv-sniffles-sminimap2-ont.tsv.zst
 NA19240m
 ont
 sample2}

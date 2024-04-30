@@ -1296,7 +1296,7 @@ test fixtsv {basic fixtsv} {
 	catch {cg fixtsv tmp/test.tsv tmp/test2.tsv} msg
 	exec diff tmp/test2.tsv tmp/expected.tsv
 	set msg
-} {header shows duplicate fields begin, removing
+} {header shows duplicate fields (begin), removing
 line 1 is of wrong length: 5 iso 7	2 8 9 a b, fixing
 line 2 is of wrong length: 8 iso 7	3 8 9 a b 8 c d, fixing}
 
