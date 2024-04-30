@@ -431,6 +431,7 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 			zstd_skipframe(res);
 			zstd_readheader(res);
 		}
+		if (feof(res->finput)) {return 0;}
 		zstd_readframe(res);
 	} else if (!res->frameread) {
 		zstd_readframe(res);
@@ -441,6 +442,7 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 			zstd_skipframe(res);
 			zstd_readheader(res);
 		}
+		if (feof(res->finput)) {return 0;}
 		zstd_readframe(res);
 	}
 	while (1) {
