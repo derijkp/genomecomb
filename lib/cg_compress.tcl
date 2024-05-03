@@ -1,4 +1,5 @@
 proc cg_compress_job args {
+	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg compress {*}$args]
 	set keep {}
 	set compressionlevel {}
@@ -41,7 +42,6 @@ proc cg_compress_job args {
 		if {$outputfile eq ""} {set outputfile -}
 	}
 	if {[job_distribute] ne "0"} {
-		upvar job_logdir job_logdir
 		if {$args eq "-" || $outputfile eq "-"} {
 			error "cannot run compression job distributed on stdin/stdout"
 		}
