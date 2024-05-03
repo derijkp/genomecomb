@@ -903,7 +903,7 @@ proc process_sample_job {args} {
 		# clipped fastqs are used for all aligners!
 		foreach aligner $aligners {
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			set bamfile $sampledir/map-${aligner}-$sample.bam
+			set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 			lappend skips $bamfile $sampledir/barcode2celbarcode.tsv
 			lappend skipsresult $resultbamfile $sampledir/barcode2celbarcode.tsv
 			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
@@ -1043,7 +1043,7 @@ proc process_sample_job {args} {
 			# clipped fastqs are used for all aligners!
 			foreach aligner $aligners {
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-				set bamfile $sampledir/map-${aligner}-$sample.bam
+				set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 				lappend skips $bamfile
 				lappend skipsresult $resultbamfile
 				# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
@@ -1082,7 +1082,7 @@ proc process_sample_job {args} {
 					}
 				}
 				foreach aligner $aligners {
-					set bamfile $sampledir/map-${aligner}-$sample.bam
+					set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 					set target $resultbamfile.temp/[file_root [file tail [lindex $files 0]]].sam.zst
 					lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
@@ -1102,7 +1102,7 @@ proc process_sample_job {args} {
 					# alignment per fastq per aligner
 					# do not do any of preliminaries if end product is already there
 					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-					set bamfile $sampledir/map-${aligner}-$sample.bam
+					set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 					file mkdir $resultbamfile.temp
 					job_cleanup_add $resultbamfile.temp
 					set target $resultbamfile.temp/$pbase.sam.zst
@@ -1135,7 +1135,7 @@ proc process_sample_job {args} {
 				# and distribute again over if -distrreg i set (for distributed cleaning)
 				# do not do any of preliminaries if end product is already there
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-				set bamfile $sampledir/map-${aligner}-$sample.bam
+				set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 				if {$distrreg in {0 ""}} {
 					set tempbamfile $bamfile
 				} else {
