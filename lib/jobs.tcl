@@ -887,7 +887,7 @@ proc job_log {job args} {
 	foreach message $args {
 		lappend cgjob(buffer,$job) "[job_timestamp]\t$message"
 	}
-	if {![llength $cgjob(buffer,$job)]} return
+	if {![llength [get cgjob(buffer,$job) {}]]} return
 	if {![info exists cgjob(f,$job)]} {
 		set cgjob(f,$job) [open [job.file log $job] a]
 	}
@@ -922,8 +922,8 @@ proc job_logclose {job args} {
 	job_log $job
 	set f $cgjob(f,$job)
 	catch {close $f}
-	unset cgjob(f,$job)
-	unset cgjob(buffer,$job)
+	unset -nocomplain cgjob(f,$job)
+	unset -nocomplain cgjob(buffer,$job)
 }
 
 proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {

@@ -94,8 +94,8 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets
 				}
 			}
 			if {$doskip} {
-				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_logfile_add $job . skipped $ftargets $cores "skip targets already completed or running" $submittime
+				job_log $job "skipping $jobname: skip targets ($skip) already completed or running"
+				job_logfile_add $job . skipped $ftargets $cores "skip targets ($skip) already completed or running" $submittime
 				job_logclose $job
 				return
 			}
@@ -133,7 +133,11 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps ftargetvars ftargets
 			job_logclose $job
 			return
 		}
-		if {$joberror ne ""} {error $joberror}
+		if {$joberror ne ""} {
+			job_logclose $job
+			error $joberror
+		}
+		job_logclose $job
 	# compile info
 #set o [open ~/tmp/temp a]
 #puts $o "===== [file tail $job] ====="

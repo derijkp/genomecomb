@@ -103,7 +103,7 @@ proc job_process_direct {} {
 				}
 			}
 			if {$doskip} {
-				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_log $job "skipping $jobname: skip targets ($skip) already completed or running"
 				job_logfile_add $job . skipped $ftargets $cores "skip targets ($skip) already completed or running" $submittime
 				job_logclose $job
 				continue
@@ -170,6 +170,7 @@ proc job_process_direct {} {
 			if ($cgjob(skipjoberrors)) {
 				putslog $result
 			} else {
+				job_logclose $job
 				error $result $::errorInfo
 			}
 		}

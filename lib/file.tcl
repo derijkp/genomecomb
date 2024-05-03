@@ -183,3 +183,21 @@ proc file_write_gz {args} {
 	puts -nonewline $f $list
 	close $f
 }
+
+if {[info commands genomecomb::open.ori] eq ""} {
+	rename open genomecomb::open.ori
+}
+proc open args {
+	set f [genomecomb::open.ori {*}$args]
+	set ::genomecomb_gzopen_info($f) $args
+	return $f
+}
+
+if {[info commands genomecomb::close.ori] eq ""} {
+	rename close genomecomb::close.ori
+}
+proc close f {
+	if {$f in "stdout stderr"} {return $}
+	genomecomb::close.ori $f
+	unset ::genomecomb_gzopen_info($f)
+}

@@ -152,6 +152,7 @@ proc job_process_parstatus {} {
 			}
 			puts "skipped\t$jobname\t\tdependencies not found\t$job"
 			job_logfile_add $job . skipped $ftargets $cores "dependencies not found" $submittime
+			job_logclose $job
 			continue
 		}
 		set targetvars $ftargetvars
@@ -191,6 +192,7 @@ proc job_process_parstatus {} {
 			puts "ok\t$jobname\t$jobnum\t$duration\ttargets found\t$job"
 			job_logfile_add $job $jobnum finished $targets $cores "" $submittime
 			job_process_pargraph $job $jobname ok $duration $checkcompressed $adeps $ids $targets
+			job_logclose $job
 			continue
 		} else {
 			puts "wrong\t$jobname\t$jobnum\t\ttargets not ok, no error file\t$job"
@@ -198,6 +200,7 @@ proc job_process_parstatus {} {
 			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets
 		}
 		set cgjob_running($job) $jobnum
+		job_logclose $job
 	}
 	cd $jobroot
 }

@@ -105,21 +105,33 @@ proc wgzopen {file {compressionlevel -1} {threads {}} {pipe {}}} {
 			if {$pipe eq ""} {
 				return stdout
 			} else {
-				return [open [list {*}$pipe >@ stdout" w]
+				set o [open [list {*}$pipe >@ stdout" w]
+				set ::genomecomb_gzopen_info($o) $pipe
+				return $o
 			}
 		} else {
-			return [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
+			set o [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] >@ stdout] w]
+			set ::genomecomb_gzopen_info($o) $pipe
+			return $o
 		}
 	} elseif {![gziscompressed $file]} {
 		if {$pipe eq ""} {
-			return [open $file w]
+			set o [open $file w]
+			set ::genomecomb_gzopen_info($o) $file
+			return $o
 		} else {
-			return [open [list {*}$pipe > $file] w]
+			set o [open [list {*}$pipe > $file] w]
+			set ::genomecomb_gzopen_info($o) $pipe
+			return $o
 		}
 	} elseif {$pipe eq ""} {
-		return [open [list {*}[compresspipe $file $compressionlevel $threads] > $file] w]
+		set o [open [list {*}[compresspipe $file $compressionlevel $threads] > $file] w]
+		set ::genomecomb_gzopen_info($o) $file
+		return $o
 	} else {
-		return [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] > $file] w]
+		set o [open [list {*}$pipe {*}[compresspipe $file $compressionlevel $threads] > $file] w]
+		set ::genomecomb_gzopen_info($o) $pipe
+		return $o
 	}
 }
 
@@ -214,6 +226,7 @@ proc gzcloseout {f} {
 		regsub "\n?child process exited abnormally\$" $error {} error
 		error $error
 	}
+	unset -nocomplain ::genomecomb_gzopen_info($f)
 }
 
 proc gzcatch {cmd} {
@@ -559,4 +572,3 @@ proc zstindex_job {args} {
 		zstindex $dep
 	}
 }
-
