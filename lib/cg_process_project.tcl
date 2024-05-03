@@ -228,7 +228,7 @@ proc process_project_job {args} {
 			set extra_reports_mastr $value
 		}
 		-jobsample {
-			if {$value ni {0 1}} {error "-jobsample must be 0 or 1"}
+			if {![isint $value]} {error "-jobsample must be an integer"}
 			set jobsample $value
 		}
 		-keepsams {
@@ -402,10 +402,14 @@ proc process_project_job {args} {
 			if {$targetfile ne ""} {lappend deps $targetfile}
 			logverbose $verbose
 			# run the actual job with deps and targets found
-			job process_sample-$sample -deps $deps -targets $targets -vars {
-				sampleargs dir
+			job process_sample-$sample -cores $jobsample -deps $deps -targets $targets -vars {
+				sampleargs dir jobsample
 			} -code {
-				cg process_sample -stack 1 -v 2 {*}$sampleargs $dir >@ stdout 2>@ stderr
+				if {$jobsample > 1} {
+					cg process_sample -stack 1 -v 2 -d $jobsample {*}$sampleargs $dir >@ stdout 2>@ stderr
+				} else {
+					cg process_sample -stack 1 -v 2 {*}$sampleargs $dir >@ stdout 2>@ stderr
+				}
 			}
 		}
 	}
