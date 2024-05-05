@@ -19,6 +19,8 @@ proc cg_tsv2sam {args} {
 		set outformat bam
 	} elseif {[file extension $samfile] eq ".sam"} {
 		set outformat sam
+	} elseif {[file extension $samfile] eq ".cram"} {
+		set outformat cram
 	}
 	set tsvcompressed [gziscompressed $tsvfile]
 	if {$samfile eq "-"} {
