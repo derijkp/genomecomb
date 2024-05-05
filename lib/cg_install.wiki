@@ -1,0 +1,37 @@
+= help =
+
+== Format ==
+cg install ?options? ?item? ...
+
+== Summary ==
+easy install of optional dependencies (external software used by genomecomb for some analysis) 
+and some reference databases.
+
+== Description ==
+cg install makes it easy to install external software and reference databases provided on the genomecomb
+website by just giving a list of items to be installed to the command. There are 3 types of items:
+; binaries: binary distributions (application dirs) of software (optionally) used by genomecomb
+; references: reference directories (genome sequence and all types of annotation)
+; presets : installs all binaries needed for running the given preset, e.g. ont will install minimap2,sniffles,cutesv,clair3 and modkit
+
+You can get the names of supported items (organized in 3 categaories) by giving the command without arguments:
+{{{
+cg install
+}}}
+
+By default the binaries are installed in the genomecomb extra directory,
+making them only available to genomecomb (unless you would put that in the
+PATH). In the extra directory, they are also the primary choice
+(overruling installs in other places). refdirs are by default installed 
+The locations can be overruled with the options -bindir and -refdir
+(bindir should be in PATH for the install to work).
+
+== Arguments ==
+; **item**: name/id of software/refdb to install
+
+== Options ==
+; **-refdir directory**: reference directories will be installed in the given location
+; **-bindir directory**: software/binaries will be installed in the given location
+
+== Category ==
+Convenience

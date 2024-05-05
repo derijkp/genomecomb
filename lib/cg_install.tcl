@@ -13,6 +13,7 @@ proc cg_install {args} {
 		hg38-cadd	ref	https://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.109.0.tar.gz
 		hg38-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_hg38-minimap2-0.109.0.tar.gz
 		hg38-star	ref	https://genomecomb.bioinf.be/download/refdb_hg38-star-0.109.0.tar.gz
+		hg38-dbnsfp	ref	https://dbnsfp.s3.amazonaws.com/dbNSFP4.5a.zip
 		liftover	ref	https://genomecomb.bioinf.be/download/refdb_liftover-0.106.0.tar.gz
 		mm10	ref	https://genomecomb.bioinf.be/download/refdb_mm10-0.106.0.tar.gz
 		mm10-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.106.0.tar.gz
@@ -27,7 +28,7 @@ proc cg_install {args} {
 
 		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-1.0.4-linux-x86_64.tar.gz
 		cutesv	bin	https://genomecomb.bioinf.be/download/extra/cutesv-1.0.11-linux-x86_64.tar.gz
-		dirR	bin	https://genomecomb.bioinf.be/download/extra/dirR-4.2.1-linux-x86_64.tar.gz
+		dirR	bin	https://genomecomb.bioinf.be/download/extra/dirR-4.2.1-2-linux-x86_64.tar.gz
 		flair	bin	https://genomecomb.bioinf.be/download/extra/flair-2.0-linux-x86_64.tar.gz
 		flames	bin	https://genomecomb.bioinf.be/download/extra/flames-c1_413e09c-linux-x86_64.tar.gz
 		flye	bin	https://genomecomb.bioinf.be/download/extra/flye-2.9.2-linux-x86_64.tar.gz
@@ -46,7 +47,6 @@ proc cg_install {args} {
 		java	bin	https://genomecomb.bioinf.be/download/extra/openjdk-22-linux-x86_64.tar.gz
 		picard	bin	https://genomecomb.bioinf.be/download/extra/picard-2.21.3-java.tar.gz
 		python3	bin	https://genomecomb.bioinf.be/download/extra/python3-3.9-linux-x86_64.tar.gz
-		scywalker	bin	https://genomecomb.bioinf.be/download/extra/scywalker-0.108.0-Linux-x86_64.tar.gz
 		sniffles	bin	https://genomecomb.bioinf.be/download/extra/sniffles-2.2-linux-x86_64.tar.gz
 		sqanti3	bin	https://genomecomb.bioinf.be/download/extra/sqanti3-4.2-linux-x86_64.tar.gz
 		star	bin	https://genomecomb.bioinf.be/download/extra/STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz
@@ -77,6 +77,9 @@ proc cg_install {args} {
 	}
 	set items {}
 	foreach item $args {
+		if {![info exists typea($item)]} {
+			error "cannot install: unknown item $item"
+		}
 		set type $typea($item)
 		if {$type eq "preset"} {
 			foreach item $urla($item) {
@@ -109,11 +112,22 @@ proc cg_install {args} {
 			puts "Downloading $item ($type) from $url"
 			mkdir $refdir
 			cd $refdir
-			set tempfile [tempdir]/[file tail $url]
-			wgetfile $urla($item) $tempfile
-			puts "Installing $item ($type) in $refdir from $url"
-			exec tar xvzf $tempfile
-			file delete $tempfile
+			if {$item eq "hg38-dbnsfp"} {
+				set dbnsfpurl https://dbnsfp.s3.amazonaws.com/dbNSFP4.5a.zip
+				set dbnsfpbuild hg38
+				puts "$item: This may take a lot longer than others, as this is not preconverted:"
+				puts "It is downloaded directly from the soure ($dbnsfpurl) and converted on your machine"
+				puts "It's use is limited by a license, read this before use"
+				puts "Installing $item ($type) in $refdir ..."
+				mkdir hg38 ; cd hg38
+				cg download_dbnsfp extra/var_hg38_dbnsfp.tsv.zst hg38 $dbnsfpurl $dbnsfpbuild
+			} else {
+				set tempfile [tempdir]/[file tail $url]
+				wgetfile $urla($item) $tempfile
+				puts "Installing $item ($type) in $refdir from $url"
+				exec tar xvzf $tempfile
+				file delete $tempfile
+			}
 		}
 	}
 }
