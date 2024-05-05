@@ -55,6 +55,22 @@ website](https://derijkp.github.io/genomecomb/install.html). These can be
 made generally available (put in the PATH) or to genomecomb only by
 putting them in the directory extra in the genomecomb app directory.
 
+Installation quickstart example:
+```
+cd ~/bin
+wget https://genomecomb.bioinf.be/download/genomecomb-0.109.0-Linux-x86_64.tar.gz
+tar xvzf genomecomb-0.109.0-Linux-x86_64.tar.gz
+
+# optional if ~/bin is not in your PATH already
+export PATH=$HOME/bin:$PATH
+# or make a softlink to something in the PATH already
+ln -s ~/bin/genomecomb-0.109.0-Linux-x86_64/cg /usr/local/bin/cg
+
+# Install the hg38 reference databases and the software needed to run the ont and srs (short read) presets.
+cg install hg38 hg38-cadd hg38-minimap2 srs ont
+
+```
+
 Documentation
 -------------
 A general overview of how to use the program is given in the help.
@@ -105,4 +121,4 @@ Universiteitsplein 1
 B-2610 Antwerpen, Belgium
 
 tel.: +32-03-265.10.40
-E-mail: Peter.DeRijk@uantwerpen.vib.be
+E-mail: Peter.DeRijk@uantwerpen.be
