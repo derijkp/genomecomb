@@ -1,0 +1,21 @@
+= tsv2gtf =
+
+== Format ==
+cg tsv2gtf ?infile? ?outfile?
+
+== Summary ==
+Converts data in tab-separated format ([[tsv]]) format to gtf format.
+
+== Arguments ==
+; **infile**: file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -upstream integer: Add upstream info in gtf (integer gives size)
+; -nocds 0/1: do not include cds info in output (default 0, so do include it)
+; -genecol fieldname: specify which column (fielname) in the tsv will be used to name the genes in the gtf
+; -addgene 0/1: Add gene information lines (1) or not (0) in the gtf output (default 0)
+
+== Category ==
+Format Conversion
+

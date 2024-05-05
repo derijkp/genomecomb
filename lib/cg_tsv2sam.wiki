@@ -1,0 +1,20 @@
+= tsv2sam =
+
+== Format ==
+cg tsv2sam ?infile? ?outfile?
+
+== Summary ==
+Converts data in tab-separated format ([[tsv]]) format to sam,bam or cram format.
+
+== Arguments ==
+; **infile**: file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -outformat sam/bam/cram: sets the desired output format (when the filename does not have one of the supported extensions, our when streaming to stdout)
+; -refseq file: reference sequence (needed when making cram files)
+; -threads integer: number of threads used
+
+== Category ==
+Format Conversion
+

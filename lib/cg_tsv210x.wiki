@@ -1,0 +1,20 @@
+= tsv210x =
+
+== Format ==
+cg tsv210x ?infile? ?outfile?
+
+== Summary ==
+Converts data in tab-separated format ([[tsv]]) format to the 10x format.
+
+== Arguments ==
+; **infile**: file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -featurefields string (-genefields): fieldnames to be used to extract gene information (default uses all of geneid,gene_id,gene which are present)
+; -cellbarcodefield string: fieldname of column to be used to extract cellbarcodes from (default uses first of cell,cellbarcode,barcode present)
+; -countfield string: fieldname of column to be used to extract counts from (default uses first icount,count present)
+
+== Category ==
+Format Conversion
+

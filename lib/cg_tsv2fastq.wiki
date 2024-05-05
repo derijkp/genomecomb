@@ -1,0 +1,15 @@
+= tsv2fastq =
+
+== Format ==
+cg tsv2fastq ?infile? ?outfile?
+
+== Summary ==
+Converts data in tab-separated format ([[tsv]]) format to fastq format.
+
+== Arguments ==
+; **infile**: file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Category ==
+Format Conversion
+
