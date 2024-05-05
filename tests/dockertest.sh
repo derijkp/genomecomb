@@ -99,7 +99,7 @@ if [ "$1" = "stage2" ] ; then
 	if [[ "$image" =~ centos ]] ; then
 		echo "installing sudo ($image)"
 		# to stop "checksum is invalid" errors when using yum in 32 bit docker
-		if [ "$image" =~ linux-ix86 ] ; then
+		if [[ "$image" =~ linux-ix86 ]] ; then
 			if ! rpm --quiet --query yum-plugin-ovl; then
 				yum install -q -y yum-plugin-ovl
 			fi
