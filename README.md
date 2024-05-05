@@ -37,7 +37,7 @@ genomecomb executable (cg) and all needed depencies compiled in a way they
 should work on all (except very ancient) Linux systems.
 
 Installation of the package is as simple as downloading the 
-[archive](https://github.com/derijkp/genomecomb/releases/download/0.106.0/genomecomb-0.106.0-Linux-x86_64.tar.gz)
+[archive](https://github.com/derijkp/genomecomb/releases/download/0.109.0/genomecomb-0.109.0-Linux-x86_64.tar.gz)
 and unpacking it somewhere. You can either call the executable (cg) directly
 from the directory, or put a soft-link to it somehwere in the path. (The
 executable itself must stay in the application directory to work.)

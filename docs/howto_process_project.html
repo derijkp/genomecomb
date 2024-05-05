@@ -141,13 +141,45 @@ on the cluster using -d sge (for Sun Grid Engine) or -d slurm</p>
 only a small part of the genome) more extensive distribution would
 actually give more work (overhead) than it saves (esp. giving it only
 2 cores to work with)</p>
-<h2 id="h4206">Results</h2>
+<h2 id="h4206">Troubleshooting</h2>
+<p>Errors in the submission command (e.g. the given reference dir
+does not exists) are returned immediately. You can get more extensive
+information on such errors by adding the -stack 1 option (and
+possible the optiuon -v 2) When running distributed (option -d with
+sge, slurm, or a number of cores), scywalker can also encounter
+errors in the submitted jobs. Information on submitted jobs is
+gathered in a directory log_jobs (files per job) and in a tsv log
+file name typically named process_project*.&lt;ext&gt;, where
+&lt;ext&gt; can be</p>
+
+<ul>
+  <li><b>submitting</b> when not all jobs are submitted yet</li>
+  <li><b>running</b> when the submission command is finished, but
+  some jobs are still running (e.g. on cluster)</li>
+  <li><b>finished</b> on successful completion (when all jobs are
+  ready and there were no errors, the log_jobs directory is deleted)</li>
+  <li><b>error</b> when all jobs are ready, but some had errors</li>
+</ul>
+<p>When there was an error in one job, all jobs that depend on
+results of that job will also have errors (dependencies that are not
+found), so you typically want to look for the first error. You can do
+this by checking/querying the (tsv) log file. The convenience
+function error_report can be used to get a more nicely formatted
+overview of the errors (if you do not specify the logfile, it will
+take the most recent one in the current working directory):</p>
+<pre>
+cg error_report ?logfile?
+</pre>
+<p>In this you can check the error messages, time run, etc. With the
+<b>runfile</b> given in this output, you can try to run specific jobs
+separately</p>
+<h2 id="h5727">Results</h2>
 <p>All analysis results are added in the projectdir, as described in <a
 href="projectdir.html">projectdir</a>. You can check the
 process_project_*.finished file (tsv) for information on how long
 jobs took etc. If there was an error, the file will be called
 process_project_*.error, and contains info on the error(s).</p>
-<h2 id="h4509">View results</h2>
+<h2 id="h6030">View results</h2>
 <p><a href="cg_viz.html">cg viz</a> allows an easy (graphical
 interface) view of the results.</p>
 <pre>
@@ -158,7 +190,7 @@ href="format_tsv.html">format_tsv</a>) using cg viz, allowing you to
 browse through the table (even if it is millions of lines long). Look
 in <a href="howto_view.html">howto_view</a> for some examples of what
 to do in cg viz.</p>
-<h2 id="h4920">Flexible queries using cg select</h2>
+<h2 id="h6441">Flexible queries using cg select</h2>
 <p><a href="cg_select.html">cg select</a> can be used to query the
 result files: selecting or adding fields, selecting variants
 fullfilling given criteria or making summaries using a command line
@@ -209,7 +241,7 @@ cg select \
     tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst tmp/utr2.tsv
 
 </pre>
-<h2 id="h7753">References</h2>
+<h2 id="h9274">References</h2>
 <p>The following is an example text describing the default
 process_project workflow for Illumina sequencing with the proper
 references (The &lt;version&gt; actually used for the various tools
@@ -239,16 +271,17 @@ and annotated using genomecomb (1).
 (9) manta &lt;version&gt;, Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and cancer sequencing applications. Bioinformatics, 32, 1220-1222 [PMID: 26647377]
 (10) lumpy &lt;version&gt;, Layer M.R. et al. (2014) LUMPY: a probabilistic framework for structural variant discovery. Genome biology, 15(6), R84 [PMID: 24970577]
 </pre>
-<h3 id="h11525">Reference Variations</h3>
+<h3 id="h13046">Reference Variations</h3>
 <p>Adapt this according to the analysis tools used. The actual
 versions used can be found in the analysisinfo files. In the example
 we did not run lumpy (which gives an error on too small a dataset),
 so this should be removed from the text. If other tools were used,
 add them in the text and the references.</p>
 <p>For amplicon sequencing, the markduplicates part should be
-removed, and the following part added after making the realignment:
-Amplicon primers were clipped using genomecomb (1)</p>
-<p>}}}</p>
+removed, and the following part added after making the realignment:</p>
+<pre>
+Amplicon primers were clipped using genomecomb (1)
+</pre>
 </div>
 
 <div id="right">

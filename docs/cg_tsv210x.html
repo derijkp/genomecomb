@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_process_rnaseq</title>
+<title>/home/peter/dev/genomecomb/lib/cg_tsv210x</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,25 +49,36 @@
 
 <div id="middle">
 
-<h1 id="h1">process_rnaseq</h1>
-<h2 id="h22">Format</h2>
-<p>cg process_rnaseq destdir libtype bowtie_index gff</p>
-<h2 id="h87">Summary</h2>
-<p>processes rnaseq samples from fastq to count table</p>
-<h2 id="h154">Library type</h2>
-<p>Library Type Examples Description fr-unstranded Standard Illumina
-Reads from the left-most end of the fragment (in transcript
-coordinates) map to the transcript strand, and the right-most end
-maps to the opposite strand. fr-firststrand dUTP, NSR, NNSR Same as
-above except we enforce the rule that the right-most end of the
-fragment (in transcript coordinates) is the first sequenced (or only
-sequenced for single-end reads). Equivalently, it is assumed that
-only the strand generated during first strand synthesis is sequenced.
-fr-secondstrand Ligation, Standard SOLiD Same as above except we
-enforce the rule that the left-most end of the fragment (in
-transcript coordinates) is the first sequenced (or only sequenced for
-single-end reads). Equivalently, it is assumed that only the strand
-generated during second strand synthesis is sequenced.</p>
+<h1 id="h1">tsv210x</h1>
+<h2 id="h15">Format</h2>
+<p>cg tsv210x ?infile? ?outfile?</p>
+<h2 id="h59">Summary</h2>
+<p>Converts data in tab-separated format (<a href="tsv.html">tsv</a>)
+format to the 10x format.</p>
+<h2 id="h148">Arguments</h2>
+
+<dl>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given (or -), uses stdin. File
+  may be compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
+</dl>
+<h2 id="h325">Options</h2>
+
+<dl>
+  <dt>-featurefields string (-genefields)</dt>
+  <dd>fieldnames to be used to extract gene information (default
+  uses all of geneid,gene_id,gene which are present)</dd>
+  <dt>-cellbarcodefield string</dt>
+  <dd>fieldname of column to be used to extract cellbarcodes from
+  (default uses first of cell,cellbarcode,barcode present)</dd>
+  <dt>-countfield string</dt>
+  <dd>fieldname of column to be used to extract counts from
+  (default uses first icount,count present)</dd>
+</dl>
+<h2 id="h752">Category</h2>
+<p>Format Conversion</p>
 </div>
 
 <div id="right">

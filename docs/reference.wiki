@@ -1,4 +1,4 @@
-= Genomecomb 0.108.0 Reference =
+= Genomecomb 0.109.0 Reference =
 
 == Format ==
 cg subcommand ?options? ....
@@ -52,6 +52,7 @@ Can also be specified using the environment variable SHADOWDIR.
 ; [[cg_process_project|process_project]]: process a sequencing project directory ([[projectdir]]), generating full
 analysis information (variant calls, multicompar, reports, ...) starting
 from raw sample data from various sources.
+; [[cg_make_project|make_project]]: Create a project directory from a samplesheet.
 ; [[cg_makerefdb|makerefdb]]: Create a reference sequence and annotation databases directory
 ; [[cg_process_multicompar|process_multicompar]]: process a sequencing project directory. 
 This expects a genomecomb directory with samples already processed and
@@ -114,6 +115,7 @@ sample data that can come from various sources.
 other than the first).
 ; [[cg_checktsv|checktsv]]: Checks the given tsv file for errors
 ; [[cg_collapsealleles|collapsealleles]]: Convert a split variant file to unsplit by collapsing alleles of the same variant into one line.
+; [[cg_fixtsv|fixtsv]]: fix erors in a tsv file
 ; [[cg_graph|graph]]: Visualization of large tsv files as a scatter plot
 ; [[cg_index|index]]: make indices for a tsv file
 ; [[cg_less|less]]: view a (possibly compressed) file using the pager less.
@@ -135,6 +137,7 @@ in e.g. cg liftregion.
 ; [[cg_fastq_split|fastq_split]]: split a (large) fastq file in multiple smaller ones
 
 === Format Conversion ===
+; [[cg_10x2tsv|10x2tsv]]: Converts data in 10x format to the tab-separated format ([[tsv]]).
 ; [[cg_bam2fastq|bam2fastq]]: Extracts reads from a bamfile into fastq. 
 The actual extraction is based on picard's SamToFastq or samtools bam2fq, but the data is 
 prepared first (ao. sorted by name to avoid the problems caused by position sorted fq files)
@@ -158,11 +161,14 @@ these annotations (and more) can be done in genomecomb.
 ; [[cg_convcgcnv|convcgcnv]]: Convert the Complete Genomics CNV files to the cg format
 ; [[cg_convcgsv|convcgsv]]: Convert the Complete Genomics SV files to the cg format
 ; [[cg_csv2tsv|csv2tsv]]: Converts comma-separated value (csv) data to tab-sparated ([[tsv]])
+; [[cg_fasta2tsv|fasta2tsv]]: Converts data in fasta format to tab-separated format ([[tsv]]).
+; [[cg_fastq2tsv|fastq2tsv]]: Converts data in fastq format to tab-separated format ([[tsv]]).
 ; [[cg_gb2fasta|gb2fasta]]: Comverts a genbank file to a fasta file
 The file may contain multiple sequences. The name of the sequence (in the fasta file)
 is taken from one of the following fields (in order, if not empty or .):
 LOCUS, VERSION, ACCESSION, KEYWORDS, DEFINITION
 ; [[cg_gene2reg|gene2reg]]: Extract gene elements from data in genepred-like format to a (tab separated) region file.
+; [[cg_genepred2tsv|genepred2tsv]]: Converts data in genepred format to tab-separated format ([[tsv]]).
 ; [[cg_gff2tsv|gff2tsv]]: Converts data in gff format to gene tsv format
 ; [[cg_gtf2tsv|gtf2tsv]]: Converts data in gtf format to gene tsv (tab separated) format
 ; [[cg_keyvalue|keyvalue]]: Converts data in tsv format from wide format (data for each sample in separate columns) 
@@ -175,10 +181,16 @@ included in the comments. Extra fields in the sam file are kept as
 field:type:value, but put together as a list in a column named other.
 Optionally the values for some extra fields can be split into different
 columns using the -fields option.
+; [[cg_tsv210x|tsv210x]]: Converts data in tab-separated format ([[tsv]]) format to the 10x format.
 ; [[cg_tsv2bed|tsv2bed]]: Converts data in tab-separated format ([[tsv]]) format to bed format.
 By default it will create a minimal bed file by extracting chromosome,begin and end
 from the input using the default fields.
 ; [[cg_tsv2csv|tsv2csv]]: Converts tab-sparated ([[tsv]]) data to comma-separated value (csv)
+; [[cg_tsv2fasta|tsv2fasta]]: Converts data in tab-separated format ([[tsv]]) format to fasta format.
+; [[cg_tsv2fastq|tsv2fastq]]: Converts data in tab-separated format ([[tsv]]) format to fastq format.
+; [[cg_tsv2gff|tsv2gff]]: Converts data in tab-separated format ([[tsv]]) format to gff format.
+; [[cg_tsv2gtf|tsv2gtf]]: Converts data in tab-separated format ([[tsv]]) format to gtf format.
+; [[cg_tsv2sam|tsv2sam]]: Converts data in tab-separated format ([[tsv]]) format to sam,bam or cram format.
 ; [[cg_tsv2vcf|tsv2vcf]]: Converts data in genomecomb tab-separated variant format ([[tsv]]) to vcf.
 ; [[cg_vcf2tsv|vcf2tsv]]: Converts data in vcf format to genomecomb tab-separated variant file ([[tsv]]).
 The command will also sort the tsv appropriately.
@@ -194,6 +206,7 @@ A histo file is generated at the location of the bam file
 ; [[cg_predictgender|predictgender]]: predicts gender for a sample
 
 === Info ===
+; [[cg_error_report|error_report]]: display help
 ; [[cg_help|help]]: display help
 ; [[cg_version|version]]: return version information
 ; [[cg_versions|versions]]: return version information as a tsv
@@ -218,6 +231,10 @@ A histo file is generated at the location of the bam file
 === Mapping ===
 ; [[cg_map|map]]: align reads in fastq files to a reference genome using a variety of methods
 
+=== Convenience ===
+; [[cg_install|install]]: easy install of optional dependencies (external software used by genomecomb for some analysis) 
+and some reference databases.
+
 === Dev ===
 ; [[cg_qsub|qsub]]: submit a command to the cluster (grid engine).
 ; [[cg_sh|sh]]: runs a shell in which genomecomb commands can be input and executed interactively.
@@ -225,7 +242,7 @@ A histo file is generated at the location of the bam file
 ; [[cg_tsvdiff|tsvdiff]]: compare tsv files
 
 === Tools ===
-; [[cg_cplinked|cplinked]]: create a copy of a directory where each file in it is a softlink to the src.
+; [[cg_cplinked|cplinked]]: create a copy of a directory (or directories) where each file in it is a softlink to the src.
 ; [[cg_hardsync|hardsync]]: creates a hardlinked copy of a directory in another location
 ; [[cg_mklink|mklink]]: Create softlinks (improved)
 ; [[cg_shadow_mkdir|shadow_mkdir]]: create a shadowed dir

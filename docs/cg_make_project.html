@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+
+<html>
+<head>
+<title>/home/peter/dev/genomecomb/lib/cg_make_project</title>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="MSSmartTagsPreventParsing" content="TRUE">
+<meta name="keywords" content="GenomeComb, genome sequencing, genome comparison, filtering, annotation">
+<meta http-equiv="expires" content="-1">
+<meta http-equiv= "pragma" CONTENT="no-cache">
+
+<link rel="stylesheet" href="css/default.css" type="text/css"/> 
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24207049-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+
+
+<iframe class="ahem"><font color="#808080"><big>[You are using an out of date browser. This site will look better if you <a href="http://www.webstandards.org/upgrade/" target="ala" title="The Web Standards Project's BROWSER UPGRADE initiative.">upgrade</a> to a current browser that supports web standards. The upgrade link will take you to the new versions of Netscape, Explorer, and Opera. Thanks.]</big></font></iframe>
+<a name="top"> </a>
+<div id="top">
+<p class="top"><br>GenomeComb</p>
+</div>
+
+<div id="left">
+<h2 class = "menu_2"><a href="index.html">Home</a></h2>
+<h2 class = "menu_2"><a href="contact.html">Contact</a></h2>
+<h2 class = "menu_2"><a href="install.html">Installation</a></h2>
+<h2 class = "menu_2"><a href="intro.html">Documentation</h2>
+<p class = "menu_mt"><a href="intro.html">Introduction</a></p>
+<p class = "menu_mt"><a href="reference.html">Reference</a></p>
+<p class = "menu_mt"><a href="howto.html">Howtos</a></p>
+</div>
+
+<div id="middle">
+
+<h1 id="h1">Process</h1>
+<h2 id="h15">Format</h2>
+<p>cg make_project ?options? projectdir samplename samplesheet</p>
+<h2 id="h89">Summary</h2>
+<p>Create a project directory from a samplesheet.</p>
+<h2 id="h151">Description</h2>
+<p>make_project is a convenience function to create a <a
+href="projectdir.html">project directory</a> based on a samplesheet.
+(You can do the same manually by creating the directories, adding
+links or copying raw data files). If the project directory does not
+exist yet, it will be created. The command creates sample directories
+under projectdir/samples, and adds the given raw data under
+projectdir/samples/samplename (by default using softlinks).</p>
+<p>The <b>samplesheet</b> is a <a href="tsv.html">tsv</a> file with
+at least the fields &quot;sample&quot; and &quot;seqfiles&quot; (The
+command will also recognize fieldnames &quot;fastq&quot; or
+&quot;fastqs&quot; instead of &quot;seqfiles&quot;)</p>
+<p>For each in the samplesheet line the sample (name given by the
+field &quot;sample&quot;) will be created in projectdir/samples
+seqfiles gives the location of sequencing data files in fastq or ubam
+format that will be added to the sample. The value can be the path to
+a specific file, a directory (containing the sequencing files), or a
+(glob) pattern matching one or more sequencing files (e.g.
+data/sample1_*.fastq.gz) The data files are (by default) soflinked in
+the directory projectdir/samples/samplename/fastq for fastq files
+(extension .fastq, .fq, .fastq.gz, or .fq.gz), and in
+projectdir/samples/samplename/ubam for unaligned bam files (extension
+.bam)</p>
+<p>You can have more than one line for the same sample, possibly
+merging sequencing data from different sources into one sample. (You
+can not mix fastq and ubam sources this way; if both a fastq and ubam
+directory are present, only the ubam will be used for analysis)</p>
+<p>The extra fields in the samplesheet (if not empty) are added to
+the projects options.tsv file, which allows you to set specific
+analysis options for each sample, e.g. the samplesheet</p>
+<pre>
+sample  seqfiles    preset
+sample1 sample1/*.fastq.gz  srs
+sample2 sample2/*.fastq.gz  ont
+</pre>
+<p>will setup a projectdir where sample1 will be analysed using the
+srs preset (for short read sequencing), whereas sample2 is an ont
+sample to be analysed using the ont preset.</p>
+<h2 id="h2148">Arguments</h2>
+
+<dl>
+  <dt>projectdir</dt>
+  <dd>project directory name.</dd>
+  <dt>samplename</dt>
+  <dd>sample name</dd>
+  <dt>rawdata</dt>
+  <dd>directory containing source/raw data (for only one sample),
+  or one or more raw data files.</dd>
+</dl>
+<h2 id="h2331">Options</h2>
+
+<dl>
+  <dt>-tranfer soft/rel/hard/copy</dt>
+  <dd>determines how raw data files are &quot;transferred&quot; to
+  the sampledir: soft(link absolute path), rel(ative softlink),
+  hard(link) or copy</dd>
+  <dt>-force 0/1</dt>
+  <dd>Normally an error is given if the target file already exists.
+  use -force 1 to overwrite existing sample data</dd>
+  <dt>-amplicons ampliconfile</dt>
+  <dd>Add amplicons file. This option turns on amplicon sequencing
+  analysis (see <a href="cg_process_sample.html">cg
+  process_sample</a>) using the amplicons defained in
+  <b>ampliconfile</b></dd>
+  <dt>-targetfile targetfile</dt>
+  <dd>Add targetfile. if provided, coverage statistics will be
+  calculated for this region</dd>
+</dl>
+<h2 id="h2934">Category</h2>
+<p>Process</p>
+</div>
+
+<div id="right">
+</div>
+
+</body>
+</html>
+

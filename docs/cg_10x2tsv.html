@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_cplinked</title>
+<title>/home/peter/dev/genomecomb/lib/cg_10x2tsv</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,29 +49,23 @@
 
 <div id="middle">
 
-<h1 id="h1">cplinked</h1>
-<h2 id="h16">Format</h2>
-<p>cg cplinked ?options? source ... dest</p>
-<h2 id="h68">Summary</h2>
-<p>create a copy of a directory (or directories) where each file in
-it is a softlink to the src.</p>
-<h2 id="h177">Arguments</h2>
+<h1 id="h1">10x2tsv</h1>
+<h2 id="h15">Format</h2>
+<p>cg 10x2tsv ?infile? ?outfile?</p>
+<h2 id="h59">Summary</h2>
+<p>Converts data in 10x format to the tab-separated format (<a
+href="tsv.html">tsv</a>).</p>
+<h2 id="h141">Arguments</h2>
 
 <dl>
-  <dt>source</dt>
-  <dd>directory to be copied</dd>
-  <dt>dest</dt>
-  <dd>destination directory</dd>
+  <dt><b>infile</b></dt>
+  <dd>file to be converted, if not given (or -), uses stdin. File
+  may be compressed.</dd>
+  <dt><b>outfile</b></dt>
+  <dd>write results to outfile, if not given, uses stdout</dd>
 </dl>
-<h2 id="h257">Options</h2>
-
-<dl>
-  <dt>-absolute 0/1</dt>
-  <dd>softlinks will use absolute paths if 1, relative paths if 0
-  (default)</dd>
-</dl>
-<h2 id="h359">Category</h2>
-<p>Tools</p>
+<h2 id="h318">Category</h2>
+<p>Format Conversion</p>
 </div>
 
 <div id="right">

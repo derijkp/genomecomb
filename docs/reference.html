@@ -49,7 +49,7 @@
 
 <div id="middle">
 
-<h1 id="h1">Genomecomb 0.108.0 Reference</h1>
+<h1 id="h1">Genomecomb 0.109.0 Reference</h1>
 <h2 id="h36">Format</h2>
 <p>cg subcommand ?options? ....</p>
 <h2 id="h79">Description</h2>
@@ -139,6 +139,8 @@ file (if the result needs to be compressed, and the compression
   href="projectdir.html">projectdir</a>), generating full analysis
   information (variant calls, multicompar, reports, ...) starting
   from raw sample data from various sources.</dd>
+  <dt><a href="cg_make_project.html">make_project</a></dt>
+  <dd>Create a project directory from a samplesheet.</dd>
   <dt><a href="cg_makerefdb.html">makerefdb</a></dt>
   <dd>Create a reference sequence and annotation databases
   directory</dd>
@@ -162,7 +164,7 @@ file (if the result needs to be compressed, and the compression
   <dd>Converts the sample names in a file or entire directory to
   other names.</dd>
 </dl>
-<h3 id="h3429">Query</h3>
+<h3 id="h3512">Query</h3>
 
 <dl>
   <dt><a href="cg_select.html">select</a></dt>
@@ -178,7 +180,7 @@ file (if the result needs to be compressed, and the compression
   <dd>Group lines in a tsv file, based on 1 or more identical
   fields</dd>
 </dl>
-<h3 id="h3871">Analysis</h3>
+<h3 id="h3954">Analysis</h3>
 
 <dl>
   <dt><a href="cg_exportplink.html">exportplink</a></dt>
@@ -189,7 +191,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_homwes_compare.html">homwes_compare</a></dt>
   <dd>finds regions of homozygosity based on a variant file</dd>
 </dl>
-<h3 id="h4150">Regions</h3>
+<h3 id="h4233">Regions</h3>
 
 <dl>
   <dt><a href="cg_multireg.html">multireg</a></dt>
@@ -212,7 +214,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_regsubtract.html">regsubtract</a></dt>
   <dd>subtract regions in region_file2 from region_file1</dd>
 </dl>
-<h3 id="h4880">Annotation</h3>
+<h3 id="h4963">Annotation</h3>
 
 <dl>
   <dt><a href="cg_annotate.html">annotate</a></dt>
@@ -225,7 +227,7 @@ file (if the result needs to be compressed, and the compression
   <dd>Creates a (region) annotation file based on a genelist with
   annotations.</dd>
 </dl>
-<h3 id="h5256">Validation</h3>
+<h3 id="h5339">Validation</h3>
 
 <dl>
   <dt><a href="cg_genome_seq.html">genome_seq</a></dt>
@@ -240,7 +242,7 @@ file (if the result needs to be compressed, and the compression
   <dd>check primer sets for multiple amplicons and snps</dd>
   <dt><a href="cg_validatesv.html">validatesv</a></dt>
 </dl>
-<h3 id="h5706">Variants</h3>
+<h3 id="h5789">Variants</h3>
 
 <dl>
   <dt><a href="cg_multicompar.html">multicompar</a></dt>
@@ -264,7 +266,7 @@ file (if the result needs to be compressed, and the compression
   <dd>generic command to call variants based on the alignment in
   bamfile.</dd>
 </dl>
-<h3 id="h6408">tsv</h3>
+<h3 id="h6491">tsv</h3>
 
 <dl>
   <dt><a href="cg_cat.html">cat</a></dt>
@@ -275,6 +277,8 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_collapsealleles.html">collapsealleles</a></dt>
   <dd>Convert a split variant file to unsplit by collapsing alleles
   of the same variant into one line.</dd>
+  <dt><a href="cg_fixtsv.html">fixtsv</a></dt>
+  <dd>fix erors in a tsv file</dd>
   <dt><a href="cg_graph.html">graph</a></dt>
   <dd>Visualization of large tsv files as a scatter plot</dd>
   <dt><a href="cg_index.html">index</a></dt>
@@ -289,7 +293,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_tsvjoin.html">tsvjoin</a></dt>
   <dd>join two tsv files based on common fields</dd>
 </dl>
-<h3 id="h7220">Conversion</h3>
+<h3 id="h7351">Conversion</h3>
 
 <dl>
   <dt><a href="cg_sam_clipamplicons.html">sam_clipamplicons</a></dt>
@@ -317,9 +321,12 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_fastq_split.html">fastq_split</a></dt>
   <dd>split a (large) fastq file in multiple smaller ones</dd>
 </dl>
-<h3 id="h8188">Format Conversion</h3>
+<h3 id="h8319">Format Conversion</h3>
 
 <dl>
+  <dt><a href="cg_10x2tsv.html">10x2tsv</a></dt>
+  <dd>Converts data in 10x format to the tab-separated format (<a
+  href="tsv.html">tsv</a>).</dd>
   <dt><a href="cg_bam2fastq.html">bam2fastq</a></dt>
   <dd>Extracts reads from a bamfile into fastq. The actual
   extraction is based on picard's SamToFastq or samtools bam2fq, but
@@ -370,6 +377,12 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_csv2tsv.html">csv2tsv</a></dt>
   <dd>Converts comma-separated value (csv) data to tab-sparated (<a
   href="tsv.html">tsv</a>)</dd>
+  <dt><a href="cg_fasta2tsv.html">fasta2tsv</a></dt>
+  <dd>Converts data in fasta format to tab-separated format (<a
+  href="tsv.html">tsv</a>).</dd>
+  <dt><a href="cg_fastq2tsv.html">fastq2tsv</a></dt>
+  <dd>Converts data in fastq format to tab-separated format (<a
+  href="tsv.html">tsv</a>).</dd>
   <dt><a href="cg_gb2fasta.html">gb2fasta</a></dt>
   <dd>Comverts a genbank file to a fasta file The file may contain
   multiple sequences. The name of the sequence (in the fasta file) is
@@ -378,6 +391,9 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_gene2reg.html">gene2reg</a></dt>
   <dd>Extract gene elements from data in genepred-like format to a
   (tab separated) region file.</dd>
+  <dt><a href="cg_genepred2tsv.html">genepred2tsv</a></dt>
+  <dd>Converts data in genepred format to tab-separated format (<a
+  href="tsv.html">tsv</a>).</dd>
   <dt><a href="cg_gff2tsv.html">gff2tsv</a></dt>
   <dd>Converts data in gff format to gene tsv format</dd>
   <dt><a href="cg_gtf2tsv.html">gtf2tsv</a></dt>
@@ -399,6 +415,9 @@ file (if the result needs to be compressed, and the compression
   together as a list in a column named other. Optionally the values
   for some extra fields can be split into different columns using the
   -fields option.</dd>
+  <dt><a href="cg_tsv210x.html">tsv210x</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to the 10x format.</dd>
   <dt><a href="cg_tsv2bed.html">tsv2bed</a></dt>
   <dd>Converts data in tab-separated format (<a
   href="tsv.html">tsv</a>) format to bed format. By default it will
@@ -407,6 +426,21 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_tsv2csv.html">tsv2csv</a></dt>
   <dd>Converts tab-sparated (<a href="tsv.html">tsv</a>) data to
   comma-separated value (csv)</dd>
+  <dt><a href="cg_tsv2fasta.html">tsv2fasta</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to fasta format.</dd>
+  <dt><a href="cg_tsv2fastq.html">tsv2fastq</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to fastq format.</dd>
+  <dt><a href="cg_tsv2gff.html">tsv2gff</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to gff format.</dd>
+  <dt><a href="cg_tsv2gtf.html">tsv2gtf</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to gtf format.</dd>
+  <dt><a href="cg_tsv2sam.html">tsv2sam</a></dt>
+  <dd>Converts data in tab-separated format (<a
+  href="tsv.html">tsv</a>) format to sam,bam or cram format.</dd>
   <dt><a href="cg_tsv2vcf.html">tsv2vcf</a></dt>
   <dd>Converts data in genomecomb tab-separated variant format (<a
   href="tsv.html">tsv</a>) to vcf.</dd>
@@ -419,7 +453,7 @@ file (if the result needs to be compressed, and the compression
   sample in separate lines) to wide format (data for each sample in
   separate columns)</dd>
 </dl>
-<h3 id="h12192">Report</h3>
+<h3 id="h13314">Report</h3>
 
 <dl>
   <dt><a href="cg_bam_histo.html">bam_histo</a></dt>
@@ -436,9 +470,11 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_predictgender.html">predictgender</a></dt>
   <dd>predicts gender for a sample</dd>
 </dl>
-<h3 id="h12733">Info</h3>
+<h3 id="h13855">Info</h3>
 
 <dl>
+  <dt><a href="cg_error_report.html">error_report</a></dt>
+  <dd>display help</dd>
   <dt><a href="cg_help.html">help</a></dt>
   <dd>display help</dd>
   <dt><a href="cg_version.html">version</a></dt>
@@ -446,7 +482,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_versions.html">versions</a></dt>
   <dd>return version information as a tsv</dd>
 </dl>
-<h3 id="h12897">RNA</h3>
+<h3 id="h14068">RNA</h3>
 
 <dl>
   <dt><a href="cg_iso_isoquant.html">iso_isoquant</a></dt>
@@ -459,7 +495,7 @@ file (if the result needs to be compressed, and the compression
   <dd>make pseudobulk files of sc_gene and sc_transcript files
   based on an sc_group file</dd>
 </dl>
-<h3 id="h13251">Compression</h3>
+<h3 id="h14422">Compression</h3>
 
 <dl>
   <dt><a href="cg_bgzip.html">bgzip</a></dt>
@@ -483,14 +519,21 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_zst.html">zst</a></dt>
   <dd>Compresses files using zstd</dd>
 </dl>
-<h3 id="h13813">Mapping</h3>
+<h3 id="h14984">Mapping</h3>
 
 <dl>
   <dt><a href="cg_map.html">map</a></dt>
   <dd>align reads in fastq files to a reference genome using a
   variety of methods</dd>
 </dl>
-<h3 id="h13924">Dev</h3>
+<h3 id="h15095">Convenience</h3>
+
+<dl>
+  <dt><a href="cg_install.html">install</a></dt>
+  <dd>easy install of optional dependencies (external software used
+  by genomecomb for some analysis) and some reference databases.</dd>
+</dl>
+<h3 id="h15268">Dev</h3>
 
 <dl>
   <dt><a href="cg_qsub.html">qsub</a></dt>
@@ -504,12 +547,12 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_tsvdiff.html">tsvdiff</a></dt>
   <dd>compare tsv files</dd>
 </dl>
-<h3 id="h14247">Tools</h3>
+<h3 id="h15591">Tools</h3>
 
 <dl>
   <dt><a href="cg_cplinked.html">cplinked</a></dt>
-  <dd>create a copy of a directory where each file in it is a
-  softlink to the src.</dd>
+  <dd>create a copy of a directory (or directories) where each file
+  in it is a softlink to the src.</dd>
   <dt><a href="cg_hardsync.html">hardsync</a></dt>
   <dd>creates a hardlinked copy of a directory in another location</dd>
   <dt><a href="cg_mklink.html">mklink</a></dt>
@@ -517,7 +560,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_shadow_mkdir.html">shadow_mkdir</a></dt>
   <dd>create a shadowed dir</dd>
 </dl>
-<h3 id="h14566">Visualization</h3>
+<h3 id="h15927">Visualization</h3>
 
 <dl>
   <dt><a href="cg_viz_transcripts.html">viz_transcripts</a></dt>

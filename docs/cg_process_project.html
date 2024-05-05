@@ -137,15 +137,6 @@ given type of data are ignored.</p>
 options to the defaults for a given analysis. These options can still
 be changed by specifically giving them a value after the -preset
 option (options given later overrule previous ones).</p>
-<p>Different options can be given to different samples within the
-same experiment run by storing a file named options.tsv in the
-experiment/project dir with the following fields: sample option value
-For each sample (that differs from the general option if given) you
-add a line with the samplename, the option (without the -, e.g.
-sc_expectedcells) and the value (the number of expected cells in the
-case of sc_expectedcells). You can use the preset option this way,
-allowing the analysis of different technologies (e.g. ont and srs) in
-one run.</p>
 
 <dl>
   <dt>-preset preset</dt>
@@ -154,6 +145,10 @@ one run.</p>
   sequencing), rseq (short read rna-seq), ont (ont genomic
   sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell
   rna-seq)</dd>
+  <dt>-samplesheet samplesheet</dt>
+  <dd>create <b>projectdir</b> based on the data in the given
+  <b>sampleheet</b> as described in <a href="cg_make_project.html">cg
+  make_project</a></dd>
   <dt>-dbdir dbdir</dt>
   <dd><b>dbdir</b> can also be given as an option (instead of
   second parameter)</dd>
@@ -301,11 +296,13 @@ one run.</p>
   <dd>generate fastqs for nextseq run &amp; create sample folders -
   rundir should be placed in projectdir of resulting variants. This
   option can be added multiple times (with different files)</dd>
-  <dt>-jobsample 0/1</dt>
+  <dt>-jobsample integer</dt>
   <dd>By default (0) the processing of each sample is split in many
   separate jobs. If you have to process many samples with relatively
-  short indivual runtimes, you can set this to 1 to run each sample
-  in one job, thus reducing the job managment overhead.</dd>
+  short individual runtimes or your cluster limits the number of jobs
+  you can set this to 1 or more to run each sample in only one job,
+  thus reducing the job managment overhead. The number given is the
+  number of cores assigned to each such job.</dd>
   <dt>-keepfields fieldlist</dt>
   <dd>Besides the obligatory fields, include only the fields in
   fieldlist (space separated) in the multicompar file. Default is to
@@ -317,7 +314,22 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combining the results</p>
-<h2 id="h12597">Dependencies</h2>
+<h2 id="h12328">Sample specific options</h2>
+<p>Different options can be given to different samples within the
+same experiment run by storing a file named <b>options.tsv</b> in the
+experiment/project dir with the following fields: sample option value</p>
+<p>For each sample (that differs from the general option if given)
+you add a line with the samplename, the option (without the -, e.g.
+sc_expectedcells) and the value (the number of expected cells in the
+case of sc_expectedcells). Sample specific options given this way
+overrule the general options given on the process_project commandline
+(for that sample)</p>
+<p>You can also use the preset option this way, allowing the analysis
+of different technologies (e.g. ont and srs) in one run. Beware that
+presets just change base/default settings; Options explicitely given
+on the process_project commandline will overrule settings from a
+preset, even if sample specific).</p>
+<h2 id="h13227">Dependencies</h2>
 <p>Some of the programs used in this workflow are not distributed
 with genomecomb. e.g., gatk and strelka should be installed
 separately. In general this extra software should be made available
@@ -326,13 +338,13 @@ directory named picard* that contains the picard jar file. Some also
 support environment variables, e.g. GATK or PICARD to indicated the
 picard installation directory. The genomecomb source distribution has
 scripts to make a portable version of most of this extra software.</p>
-<h2 id="h13151">Example</h2>
+<h2 id="h13781">Example</h2>
 <pre>
 export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
 export PICARD=/opt/bio/picard-tools-1.87
 cg process_project -d sge testproject /complgen/refseq/hg19
 </pre>
-<h2 id="h13329">Category</h2>
+<h2 id="h13959">Category</h2>
 <p>Process</p>
 </div>
 

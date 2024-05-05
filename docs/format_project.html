@@ -111,12 +111,23 @@ character (-) should not be present in the name.</p>
   <dd>If the original data is in the form of fastq files, the fastq
   files for that sample are present in a subdirectory named
   <b>fastq</b>. (If fastq files are found in the ori directory, a
-  fastq dir is made, and the files linked.) The names of matching
-  fastq files of paired reads should be consecutive when sorted
-  naturaly,the forward reads first. The usual naming of these files
-  (same name, except for a 1 and 2) is ok.</dd>
+  fastq dir is made, and the files linked.) Any of the commonly used
+  file name extensions (.fastq.gz, .fq.gz, .fastq, .fq) are
+  recognised The names of matching fastq files of paired reads should
+  be consecutive when sorted naturaly,the forward reads first. The
+  usual naming of these files (same name, except for a 1 and 2) is
+  ok.</dd>
 </dl>
-<h3 id="h2955">sample results</h3>
+
+<dl>
+  <dt>ubam</dt>
+  <dd>sequencing data as ubams (unaligned bams) is also accepted.
+  These should be typically in a directory named ubam instead of
+  fastq, although they will be detected in a fastq directory as well.
+  If both a ubam and fastq directory are present, the ubam gets
+  priority.</dd>
+</dl>
+<h3 id="h3320">sample results</h3>
 <p>All files generated have names following the convention of using
 hyphen-minus to separate different elements of the file. The first
 element indicates what is in the file. The last element (before the
@@ -172,7 +183,7 @@ reg_cluster-cg-cg-S0489.tsv.zst</p>
 pipelines. If these are in the correct format, they will be
 integrated in the project. vcf files (var-*.vcf) will be converted to
 tsv files, and their variants included in the multicompar.</p>
-<h2 id="h5538">compar dir</h2>
+<h2 id="h5903">compar dir</h2>
 <p>The subdirectory compar contains comparisons of all samples, e.g.:</p>
 
 <dl>
@@ -200,12 +211,12 @@ tsv files, and their variants included in the multicompar.</p>
   databases in refdir (impact on genes, regions of interest, known
   variant data)</dd>
 </dl>
-<h2 id="h6938">analysisinfo files</h2>
+<h2 id="h7303">analysisinfo files</h2>
 <p>Most files have an accompanying analysisinfo file (same name as
 the file, but with the extension .analysisinfo added). These are tsv
 files containing information about how the file was made (which
 programs were used, which versions, settings, ...)</p>
-<h2 id="h7212">projectinfo.tsv</h2>
+<h2 id="h7577">projectinfo.tsv</h2>
 <p>projectinfo.tsv is a <a href="tsv.html">tsv</a> file containing
 data about the project. It must have 2 columns: key and value. The
 following keys can be found:</p>
