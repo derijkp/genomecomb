@@ -74,6 +74,7 @@ yuminstall atlas
 #yuminstall java
 #yuminstall texlive
 yuminstall texlive-latex
+yuminstall fontconfig
 yuminstall devtoolset-11
 ## use source instead of scl enable so it can run in a script
 ## scl enable devtoolset-11 bash
@@ -346,11 +347,20 @@ cp -a -f libgobject* libthai* libpcre.so libpcre.so.1 libpcre.so.1.2.0 \
     libpixman* libEGL* libxcb-shm.* libxcb.so* libxcb-render.* \
     libXrender.* libX11* libXext* libGL* libXau* \
 	/build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f libstdc++.so* libgcc_s* \
+	/build/dirR-$dirRversion-$arch/lib64/R/lib
 # docker test ubuntu:20.04
 yuminstall libSM
 cp -a -f libSM.* libgobject* \
 	libXt.so.* libXft.so.* atlas/libsatlas.so.* libjbig.so.* libICE.so.* \
 	/build/dirR-$dirRversion-$arch/lib64/R/lib
+
+cd /usr/share
+cp -a -f fonts fontconfig \
+	/build/dirR-$dirRversion-$arch/lib64/R/share
+mkdir /build/dirR-$dirRversion-$arch/lib64/R/conf
+cp -a -f /etc/fonts/fonts.conf \
+	/build/dirR-$dirRversion-$arch/lib64/R/conf
 
 cd /build/R-$dirRversion
 
@@ -487,11 +497,11 @@ tar xvzf hdf5-1.14.1-2.tar.gz
 cd hdf5-1.14.1-2
 ./configure
 make
-sudo cp bin/* /usr/bin
-sudo cp -ra lib/* /usr/lib
-sudo cp -ra share/* /usr/share/
-sudo cp -ra include/* /usr/include/
-cp -ra lib/* /build/dirR-$dirRversion-$arch/lib64/R/lib
+sudo cp -ra bin/* hdf5/bin/* /usr/bin
+sudo cp -ra hdf5/lib/* /usr/lib
+sudo cp -ra hdf5/share/* /usr/share/
+sudo cp -ra hdf5/include/* /usr/include/
+cp -ra hdf5/lib/* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("hdf5r", repos="http://cran.us.r-project.org")'
 
 # "install" sc-type
