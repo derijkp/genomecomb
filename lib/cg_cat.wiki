@@ -30,6 +30,7 @@ if 0 the comments of all source files are there, but no extra comments (file nam
 You can use the value f to only display the comment of the first file, 
 or n to leave out comments completely.
 ; **-n fieldname** (--fieldname): if -n is not empty, a column with the name fieldname will be added, that contains the filename where the line came from
+; **-fullfilename 0/1**: if 0 (default) only the tail of the filename is placed in the field given in the -n option, if 1, the full path to the file is used
 ; **-fields fields** (--fields): only return the given **fields** in the concatenated output
 ; -catfiles 0/1: show concatenated files in merged header (only for -c m) under key catfiles (default 0)
 

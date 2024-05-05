@@ -3,6 +3,7 @@ proc cg_cat {args} {
 	set force 0
 	set merge 0
 	set namefield {}
+	set fullfilename 0
 	set sort 0
 	set catfiles 0
 	set sample {}
@@ -37,6 +38,9 @@ proc cg_cat {args} {
 		}
 		-n - -fieldname {
 			set namefield $value
+		}
+		-fullfilename {
+			set fullfilename $value
 		}
 		-fields {
 			set fields $value
@@ -165,10 +169,18 @@ proc cg_cat {args} {
 		set testheader [tsv_open $f]
 		if {($force eq "f" || $force eq "") && $fields eq ""} {
 			if {$namefield ne ""} {
-				while {![eof $f]} {
-					set line [gets $f]
-					if {$line eq ""} continue
-					puts $line\t$fname
+				if {$fullfilename} {
+					while {![eof $f]} {
+						set line [gets $f]
+						if {$line eq ""} continue
+						puts $line\t$file
+					}
+				} else {
+					while {![eof $f]} {
+						set line [gets $f]
+						if {$line eq ""} continue
+						puts $line\t$fname
+					}
 				}
 			} else {
 				fcopy $f stdout
