@@ -406,7 +406,7 @@ proc process_project_job {args} {
 				sampleargs dir jobsample
 			} -code {
 				if {$jobsample > 1} {
-					cg process_sample -stack 1 -v 2 -d $jobsample {*}$sampleargs $dir >@ stdout 2>@ stderr
+					cg process_sample -stack 1 -v 2 -shadowdir [get ::env(SHADOWDIR) {}] -d $jobsample {*}$sampleargs $dir >@ stdout 2>@ stderr
 				} else {
 					cg process_sample -stack 1 -v 2 {*}$sampleargs $dir >@ stdout 2>@ stderr
 				}
