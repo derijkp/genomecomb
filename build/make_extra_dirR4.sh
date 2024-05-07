@@ -358,7 +358,7 @@ cp -a -f libSM.* libgobject* \
 cd /usr/share
 cp -a -f fonts fontconfig \
 	/build/dirR-$dirRversion-$arch/lib64/R/share
-mkdir /build/dirR-$dirRversion-$arch/lib64/R/conf
+mkdir -f /build/dirR-$dirRversion-$arch/lib64/R/conf || true
 cp -a -f /etc/fonts/fonts.conf \
 	/build/dirR-$dirRversion-$arch/lib64/R/conf
 
@@ -410,41 +410,58 @@ tclsh /tmp/convert /build/dirR-$dirRversion-$arch/lib64/R/bin/R /build/dirR-$dir
 #    | sed 's#CXX11FLAGS =  $(LTO)#CXX11FLAGS = -I/usr/local/include -fPIC#g' \
 #    > /build/dirR-$dirRversion-$arch/lib64/R/etc/Makeconf
 
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("tidyverse", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rmarkdown", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("shiny", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("googleVis", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("DT", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("RColorBrewer", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("pheatmap", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("curl", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("plotly", repos="http://cran.us.r-project.org")'
 yuminstall libtiff-devel
 cp -a -f /usr/lib64/libtiff.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("devtools", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("jpeg", repos="http://cran.us.r-project.org")'
 
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("xml2", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("XML", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("askpass", version = "1.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("bit", version = "4.0.4", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("blob", version = "1.2.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("brio", version = "1.1.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("cowplot", version = "1.1.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("cpp11", version = "0.4.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("DBI", version = "1.1.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("dbplyr", version = "2.3.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("dtplyr", version = "1.2.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("dqrng", version = "0.3.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("bslib", version = "0.5.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("callr", version = "3.7.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("checkmate", version = "2.2.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("cli", version = "3.6.1", repos = "http://cran.us.r-project.org")'
 
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("tidyverse", version = "2.0.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("rmarkdown", version = "2.23", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("shiny", version = "1.7.4", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("googleVis", version = "0.7.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("DT", version = "0.28", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("RColorBrewer", version = "1.1-3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("pheatmap", version = "1.0.12", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("curl", version = "5.0.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("plotly", version = "4.10.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("jpeg", version = "0.1-10", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("xml2", version = "1.3.4", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("XML", version = "3.99-0.14", repos = "http://cran.us.r-project.org")'
 yuminstall cmake3
 yuminstall NLopt NLopt-devel
 cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("nloptr", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("lme4", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("pbkrtest", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("car", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstatix", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggpubr", repos="http://cran.us.r-project.org")'
 
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("BiocManager", repos="http://cran.us.r-project.org")'
+
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("nloptr", version = "2.0.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("lme4", version = "1.1-33", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("pbkrtest", version = "0.5.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("car", version = "3.1-2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("rstatix", version = "0.7.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("ggpubr", version = "0.6.0", repos = "http://cran.us.r-project.org")'
+
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("BiocManager", version = "1.30.21", repos = "http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DESeq2")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("edgeR")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("http://hartleys.github.io/QoRTs/QoRTs_STABLE.tar.gz",repos=NULL,type="source");'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("https://github.com/hartleys/QoRTs/archive/refs/tags/v1.3.6.tar.gz",repos=NULL,type="source");'
+# /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("http://hartleys.github.io/QoRTs/QoRTs_STABLE.tar.gz",repos=NULL,type="source");'
 # get java part with: wget http://hartleys.github.io/QoRTs/QoRTs.jar
+
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("PCAtools")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("pcaExplorer")'
-
 /build/dirR-$dirRversion-$arch/R --vanilla -e $'BiocManager::install("Rhtslib")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("Rsamtools")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("ggbio")'
@@ -452,18 +469,18 @@ cp -a -f /usr/lib64/libnlopt*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("bambu")'
 
 # leafcutter
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstan", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("rstantools", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("rstan", version = "2.21.8", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("rstantools", version = "2.3.1", repos = "http://cran.us.r-project.org")'
 yuminstall gsl-devel
 cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DirichletMultinomial")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("DropletUtils")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("Seurat", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("sleepwalk", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SCINA", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("HGNChelper", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("openxlsx", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'devtools::install_github("davidaknowles/leafcutter/leafcutter", version = "0.2.9")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("Seurat", version = "4.3.0.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("sleepwalk", version = "0.3.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("SCINA", version = "1.2.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("HGNChelper", version = "0.8.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("openxlsx", version = "4.2.5.2", repos = "http://cran.us.r-project.org")'
 
 # other
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("MOFA2")'
@@ -471,38 +488,40 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 # Rhtslib does not compile for some reason, so not for now
 # /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("chromVAR")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("OmicCircos")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("RCircos", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggdendro", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("GGally", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ComplexUpset", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("corrplot", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("eulerr", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("vioplot", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("gplots", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("gtools", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("ggrepel", repos="http://cran.us.r-project.org")'
-# /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("SRAdb", repos="http://cran.us.r-project.org")'
-# /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("factoextra", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("MatrixEQTL", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("RCircos", version = "1.2.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("ggdendro", version = "0.1.23", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("GGally", version = "2.1.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("ComplexUpset", version = "1.3.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("corrplot", version = "0.92", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("eulerr", version = "7.0.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("vioplot", version = "0.4.0", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("gplots", version = "3.1.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("gtools", version = "3.9.4", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("ggrepel", version = "0.9.3", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("MatrixEQTL", version = "2.3", repos = "http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("https://github.com/dzhang32/ggtranscript/archive/refs/tags/v0.99.3.tar.gz", repos=NULL, type="source")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("survminer", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("survminer", version = "0.4.9", repos = "http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("scDblFinder")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'remotes::install_github("chris-mcginnis-ucsf/DoubletFinder")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("argparser", repos="http://cran.us.r-project.org")'
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("scSorter", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'remotes::install_github("chris-mcginnis-ucsf/DoubletFinder", version = "2.0.3")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("argparser", version = "0.7.1", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("scSorter", version = "0.0.2", repos = "http://cran.us.r-project.org")'
 
+cd /build/R-$dirRversion
 yuminstall hdf5-devel
 wget https://hdf-wordpress-1.s3.amazonaws.com/wp-content/uploads/manual/HDF5/HDF5_1_14_1/src/hdf5-1.14.1-2.tar.gz
 tar xvzf hdf5-1.14.1-2.tar.gz
-cd hdf5-1.14.1-2
+cd /build/R-$dirRversion/hdf5-1.14.1-2
 ./configure
 make
-sudo cp -ra bin/* hdf5/bin/* /usr/bin
+make install
+sudo cp -ra hdf5/bin/* /usr/bin
 sudo cp -ra hdf5/lib/* /usr/lib
 sudo cp -ra hdf5/share/* /usr/share/
 sudo cp -ra hdf5/include/* /usr/include/
 cp -ra hdf5/lib/* /build/dirR-$dirRversion-$arch/lib64/R/lib
-/build/dirR-$dirRversion-$arch/R --vanilla -e 'install.packages("hdf5r", repos="http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("hdf5r", version = "1.3.8", repos = "http://cran.us.r-project.org")'
+cp -a -f hdf5/lib/* /build/dirR-$dirRversion-$arch/lib64/R/lib
+cp -a -f hdf5/bin/* /build/dirR-$dirRversion-$arch/lib64/R/bin
 
 # "install" sc-type
 cd /build/dirR-$dirRversion-$arch/lib64/R/library
@@ -518,4 +537,5 @@ rm dirR-$dirRversion-$arch.tar.gz || true
 tar cvzf dirR-$dirRversion-$arch.tar.gz dirR-$dirRversion-$arch dirR-4.2.1 dirR R
 cp -ra dirR-$dirRversion-$arch dirR-4.2.1 dirR R /io/extra$ARCH
 
-echo "Finished building dirR4"
+echo "Finished building dirR4 in $builddir/dirR-$dirRversion-$arch"
+echo "Copied to $srcdir/extra$ARCH"
