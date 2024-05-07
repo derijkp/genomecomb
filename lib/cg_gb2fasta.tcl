@@ -62,7 +62,7 @@ proc cg_gb2fasta {args} {
 		file rename $tempfile $outfile
 	} else {
 		# do this, otherwise does not out output last \n when run e.g. from exec
-		puts ""
+		flush stdout
 	}
 }
 

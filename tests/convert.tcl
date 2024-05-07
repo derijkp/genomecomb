@@ -1338,8 +1338,7 @@ test fasta2tsv {fasta2tsv} {
 	cg fasta2tsv tmp/test.fasta
 } {id	sequence
 name1	AAGAAAA
-name 2	ACAAAAAAA
-}
+name 2	ACAAAAAAA}
 
 test fasta2tsv {fasta2tsv to outfile} {
 	file_write tmp/test.fasta [deindent {
@@ -1350,6 +1349,21 @@ test fasta2tsv {fasta2tsv to outfile} {
 		ACAAAAAAA
 	}]\n
 	cg fasta2tsv tmp/test.fasta tmp/out.tsv
+	file_read tmp/out.tsv
+} {id	sequence
+name1	AAGAAAA
+name 2	ACAAAAAAA
+}
+
+test fasta2tsv {fasta2tsv redirect to outfile} {
+	file_write tmp/test.fasta [deindent {
+		>name1
+		AAG
+		AAAA
+		>name 2
+		ACAAAAAAA
+	}]\n
+	cg fasta2tsv tmp/test.fasta > tmp/out.tsv
 	file_read tmp/out.tsv
 } {id	sequence
 name1	AAGAAAA
@@ -1399,8 +1413,7 @@ test tsv2fasta {tsv2fasta} {
 } {>name1
 AAGAAAA
 >name 2
-ACAAAAAAA
-}
+ACAAAAAAA}
 
 test tsv2fasta {tsv2fasta to outfile} {
 	file_write tmp/test.tsv [deindent {
@@ -1409,6 +1422,20 @@ test tsv2fasta {tsv2fasta to outfile} {
 		name 2	ACAAAAAAA
 	}]\n
 	cg tsv2fasta tmp/test.tsv tmp/out.fasta
+	file_read tmp/out.fasta
+} {>name1
+AAGAAAA
+>name 2
+ACAAAAAAA
+}
+
+test tsv2fasta {tsv2fasta redirect to outfile} {
+	file_write tmp/test.tsv [deindent {
+		id	sequence
+		name1	AAGAAAA
+		name 2	ACAAAAAAA
+	}]\n
+	cg tsv2fasta tmp/test.tsv > tmp/out.fasta
 	file_read tmp/out.fasta
 } {>name1
 AAGAAAA
@@ -2046,6 +2073,12 @@ test convert_pipe {convert_pipe various} {
 test convert {gb2fasta} {
 	file delete tmp/results.fas
 	cg gb2fasta -clean_names 0 data/plasmids.gb tmp/results.fas
+	exec diff tmp/results.fas data/plasmids.fas
+} {}
+
+test convert {gb2fasta redirect} {
+	file delete tmp/results.fas
+	cg gb2fasta -clean_names 0 data/plasmids.gb > tmp/results.fas
 	exec diff tmp/results.fas data/plasmids.fas
 } {}
 
