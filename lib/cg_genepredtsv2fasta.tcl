@@ -1,13 +1,9 @@
 proc cg_genepredtsv2fasta {args} {
 	set file {}
 	set outfile {}
-	set upstream 0
-	set cdsonly 0
 	set refseq {}
 	cg_options genepredtsv2fasta args {
 		-refseq {set refseq $value}
-		-upstream {set upstream $value}
-		-cdsonly {set cdsonly $value}
 	}  {file outfile} 0 2
 	if {[llength $args] > 2} {
 		errorformat genepredtsv2fasta

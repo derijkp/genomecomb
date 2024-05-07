@@ -1,0 +1,22 @@
+= genepredtsv2fasta =
+
+== Format ==
+cg genepredtsv2fasta ?options? ?gene_tsv? ?fastafile?
+
+== Summary ==
+Extracts transcript sequences based on a transcript tsv file ([[format_transcript]]) and stores them in a fasta file.
+
+== Description ==
+genepredtsv2fasta takes a tsv file (with fields as described in [[format_transcript]])
+and extracts the sequences of the transcripts in the file from the reference sequence (which
+must be given using -refseq path) and stores them in fasta format in the result file.
+
+== Arguments ==
+; gene_tsv: tsv file with the [[format_transcript]] fields
+; fastafile: output file in fasta format
+
+== Options ==
+; -refseq path: path to the reference sequence (or refdir). This must be given
+
+== Category ==
+Format Conversion
