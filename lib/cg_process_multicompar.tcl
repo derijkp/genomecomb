@@ -4,7 +4,7 @@ proc process_multicompar_job {args} {
 	set keepargs $args
 	set dbdir {}
 	set dbfiles {}
-	set realign 1
+	set realign 0
 	set cleanup 1
 	set paired 1
 	set conv_nextseq 0

@@ -41,6 +41,7 @@ proc bam_clean_job {args} {
 	set dir [file dir $sourcefile]
 	set file [file tail $sourcefile]
 	set root [file_rootname $file pre]
+	set mem 1
 	# precalc name and steps
 	set steps 0
 	set temproot $root
@@ -174,6 +175,7 @@ proc bam_clean_job {args} {
 		if {[llength $pipe]} {lappend pipe |}
 		set realign [methods_realign $realign]
 		if {$realign eq "gatk"} {set realignm gatk3} else {set realignm $realign}
+		if {$realign eq "gatk3"} {set mem 24}
 		lappend addanalysisinfo realign $realign realign_version [version $realignm]
 		lappend pipe cg realign -stack $stack -method $realign -regionfile $regionfile -refseq $refseq \
 			-inputformat $inputformat -outputformat $curoutputformat \
@@ -196,7 +198,7 @@ proc bam_clean_job {args} {
 			$clipamplicons
 	}
 	lappend pipe {*}$optsio
-	job bamclean-$root {*}$skips -deps $deps -targets {
+	job bamclean-$root {*}$skips -mem ${mem}G -deps $deps -targets {
 		$resultfile
 	} -rmtargets $cleanuplist -vars {
 		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq cleanuplist

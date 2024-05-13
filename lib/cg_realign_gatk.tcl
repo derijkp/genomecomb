@@ -52,7 +52,7 @@ proc cg_realign_gatk {args} {
 		lappend realignopts -L $bedfile
 	}
 	putslog "realign: RealignerTargetCreator"
-	gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator \
+	gatk3exec {-XX:ParallelGCThreads=1 -Xms1G -Xmx24g} RealignerTargetCreator \
 		-R $gatkrefseq -I $sourcefile -o $tempresult.intervals {*}$realignopts
 	if {[loc_compare [version gatk3] 2.7] >= 0} {
 		set extra {--filter_bases_not_stored}
@@ -66,7 +66,7 @@ proc cg_realign_gatk {args} {
 		set compressionlevel [defcompressionlevel 5]
 	}
 	putslog "realign: IndelRealigner"
-	gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
+	gatk3exec {-XX:ParallelGCThreads=1 -Xms1G -Xmx24g} IndelRealigner -R $gatkrefseq \
 		-targetIntervals $tempresult.intervals -I $sourcefile --bam_compression $compressionlevel \
 		-o $tempresult {*}$extra
 	catch {file delete -- $tempresult.intervals}
