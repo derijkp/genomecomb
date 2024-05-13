@@ -1543,7 +1543,9 @@ proc iso_isoquant_job {args} {
 	}
 	cd $sampledir
 	set sample [file tail $sampledir]
-	set bam [lindex [jobglob map-sminimap*.bam map-sminimap*.cram map-*.bam map-*.cram] 0]
+	if {$bam eq ""} {
+		set bam [lindex [jobglob map-sminimap*.bam map-sminimap*.cram map-*.bam map-*.cram] 0]
+	}
 	if {![llength $regions]} {
 		set regions {{}}
 	}
