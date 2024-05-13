@@ -533,7 +533,7 @@ proc process_sample_job {args} {
 	set reftranscripts {}
 	set isocallers {}
 	set organelles {}
-	set realign 1
+	set realign 0
 	set cleanup 1
 	set paired 1
 	set samBQ 0

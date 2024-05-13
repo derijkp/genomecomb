@@ -212,7 +212,7 @@ proc gzclose {f} {
 	if {$f in {stdin stdout}} return
 	if {[catch {close $f} error]} {
 		# if {$error eq "child process exited abnormally"} return
-		if {$error eq "child killed: write on pipe with no readers"} return
+		if {[join [list_remdup [split $error \n]] \n] eq "child killed: write on pipe with no readers"} return
 		if {$error eq "error writing \"stdout\": broken pipe"} return
 		if {[regexp {Successfully decoded [0-9]+ bytes} $error]} return
 		error "error closing file \"[get ::genomecomb_gzopen_info($f) $f]\": $error"
