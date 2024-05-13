@@ -1573,19 +1573,25 @@ proc job_cleanup_add_shadow {args} {
 }
 
 proc job_delete_ifempty {file {subdirs 0}} {
+	if {![file exists $file]} return
 	if {[file isdir $file]} {
-		set content [list_remove [glob -nocomplain $file/*] $file/shadow_source]
-		if {$subdirs} {
-			set empty 1
-			foreach subdir $content {
-				if {![file isdir $subdir] || [llength [glob -nocomplain $subdir/*]]} {
-					set empty 0
+		if {![file readable $file]} return
+		# The catch is added here because the glob command sometimes gave an error (file does not exist)
+		# despite the -nocomplain option and the fact that if $file does not exist it should not even get there
+		catch {
+			set content [list_remove [glob -nocomplain $file/*] $file/shadow_source]
+			if {$subdirs} {
+				set empty 1
+				foreach subdir $content {
+					if {![file isdir $subdir] || [llength [glob -nocomplain $subdir/*]]} {
+						set empty 0
+					}
 				}
+				if {$empty} {set content {}}
 			}
-			if {$empty} {set content {}}
-		}
-		if {![llength $content]} {
-			shadow_delete $file
+			if {![llength $content]} {
+				shadow_delete $file
+			}
 		}
 	} else {
 		shadow_delete $file
