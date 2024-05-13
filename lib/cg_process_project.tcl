@@ -1,3 +1,11 @@
+proc code_empty {value} {
+	if {$value eq ""} {
+		return -
+	} else {
+		return $value
+	}
+}
+
 proc process_project_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg process_project {*}$args]
@@ -79,7 +87,7 @@ proc process_project_job {args} {
 			set minfastqreads $value
 		}
 		-maxfastqdistr {
-			set maxfastqdistr $value
+			set maxfastqdistr [code_empty $value]
 		}
 		-clip {
 			set clip $value
@@ -89,95 +97,98 @@ proc process_project_job {args} {
 		}
 		-adapterfile {
 			if {$value ne "" && ![file exists $value]} {error "adapterfile $value does not exists"}
-			set adapterfile $value
+			set adapterfile [code_empty $value]
 		}
 		-removeskew {
-			set removeskew $value
+			set removeskew [code_empty $value]
 		}
 		-a - -aligner - -aligners {
 			set aligners $value
 		}
 		-ali_keepcomments {
-			set ali_keepcomments $value
+			set ali_keepcomments [code_empty $value]
 		}
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
-			set singlecell $value
+			set singlecell [code_empty $value]
 		}
 		-sc_whitelist {
-			set sc_whitelist $value
+			set sc_whitelist [code_empty $value]
 		}
 		-sc_umisize {
-			set sc_umisize $value
+			set sc_umisize [code_empty $value]
 		}
 		-sc_barcodesize {
-			set sc_barcodesize $value
+			set sc_barcodesize [code_empty $value]
 		}
 		-sc_adaptorseq {
-			set sc_adaptorseq $value
+			set sc_adaptorseq [code_empty $value]
 		}
 		-sc_filters {
-			set sc_filters $value
+			set sc_filters [code_empty $value]
 		}
 		-sc_celltypers {
-			set sc_celltypers $value
+			set sc_celltypers [code_empty $value]
 		}
 		-sc_expectedcells {
-			set sc_expectedcells $value
+			set sc_expectedcells [code_empty $value]
 		}
 		-cellmarkerfile {
 			if {$value ne "" && ![file exists $value]} {error "cellmarkerfile $value does not exists"}
-			set cellmarkerfile [file_absolute $value]
+			set cellmarkerfile [code_empty [file_absolute $value]]
 		}
 		-tissue {
-			set tissue $value
+			set tissue [code_empty $value]
 		}
 		-realign {
 			set realign $value
 		}
 		-removeduplicates {
-			set removeduplicates $value
+			set removeduplicates [code_empty $value]
 		}
 		-amplicons {
-			set amplicons [file_absolute $value]
-			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
+			if {$value ne "-" && ![jobfileexists $value]} {error "amplicons file $amplicons does not exists"}
+			set amplicons [code_empty [file_absolute $value]]
 		}
 		-v - -varcallers {
-			set varcallers $value
+			set varcallers [code_empty $value]
 		}
 		-svcallers {
-			set svcallers $value
+			set svcallers [code_empty $value]
 		}
 		-methcallers {
-			set methcallers $value
+			set methcallers [code_empty $value]
 		}
 		-counters {
-			set counters $value
+			set counters [code_empty $value]
 		}
 		-isocallers {
-			set isocallers $value
+			set isocallers [code_empty $value]
 		}
 		-organelles {
-			set organelles $value
+			set organelles [code_empty $value]
 		}
 		-iso_joint {
 			set iso_joint $value
 		}
 		-reftranscripts {
-			set reftranscripts $value
+			set reftranscripts [code_empty $value]
 		}
 		-iso_match {
 			set iso_match $value
 		}
 		-flair {
-			if {[true $value]} {list_addnew isocallers flair}
+			if {[true $value]} {
+				list_addnew isocallers flair
+				set isocallers [list_remove $isocallers -]
+			}
 		}
 		-s - -split {
 			set split $value
 		}
 		-dt - -downsampling_type {
 			if {$value ni "{} NONE ALL_READS BY_SAMPLE"} {error "-dt must be one of: NONE ALL_READS BY_SAMPLE"}
-			set dt $value
+			set dt [code_empty $value]
 		}
 		-samBQ {
 			set samBQ $value
@@ -195,18 +206,18 @@ proc process_project_job {args} {
 			}
 		}
 		-targetfile {
-			set targetfile [file_absolute $value]
-			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
+			if {$value ne "" && ![jobfileexists $value]} {error "target file $value does not exists"}
+			set targetfile [code_empty [file_absolute $value]]
 		}
 		-targetvarsfile {
+			if {$value ne "" && ![jobfileexists $value]} {error "targetvarsfile $value does not exists"}
 			set targetvarsfile [file_absolute $value]
-			if {$targetvarsfile ne "" && ![jobfileexists $value]} {error "targetvarsfile $targetvarsfile does not exists"}
 		}
 		-keepfields {
 			set keepfields $value
 		}
 		-r - -reports {
-			set reports $value
+			set reports [code_empty $value]
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -235,7 +246,7 @@ proc process_project_job {args} {
 			set keepsams $value
 		}
 		-datatype {
-			set datatype $value
+			set datatype [code_empty $value]
 		}
 		-aliformat {
 			set aliformat $value

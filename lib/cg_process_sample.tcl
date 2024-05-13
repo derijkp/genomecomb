@@ -517,6 +517,14 @@ proc process_sample_reports_minfastqreads {sampledir sample reports num todoVar}
 	}
 }
 
+proc codeback_empty {value} {
+	if {$value eq "-"} {
+		return ""
+	} else {
+		return $value
+	}
+}
+
 proc process_sample_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg process_sample {*}$args]
@@ -598,70 +606,72 @@ proc process_sample_job {args} {
 			set aligners $value
 		}
 		-ali_keepcomments {
-			set ali_keepcomments $value
+			set ali_keepcomments [codeback_empty $value]
 		}
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
-			set singlecell $value
+			set singlecell [codeback_empty $value]
 		}
 		-sc_whitelist {
-			set sc_whitelist $value
+			set sc_whitelist [codeback_empty $value]
 		}
 		-sc_umisize {
-			set sc_umisize $value
+			set sc_umisize [codeback_empty $value]
 		}
 		-sc_barcodesize {
-			set sc_barcodesize $value
+			set sc_barcodesize [codeback_empty $value]
 		}
 		-sc_adaptorseq {
-			set sc_adaptorseq $value
+			set sc_adaptorseq [codeback_empty $value]
 		}
 		-sc_filters {
-			set sc_filters $value
+			set sc_filters [codeback_empty $value]
 		}
 		-sc_celltypers {
-			set sc_celltypers $value
+			set sc_celltypers [codeback_empty $value]
 		}
 		-sc_expectedcells {
-			set sc_expectedcells $value
+			set sc_expectedcells [codeback_empty $value]
 		}
 		-cellmarkerfile {
+			set value [codeback_empty $value]
 			if {$value ne "" && ![file exists $value]} {error "cellmarkerfile $value does not exists"}
 			set cellmarkerfile [file_absolute $value]
 		}
 		-tissue {
-			set tissue $value
+			set tissue [codeback_empty $value]
 		}
 		-realign - -realign {
 			set realign $value
 		}
 		-removeduplicates {
-			set removeduplicates $value
+			set removeduplicates [codeback_empty $value]
 		}
 		-amplicons {
+			set value [codeback_empty $value]
 			set amplicons [file_absolute $value]
 			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
 		}
 		-v - -varcallers {
-			set varcallers $value
+			set varcallers [codeback_empty $value]
 		}
 		-svcallers {
-			set svcallers $value
+			set svcallers [codeback_empty $value]
 		}
 		-methcallers {
-			set methcallers $value
+			set methcallers [codeback_empty $value]
 		}
 		-counters {
-			set counters $value
+			set counters [codeback_empty $value]
 		}
 		-reftranscripts {
-			set reftranscripts $value
+			set reftranscripts [codeback_empty $value]
 		}
 		-isocallers {
-			set isocallers $value
+			set isocallers [codeback_empty $value]
 		}
 		-organelles {
-			set organelles $value
+			set organelles [codeback_empty $value]
 		}
 		-s - -split {
 			set split $value
@@ -670,22 +680,24 @@ proc process_sample_job {args} {
 			set samBQ $value
 		}
 		-a - -adapterfile {
+			set adapterfile [codeback_empty $value]
 			set adapterfile [file_absolute $value]
 			if {$value ne "" && ![jobfileexists $adapterfile]} {error "adapterfile $adapterfile does not exists"}
 		}
 		-removeskew {
-			set removeskew $value
+			set removeskew [codeback_empty $value]
 		}
 		-dt - -downsampling_type {
 			if {$value ni "{} NONE ALL_READS BY_SAMPLE"} {error "-dt must be one of: NONE ALL_READS BY_SAMPLE"}
-			set dt $value
+			set dt [codeback_empty $value]
 		}
 		-targetfile {
+			set targetfile [codeback_empty $value]
 			set targetfile [file_absolute $value]
 			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
 		}
 		-r - -reports {
-			set reports $value
+			set reports [codeback_empty $value]
 		}
 		-todoVar {
 			upvar $value todo
@@ -706,13 +718,13 @@ proc process_sample_job {args} {
 			set keepsams $value
 		}
 		-datatype {
-			set datatype $value
+			set datatype [codeback_empty $value]
 		}
 		-aliformat {
 			set aliformat [string tolower $value]
 		}
 		-maxfastqdistr {
-			set maxfastqdistr $value
+			set maxfastqdistr [codeback_empty $value]
 		}
 		-hap_bam {
 			set hap_bam $value
