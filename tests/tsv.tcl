@@ -1300,4 +1300,9 @@ test fixtsv {basic fixtsv} {
 line 1 is of wrong length: 5 iso 7	2 8 9 a b, fixing
 line 2 is of wrong length: 8 iso 7	3 8 9 a b 8 c d, fixing}
 
+test findfields {basic findfields} {
+	set header {chromosome chromStart chromEnd type reference alternative name2 transcriptid}
+	findfields $header {chromosome ref type begin end alt gene geneid transcript}
+} {chromosome reference type chromStart chromEnd alternative name2 name2 transcriptid}
+
 testsummarize

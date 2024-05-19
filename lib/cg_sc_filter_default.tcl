@@ -42,7 +42,8 @@ proc sc_filter_default_job {args} {
 	} -vars {
 		scisoformfile scisoformfile10x
 	} -code {
-		cg tsv210x -featurefields {gene transcript} -countfield counts_weighed $scisoformfile $scisoformfile10x.temp
+		set featurefields [findfields [cg select -h $scisoformfile] {gene transcript}]
+		cg tsv210x -featurefields $featurefields -countfield counts_weighed $scisoformfile $scisoformfile10x.temp
 		file rename $scisoformfile10x.temp $scisoformfile10x
 	}
 	set outinfofile $dir/sc_temp_info-$rootname.tsv
@@ -57,7 +58,8 @@ proc sc_filter_default_job {args} {
 		set pos [list_find -regexp $organelles M]
 		set mitchr [lindex $organelles [lindex $pos 0]]
 	}
-	set mitgenes [cg select -sh /dev/null -f gene -q "\$$cfield eq \"$mitchr\"" $tsvreftranscripts]
+	set genefields [findfields [cg select -h $tsvreftranscripts] {gene}]
+	set mitgenes [cg select -sh /dev/null -f $genefields -q "\$$cfield eq \"$mitchr\"" $tsvreftranscripts]
 	job sc_filter_default_r-$rootname -deps {
 		$scgenefile10x
 		$scisoformfile10x

@@ -4,10 +4,13 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv210x {tsvfile 10xdir {genefields {geneid gene_id gene}} {cellbarcodefield {}} {countfield {}}} {
+proc tsv210x {tsvfile 10xdir {genefields -} {cellbarcodefield {}} {countfield {}}} {
 	mkdir $10xdir.temp
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f]
+	if {$genefields eq "-"} {
+		set genefields [findfields $header {geneid gene}]
+	}
 	set geneposs [list_cor $header $genefields]
 	set poss [lsearch $geneposs -1]
 	set geneposs [list_sub $geneposs -exclude $poss]
@@ -88,7 +91,7 @@ proc tsv210x {tsvfile 10xdir {genefields {geneid gene_id gene}} {cellbarcodefiel
 proc cg_tsv210x {args} {
 	set 10xdir -
 	set tsvfile -
-	set genefields {geneid gene gene_id}
+	set genefields -
 	set cellbarcodefield {} 
 	set countfield {}
 	cg_options tsv210x args {

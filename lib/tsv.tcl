@@ -212,6 +212,42 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	return $poss
 }
 
+array set altfieldsa {
+	chromosome {chrom chr chr1 genoName tName contig}
+	begin {start end1 chromStart genoStart tStart txStart pos offset}
+	end {start2 chromEnd genoEnd tEnd txEnd}
+	ref {reference}
+	alt {alternative}
+	transcript {transcript_id transcriptid name}
+	gene_name {gene geneid gene_id name2}
+	gene {gene_name geneid gene_id name2}
+	geneid {gene_id gene_name gene name2}
+}
+
+proc findfields {header fields} {
+	global altfieldsa
+	set result {}
+	foreach field $fields {
+		if {$field in $header} {
+			lappend result $field
+		} elseif {[info exists altfieldsa($field)]} {
+			set found {}
+			foreach name $altfieldsa($field) {
+				set v [lsearch $header $name]
+				if {$v != -1} {
+					set found $name
+					break
+				}
+			}
+			lappend result $found
+			
+		} else {
+			lappend result {}
+		}
+	}
+	return $result
+}
+
 proc tsv_comment2var {comment varName} {
 	upvar $varName a
 	unset -nocomplain a
