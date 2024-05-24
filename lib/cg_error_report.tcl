@@ -25,13 +25,21 @@ proc cg_error_report args {
 		puts "logfile: $logfile"
 	} else {
 		if {$format eq "1"} {
+			set bold ""
+			set underline ""
+			set green ""
+			set yellow ""
+			set cyan ""
+			set normal ""
+			set foutput [open "| less -S -R" w]
+		} elseif {$format eq "2"} {
 			set bold "\033\[1;1m"
 			set underline "\033\[1;4m"
 			set green "\033\[1;32m"
 			set yellow "\033\[1;33m"
 			set cyan "\033\[1;36m"
 			set normal "\033\[0m"
-			set foutput [open "| less -S -r" w]
+			set foutput [open "| less -S -R" w]
 		} else {
 			set bold ""
 			set underline ""
@@ -45,6 +53,7 @@ proc cg_error_report args {
 		set nrerrors [lindex [cg select -g all -q {$status eq "error"} $logfile] end]
 		puts $foutput "logfile: $logfile"
 		puts $foutput "Analysis ended with $nrerrors errors (out of $num jobs)"
+		flush $foutput
 		set f [gzopen $logfile]
 		set header [tsv_open $f]
 		set poss [list_cor $header {job jobid status submittime starttime endtime duration time_seconds targets msg run cores pct_cpu maxmem bytes_read bytes_written}]
@@ -62,7 +71,7 @@ proc cg_error_report args {
 			set title "job $jobid ($job)"
 			puts -nonewline $foutput $green
 			puts $foutput $title
-			puts $foutput [string_fill - [string length $title]]
+			puts $foutput $green[string_fill - [string length $title]]
 			puts -nonewline $foutput $normal
 			puts $foutput ""
 			puts -nonewline $foutput $yellow
@@ -71,14 +80,14 @@ proc cg_error_report args {
 			puts $foutput $omsg
 			puts $foutput ""
 			puts -nonewline $foutput $yellow
-			puts $foutput "time: $starttime - $endtime ($duration)"
-			puts $foutput "maxmem: $maxmem"
-			puts $foutput "run_file: $pre/run/$post.run"
+			puts $foutput "${yellow}time: $starttime - $endtime ($duration)"
+			puts $foutput "${yellow}maxmem: $maxmem"
+			puts $foutput "${yellow}run_file: $pre/run/$post.run"
 			puts -nonewline $foutput $normal
 			flush $foutput
 		}
 		close $f
-		if {$format eq "1"} {
+		if {$format in "1 2"} {
 			catch {close $foutput}
 		}
 	}
