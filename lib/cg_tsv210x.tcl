@@ -4,17 +4,37 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv210x {tsvfile 10xdir {genefields -} {cellbarcodefield {}} {countfield {}}} {
+proc tsv210x {args} {
+	set tsvfile -
+	set 10xdir -
+	set genefields -
+	set cellbarcodefield {} 
+	set countfield {}
+	set round 1
+	set remdups 1
+	cg_options tsv210x args {
+		-featurefields - -genefields {set genefields $value}
+		-cellbarcodefield {set cellbarcodefield $value}
+		-countfield {set countfield $value}
+		-round {set round $value}
+		-remdups {set remdups [true $value]}
+	} {tsvfile 10xdir} 2 2
 	mkdir $10xdir.temp
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f]
 	if {$genefields eq "-"} {
 		set genefields [findfields $header {geneid gene}]
 	}
-	set geneposs [list_cor $header $genefields]
+	set geneposs {}
+	foreach field $genefields {
+		lappend geneposs [lsearch $header $field]
+	}
 	set poss [lsearch $geneposs -1]
 	set geneposs [list_sub $geneposs -exclude $poss]
 	set genefields [list_sub $header $geneposs]
+	if {[llength $genefields] < 2} {
+		error "should have at least 2 genefields/featurefields, only got: $genefields"
+	}
 	if {$cellbarcodefield eq ""} {
 		foreach field {cell cellbarcode barcode} {
 			set barcodepos [lsearch $header $field]
@@ -44,6 +64,7 @@ proc tsv210x {tsvfile 10xdir {genefields -} {cellbarcodefield {}} {countfield {}
 	set om [wgzopen $10xdir.temp/matrix.mtx.temp.zst]
 	set ob [wgzopen $10xdir.temp/barcodes.tsv.gz]
 	set og [wgzopen $10xdir.temp/features.tsv.gz]
+	unset -nocomplain dupa
 	while {[gets $f line] != -1} {
 		set line [split $line \t]
 		set barcode [lindex $line $barcodepos]
@@ -60,14 +81,25 @@ proc tsv210x {tsvfile 10xdir {genefields -} {cellbarcodefield {}} {countfield {}
 			set genea($geneinfo) [incr genenum]
 			puts $og [join $geneinfo \t]\tGene\ Expression
 		}
-		if {$count <= 0.01} {
-			set count 10
-		} elseif {$count <= 1} {
-			set count 1
-		} else {
-			set count [expr {round($count)}]
+		set numgene $genea($geneinfo)
+		set numbarcode $barcodea($barcode)
+		if {$remdups} {
+			if {[info exists dupa($numgene,$numbarcode)]} {
+				continue
+			} else {
+				set dupa($numgene,$numbarcode) 1
+			}
 		}
-		puts $om $genea($geneinfo)\ $barcodea($barcode)\ $count
+		if {$round} {
+			if {$count <= 0.01} {
+				set count 0
+			} elseif {$count <= 1} {
+				set count 1
+			} else {
+				set count [expr {round($count)}]
+			}
+		}
+		puts $om $numgene\ $numbarcode\ $count
 		incr num
 	}
 	gzclose $om ; gzclose $ob ; gzclose $og
@@ -89,16 +121,6 @@ proc tsv210x {tsvfile 10xdir {genefields -} {cellbarcodefield {}} {countfield {}
 }
 
 proc cg_tsv210x {args} {
-	set 10xdir -
-	set tsvfile -
-	set genefields -
-	set cellbarcodefield {} 
-	set countfield {}
-	cg_options tsv210x args {
-		-featurefields - -genefields {set genefields $value}
-		-cellbarcodefield {set cellbarcodefield $value}
-		-countfield {set countfield $value}
-	} {tsvfile 10xdir} 1 2
-	tsv210x $tsvfile $10xdir $genefields $cellbarcodefield $countfield
+	tsv210x {*}$args
 }
 
