@@ -315,11 +315,14 @@ proc giab_getdata_job {args} {
 				cd tmp
 				set tempfiles {}
 				foreach url $urls {
+					if {[file exists ../[file tail $url]]} continue
 					exec wget -c $url >@ stdout 2>@ stderr
 					lappend tempfiles tmp/[file tail $url]
 				}
 				cd ..
-				file rename {*}$tempfiles .
+				if {[llength $tempfiles]} {
+					file rename {*}$tempfiles .
+				}
 				file delete tmp
 			}
 		}
