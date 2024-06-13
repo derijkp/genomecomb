@@ -1,0 +1,26 @@
+= bams2crams =
+
+== Format ==
+cg bams2crams ?options? bamfile ?bamfile? ...
+
+== Summary ==
+Convert bam files to a cram
+
+== Description ==
+Converts all given bam files to cram. The resulting cramfiles will have
+the same filename as the source bam, but with .cram instread of .bam as
+file extension. 
+
+The command supports parallel processing using the [[joboptions]]
+
+== Arguments ==
+; **bamfile**: bamfile
+
+== Options ==
+; -refseq file/dir: file or directory containing the reference genome sequence (this option must be given)
+; -handlebam old/keep/rm: what to do with the bam file (old) rename to file.old (is the default), (keep) keep it as is, (rm) delete the bam file after conversion
+; -threads number: use **number** of threads for the conversion
+; -index 0/1: if 1 (default), create the crai index of the cram file
+
+== Category ==
+Format Conversion

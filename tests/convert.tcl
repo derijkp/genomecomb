@@ -2091,4 +2091,39 @@ test 10x {tsv210x and 10x2tsv} {
 	exec diff tmp/sc_gene_counts-result.tsv data/sc_gene_counts-test.tsv
 } {}
 
+test bam2cram {bam2cram} {
+	exec samtools view -b -h data/bwa.sam > tmp/bwa.bam
+	set refseq $::refseqdir/hg19
+	cg bam2cram -refseq $refseq tmp/bwa.bam tmp/bwa.cram
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} data/bwa.sam | cg select -rc 1 > tmp/test.tsv
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} tmp/bwa.cram | cg select -rc 1 > tmp/bwa.tsv
+	cg tsvdiff tmp/bwa.tsv tmp/test.tsv
+} {}
+
+test bam2cram {bams2crams} {
+	exec samtools view -b -h data/bwa.sam > tmp/bwa.bam
+	exec samtools view -b -h data/bwa.sam > tmp/bwa2.bam
+	set refseq $::refseqdir/hg19
+	cg bams2crams -refseq $refseq tmp/bwa.bam tmp/bwa2.bam
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} data/bwa.sam | cg select -rc 1 > tmp/test.tsv
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} tmp/bwa.cram | cg select -rc 1 > tmp/bwa.tsv
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} tmp/bwa2.cram | cg select -rc 1 > tmp/bwa2.tsv
+	cg tsvdiff tmp/bwa.tsv tmp/test.tsv
+	cg tsvdiff tmp/bwa2.tsv tmp/test.tsv
+} {}
+
+test bam2cram {bams2crams -links rename} {
+	exec samtools view -b -h data/bwa.sam > tmp/bwa.bam
+	exec samtools index tmp/bwa.bam
+	mklink tmp/bwa.bam tmp/bwa2.bam
+	mklink tmp/bwa.bam.bai tmp/bwa2.bam.bai
+	set refseq $::refseqdir/hg19
+	cg bams2crams -links rename -refseq $refseq tmp/bwa.bam tmp/bwa2.bam
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} data/bwa.sam | cg select -rc 1 > tmp/test.tsv
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} tmp/bwa.cram | cg select -rc 1 > tmp/bwa.tsv
+	cg sam2tsv -fields {NM MD AS XS RG MQ MC ms} tmp/bwa2.cram | cg select -rc 1 > tmp/bwa2.tsv
+	cg tsvdiff tmp/bwa.tsv tmp/test.tsv
+	cg tsvdiff tmp/bwa2.tsv tmp/test.tsv
+} {}
+
 testsummarize
