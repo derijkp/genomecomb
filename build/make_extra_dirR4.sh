@@ -505,6 +505,7 @@ cp -a /usr/lib64/libgsl*.so* /build/dirR-$dirRversion-$arch/lib64/R/lib
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'remotes::install_github("chris-mcginnis-ucsf/DoubletFinder", version = "2.0.3")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("argparser", version = "0.7.1", repos = "http://cran.us.r-project.org")'
 /build/dirR-$dirRversion-$arch/R --vanilla -e 'require(devtools); install_version("scSorter", version = "0.0.2", repos = "http://cran.us.r-project.org")'
+/build/dirR-$dirRversion-$arch/R --vanilla -e 'BiocManager::install("cleaver")'
 
 cd /build/R-$dirRversion
 yuminstall hdf5-devel
