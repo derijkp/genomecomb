@@ -66,17 +66,20 @@ proc samregions {region {refseq {}} {full 0}} {
 	set split [split $region :-]
 	foreach {chr begin end} {{} {} {}} break
 	foreach {chr begin end} $split break
+	distrreg_group_read [refseq $refseq] groupchra elementsa
 	if {!$full && ($begin eq "" || $end eq "")} {
 		if {$begin ne "" || $end ne ""} {
 			error "incorrect region:, must be either chr or chr:begin-end"
 		}
-		if {[regexp _$ $chr]} {
+		if {[info exists elementsa($chr)]} {
+			return $elementsa($chr)
+		} elseif {[regexp _$ $chr]} {
 			set refseq [refseq $refseq]
 			set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
 			set result {}
 			foreach tchr $chromosomes {
 				if {[regexp ^$chr $tchr]} {
-				lappend result $tchr
+					lappend result $tchr
 				}
 			}
 			return $result
@@ -84,12 +87,19 @@ proc samregions {region {refseq {}} {full 0}} {
 			return [list $chr]
 		}
 	}
-	if {[regexp _$ $chr]} {
+	if {[info exists elementsa($chr)]} {
+		set chromosomes $elementsa($chr)
+		set result {}
+		foreach tchr $chromosomes {
+			lappend result $tchr:1-[ref_chrsize $refseq $tchr]
+		}
+		return $result
+	} elseif {[regexp _$ $chr]} {
 		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
 		set result {}
 		foreach tchr $chromosomes {
 			if {[regexp ^$chr $tchr]} {
-			lappend result $tchr:1-[ref_chrsize $refseq $tchr]
+				lappend result $tchr:1-[ref_chrsize $refseq $tchr]
 			}
 		}
 		return $result

@@ -1,3 +1,30 @@
+proc groupchromosomes {refseq groupchromosomes} {
+	if {![llength $groupchromosomes]} return
+	if {![file exists $refseq.fai]} {
+		exec samtools faidx $refseq
+	}
+	set f [open $refseq.fai]
+	set o [open $refseq.groupchromosomes w]
+	puts $o "chromosome\tgroup"
+	while {[gets $f line] != -1} {
+		set chr [lindex [split $line \t] 0]
+		unset -nocomplain group ; unset -nocomplain group2
+		foreach pattern $groupchromosomes {
+			if {[regexp $pattern $chr group group2]} {
+				if {$group2 ne ""} {set group $group2}
+				break
+			}
+		}
+		if {[info exists group]} {
+			puts $o "$chr\t$group"
+		} else {
+			puts $o "$chr\t$chr"
+		}
+	}
+	close $o
+	close $f
+}
+
 proc makerefdb_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline [clean_cmdline cg makerefdb {*}$args]
@@ -29,6 +56,7 @@ proc makerefdb_job {args} {
 	set organelles {}
 	set transcriptsurl {}
 	set transcriptsgtf {}
+	set groupchromosomes {}
 
 	# options
 	# -------
@@ -65,6 +93,9 @@ proc makerefdb_job {args} {
 		}
 		-transcriptsgtf {
 			set transcriptsgtf $value
+		}
+		-groupchromosomes {
+			set groupchromosomes $value
 		}
 		-webcache {
 			set webcache [file_absolute $value]
@@ -114,6 +145,16 @@ proc makerefdb_job {args} {
 		cg zst -i 1 extra/reg_${build}_fullgenome.tsv
 	}
 
+	if {$groupchromosomes ne ""} {
+		job genome_groupchromosomes_${build} -targets {
+			genome_${build}.ifas
+			genome_${build}.ifas.groupchromosomes
+		} -vars {
+			build groupchromosomes
+		} -code {
+			groupchromosomes genome_${build}.ifas $groupchromosomes
+		}
+	}
 	job genome_${build}_cindex -deps {
 		genome_${build}.ifas
 	} -targets {

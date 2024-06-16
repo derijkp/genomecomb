@@ -227,6 +227,38 @@ proc cg_distrreg_nolowgene {args} {
 	distrreg_nolowgene {*}$args
 }
 
+proc distrreg_group_read {refseq groupchraVar {elementsaVar {}}} {
+	upvar $groupchraVar groupchra
+	if {$elementsaVar ne ""} {upvar $elementsaVar elementsa}
+	unset -nocomplain groupchra
+	unset -nocomplain elementsa
+	if {[file exists $refseq.groupchromosomes]} {
+		set f [open $refseq.groupchromosomes]
+		set header [tsv_open $f]
+		while {[gets $f line] != -1} {
+			foreach {chr group} [split $line \t] break
+			set groupchra($chr) $group
+			lappend elementsa($group) $chr
+		}
+	}
+}
+
+proc distrreg_group_base {groupchraVar chr} {
+	upvar $groupchraVar groupchra
+	
+	if {[info exists groupchra($chr)]} {
+		if {$groupchra($chr) ne $chr} {
+			set base $groupchra($chr)
+		} else {
+			set base {}
+		}
+	} elseif {[regexp {^[^_]*_} $chr base]} {
+	} else {
+		set base {}
+	}
+	return $base
+}
+
 proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 	if {$regfile eq "" || $regfile eq "0"} {
 		return {}
@@ -238,6 +270,7 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 	if {[regexp {^x([0-9]+)$} $regfile temp regsize]} {
 		set regfile $type$regsize
 	}
+	distrreg_group_read [refseq $refseq] groupchra
 	if {[regexp {^s([0-9]+)$} $regfile temp regsize]} {
 		set sequencedfile [gzfile [file dir $refseq]/extra/reg_*_sequencedgenome.tsv]
 		if {![file exists $sequencedfile]} {
@@ -253,8 +286,9 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 			set csize [expr {$cend-$cbegin}]
 			list_foreach {chr begin end} $list {
 				set size [expr {$end-$begin}]
+				set base [distrreg_group_base groupchra $cchr]
 				if {$chr ne $cchr} {
-					if {[regexp {^[^_]*_} $cchr base]} {
+					if {$base ne ""} {
 						if {![info exists donea($base)]} {
 							lappend result $base
 							set donea($base) 1
@@ -267,7 +301,7 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 					set cbegin 0
 					set cend $end
 					set cmax [ref_chrsize $refseq $cchr]
-				} elseif {[regexp {^[^_]*_} $cchr base]} {
+				} elseif {$base ne ""} {
 					# do not add anything if chr1_*
 				} elseif {[expr {$csize + $size}] > $regsize} {
 					set mid [expr {($cend + $begin)/2}]
@@ -300,8 +334,9 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 			set csize [expr {$cend-$cbegin}]
 			list_foreach {chr begin end} $list {
 				set size [expr {$end-$begin}]
+				set base [distrreg_group_base groupchra $cchr]
 				if {$chr ne $cchr} {
-					if {[regexp {^[^_]*_} $cchr base]} {
+					if {$base ne ""} {
 						if {![info exists donea($base)]} {
 							lappend result $base
 							set donea($base) 1
@@ -314,7 +349,7 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 					set cbegin 0
 					set cend $end
 					set cmax [ref_chrsize $refseq $cchr]
-				} elseif {[regexp {^[^_]*_} $cchr base]} {
+				} elseif {$base ne ""} {
 					# do not add anything if chr1_*
 				} elseif {[expr {$csize + $size}] > $regsize} {
 					set mid [expr {($cend + $begin)/2}]
@@ -347,8 +382,9 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 			set csize [expr {$cend-$cbegin}]
 			list_foreach {chr begin end} $list {
 				set size [expr {$end-$begin}]
+				set base [distrreg_group_base groupchra $cchr]
 				if {$chr ne $cchr} {
-					if {[regexp {^[^_]*_} $cchr base]} {
+					if {$base ne ""} {
 						if {![info exists donea($base)]} {
 							lappend result $base
 							set donea($base) 1
@@ -361,7 +397,7 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 					set cbegin 0
 					set cend $end
 					set cmax [ref_chrsize $refseq $cchr]
-				} elseif {[regexp {^[^_]*_} $cchr base]} {
+				} elseif {$base ne ""} {
 					# do not add anything if chr1_*
 				} elseif {[expr {$csize + $size}] > $regsize} {
 					set mid [expr {($cend + $begin)/2}]
@@ -383,8 +419,12 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
 		unset -nocomplain a
 		foreach chr $chromosomes {
-			regsub {_.*$} $chr _ chr
-			set a($chr) 1
+			set base [distrreg_group_base groupchra $chr]
+			if {$base ne ""} {
+				set a($base) 1
+			} else {
+				set a($chr) 1
+			}
 		}
 		return [distrreg_addunaligned [bsort [array names a]] $addunaligned]
 	} elseif {$regfile in "schr schromosome"} {
@@ -394,7 +434,8 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 		unset -nocomplain donea
 		set result {}
 		list_foreach {chr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
-			if {[regexp {^[^_]*_} $chr base]} {
+			set base [distrreg_group_base groupchra $chr]
+			if {$base ne ""} {
 				if {![info exists donea($base)]} {
 					lappend result $base
 					set donea($base) 1
