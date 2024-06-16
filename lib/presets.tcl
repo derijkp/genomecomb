@@ -58,6 +58,7 @@ proc preset_ontr {} {
 		iso_joint {isoquant}
 		singlecell {}
 		distrreg chr
+		iso_match novel
 		reports {-fastqc predictgender}
 	}
 }
