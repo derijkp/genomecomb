@@ -11,7 +11,15 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 		return $minimap2refseq
 	}
 	job [job_relfile2name minimap2_2refseq- $refseq] -deps {$refseq} -targets {$minimap2refseq} -vars {preset} -code {
-		set temp [catch_exec minimap2 -x $preset -d $target.temp $dep]
+		set size 0
+		set f [open $dep.fai]
+		while {[gets $f line] != -1} {
+			incr size [lindex [split $line \t] 1]
+		}
+		close $f
+		incr size 1000
+		if {$size < 10000000000} {set size 10000000000}
+		set temp [catch_exec minimap2 -I $size -x $preset -d $target.temp $dep]
 		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
 			error "could not properly index $dep: contains no sequences"
 		}
