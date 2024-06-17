@@ -2,8 +2,12 @@ proc cg_qjobs {args} {
 	set basedir [file_absolute [pwd]]
 	set options {}
 	set user {}
+	set summary 0
 	cg_options qjobs args {
 		-u {set user $value}
+		-s - -summary {
+			set summary [true $value]
+		}
 	} {} 0 0 {
 		returns running and waiting jobs on a grid engine cluster in tsv format (so they can by analysed using cg select)
 	}
@@ -52,9 +56,17 @@ proc cg_qjobs {args} {
 			lappend result $resultline
 		}
 		set result [bsort -index 0 $result]
-		puts [join {id tasks state submissiontime starttime priority JAT_prio owner queue slots run runversion name} \t]
-		foreach line $result {
-			puts [join [lrange $line 1 end] \t]
+		if {!$summary} {
+			puts [join {id tasks state submissiontime starttime priority JAT_prio owner queue slots run runversion name} \t]
+			foreach line $result {
+				puts [join [lrange $line 1 end] \t]
+			}
+		} else {
+			unset -nocomplain a
+			foreach line $result {
+				foreach {run state} [list_sub [lrange $line 1 end] {10 2}] break
+				incr a([list $run $state])
+			}
 		}
 	} else {
 		package require json
@@ -104,9 +116,24 @@ proc cg_qjobs {args} {
 			lappend result $resultline
 		}
 		set result [bsort -index 0 $result]
-		puts [join $header \t]
-		foreach line $result {
-			puts [join $line \t]
+		if {!$summary} {
+			puts [join $header \t]
+			foreach line $result {
+				puts [join $line \t]
+			}
+		} else {
+			set poss [list_cor $header {run state}]
+			unset -nocomplain a
+			foreach line $result {
+				foreach {run state} [list_sub $line $poss] break
+				incr a([list $run $state])
+			}
+		}
+	}
+	if {$summary} {
+		puts [join {run state count} \t]
+		foreach key [bsort [array names a]] {
+			puts [join [list {*}$key $a($key)] \t]
 		}
 	}
 }

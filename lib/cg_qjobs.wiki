@@ -1,0 +1,23 @@
+= qjobs =
+
+== Format ==
+cg qjobs ?options?
+
+== Summary ==
+returns the running jobs on the cluster in [[tsv]] format.
+
+== Description ==
+Convenience function to easily get information on jobs running on a (grid engine) cluster
+in a parsable format
+
+== Arguments ==
+; **cmd** ...: command (and parameters) to be executed
+
+== Options ==
+; -s 0/1: return a summary of running jobs
+; -u user: list jobs of the given user
+
+
+== Category ==
+Dev
+
