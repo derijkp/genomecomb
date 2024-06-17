@@ -1,16 +1,64 @@
 proc cg_qsub {args} {
+	global cgjob_distr
 	set basedir [file_absolute [pwd]]
 	set options {}
 	set dqueue all.q
+	set soft {}
+	set hard {}
+	set priority 0
+	set cores 1
+	set mem {}
+	set time {}
+	set lang {}
+	set submitoptions {}
 	cg_options qsub args {
 		-deps {
 			lappend options -hold_jid [join $value ,]
+		}
+		-priority {
+			set priority $value
+		}
+		-cores {
+			# we will use a PE named local, which must be present/made on the cluster
+			# if PE local does not exists, PE smp is tried
+			# -l slots=$value mentioned in http://www.softpanorama.org/HPC/Grid_engine/Reference/qsub.shtml
+			# would be easier, but does not seem to work (if there is any PE defined?)
+			# lappend hard -l slots=$value
+			set cores $value
+			if {![info exists cgjob_distr(local_pe)]} {
+				set error [catch {exec qconf -sp local}]
+				if {!$error} {
+					set cgjob_distr(local_pe) local
+				} else {
+					set error [catch {exec qconf -sp smp}]
+					if {!$error} {
+						set cgjob_distr(local_pe) smp
+					} else {
+						set cgjob_distr(local_pe) {}
+					}
+				}
+			}
+			if {$cgjob_distr(local_pe) ne ""} {
+				lappend hard -pe $cgjob_distr(local_pe) $cores -R y
+			}
+		}
+		-hard {
+			lappend hard -l $value
+		}
+		-soft {
+			lappend soft -l $value
 		}
 		-host {
 			lappend options -l hostname=$value
 		}
 		-io {
 			lappend options -l io=$value
+		}
+		-mem {
+			set mem $value
+		}
+		-time {
+			set time $value
 		}
 		-o - -outputfile {
 			set outputfile $value
@@ -27,7 +75,33 @@ proc cg_qsub {args} {
 		-run {
 			set run $value
 		}
+		-lang {
+			set lang $value
+		}
+		-submitoptions {
+			lappend options {*}$value
+		}
 	} command	
+	if {$mem ne ""} {
+		# mem_free: only start job if the given amount of memory is free on the node
+		#  -> often not sufficient if running jobs increase memory use during run
+		# virtual_free: reserves this much memory, can be defined as a consumable resource
+		#	-> if all memory is reserved for running kjobs, no new jobs are started on node
+		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
+		set temp [job_mempercore $mem $cores]
+		lappend hard -l mem_free=$temp,virtual_free=$temp
+	}
+	if {$time ne ""} {
+		# (time format is hh:mm:ss)
+		lappend soft -l s_rt=$time
+	}
+	if {[llength $soft]} {
+		lappend options -soft {*}$soft
+	}
+	if {[llength $hard]} {
+		lappend options -hard {*}$hard
+	}
+	# check running jobs
 	catch {exec qstat -xml} jobxml
 	set jobs [regexp -all -inline {<job_list.+?</job_list>} $jobxml]
 	unset -nocomplain ra
@@ -59,6 +133,7 @@ proc cg_qsub {args} {
 	} else {
 		job_init
 		global cgjob
+		set runfile job_$jobname.run
 		set cmd {#!/bin/sh}
 		append cmd \n
 		append cmd {#$ -S /bin/bash} \n
@@ -66,8 +141,16 @@ proc cg_qsub {args} {
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
 		append cmd "cd [pwd]\n"
-		append cmd [list exec $command {*}$args]\n
-		set runfile job_$jobname.run
+		if {$lang eq ""} {
+			append cmd "[list exec $command {*}$args] >@ stdout 2>@ stderr\n"
+		} else {
+			if {$lang eq "R"} {
+				set lang "R --vanilla --slave --no-restore <"
+			}
+			append cmd {set tempfile [tempfile]} \n
+			append cmd "file_write \$tempfile [list [deindent $command]]\n"
+			append cmd "exec $lang \$tempfile >@ stdout 2>@ stderr\n"
+		}
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 
@@ -76,7 +159,7 @@ proc cg_qsub {args} {
 		puts "run file: $runfile"
 		puts "output file: $outputfile"
 		puts "error file: $errorfile"
-		set jnum [exec qsub -N j$jobname -q $dqueue -o $outputfile -e $errorfile {*}$options $runfile]
+		set jnum [exec qsub -N j$jobname -cwd -q $dqueue -o $outputfile -e $errorfile -p $priority {*}$options $runfile]
 		puts "$jnum $jobname"
 	}
 }

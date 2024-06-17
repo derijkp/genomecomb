@@ -20,8 +20,16 @@ to the given errorfile. By default, the filename job_$name.err will be
 used
 ; -name name: specify name to job (default generated based on the command)
 ; -run run: specify the run name for the job (default generated based on the command)
+; -lang interpreter: use **cmd** as a piece of code to be run with the given interpreter, e.g. '''-lang python''' or '''-lang R''' (further arguments after cmd are ignored in this case)
+; -mem memorysize: indication of (maximum) memory needed by the job (on sge: -l mem_free=$value,virtual_free=$value, where value is corrected by the system based on -cores)
+; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)
+If using multiple cores, other requirements on sge are per core!
+For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
+; -time timelimit: indication of (maximum) time needed by the job (on sge: -l s_rt=$time)
 ; -dqueue value: (only for sge) Use this option if you want to run on another queue than the default all.q
 ; -deps ids: job will only run when the jobs in ids (a comma separated list of job ids)
+; -hard hardlimits: on sge: extra options passed on as hard limits
+; -soft softlimits: on sge: extra options passed on as soft limits
 
 
 == Category ==
