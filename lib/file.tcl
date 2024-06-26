@@ -197,7 +197,7 @@ if {[info commands genomecomb::close.ori] eq ""} {
 	rename close genomecomb::close.ori
 }
 proc close f {
-	if {$f in "stdout stderr"} {return $}
+	if {$f in "stdin stdout stderr"} return
 	genomecomb::close.ori $f
-	unset ::genomecomb_gzopen_info($f)
+	unset -nocomplain ::genomecomb_gzopen_info($f)
 }

@@ -209,7 +209,7 @@ proc gzopen {file {pos -1}} {
 }
 
 proc gzclose {f} {
-	if {$f in {stdin stdout}} return
+	if {$f in {stdin stdout stderr}} return
 	if {[catch {close $f} error]} {
 		# if {$error eq "child process exited abnormally"} return
 		if {[join [list_remdup [split $error \n]] \n] eq "child killed: write on pipe with no readers"} return
@@ -221,7 +221,7 @@ proc gzclose {f} {
 }
 
 proc gzcloseout {f} {
-	if {$f in {stdin stdout}} return
+	if {$f in {stdin stdout stderr}} return
 	if {[catch {close $f} error]} {
 		regsub "\n?child process exited abnormally\$" $error {} error
 		error $error
