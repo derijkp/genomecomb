@@ -533,9 +533,14 @@ proc helptext_overview {} {
 		; -compressionthreads number: Use **number** threads (default 1) to compress the result 
 		file (if the result needs to be compressed, and the compression method supports threads)
 
-		; -shadowdir: alternative location (e.g. a faster disk or disk without snapshots) to store some of the intermediate files
-		that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
+		; -shadowdir path: alternative location (e.g. a faster disk or disk without snapshots) to store 
+		some of the intermediate files that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
 		Can also be specified using the environment variable SHADOWDIR.
+
+		; -scratchdir path: alternative location to store (local, not potentially accessed by multiple nodes) temporary
+		files which may become very big. The default location is /tmp; if this is too small (on some nodes)
+		you can specify a different location using this option
+		Can also be specified using the environment variable SCRATCHDIR.
 		
 		== Available subcommands ==
 	}]] \n
