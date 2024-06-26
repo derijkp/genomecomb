@@ -1,0 +1,15 @@
+= samcat =
+
+== Format ==
+cg samcat samfile ?samfile? ...
+
+== Summary ==
+concatenates sam files outputting to stdout.
+
+== Arguments ==
+; **samfile**: file to be concatenated
+
+== Category ==
+Convenience
+
+
