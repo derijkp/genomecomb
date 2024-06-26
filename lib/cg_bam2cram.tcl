@@ -65,7 +65,7 @@ proc cg_bam2cram {args} {
 	}
 	exec samtools view --threads $threads --no-PG -h -C -T $refseq --no-PG $bamfile > $cramfile.temp.cram
 	exec samtools index $cramfile.temp.cram
-	file rename -force $cramfile.temp.cram.crai $cramfile.temp.cram.crai
+	file rename -force $cramfile.temp.cram.crai $cramfile.crai
 	file rename -force $cramfile.temp.cram $cramfile
 	exec touch -r $bamfile $cramfile
 	if {$handlebam eq "old"} {
