@@ -37,7 +37,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#[join $header \t]
-	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" -t \\t -s -N"
+	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" --buffer-size=500M --compress-program=zstd-mt-1 -t \\t -s -N"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }

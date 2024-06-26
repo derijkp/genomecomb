@@ -1,0 +1,4 @@
+#!/bin/sh
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+"${dir}/zstd-mt" -1 "$@"

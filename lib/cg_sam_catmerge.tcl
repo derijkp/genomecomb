@@ -70,7 +70,7 @@ proc sam_catmerge_job {args} {
 	} {resultfile samfile} 1 ... {
 		merge sam files by concatenating (no problem with max open files) and then sorting them.
 		For already sorted files, you can use the option -mergesort 1 for more perfermonance: 
-		Instead of concatenating and sorting, a hierarchical (if > max open files) mergesort is used
+		Instead of concatenating and sorting, a hierarchical (if > max open files) mergesort is then used
 	}
 	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
@@ -182,7 +182,7 @@ proc sam_catmerge_job {args} {
 						file_write $tempfile $header
 					}
 					exec samcat -header $tempfile {*}$deps \
-						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
+						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] --buffer-size=500M --compress-program=zstd-mt-1 -t \t -s {*}$sortopt \
 						{*}$outcmd $tempresultfile
 				} else {
 					if {[llength $outcmd]} {lappend outcmd >}
@@ -193,7 +193,7 @@ proc sam_catmerge_job {args} {
 						file_write $tempfile $header
 					}
 					exec samcat -header $tempfile {*}$deps \
-						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s {*}$sortopt \
+						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] --buffer-size=500M --compress-program=zstd-mt-1 -t \t -s {*}$sortopt \
 						| distrreg [file_root $tempresultfile]- [file_ext $resultfile] 1 $regions 2 3 3 0 @ {*}$outcmd 2>@ stderr
 				}
 			} else {

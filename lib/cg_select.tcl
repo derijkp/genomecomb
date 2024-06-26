@@ -1568,7 +1568,8 @@ proc cg_select {args} {
 					lappend keys $pos,${pos}N
 				}
 			}
-			set sort "gnusort8 -T \"[scratchdir]\" -t \\t -s -k[join $keys " -k"]"
+#			set sort "gnusort8 -T \"[scratchdir]\" --buffer-size=500M --compress-program=\"zstd-mt-1\" -t \\t -s -k[join $keys " -k"]"
+			set sort [list gnusort8 -T [scratchdir] --buffer-size=500M --compress-program=zstd-mt-1 -t \t -s {*}-k[join $keys " -k"]]
 		}
 	}
 	set tsv_funcnum 1
