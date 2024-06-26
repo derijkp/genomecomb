@@ -89,6 +89,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(dmem)]} {
 		set cgjob(dmem) {}
 	}
+	if {![info exists cgjob(dmaxmem)]} {
+		set cgjob(dmaxmem) {}
+	}
 	if {![info exists cgjob(dtime)]} {
 		set cgjob(dtime) {}
 	}
@@ -129,6 +132,10 @@ proc job_args {jobargs} {
 			}
 			-dmem {
 				set cgjob(dmem) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dmaxmem {
+				set cgjob(dmaxmem) [entry_memory [lindex $jobargs $pos]]
 				incr pos
 			}
 			-dtime {
@@ -1490,6 +1497,7 @@ proc job_init {args} {
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
 	set cgjob(dmem) {}
+	set cgjob(maxmem) {}
 	set cgjob(dtime) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	set cgjob(default_job_logdir) 1
@@ -1514,6 +1522,22 @@ proc job_curargs {} {
 		}
 	}
 	return $temp
+}
+
+proc entry_memory {mem} {
+	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
+		if {$memunits eq "G" || $memunits eq "g"} {
+			return [expr {1073741824*$memnum}]
+		} elseif {$memunits eq "M" || $memunits eq "m"} {
+			return [expr {1048576*$memnum}]
+		} elseif {$memunits eq "K" || $memunits eq "k"} {
+			return [expr {1024*$memnum}]
+		}
+	}
+	if {![regexp {^([0-9]+)$} $mem]} {
+		error "memory must be either a number, or a number followed by one of: G or g (gigabite), M or m (megabyte), K or k (kilobyte)"
+	}
+	return $mem
 }
 
 proc job_mempercore {mem threads} {

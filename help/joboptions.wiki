@@ -94,6 +94,7 @@ List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)
 ; -dpriority value: run jobs with the given priority (default is 0; for sge negative numbers decrease priority; for slurm this is given through the --nice option, which gives greater priority to negative values)
 ; -dqueue value: Use this option if you want to run on another queue than the default all.q (for slurm this will specify the "partition(s)" / -p option to sbatch)
+; -dmaxmem value: limit total amount of (reserved) memory in local distribute to value: do not start new jobs until reserved memory (total of running jobs and new job) stays below this value (unless it would be the only job)
 ; -submitoptions value: can be used to add any options to the submit command. 
 The text in value will be added verbatim, so options must be specified as they would be given to the submit command of the job system used,
 e.g. for slurm {{{-submitoptions '--account=test1'}}}
