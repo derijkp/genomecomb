@@ -8,6 +8,7 @@ proc cg_qsub {args} {
 	set priority 0
 	set cores 1
 	set mem {}
+	set memlimit {}
 	set time {}
 	set lang {}
 	set submitoptions {}
@@ -57,6 +58,9 @@ proc cg_qsub {args} {
 		-mem {
 			set mem $value
 		}
+		-memlimit {
+			set memlimit $value
+		}
 		-time {
 			set time $value
 		}
@@ -90,6 +94,10 @@ proc cg_qsub {args} {
 		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
 		set temp [job_mempercore $mem $cores]
 		lappend hard -l mem_free=$temp,virtual_free=$temp
+	}
+	if {$memlimit ne ""} {
+		set temp [job_mempercore $memlimit $cores]
+		lappend hard -l h_vmem=$temp
 	}
 	if {$time ne ""} {
 		# (time format is hh:mm:ss)
@@ -163,3 +171,4 @@ proc cg_qsub {args} {
 		puts "$jnum $jobname"
 	}
 }
+

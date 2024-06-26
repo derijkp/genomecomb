@@ -22,6 +22,7 @@ used
 ; -run run: specify the run name for the job (default generated based on the command)
 ; -lang interpreter: use **cmd** as a piece of code to be run with the given interpreter, e.g. '''-lang python''' or '''-lang R''' (further arguments after cmd are ignored in this case)
 ; -mem memorysize: indication of (maximum) memory needed by the job (on sge: -l mem_free=$value,virtual_free=$value, where value is corrected by the system based on -cores)
+; -memlimit memorysize: limit memory use of the job to the given amount (on sge: -l h_vmem=$value where value is corrected by the system based on -cores)
 ; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)
 If using multiple cores, other requirements on sge are per core!
 For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
