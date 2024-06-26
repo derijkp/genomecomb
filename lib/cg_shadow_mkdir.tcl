@@ -27,12 +27,12 @@ proc shadow_clean {{shadowdir {}}} {
 
 proc cg_shadow_clean {args} {
 	set shadowdir {}
-	cg_options shadow_mkdir args {
+	cg_options shadow_clean args {
 		-shadowdir {
 			set shadowdir $value
 		}
 	} {shadowdir} 0 1 {
-		make a shadow dir
+		clean up shadowdirs that are no longer used
 	}
 	shadow_clean $shadowdir 
 }
