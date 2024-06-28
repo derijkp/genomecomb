@@ -1,6 +1,6 @@
 proc cg_error_report args {
 	set logfile {}
-	set format 1
+	set format 2
 	cg_options error_report args {
 		-format {set format $value}
 	} logfile 0 1
@@ -31,7 +31,7 @@ proc cg_error_report args {
 			set yellow ""
 			set cyan ""
 			set normal ""
-			set foutput [open "| less -S -R" w]
+			set foutput [open "| less -R" w]
 		} elseif {$format eq "2"} {
 			set bold "\033\[1;1m"
 			set underline "\033\[1;4m"
@@ -39,7 +39,7 @@ proc cg_error_report args {
 			set yellow "\033\[1;33m"
 			set cyan "\033\[1;36m"
 			set normal "\033\[0m"
-			set foutput [open "| less -S -R" w]
+			set foutput [open "| less -R" w]
 		} else {
 			set bold ""
 			set underline ""
@@ -69,21 +69,15 @@ proc cg_error_report args {
 
 			puts $foutput ""
 			set title "job $jobid ($job)"
-			puts -nonewline $foutput $green
-			puts $foutput $title
-			puts $foutput $green[string_fill - [string length $title]]
-			puts -nonewline $foutput $normal
+			puts $foutput $green$title$normal
+			puts $foutput $green[string_fill - [string length $title]]$normal
 			puts $foutput ""
-			puts -nonewline $foutput $yellow
-			puts $foutput "error message ($pre/err/$post.err):"
-			puts -nonewline $foutput $normal
+			puts $foutput "${yellow}error message ($pre/err/$post.err):$normal"
 			puts $foutput $omsg
 			puts $foutput ""
-			puts -nonewline $foutput $yellow
-			puts $foutput "${yellow}time: $starttime - $endtime ($duration)"
-			puts $foutput "${yellow}maxmem: $maxmem"
-			puts $foutput "${yellow}run_file: $pre/run/$post.run"
-			puts -nonewline $foutput $normal
+			puts $foutput "${yellow}time: $starttime - $endtime ($duration)$normal"
+			puts $foutput "${yellow}maxmem: $maxmem$normal"
+			puts $foutput "${yellow}run_file: $pre/run/$post.run$normal"
 			flush $foutput
 		}
 		close $f
