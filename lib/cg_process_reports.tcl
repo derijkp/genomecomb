@@ -178,9 +178,25 @@ proc reports_singlecell {sampledir} {
 	set countfile [gzfile $sampledir/mergedbarcodes.tsv.zst]
 	if {[file exists $countfile]} {
 		set temp [cg select -f {{group=if($whitelist == 1,"valid",$barcode eq "","nobc","invalid")}} -g group -gc sum(count),sum(umicount) $countfile]
-		foreach {
-			na invalidreads invalidumis na nobcreads na na validreads validumis
-		} [lrange [split $temp \n\t] 3 end] break
+		set validreads 0
+		set validumis 0
+		set invalidreads 0
+		set invalidumis 0
+		set nobcreads 0
+		set nobcumis 0
+		foreach line [split [string trim $temp] \n] {
+			foreach {group sum_count sum_umicount} [split $line \t] break
+			if {$group eq "valid"} {
+				set validreads $sum_count
+				set validumis $sum_umicount
+			} elseif {$group eq "invalid"} {
+				set invalidreads $sum_count
+				set invalidumis $sum_umicount
+			} elseif {$group eq "invalid"} {
+				set nobcreads $sum_count
+				set nobcumis $sum_umicount
+			}
+		}
 		set barcoded_reads [expr {$invalidreads + $validreads}]
 		set pct_barcoded_reads [format %.2f [expr {100.0*$barcoded_reads/$total_reads}]]
 		set validbarcoded_reads $validreads
@@ -306,7 +322,7 @@ proc reports_singlecell {sampledir} {
 		}
 	}
 	close $o
-	set countfile [gzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv]
+	set countfile [gzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv $sampledir/read_assignments-isoquant_sc*-$sample.tsv]
 	cg select -overwrite 1 -f {
 		{rcovered_pct=round($covered_pct)}
 		{ccount=if($ambiguity <= 1,if($umicount <= 1,1,1.0/$umicount),1.0/($ambiguity * $umicount))}
