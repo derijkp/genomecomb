@@ -321,16 +321,34 @@ proc gzfile_multi {filelist} {
 #	return $result
 #}
 
+# list files matching any of the given patterns
+# including if they are compressed (give pattern for uncompressed filename)
+# if the same file is present with multiple compression, only one version is given (in gzorder)
+# results are sorted:
+#   first all files matching first given pattern, then the second pattern, etc.
+#   per pattern files are sorted (natural using bsort)
 proc gzfiles {args} {
+	set result {}
+	unset -nocomplain a
+	set gzorder {{} .zst .lz4 .rz .bgz .gz .bz2}
 	foreach filename $args {
 		if {[string first * $filename] != -1} {
-			foreach ext {{} .zst .lz4 .rz .bgz .gz .bz2} {
-				set list [glob -nocomplain $filename$ext]
-				foreach file $list {
-					set root [gzroot $file]
-					if {[info exists a($root)]} continue
-					set a($root) $file
+			set list [glob -nocomplain $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+			unset -nocomplain thisa
+			foreach file $list {
+				set root [gzroot $file]
+				if {[info exists a($root)]} continue
+				if {[info exists thisa($root)]} {
+					if {[lsearch $gzorder [gzext $file]] < [lsearch $gzorder [gzext $thisa($root)]]} {
+						set thisa($root) $file
+					}
+				} else {
+					set thisa($root) $file
 				}
+			}
+			foreach root [bsort [array names thisa]] {
+				set a($root) $thisa($root)
+				lappend result $thisa($root)
 			}
 		} else {
 			foreach ext {{} .zst .lz4 .rz .bgz .gz .bz2} {
@@ -338,14 +356,11 @@ proc gzfiles {args} {
 				if {[file exists $file]} {
 					set root [gzroot $file]
 					set a($root) $file
+					lappend result $file
 					break
 				}
 			}
 		}
-	}
-	set result {}
-	foreach file [array names a] {
-		lappend result $a($file)
 	}
 	return $result
 }

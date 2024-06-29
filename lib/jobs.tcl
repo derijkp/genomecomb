@@ -336,17 +336,27 @@ proc jobglob {args} {
 }
 
 proc jobgzfiles {args} {
+	set result {}
+	unset -nocomplain a
+	set gzorder {{} .zst .lz4 .rz .bgz .gz .bz2}
 	foreach filename $args {
 		set list [jobglob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2]
+		unset -nocomplain thisa
 		foreach file $list {
 			set root [gzroot $file]
 			if {[info exists a($root)]} continue
-			set a($root) $file
+			if {[info exists thisa($root)]} {
+				if {[lsearch $gzorder [gzext $file]] < [lsearch $gzorder [gzext $thisa($root)]]} {
+					set thisa($root) $file
+				}
+			} else {
+				set thisa($root) $file
+			}
 		}
-	}
-	set result {}
-	foreach file [array names a] {
-		lappend result $a($file)
+		foreach root [bsort [array names thisa]] {
+			set a($root) $thisa($root)
+			lappend result $thisa($root)
+		}
 	}
 	return $result
 }
