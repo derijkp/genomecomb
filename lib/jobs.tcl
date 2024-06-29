@@ -1535,7 +1535,7 @@ proc entry_memory {mem} {
 		}
 	}
 	if {![regexp {^([0-9]+)$} $mem]} {
-		error "memory must be either a number, or a number followed by one of: G or g (gigabite), M or m (megabyte), K or k (kilobyte)"
+		error "memory must be either a number, or a number followed by one of: G or g (gigabyte), M or m (megabyte), K or k (kilobyte)"
 	}
 	return $mem
 }
