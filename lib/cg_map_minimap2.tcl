@@ -49,7 +49,7 @@ cg refseq_minimap2 \'$refseq\' $preset"
 
 proc map_mem_minimap2 {mem threads preset deps} {
 	if {$mem eq ""} {
-		if {$preset eq "splice"} {
+		if {[regexp splice $preset]} {
 			set mem 20G
 		} else {
 			set mem 10G
