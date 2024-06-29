@@ -170,8 +170,9 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 proc reports_singlecell {sampledir} {
 	set sample [file tail $sampledir]
 	set rootname $sample
-	if {[file exists $sampledir/reports/report_fastq_fw-$rootname.tsv]} {
-		set total_reads [lindex [exec grep fw_numreads $sampledir/reports/report_fastq_fw-$rootname.tsv] end]
+	set fastq_fw [gzfile $sampledir/reports/report_fastq_fw-*$sample.tsv]
+	if {[file exists $fastq_fw]} {
+		set total_reads [lindex [exec grep fw_numreads $fastq_fw] end]
 	} else {
 		set total_reads NA
 	}
@@ -687,10 +688,13 @@ proc process_reports_job {args} {
 	if {[inlist $reports singlecell]} {
 		set deps [list]
 		lappend deps [jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv]
-		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
+		lappend deps [jobgzfile $sampledir/mergedbarcodes.tsv.zst]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_raw-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_filtered-*$sample.tsv sc_gene_counts_filtered-*.tsv]
+		lappend deps [jobgzfile $sampledir/sc_isoform_counts_filtered-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_cellinfo_filtered-*$sample.tsv sc_cellinfo_filtered-*.tsv]
+		lappend deps [jobgzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv $sampledir/read_assignments-isoquant_sc*-$sample.tsv]
+		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
 		# set deps "([join $deps ") ("])"
 		job reports_singlecell-$sample -deps $deps -targets {
 			$sampledir/reports/report_singlecell-$sample.tsv
