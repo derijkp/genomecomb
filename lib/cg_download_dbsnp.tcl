@@ -120,6 +120,17 @@ proc cg_download_dbsnp {resultfile build dbname} {
 	file delete $resultfile.temp $resultfile.ucsc
 }
 
+proc cg_download_bigbed {url resultfile} {
+	wgetfile $url $resultfile.temp.bb
+	wgetfile http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v369/bigBedToBed
+	chmod u+x bigBedToBed
+	exec ./bigBedToBed $resultfile.temp.bb $resultfile.temp.bb.bed
+	file delete -force $resultfile.temp.bb
+	file rename -force $resultfile.temp.bb.bed $resultfile
+	file delete bigBedToBed [file tail $url]
+	#
+}
+
 proc cg_download_dbsnp_new {resultfile build dbname} {
 	regsub ^snp $dbname {} dbsnpversion
 	file_write [gzroot $resultfile].info [subst [deindent {
