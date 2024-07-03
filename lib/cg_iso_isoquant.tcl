@@ -1683,7 +1683,7 @@ proc iso_isoquant_job {args} {
 				}
 			}
 			if {$cleanup} {
-				file delete -force $isodir
+				cg_shadow_delete $isodir
 			}
 		}
 	}
