@@ -89,8 +89,8 @@ Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, minimap2_pb, minim
 ; -ali_keepcomments 1/0: set to 1 to transfer sequence comments in the source fastq or ubams to the alignment (default don't keep for fastq, keep for ubams). 
 This option currently only works for minimap2 aligner
 ; -aliformat format: format of the (final) alignment (map) files, this is by default bam, but can be set to cram
-; -realign value: If **value** is 0, realignment will not be performed, 
-use 1 for (default) realignment with gatk, or **value** srma for alignment with srma
+; -realign value: If **value** is 0 (default), realignment will not be performed, 
+use 1 for realignment with gatk, or **value** srma for alignment with srma
 ; -removeduplicates 0/1/picard/biobambam: By default duplicates will be
 removed (marked actually) using samtools except for amplicon sequencing.
 With this option you can specifically request or turn of duplicate removal
