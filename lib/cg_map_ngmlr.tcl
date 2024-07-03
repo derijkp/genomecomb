@@ -100,7 +100,7 @@ proc cg_map_ngmlr {args} {
 	set ngmlr_refseq [refseq_ngmlr $refseq $preset]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	putslog "making $result"
-	analysisinfo_write $fastqfile $result sample [file tail $sample] aligner ngmlr aligner_version [version ngmlr] reference [file2refname $ngmlr_refseq] aligner_paired 0
+	analysisinfo_write $fastqfile $result sample [file tail $sample] aligner ngmlr aligner_version [version ngmlr] aligner_preset $preset reference [file2refname $ngmlr_refseq] aligner_paired 0
 	set rg {}
 	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
 		lappend rg "$key:$value"

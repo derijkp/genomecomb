@@ -140,7 +140,7 @@ proc cg_map_star {args} {
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
 	set starrefseq [refseq_star $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
-	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner star aligner_version [version star] reference [file2refname $starrefseq] aligner_paired $paired
+	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner star aligner_version [version star] aligner_preset $preset reference [file2refname $starrefseq] aligner_paired $paired
 	putslog "making $result"
 	set rg {}
 	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {

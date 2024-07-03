@@ -237,7 +237,7 @@ proc map_job {args} {
 					{*}[convert_pipe -.sam $tempfile -compressionlevel $compressionlevel -refseq $refseq -threads $threads -endpipe 1]
 			}
 			result_rename $tempfile $result
-			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
+			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] aligner_preset $preset reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 			foreach file $cleanupfiles {
 				file delete $file
 			}

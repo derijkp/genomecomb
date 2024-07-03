@@ -60,6 +60,9 @@ proc cg_map_hisat2 {args} {
 		-paired - -p {
 			set paired $value
 		}
+		-x - -preset - -p {
+			# not used
+		}		
 		-readgroupdata {
 			set readgroupdata $value
 		}
