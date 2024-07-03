@@ -78,4 +78,46 @@ test gzfiles {gzfiles basic} {
 	gzfiles tmp/test1
 } {tmp/test1.zst}
 
+test gzfiles {gzfiles complex} {
+	test_cleantmp
+	file_write tmp/s test
+	cg bz2 tmp/s
+	file_write tmp/s test
+	cg zst tmp/s
+	file_write tmp/s test
+	cg bgz tmp/s
+	file_write tmp/test1 test1
+	cg rz tmp/test1
+	file_write tmp/test1 test1
+	cg lz4 tmp/test1
+	file_write tmp/test2 test2
+	file_write tmp/try_a2 test
+	cg zst tmp/try_a2
+	file_write tmp/try_a2 test
+	cg lz4 tmp/try_a2
+	file_write tmp/try_a1 test
+	gzfiles tmp/try* tmp/test* tmp/s
+} {tmp/try_a1 tmp/try_a2.zst tmp/test1.lz4 tmp/test2 tmp/s.zst}
+
+test jobgzfiles {jobgzfiles complex - not testing "job" part} {
+	test_cleantmp
+	file_write tmp/s test
+	cg bz2 tmp/s
+	file_write tmp/s test
+	cg zst tmp/s
+	file_write tmp/s test
+	cg bgz tmp/s
+	file_write tmp/test1 test1
+	cg rz tmp/test1
+	file_write tmp/test1 test1
+	cg lz4 tmp/test1
+	file_write tmp/test2 test2
+	file_write tmp/try_a2 test
+	cg zst tmp/try_a2
+	file_write tmp/try_a2 test
+	cg lz4 tmp/try_a2
+	file_write tmp/try_a1 test
+	jobgzfiles tmp/try* tmp/test* tmp/s
+} {tmp/try_a1 tmp/try_a2.zst tmp/test1.lz4 tmp/test2 tmp/s.zst}
+
 testsummarize
