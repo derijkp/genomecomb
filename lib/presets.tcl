@@ -23,6 +23,31 @@ proc preset_scywalker {} {
 	}
 }
 
+proc preset_scywalker_pacbio {} {
+	return {
+		split 1
+		paired 0
+		clip 0
+		removeduplicates 0
+		aligners minimap2_splicehq
+		realign 0
+		varcallers {}
+		svcallers {}
+		methcallers {}
+		counters {}
+		isocallers isoquant_scpacbio
+		singlecell 1
+		sc_umisize 12
+		sc_barcodesize 16
+		sc_adaptorseq CTACACGACGCTCTTCCGATCT
+		sc_filters default
+		sc_celltypers {}
+		distrreg g5000000
+		iso_match novel
+		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
+	}
+}
+
 proc preset_ont {} {
 	return {
 		split 1
