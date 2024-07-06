@@ -609,7 +609,10 @@ proc process_sample_job {args} {
 			set ali_keepcomments [codeback_empty $value]
 		}
 		-singlecell {
-			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
+			# this is (for now) only checked in the code if it is empty (no single cell analysis) or not
+			# The preset and/or other options actually determine the analysis methods.
+			if {$value ni {0 1 ontr10x {}}} {error "Unknown value $value for -singlecell, must be either empty or 0 (for no single cell analysis) or 1 for doing single cell analysis"}
+			if {$value eq "0"} {set value ""}
 			set singlecell [codeback_empty $value]
 		}
 		-sc_whitelist {
@@ -1335,7 +1338,7 @@ proc process_sample_job {args} {
 		}
 	}
 	#calculate reports
-	if {$singlecell eq "ontr10x"} {
+	if {$singlecell ne ""} {
 		scywalker_report_job $sampledir $refseq
 	}
 	if {[llength $reports]} {
