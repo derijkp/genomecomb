@@ -506,7 +506,7 @@ proc makerefdb_job {args} {
 		} -vars {mirbasegenome mirbaserelease mirbasebuild dest build db} -code {
 			set target [gzroot $target].zst
 			if {$mirbasebuild ne $build} {error "error: mirbase $mirbaserelease for build $mirbasebuild (making $build)"}
-			cg download_mirbase $target $mirbasegenome $mirbaserelease
+			cg_download_mirbase $target $mirbasegenome $mirbaserelease
 		}
 	}
 	

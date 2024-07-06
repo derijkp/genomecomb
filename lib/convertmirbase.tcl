@@ -1,11 +1,54 @@
+proc lpop {stackVar} {
+	upvar $stackVar stack
+	set result [lindex $stack end]
+	set stack [lrange $stack 0 end-1]
+	return $result
+}
+
+proc findloop {struct} {
+	unset -nocomplain structa
+	set sstruct [split $struct ""]
+	set stack {}
+	set pos 0
+	set helix 0
+	set climbing 1
+	foreach ch $sstruct {
+		if {$ch eq "\("} {
+			if {!$climbing} {
+				incr helix
+				lappend stack switch
+			}
+			lappend stack $pos
+		} elseif {$ch eq "\)"} {
+			set s [lpop stack]
+			if {$climbing || $s eq "switch"} {
+				incr helix
+				set climbing 0
+				while {$s eq "switch"} {
+					set s [lpop stack]
+				}
+			}
+			lappend structa($helix) [list $s $pos]
+		}
+		incr pos
+	}
+	if {![info exists structa($helix)]} {
+		return {-1 -1}
+	}
+	foreach {s e} [lindex $structa($helix) 0] break
+	incr s ; incr e -1
+	return [list $s $e]
+}
+
 proc convertmirbase_findloop {resultline mirnas seq structs} {
 	foreach {chr begin end strand name} $resultline break
 	if {[dict exists $structs $name]} {
 		foreach {loopbegin looplen} [dict get $structs $name] break
 	} else {
-		set rnafold [split [exec [rnafold] --noPS --MEA -p -d2 << $seq] \n]
+		set rnafold [split [exec RNAfold --noPS --MEA -p -d2 << $seq] \n]
 		set struct [lindex [lindex $rnafold 1] 0]
 		foreach {loopbegin loopend} [findloop $struct] break
+		set looplen [expr {$loopend - $loopbegin}]
 	}
 	if {$strand eq "+"} {
 		set loopbegin [expr {$begin + $loopbegin}]
@@ -21,7 +64,7 @@ proc convertmirbase_findloop {resultline mirnas seq structs} {
 			error "overlapping mirnas [join $mirnas ,] for $resultline"
 		}
 		if {$loopbegin >= $b2 || $loopend <= $e1} {
-			log "[lindex $resultline 4]: loop outside of mirnas, shifted"
+			putslog "[lindex $resultline 4]: loop outside of mirnas, shifted"
 			set loopbegin $b2
 			set loopend $e2
 		}
