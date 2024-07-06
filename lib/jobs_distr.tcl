@@ -87,19 +87,37 @@ proc job_process_distr_jobmanager {} {
 	set torun [expr {$maxrunning - $countrunning}]
 	set pos -1
 	set added {}
+	if {$cgjob(dmaxmem) ne ""} {
+		set currentmem 0
+		foreach jobnum [bsort [array names cgjob_distr_running]] {
+			set currentmem [expr {$currentmem + [lindex $cgjob_distr_running($jobnum) 2]}]
+		}
+	}
 	foreach line $cgjob_distr(queue) {
 		incr pos
-		foreach {jobnum deps name job runfile options} $line break
+		foreach {jobnum deps name job runfile options mem} $line break
 		set do 1
 		foreach dep $deps {
 			if {[info exists cgjob_distr_queue($dep)]} {set do 0 ; break}
 		}
 		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
+		set waitingformem 0
+		set waitingmaxmem 0
+		if {$cgjob(dmaxmem) ne ""} {
+			set testmem [expr {$currentmem + $mem}]
+			if {$testmem > $cgjob(dmaxmem)} {
+				# if {!$cgjob(silent)} {puts "   -=- not enough memory free to start $job: needs [display_memory $mem]"}
+				incr waitingformem
+				if {$mem > $waitingmaxmem} {set waitingmaxmem $mem}
+				continue
+			}
+			set currentmem $testmem
+		}
 		if {!$cgjob(silent)} {puts "   -=- starting $job"}
 		set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
 		file_write [job.file pid $job] $cgjob_pid
-		set cgjob_distr_running($jobnum) [list $cgjob_pid $job]
+		set cgjob_distr_running($jobnum) [list $cgjob_pid $job $mem]
 		incr torun -1
 		lappend added $pos
 		if {$torun == 0} break
@@ -109,7 +127,8 @@ proc job_process_distr_jobmanager {} {
 	if {[llength $added]} {
 		set cgjob_distr(queue) [list_sub $cgjob_distr(queue) -exclude $added]
 		set countqueue [llength cgjob_distr(queue)]
-		if {!$cgjob(silent)} {puts "   -=- [llength [array names cgjob_distr_running]] running $countqueue in queue"}
+		if {$waitingformem} {set temp " ($waitingformem waiting for memory, max needed [display_memory $waitingmaxmem])"} else {set temp {}}
+		if {!$cgjob(silent)} {puts "   -=- [llength [array names cgjob_distr_running]] running $countqueue in queue$temp"}
 		after 200 job_process_distr_jobmanager
 	} else {
 		set countqueue [llength $cgjob_distr(queue)]
@@ -133,6 +152,7 @@ proc job_process_submit_distr {job cmd args} {
 	set cores 1
 	set io 1
 	set pos 0
+	set mem 500m
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
@@ -159,7 +179,6 @@ proc job_process_submit_distr {job cmd args} {
 				incr pos 2
 			}
 			-mem {
-				# not used yet
 				set mem $value
 				incr pos 2
 			}
@@ -199,8 +218,10 @@ proc job_process_submit_distr {job cmd args} {
 	if {$cgjob(nosubmit) || $cgjob(dry)} {
 		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
 	} else {
-		putslog "distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
-		lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options]
+		putslog "distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options mem $mem]"
+		if {$mem eq ""} {set mem 500m}
+		set mem [entry_memory $mem]
+		lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options $mem]
 		set cgjob_distr_queue($jobnum) 1
 		job_process_distr_jobmanager
 	}

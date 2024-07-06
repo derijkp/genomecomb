@@ -1507,7 +1507,7 @@ proc job_init {args} {
 	set cgjob(cleanupfiles) {}
 	set cgjob(cleanupifemptyfiles) {}
 	set cgjob(dmem) {}
-	set cgjob(maxmem) {}
+	set cgjob(dmaxmem) {}
 	set cgjob(dtime) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	set cgjob(default_job_logdir) 1
@@ -1545,7 +1545,20 @@ proc entry_memory {mem} {
 		}
 	}
 	if {![regexp {^([0-9]+)$} $mem]} {
-		error "memory must be either a number, or a number followed by one of: G or g (gigabyte), M or m (megabyte), K or k (kilobyte)"
+		error "incorrect value \"$mem\" for memory, must be either a number, or a number followed by one of: G or g (gigabyte), M or m (megabyte), K or k (kilobyte)"
+	}
+	return $mem
+}
+
+proc display_memory {mem} {
+	if {[isdouble $mem]} {
+		if {$mem > 1073741824} {
+			return "[format %.1f [expr {$mem/1073741824.0}]]G"
+		} elseif {$mem > 1048576} {
+			return "[format %.1f [expr {$mem/1048576.0}]]M"
+		} elseif {$mem > 1024} {
+			return "[format %.1f [expr {$mem/1024.0}]]K"
+		}
 	}
 	return $mem
 }
