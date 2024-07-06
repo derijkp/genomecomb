@@ -49,10 +49,19 @@ cg refseq_minimap2 \'$refseq\' $preset"
 
 proc map_mem_minimap2 {mem threads preset deps} {
 	if {$mem eq ""} {
-		if {[regexp splice $preset]} {
-			set mem 20G
-		} else {
-			set mem 10G
+		set refseq [lindex $deps 0]
+		if {[file exists $refseq.minimap2.$preset]} {
+			# scale according to size index file
+			set size [file size $refseq.minimap2.$preset]
+			set mem [expr {2*$size}]
+			# but require minimum 6G
+			if {$mem < 6442450944} {set mem 6442450944}
+		} else 
+			if {[regexp splice $preset]} {
+				set mem 20G
+			} else {
+				set mem 10G
+			}
 		}
 	}
 	return $mem
