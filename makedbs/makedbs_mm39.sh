@@ -27,16 +27,20 @@ set defaultdest /complgen/refseqnew
 # basic settings
 # use default (ucsc goldenPath) genome source
 set genomeurl {}
+# Where are the pseudoautosomal regions (PAR) located in the mm39 (GRCm39) mouse genome reference? Please give genomic coordinates, and indicate where you found the stated numbers.
+# https://www.ncbi.nlm.nih.gov/grc/mouse
 set par {chromosome	begin	end	name
-X	169969759	170931299	PAR1
-Y	90745845	91644698	PAR1
+X	168752755 169376592	PAR1
+Y	90757114	91355967	PAR1
 }
 set organelles {chromosome
 chrM
 }
-set dbsnpversion 142
-set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/108.20200622/GCF_000001635.26_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gff.gz
-set mirbase mmu-22.1:mm39
+# dbsnp depricated for mouse
+set dbsnpversion {}
+set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/109/GCF_000001635.27_GRCm39/GCF_000001635.27_GRCm39_genomic.gff.gz
+# mirbase is mm10 based, skipping (for now)
+set mirbase {}
 set regionsdb_collapse {
 	cytoBand oreganno cpgIslandExt tRNAs
 	microsat rmsk simpleRepeat 
@@ -46,7 +50,7 @@ set regionsdb_join {
 	genomicSuperDups
 }
 
-set gencodeversion 25
+set gencodeversion 35
 # list with geneset name (first word) and one or more of the following keywords
 # int : include in intGene
 # extra : place in the extra dir instead of in base annotation dir
@@ -61,8 +65,8 @@ set genesdb [list \
 
 # extra settings
 # --------------
-set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M32/gencode.vM32.annotation.gtf.gz
-set transcriptsgtf extra/gene_mm39_gencode.vM32.gtf
+set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M35/gencode.vM35.annotation.gtf.gz
+set transcriptsgtf extra/gene_mm39_gencode.vM35.gtf
 
 # prepare
 # =======
@@ -117,5 +121,53 @@ makerefdb_job \
 
 # rest after this is mm39 specific code
 # -------------------------------------
+
+set evasnpurl https://hgdownload.soe.ucsc.edu/gbdb/$build/bbi/evaSnp5.bb
+job var_${build}evaSnp -deps {
+} -targets {
+	var_${build}_evaSnp.tsv.zst
+} -vars {
+	build evasnpurl
+} -code {
+	if {![file exists ${build}_evaSnp5.bb.bed]} {
+		cg_download_bigbed $evasnpurl ${build}_evaSnp5.bb.temp.bed
+		file rename ${build}_evaSnp5.bb.temp.bed ${build}_evaSnp5.bb.bed
+	}
+	set f [open ${build}_evaSnp5.bb.bed]
+	set o [wgzopen ${build}_evaSnp5.tsv.temp.zst]
+	puts $o [join {chromosome begin end type ref alt name} \t]
+	while {[gets $f line] != -1} {
+		foreach {chromosome begin end ref alt name} [list_sub [split $line \t] {0 1 2 9 10 3}] break
+		# putsvars chromosome begin end ref alt name
+		set l1 [string length $ref]
+		set l2 [string length $alt]
+		if {$l1 > 1} {
+			if {$l2 > 1} {
+				set type sub
+			} elseif {[string index $ref 0] ne [string index $alt 0]} {
+				set type sub
+			} else {
+				set type del
+				set ref [string range $ref 1 end]
+				set alt [string range $alt 1 end]
+			}
+		} elseif {$l2 > 1} {
+			if {[string index $ref 0] ne [string index $alt 0]} {
+				set type sub
+			} else {
+				set type ins
+				set ref [string range $ref 1 end]
+				set alt [string range $alt 1 end]
+			}
+		} else {
+			set type snp
+		}
+		puts $o $chromosome\t$begin\t$end\t$type\t$ref\t$alt\t$name
+	}
+	gzclose $o
+	close $f
+	file rename -force ${build}_evaSnp5.tsv.temp.zst	var_${build}_evaSnp.tsv.zst
+	file delete ${build}_evaSnp5.bb.bed
+}
 
 job_wait

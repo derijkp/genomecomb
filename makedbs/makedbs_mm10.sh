@@ -34,7 +34,7 @@ Y	90745845	91644698	PAR1
 set organelles {chromosome
 chrM
 }
-set dbsnpversion 142
+set dbsnpversion {}
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Mus_musculus/annotation_releases/108.20200622/GCF_000001635.26_GRCm38.p6/GCF_000001635.26_GRCm38.p6_genomic.gff.gz
 set mirbase mmu-22.1:mm10
 set regionsdb_collapse {
@@ -117,5 +117,53 @@ makerefdb_job \
 
 # rest after this is mm10 specific code
 # -------------------------------------
+
+set evasnpurl https://hgdownload.soe.ucsc.edu/gbdb/$build/bbi/evaSnp5.bb
+job var_${build}evaSnp -deps {
+} -targets {
+	var_${build}_evaSnp.tsv.zst
+} -vars {
+	build evasnpurl
+} -code {
+	if {![file exists ${build}_evaSnp5.bb.bed]} {
+		cg_download_bigbed $evasnpurl ${build}_evaSnp5.bb.temp.bed
+		file rename ${build}_evaSnp5.bb.temp.bed ${build}_evaSnp5.bb.bed
+	}
+	set f [open ${build}_evaSnp5.bb.bed]
+	set o [wgzopen ${build}_evaSnp5.tsv.temp.zst]
+	puts $o [join {chromosome begin end type ref alt name} \t]
+	while {[gets $f line] != -1} {
+		foreach {chromosome begin end ref alt name} [list_sub [split $line \t] {0 1 2 9 10 3}] break
+		# putsvars chromosome begin end ref alt name
+		set l1 [string length $ref]
+		set l2 [string length $alt]
+		if {$l1 > 1} {
+			if {$l2 > 1} {
+				set type sub
+			} elseif {[string index $ref 0] ne [string index $alt 0]} {
+				set type sub
+			} else {
+				set type del
+				set ref [string range $ref 1 end]
+				set alt [string range $alt 1 end]
+			}
+		} elseif {$l2 > 1} {
+			if {[string index $ref 0] ne [string index $alt 0]} {
+				set type sub
+			} else {
+				set type ins
+				set ref [string range $ref 1 end]
+				set alt [string range $alt 1 end]
+			}
+		} else {
+			set type snp
+		}
+		puts $o $chromosome\t$begin\t$end\t$type\t$ref\t$alt\t$name
+	}
+	gzclose $o
+	close $f
+	file rename -force ${build}_evaSnp5.tsv.temp.zst	var_${build}_evaSnp.tsv.zst
+	file delete ${build}_evaSnp5.bb.bed
+}
 
 job_wait
