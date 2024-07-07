@@ -12,6 +12,9 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 	}
 	job [job_relfile2name minimap2_2refseq- $refseq] -deps {$refseq} -targets {$minimap2refseq} -vars {preset} -code {
 		set size 0
+		if {![file exists $dep.fai]} {
+			exec samtools faidx $dep
+		}
 		set f [open $dep.fai]
 		while {[gets $f line] != -1} {
 			incr size [lindex [split $line \t] 1]
@@ -56,7 +59,7 @@ proc map_mem_minimap2 {mem threads preset deps} {
 			set mem [expr {2*$size}]
 			# but require minimum 6G
 			if {$mem < 6442450944} {set mem 6442450944}
-		} else 
+		} else {
 			if {[regexp splice $preset]} {
 				set mem 20G
 			} else {
