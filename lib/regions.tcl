@@ -66,7 +66,9 @@ proc samregions {region {refseq {}} {full 0}} {
 	set split [split $region :-]
 	foreach {chr begin end} {{} {} {}} break
 	foreach {chr begin end} $split break
-	distrreg_group_read [refseq $refseq] groupchra elementsa
+	if {$refseq ne ""} {
+		distrreg_group_read [refseq $refseq] groupchra elementsa
+	}
 	if {!$full && ($begin eq "" || $end eq "")} {
 		if {$begin ne "" || $end ne ""} {
 			error "incorrect region:, must be either chr or chr:begin-end"
