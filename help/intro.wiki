@@ -2,7 +2,8 @@
 
 == GenomeComb ==
 GenomeComb provides tools to analyze, combine, annotate and query whole genome,
-exome or targetted sequencing data. Variant files in [[format_tsv|tab-separated format]]
+exome or targetted sequencing data as well as transcriptome data. 
+Variant files in [[format_tsv|tab-separated format]]
 from different sequencing datasets can be [[howto_process_project|generated]]
 and [[cg_pmulticompar|combined]] taking into account which regions are
 actually sequenced (given as region files in tab-separated format),
@@ -20,7 +21,9 @@ that are also available separately ([[reference]])
 
 == File formats ==
 
-The standard file format used in GenomeComb is the widely supported,
+While genomecomb understands and produces most of the typical formats
+used in ngs analysis (bam/cram, vcf, bed, ...), the central, standard file 
+format used in GenomeComb is the widely supported,
 simple, yet flexible tab-separated values file ([[format_tsv]]). This
 text format contains tabular data, where each line is a record, and each
 field is separated from the next by a TAB character. The first line (not

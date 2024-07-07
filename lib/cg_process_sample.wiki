@@ -11,8 +11,12 @@ sample data that can come from various sources.
 == Description ==
 
 The command expects a basic genomecomb sample directory (as described
-extensively in [[projectdir]]) It generates all kinds of result data
-(variant calls, sequenced regions, ...) analyses and reports. 
+extensively in [[projectdir]]) It performs a generic ngs analysis pipeline
+where options determine how the data is prepared, what aligner is used,
+what programs are used to analyse the alignments (variant calling, counting, ...)
+and which reports are created. With the -preset option, you can select
+a number of default settings for short and long read genome analysis as well as RNA-seq
+analysis.
 
 Several types of source data (fastq files, unaligned bams, Complete Genomics analysis dir,
 ...) are supported. The directory containing the original starting data
@@ -25,7 +29,8 @@ according to the type of original data, the parameters given (e.g. use
 By default, process_sample will only create files that do no exist yet,
 or update ones that are older than files they depend on. This way an
 analysis that was interupted, can be simply restarted (giving the same command),
-and it will proceed from where it was.
+and it will proceed from where it was. New options can also be given/added, e.g.
+add an extra variant caller, and only the new analyses will be done.
 
 == Arguments ==
 ; oridir: directory containing original data, this can be a data directory
@@ -47,7 +52,9 @@ value after the -preset option (options given later overrule previous
 ones). 
 
 ; -preset preset: sets a number of options to the defaults for the given "preset",
-must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), ont (ont genomic sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell rna-seq)
+must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), 
+ont (ont genomic sequencing), ontr (ont RNA-seq), 
+scywalker (ont 10x single cell rna-seq), scywalker_pacbio (pacbio 10x single cell rna-seq)
 ; -dbdir dbdir: Some of the analysis require a reference genome and
 databases; **dbdir** gives the directory where to find these
 ; -oridir oridir: directory containing original data, this can be a data
@@ -183,12 +190,16 @@ presence of a file named reg_targets.tsv (or matching reg_*_targets*.tsv)
 in the sampledir (or the option -targetfile). If present, coverage
 statistics will be calculated for this region.
 
-For ONT genome/targeted sequencing analysis a similar steps are performed,
-but you select other programs and settings, e.g. minimap2 for alignment,
-clair3 for (small) variant calling. It can start from fastq files in
-the fastq directory, but can also use unaligned bam files (in a direcory
-named ubam). You would typically use ubams to include methylation calling
-data produced by remora/dorado at the basecalling step.
+=== ONT/nanopore sequencing ===
+For ONT genome/targeted sequencing analysis similar steps are performed,
+but using the ont preset other programs and settings are selected, e.g.
+minimap2 for alignment, clair3 for (small) variant calling. You can still
+deviate from the preset by specifying different options for e.g. variant
+calling after the preset option. The default ONT pipeline also expects a
+fastq directory with the fastqs in it per sample, but can also use
+unaligned bam files (in a direcory named ubam). You would typically use
+ubams instead of fastq to include methylation calling data produced by
+remora/dorado at the basecalling step.
 
 === Amplicon sequencing ===
 Amplicon sequencing samples are indicated by the presence of a file named
@@ -228,6 +239,12 @@ region and variant information is converted to a similar format as use for
 * Extra files, e.g. the directory coverage-cg-sample contains whole genome
 coverage, refscore, ... data in the form of [[bcol]] files.
 * CG data can include structural variant (cgsv-sample.tsv) and CNV (cgcnv-sample.tsv) calls
+
+=== RNA-seq (rseq) ===
+Similar to genome analysis, the source data is either fastqs in a directory fastq
+or unaligned bams in a ubam directory. In addition to variant calls, the short read preset (rseq)
+will also produce a gene count matrix using QoRTs (changable to e.g. rnaseqc for human)
+and the ONT preset (ontr) will add isoform predictions and counts to this.
 
 === Precalculated data ===
 The sampledir may contain precalculated data data from other pipelines.

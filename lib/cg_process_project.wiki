@@ -14,8 +14,10 @@ The [[cg_process_project]] command performs the entire secondary analysis
 tertiary analysis (combining samples, annotation, ...) on a number of
 samples that may come from various sources. You can specify which analyses
 should be run using the options. The default settings/options are for
-analysing Illumina genomic sequencing data. A practical example of the
-workflow can be found in [[howto_process_project]].
+analysing Illumina genomic sequencing data. You can use the -preset option
+to specify default settings for various types of analyses (short or
+long-read genome, transcriptome, etc.) A practical example of the workflow
+can be found in [[howto_process_project]].
 
 The command expects a basic genomecomb project directory (as
 described extensively in [[projectdir]]) containing a number of
@@ -75,7 +77,9 @@ value after the -preset option (options given later overrule previous
 ones).
 
 ; -preset preset: sets a number of options to the defaults for the given "preset",
-must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), ont (ont genomic sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell rna-seq)
+must be one of: srs (short read genomic sequencing), rseq (short read rna-seq), 
+ont (ont genomic sequencing), ontr (ont RNA-seq), 
+scywalker (ont 10x single cell rna-seq), scywalker_pacbio (pacbio 10x single cell rna-seq)
 ; -samplesheet samplesheet: create **projectdir** based on the data in the given **sampleheet** as described in [[cg_make_project]]
 ; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
 ; -minfastqreads num: fastq based samples with less than **num** reads in the fastq files are 
@@ -187,18 +191,14 @@ process_project commandline will overrule settings from a preset, even if
 sample specific).
 
 == Dependencies ==
-Some of the programs used in this workflow are not distributed with genomecomb. 
-e.g., gatk and strelka should be installed separately. In general this extra software
-should be made available as executables in the PATH. Some, like picard can be available
-as a directory named picard* that contains the picard jar file. Some also support
-environment variables, e.g. GATK or PICARD to indicated the picard installation
-directory. The genomecomb source distribution has scripts to make a portable version
-of most of this extra software.
+Some of the programs used in this workflow are not distributed with
+genomecomb itself (e.g. gatk, strelka) and should be installed separately.
+To make this easier, they are available as portable application
+directories from the [genomecomb website](https://derijkp.github.io/genomecomb/install.html)
+or can be directly installed using the [[cg_install]] command.
 
 == Example ==
 {{{
-export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
-export PICARD=/opt/bio/picard-tools-1.87
 cg process_project -d sge testproject /complgen/refseq/hg19
 }}}
 
