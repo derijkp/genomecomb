@@ -50,8 +50,8 @@ test process_sample {bwa distrreg} {
 	# chr21:42730799-42762826
 	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [subst [deindent {
-		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	$genomecombversion	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	$genomecombversion	coordinate	1	genomecomb	$genomecombversion	samtools	1.15.1 (using htslib 1.15.1)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	$genomecombversion	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	aligner_preset	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.109.0	bwa	0.7.15-r1140		hg19	1	gnusort	8.31	genomecomb	0.109.0	coordinate	1	genomecomb	0.109.0	samtools	1.15.1 (using htslib 1.15.1)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.109.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]]\n
 	cg tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
 		-x projectinfo.tsv -x *.analysisinfo -x *.stats.zst \
@@ -90,8 +90,8 @@ test process_sample {bwa distrreg cram} {
 	# chr21:42730799-42762826
 	set genomecombversion [cg version]
 	file_write tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo [deindent [subst {
-		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
-		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	$genomecombversion	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	$genomecombversion	coordinate	1	genomecomb	$genomecombversion	samtools	1.15.1 (using htslib 1.15.1)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	$genomecombversion	sreg-cov5-rdsbwa-NA19240m.tsv.zst
+		sample	clipping	clipping_version	clipping_cg_version	aligner	aligner_version	aligner_preset	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	analysis	varcaller	varcaller_version	varcaller_cg_version	varcaller_region
+		gatk-rdsbwa-NA19240m	fastq-mcf	1.1.2-537 adapted	0.109.0	bwa	0.7.15-r1140		hg19	1	gnusort	8.31	genomecomb	0.109.0	coordinate	1	genomecomb	0.109.0	samtools	1.15.1 (using htslib 1.15.1)	gatk	3.8-1-0-gf15c1c3ef	gatk-rdsbwa-NA19240m	gatk	3.8-1-0-gf15c1c3ef	0.109.0	sreg-cov5-rdsbwa-NA19240m.tsv.zst
 	}]]\n
 	set result {}
 	lappend result [tsvdiff -q 1 -x fastq -x *.bai -x *.crai -x *.zsti \
@@ -241,7 +241,7 @@ test process_project {make_project, different tech} {
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	lappend result [tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv]
 	#
-	lappend result [tsvdiff tmp/samples/sample2/var-bcf-dsbwa-sample2.tsv.zst data/var-bcf-bwa.tsv]
+	lappend result [tsvdiff tmp/samples/sample2/var-bcf-rdsbwa-sample2.tsv.zst data/var-bcf-bwa.tsv]
 	lappend result [glob tmp/samples/ont/var-clair3-sminimap2-ont.tsv.zst tmp/samples/ont/sv-sniffles-sminimap2-ont.tsv.zst]
 	#
 	lappend result [cg select -n tmp/compar/annot_compar-tmp.tsv.zst]

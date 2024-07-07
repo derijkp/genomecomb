@@ -514,7 +514,7 @@ chr22	41923406	41923413}
 test cg_regextract {bam -region} {
 	file copy data/bwa.bam tmp/bwa.bam
 	exec samtools index tmp/bwa.bam
-	exec cg regextract --verbose 0 -region chr22 -qfields coverage -shift -1 -min 8 tmp/bwa.bam
+	exec cg regextract -stack 1 --verbose 0 -region chr22 -qfields coverage -shift -1 -min 8 tmp/bwa.bam
 } {chromosome	begin	end
 chr22	41923406	41923413}
 

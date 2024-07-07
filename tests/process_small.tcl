@@ -85,9 +85,12 @@ test process_small {process_project mastr_mx2_gatkh} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
 	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
-	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
-		-minfastqreads 10 -amplicons tmp/${basename}/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		-varcallers {gatkh} -extra_reports_mastr gatkh \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-reports -predictgender \
+		-minfastqreads 10 \
+		-amplicons tmp/${basename}/samplicons-wgs2.tsv \
+		-varcallers {gatkh} \
+		-extra_reports_mastr gatkh \
 		tmp/${basename} $::refseqdir/hg19 >& tmp/${basename}.log
 	grid_wait
 	# check vs expected

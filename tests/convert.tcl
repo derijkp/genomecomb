@@ -1400,8 +1400,7 @@ test fasta2tsv {fasta2tsv multiple infiles to stdout} {
 name1	AAGAAAA
 name 2	ACAAAAAAA
 name1	AAGAAAA
-name 2	ACAAAAAAA
-}
+name 2	ACAAAAAAA}
 
 test tsv2fasta {tsv2fasta} {
 	file_write tmp/test.tsv [deindent {
@@ -1453,8 +1452,7 @@ test tsv2fasta {tsv2fasta stdin} {
 } {>name1
 AAGAAAA
 >name 2
-ACAAAAAAA
-}
+ACAAAAAAA}
 
 test sam2tsv {sam2tsv} {
 	exec samtools view --no-PG -h data/bwa.bam > tmp/bwa.sam
