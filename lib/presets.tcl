@@ -96,7 +96,7 @@ proc preset_srs {} {
 		clip 1
 		removeduplicates {}
 		aligners bwa
-		realign 0
+		realign 1
 		varcallers {gatkh strelka}
 		svcallers {manta lumpy}
 		methcallers {}
