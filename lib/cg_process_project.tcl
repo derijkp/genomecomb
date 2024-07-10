@@ -317,8 +317,10 @@ proc process_project_job {args} {
 	}
 	# logfile
 	# -------
-	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir fastq-stats samtools gnusort8 zst os]
+	if {!$validate} {
+		job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
+			{*}[versions dbdir fastq-stats samtools gnusort8 zst os]
+	}
 	# amplicons settings
 	# ------------------
 	if {$amplicons ne ""} {
