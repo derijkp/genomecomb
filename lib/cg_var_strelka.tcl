@@ -1,3 +1,10 @@
+proc validate_var_strelka {refseq distrreg datatype} {
+	# seperate because command is not the same as cmd
+	if {[catch {exec which configureStrelkaGermlineWorkflow.py}]} {
+		error "command \"configureStrelkaGermlineWorkflow.py\" not available, make sure strelka is installed, e.g. using \"cg install strelka\""
+	}
+}
+
 proc strelka_env {} {
 	set strelkadir [findstrelka]
 	set ::env(PATH) $strelkadir/bin:$::env(PATH)

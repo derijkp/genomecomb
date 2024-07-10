@@ -2,6 +2,13 @@ proc var_clair3_tools {} {
 	return {clair3}
 }
 
+proc validate_var_clair3 {refseq distrreg datatype} {
+	# seperate because command is not clair3
+	if {[catch {exec which run_clair3.sh}]} {
+		error "command \"run_clair3.sh\" not available, try installing clair3 using e.g. \"cg install clair3\""
+	}
+}
+
 proc version_clair3 {} {
 	set version ?
 	catch {exec run_clair3.sh -v} version

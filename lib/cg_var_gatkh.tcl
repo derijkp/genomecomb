@@ -1,3 +1,9 @@
+proc validate_var_gatkh {refseq distrreg datatype} {
+	# seperate because command is not the same as cmd
+	if {[version gatk] eq "?"} {
+		error "command not available, make sure gatk is installed, e.g. using \"cg install gatk\""
+	}
+}
 proc var_gatkh_tools {} {
 	return {gatkh}
 }

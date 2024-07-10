@@ -8,6 +8,13 @@ proc version_star {} {
 	version_STAR
 }
 
+proc validate_map_star {refseq preset} {
+	if {[catch {exec which STAR}]} {
+		error "command STAR not available, have you installed this program"
+	}
+	refseq_star $refseq $preset
+}
+
 proc refseq_star_job {refseq {gtffile {}} {threads 4}} {
 	upvar job_logdir job_logdir
 	set refseq [refseq $refseq]
@@ -57,7 +64,7 @@ proc cg_refseq_star args {
 	return $return
 }
 
-proc refseq_star {refseq} {
+proc refseq_star {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set starrefseq $refseq.star

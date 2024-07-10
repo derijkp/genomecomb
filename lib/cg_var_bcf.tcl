@@ -2,6 +2,13 @@ proc var_bcf_tools {} {
 	return {samtools bcftools}
 }
 
+proc validate_var_bcf {refseq distrreg datatype} {
+	# seperate because command is not bcf
+	if {[catch {exec which bcftools}]} {
+		error "command \"bcftools\" not available, this schould be included in the base installation, so retry that"
+	}
+}
+
 # identical to var_sam, but
 proc var_bcf_job {args} {
 	upvar job_logdir job_logdir

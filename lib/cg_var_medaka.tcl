@@ -1,3 +1,10 @@
+proc validate_var_medaka {refseq distrreg datatype} {
+	# seperate because command is not the same as cmd
+	if {[catch {exec which medaka_variant}]} {
+		error "command \"medaka_variant\" not available, make sure medaka is installed, e.g. using \"cg install medaka\""
+	}
+}
+
 proc var_medaka_tools {} {
 	return {medaka}
 }

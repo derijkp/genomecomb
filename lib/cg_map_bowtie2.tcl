@@ -18,7 +18,7 @@ proc cg_refseq_bowtie2 args {
 	return $return
 }
 
-proc refseq_bowtie2 {refseq} {
+proc refseq_bowtie2 {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]

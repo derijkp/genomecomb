@@ -112,6 +112,30 @@ proc specialopts {key} {
 	return $result 
 }
 
+proc args_remove {args remove} {
+	set newargs {}
+	set pos 0
+	while {$pos < [llength $args]} {
+		set key [lindex $args $pos]
+		incr pos
+		switch -- $key {
+			-- {
+				lappend newargs --
+				break
+			}
+			default {
+				if {$key in $remove} {
+					incr pos
+				} else {
+					lappend newargs $key
+				}
+			}
+		}
+	}
+	lappend newargs {*}[lrange $args $pos end]
+	return $newargs
+}
+
 proc bgcg_progress {bgexechandleVar args} {
 	upvar #0 $bgexechandleVar bgexechandle
 	if {![isint $args]} {

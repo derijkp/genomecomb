@@ -46,7 +46,7 @@ proc fastq_clipadapters_job {args} {
 	if {$resultdir eq ""} {
 		set resultdir [file dir [lindex $fastqfiles 0]]/fastq.clipped
 	}
-	file mkdir $resultdir
+	# file mkdir $resultdir
 	set resultfastqs {}
 	set resultanalysisinfo {}
 	foreach file $fastqfiles {
@@ -73,7 +73,7 @@ proc fastq_clipadapters_job {args} {
 			} -vars {
 				resultfastqs adapterfile paired removeskew ::analysisinfo compress
 			} -code {
-				file mkdir [file dir $target]
+				mkdir [file dir $target]
 				analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 				set tempout1 [filetemp $target]
 				if {$compress eq "gz"} {
@@ -97,8 +97,8 @@ proc fastq_clipadapters_job {args} {
 			} -vars {
 				resultfastqs adapterfile paired removeskew ::analysisinfo compress
 			} -code {
-				file mkdir [file dir $target]
-				file mkdir [file dir $target2]
+				mkdir [file dir $target]
+				mkdir [file dir $target2]
 				analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 				analysisinfo_write $dep2 $target2 clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 				set tempfile1 [tempfile]

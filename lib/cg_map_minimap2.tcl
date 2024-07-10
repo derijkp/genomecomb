@@ -40,6 +40,7 @@ proc cg_refseq_minimap2 args {
 
 proc refseq_minimap2 {refseq preset} {
 	upvar job_logdir job_logdir
+	if {$preset eq ""} {set preset map-ont}
 	set refseq [file_absolute $refseq]
 	set minimap2refseq $refseq.minimap2.$preset
 	if {![file exists $minimap2refseq]} {

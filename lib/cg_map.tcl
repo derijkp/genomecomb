@@ -131,7 +131,7 @@ proc map_job {args} {
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	set resultdir [file dir $result]
-	file mkdir $resultdir
+	mkdir $resultdir
 	if {![info exists job_logdir]} {
 		set_job_logdir [file dir $result]/log_jobs
 	}

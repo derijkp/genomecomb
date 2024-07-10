@@ -1,3 +1,11 @@
+proc validate_count_qorts {refseq} {
+	# seperate because command is not the same as cmd
+	set jar [findjar QoRTs]
+	if {![file exists $jar]} {
+		error "Could not find \"QoRTs\" jar file, make sure QoRTs is installed, e.g. using \"cg install qorts\""
+	}
+}
+
 proc count_mem_qorts {mem threads preset} {
 	return 1G
 }

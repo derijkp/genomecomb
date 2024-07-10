@@ -2,6 +2,13 @@ proc var_sam_tools {} {
 	return {samtools bcftools}
 }
 
+proc validate_var_sam {refseq distrreg datatype} {
+	# seperate because command is not samtools
+	if {[catch {exec which samtools}]} {
+		error "command \"samtools\" not available, this schould be included in the base installation, so retry that"
+	}
+}
+
 proc sreg_sam_job {job varallfile resultfile {mincoverage 5} {minqual 30} {skips {}}} {
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {

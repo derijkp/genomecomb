@@ -64,6 +64,7 @@ proc process_project_job {args} {
 	set optionsfile options.tsv
 	set process_msamples 0
 	set samplesheet {}
+	set validate 0
 	cg_options process_project args {
 		-preset {
 			if {$value ne ""} {
@@ -271,12 +272,19 @@ proc process_project_job {args} {
 		-samplesheet {
 			set samplesheet $value
 		}
+		-validate {
+			set validate $value
+			if {[true $validate]} {
+				job_getinfo 1
+				# logverbose 0
+			}
+		}
 		-*-* {
 			set ::specialopt($key) $value
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
-	if {$samplesheet ne ""} {
+	if {!$validate && $samplesheet ne ""} {
 		cg make_project $destdir $samplesheet
 	}
 	set adapterfile [adapterfile $adapterfile]
@@ -381,7 +389,7 @@ proc process_project_job {args} {
 		varcallers svcallers methcallers counters reftranscripts isocallers 
 		organelles hap_bam dbdir split paired maxfastqdistr adapterfile 
 		reports samBQ cleanup removeduplicates amplicons threads distrreg 
-		keepsams removeskew dt targetfile minfastqreads depth_histo_max 
+		keepsams removeskew dt targetfile minfastqreads depth_histo_max validate
 	}
 	foreach sample $samples {
 		putslog "Processing sample $sample"
@@ -401,7 +409,7 @@ proc process_project_job {args} {
 				}
 			}
 		}
-		if {!$jobsample} {
+		if {!$jobsample || $validate} {
 			process_sample_job -todoVar todo {*}$sampleargs $dir
 		} else {
 			# find deps and targets by running the process_sample_job with job_getinfo set to 1
@@ -424,6 +432,7 @@ proc process_project_job {args} {
 			}
 		}
 	}
+	if {$validate} return
 	# run msamples (not supporting jobsample for these)
 	foreach sample $msamples {
 		putslog "Processing msample $sample"
@@ -483,6 +492,15 @@ proc process_project_job {args} {
 }
 
 proc cg_process_project {args} {
+	# validation run
+	set args [args_remove $args {-validate}]
+	set keeppwd [pwd]
+	set valargs [job_init {*}$args]
+	putslog "validating process_sample $valargs"
+	process_project_job -validate 1 {*}$valargs
+	putslog "validation done. Start for real"
+	# real run
+	cd $keeppwd
 	set args [job_init {*}$args]
 	putslog pwd:\ [pwd]
 	putslog cmd:\ [list cg process_project {*}$args]

@@ -30,7 +30,7 @@ proc cg_refseq_hisat2 args {
 	return $return
 }
 
-proc refseq_hisat2 {refseq} {
+proc refseq_hisat2 {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set hisat2refseq $refseq.hisat2/[file tail $refseq]

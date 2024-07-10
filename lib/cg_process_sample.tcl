@@ -515,6 +515,9 @@ proc process_sample_reports_minfastqreads {sampledir sample reports num todoVar}
 		] \n]\n
 		lappend todo(reports) $sampledir/reports
 	}
+	foreach file [glob -nocomplain  $sampledir/*.temp] {
+		shadow_delete $file
+	}
 }
 
 proc codeback_empty {value} {
@@ -572,6 +575,7 @@ proc process_sample_job {args} {
 	set sc_expectedcells {}
 	set cellmarkerfile {}
 	set tissue {}
+	set validate 0
 	cg_options process_sample args {
 		-preset {
 			if {$value ne ""} {
@@ -740,6 +744,13 @@ proc process_sample_job {args} {
 				set ::cgextraopts($k) $v
 			}
 		}
+		-validate {
+			set validate $value
+			if {[true $validate]} {
+				job_getinfo 1
+				# logverbose 0
+			}
+		}
 		-*-* {
 			set ::specialopt($key) $value
 		}
@@ -777,6 +788,69 @@ proc process_sample_job {args} {
 		set reftranscripts [ref_tsvtranscripts $dbdir]
 	}
 	set organelles [getorganelles $dbdir $organelles]
+	set refseq [refseq $dbdir]
+
+	# validation
+	if {$validate} {
+		foreach aligner $aligners {
+			set preset {}
+			if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
+			} else {
+				set aliprog $aligner
+				set alipreset ""
+			}
+			validate_map $aliprog $refseq $alipreset
+		}
+		validate_distrreg $distrreg $refseq
+		foreach aligner $aligners {
+			set udistrreg [distrreg_use $distrreg chr chr]
+			if {$udistrreg ne $distrreg} {validate_distrreg $udistrreg $refseq}
+		}
+		foreach varcaller $varcallers {
+			if {![auto_load var_${varcaller}_job]} {
+				error "varcaller $varcaller not supported"
+			}
+			validate_var $varcaller $refseq $distrreg $datatype
+		}
+		foreach methcaller $methcallers {
+			set preset {}
+			if {[regexp {^(.*)_([^_]+)$} $methcaller tmp methcallerprog preset]} {
+			} else {
+				set methcallerprog $methcaller
+			}
+			if {![auto_load meth_${methcallerprog}_job]} {
+				error "methcaller $methcallerprog not supported"
+			}
+			validate_meth $methcallerprog $refseq $preset $distrreg
+		}
+		foreach counter $counters {
+			if {![auto_load count_${counter}_job]} {
+				error "counter $counter not supported"
+			}
+			validate_count $counter $refseq
+		}
+		foreach isocaller $isocallers {
+			set preset {}
+			foreach {isocaller preset} [split $isocaller _] break
+			if {![auto_load iso_${isocaller}_job]} {
+				error "isocaller $isocaller not supported"
+			}
+			validate_iso $isocaller $refseq $preset $reftranscripts $organelles $distrreg
+		}
+		foreach sc_filter $sc_filters {
+			if {![auto_load sc_filter_${sc_filter}_job]} {
+				error "sc_filter $sc_filter not supported"
+			}
+			validate_sc_filter $sc_filter $refseq $reftranscripts $organelles
+		}
+		foreach sc_celltyper $sc_celltypers {
+			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
+				error "sc_celltyper $sc_celltyper not supported"
+			}
+			validate_sc_celltyper $sc_celltyper $cellmarkerfile $tissue
+		}
+		return
+	}
 	#
 	putslog "Making $sampledir"
 	catch {file mkdir $sampledir}
@@ -892,7 +966,6 @@ proc process_sample_job {args} {
 #	set keeppwd [pwd]
 #	cd $sampledir
 	set_job_logdir $sampledir/log_jobs
-	set refseq [glob $dbdir/genome_*.ifas]
 	set resultbamprefix {}
 	if {$amplicons ne ""} {append resultbamprefix c}
 	if {$realign} {append resultbamprefix r}
@@ -906,7 +979,7 @@ proc process_sample_job {args} {
 		# check if we have the minimum number of reads required (at least 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		set minreads [max 1 $minfastqreads]
-		if {![checkminreads $fastqdir $minreads num]} {
+		if {!$validate && ![checkminreads $fastqdir $minreads num]} {
 			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
 			return {}
 		}
@@ -1010,7 +1083,7 @@ proc process_sample_job {args} {
 		}
 	}
 	# put check here, because fastqs might be generated from bams, etc.
-	if {$singlecell eq "" && $minfastqreads > 0 && ![llength $cleanedbams]} {
+	if {!$validate && $singlecell eq "" && $minfastqreads > 0 && ![llength $cleanedbams]} {
 		# check if we have the minimum number of reads required (default 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		if {![checkminreads $fastqdir $minfastqreads num]} {
@@ -1118,7 +1191,7 @@ proc process_sample_job {args} {
 					# do not do any of preliminaries if end product is already there
 					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 					set bamfile $sampledir/map-${aligner}-$sample.$aliformat
-					file mkdir $resultbamfile.temp
+					# file mkdir $resultbamfile.temp
 					job_cleanup_add $resultbamfile.temp
 					set target $resultbamfile.temp/$pbase.sam.zst
 					lappend partsa($aligner) $target
@@ -1128,7 +1201,9 @@ proc process_sample_job {args} {
 						lappend opts -preset $alipreset
 					} else {
 						set aliprog $aligner
+						set alipreset ""
 					}
+					# validate_map $aliprog $refseq $alipreset
 					map_job -method $aliprog {*}$opts -threads $threads \
 						-skip $skips \
 						-joinfastqs 1 \
@@ -1145,6 +1220,7 @@ proc process_sample_job {args} {
 				}
 			}
 			set cleanupdeps {}
+			# validate_distrreg $distrreg $refseq
 			foreach aligner $aligners {
 				# mergesort sams from individual fastq files
 				# and distribute again over if -distrreg i set (for distributed cleaning)
@@ -1154,13 +1230,14 @@ proc process_sample_job {args} {
 				if {$distrreg in {0 ""}} {
 					set tempbamfile $bamfile
 				} else {
-					file mkdir $resultbamfile.temp
+					# file mkdir $resultbamfile.temp
 					job_cleanup_add $resultbamfile.temp
 					set tempbamfile $resultbamfile.temp/map-${aligner}-$sample.$aliformat
 				}
 				set compressionlevel [defcompressionlevel 5]
 				setdefcompressionlevel 1
 				set udistrreg [distrreg_use $distrreg chr chr]
+				# if {$udistrreg ne $distrreg} {validate_distrreg $udistrreg $refseq}
 				set bamfiles [sam_catmerge_job \
 					-skip [list $bamfile [analysisinfo_file $bamfile]] \
 					-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
@@ -1250,6 +1327,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
+			# validate_var $varcaller $refseq $distrreg $datatype
 			lappend cleanupdeps {*}[var_job -method ${varcaller} -distrreg $distrreg -datatype $datatype -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
@@ -1265,6 +1343,7 @@ proc process_sample_job {args} {
 			if {![auto_load sv_${svcallerprog}_job]} {
 				error "svcaller $svcaller not supported"
 			}
+			# validate_sv $svcallerprog $refseq $distrreg
 			lappend cleanupdeps {*}[sv_job -method ${svcallerprog} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
 			lappend todo(sv) [lindex [jobglob -checkcompressed 1 [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv] 0]
 		}
@@ -1283,6 +1362,7 @@ proc process_sample_job {args} {
 			}
 			set fast5dir [file dir $cleanedbam]/fast5
 			set fastqdir [file dir $cleanedbam]/fastq
+			# validate_meth $methcallerprog $refseq $distrreg
 			lappend cleanupdeps {*}[meth_${methcallerprog}_job \
 				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
 				$fast5dir $fastqdir $cleanedbam]
@@ -1292,6 +1372,7 @@ proc process_sample_job {args} {
 			if {![auto_load count_${counter}_job]} {
 				error "counter $counter not supported"
 			}
+			# validate_count $counter $refseq
 			lappend cleanupdeps {*}[count_${counter}_job -threads $threads \
 				-refseq $refseq $cleanedbam]
 		}
@@ -1303,6 +1384,7 @@ proc process_sample_job {args} {
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
+			# validate_iso $isocaller $refseq $reftranscripts $organelles $distrreg
 			iso_${isocaller}_job \
 				-reftranscripts $reftranscripts \
 				{*}$options \
@@ -1321,6 +1403,7 @@ proc process_sample_job {args} {
 			if {![auto_load sc_filter_${sc_filter}_job]} {
 				error "sc_filter $sc_filter not supported"
 			}
+			# validate_sc_filter $sc_filter $refseq $reftranscripts $organelles
 			sc_filter_${sc_filter}_job \
 				-reftranscripts $reftranscripts \
 				-organelles $organelles \
@@ -1334,6 +1417,7 @@ proc process_sample_job {args} {
 			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
 				error "sc_celltyper $sc_celltyper not supported"
 			}
+			# validate_sc_celltyper $sc_celltyper $cellmarkerfile $tissue
 			sc_celltyper_${sc_celltyper}_job -cellmarkerfile $cellmarkerfile -tissue $tissue $scgenefile $scisoformfile
 		}
 	}
@@ -1349,6 +1433,15 @@ proc process_sample_job {args} {
 }
 
 proc cg_process_sample {args} {
+	# validation run
+	set keeppwd [pwd]
+	set args [args_remove $args {-validate}]
+	set valargs [job_init {*}$args]
+	putslog "validating process_sample $valargs"
+	process_sample_job -validate 1 {*}$valargs
+	putslog "validation sample done"
+	# real run
+	cd $keeppwd
 	set args [job_init {*}$args]
 	process_sample_job {*}$args
 	job_wait
