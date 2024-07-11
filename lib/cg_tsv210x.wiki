@@ -16,6 +16,8 @@ Converts data in tab-separated format ([[tsv]]) format to the 10x format.
 ; -countfield string: fieldname of column to be used to extract counts from (default uses first icount,count present)
 ; -round 0/1: 0 takes counts as is, 1 rounds to integers using the round function 
   except for values < 1 (v < 0.01 become 0, higher but < 1 become 1)
+; -remdups 0/1: remove duplicate lines (1 default) or not (0)
+
 
 == Category ==
 Format Conversion
