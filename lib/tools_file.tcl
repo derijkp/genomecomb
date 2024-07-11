@@ -607,7 +607,7 @@ proc tempramdir {size} {
 			if {[file exists $dir/pid]} {
 				set pid [file_read $dir/pid]
 			} elseif {![regexp {[0-9]+} $dir pid]} continue
-			if {[catch {exec ps -p $pid} msg]} {
+			if {[catch {exec kill -0 $pid} msg]} {
 				file delete -force $dir
 			}
 		}

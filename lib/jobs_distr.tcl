@@ -20,12 +20,12 @@ proc job_running_distr {jobnum} {
 	if {![info exists cgjob_distr_running($jobnum)]} {return 0}
 	set job [lindex $cgjob_distr_running($jobnum) 1]
 	if {![catch {file_read [job.file pid $job]} pid]} {
-		if {![catch {exec ps $pid}]} {
+		if {![catch {exec kill -0 $pid} msg]} {
 			return 1
 		}
-		if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
 		file delete [job.file pid $job]
 	}
+	if {!$cgjob(silent)} {puts "   -=- [timestamp] ending $job ($jobnum)"}
 	unset -nocomplain cgjob_distr_running($jobnum)
 	unset -nocomplain cgjob_distr_queue($jobnum)
 	return 0
@@ -40,9 +40,9 @@ proc job_status_distr {job {jobloginfo {}}} {
 	}
 	foreach {status starttime endtime run duration} $jobloginfo break
 	if {$status ni {submitted running}} {return $status}
-	if {![info exists cgjob(pid)] || [catch {exec ps $cgjob(pid)}]} {return error}
+	if {![info exists cgjob(pid)] || [catch {exec kill -0 $cgjob(pid)}]} {return error}
 	if {$status eq "submitted"} {return $status}
-	if {![catch {file_read [job.file pid $job]} pid] && ![catch {exec ps $pid}]} {
+	if {![catch {file_read [job.file pid $job]} pid] && ![catch {exec kill -0 $pid}]} {
 		return running
 	} else {
 		return error
@@ -114,7 +114,7 @@ proc job_process_distr_jobmanager {} {
 			}
 			set currentmem $testmem
 		}
-		if {!$cgjob(silent)} {puts "   -=- starting $job"}
+		if {!$cgjob(silent)} {puts "   -=- [timestamp] starting $job"}
 		set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
 		file_write [job.file pid $job] $cgjob_pid
 		set cgjob_distr_running($jobnum) [list $cgjob_pid $job $mem]
