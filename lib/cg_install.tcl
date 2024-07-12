@@ -15,9 +15,15 @@ proc cg_install {args} {
 		hg38-star	ref	https://genomecomb.bioinf.be/download/refdb_hg38-star-0.109.0.tar.gz
 		hg38-dbnsfp	ref	https://dbnsfp.s3.amazonaws.com/dbNSFP4.5a.zip
 		liftover	ref	https://genomecomb.bioinf.be/download/refdb_liftover-0.106.0.tar.gz
-		mm10	ref	https://genomecomb.bioinf.be/download/refdb_mm10-0.106.0.tar.gz
-		mm10-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.106.0.tar.gz
-		mm10-star	ref	https://genomecomb.bioinf.be/download/refdb_mm10-star-0.106.0.tar.gz
+		mm39	ref	https://genomecomb.bioinf.be/download/refdb_mm39-0.110.0.tar.gz
+		mm39-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_mm39-minimap2-0.110.0.tar.gz
+		mm39-star	ref	https://genomecomb.bioinf.be/download/refdb_mm39-star-0.110.0.tar.gz
+		mm10	ref	https://genomecomb.bioinf.be/download/refdb_mm10-0.110.0.tar.gz
+		mm10-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.110.0.tar.gz
+		mm10-star	ref	https://genomecomb.bioinf.be/download/refdb_mm10-star-0.110.0.tar.gz
+		tair10	ref	https://genomecomb.bioinf.be/download/refdb_tair10-0.110.0.tar.gz
+		tair10-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_tair10-minimap2-0.110.0.tar.gz
+		tair10-star	ref	https://genomecomb.bioinf.be/download/refdb_tair10-star-0.110.0.tar.gz
 		sacCer3	ref	https://genomecomb.bioinf.be/download/refdb_sacCer3-0.106.0.tar.gz
 		sacCer3-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_sacCer3-minimap2-0.106.0.tar.gz
 		sacCer3-star	ref	https://genomecomb.bioinf.be/download/refdb_sacCer3-star-0.106.0.tar.gz
