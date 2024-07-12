@@ -77,14 +77,39 @@ engine) cluster</p>
   <dt>-run run</dt>
   <dd>specify the run name for the job (default generated based on
   the command)</dd>
+  <dt>-lang interpreter</dt>
+  <dd>use <b>cmd</b> as a piece of code to be run with the given
+  interpreter, e.g. '''-lang python''' or '''-lang R''' (further
+  arguments after cmd are ignored in this case)</dd>
+  <dt>-mem memorysize</dt>
+  <dd>indication of (maximum) memory needed by the job (on sge: -l
+  mem_free=$value,virtual_free=$value, where value is corrected by
+  the system based on -cores)</dd>
+  <dt>-memlimit memorysize</dt>
+  <dd>limit memory use of the job to the given amount (on sge: -l
+  h_vmem=$value where value is corrected by the system based on
+  -cores)</dd>
+  <dt>-cores numcores</dt>
+  <dd>give value &gt; 1 if job uses more than 1 core (on sge hard
+  option: &quot;-pe local $value&quot; if local pe is defined) If
+  using multiple cores, other requirements on sge are per core! For
+  memory (-mem) this conversion will be done by the system, and you
+  must give the total required memory (for the job)</dd>
+  <dt>-time timelimit</dt>
+  <dd>indication of (maximum) time needed by the job (on sge: -l
+  s_rt=$time)</dd>
   <dt>-dqueue value</dt>
   <dd>(only for sge) Use this option if you want to run on another
   queue than the default all.q</dd>
   <dt>-deps ids</dt>
   <dd>job will only run when the jobs in ids (a comma separated
   list of job ids)</dd>
+  <dt>-hard hardlimits</dt>
+  <dd>on sge: extra options passed on as hard limits</dd>
+  <dt>-soft softlimits</dt>
+  <dd>on sge: extra options passed on as soft limits</dd>
 </dl>
-<h2 id="h953">Category</h2>
+<h2 id="h2002">Category</h2>
 <p>Dev</p>
 </div>
 

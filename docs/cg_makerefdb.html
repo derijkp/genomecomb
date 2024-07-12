@@ -69,18 +69,48 @@ will be downloaded. Using the options you can adjust which
 annotations are added. For some genomes genomecomb includes a script
 (e.g. makedbs/makedbs_hg38.sh for human)with extended preset options
 and adding (much) more annotations not coming from UCSC.</p>
-<h2 id="h972">Arguments</h2>
+<p>Some options give information that cannot be easily derived from
+the downloads, and can be important for specific analysis. These are
+best supplied: The <b>-organelles</b> option lists chromosomes that
+are (actually) organelle genomes (these are treated differently e.g.
+by scywalker analysis)</p>
+<p>When distributing over chromosomes (or regions), by default alt
+and unplaced chromosomes (usually small) are grouped together. This
+default relies on the fact that these (often) contain a
+&quot;_&quot;, and so, e.g. chr1_KI270706v1_random,
+chr1_KI270707v1_random are grouped under chr1_. For some genomes this
+default is not ideal, e.g. the dual human-mouse genome provided by
+cellranger makes only 2 groups (one per genome) You can use the
+<b>-groupchromosomes</b> option to specify a different way of
+grouping: Each chromosome is matched to the given list of regular
+expressions, and if it matches one the chromosome is assigned to a
+group named after the match. The resulting file
+genomeseq.groupchromosomes in the reference directory can be manually
+adjusted after creation (it is a tsv file with assignments of each
+chromosome to a group).</p>
+<h2 id="h2098">Arguments</h2>
 
 <dl>
   <dt>dbdir</dt>
   <dd>name/path of result directory</dd>
 </dl>
-<h2 id="h1028">Options</h2>
+<h2 id="h2154">Options</h2>
 
 <dl>
-  <dt>-genesdb</dt>
+  <dt>-genomeurl url</dt>
+  <dd>url to download the genomesequence from (instead of the UCSC
+  default)</dd>
+  <dt>-organelles list</dt>
+  <dd>list of chromosome names that are organelle genomes (these
+  are treated differently e.g. by scywalker analysis)</dd>
+  <dt>-pseudoautosomal list</dt>
+  <dd>list of pseudoautosomal regions</dd>
+  <dt>-groupchromosomes list</dt>
+  <dd>list of patterns indicating which (small) chromosomes should
+  be grouped for distrreg</dd>
+  <dt>-genesdb list</dt>
   <dd></dd>
-  <dt>-mirbase</dt>
+  <dt>-mirbase string</dt>
   <dd></dd>
   <dt>-regionsdb_collapse</dt>
   <dd></dd>
@@ -89,10 +119,6 @@ and adding (much) more annotations not coming from UCSC.</p>
   <dt>-dbsnp</dt>
   <dd></dd>
   <dt>-refSeqFuncElemsurl</dt>
-  <dd></dd>
-  <dt>-genomeurl</dt>
-  <dd></dd>
-  <dt>-pseudoautosomal</dt>
   <dd></dd>
   <dt>-transcriptsurl</dt>
   <dd></dd>
@@ -104,7 +130,7 @@ and adding (much) more annotations not coming from UCSC.</p>
 <p>This command can be distributed on a cluster or using multiple
 with <a href="joboptions.html">job options</a> (more info with cg
 help joboptions)</p>
-<h2 id="h1370">Example</h2>
+<h2 id="h2859">Example</h2>
 <p>The following example downloads the C. elegans ce11 reference
 sequence and some annotation databases. It will distribute processing
 of the data over 4 cores (-d 4).</p>
@@ -126,7 +152,7 @@ cg makerefdb -d 4 -v 2 \
     /complgen/refseq/ce11
 
 </pre>
-<h2 id="h1932">Category</h2>
+<h2 id="h3421">Category</h2>
 <p>Process</p>
 </div>
 

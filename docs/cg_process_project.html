@@ -64,8 +64,10 @@ variant calling, reports, ...) and part of the tertiary analysis
 (combining samples, annotation, ...) on a number of samples that may
 come from various sources. You can specify which analyses should be
 run using the options. The default settings/options are for analysing
-Illumina genomic sequencing data. A practical example of the workflow
-can be found in <a
+Illumina genomic sequencing data. You can use the -preset option to
+specify default settings for various types of analyses (short or
+long-read genome, transcriptome, etc.) A practical example of the
+workflow can be found in <a
 href="howto_process_project.html">howto_process_project</a>.</p>
 <p>The command expects a basic genomecomb project directory (as
 described extensively in <a href="projectdir.html">projectdir</a>)
@@ -75,7 +77,7 @@ a directory named <b>samples</b> in the projectdir. You can add
 samples manually or using the <a href="cg_project_addsample.html">cg
 project_addsample</a> command as described in <a
 href="howto_process_project.html">howto_process_project</a>.</p>
-<h3 id="h1233">Per sample analysis</h3>
+<h3 id="h1371">Per sample analysis</h3>
 <p>In the first step, each sampledir is processed using <a
 href="cg_process_sample.html">cg process_sample</a>; Samples in one
 project can come from different sources (Complete genomics, illumina
@@ -89,7 +91,7 @@ can be applied specifically by placing files, e.g. an amplicon file
 More information on specific sample types and options can be found in
 the description of <a href="cg_process_sample.html">cg
 process_sample</a>.</p>
-<h3 id="h2035">Combined analysis</h3>
+<h3 id="h2173">Combined analysis</h3>
 <p>In the final step process_project will call <a
 href="cg_process_multicompar.html">cg process_multicompar</a> to
 combine sample results in the subdirectory compar. Different result
@@ -112,7 +114,7 @@ files may be present depending on the type of analysis:</p>
   <dt>annot_cgcnv-projectname.tsv</dt>
   <dd>combined results of Complete Genomics CNV calling</dd>
 </dl>
-<h2 id="h3005">Arguments</h2>
+<h2 id="h3143">Arguments</h2>
 
 <dl>
   <dt><b>projectdir</b></dt>
@@ -125,7 +127,7 @@ files may be present depending on the type of analysis:</p>
   in the project directory. process_project called with the dbdir
   parameter will create the projectinfo.tsv file.</dd>
 </dl>
-<h2 id="h3441">Options</h2>
+<h2 id="h3579">Options</h2>
 <p>This command can be distributed on a cluster or using multiple
 with <a href="joboptions.html">job options</a> (more info with cg
 help joboptions)</p>
@@ -144,7 +146,7 @@ option (options given later overrule previous ones).</p>
   &quot;preset&quot;, must be one of: srs (short read genomic
   sequencing), rseq (short read rna-seq), ont (ont genomic
   sequencing), ontr (ont RNA-seq), scywalker (ont 10x single cell
-  rna-seq)</dd>
+  rna-seq), scywalker_pacbio (pacbio 10x single cell rna-seq)</dd>
   <dt>-samplesheet samplesheet</dt>
   <dd>create <b>projectdir</b> based on the data in the given
   <b>sampleheet</b> as described in <a href="cg_make_project.html">cg
@@ -179,7 +181,7 @@ option (options given later overrule previous ones).</p>
   default bam, but can be set to cram</dd>
   <dt>-realign value</dt>
   <dd>If <b>value</b> is 0, realignment will not be performed, use
-  1 for (default) realignment with gatk, or <b>value</b> srma for
+  1 (default) for realignment with gatk, or <b>value</b> srma for
   alignment with srma</dd>
   <dt>-removeduplicates 0/1/picard/biobambam</dt>
   <dd>By default duplicates will be removed (marked actually) using
@@ -314,7 +316,7 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combining the results</p>
-<h2 id="h12328">Sample specific options</h2>
+<h2 id="h12519">Sample specific options</h2>
 <p>Different options can be given to different samples within the
 same experiment run by storing a file named <b>options.tsv</b> in the
 experiment/project dir with the following fields: sample option value</p>
@@ -329,22 +331,19 @@ of different technologies (e.g. ont and srs) in one run. Beware that
 presets just change base/default settings; Options explicitely given
 on the process_project commandline will overrule settings from a
 preset, even if sample specific).</p>
-<h2 id="h13227">Dependencies</h2>
+<h2 id="h13418">Dependencies</h2>
 <p>Some of the programs used in this workflow are not distributed
-with genomecomb. e.g., gatk and strelka should be installed
-separately. In general this extra software should be made available
-as executables in the PATH. Some, like picard can be available as a
-directory named picard* that contains the picard jar file. Some also
-support environment variables, e.g. GATK or PICARD to indicated the
-picard installation directory. The genomecomb source distribution has
-scripts to make a portable version of most of this extra software.</p>
-<h2 id="h13781">Example</h2>
+with genomecomb itself (e.g. gatk, strelka) and should be installed
+separately. To make this easier, they are available as portable
+application directories from the [genomecomb
+website](https://derijkp.github.io/genomecomb/install.html) or can be
+directly installed using the <a href="cg_install.html">cg install</a>
+command.</p>
+<h2 id="h13812">Example</h2>
 <pre>
-export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
-export PICARD=/opt/bio/picard-tools-1.87
 cg process_project -d sge testproject /complgen/refseq/hg19
 </pre>
-<h2 id="h13959">Category</h2>
+<h2 id="h13895">Category</h2>
 <p>Process</p>
 </div>
 

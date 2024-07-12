@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_tsv210x</title>
+<title>/home/peter/dev/genomecomb/lib/cg_bams2crams</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,41 +49,39 @@
 
 <div id="middle">
 
-<h1 id="h1">tsv210x</h1>
-<h2 id="h15">Format</h2>
-<p>cg tsv210x ?infile? ?outfile?</p>
-<h2 id="h59">Summary</h2>
-<p>Converts data in tab-separated format (<a href="tsv.html">tsv</a>)
-format to the 10x format.</p>
-<h2 id="h148">Arguments</h2>
+<h1 id="h1">bams2crams</h1>
+<h2 id="h18">Format</h2>
+<p>cg bams2crams ?options? bamfile ?bamfile? ...</p>
+<h2 id="h78">Summary</h2>
+<p>Convert bam files to a cram</p>
+<h2 id="h121">Description</h2>
+<p>Converts all given bam files to cram. The resulting cramfiles will
+have the same filename as the source bam, but with .cram instread of
+.bam as file extension.</p>
+<p>The command supports parallel processing using the <a
+href="joboptions.html">joboptions</a></p>
+<h2 id="h368">Arguments</h2>
 
 <dl>
-  <dt><b>infile</b></dt>
-  <dd>file to be converted, if not given (or -), uses stdin. File
-  may be compressed.</dd>
-  <dt><b>outfile</b></dt>
-  <dd>write results to outfile, if not given, uses stdout</dd>
+  <dt><b>bamfile</b></dt>
+  <dd>bamfile</dd>
 </dl>
-<h2 id="h325">Options</h2>
+<h2 id="h408">Options</h2>
 
 <dl>
-  <dt>-featurefields string (-genefields)</dt>
-  <dd>fieldnames to be used to extract gene information (default
-  uses all of geneid,gene_id,gene which are present)</dd>
-  <dt>-cellbarcodefield string</dt>
-  <dd>fieldname of column to be used to extract cellbarcodes from
-  (default uses first of cell,cellbarcode,barcode present)</dd>
-  <dt>-countfield string</dt>
-  <dd>fieldname of column to be used to extract counts from
-  (default uses first icount,count present)</dd>
-  <dt>-round 0/1</dt>
-  <dd>0 takes counts as is, 1 rounds to integers using the round
-  function except for values &lt; 1 (v &lt; 0.01 become 0, higher but
-  &lt; 1 become 1)</dd>
-  <dt>-remdups 0/1</dt>
-  <dd>remove duplicate lines (1 default) or not (0)</dd>
+  <dt>-refseq file/dir</dt>
+  <dd>file or directory containing the reference genome sequence
+  (this option must be given)</dd>
+  <dt>-handlebam old/keep/rm</dt>
+  <dd>what to do with the bam file (old) rename to file.old (is the
+  default), (keep) keep it as is, (rm) delete the bam file after
+  conversion</dd>
+  <dt>-threads number</dt>
+  <dd>use <b>number</b> of threads for the conversion</dd>
+  <dt>-index 0/1</dt>
+  <dd>if 1 (default), create the crai index of the cram file</dd>
 </dl>
-<h2 id="h967">Category</h2>
+<h2 id="h825">Category</h2>
 <p>Format Conversion</p>
 </div>
 

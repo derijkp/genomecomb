@@ -142,6 +142,11 @@ check progress/errors by updating and checking the logfile.</p>
   <dd>Use this option if you want to run on another queue than the
   default all.q (for slurm this will specify the
   &quot;partition(s)&quot; / -p option to sbatch)</dd>
+  <dt>-dmaxmem value</dt>
+  <dd>limit total amount of (reserved) memory in local distribute
+  to value: do not start new jobs until reserved memory (total of
+  running jobs and new job) stays below this value (unless it would
+  be the only job)</dd>
   <dt>-submitoptions value</dt>
   <dd>can be used to add any options to the submit command. The
   text in value will be added verbatim, so options must be specified
@@ -201,7 +206,7 @@ amounts for any job:</p>
 </pre>
 <p>will set the default requested memory to 2G and time to 2h, but
 for mapping with bwa 10G of memory will be re quested and 10h.</p>
-<h2 id="h7498">Category</h2>
+<h2 id="h7723">Category</h2>
 <p>Format Conversion</p>
 </div>
 

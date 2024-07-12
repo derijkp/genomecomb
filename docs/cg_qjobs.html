@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_tsv210x</title>
+<title>/home/peter/dev/genomecomb/lib/cg_qjobs</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,42 +49,31 @@
 
 <div id="middle">
 
-<h1 id="h1">tsv210x</h1>
-<h2 id="h15">Format</h2>
-<p>cg tsv210x ?infile? ?outfile?</p>
-<h2 id="h59">Summary</h2>
-<p>Converts data in tab-separated format (<a href="tsv.html">tsv</a>)
-format to the 10x format.</p>
-<h2 id="h148">Arguments</h2>
+<h1 id="h1">qjobs</h1>
+<h2 id="h13">Format</h2>
+<p>cg qjobs ?options?</p>
+<h2 id="h46">Summary</h2>
+<p>returns the running jobs on the cluster in <a
+href="tsv.html">tsv</a> format.</p>
+<h2 id="h120">Description</h2>
+<p>Convenience function to easily get information on jobs running on
+a (grid engine) cluster in a parsable format</p>
+<h2 id="h250">Arguments</h2>
 
 <dl>
-  <dt><b>infile</b></dt>
-  <dd>file to be converted, if not given (or -), uses stdin. File
-  may be compressed.</dd>
-  <dt><b>outfile</b></dt>
-  <dd>write results to outfile, if not given, uses stdout</dd>
+  <dt><b>cmd</b> ...</dt>
+  <dd>command (and parameters) to be executed</dd>
 </dl>
-<h2 id="h325">Options</h2>
+<h2 id="h322">Options</h2>
 
 <dl>
-  <dt>-featurefields string (-genefields)</dt>
-  <dd>fieldnames to be used to extract gene information (default
-  uses all of geneid,gene_id,gene which are present)</dd>
-  <dt>-cellbarcodefield string</dt>
-  <dd>fieldname of column to be used to extract cellbarcodes from
-  (default uses first of cell,cellbarcode,barcode present)</dd>
-  <dt>-countfield string</dt>
-  <dd>fieldname of column to be used to extract counts from
-  (default uses first icount,count present)</dd>
-  <dt>-round 0/1</dt>
-  <dd>0 takes counts as is, 1 rounds to integers using the round
-  function except for values &lt; 1 (v &lt; 0.01 become 0, higher but
-  &lt; 1 become 1)</dd>
-  <dt>-remdups 0/1</dt>
-  <dd>remove duplicate lines (1 default) or not (0)</dd>
+  <dt>-s 0/1</dt>
+  <dd>return a summary of running jobs</dd>
+  <dt>-u user</dt>
+  <dd>list jobs of the given user</dd>
 </dl>
-<h2 id="h967">Category</h2>
-<p>Format Conversion</p>
+<h2 id="h420">Category</h2>
+<p>Dev</p>
 </div>
 
 <div id="right">

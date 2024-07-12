@@ -84,8 +84,8 @@ downloaded archive somewhere in the PATH
 
 </p>
 <ul>
-<li><a href="https://github.com/derijkp/genomecomb/releases/download/0.109.0/genomecomb-0.109.0-Linux-x86_64.tar.gz">genomecomb-0.109.0-Linux-x86_64.tar.gz</a> (github)
-<li><a href="https://genomecomb.bioinf.be/download/genomecomb-0.109.0-Linux-x86_64.tar.gz">genomecomb-0.109.0-Linux-x86_64.tar.gz</a> (VIB/UAntwerp server)
+<li><a href="https://github.com/derijkp/genomecomb/releases/download/0.110.0/genomecomb-0.110.0-linux-x86_64.tar.gz">genomecomb-0.110.0-linux-x86_64.tar.gz</a> (github)
+<li><a href="https://genomecomb.bioinf.be/download/genomecomb-0.110.0-linux-x86_64.tar.gz">genomecomb-0.110.0-linux-x86_64.tar.gz</a> (VIB/UAntwerp server)
 <li><a href="old_releases.html#genomecomb">older releases</a>
 </ul>
 
@@ -97,7 +97,7 @@ executable itself must stay in the application directory to work.)
 
 Example using a softlink to make it available in a bin directory. e.g.:
 <pre>
-ln -s /opt/genomecomb-0.109.0-Linux-x86_64/cg /usr/local/bin/cg
+ln -s /opt/genomecomb-0.110.0-linux-x86_64/cg /usr/local/bin/cg
 </pre>
 </p>
 
@@ -108,43 +108,61 @@ genome annotation data. These have to be available in a directory you will
 give as a parameter (refseq).
 
 
-You can download these for several species/builds (some of these, esp human are very large: 55G) or download
-and install them using <a href="cg_install.html">cg install</a>
-
-</p>
-<ul>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_hg38-0.109.0.tar.gz">refdb_hg38-0.109.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_hg19-0.106.0.tar.gz">refdb_hg19-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-0.106.0.tar.gz">refdb_mm10-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_dm6-0.106.0.tar.gz">refdb_dm6-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_ce11-0.106.0.tar.gz">refdb_ce11-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_sacCer3-0.106.0.tar.gz">refdb_sacCer3-0.106.0.tar.gz</a>
-<li><a href="old_releases.html#refdb">older releases</a>
-</ul>
-<p>
-
-Install by unpacking in a directory<br>
+You can download these for several species/builds (some of these, esp
+human are very large: 55G) and unpack them in a directory, or more easily,
+directly install them using <a href="cg_install.html">cg install</a>
+command
 
 Some larger files in the reference databases (cadd annotation, minimap2 and
 star indexes) are provided separately (downloads below). You can install
 these download by unpacking directly in the relevant reference database directory (the one
 you unpacked before)
+
 </p>
 <ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_hg38-0.109.0.tar.gz">refdb_hg38-0.109.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.109.0.tar.gz">refdb_hg38-cadd-0.109.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_hg38-minimap2-0.109.0.tar.gz">refdb_hg38-minimap2-0.109.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_hg38-star-0.109.0.tar.gz">refdb_hg38-star-0.109.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_hg19-0.106.0.tar.gz">refdb_hg19-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_hg19-cadd-0.106.0.tar.gz">refdb_hg19-cadd-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_hg19-minimap2-0.106.0.tar.gz">refdb_hg19-minimap2-0.106.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm39-0.110.0.tar.gz">refdb_mm39-0.110.0.tar.gz</a>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm39-minimap2-0.110.0.tar.gz">refdb_mm39-minimap2-0.110.0.tar.gz</a>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm39-star-0.110.0.tar.gz">refdb_mm39-star-0.110.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-0.110.0.tar.gz">refdb_mm10-0.110.0.tar.gz</a>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.110.0.tar.gz">refdb_mm10-minimap2-0.110.0.tar.gz</a>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-star-0.110.0.tar.gz">refdb_mm10-star-0.110.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_tair10-0.110.0.tar.gz">refdb_tair10-0.110.0.tar.gz</a>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_tair10-minimap2-0.110.0.tar.gz">refdb_tair10-minimap2-0.110.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_dm6-0.106.0.tar.gz">refdb_dm6-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_dm6-minimap2-0.106.0.tar.gz">refdb_dm6-minimap2-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_dm6-star-0.106.0.tar.gz">refdb_dm6-star-0.106.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_ce11-0.106.0.tar.gz">refdb_ce11-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_ce11-minimap2-0.106.0.tar.gz">refdb_ce11-minimap2-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_ce11-star-0.106.0.tar.gz">refdb_ce11-star-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-minimap2-0.106.0.tar.gz">refdb_mm10-minimap2-0.106.0.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/refdb_mm10-star-0.106.0.tar.gz">refdb_mm10-star-0.106.0.tar.gz</a>
+</ul>
+<ul>
+<li><a href="https://genomecomb.bioinf.be/download/refdb_sacCer3-0.106.0.tar.gz">refdb_sacCer3-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_sacCer3-minimap2-0.106.0.tar.gz">refdb_sacCer3-minimap2-0.106.0.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/refdb_sacCer3-star-0.106.0.tar.gz">refdb_sacCer3-star-0.106.0.tar.gz</a>
 </ul>
+<ul>
+<li><a href="old_releases.html#refdb">older releases</a>
+</ul>
+<p>
 
 Special reference files are needed for the cg liftover command (to lift e.g. variants from one genome build to another).
 These are provided (for lifting between the different human builds) in the following download
@@ -251,7 +269,7 @@ wget https://genomecomb.bioinf.be/download/genomecomb-0.109.0-Linux-x86_64.tar.g
 tar xvzf genomecomb-0.109.0-Linux-x86_64.tar.gz
 ln -s /opt/genomecomb/genomecomb-0.109.0-Linux-x86_64/cg /usr/local/bin/cg
 
-# Install the hg38 refernce databases and the software needed to run the ont preset.
+# Install the hg38 reference databases and the software needed to run the ont preset.
 cg install hg38 hg38-cadd hg38-minimap2 ont
 
 #wget https://genomecomb.bioinf.be/download/refdb_hg38-0.109.0.tar.gz

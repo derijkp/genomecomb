@@ -52,7 +52,8 @@
 <h1 id="h1">Introduction</h1>
 <h2 id="h20">GenomeComb</h2>
 <p>GenomeComb provides tools to analyze, combine, annotate and query
-whole genome, exome or targetted sequencing data. Variant files in <a
+whole genome, exome or targetted sequencing data as well as
+transcriptome data. Variant files in <a
 href="format_tsv.html">tab-separated format</a> from different
 sequencing datasets can be <a
 href="howto_process_project.html">generated</a> and <a
@@ -70,9 +71,11 @@ data, reports, etc. starting from various raw data source material
 (optionally using multiple cores) or distributed on a cluster. It
 combines many of the genomecomb commands that are also available
 separately (<a href="reference.html">reference</a>)</p>
-<h2 id="h1082">File formats</h2>
-<p>The standard file format used in GenomeComb is the widely
-supported, simple, yet flexible tab-separated values file (<a
+<h2 id="h1113">File formats</h2>
+<p>While genomecomb understands and produces most of the typical
+formats used in ngs analysis (bam/cram, vcf, bed, ...), the central,
+standard file format used in GenomeComb is the widely supported,
+simple, yet flexible tab-separated values file (<a
 href="format_tsv.html">format_tsv</a>). This text format contains
 tabular data, where each line is a record, and each field is
 separated from the next by a TAB character. The first line (not
@@ -136,7 +139,7 @@ into a local database.</p>
 <p>The format does not use quoting, so values in the table cannot
 contain tabs or newlines, unless by coding them using escape
 characters (\t,\n)</p>
-<h2 id="h3732">Project directories</h2>
+<h2 id="h3891">Project directories</h2>
 <p>While not necessary for many of the commands, using the specific
 organisation of files in a Genomecomb project directory (described in
 <a href="projectdir.html">projectdir</a>) is useful: e.g. the process
@@ -145,7 +148,7 @@ process_project</a>,<a href="cg_process_sample.html">cg
 process_sample</a>) to run an entire analysis pipeline expect this
 structure to start from and generates all additional data in this
 structure.</p>
-<h2 id="h4123">How to start</h2>
+<h2 id="h4282">How to start</h2>
 <p>In the <a href="howto.html">Howto</a> section we give some
 extended examples on how to process ngs data and query the results.</p>
 </div>

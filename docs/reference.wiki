@@ -1,4 +1,4 @@
-= Genomecomb 0.109.0 Reference =
+= Genomecomb 0.110.0 Reference =
 
 == Format ==
 cg subcommand ?options? ....
@@ -39,11 +39,15 @@ are to be compressed
 ; -compressionthreads number: Use **number** [[cg_threads (default 1) to compress the result 
 file (if the result needs to be compressed, and the compression method supports threads)
 
-; -shadowdir path: alternative location (e.g. a faster disk or disk without snapshots) to store some of the intermediate files
-that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
+; -shadowdir path|threads (default 1) to compress the result 
+file (if the result needs to be compressed, and the compression method supports threads)
+
+; -shadowdir path]]: alternative location (e.g. a faster disk or disk without snapshots) to store 
+some of the intermediate files that must be accessible to multiple jobs (will be made using [[shadow_mkdir]]).  
 Can also be specified using the environment variable SHADOWDIR.
-; -scratchdir: alternative location to store (local, not potentially accessed by multiple nodes) temporary
-files which may become very big. The default location is /tmp; if /tmp is too small (on some nodes)
+
+; -scratchdir path: alternative location to store (local, not potentially accessed by multiple nodes) temporary
+files which may become very big. The default location is /tmp; if this is too small (on some nodes)
 you can specify a different location using this option
 Can also be specified using the environment variable SCRATCHDIR.
 
@@ -139,11 +143,13 @@ in e.g. cg liftregion.
 
 === Format Conversion ===
 ; [[cg_10x2tsv|10x2tsv]]: Converts data in 10x format to the tab-separated format ([[tsv]]).
+; [[cg_bam2cram|bam2cram]]: Convert a bam file to a cramfile
 ; [[cg_bam2fastq|bam2fastq]]: Extracts reads from a bamfile into fastq. 
 The actual extraction is based on picard's SamToFastq or samtools bam2fq, but the data is 
 prepared first (ao. sorted by name to avoid the problems caused by position sorted fq files)
 ; [[cg_bam2reg|bam2reg]]: Extract regions with a minimum coverage from a bam file.
 ; [[cg_bam2sam|bam2sam]]: convert bam (or cram) to sam, sorting chromosomes into natural sort order.
+; [[cg_bams2crams|bams2crams]]: Convert bam files to a cram
 ; [[cg_bcol|bcol]]: several commands for managing bcol files
 ; [[cg_bcol_get|bcol_get]]: Get a list of values from a bcol file
 ; [[cg_bcol_make|bcol_make]]: Creates a [[bcol]] file
@@ -170,6 +176,7 @@ is taken from one of the following fields (in order, if not empty or .):
 LOCUS, VERSION, ACCESSION, KEYWORDS, DEFINITION
 ; [[cg_gene2reg|gene2reg]]: Extract gene elements from data in genepred-like format to a (tab separated) region file.
 ; [[cg_genepred2tsv|genepred2tsv]]: Converts data in genepred format to tab-separated format ([[tsv]]).
+; [[cg_genepredtsv2fasta|genepredtsv2fasta]]: Extracts transcript sequences based on a transcript tsv file ([[format_transcript]]) and stores them in a fasta file.
 ; [[cg_gff2tsv|gff2tsv]]: Converts data in gff format to gene tsv format
 ; [[cg_gtf2tsv|gtf2tsv]]: Converts data in gtf format to gene tsv (tab separated) format
 ; [[cg_keyvalue|keyvalue]]: Converts data in tsv format from wide format (data for each sample in separate columns) 
@@ -235,8 +242,10 @@ A histo file is generated at the location of the bam file
 === Convenience ===
 ; [[cg_install|install]]: easy install of optional dependencies (external software used by genomecomb for some analysis) 
 and some reference databases.
+; [[cg_samcat|samcat]]: concatenates sam files outputting to stdout.
 
 === Dev ===
+; [[cg_qjobs|qjobs]]: returns the running jobs on the cluster in [[tsv]] format.
 ; [[cg_qsub|qsub]]: submit a command to the cluster (grid engine).
 ; [[cg_sh|sh]]: runs a shell in which genomecomb commands can be input and executed interactively.
 ; [[cg_source|source]]: runs a script (Tcl) with all commands/extensions from genomecomb available.

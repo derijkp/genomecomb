@@ -5,17 +5,17 @@ Copyright VIB and University of Antwerp
 
 Purpose
 -------
-Genomecomb is a package designed to analyze, combine, annotate
+Genomecomb is an integrated package designed to analyze, combine, annotate
 and query genome as well as transcriptome sequencing data.
 
-It provides pipelines to analyse data sets made with different sequencing
-technologies (Illumina, nanopore) using a (choosable) set of aligners,
-variant callers, structural variant callers, isoform callers, gene
-counters, etc. and to extensively annotate the results.
+For the first step it provides pipelines to analyse data sets made with
+different sequencing technologies (Illumina, nanopore) using a (choosable)
+set of aligners, variant callers, structural variant callers, isoform
+callers, gene counters, etc. and to extensively annotate the results.
 
-It also provides a very flexible tool to query or summarise the results, and
+It also provides a very flexible tool to query and/or summarise the results, and
 includes a graphical table browser that can handle browsing (and querying)
-multigigabyte tables with millions of rows
+multigigabyte tables with millions of rows.
 
 Other included tools can be used for region operations (including making a
 queryable multisample regionfile), validation (primer design and
@@ -37,7 +37,7 @@ genomecomb executable (cg) and all needed depencies compiled in a way they
 should work on all (except very ancient) Linux systems.
 
 Installation of the package is as simple as downloading the 
-[archive](https://github.com/derijkp/genomecomb/releases/download/0.109.0/genomecomb-0.109.0-Linux-x86_64.tar.gz)
+[archive](https://github.com/derijkp/genomecomb/releases/download/0.110.0/genomecomb-0.110.0-Linux-x86_64.tar.gz)
 and unpacking it somewhere. You can either call the executable (cg) directly
 from the directory, or put a soft-link to it somehwere in the path. (The
 executable itself must stay in the application directory to work.)
@@ -51,22 +51,25 @@ in the distribution (e.g. samtools). However most external software (such
 as e.g specific variant callers) needs to be installed on the system.
 Portable application directories of these programs (in versions that were
 tested with genomecomb) are made available on the the [genomecomb
-website](https://derijkp.github.io/genomecomb/install.html). These can be
-made generally available (put in the PATH) or to genomecomb only by
-putting them in the directory extra in the genomecomb app directory.
+website](https://derijkp.github.io/genomecomb/install.html). These can be made
+generally available (put in the PATH) or to genomecomb only by putting
+them in the directory extra in the genomecomb app directory. This software
+can also be installed more easily using the [cg
+install](https://derijkp.github.io/genomecomb/cg_install.html) command
 
 Installation quickstart example:
 ```
 cd ~/bin
-wget https://genomecomb.bioinf.be/download/genomecomb-0.109.0-Linux-x86_64.tar.gz
-tar xvzf genomecomb-0.109.0-Linux-x86_64.tar.gz
+wget https://genomecomb.bioinf.be/download/genomecomb-0.110.0-Linux-x86_64.tar.gz
+tar xvzf genomecomb-0.110.0-Linux-x86_64.tar.gz
 
 # optional if ~/bin is not in your PATH already
 export PATH=$HOME/bin:$PATH
 # or make a softlink to something in the PATH already
-ln -s ~/bin/genomecomb-0.109.0-Linux-x86_64/cg /usr/local/bin/cg
+ln -s ~/bin/genomecomb-0.110.0-Linux-x86_64/cg /usr/local/bin/cg
 
-# Install the hg38 reference databases and the software needed to run the ont and srs (short read) presets.
+# Install the hg38 reference databases (including the minimap2 index) and
+# the software needed to run the ont and srs (short read) presets.
 cg install hg38 hg38-cadd hg38-minimap2 srs ont
 
 ```
