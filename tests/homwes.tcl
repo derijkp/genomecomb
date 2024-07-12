@@ -15,7 +15,8 @@ set keepdir [pwd]
 test homwes {basic} {
 	file delete -force tmp/homwes
 	file mkdir tmp/homwes
-	set varfile [gzfile data/annot_compar-yri_exome_part_test.tsv]
+	set varfile tmp/annot_compar-yri_exome_part_test.tsv
+	mklink [gzfile data/annot_compar-yri_exome_part_test.tsv] $varfile
 	set dbdir $::refseqdir/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile NA19240 tmp/homwes/homwes-out.tsv
 	cg tsvdiff -q 1 -x *.log tmp/homwes data/homwes
@@ -24,7 +25,8 @@ test homwes {basic} {
 test homwes {basic -variantsonly 0} {
 	file delete -force tmp/homwes_variantsonly0
 	file mkdir tmp/homwes_variantsonly0
-	set varfile [gzfile data/annot_compar-yri_exome_part_test.tsv]
+	set varfile tmp/annot_compar-yri_exome_part_test.tsv
+	mklink [gzfile data/annot_compar-yri_exome_part_test.tsv] $varfile
 	set dbdir $::refseqdir/hg19
 	cg homwes --stack 1 -variantsonly 0 -dbdir $dbdir $varfile NA19240 tmp/homwes_variantsonly0/homwes-out.tsv
 	cg tsvdiff tmp/homwes_variantsonly0/homwes-out.tsv data/homwes_variantsonly0-homwes-out.tsv
@@ -33,7 +35,8 @@ test homwes {basic -variantsonly 0} {
 test homwes {samples empty -> multiple samples} {
 	file delete -force tmp/homwes_multi
 	file mkdir tmp/homwes_multi
-	set varfile [gzfile data/annot_compar-yri_exome_part_test.tsv]
+	set varfile tmp/annot_compar-yri_exome_part_test.tsv
+	mklink [gzfile data/annot_compar-yri_exome_part_test.tsv] $varfile
 	set dbdir $::refseqdir/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile {} tmp/homwes_multi/homwes-out.tsv
 	file delete -force tmp/homwes_multi/homwes-out.work
@@ -43,7 +46,8 @@ test homwes {samples empty -> multiple samples} {
 test homwes {sample not given -> multiple samples} {
 	file delete -force tmp/homwes_multi
 	file mkdir tmp/homwes_multi
-	set srcfile [gzfile data/annot_compar-yri_exome_part_test.tsv]
+	set srcfile tmp/annot_compar-yri_exome_part_test.tsv
+	mklink [gzfile data/annot_compar-yri_exome_part_test.tsv] $srcfile
 	set varfile tmp/homwes_multi/annot_compar-yri_exome_part_test.tsv[gzext $srcfile]
 	mklink $srcfile $varfile
 	set dbdir $::refseqdir/hg19
