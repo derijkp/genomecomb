@@ -11,7 +11,7 @@ set test_cleantmp 0
 # =====
 
 lappend dopts -threads 1
-set runopts {-stack 1}
+set runopts {-stack 1 -v 2}
 
 # download testdata in process_ont.tcl
 

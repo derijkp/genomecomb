@@ -360,7 +360,7 @@ proc process_multicompar_job {args} {
 				putslog "Starting annotation"
 				cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth${type}-$experiment.tsv.zst $dbdir {*}$dbfiles
 				job indexannotcompar-$experiment -deps {
-					$methcompar_file
+					compar/annot_meth${type}-$experiment.tsv.zst
 				} -targets {
 					compar/annot_meth${type}-$experiment.tsv.index/info.tsv
 				} -vars dbdir -code {
