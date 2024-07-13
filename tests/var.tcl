@@ -837,9 +837,14 @@ test var {var -method medaka -regionfile} {
 		chr20	1005000	1009000
 	}]]\n
 	#
-	cg var -method medaka -regionfile tmp/medaka_reg/targets.tsv {*}$::dopts tmp/medaka_reg/test.bam $::refseqdir/hg38
+	cg var -stack 1 -v 2 -method medaka \
+		-regionfile tmp/medaka_reg/targets.tsv \
+		{*}$::dopts \
+		tmp/medaka_reg/test.bam $::refseqdir/hg38 \
+		>& tmp/medaka_reg.reg
 	file delete tmp/medaka_reg/compar.tsv
-	cg multicompar -reannot 1 tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
+	cg multicompar -reannot 1 \
+		tmp/medaka_reg/compar.tsv tmp/medaka_reg/var-medaka-test.tsv.zst tmp/medaka_reg/var-truth.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
@@ -874,9 +879,16 @@ test var {var -method medaka -regionfile -distreg} {
 		chr20	1005000	1009000
 	}]]\n
 	#
-	cg var -method medaka -regionfile tmp/medaka_reg_distrreg/targets.tsv -distrreg regionfile {*}$::dopts tmp/medaka_reg_distrreg/test.bam $::refseqdir/hg38
+	cg var -method medaka \
+		-regionfile tmp/medaka_reg_distrreg/targets.tsv \
+		-distrreg regionfile \
+		{*}$::dopts \
+		tmp/medaka_reg_distrreg/test.bam \
+		$::refseqdir/hg38 \
+		>& tmp/medaka_reg_distrreg.reg
 	file delete tmp/medaka_reg_distrreg/compar.tsv
-	cg multicompar -reannot 1 tmp/medaka_reg_distrreg/compar.tsv tmp/medaka_reg_distrreg/var-medaka-test.tsv.zst tmp/medaka_reg_distrreg/var-truth.tsv
+	cg multicompar -reannot 1 \
+		tmp/medaka_reg_distrreg/compar.tsv tmp/medaka_reg_distrreg/var-medaka-test.tsv.zst tmp/medaka_reg_distrreg/var-truth.tsv
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tbi -x *.tsv.reannot \
