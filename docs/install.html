@@ -114,9 +114,21 @@ directly install them using <a href="cg_install.html">cg install</a>
 command
 
 Some larger files in the reference databases (cadd annotation, minimap2 and
-star indexes) are provided separately (downloads below). You can install
-these download by unpacking directly in the relevant reference database directory (the one
-you unpacked before)
+star indexes) are provided separately (downloads below). These can also be installed directly
+using <a href="cg_install.html">cg install</a>, e.g. for hg38 and all hg38 options:
+<pre>
+cg install hg38 hg38-cadd hg38-minimap2 hg38-star
+</pre>
+or downloaded manually and unpacked directly next to the relevant
+reference database directory (the one you unpacked before), e.g.
+<pre>
+wget https://genomecomb.bioinf.be/download/refdb_tair10-0.110.0.tar.gz
+tar xvaf refdb_tair10-0.110.0.tar.gz
+rm refdb_tair10-0.110.0.tar.gz
+wget https://genomecomb.bioinf.be/download/refdb_tair10-minimap2-0.110.0.tar.gz
+tar xvaf refdb_tair10-minimap2-0.110.0.tar.gz
+rm refdb_tair10-minimap2-0.110.0.tar.gz
+</pre>
 
 </p>
 <ul>
@@ -232,7 +244,6 @@ cg install ont
 <li><a href="https://genomecomb.bioinf.be/download/extra/openjdk-22-linux-x86_64.tar.gz">openjdk-22-linux-x86_64.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/extra/picard-2.21.3-java.tar.gz">picard-2.21.3-java.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/extra/python3-3.9-linux-x86_64.tar.gz">python3-3.9-linux-x86_64.tar.gz</a>
-<li><a href="https://genomecomb.bioinf.be/download/extra/scywalker_test.tar.gz">scywalker_test.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/extra/sniffles-2.2-linux-x86_64.tar.gz">sniffles-2.2-linux-x86_64.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/extra/sqanti3-4.2-linux-x86_64.tar.gz">sqanti3-4.2-linux-x86_64.tar.gz</a>
 <li><a href="https://genomecomb.bioinf.be/download/extra/STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz">STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz</a>
@@ -267,22 +278,17 @@ ln -s /opt/genomecomb/genomecomb-0.110.0-Linux-x86_64/cg /usr/local/bin/cg
 # Install the hg38 reference databases and the software needed to run the ont preset.
 cg install hg38 hg38-cadd hg38-minimap2 ont
 
-# The above could also be done manually using
-#wget https://genomecomb.bioinf.be/download/refdb_hg38-0.109.0.tar.gz
-#tar xvzf refdb_hg38-0.109.0.tar.gz
-#wget https://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.109.0.tar.gz
-#cd /opt/genomecomb/hg38
-#tar xvzf ../refdb_hg38-cadd-0.109.0.tar.gz
-#cd /opt/genomecomb
+# The above (except the minimap2 index) could also be done manually using
+wget https://genomecomb.bioinf.be/download/refdb_hg38-0.109.0.tar.gz
+tar xvzf refdb_hg38-0.109.0.tar.gz
+wget https://genomecomb.bioinf.be/download/refdb_hg38-cadd-0.109.0.tar.gz
+tar xvzf ../refdb_hg38-cadd-0.109.0.tar.gz
+rm refdb_hg38-0.109.0.tar.gz refdb_hg38-cadd-0.109.0.tar.gz
 
 # download example data
 wget https://genomecomb.bioinf.be/download/dataset_howto_query.tar.gz
 tar xvzf dataset_howto_query.tar.gz
 
-# delete downloaded files
-#rm genomecomb-0.110.0-Linux-x86_64.tar.gz
-#rm refdb_hg38-0.109.0.tar.gz refdb_hg38-cadd-0.109.0.tar.gz
-rm dataset_howto_query.tar.gz
 </pre>
 
 </p>
