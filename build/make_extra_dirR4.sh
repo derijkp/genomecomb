@@ -400,6 +400,52 @@ cp /build/dirR-$dirRversion-$arch/bin/R.ori /build/dirR-$dirRversion-$arch/R.ori
 tclsh /tmp/convert /build/dirR-$dirRversion-$arch/R /build/dirR-$dirRversion-$arch '$(dirname "$script")'
 tclsh /tmp/convert /build/dirR-$dirRversion-$arch/lib64/R/bin/R /build/dirR-$dirRversion-$arch '$(dirname "$(dirname "$(dirname "$(dirname "$script")")")")'
 
+# make an Rscript analog using only R and bash
+cat << 'EOF' > Rscript
+#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+# Initialize variables
+R_OPTS=()
+R_SCRIPT=""
+SCRIPT_ARGS=()
+# Parse the arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|--version|--vanilla|--no-save|--no-restore|-save|--no-environ|--no-site-file|--no-init-file|--restore)
+            R_OPTS+=("$1")
+            shift
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+        *)
+            if [ -z "$R_SCRIPT" ]; then
+                R_SCRIPT="$1"
+                shift
+            else
+                SCRIPT_ARGS+=("$1")
+                shift
+            fi
+            ;;
+    esac
+done
+# Check if the R script file is specified
+if [ -z "$R_SCRIPT" ]; then
+    echo "Usage: $0 [options] <R_script> [args...]"
+    exit 1
+fi
+# Check if the R script file exists
+if [ ! -f "$R_SCRIPT" ]; then
+    echo "R script '$R_SCRIPT' not found!"
+    exit 1
+fi
+# run the script with arguments
+"${dir}/R" "${R_OPTS[@]}" --slave -e "args <- commandArgs(trailingOnly = TRUE); source('$R_SCRIPT')" --args "${SCRIPT_ARGS[@]}"
+EOF
+chmod ugo+x Rscript
+
 # packages
 # --------
 
