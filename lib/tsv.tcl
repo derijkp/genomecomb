@@ -145,6 +145,25 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 	return $line
 }
 
+proc tsv_makeregular {source resultfile {extra *}} {
+	set fields [cg select -h $source]
+	set poss [tsv_basicfields $fields 14 0]
+	set oldfields [list_sub $fields $poss]
+	set makefields {}
+	foreach newfield {chromosome begin end type ref alt strand exonStarts exonEnds cdsStart cdsEnd transcript gene_name geneid} \
+		oldfield $oldfields pos $poss {
+		if {$pos == -1} continue
+		if {$newfield eq $oldfield} {
+			lappend makefields $oldfield
+		} else {
+			lappend makefields $newfield=\$$oldfield
+		}
+	}
+	lappend makefields {*}$extra
+	cg select -overwrite 1 -f $makefields $source $resultfile.temp[gzext $resultfile]
+	file rename -force $resultfile.temp[gzext $resultfile] $resultfile
+}
+
 proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	set poss [list_cor $header {chromosome begin end type ref alt strand exonStarts exonEnds cdsStart cdsEnd transcript gene_name geneid}]
 	set nfposs [list_find $poss -1]
@@ -243,6 +262,30 @@ proc findfields {header fields} {
 			
 		} else {
 			lappend result {}
+		}
+	}
+	return $result
+}
+
+proc findfieldspos {header fields} {
+	global altfieldsa
+	set result {}
+	foreach field $fields {
+		set pos [lsearch $header $field]
+		if {$pos != -1} {
+			lappend result $pos
+		} elseif {[info exists altfieldsa($field)]} {
+			set found -1
+			foreach name $altfieldsa($field) {
+				set v [lsearch $header $name]
+				if {$v != -1} {
+					set found $v
+					break
+				}
+			}
+			lappend result $found
+		} else {
+			lappend result -1
 		}
 	}
 	return $result

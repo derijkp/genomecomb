@@ -95,7 +95,11 @@ proc iso_joint_job {args} {
 	set threads 2
 	set distrreg 0
 	set cleanup 1
+	set reftranscripts {}
 	cg_options iso_joint args {
+		-reftranscripts {
+			set reftranscripts [code_empty $value]
+		}
 		-iso_joint {
 			set iso_joint $value
 		}
@@ -125,16 +129,30 @@ proc iso_joint_job {args} {
 		set source [file_absolute compar/isoform_counts-$isocaller-$exproot.tsv]
 		set ref [file_absolute compar/isoform_counts-$isocaller-$exproot-ref.tsv]
 		job isojoint_ref_$isocaller -deps {
-			$source
+			$source $reftranscripts
 		} -targets {
 			$ref
 		} -vars {
-			source ref
+			source ref reftranscripts
 		} -code {
-			set fields [cg select -h $source]
-			set fields [list_sub $fields -exclude [list_find -regexp $fields ^counts]]
-			cg select -overwrite 1 -f $fields $source $ref.temp
-			file rename $ref.temp $ref
+			tsv_makeregular $source $ref.temp {}
+			tsv_makeregular $reftranscripts $ref.temp2 {}
+			cg cat -m 1 $ref.temp2 $ref.temp | cg select -s - > $ref.temp3
+			set o [open $ref.temp4 w]
+			set f [open $ref.temp3]
+			set header [tsv_open $f comment]
+			puts $o $comment[join $header \t]
+			set pos [findfieldspos $header transcript]
+			unset -nocomplain a
+			while 1 {
+				if {[gets $f line] == -1} break
+				set transcript [lindex [split $line \t] $pos]
+				if {[info exists a($transcript)]} continue
+				puts $o $line
+				set a($transcript) 1
+			}
+			file rename -force $ref.temp4 $ref
+			file delete -force $ref.temp $ref.temp2 $ref.temp3
 		}
 		foreach bam [jobglob $projectdir/samples/*/*.bam $projectdir/samples/*/*.cram] {
 			set preset {}

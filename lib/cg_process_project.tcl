@@ -481,7 +481,9 @@ proc process_project_job {args} {
 		analysis_complete_job $experiment $destdir $extra_reports_mastr
 	}
 	if {[llength $iso_joint]} {
+		set reftranscripts [ref_tsvtranscripts $dbdir]
 		iso_joint_job \
+			-reftranscripts $reftranscripts \
 			-iso_joint $iso_joint \
 			-iso_match $iso_match \
 			-threads $threads \

@@ -113,6 +113,9 @@ Currently supported are: nanopolish
 Currently supported are: flair, isoquant, flames
 ; -isocallers isocallers: (space separated) list of isofrom calling (and counting) programs to be used for rna-seq data.
 Currently supported are: flair, isoquant, flames
+; -iso_joint isocallers: perform jopint analysis on the given list of isoform callers: the resulting isoforms of 
+  all per sample runs using the isoform caller (so must be in -isocallers) are combined, and each sample is recalled
+  with the combination of isoforms (including novel ones found in at least one sample) as reference
 ; -organelles organelles: (space separated) list of chromosomes that are organelles (that are treated differently in some analysis)
 If not given explicitely, the ones indicated in the file $refdb/extra/reg_*_organelles.tsv (if present) will be used
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.

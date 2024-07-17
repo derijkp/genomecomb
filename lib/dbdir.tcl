@@ -129,7 +129,7 @@ proc ref_tsvtranscripts {refseq {job 0}} {
 }
 
 proc get_transcriptsfile_tsv {reftranscripts refseq} {
-	if {$reftranscripts eq ""} {
+	if {$reftranscripts in {"" -}} {
 		set reftranscripts [ref_tsvtranscripts $refseq]
 	} elseif {$reftranscripts eq "none"} {
 	} elseif {[file extension $reftranscripts] eq ".gtf"} {
