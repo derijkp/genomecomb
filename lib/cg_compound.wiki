@@ -72,7 +72,7 @@ When doing per sample analysis, the -criteria argument must be provided.
 == Options ==
 ; -geneset geneset: A variantfile can have annotations of different gene
 sets. **geneset** is the base name of the gene annotation, e.g. when it is
-"refGene", the field "refGene_descr" will be used to extract the transcipt
+"refGene", the field "refGene_descr" will be used to extract the transcript
 names, "refGene_gene" for the gene name and "refGene_impact" for the
 filtering.
 ; -impact impacts: **impacts** defines which impact a variant must have omn the transcripts to count.

@@ -226,14 +226,14 @@ u (unsequenced)
 affected by a variant for the given gene set, potentially filtered by impact
 type. 
 **geneset** is the base name of the gene annotation, e.g. when it is
-"refGene", the field "refGene_descr" will be used to extract the transcipt
+"refGene", the field "refGene_descr" will be used to extract the transcript
 names, "refGene_gene" for the gene name and "refGene_impact" for the
 filtering. If **filter** is given (a comma separated list if impacts),
 only transcripts where the variant has one of the given impacts are
 returned. You can use wildcards and > to select multiple impacts in the
 filter (e.g. CDS* for CDS impacts and >=CDSmis for anything at the level
 of missense and higher in the list).
-**type** determines what is returned: t for only transcipt name, gt for
+**type** determines what is returned: t for only transcript name, gt for
 gene and transcript name and g for only the gene name.
 ; maximpact(list,...): returns the maximum impact from one or more lists of impacts. The order of impact
 is as in the list given in [[cg_annotate]]

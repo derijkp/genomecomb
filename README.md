@@ -1,6 +1,6 @@
 GenomeComb
 ========== 
-A program for the analysis of genome and transciptome sequencing data
+A program for the analysis of genome and transcriptome sequencing data
 Copyright VIB and University of Antwerp
 
 Purpose

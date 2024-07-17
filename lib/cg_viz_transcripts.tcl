@@ -90,7 +90,7 @@ proc cg_viz_transcripts {args} {
 		library(ggpubr)
 		
 		tsv=read.table(tsvfile,header = T, sep = '\t')
-		# sort transcipts on counts_weight
+		# sort transcripts on counts_weight
 	}
 	if {![info exists sortcol]} {
 		set sortcol [lindex $countfields 1]
