@@ -44,7 +44,7 @@ proc cg_realign_abra {args} {
 		set regionfile [cg_bam2reg -mincoverage 3 $sourcefile]
 	}
 	putslog "making $resultfile"
-	if {![file exists $sourcefile.[indexext $sourcefile]]} {exec samtools index $sourcefile}
+	if {![file exists $sourcefile.[indexext $sourcefile]]} {bam_index $sourcefile}
 	if {$regionfile ne ""} {
 		set regionfile [tempbed $regionfile $refseq]
 	}

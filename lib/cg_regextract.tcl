@@ -84,7 +84,7 @@ proc cg_regextract {args} {
 			}
 			set index $file.[indexext $file]
 			if {$ext in ".bam .cram" && ![file exists $index]} {
-				exec samtools index $file
+				bam_index $file
 			}
 			set regions [samregions $region $refseq]
 			if {![llength $regions]} {set regions {{}}}

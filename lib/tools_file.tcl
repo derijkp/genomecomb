@@ -304,6 +304,7 @@ array set genomecomb_indexmap {
 	.zst zsti
 	.lz4 lz4i
 	.bam bai
+	.sam bai
 	.cram crai
 	.fa fai
 	.fas fai

@@ -58,7 +58,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 			if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 		}
 		file delete $scratchbase-chr$chr.sam
-		catch {exec samtools index $scratchbase-chr$chr.sam}
+		catch {bam_index $scratchbase-chr$chr.sam}
 		file rename -force -- $temptarget $outfile-chr$chr.bam
 	}
 }

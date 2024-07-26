@@ -44,7 +44,7 @@ proc cg_realign_gatk {args} {
 	putslog "realign: making $resultfile"
 	if {![file exists $sourcefile.[indexext $sourcefile]]} {
 		putslog "realign: indexing $sourcefile"
-		exec samtools index $sourcefile
+		bam_index $sourcefile
 	}
 	putslog "realign: regionfile $regionfile"
 	if {$regionfile ne ""} {

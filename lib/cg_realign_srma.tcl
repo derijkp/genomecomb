@@ -58,7 +58,7 @@ proc cg_realign_srma {args} {
 	set gatkrefseq [gatk_refseq $refseq]
 	putslog "making $resultfile"
 	analysisinfo_write $sourcefile $resultfile realign srma realign_version [version srma]
-	if {![file exists $sourcefile.[indexext $sourcefile]]} {exec samtools index $sourcefile}
+	if {![file exists $sourcefile.[indexext $sourcefile]]} {bam_index $sourcefile}
 	if {$regionfile ne ""} {
 		set regionfile [tempbed $regionfile $refseq]
 	}

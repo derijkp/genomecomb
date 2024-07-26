@@ -1,0 +1,22 @@
+= bam_index =
+
+== Format ==
+cg bam_index ?options? bamfile ?bamfile? ...
+
+== Summary ==
+index a bam/cram/sam file.
+
+== Description ==
+Indexes the given bam/cram/sam files using samtools index, but with improvements:
+* index file will only be put in place when completed (so no corrupted index file when e.g. interrupted)
+* index file will get the same time as indexed bam file (reruns will not unnecessarily cause reanalysis of everything dependent on bam when you add indexes later)
+* supports [[joboptions]]
+
+== Arguments ==
+; bamfile: bam file to index
+
+== Options ==
+; -threads number: number of threads to use for indexing
+
+== Category ==
+Conversion
