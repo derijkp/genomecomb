@@ -1,4 +1,4 @@
-= Bam2reg =
+= Bam_sort =
 
 == Format ==
 cg bam_sort ?options? ?bamfile? ?sortedbamfile?

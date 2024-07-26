@@ -281,7 +281,7 @@ proc maketabix_job {args} {
 	upvar job_logdir job_logdir
 	set skips {}
 	set optional 1
-	cg_options bam_index args {
+	cg_options maketabix args {
 		-skip {
 			lappend skips -skip $value
 		}
