@@ -48,6 +48,7 @@ a - allways replace them with new information
 ** a number preceded by an s: distribution into regions targeting the given size, but breaks can only occur in unsequenced regions of the genome (N stretches)
 ** a number preceded by an r: distribution into regions targeting the given size, but breaks can only occur in large (>=100000 bases) repeat regions
 ** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
+** g: distribution into regions as given in the <refdir>/extra/reg_*_distrg.tsv file; if this does not exist uses g5000000
 ** a file name: the regions in the file will be used for distribution
 ; -margin number: (SV only) Allow begin and end to deviate the number of bases given (default 30)
 ; -lmargin number: (SV only) Allow begin and end to deviate the number of bases given for deletions, inversions (default 300)

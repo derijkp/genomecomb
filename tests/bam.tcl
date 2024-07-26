@@ -1261,4 +1261,25 @@ test bam_varia {longshot_replacebam} {
 	list [file link tmp/minimap2.bam] $a(mtime) [file size tmp/minimap2.bam] [file mtime tmp/minimap2-p.bam] [file size tmp/minimap2-p.bam]
 } {minimap2-p.bam 1607468400 19446 1607554800 19446}
 
+test bam_index {bam_index} {
+	test_cleantmp
+	file copy data/bwa.bam tmp/bwa.bam
+	set bam tmp/bwa.bam
+	cg bam_index $bam
+	llength [split [exec samtools view $bam chr21:42733807-42733958] \n]
+} 2
+
+test bam_index {bam_index multiple} {
+	test_cleantmp
+	file copy data/bwa.bam tmp/bwa.bam
+	file copy data/minimap2.bam tmp/minimap2.bam
+	file copy data/minimap2-p.sam tmp/minimap2-p.sam
+	cg gzip tmp/minimap2-p.sam
+	cg bam_index tmp/bwa.bam tmp/minimap2.bam tmp/minimap2-p.sam.gz
+	list \
+		[llength [split [exec samtools view tmp/bwa.bam chr21:42733807-42733958] \n]] \
+		[llength [split [exec samtools view tmp/minimap2.bam chr21:42733807-42733958] \n]] \
+		[llength [split [exec samtools view tmp/minimap2-p.sam.gz chr21:42733807-42733958] \n]]
+} {2 2 2}
+
 testsummarize

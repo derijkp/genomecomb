@@ -11,6 +11,8 @@ proc distrreg_checkvalue {value {default s50000000}} {
 		return $value
 	} elseif {[regexp {^r([0-9]+)$} $value]} {
 		return $value
+	} elseif {$value eq "g"} {
+		return $value
 	} elseif {[regexp {^g([0-9]+)$} $value]} {
 		return $value
 	} elseif {[regexp {^x([0-9]+)$} $value]} {
@@ -18,7 +20,7 @@ proc distrreg_checkvalue {value {default s50000000}} {
 	} elseif {[file exists $value]} {
 		return [file_absolute $value]
 	} else {
-		error "unknown value $value for -distrreg, must be an existing (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, a number or a number preceded by an s, r, or g"
+		error "unknown value $value for -distrreg, must be an existing (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, g, a number or a number preceded by an s, r, or g"
 	}
 }
 
@@ -193,6 +195,12 @@ proc distrreg_norep100000file {refdir} {
 }
 
 proc distrreg_nolowgene {refdir {cutoff 200000} {name {}}} {
+	if {$cutoff eq "" && $name eq "" && [file exists $refdir/extra/reg_${ref}_nolowgene.tsv.zst]} {
+		return $refdir/extra/reg_${ref}_nolowgene.tsv.zst
+	}
+	if {$cutoff eq ""} {
+		set cutoff 200000
+	}
 	if {$name eq ""} {
 		set name $cutoff
 		regsub {000$} $name k name
@@ -366,6 +374,26 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 			set result [distrreg_addunaligned $result $addunaligned]
 			return $result
 		}
+	}
+	if {$regfile eq "g"} {
+		set distrgfile [gzfile [file dir $refseq]/extra/reg_*_distrg.tsv]
+		if {[file exists $distrgfile]} {
+			set f [open $distrgfile]
+			set header [tsv_open $f]
+			set result {}
+			while {[gets $f line] != -1} {
+				foreach {chr b e} {{} {} {}} break
+				foreach {chr b e} [split $line \t] break
+				if {$b eq ""} {
+					lappend result $chr
+				} else {
+					lappend result $chr-$b-$e
+				}
+			}
+			set result [distrreg_addunaligned $result $addunaligned]
+			return $result
+		}
+		set regfile g5000000
 	}
 	if {[regexp {^g([0-9]+)$} $regfile temp regsize]} {
 		set nolowgenefile [distrreg_nolowgene [file dir $refseq]]

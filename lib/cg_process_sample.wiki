@@ -116,6 +116,7 @@ you want to affect the distribution).
 ** a number preceded by an s: distribution into regions targeting the given size, but breaks can only occur in unsequenced regions of the genome (N stretches)
 ** a number preceded by an r: distribution into regions targeting the given size, but breaks can only occur in large (>=100000 bases) repeat regions
 ** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
+** g: distribution into regions as given in the <refdir>/extra/reg_*_distrg.tsv file; if this does not exist uses g5000000
 ** a file name: the regions in the file will be used for distribution
 ; -maxfastqdistr maxfastqdistr: if there are more than **maxfastqdistr** separate input fastqs, they will be merged 
 into **maxfastqdistr** fastqs for analysis: If there are many (small) fastqs, the overhead to 

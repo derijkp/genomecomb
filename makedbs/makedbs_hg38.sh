@@ -162,6 +162,119 @@ makerefdb_job \
 # rest after this is hg38 specific code
 # -------------------------------------
 
+set target extra/reg_${ref}_distrg.tsv
+job reg_${ref}_nolowgene -deps {
+	extra/gene_${ref}_cgencode.tsv.zst
+	extra/reg_${ref}_nolowgene200k.tsv.zst
+} -targets {
+	$target
+} -vars {ref} -code {
+	proc sizes {list} {
+		set list [split [string trim $list] \n]
+		set list [list_subindex $list 0]
+		foreach region $list {
+			if {$region eq ""} continue
+			puts "$region\t[format %.2f [expr {([lindex [split $region -] end] - [lindex [split $region -] end-1])/1000000.0}]]"
+		}
+	}
+	
+	proc finerregions {nogenes problemregions cutoff} {
+		foreach problemregion $problemregions {
+			foreach {chr prevbegin finalend} [split $problemregion -] break
+			set data [split [cg select -sh /dev/null \
+				-q "region(\"$problemregion\") and \$end - \$begin > $cutoff" \
+				$nogenes] \n]
+			set regions {}
+			list_foreach {c begin end} $data {
+				set mid [expr {($end+$begin)/2}]
+				lappend regions $chr-$prevbegin-$mid
+				set prevbegin $mid
+			}
+			lappend regions $chr-$prevbegin-$finalend
+			foreach region $regions {
+				puts "$region\t[format %.2f [expr {([lindex [split $region -] end] - [lindex [split $region -] end-1])/1000000.0}]]"
+			}
+		}
+		return $regions
+	}
+	set problemregions {
+		chr11-54985028-79789552 chr19-0-25900983
+		chr21-5371491-11824755
+		chr17-24847945-52275265 chr16-0-9238611
+		chr19-25900983-56983846
+		chr1-144101052-157398672
+		chr3-43888438-61406513
+		chr9-124145453-138394717
+		chr12-47540720-58325029
+		chr15-22326183-37706401
+		chr16-66095566-75984075
+	}
+	# sizes [join [bsort $problemregions] \n]
+	set regions [distrreg_regs g5000000 [pwd] s 0]
+	# These regions are to large still from the 200k file, remove and replace with smaller
+	set regions [list_lremove $regions $problemregions]
+	lappend regions {*}{
+		chr1-144101052-147845873
+		chr1-147845873-152478129
+		chr1-152478129-157398672
+		chr3-43888438-48126125
+		chr3-48126125-55120733
+		chr3-55120733-61406513
+		chr9-124145453-126754848
+		chr9-126754848-132120962
+		chr9-132120962-135408505
+		chr9-135408505-138394717
+		chr11-54985028-57948734
+			chr11-57948734-62009676
+			chr11-62009676-67845906
+			chr11-67845906-69232857
+			chr11-69232857-71317516
+		chr11-71317516-72482417
+		chr11-72482417-76282961
+		chr11-76282961-79789552
+		chr12-47540720-51553014
+		chr12-51553014-54758975
+		chr12-54758975-58325029
+		chr15-22326183-26330477
+		chr15-26330477-31278860
+		chr15-31278860-37706401
+		chr16-0-4148279
+		chr16-4148279-9238611
+		chr16-66095566-69515678
+		chr16-69515678-75984075
+		chr17-24847945-27710211
+		chr17-27710211-34421252
+		chr17-24847945-34421252
+		chr17-34421252-36794009
+		chr17-36794009-46430772
+		chr17-46430772-52275265
+		chr19-0-5398114
+		chr19-5398114-13682392
+		chr19-13682392-20866608
+		chr19-20866608-25900983
+		chr19-25900983-30152779
+		chr19-30152779-34119393
+		chr19-34119393-40142915
+		chr19-40142915-47927180
+		chr19-47927180-56983846
+		chr21-5371491-7569202
+		chr21-7569202-9450211
+		chr21-9450211-11824755
+	}
+	# sizes {}
+	# finerregions $nogenes $problemregions 100000
+	set o [open $target.temp w]
+	puts $o [join {chromosome begin end} \t]
+	foreach region [bsort $regions] {
+		append region --
+		puts $o [join [lrange [split $region -] 0 2] \t]
+	}
+	close $o
+	file rename -force $target.temp $target
+	# check
+	cg regsubtract extra/reg_${ref}_fullgenome.tsv.zst $target | cg covered
+}
+
 #job gtf -targets {
 #	$gtffile
 #} -vars {gtfurl gtffile} -code {

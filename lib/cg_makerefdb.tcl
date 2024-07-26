@@ -558,7 +558,7 @@ proc makerefdb_job {args} {
 	} -vars {
 		dbdir
 	} -code {
-		distrreg_nolowgene $dbdir
+		distrreg_nolowgene $dbdir 200000 200k
 	}
 
 	if {$transcriptsgtf ne ""} {

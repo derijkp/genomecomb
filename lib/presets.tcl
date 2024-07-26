@@ -17,7 +17,7 @@ proc preset_scywalker {} {
 		sc_adaptorseq CTACACGACGCTCTTCCGATCT
 		sc_filters default
 		sc_celltypers {}
-		distrreg g5000000
+		distrreg g
 		iso_match novel
 		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
 	}
@@ -42,7 +42,7 @@ proc preset_scywalker_pacbio {} {
 		sc_adaptorseq CTACACGACGCTCTTCCGATCT
 		sc_filters default
 		sc_celltypers {}
-		distrreg g5000000
+		distrreg g
 		iso_match novel
 		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
 	}

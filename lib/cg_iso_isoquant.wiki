@@ -43,7 +43,7 @@ Possible options are
 ** pacbiosens: sensitive settings for PacBio CCS reads, more transcripts are reported possibly at a cost of precision (sensitive_pacbio in isoquant)
 ** pacbioall: reports almost all novel transcripts (for pacbio), loses precision in favor to recall (is also slower)
 ** assembly: optimal settings for a transcriptome assembly: input sequences are considered to be reliable and each transcript to be represented only once, so abundance is not considered
-; -distrreg: distribute regions for parallel processing (default s50000000).
+; -distrreg: distribute regions for parallel processing (default g).
 Possible options are 
 ** 0: no distribution (also empty)
 ** 1: default distribution
@@ -53,6 +53,7 @@ Possible options are
 ** a number preceded by an s: distribution into regions targeting the given size, but breaks can only occur in unsequenced regions of the genome (N stretches)
 ** a number preceded by an r: distribution into regions targeting the given size, but breaks can only occur in large (>=100000 bases) repeat regions
 ** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
+** g: distribution into regions as given in the <refdir>/extra/reg_*_distrg.tsv file; if this does not exist uses g5000000
 ** a file name: the regions in the file will be used for distribution
 ; -refseq:
 ; -reftranscripts:
