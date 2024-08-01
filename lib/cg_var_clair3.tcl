@@ -252,7 +252,9 @@ proc var_clair3_job {args} {
 			if {[file exists $runinfofile]} {
 				set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
 			} else {
-				set guppyversion ?
+				if {![regexp {_v([0-9]\.[0-9]+\.[0-9]+)} [file tail $dep] temp guppyversion]} {
+					set guppyversion ?
+				}
 			}
 			if {[string index $guppyversion 0] in "5 6"} {
 				set usemodel r941_prom_sup_g5014
