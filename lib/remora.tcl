@@ -1,4 +1,12 @@
-# install modekit
+proc validate_meth_remora {refseq preset distrreg} {
+	if {[catch {exec which modkit}]} {
+		error "command \"modkit\" not available (needed for remora analysis), make sure it is installed, e.g. using \"cg install\""
+	}
+	# could check whether remora/methylation data is in ubams, but ubams are not passed to validation (yet)
+	return
+}
+
+# install modkit
 proc install_modkit {bindir} {
 	mkdir $bindir/modkit-0.2.1-linux-x86_64
 	cd $bindir/modkit-0.2.1-linux-x86_64
