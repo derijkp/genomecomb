@@ -57,6 +57,8 @@ proc catch_exec {args} {
 			dict unset opt -level
 			set errorInfo "$msg\n    while executing\n$args"
 			return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
+		} else {
+			puts stderr $msg
 		}
 	}
 	return $msg
