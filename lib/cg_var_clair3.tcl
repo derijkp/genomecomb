@@ -176,7 +176,8 @@ proc var_clair3_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	if {$time eq ""} {set time ${threads}:00:00}
-	if {$mem eq ""} {set mem ${threads}G}
+	# if {$mem eq ""} {set mem [expr {2*$threads}]G}
+	if {$mem eq ""} {set mem 24G}
 	# if {$phasing} {lappend opts	--enable_phasing --use_longphase_for_final_output_phasing}
 	if {$preset ne ""} {
 		switch $preset {
@@ -239,7 +240,7 @@ proc var_clair3_job {args} {
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
 #putsvars deps vcffile region refseq root varfile split tech opts region index
 #error stop
-	job [job_relfile2name clair3- $varfile] {*}$skips -mem $mem -time $time -cores $threads \
+	job clair3-[file_rootname $varfile] {*}$skips -mem $mem -time $time -cores $threads \
 	-deps $deps -targets {
 		$varfile $vcffile $varallfile
 	} -vars {
@@ -302,6 +303,7 @@ proc var_clair3_job {args} {
 				distrreg_reg2bed $tempbed $regions $refseq
 				lappend opts --bed_fn=$tempbed
 			}
+			putslog "Running clair3"
 			set result [catch_exec run_clair3.sh {*}$opts \
 				--include_all_ctgs \
 				--threads $threads \
@@ -314,10 +316,13 @@ proc var_clair3_job {args} {
 			]
 			if {[regexp {[Ee]rror} $result]} {
 				error $result
+			} else {
+				putslog $result
 			}
 		}
 		set gvcf [gzfile $tempvcfdir/merge_output.gvcf]
 		if {[file exists $gvcf]} {
+			putslog "Sorting gvcf ($gvcf.s.gz)"
 			cg sortvcf -threads $threads $gvcf $gvcf.s.gz
 			file rename -force -- $gvcf.s.gz $varallfile
 		} else {
@@ -338,13 +343,14 @@ proc var_clair3_job {args} {
 					} else {
 						set seqplatformopt --pb
 					}
-					catch_exec [clair3_dir]/bin/longphase phase \
+					putslog "Running longphase ($vcffile)"
+					set result [catch_exec [clair3_dir]/bin/longphase phase \
 						-s $tempvcfdir/merge_output.vcf.gz \
 						-b $dep \
 						-r $refseq \
 						-t $threads -o $tempvcfdir/phased-merge_output \
-						--indels \
-						$seqplatformopt
+						$seqplatformopt]
+					putslog $result
 					cg sortvcf -threads $threads $tempvcfdir/phased-merge_output.vcf $vcffile.s.gz
 					file rename -force -- $vcffile.s.gz $vcffile
 				}
@@ -355,7 +361,7 @@ proc var_clair3_job {args} {
 		} else {
 			clair3_empty_vcf $vcffile
 		}
-		catch {file delete -force $tempvcfdir}
+		putslog "Making varfile ($varfile)"
 		set tempfile [filetemp $varfile]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
@@ -366,9 +372,10 @@ proc var_clair3_job {args} {
 		} $vcffile | cg select -f $fields | cg zst > $tempfile
 		file rename -force -- $tempfile $varfile
 		cg_zindex $varfile
+		catch {file delete -force $tempvcfdir}
 	}
 	# make sreg
-	job [job_relfile2name clair3-sreg- $varfile] {*}$skips \
+	job clair3-sreg-[file_rootname $varfile] {*}$skips \
 	-deps {
 		$varallfile
 	} -targets {
