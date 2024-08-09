@@ -1,7 +1,7 @@
 proc validate_var_strelka {refseq distrreg datatype} {
 	# seperate because command is not the same as cmd
-	if {[catch {exec which configureStrelkaGermlineWorkflow.py}]} {
-		error "command \"configureStrelkaGermlineWorkflow.py\" not available, make sure strelka is installed, e.g. using \"cg install strelka\""
+	if {![file exists [findstrelka]]} {
+		error "could not find strelka, make sure strelka is installed, e.g. using \"cg install strelka\""
 	}
 }
 
