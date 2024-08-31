@@ -78,6 +78,7 @@ proc cg_bam2cram {args} {
 
 proc cg_bams2crams {args} {
 	set args [job_init {*}$args]
+	job_logfile [pwd]/bams2crams [pwd] [list cg bams2crams $args]
 	set refseq {}
 	set threads 1
 	set handlebam old
