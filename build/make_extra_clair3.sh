@@ -143,6 +143,34 @@ mkdir /build/clair3-$clair3version-$arch
 cd /build/clair3-$clair3version-$arch
 tar xvzf ../clair3.tar.gz
 
+## (extra) ONT models
+# git clone https://github.com/nanoporetech/rerio
+cd /build/clair3-$clair3version-$arch/models
+for model in \
+	r1041_e82_400bps_sup_v500.tar.gz \
+	r1041_e82_400bps_hac_v500.tar.gz \
+	r1041_e82_400bps_sup_v410.tar.gz \
+	r1041_e82_400bps_hac_v410.tar.gz \
+	r1041_e82_400bps_sup_v430.tar.gz \
+	r1041_e82_400bps_hac_v430.tar.gz \
+	r1041_e82_400bps_sup_v420.tar.gz \
+	r1041_e82_400bps_hac_v420.tar.gz \
+	r1041_e82_260bps_sup_v400.tar.gz \
+	r1041_e82_260bps_hac_v400.tar.gz \
+	r1041_e82_260bps_sup_g632.tar.gz \
+	r1041_e82_400bps_hac_g632.tar.gz \
+	r1041_e82_400bps_sup_g615.tar.gz \
+	r1041_e82_400bps_hac_g615.tar.gz \
+	r104_e81_sup_g5015.tar.gz \
+	r104_e81_hac_g5015.tar.gz \
+do
+	wget https://cdn.oxfordnanoportal.com/software/analysis/models/clair3/$model
+	tar xvzf $model
+	rm $model
+done
+
+cd /build/clair3-$clair3version-$arch
+
 # should be solved in v1.0.0
 ## patch (for error: `np.int` was a deprecated)
 #catch {file copy bin/preprocess/CreateTensorPileupFromCffi.py bin/preprocess/CreateTensorPileupFromCffi.py.ori}
