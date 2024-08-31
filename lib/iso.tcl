@@ -90,6 +90,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 proc iso_joint_job {args} {
 	upvar job_logdir job_logdir
 	set iso_joint {}
+	set iso_joint_min 2
 	set iso_match {}
 	set dbdir {}
 	set threads 2
@@ -102,6 +103,9 @@ proc iso_joint_job {args} {
 		}
 		-iso_joint {
 			set iso_joint $value
+		}
+		-iso_joint_min {
+			set iso_joint_min $value
 		}
 		-iso_match {
 			set iso_match $value
@@ -133,11 +137,12 @@ proc iso_joint_job {args} {
 		} -targets {
 			$ref
 		} -vars {
-			source ref reftranscripts
+			source ref reftranscripts iso_joint_min
 		} -code {
-			tsv_makeregular $source $ref.temp {}
+			cg select -overwrite 1 -q "acount(\$counts_weighed > 2) > $iso_joint_min" $source $ref.temp
+			tsv_makeregular $ref.temp $ref.temp1 {}
 			tsv_makeregular $reftranscripts $ref.temp2 {}
-			cg cat -m 1 $ref.temp2 $ref.temp | cg select -s - > $ref.temp3
+			cg cat -m 1 $ref.temp2 $ref.temp1 | cg select -s - > $ref.temp3
 			set o [open $ref.temp4 w]
 			set f [open $ref.temp3]
 			set header [tsv_open $f comment]
@@ -151,8 +156,10 @@ proc iso_joint_job {args} {
 				puts $o $line
 				set a($transcript) 1
 			}
+			close $o
+			close $f
 			file rename -force $ref.temp4 $ref
-			file delete -force $ref.temp $ref.temp2 $ref.temp3
+			file delete -force $ref.temp $ref.temp $ref.temp2 $ref.temp3
 		}
 		foreach bam [jobglob $projectdir/samples/*/*.bam $projectdir/samples/*/*.cram] {
 			set preset {}

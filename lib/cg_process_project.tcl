@@ -22,6 +22,7 @@ proc process_project_job {args} {
 	set varcallers {}
 	set isocallers {}
 	set iso_joint {}
+	set iso_joint_min 2
 	set iso_match {}
 	set counters {}
 	set svcallers {}
@@ -171,6 +172,9 @@ proc process_project_job {args} {
 		}
 		-iso_joint {
 			set iso_joint $value
+		}
+		-iso_joint_min {
+			set iso_joint_min $value
 		}
 		-reftranscripts {
 			set reftranscripts [code_empty $value]
@@ -485,6 +489,7 @@ proc process_project_job {args} {
 		iso_joint_job \
 			-reftranscripts $reftranscripts \
 			-iso_joint $iso_joint \
+			-iso_joint_min $iso_joint_min \
 			-iso_match $iso_match \
 			-threads $threads \
 			-distrreg $distrreg \
