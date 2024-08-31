@@ -39,6 +39,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		} -code {
 			set isoformcounts compar/pb_isoform_counts-$root.tsv
 			cg multitranscript -match $iso_match $isoformcounts.temp.zst {*}$pbisoformfiles
+			file rename -force $isoformcounts.temp.analysisinfo $isoformcounts.analysisinfo
 			file rename -force $isoformcounts.temp.zst $isoformcounts.zst
 		}
 		job pb_compar-pb_isoform_counts_colinfo-$root \
@@ -64,6 +65,7 @@ proc pb_combine_job {projectdir sc_celltyper {iso_match {}}} {
 		} -code {
 			set genecounts compar/pb_gene_counts-$root.tsv
 			cg_multigene -match $iso_match $genecounts.temp.zst {*}$pbgenefiles
+			file rename -force $genecounts.temp.analysisinfo $genecounts.analysisinfo
 			file rename -force $genecounts.temp.zst $genecounts.zst
 		}
 		job pb_compar-pb_gene_counts_colinfo-$root \
