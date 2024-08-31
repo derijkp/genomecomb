@@ -4,10 +4,16 @@ proc cg_error_report args {
 	cg_options error_report args {
 		-format {set format $value}
 	} logfile 0 1
+	if {[file isdir $logfile]} {
+		set dir [file_absolute $logfile]
+		set logfile ""
+	} else {
+		set dir [pwd]
+	}
 	if {$logfile eq ""} {
-		set logfiles [bsort [glob -nocomplain process_*.*.finished process_*.*.running process_*.*.error process_*.*.submitting]]
+		set logfiles [bsort [glob -nocomplain $dir/process_*.*.finished $dir/process_*.*.running $dir/process_*.*.error $dir/process_*.*.submitting]]
 		if {![llength $logfiles]} {
-			set logfiles [bsort [glob -nocomplain *.*.finished *.*.running *.*.error *.*.submitting]]
+			set logfiles [bsort [glob -nocomplain $dir/*.*.finished $dir/*.*.running $dir/*.*.error $dir/*.*.submitting]]
 		}
 		set logfile [lindex $logfiles end]
 	}
