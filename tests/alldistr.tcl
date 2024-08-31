@@ -6,7 +6,7 @@ exec tclsh "$0" "$@"
 set version 0.110.0
 
 set keeppath $::env(PATH)
-set testlist [list /home/peter/build/genomecomb-$version-Linux-i686 /home/peter/build/genomecomb-$version-Linux-x86_64]
+set testlist [list $::env(HOME)/build/genomecomb-$version-Linux-i686 $::env(HOME)/build/genomecomb-$version-Linux-x86_64]
 set cgversion [lindex $testlist 0]
 
 foreach cgversion $testlist {

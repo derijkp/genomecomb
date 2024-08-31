@@ -38,7 +38,7 @@ proc ucsc2annotvar {file outfile} {
 
 if 0 {
 
-lappend auto_path /home/peter/dev/comletegenomics/lib
+lappend auto_path $::env(HOME)/dev/comletegenomics/lib
 package require Extral
 set file /complgen/GS00028-DNA-C01/GS00028-ucsc2006-vars.tsv
 set outfile /complgen/GS00028-DNA-C01/annot-GS00028-ucsc2006-vars.tsv
