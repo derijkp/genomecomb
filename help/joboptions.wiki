@@ -71,6 +71,7 @@ but not by default). If no pe local is defined, multiple slots are not requested
 and nodes may be overloaded. if the local pe is defined, but not in a way that allows
 for this, jobs may not run. The following settings (create with "qconf -ap local"
 or modify with "qconf -mp local") work on our cluster
+{{{
 pe_name            local
 slots              9999999
 user_lists         NONE
@@ -82,6 +83,7 @@ control_slaves     TRUE
 job_is_first_task  TRUE
 urgency_slots      min
 accounting_summary FALSE
+}}}
 
 === slurm distribution ===
 Using "**-d slurm**" the submitting command will submit all jobs to slurm
@@ -92,6 +94,7 @@ checking the logfile.
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)
+; -dsubmit value: alternate distribute method, see in description
 ; -dpriority value: run jobs with the given priority (default is 0; for sge negative numbers decrease priority; for slurm this is given through the --nice option, which gives greater priority to negative values)
 ; -dqueue value: Use this option if you want to run on another queue than the default all.q (for slurm this will specify the "partition(s)" / -p option to sbatch)
 ; -dmaxmem value: limit total amount of (reserved) memory in local distribute to value: do not start new jobs until reserved memory (total of running jobs and new job) stays below this value (unless it would be the only job)

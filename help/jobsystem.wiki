@@ -1,7 +1,7 @@
 = Job system =
 
 The genomecomb job system allows you to create workflows by writing and
-debugging (easy) sequential code, which you can (optionally) make
+debugging (easy) procedural/sequential code, which you can (optionally) make
 distributed by indicating subtasks (jobs) and their dependencies in the
 code using the "job" commmand.
 

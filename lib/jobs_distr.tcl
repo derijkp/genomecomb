@@ -19,11 +19,28 @@ proc job_running_distr {jobnum} {
 	global cgjob cgjob_distr_running cgjob_distr_queue
 	if {![info exists cgjob_distr_running($jobnum)]} {return 0}
 	set job [lindex $cgjob_distr_running($jobnum) 1]
-	if {![catch {file_read [job.file pid $job]} pid]} {
-		if {![catch {exec kill -0 $pid} msg]} {
+	if {$cgjob(dsubmit) eq ""} {
+		if {![catch {file_read [job.file pid $job]} pid]} {
+			if {![catch {exec kill -0 $pid} msg]} {
+				return 1
+			}
+			file delete [job.file pid $job]
+		}
+	} elseif {$cgjob(dsubmit) eq "sge"} {
+		set jnum [lindex $cgjob_distr_running($jobnum) 0]
+		if {[job_running_sge $jnum]} {
 			return 1
 		}
-		file delete [job.file pid $job]
+	} elseif {$cgjob(dsubmit) eq "slurm"} {
+		set jnum [lindex $cgjob_distr_running($jobnum) 0]
+		if {[job_running_slurm $jnum]} {
+			return 1
+		}
+	} else {
+		set jnum [lindex $cgjob_distr_running($jobnum) 0]
+		if {[exec $cgjob(dsubmit) running $jnum]} {
+			return 1
+		}
 	}
 	if {!$cgjob(silent)} {puts "   -=- [timestamp] ending $job ($jobnum)"}
 	unset -nocomplain cgjob_distr_running($jobnum)
@@ -96,28 +113,40 @@ proc job_process_distr_jobmanager {} {
 	foreach line $cgjob_distr(queue) {
 		incr pos
 		foreach {jobnum deps name job runfile options mem} $line break
+		# foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		set do 1
 		foreach dep $deps {
 			if {[info exists cgjob_distr_queue($dep)]} {set do 0 ; break}
 		}
 		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
-		set waitingformem 0
-		set waitingmaxmem 0
-		if {$cgjob(dmaxmem) ne ""} {
-			set testmem [expr {$currentmem + $mem}]
-			if {$testmem > $cgjob(dmaxmem)} {
-				# if {!$cgjob(silent)} {puts "   -=- not enough memory free to start $job: needs [display_memory $mem]"}
-				incr waitingformem
-				if {$mem > $waitingmaxmem} {set waitingmaxmem $mem}
-				continue
+		if {$cgjob(dsubmit) eq ""} {
+			set waitingformem 0
+			set waitingmaxmem 0
+			if {$cgjob(dmaxmem) ne ""} {
+				set testmem [expr {$currentmem + $mem}]
+				if {$testmem > $cgjob(dmaxmem)} {
+					# if {!$cgjob(silent)} {puts "   -=- not enough memory free to start $job: needs [display_memory $mem]"}
+					incr waitingformem
+					if {$mem > $waitingmaxmem} {set waitingmaxmem $mem}
+					continue
+				}
+				set currentmem $testmem
 			}
-			set currentmem $testmem
+			if {!$cgjob(silent)} {puts "   -=- [timestamp] starting $job"}
+			set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
+			file_write [job.file pid $job] $cgjob_pid
+			set cgjob_distr_running($jobnum) [list $cgjob_pid $job $mem]
+		} elseif {$cgjob(dsubmit) eq "sge"} {
+			set jnum [job_process_submit_sge $job $cmd -mem $mem]
+			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
+		} elseif {$cgjob(dsubmit) eq "slurm"} {
+			set jnum [job_process_submit_slurm $job $cmd -mem $mem]
+			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
+		} else {
+			set jnum [exec $cgjob(dsubmit) submit -mem $mem -o [job.file out $job] -e [job.file err $job] $runfile]
+			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
 		}
-		if {!$cgjob(silent)} {puts "   -=- [timestamp] starting $job"}
-		set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
-		file_write [job.file pid $job] $cgjob_pid
-		set cgjob_distr_running($jobnum) [list $cgjob_pid $job $mem]
 		incr torun -1
 		lappend added $pos
 		if {$torun == 0} break
@@ -210,6 +239,9 @@ proc job_process_submit_distr {job cmd args} {
 	set runcmd {}
 	append runcmd {#!/bin/sh}
 	append runcmd \n
+	append runcmd {#$ -S /bin/bash} \n
+	append runcmd {#$ -V} \n
+	append runcmd {#$ -cwd} \n
 	append runcmd $cmd
 	set runfile [job.file run $job]
 	file_write $runfile $runcmd

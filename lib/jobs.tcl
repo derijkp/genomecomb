@@ -92,6 +92,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(dmaxmem)]} {
 		set cgjob(dmaxmem) {}
 	}
+	if {![info exists cgjob(dsubmit)]} {
+		set cgjob(dsubmit) {}
+	}
 	if {![info exists cgjob(dtime)]} {
 		set cgjob(dtime) {}
 	}
@@ -136,6 +139,10 @@ proc job_args {jobargs} {
 			}
 			-dmaxmem {
 				set cgjob(dmaxmem) [entry_memory [lindex $jobargs $pos]]
+				incr pos
+			}
+			-dsubmit {
+				set cgjob(dsubmit) [entry_memory [lindex $jobargs $pos]]
 				incr pos
 			}
 			-dtime {
@@ -1508,6 +1515,7 @@ proc job_init {args} {
 	set cgjob(cleanupifemptyfiles) {}
 	set cgjob(dmem) {}
 	set cgjob(dmaxmem) {}
+	set cgjob(dsubmit) {}
 	set cgjob(dtime) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	set cgjob(default_job_logdir) 1
