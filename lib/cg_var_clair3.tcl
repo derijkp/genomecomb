@@ -317,7 +317,7 @@ proc var_clair3_job {args} {
 			if {[regexp {[Ee]rror} $result]} {
 				error $result
 			} else {
-				putslog $result
+				puts stderr $result
 			}
 		}
 		set gvcf [gzfile $tempvcfdir/merge_output.gvcf]
