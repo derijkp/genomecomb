@@ -41,6 +41,10 @@ proc bam_index_job {args} {
 	} {bam} 1 ...
 	set bams [list $bam {*}$args]
 	foreach bam $bams {
+		set ext [file extension $bam]
+		if {$ext in ".bam .cram" || ($ext eq ".gz" && [file extension [file root $dep]] eq ".sam")} {
+			# can only make index for bam, cram, or gz compressed sam
+		} else continue
 		set bamindex $bam.[indexext [gzroot $bam]]
 		if {[file exists $bamindex] && [file size $bamindex] == 0} {
 			file rename $bamindex $bamindex.old
