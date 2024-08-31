@@ -1577,7 +1577,7 @@ proc iso_isoquant_job {args} {
 				$regdir/isoform_counts-${root}.tsv
 			continue
 		}
-		job isoquant-${root}-$region -mem 15G -cores $threads -skip $mainskips -skip $regionskips -deps {
+		job isoquant-${root}-$region -mem 6G -cores $threads -skip $mainskips -skip $regionskips -deps {
 			$bam $bamindex $refseq $depreftranscripts
 		} -targets {
 			$regdir/00_regali
@@ -1646,7 +1646,7 @@ proc iso_isoquant_job {args} {
 			file delete -force $regdir
 			file rename $regdir.temp $regdir
 		}
-		job isquant_convert-${root}-$region -cores 1 -mem 10g -skip $mainskips -deps {
+		job isquant_convert-${root}-$region -cores 1 -mem 5g -skip $mainskips -deps {
 			$regdir/00_regali $refseq $depreftranscripts
 		} -targets {
 			$regdir/isoform_counts-${root}.tsv

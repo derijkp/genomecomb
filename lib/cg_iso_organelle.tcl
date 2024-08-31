@@ -68,7 +68,7 @@ proc iso_organelle_job {args} {
 	set resultfile [file_absolute $resultfile]
 	set regdir [file dir $resultfile]
 	mkdir $regdir
-	job iso_organelle-${root}-$region -mem 15G {*}$skips -deps {
+	job iso_organelle-${root}-$region -mem 3G {*}$skips -deps {
 		$bam $bamindex $refseq $reftranscripts
 	} -targets {
 		$regdir/isoform_counts-${root}.tsv
