@@ -143,10 +143,9 @@ proc validate_sc_celltyper {cmd cellmarkerfile tissue} {
 	if {[catch {exec which dirR}]} {
 		error "command \"dirR\" not available (which should have package \"$cmd\"), make sure it is installed, e.g. using \"cg install dirR\""
 	}
-	if {$cellmarkerfile eq ""}  {
-		ref_gtftranscripts $refseq
-	} elseif {$cellmarkerfile in {none -}} {
+	if {$cellmarkerfile in {"" none -}} {
 		# ignore
+		return
 	} elseif {![file exists $cellmarkerfile]} {
 		error "cellmarkerfile does not exist ($cellmarkerfile)"
 	}
