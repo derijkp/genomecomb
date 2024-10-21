@@ -30,8 +30,19 @@ proc longshot_replacebam {finalbam oribam} {
 	        mklink $finalbam.[indexext $finalbam] $oribam.[indexext $oribam]
 	        exec touch -h -d [clock format $btime] $oribam.[indexext $oribam]
 	}
+	unset btime
+	catch {
+		file lstat $oribam.analysisinfo a
+		set btime $a(mtime)
+	}
+	catch {file rename -force $oribam.analysisinfo $oribam.analysisinfo.old}
+	if {[info exists btime]} {
+	        mklink $finalbam.analysisinfo $oribam.analysisinfo
+	        exec touch -h -d [clock format $btime] $oribam.analysisinfo
+	}
 	file delete $oribam.old
 	file delete $oribam.[indexext $oribam].old
+	file delete $oribam.analysisinfo.old
 }
 
 proc longshot_empty_vcf {vcffile} {
