@@ -755,6 +755,7 @@ proc process_sample_job {args} {
 			set ::specialopt($key) $value
 		}
 	} {} 1 2
+
 	if {[llength $args] == 1} {
 		foreach {sampledir} $args break
 	} elseif {[llength $args] == 2} {
@@ -983,7 +984,7 @@ proc process_sample_job {args} {
 			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
 			return {}
 		}
-		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
+		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
 		# put bams in skips (don't actually run sc_barcodes if already exis)
 		set skips {}
 		set skipsresult {}

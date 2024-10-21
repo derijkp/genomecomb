@@ -220,6 +220,18 @@ proc gzclose {f} {
 	unset -nocomplain ::genomecomb_gzopen_info($f)
 }
 
+proc gzclosesamtools {f} {
+	if {[catch {gzclose $f} msg]} {
+		regsub {^error closing file [^:]+: } $msg {} temp
+		regsub -all {\[M::[^\n]+} $temp {} temp
+		set temp [list_remove [split $temp \n] {}]
+		if {[llength $temp]} {
+			error $msg
+		}
+		unset -nocomplain ::genomecomb_gzopen_info($f)
+	}
+}
+
 proc gzcloseout {f} {
 	if {$f in {stdin stdout stderr}} return
 	if {[catch {close $f} error]} {

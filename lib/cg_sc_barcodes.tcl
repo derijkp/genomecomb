@@ -16,7 +16,16 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
 	set sam [tempfile].sam
 	# set sam $resultfile.sam
-	catch_exec minimap2 -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $fastq > $sam 2>@ stderr
+	if {[file ext $fastq] in ".bam .cram .sam"} {
+		set usefastq [tempfile].fastq.gz
+		catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq | gzip > $usefastq
+		set ubams 1
+	} else {
+		set usefastq $fastq
+		set ubams 0
+	}
+	catch_exec minimap2 -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq > $sam 2>@ stderr
+	if {$ubams} {file delete $usefastq}
 	# cg sam2tsv $sam | cg select -g chromosome
 	# exec ~/dev/genomecomb/bin/sc_getbarcodes adapter $begin 16 10 < $sam > temp
 	catch {close $f} ; catch {close $o}
@@ -173,7 +182,7 @@ proc sc_barcodes_job args {
 	}
 	job_logfile $resultdir/sc_barcodes_[file tail $resultdir] $resultdir $cmdline \
 		{*}[versions minimap2]
-	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
+	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
 	set summaries {}
 	shadow_mkdir $resultdir/barcodes
 	job_cleanup_add_shadow $resultdir/barcodes
@@ -540,9 +549,15 @@ proc sc_barcodes_job args {
 			close $f
 			#
 			# process fastq
-			catch {close $ff} ; catch {close $fb}
-			catch {close $fqo} ; catch {close $fio}
-			set ff [gzopen $fastq]
+			catch {gzclose $ff} ; catch {gzclose $fb}
+			catch {gzclose $fqo} ; catch {gzclose $fio}
+			if {[file ext $fastq] in ".bam .cram .sam"} {
+				set ff [open [list | samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq]]
+				set ubams 1
+			} else {
+				set ff [gzopen $fastq]
+				set ubams 0
+			}
 			set fb [gzopen $dep2]
 			set header [tsv_open $fb]
 			if {$header ne {id barcode umi start strand polyA}} {error "wrong header for file $dep2"}
@@ -584,8 +599,13 @@ proc sc_barcodes_job args {
 				puts $fio [join [list $id $cellbarcode $umi $barcode $start $strand $polyA] \t]
 			}
 
-			close $ff ; close $fb
-			close $fqo ; close $fio
+			if {$ubams} {
+				gzclosesamtools $ff
+			} else {
+				gzclose $ff
+			}
+			gzclose $fb
+			gzclose $fqo ; gzclose $fio
 		}
 	}
 }

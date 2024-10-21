@@ -587,7 +587,10 @@ proc process_reports_job {args} {
 			cg predictgender -dbdir $dbdir $resultbamfile $target
 		}
 	}
-	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	set fastqfiles [bsort [jobglob \
+		$sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq \
+		$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/uban/*.sam \
+	]]
 	if {$paired} {
 		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	} else {
@@ -645,11 +648,22 @@ proc process_reports_job {args} {
 					file_write $target2 ""
 					file_write $target3 ""
 				} else {
-					set gzcat [gzcat [lindex $deps 0]]
-					if {[llength $deps] >= 1000} {
+					if {[llength $deps] >= 1000 || [file extension [gzroot [lindex $deps 0]]] in ".bam .cram .sam"} {
 						set o [open [list | fastq-stats -x $target3 > $target2] w]
 						foreach file $deps {
-							exec {*}$gzcat $file >@ $o
+							if {[file extension [gzroot $file]] in ".bam .cram .sam"} {
+								if {[catch {
+									exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file >@ $o
+								} msg]} {
+									regsub -all {\[M::[^\n]+} $msg {} temp
+									set temp [list_remove [split $temp \n] {}]
+									if {[llength $temp]} {
+										error $msg
+									}
+								}
+							} else {
+								exec {*}[gzcat $file] $file >@ $o
+							}
 						}
 						close $o
 					} else {
@@ -687,7 +701,7 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports singlecell]} {
 		set deps [list]
-		lappend deps [jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv]
+		lappend deps ([jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv])
 		lappend deps [jobgzfile $sampledir/mergedbarcodes.tsv.zst]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_raw-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_filtered-*$sample.tsv sc_gene_counts_filtered-*.tsv]
