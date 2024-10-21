@@ -98,7 +98,30 @@ proc sc_demultiplex_job {sampledir dmfile refseq destVar} {
 				}
 			}
 		}
-
+	}
+	foreach dmsample $dmsamples {
+		set destsample [file tail $dest($dmsample)]
+		set destfile $dest($dmsample)/$pre-$destsample$fullext
+		lappend targets $destfile
+		set sampledir $dest($dmsample)
+		set isocallers {}
+		foreach scgenefile [bsort [jobglob $sampledir/sc_gene_counts_filtered-*.tsv]] {
+			lappend isocallers [lindex [split [file tail $scgenefile] -] 1]
+		}
+		set isocallers [list_remdup $isocallers]
+		set sc_celltypers {}
+		foreach groupfile [bsort [jobglob $sampledir/sc_group-*.tsv]] {
+			lappend sc_celltypers [lindex [split [file tail $groupfile] -] 1]
+		}
+		set sc_celltypers [list_remdup $sc_celltypers]
+		foreach isocaller $isocallers {
+			foreach sc_celltyper $sc_celltypers {
+				set scgenefile [gzfile $sampledir/sc_gene_counts_filtered-$isocaller-*.tsv]
+				set scisoformfile [gzfile $sampledir/sc_isoform_counts_filtered-$isocaller-*.tsv]
+				set groupfile [gzfile $sampledir/sc_group-$sc_celltyper-$isocaller-*.tsv]
+				sc_pseudobulk_job $scgenefile $scisoformfile $groupfile
+			}
+		}
 	}
 }
 
