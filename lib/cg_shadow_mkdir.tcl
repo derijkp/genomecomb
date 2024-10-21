@@ -47,9 +47,10 @@ proc shadow_delete {link} {
 		return
 	}
 	if {![file exists $shadow/shadow_source]} {
-		error "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist)"
+		puts stderr "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist), only removing link, not target"
+	} else {
+		rm -force $shadow
 	}
-	rm -force $shadow
 	rm $link
 }
 
