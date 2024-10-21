@@ -42,6 +42,9 @@ proc cg_bam2cram {args} {
 			}
 			mklink $link $cramfile
 			mklink $link.crai $cramfile.crai
+			if {[file exists $link.analysisinfo]} {
+				mklink $link.analysisinfo $cramfile.analysisinfo
+			}
 			if {![catch {file lstat $bamfile a}]} {
 				set mtime $a(mtime)
 				exec touch -h -d [clock format $mtime] $cramfile
