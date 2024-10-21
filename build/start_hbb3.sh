@@ -86,6 +86,135 @@ if [ ! -f /hbb_exe/activate ]; then
 	exit
 fi
 
+# centos 7 is EOL, moved to vault: adapt the repos
+
+if ! cat /etc/yum.repos.d/CentOS-Base.repo | grep --quiet vault; then
+	echo "change repos to vault"
+
+echo '# /etc/yum.repos.d/CentOS-Base.repo
+[base]
+name=CentOS-$releasever - Base
+baseurl=http://vault.centos.org/7.9.2009/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+[updates]
+name=CentOS-$releasever - Updates
+baseurl=http://vault.centos.org/7.9.2009/updates/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+[extras]
+name=CentOS-$releasever - Extras
+baseurl=http://vault.centos.org/7.9.2009/extras/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+[centosplus]
+name=CentOS-$releasever - Plus
+baseurl=http://vault.centos.org/7.9.2009/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+[contrib]
+name=CentOS-$releasever - Contrib
+baseurl=http://vault.centos.org/7.9.2009/contrib/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+' > /etc/yum.repos.d/CentOS-Base.repo
+
+echo '[epel]
+name=Extra Packages for Enterprise Linux 7 - $basearch
+#baseurl=http://download.fedoraproject.org/pub/epel/7/$basearch
+baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/x86_64
+#mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch
+failovermethod=priority
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+[epel-debuginfo]
+name=Extra Packages for Enterprise Linux 7 - $basearch - Debug
+#baseurl=http://download.fedoraproject.org/pub/epel/7/$basearch/debug
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-debug-7&arch=$basearch
+failovermethod=priority
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+gpgcheck=1
+[epel-source]
+name=Extra Packages for Enterprise Linux 7 - $basearch - Source
+#baseurl=http://download.fedoraproject.org/pub/epel/7/SRPMS
+baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/SRPMS
+#mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-source-7&arch=$basearch
+failovermethod=priority
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+gpgcheck=1
+' > /etc/yum.repos.d/epel.repo
+
+echo '# CentOS-SCLo-sclo.repo
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/SCLo for more
+# information
+[centos-sclo-sclo]
+name=CentOS-7 - SCLo sclo
+baseurl=http://vault.epel.cloud/centos/7/sclo/$basearch/sclo/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+[centos-sclo-sclo-testing]
+name=CentOS-7 - SCLo sclo Testing
+baseurl=http://buildlogs.centos.org/centos/7/sclo/$basearch/sclo/
+gpgcheck=0
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+[centos-sclo-sclo-source]
+name=CentOS-7 - SCLo sclo Sources
+baseurl=http://vault.epel.cloud/centos/7/sclo/Source/sclo/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+[centos-sclo-sclo-debuginfo]
+name=CentOS-7 - SCLo sclo Debuginfo
+baseurl=http://debuginfo.centos.org/centos/7/sclo/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+' > /etc/yum.repos.d/CentOS-SCLo-scl.repo
+
+echo '# CentOS-SCLo-rh.repo
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/SCLo for more
+# information
+
+[centos-sclo-rh]
+name=CentOS-7 - SCLo rh
+baseurl=http://vault.epel.cloud/centos/7/sclo/$basearch/rh/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-testing]
+name=CentOS-7 - SCLo rh Testing
+baseurl=http://buildlogs.centos.org/centos/7/sclo/$basearch/rh/
+gpgcheck=0
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-source]
+name=CentOS-7 - SCLo rh Sources
+baseurl=http://vault.epel.cloud/centos/7/sclo/Source/rh/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+
+[centos-sclo-rh-debuginfo]
+name=CentOS-7 - SCLo rh Debuginfo
+baseurl=http://debuginfo.centos.org/centos/7/sclo/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
+' > /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo
+
+fi
+
 if [ "$1" = "stage2" ] ; then
 	# in stage 2 we will create the user build with sudo access
 	# then restart the script (skipping to stage 3)
