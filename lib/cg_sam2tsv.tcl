@@ -70,6 +70,7 @@ proc cg_sam2tsv {args} {
 		rl {i:Length of query regions harboring repetitive seeds}
 	}
 	set fields {}
+	set opt {}
 	cg_options sam2tsv args {
 		-informat {set informat $value}
 		-f - -fields {
@@ -88,17 +89,22 @@ proc cg_sam2tsv {args} {
 		-a - -addfields {
 			lappend fields $value
 		}
+		-refseq {
+			if {$value ne ""} {
+				lappend opt -T [refseq $value]
+			}
+		}
 	} {samfile outfile} 0
 	if {[file extension $samfile] in ".bam .cram"} {
 		set informat bam
 	} elseif {[file extension $samfile] eq ".sam"} {
 		set informat sam
 	}
-	if {$informat eq "bam"} {
+	if {$informat in "bam cram"} {
 		if {$samfile eq "-"} {
-			set pipe [list samtools view --no-PG -h \| sam2tsv {*}$fields <@ stdin]
+			set pipe [list samtools view {*}$opt --no-PG -h \| sam2tsv {*}$fields <@ stdin]
 		} else {
-			set pipe [list samtools view --no-PG -h $samfile \| sam2tsv {*}$fields]
+			set pipe [list samtools view {*}$opt --no-PG -h $samfile \| sam2tsv {*}$fields]
 		}
 	} elseif {$samfile eq "-"} {
 		set pipe [list sam2tsv {*}$fields <@ stdin]
