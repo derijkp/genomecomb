@@ -43,14 +43,18 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}} {ignorefields {}}} {
+proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}} {ignorefields {}} {refseq {}}} {
 	global errors
 	set tempdir [tempdir]
 	if {[file extension [gzroot $file1]] in ".bam .sam .cram"}  {
 		set tempdir [tempfile]
 		file delete $tempdir ; file mkdir $tempdir
 		set temp $tempdir/[file tail $file1].tsv
-		cg sam2tsv $file1 $temp
+		if {$refseq eq ""} {
+			cg sam2tsv $file1 $temp
+		} else {
+			cg sam2tsv -refseq [refseq $refseq] $file1 $temp
+		}
 		set usefile1 $temp
 	} else {
 		set usefile1 $file1
@@ -59,7 +63,11 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		set tempdir [tempfile]
 		file delete $tempdir ; file mkdir $tempdir
 		set temp $tempdir/[file tail $file2].tsv
-		cg sam2tsv $file2 $temp
+		if {$refseq eq ""} {
+			cg sam2tsv $file2 $temp
+		} else {
+			cg sam2tsv -refseq [refseq $refseq] $file2 $temp
+		}
 		set usefile2 $temp
 	} else {
 		set usefile2 $file2
@@ -251,6 +259,7 @@ proc cg_tsvdiff args {
 	set lines {}
 	set sort {}
 	set ignorefields {}
+	set refseq {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
@@ -296,6 +305,9 @@ proc cg_tsvdiff args {
 				incr pos -1
 			}
 		}
+		-refseq {
+			set refseq ""
+		}
 	} {dir1 dir2}
 	if {$type eq "xl"} {
 		if {![info exists side-by-side]} {set side-by-side 1}
@@ -313,7 +325,7 @@ proc cg_tsvdiff args {
 	if {![catch {exec diff -r {*}$diffopts {*}$excludeopts --brief $dir1 $dir2} diff]} {exit 0}
 	if {![file isdir $dir1] && ![file isdir $dir2]} {
 		if {!$brief} {
-			tsvdiff_file $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
+			tsvdiff_file $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields $refseq
 		} else {
 			tsvdiff_file_brief $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 		}
@@ -338,7 +350,7 @@ proc cg_tsvdiff args {
 				}
 				if {[file exists $file2]} {
 					if {!$brief} {
-						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
+						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields $refseq
 					} else {
 						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 					}
@@ -366,7 +378,7 @@ proc cg_tsvdiff args {
 				if {$brief} {
 					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
 				} else {
-					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields
+					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort $ignorefields $refseq
 				}
 			} else {
 				if {$brief} {

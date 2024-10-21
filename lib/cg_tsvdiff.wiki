@@ -37,6 +37,7 @@ xl is similar to l, but adds extra data describing the variant or region before 
 ; -d progname (-diffprog): show diff using **progname** (conversion from e.g. xl type is done first)
 ; -w number (-width): number of characters the display is wide (for side by side)
 ; -lines number: only compare the first **number** of lines
+; -refseq refseq: genomic reference sequence (needed for some cram files)
 
 == Category ==
 Dev
