@@ -6,9 +6,12 @@ proc cg_bam2cram {args} {
 	set threads 1
 	set handlebam {}
 	set links ignore
+	set opt {}
 	cg_options cg_bam2cram args {
 		-refseq {
-			set refseq [refseq $value]
+			if {$value ne ""} {
+				lappend opt -T [refseq $value]
+			}
 		}
 		-handlebam {
 			if {$value ni "rm old keep"} {
@@ -66,7 +69,7 @@ proc cg_bam2cram {args} {
 			error "$bam is a symlink"
 		}
 	}
-	exec samtools view --threads $threads --no-PG -h -C -T $refseq --no-PG $bamfile > $cramfile.temp.cram
+	exec samtools view --threads $threads --no-PG -h -C {*}$opt --no-PG $bamfile > $cramfile.temp.cram
 	exec samtools index $cramfile.temp.cram
 	file rename -force $cramfile.temp.cram.crai $cramfile.crai
 	file rename -force $cramfile.temp.cram $cramfile
