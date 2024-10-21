@@ -220,10 +220,13 @@ proc var_job {args} {
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
+			if {[file extension $resultfile] in ".bam .cram"} {
+				set resultfile [file root $resultfile][file extension $bamfile]
+			}
 			job var_combineresults-[file tail $resultfile] {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
-				list regionfile method bamfile
+				list regionfile method bamfile refseq
 			} -code {
 				set analysisinfo [analysisinfo_file $dep]
 				if {[file exists $analysisinfo]} {
@@ -237,11 +240,12 @@ proc var_job {args} {
 				# files are xxx-100 -> would sort reverse of what we want because of the -
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
-				} elseif {[file extension [gzroot $target]] in ".bam"} {
+				} elseif {[file extension [gzroot $target]] in ".bam .cram"} {
 					cg sam_catmerge \
 						-sort nosort \
 						-index 1 \
 						-deletesams 1 \
+						-refseq $refseq \
 						$target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
 					set empty 1
