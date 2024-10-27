@@ -393,14 +393,14 @@ proc tempbam {sourcefile {inputformat {}} {refseq {}}} {
 		} else {
 			catch_exec {*}[pipe2bam $sourcefile $inputformat $refseq] -o $tempfile <@ stdin
 		}
-		exec samtools index $tempfile
+		catch_exec samtools index $tempfile
 		set sourcefile $tempfile
 	} elseif {$inputformat ne "bam"} {
 		set tempfile [tempfile].bam
 		if {[gziscompressed $inputformat]} {
 			exec {*}[gzcat $inputformat 0] $sourcefile | samtools view --no-PG -b -u -o $tempfile
 		} else {
-			exec samtools view --no-PG -b -u $sourcefile -o $tempfile
+			catch_exec samtools view --no-PG -b -u $sourcefile -o $tempfile
 		}
 		set sourcefile $tempfile
 	}

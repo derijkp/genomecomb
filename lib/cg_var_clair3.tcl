@@ -293,8 +293,8 @@ proc var_clair3_job {args} {
 			clair3_empty_vcf $tempvcfdir/temp.vcf
 			# add unmapped reads
 			set tempoutbam [tempfile].unmapped.bam
-			exec samtools view -h -b -f 4 $dep > $tempoutbam
-			exec samtools index $tempoutbam
+			catch_exec samtools view -h -b -f 4 $dep > $tempoutbam
+			catch_exec samtools index $tempoutbam
 			file rename -force -- $tempoutbam $outbam
 			file rename -force -- $tempoutbam.[indexext $tempoutbam] $outbam.[indexext $outbam]
 		} else {

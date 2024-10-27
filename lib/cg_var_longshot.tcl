@@ -218,8 +218,8 @@ proc var_longshot_job {args} {
 			longshot_empty_vcf $tempvcf
 			# add unmapped reads
 			set tempoutbam [tempfile].unmapped.bam
-			exec samtools view -h -b -f 4 $dep > $tempoutbam
-			exec samtools index $tempoutbam
+			catch_exec samtools view -h -b -f 4 $dep > $tempoutbam
+			catch_exec samtools index $tempoutbam
 			file rename -force -- $tempoutbam $outbam
 			file rename -force -- $tempoutbam.[indexext $tempoutbam] $outbam.[indexext $outbam]
 		} elseif {[llength $regions] > 1} {
@@ -242,7 +242,7 @@ proc var_longshot_job {args} {
 					if {[regexp "^error: Chromosome name for region is not in BAM file" $msg]} {
 						putslog "longshot warning: Chromosome name ($region) for region is not in BAM file, writing empty"
 						longshot_empty_vcf $tempfile
-						exec samtools view -H -b $dep > $tempoutbam
+						catch_exec samtools view -H -b $dep > $tempoutbam
 					} else {
 						error $msg
 					}
@@ -251,7 +251,7 @@ proc var_longshot_job {args} {
 					longshot_empty_vcf $tempfile
 				}
 				if {$hap_bam && ![file exists $tempoutbam]} {
-					exec samtools view -h -b $dep $region > $tempoutbam
+					catch_exec samtools view -h -b $dep $region > $tempoutbam
 				}
 				lappend todo $tempfile
 				lappend todobams $tempoutbam
@@ -291,7 +291,7 @@ proc var_longshot_job {args} {
 					}
 				}
 				if {$index} {
-					exec samtools index $outbam.temp.bam
+					catch_exec samtools index $outbam.temp.bam
 				}
 				catch {file rename -force -- $outbam.temp.bam $outbam}
 				catch {file rename -force -- $outbam.temp.bam.bai $outbam.bai}
@@ -321,7 +321,7 @@ proc var_longshot_job {args} {
 		if {$region ne ""} {
 			lappend opts -region $region
 		}
-		exec cg regextract -stack 1 {*}$opts -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
+		cg regextract -stack 1 {*}$opts -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
 		file rename -force -- $temptarget $sregfile
 		cg_zindex $sregfile
 	}

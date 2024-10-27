@@ -198,7 +198,7 @@ proc var_medaka_job {args} {
 		if {$region ne ""} {
 			lappend opts -region $region
 		}
-		exec cg regextract -stack 1 {*}$opts -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
+		cg regextract -stack 1 {*}$opts -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
 		file rename -force -- $temptarget $sregfile
 		cg_zindex $sregfile
 	}

@@ -63,7 +63,7 @@ proc cg_regextract {args} {
 				set cat [gzcat $file]
 				set error [catch {
 					# puts stderr "$cat $file | getregionsbcol $chr $type $start $min $max $useshift"
-					exec {*}$cat $file | getregionsbcol $chr $type $start $min $max $useshift >@ $o
+					catch_exec {*}$cat $file | getregionsbcol $chr $type $start $min $max $useshift >@ $o
 				} errmessage]
 				if {$error} {
 					set errmessage [split [string trim $errmessage] \n]
@@ -74,7 +74,7 @@ proc cg_regextract {args} {
 				}
 			} else {
 				# puts "getregionsbcol2 $file $min $max $useshift"
-				exec getregionsbcol2 $file $min $max $useshift >@ $o
+				catch_exec getregionsbcol2 $file $min $max $useshift >@ $o
 			}
 		} elseif {$ext in ".bam .cram .sam"} {
 			set chrcol 0
@@ -143,7 +143,7 @@ proc cg_regextract {args} {
 			}
 			set cat [gzcat $file]
 			set error [catch {
-				exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $min $max $useshift 1 >@ $o
+				catch_exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $min $max $useshift 1 >@ $o
 			} errmessage]
 			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage] && ![regexp {Successfully decoded} $errmessage]} {
 				error $errmessage

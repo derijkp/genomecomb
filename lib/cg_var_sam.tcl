@@ -146,7 +146,7 @@ proc var_sam_job {args} {
 	# start
 	# make sure reference sequence is indexed
 	job ${pre}var_sam_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
-		exec samtools faidx $dep
+		catch_exec samtools faidx $dep
 	}
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallvcf]/cache_vcf_sam_[file tail $refseq].temp.zst

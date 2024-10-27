@@ -1604,20 +1604,20 @@ proc iso_isoquant_job {args} {
 			# set tempbam $regdir.temp/regali.bam
 			if {$region ne ""} {
 				set samregions [samregions $region $refseq]
-				exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
+				catch_exec samtools view -h -b -1 $bam {*}$samregions > $tempbam
 			} else {
 				set samregions {}
 				# use absolute link, as this may be in a shadowdir (testing version $regdir.temp/regali.bam)
 				# and relative links caanot cross that
 				mklink $bam $tempbam 1
 			}
-			if {![catch {exec samtools view $tempbam | head -1} out]} {
+			if {![catch {catch_exec samtools view $tempbam | head -1} out]} {
 				# only one read aligned -> skip running isoquant
 				file mkdir $regdir.temp
 				file mkdir $regdir.temp/00_regali
 				file_write $regdir.temp/not_enough_reads ""
 			} else {
-				exec samtools index $tempbam
+				catch_exec samtools index $tempbam
 				# region gene file
 				if {$reftranscripts ne "none"} {
 					convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb

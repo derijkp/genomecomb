@@ -129,7 +129,7 @@ proc sam_catmerge_job {args} {
 		if {[gziscompressed $testsam]} {
 			set header [exec cg zcat $testsam | samtools view --no-PG -H]
 		} else {
-			set header [exec samtools view --no-PG -H $testsam]
+			set header [catch_exec samtools view --no-PG -H $testsam]
 		}
 		if {[file_ext $resultfile] eq ".cram"} {
 			set refseq [refseq $refseq]
@@ -236,7 +236,7 @@ proc sam_catmerge_job {args} {
 								set parttarget $workdir/paste.temp$num.zst
 								exec cg mergesorted -commentchar @ -headerline 0 -header $header -sortpos $sortopt \
 									{*}$part | cg zst -compressionlevel 1 > $parttarget.temp.zst
-								# exec samtools merge {*}$sortopt -t $threads $parttarget.temp {*}$part
+								# catch_exec samtools merge {*}$sortopt -t $threads $parttarget.temp {*}$part
 								if {$delete} {file delete {*}$part}
 								file rename -force -- $parttarget.temp.zst $parttarget
 							} elseif {!$delete} {

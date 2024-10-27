@@ -155,7 +155,7 @@ proc cg_sam_sort {args} {
 		if {$outputformat eq "cram"} {
 			lappend opts --output-fmt-option reference=[refseq $refseq]
 		}
-		if {[catch {exec samtools sort --no-PG --threads $threads -T [scratchfile] \
+		if {[catch {catch_exec samtools sort --no-PG --threads $threads -T [scratchfile] \
 			-O [string toupper $outputformat] \
 			 {*}$opts {*}$optsio 2>@ stderr
 		} msg]} {

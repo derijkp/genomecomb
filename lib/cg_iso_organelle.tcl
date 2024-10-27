@@ -116,7 +116,7 @@ proc iso_organelle_job {args} {
 		set regtsvali $regdir/map-$region.sam.tsv.zst
 		if {$region ne ""} {
 			set samregions [samregions $region $refseq]
-			exec samtools view -h $bam {*}$samregions | cg sam2tsv | cg zst -c 1 > $regtsvali
+			catch_exec samtools view -h $bam {*}$samregions | cg sam2tsv | cg zst -c 1 > $regtsvali
 		} else {
 			set samregions {}
 			cg sam2tsv $bam | cg zst -c 1 > $regtsvali

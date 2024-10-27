@@ -18,5 +18,5 @@ proc cg_depth {args} {
 		run samtools depth on a bam/sam file, outputting tsv format
 	}
 	puts [join {chromosome end depth} \t]
-	exec samtools depth {*}$opts -d$max -Q $Q -q $q $bamfile >@ stdout 2>@ stderr
+	catch_exec samtools depth {*}$opts -d$max -Q $Q -q $q $bamfile >@ stdout 2>@ stderr
 }

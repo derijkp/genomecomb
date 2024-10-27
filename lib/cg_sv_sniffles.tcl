@@ -166,8 +166,8 @@ proc sv_sniffles_job {args} {
 		analysisinfo_write $dep $target sample $sample varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
 		if {$region ne ""} {
 			set usebam [scratchfile].bam
-			exec samtools view -h -b -1 --threads $threads $bamfile {*}[samregions $region $refseq] > $usebam
-			exec samtools index $usebam
+			catch_exec samtools view -h -b -1 --threads $threads $bamfile {*}[samregions $region $refseq] > $usebam
+			catch_exec samtools index $usebam
 		} else {
 			set usebam $bamfile
 		}

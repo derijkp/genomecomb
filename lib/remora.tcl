@@ -36,8 +36,8 @@ proc modkit_job {args} {
 	if {[file extension $bamfile] eq ".cram"} {
 		# modkit does not work well with cram (# "detected non-BAM input format, please consider using BAM, CRAM may be unstable")
 		set tempfile [tempfile].bam
-		exec samtools view -b -1 -T $refseq $bamfile > $tempfile
-		exec samtools index $tempfile
+		catch_exec samtools view -b -1 -T $refseq $bamfile > $tempfile
+		catch_exec samtools index $tempfile
 		set bamfile $tempfile
 	}
 	exec modkit pileup $bamfile $target.temp.gz \
@@ -122,8 +122,8 @@ proc meth_remora_job {args} {
 		if {[file extension $bamfile] eq ".cram"} {
 			# modkit does not work well with cram (# "detected non-BAM input format, please consider using BAM, CRAM may be unstable")
 			set tempfile [tempfile].bam
-			exec samtools view -b -1 -T $refseq $bamfile > $tempfile
-			exec samtools index $tempfile
+			catch_exec samtools view -b -1 -T $refseq $bamfile > $tempfile
+			catch_exec samtools index $tempfile
 			set bamfile $tempfile
 		}
 		exec modkit pileup $bamfile $target.temp \

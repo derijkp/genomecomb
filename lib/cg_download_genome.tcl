@@ -94,7 +94,7 @@ proc cg_download_genome {args} {
 	catch {file delete -force $result.temp}
 	#
 	# make samtools index
-	exec samtools faidx $result
+	catch_exec samtools faidx $result
 	#
 	set rfile [file dir $result]/reg_[file root $tail].tsv
 	putslog "Making $rfile"

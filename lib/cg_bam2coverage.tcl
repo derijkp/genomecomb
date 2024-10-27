@@ -4,9 +4,9 @@ proc cg_bam2coverage {bamfile destprefix} {
 	file mkdir $dir
 	file mkdir $destprefix.temp
 	puts "coverage: making $destprefix"
-	# exec samtools depth -d1000000 $bamfile | cg bcol make -p pos -c contig -t su $dir/tmp-$prefix coverage
+	# catch_exec samtools depth -d1000000 $bamfile | cg bcol make -p pos -c contig -t su $dir/tmp-$prefix coverage
 	#basequal threshold to 1 to avoid counting of primer bases
-	exec samtools depth -d1000000 -q 1 $bamfile | cg bcol make --header 0 --chromosomecol 0 --poscol 1 --type iu $destprefix.temp/${prefix}- 2
+	catch_exec samtools depth -d1000000 -q 1 $bamfile | cg bcol make --header 0 --chromosomecol 0 --poscol 1 --type iu $destprefix.temp/${prefix}- 2
 	file mkdir $dir/tmp
 	set files [glob -nocomplain $destprefix.temp/$prefix-*.bcol]
 	foreach file $files {

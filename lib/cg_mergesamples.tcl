@@ -63,7 +63,7 @@ proc mergesamples_job {result args} {
 				type destsample bams result
 			} -code {
 				file_copy [analysisinfo_file [lindex $bams 0]] [analysisinfo_file $result/$type-$destsample.bam]
-				exec samtools merge -c -p --threads 8 $result/temp$type-$destsample.bam {*}$bams
+				catch_exec samtools merge -c -p --threads 8 $result/temp$type-$destsample.bam {*}$bams
 				file rename -force $result/temp$type-$destsample.bam $target
 			}
 		}

@@ -171,8 +171,8 @@ proc count_qorts_job {args} {
 		if {[file extension $bamfile] eq ".cram"} {
 			# QoRTs gives an error on cram, make temp bamfile to solve
 			set tempfile [tempdir]/[file root [file tail $bamfile]].bam
-			exec samtools view -b -1 -h $bamfile > $tempfile
-			exec samtools index $tempfile
+			catch_exec samtools view -b -1 -h $bamfile > $tempfile
+			catch_exec samtools index $tempfile
 			set bamfile $tempfile
 		}
 		file delete -force $qortsdir.temp

@@ -17,7 +17,7 @@ proc gatk_refseq_job refseq {
 		mklink $refseq $nrefseq
 	}
 	job [job_relfile2name gatkrefseq_faidx- $nrefseq] -deps {$nrefseq} -targets {$nrefseq.fai} -code {
-		exec samtools faidx $dep
+		catch_exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
 	job [job_relfile2name gatkrefseq- $nrefseq] -deps {$nrefseq} -targets {$dict} -vars {nrefseq} -code {
@@ -35,7 +35,7 @@ proc gatk_refseq refseq {
 		mklink $refseq $nrefseq
 	}
 	if {![file exists $nrefseq.fai]} {
-		exec samtools faidx $dep
+		catch_exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
 	set target $dict

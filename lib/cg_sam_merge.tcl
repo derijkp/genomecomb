@@ -52,7 +52,7 @@ proc sam_merge_job {args} {
 			job $name -optional $optional -force $force -deps $samfiles -targets {
 				$target
 			} -vars {threads sortopts} -code {
-				exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
+				catch_exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 				file rename -force -- $target.temp $target
 			}
 		} else {
@@ -67,7 +67,7 @@ proc sam_merge_job {args} {
 					-deps $todo -targets {
 						$target
 					} -vars {delete workdir threads sortopts} -code {
-						exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
+						catch_exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 						file rename -force -- $target.temp $target
 						if {$delete} {file delete {*}$deps}
 					}
@@ -87,7 +87,7 @@ proc sam_merge_job {args} {
 					} -vars {delete threads sortopts} -code {
 						# puts [list ../bin/tsv_paste {*}$deps]
 						if {[llength $deps] > 1} {
-							exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
+							catch_exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 							if {$delete} {file delete {*}$deps}
 						} elseif {!$delete} {
 							mklink $dep $target.temp

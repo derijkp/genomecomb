@@ -58,11 +58,11 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 			putslog "Making $target"
 			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
 			if {$option eq ""} {
-				exec samtools stats -@ $threads $dep > $target.temp
+				catch_exec samtools stats -@ $threads $dep > $target.temp
 			} elseif {$option eq "unaligned"} {
-				exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
+				catch_exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
 			} elseif {$option eq "aligned"} {
-				exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
+				catch_exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
 			} else {
 				error "unknown option $option"
 			}
@@ -424,7 +424,7 @@ proc process_reports_job {args} {
 				bamroot threads
 			} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
-				exec samtools flagstat -@ $threads $dep > $target.temp
+				catch_exec samtools flagstat -@ $threads $dep > $target.temp
 				file rename -force -- $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
@@ -458,7 +458,7 @@ proc process_reports_job {args} {
 			} -vars {bamroot} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
 				if {[catch {
-					exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
+					catch_exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
 				} msg]} {
 					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
 				}
@@ -653,7 +653,7 @@ proc process_reports_job {args} {
 						foreach file $deps {
 							if {[file extension [gzroot $file]] in ".bam .cram .sam"} {
 								if {[catch {
-									exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file >@ $o
+									catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file >@ $o
 								} msg]} {
 									regsub -all {\[M::[^\n]+} $msg {} temp
 									set temp [list_remove [split $temp \n] {}]

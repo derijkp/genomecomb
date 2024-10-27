@@ -29,7 +29,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	file rename -force -- $temptarget $samfile
 	# read header
 	if {[catch {
-		set header [exec samtools view --no-PG -S -H $samfile 2> /dev/null]
+		set header [catch_exec samtools view --no-PG -S -H $samfile 2> /dev/null]
 	} error]} {
 		if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 	}
@@ -53,7 +53,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	foreach chr $chrs {
 		set temptarget [filetemp $outfile-chr$chr.bam]
 		if {[catch {
-			exec samtools view --no-PG -S -h -b -o $temptarget $scratchbase-chr$chr.sam
+			catch_exec samtools view --no-PG -S -h -b -o $temptarget $scratchbase-chr$chr.sam
 		} error]} {
 			if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 		}
@@ -69,7 +69,7 @@ proc cg_mergebam {outfile args} {
 	}
 	putslog "Merging $outfile"
 	set temptarget [filetemp $outfile]
-	exec samtools merge $temptarget {*}$args
+	catch_exec samtools merge $temptarget {*}$args
 	file rename -force -- $temptarget $outfile
 	putslog "Delete old files for building $outfile ($args)"
 	file delete {*}$args
