@@ -42,7 +42,7 @@ proc bam_index_job {args} {
 	set bams [list $bam {*}$args]
 	foreach bam $bams {
 		set ext [file extension $bam]
-		if {$ext in ".bam .cram" || ($ext eq ".gz" && [file extension [file root $dep]] eq ".sam")} {
+		if {$ext in ".bam .cram" || ($ext eq ".gz" && [file extension [file root $bam]] eq ".sam")} {
 			# can only make index for bam, cram, or gz compressed sam
 		} else continue
 		set bamindex $bam.[indexext [gzroot $bam]]
