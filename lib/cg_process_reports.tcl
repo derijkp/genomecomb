@@ -606,7 +606,6 @@ proc process_reports_job {args} {
 			} -code {
 				analysisinfo_write $dep $target fastqc_prog falco falco_version [version falco]
 				file mkdir $target.temp
-				set gzcat [gzcat [lindex $deps 0]]
 				set foundreads 0
 				foreach fastq $deps {
 					if {[fastq_size $fastq 1]} {set foundreads 1 ; break}
@@ -617,8 +616,25 @@ proc process_reports_job {args} {
 				} else {
 					if {[llength $deps] == 1} {
 						set src [lindex $deps 0]
-						set format fastq[gzext $src]
+						if {[file ext $src] in ".cram .bam"} {
+							set tempfile [tempfile].fastq.gz
+							cg bam2fastq $src $tempfile
+							set format fastq.gz
+							set src $tempfile
+						} else {
+							set format fastq[gzext $src]
+						}
 					} else {
+						if {[file ext [lindex $deps 0]] in ".cram .bam"} {
+							set newdeps {}
+							foreach bam $deps {
+								set tempfile [tempfile].fastq.gz
+								cg bam2fastq $src $tempfile
+								lappend newdeps $tempfile
+							}
+							set deps $newdeps
+						}
+						set gzcat [gzcat [lindex $deps 0]]
 						set src [tempdir]/stdin
 						exec -ignorestderr {*}$gzcat {*}$deps > $src
 						set format fastq
@@ -667,6 +683,7 @@ proc process_reports_job {args} {
 						}
 						close $o
 					} else {
+						set gzcat [gzcat [lindex $deps 0]]
 						exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
 					}
 					analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
