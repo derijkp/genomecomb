@@ -30,7 +30,7 @@ proc longshot_replacebam {finalbam oribam} {
 	        mklink $finalbam.[indexext $finalbam] $oribam.[indexext $oribam]
 	        exec touch -h -d [clock format $btime] $oribam.[indexext $oribam]
 	}
-	unset btime
+	unset -nocomplain btime
 	catch {
 		file lstat $oribam.analysisinfo a
 		set btime $a(mtime)
