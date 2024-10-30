@@ -212,7 +212,10 @@ test sv {cg sv -method manta -distreg 1} {
 	file mkdir tmp/sv-manta
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
-	exec cg sv -method manta -distrreg 1 {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	cg sv -method manta -distrreg 1 {*}$::dopts \
+		-refseq $::smalltestdir/refseqtest/hg19 \
+		tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam \
+		>& tmp/sv-manta.log
 	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
 		-ignorefields {varcaller_cg_version} \
 		tmp/sv-manta expected/sv-manta

@@ -350,7 +350,7 @@ test cg_bamreorder {basic genomecomb} {
 @SQ	SN:chr21_gl000210_random	LN:27682
 @SQ	SN:chr21	LN:48129895
 @RG	ID:NA19240m	SM:NA19240m	PL:illumina	PU:NA19240m	LB:solexa-123
-@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 *}} match
+@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R *}} match
 
 test cg_sam_catmerge {basic cg_sam_catmerge} {
 	write_sam tmp/temp1.sam {
