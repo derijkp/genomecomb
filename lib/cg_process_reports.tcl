@@ -193,7 +193,7 @@ proc reports_singlecell {sampledir} {
 			} elseif {$group eq "invalid"} {
 				set invalidreads $sum_count
 				set invalidumis $sum_umicount
-			} elseif {$group eq "invalid"} {
+			} elseif {$group eq "nobc"} {
 				set nobcreads $sum_count
 				set nobcumis $sum_umicount
 			}
@@ -332,7 +332,7 @@ proc reports_singlecell {sampledir} {
 }
 
 proc reports_expand {reports} {
-	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender}
+	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender singlecell}
 	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
 	if {$reports eq "all"} {
 		set reports $allreports
@@ -589,8 +589,12 @@ proc process_reports_job {args} {
 	}
 	set fastqfiles [bsort [jobglob \
 		$sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq \
-		$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/uban/*.sam \
 	]]
+	if {![llength $fastqfiles]} {
+		set fastqfiles [bsort [jobglob \
+			$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/uban/*.sam \
+		]]
+	}
 	if {$paired} {
 		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	} else {

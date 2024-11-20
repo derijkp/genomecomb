@@ -125,7 +125,7 @@ Currently supported are: rnaseqc, qorts
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use basic (default) for creating most reports, or all for all reports. If you only
 want some made, give these as a space separated list. Possible reports are (further explained in [[cg_process_reports]]):
-fastqstats fastqc flagstat_reads flagstat_alignments samstats alignedsamstats unalignedsamstats histodepth vars hsmetrics covered histo predictgender
+fastqstats fastqc flagstat_reads flagstat_alignments samstats alignedsamstats unalignedsamstats histodepth vars hsmetrics covered histo predictgender singlecell
 ; -m maxopenfiles (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
