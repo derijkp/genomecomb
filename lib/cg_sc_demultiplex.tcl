@@ -93,6 +93,7 @@ proc sc_demultiplex_job {sampledir dmfile refseq destVar} {
 				unset desta($dmsample)
 				if {$bam} {
 					file rename -force $destfile.temp$ext $destfile
+					exec samtools index $destfile
 				} else {
 					file rename -force $destfile.temp$gzext $destfile
 				}
