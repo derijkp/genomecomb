@@ -37,11 +37,13 @@ if [ ! -f /hbb_exe/activate ]; then
 	echo "Running script $dir/$file"
 	builddir=""
 	arch=linux-x86_64
-	argumentspos=1; 
+	argumentspos=1;
+	clear=1
 	while [[ "$#" -gt 0 ]]; do case $1 in
 		-b|-bits|--bits) arch="$2"; shift;;
 		-a|-arch|--arch) arch="$2"; shift;;
 		-d|-builddir|--builddir) builddir="$(readlink -f "$2")" ; shift;;
+		-c|-clear|--clear) clear="$2"; shift;;
 		*) arguments[$argumentspos]="$1"; argumentspos+=1 ; arguments[$argumentspos]="$2"; argumentspos+=1 ; shift;;
 	esac; shift; done
 	if [ "$bits" = "32" ] ; then arch=linux-ix86 ; fi
@@ -50,169 +52,50 @@ if [ ! -f /hbb_exe/activate ]; then
 		arch=linux-ix86
 	elif [ "$arch" = "64" ] || [ "$arch" = "x86_64" ]; then
 		arch=linux-x86_64
-	elif [ "$arch" = "win" ] || [ "$arch" = "mingw-w64" ]; then
+	elif [ "$arch" = "win-ix86" ] || [ "$arch" = "mingw-w32" ]; then
+		arch=windows-ix86
+	elif [ "$arch" = "win" ] || [ "$arch" = "windows" ] || [ "$arch" = "win-x86_64" ] || [ "$arch" = "mingw-w64" ]; then
 		arch=windows-x86_64
 	fi
 	if [ "$builddir" = "" ] ; then
-		if [ "$arch" = "linux-ix86" ] ; 	then
-			builddir="$HOME/build/bin-ix86"
-		else
+		if [ "$arch" = "linux-x86_64" ] ; 	then
 			builddir="$HOME/build/bin-x86_64"
+		elif [ "$arch" = "linux-ix86" ] ; 	then
+			builddir="$HOME/build/bin-ix86"
+		elif [ "$arch" = "windows-x86_64" ] ; 	then
+			builddir="$HOME/build/bin-windows-x86_64"
+		elif [ "$arch" = "windows-ix86" ] ; 	then
+			builddir="$HOME/build/bin-windows-ix86"
+		else
+			echo "unknown arch $arch"
+			exit 1
 		fi
 	fi
 	mkdir -p "$builddir"
 	echo "Build $arch version"
 	echo "builddir=$builddir"
 	echo "srcdir=$srcdir"
+	echo "clear=$clear"
 	# run the script in holy build box
 	uid=$(id -u)
 	gid=$(id -g $uid)
 	
 	if [ "$arch" = "linux-ix86" ] ; 	then
-		if docker image list | grep --quiet hbb3-32; then
-			buildbox=hbb3-32
+		if docker image list | grep --quiet 'hbb32.*3.0.2'; then
+			buildbox=hbb32:3.0.2
 		else
 			buildbox=phusion/holy-build-box-32:3.0.2
 		fi
-		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" "$srcdir" "$builddir" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" "$srcdir" "$builddir" "$clear" ${arguments[*]}
 	else
-		if docker image list | grep --quiet hbb3-64; then
-			buildbox=hbb3-64
+		if docker image list | grep --quiet 'hbb64.*3.0.2'; then
+			buildbox=hbb64:3.0.2
 		else
 			buildbox=phusion/holy-build-box-64:3.0.2
 		fi
-		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$bits" "$uid" "$gid" "$srcdir" "$builddir" ${arguments[*]}
+		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" "$srcdir" "$builddir" "$clear" ${arguments[*]}
 	fi
 	exit
-fi
-
-# centos 7 is EOL, moved to vault: adapt the repos
-
-if ! cat /etc/yum.repos.d/CentOS-Base.repo | grep --quiet vault; then
-	echo "change repos to vault"
-
-echo '# /etc/yum.repos.d/CentOS-Base.repo
-[base]
-name=CentOS-$releasever - Base
-baseurl=http://vault.centos.org/7.9.2009/os/$basearch/
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-[updates]
-name=CentOS-$releasever - Updates
-baseurl=http://vault.centos.org/7.9.2009/updates/$basearch/
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-[extras]
-name=CentOS-$releasever - Extras
-baseurl=http://vault.centos.org/7.9.2009/extras/$basearch/
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-[centosplus]
-name=CentOS-$releasever - Plus
-baseurl=http://vault.centos.org/7.9.2009/centosplus/$basearch/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-[contrib]
-name=CentOS-$releasever - Contrib
-baseurl=http://vault.centos.org/7.9.2009/contrib/$basearch/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-' > /etc/yum.repos.d/CentOS-Base.repo
-
-echo '[epel]
-name=Extra Packages for Enterprise Linux 7 - $basearch
-#baseurl=http://download.fedoraproject.org/pub/epel/7/$basearch
-baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/x86_64
-#mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch
-failovermethod=priority
-enabled=1
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
-[epel-debuginfo]
-name=Extra Packages for Enterprise Linux 7 - $basearch - Debug
-#baseurl=http://download.fedoraproject.org/pub/epel/7/$basearch/debug
-mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-debug-7&arch=$basearch
-failovermethod=priority
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
-gpgcheck=1
-[epel-source]
-name=Extra Packages for Enterprise Linux 7 - $basearch - Source
-#baseurl=http://download.fedoraproject.org/pub/epel/7/SRPMS
-baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/SRPMS
-#mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-source-7&arch=$basearch
-failovermethod=priority
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
-gpgcheck=1
-' > /etc/yum.repos.d/epel.repo
-
-echo '# CentOS-SCLo-sclo.repo
-#
-# Please see http://wiki.centos.org/SpecialInterestGroup/SCLo for more
-# information
-[centos-sclo-sclo]
-name=CentOS-7 - SCLo sclo
-baseurl=http://vault.epel.cloud/centos/7/sclo/$basearch/sclo/
-gpgcheck=1
-enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-[centos-sclo-sclo-testing]
-name=CentOS-7 - SCLo sclo Testing
-baseurl=http://buildlogs.centos.org/centos/7/sclo/$basearch/sclo/
-gpgcheck=0
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-[centos-sclo-sclo-source]
-name=CentOS-7 - SCLo sclo Sources
-baseurl=http://vault.epel.cloud/centos/7/sclo/Source/sclo/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-[centos-sclo-sclo-debuginfo]
-name=CentOS-7 - SCLo sclo Debuginfo
-baseurl=http://debuginfo.centos.org/centos/7/sclo/$basearch/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-' > /etc/yum.repos.d/CentOS-SCLo-scl.repo
-
-echo '# CentOS-SCLo-rh.repo
-#
-# Please see http://wiki.centos.org/SpecialInterestGroup/SCLo for more
-# information
-
-[centos-sclo-rh]
-name=CentOS-7 - SCLo rh
-baseurl=http://vault.epel.cloud/centos/7/sclo/$basearch/rh/
-gpgcheck=1
-enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-
-[centos-sclo-rh-testing]
-name=CentOS-7 - SCLo rh Testing
-baseurl=http://buildlogs.centos.org/centos/7/sclo/$basearch/rh/
-gpgcheck=0
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-
-[centos-sclo-rh-source]
-name=CentOS-7 - SCLo rh Sources
-baseurl=http://vault.epel.cloud/centos/7/sclo/Source/rh/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-
-[centos-sclo-rh-debuginfo]
-name=CentOS-7 - SCLo rh Debuginfo
-baseurl=http://debuginfo.centos.org/centos/7/sclo/$basearch/
-gpgcheck=1
-enabled=0
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-SCLo
-' > /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo
-
 fi
 
 if [ "$1" = "stage2" ] ; then
@@ -224,20 +107,29 @@ if [ "$1" = "stage2" ] ; then
 	gid=$5
 	srcdir=$6
 	builddir=$7
+	clear=$8
+	# centos7 is no longer supported in the repos, use the vault
+	if [[ $arch =~ "linux" ]]; then
+		sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
+		sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
+		sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+		sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+	fi
 	# prepare the user build with sudo rights
 	echo "installing sudo ($arch)"
+	# to stop "checksum is invalid" errors when using yum in 32 bit docker
 	if ! rpm --quiet --query sudo; then
 		yum install -q -y sudo
 	fi
 	echo "preparing user build with uid=$uid and gid=$gid"
 	groupadd build --gid $gid
-	useradd build --uid $uid --gid $gid
+	useradd build --uid $uid --gid $gid -s /usr/bin/bash
 	# usermod -a -G wheel build
 	echo "build ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-build
 	# default nr of processes (for user build) is sometimes not enough
 	sudo sed -i 's/4096/10240/' /etc/security/limits.d/20-nproc.conf
 	# (re)start script for stage 3: running the actual code
-	sudo -u build bash /io/$file "stage3" "$file" "$bits" "$uid" "$gid" "$srcdir" "$builddir" ${arguments[*]}
+	sudo -u build bash /io/$file "stage3" ${@:2}
 	exit
 fi
 
@@ -251,54 +143,98 @@ function yuminstall {
 }
 
 file=$2
+# install yuminstall and env vars in .bashrc so it will be available if the new shell is started
+mkdir -p /home/build
 
-if [ $(basename "$file") = "start_hbb3.sh" ] ; then
-	# install yuminstall in .bashrc so it will be available in the new shell started here
-	mkdir -p /home/build
-	echo "
-	file=$2
-	arch=$3
-	uid=$4
-	gid=$5
-	srcdir=$6
-	builddir=$7
-	" >> /home/build/.bashrc
-	echo 'if [ "$arch" = 'linux-ix86' ] ; then
-		ARCH='-linux-ix86'
-		arch=linux-ix86
-		bits=32
-	else
-		ARCH=''
-		arch=linux-x86_64
-		bits=64
-	fi
-	function yuminstall {
-		echo "yuminstall $1"
-		if ! rpm --quiet --query "$1"; then
-			sudo yum install -y "$1"
-		fi
-	}
-	' >> /home/build/.bashrc
-	# if run as start_hbb.sh directly, show a shell
-	echo "shell started by start_hbb3.sh"
-	bash
-	exit
-fi
+echo "
+file=$2
+arch=$3
+echo arch_sh=$arch
+uid=$4
+gid=$5
+srcdir=$6
+builddir=$7
+clear=$8
+" > /home/build/.bashrc
 
-# if sourced in another script, continue executing this other script
-if [ "$3" = 'linux-ix86' ] ; then
+echo 'if [ "$arch" = 'linux-ix86' ] ; then
 	ARCH='-linux-ix86'
 	arch=linux-ix86
 	bits=32
+elif [ "$arch" = 'windows-ix86' ] ; then
+	ARCH='-windows-ix86'
+	arch=windows-ix86
+	bits=64
+	sudo yum install epel-release
+	sudo yum install -y mingw64-gcc mingw64-zlib mingw64-zlib-static
+	sudo yum install -y mingw32-gcc mingw32-zlib mingw32-zlib-static
+	# sudo yum install -y mingw64-g++ mingw64-libgnurx-static mingw64-boost mingw64-boost-static
+	export CROSSTARGET="w64-mingw32"
+	export TARGETARCHITECTURE="i686"
+	#
+	export TARGET="$TARGETARCHITECTURE-$CROSSTARGET"
+	export HOST="$TARGET"
+	export CROSSBASE="/usr/lib/gcc/$TARGET/4.9.2/"
+	# export BASE=/build/deps-$TARGET
+	export LDFLAGS="-L$CROSSBASE"
+	export CPPFLAGS="-I$CROSSBASE/include"
+	export CFLAGS="-I$CROSSBASE/include"
+	export CROSS_COMPILE="$TARGET-"
+	#export CC=${CROSS_COMPILE}gcc
+	#export CXX=${CROSS_COMPILE}g++
+	#export CPP=${CROSS_COMPILE}cpp
+	#export AR=${CROSS_COMPILE}ar
+	#export LD=${CROSS_COMPILE}ld
+	#export RANLIB=${CROSS_COMPILE}ranlib
+	export DIRTCL=/build/dirtcl-$TARGET
+elif [ "$arch" = 'windows-x86_64' ] ; then
+	ARCH='-windows-x86_64'
+	arch=windows-x86_64
+	bits=64
+	sudo yum install epel-release
+	sudo yum install -y mingw64-gcc mingw64-zlib mingw64-zlib-static
+	sudo yum install -y mingw64-g++ mingw64-libgnurx-static mingw64-boost mingw64-boost-static
+	export CROSSTARGET="w64-mingw32"
+	export TARGETARCHITECTURE="x86_64"
+	#
+	export TARGET="$TARGETARCHITECTURE-$CROSSTARGET"
+	export HOST="$TARGET"
+	export CROSSBASE="/usr/lib/gcc/$TARGET/4.9.2/"
+	# export BASE=/build/deps-$TARGET
+	export LDFLAGS="-L$CROSSBASE"
+	export CPPFLAGS="-I$CROSSBASE/include"
+	export CFLAGS="-I$CROSSBASE/include"
+	export CROSS_COMPILE="$TARGET-"
+	#export CC=${CROSS_COMPILE}gcc
+	#export CXX=${CROSS_COMPILE}g++
+	#export CPP=${CROSS_COMPILE}cpp
+	#export AR=${CROSS_COMPILE}ar
+	#export LD=${CROSS_COMPILE}ld
+	#export RANLIB=${CROSS_COMPILE}ranlib
+	export DIRTCL=/build/dirtcl-$TARGET
 else
 	ARCH=''
 	arch=linux-x86_64
 	bits=64
 fi
-uid=$4;
-gid=$5;
-srcdir=$6;
-builddir=$7;
-shift 7;
+function yuminstall {
+	echo "yuminstall $1"
+	if ! rpm --quiet --query "$1"; then
+		sudo yum install -y "$1"
+	fi
+}
+' >> /home/build/.bashrc
+shift 8;
 
-echo "Entering Holy Build Box environment; building using arch $arch, uid=$uid, gid=$gid"
+if [ $(basename "$file") = "start_hbb3.sh" ] ; then
+	# if run as start_hbb3.sh directly, show a shell
+	echo "shell started by start_hbb.sh"
+	bash
+	exit
+fi
+
+# if sourced in another script, continue executing this other script
+# after sourcing the settings put into the bashrc
+source /home/build/.bashrc
+
+echo "Entering Holy Build Box environment; building using arch $arch, $bits bits, uid=$uid, gid=$gid"
