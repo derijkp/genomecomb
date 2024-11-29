@@ -249,6 +249,41 @@ proc var_clair3_job {args} {
 		mincoverage mingenoqual split platform model phasing
 	} -code {
 		if {$model eq ""} {
+			set clairscript [follow_links [exec which run_clair3.sh]]
+			set clairdir [file dir $clairscript]
+			set sampledir [file dir $dep]
+			set fastq [gzfile $sampledir/fastq/*.f*q]
+			set bcmodel {}
+			if {[file exists $fastq]} {
+				set f [gzopen $fastq]
+				set line [gets $f]
+				gzclose $f
+				regexp {basecall_model_version_id=([^ ]+)} $line temp bcmodel
+			} else {
+				set fastq [gzfile $sampledir/ubam/*.bam]
+				if {[file exists $fastq]} {
+					set f [open "| samtools view $ubam"]
+					set line [gets $f]
+					catch {close $f}
+					regexp {RG:Z:([^ \t]+)} $line temp bcmodel
+					regsub {^[^_]+_} $bcmodel {} bcmodel
+				}
+			}
+			if {$bcmodel ne ""} {
+				regsub {_barcode[0-9]+$} $bcmodel {} bcmodel
+				set bcmodel [string_change $bcmodel {. {} @ _}]
+				regsub {^[dr]na_} $bcmodel {} bcmodel
+				if {[file exists $clairdir/models/$bcmodel]} {
+					set model $clairdir/models/$bcmodel
+				} else {
+					regsub {_[^_]+$} $bcmodel {} bcmodel
+					if {[file exists $clairdir/models/$bcmodel]} {
+						set model $clairdir/models/$bcmodel
+					}
+				}
+			}
+		}
+		if {$model eq ""} {
 			set runinfofile [gzfile [file dir $dep]/runinfo*.tsv]
 			if {[file exists $runinfofile]} {
 				set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
