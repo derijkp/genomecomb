@@ -262,7 +262,7 @@ proc var_clair3_job {args} {
 			} else {
 				set fastq [gzfile $sampledir/ubam/*.bam]
 				if {[file exists $fastq]} {
-					set f [open "| samtools view $ubam"]
+					set f [open "| samtools view $fastq"]
 					set line [gets $f]
 					catch {close $f}
 					regexp {RG:Z:([^ \t]+)} $line temp bcmodel
