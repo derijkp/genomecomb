@@ -287,7 +287,7 @@ proc var_longshot_job {args} {
 					if {[llength $regions]} {
 						catch_exec samtools view -h -b $dep [lindex $regions 0] > $outbam.temp.bam
 					} else {
-						hardklink $dep $outbam.temp.bam
+						hardlink $dep $outbam.temp.bam
 					}
 				}
 				if {$index} {
