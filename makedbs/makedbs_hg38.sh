@@ -261,6 +261,7 @@ job reg_${ref}_nolowgene -deps {
 		chr21-7569202-9450211
 		chr21-9450211-11824755
 	}
+	# set nogenes /complgen/refseqnew/hg38/extra/reg_hg38_nogenes.tsv.zst
 	# sizes {}
 	# finerregions $nogenes $problemregions 100000
 	set o [open $target.temp w]
