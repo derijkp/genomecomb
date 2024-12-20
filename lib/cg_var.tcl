@@ -130,10 +130,19 @@ proc var_job {args} {
 			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $resultfile
 	} else {
 		# check what the resultfiles are for the method
-		set resultfiles [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
+		set resultfiles {} 
+		foreach resultfile [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
 			-pre $pre \
 			-datatype $datatype \
-			-split $split $bamfile $refseq $resultfile]
+			-split $split $bamfile $refseq $resultfile \
+		] {
+			if {[file extension $resultfile] in ".bam .cram"} {
+				# this is for the hapbam files: give same format/extension as bamfile
+				lappend resultfiles [file root $resultfile][file extension $bamfile]
+			} else {
+				lappend resultfiles $resultfile
+			}
+		}
 		set skips [list -skip [list_remove  $resultfiles {}]]
 		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {varfile sregfile varallfile vcffile} $resultfiles break
