@@ -24,7 +24,7 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 		set usefastq $fastq
 		set ubams 0
 	}
-	catch_exec minimap2 -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq > $sam 2>@ stderr
+	catch_exec minimap2 -Y -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq > $sam 2>@ stderr
 	if {$ubams} {file delete $usefastq}
 	# cg sam2tsv $sam | cg select -g chromosome
 	# exec ~/dev/genomecomb/bin/sc_getbarcodes adapter $begin 16 10 < $sam > temp
@@ -35,35 +35,75 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	puts $o [join {id barcode umi start strand polyA} \t]
 	set header [tsv_open $f]
 	set poss [list_cor $header {chromosome begin end strand qname qstart qend cigar seq supplementary}]
+	set qnamepos [lsearch $header qname]
+	set mqpos [lsearch $header mapquality]
+	set strandpos [lsearch $header strand]
+	set qstartpos [lsearch $header qstart]
 	set num 0
+	set todo {}
+	set prevqname {}
 	while 1 {
-		if {[gets $f line] == -1} break
-		set line [split $line \t]
+		if {[gets $f nline] == -1} break
+		set nline [split $nline \t]
 		if {![expr [incr num]%10000]} {puts $num}
-		foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
-		if {$supplementary} continue
-		if {$chromosome eq "*"} {
-			puts $o [join [list $qname {} {} {} {} 0] \t]
-			continue
+		set nqname [lindex $nline $qnamepos]
+		if {$nqname ne $prevqname && [llength $todo]} {
+			# if more than one hit for adapter, select "best" one
+			if {[llength $todo] > 1} {
+				# remove hits with lower mapping quality
+				set qs [list_subindex $todo $mqpos]
+				set limitq [expr {[lmath_max $qs]-3}]
+				set num 0
+				set keep {}
+				foreach q $qs {
+					if {$q >= $limitq} {lappend keep $num}
+					incr num
+				}
+				if {[llength $keep] < [llength $todo]} {
+					set todo [list_sub $todo $keep]
+				}
+			}
+			if {[llength $todo] > 1} {
+				# if still multiple left with similar mapquality, pick the inner one
+				# (for e.g. when adapter/read1 also included in adapters added later, after 10x)
+				# for now ignoring that we can have multiple hits on different strands
+				# set starts [list_subindex $todo $qstartpos]
+				if {[lindex $todo 0 $strandpos] eq "+"} {
+					set line [lindex [lsort -integer -index $qstartpos $todo] end]
+				} else {
+					set line [lindex [lsort -integer -index $qstartpos $todo] 0]
+				}
+			} else {
+				set line [lindex $todo 0]
+			}
+			foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
+			if {$chromosome eq "*"} {
+				puts $o [join [list $qname {} {} {} {} 0] \t]
+			} else {
+				set start $qend
+				if {[regexp H $cigar]} {
+					error "hardclipped sequence in line: [list set line $line]"
+				}
+				set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+				set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
+				# check Ts
+				set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
+				set polya [regexp -all T $post]
+				# if {$polya < 1} {
+				# 	error "not enough Ts in line: [list set line $line]"
+				# }
+				if {![info exists a($barcode)]} {
+					set a($barcode) 1
+				} else {
+					incr a($barcode)
+				}
+				puts $o [join [list $qname $barcode $umi $start $strand $polya] \t]
+			}
+			set todo [list]
 		}
-		set start $qend
-		if {[regexp H $cigar]} {
-			error "hardclipped sequence in line: [list set line $line]"
-		}
-		set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
-		set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
-		# check Ts
-		set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
-		set polya [regexp -all T $post]
-#		if {$polya < 1} {
-#			error "not enough Ts in line: [list set line $line]"
-#		}
-		if {![info exists a($barcode)]} {
-			set a($barcode) 1
-		} else {
-			incr a($barcode)
-		}
-		puts $o [join [list $qname $barcode $umi $start $strand $polya] \t]
+		# if {$supplementary} continue
+		set prevqname $nqname
+		lappend todo $nline
 	}
 	gzclose $o
 	close $f
