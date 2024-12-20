@@ -244,7 +244,7 @@ proc var_job {args} {
 					cg sam_catmerge \
 						-sort nosort \
 						-index 1 \
-						-deletesams 1 \
+						-deletesams 0 \
 						-refseq $refseq \
 						$target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
