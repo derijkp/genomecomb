@@ -168,7 +168,24 @@ proc sc_barcodes_job args {
 		      read name (as @<cellbarcode>_<umi>#originalname) as well as in the info "fields" CB CR and MI
 		* files
 	}
-	if {$whitelist ne ""} {set usewhitelist 1} else {set usewhitelist 0}
+	if {$whitelist ne ""} {
+		if {![file exists $whitelist]} {
+			if {$whitelist in "10Xv3 v3"} {
+				set whitelist $::genomecombdir/whitelists/3M-february-2018.txt.gz
+			} elseif {$whitelist in "10Xv4 v4"} {
+				set whitelist $::genomecombdir/whitelists/3M-3pgex-may-2023.txt.gz
+			} elseif {$whitelist in "10Xp5v3 p5v3"} {
+				set whitelist $::genomecombdir/whitelists/3M-5pgex-jan-2023.txt.gz
+			} elseif {$whitelist in "10Xv2 v2"} {
+				set whitelist $::genomecombdir/whitelists/737K-august-2016.txt.gz
+			} else {
+				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2"
+			}
+		}
+		set usewhitelist 1
+	} else {
+		set usewhitelist 0
+	}
 	# logfile
 	set fastqdir [file_absolute $fastqdir]
 	if {![info exists resultdir]} {set resultdir [file dir $fastqdir]}
