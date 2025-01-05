@@ -731,7 +731,7 @@ proc process_reports_job {args} {
 		lappend deps [jobgzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv $sampledir/read_assignments-isoquant_sc*-$sample.tsv]
 		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
 		# set deps "([join $deps ") ("])"
-		job reports_singlecell-$sample -deps $deps -targets {
+		job reports_singlecell-$sample -optional 1 -deps $deps -targets {
 			$sampledir/reports/report_singlecell-$sample.tsv
 			$sampledir/reports/report_singlecell-cellgrouping-$sample.tsv
 			$sampledir/reports/singlecell-pseudobulk_isoforms-$sample.tsv
