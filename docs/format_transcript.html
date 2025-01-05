@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/help/format_transcript</title>
+<title>format_transcript</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -55,8 +55,7 @@ containing a list of transcripts. Each line contains one transcript.
 The standard region fields (chromosome, begin and end) indicate the
 location of the transcript (and the transcript file is thus also a
 region file) while other fields indicate the strand, exons etc.</p>
-<p>The basic fields for a transcript file are</p>
-
+<p>The basic fields for a transcript file are
 <dl>
   <dt>chromosome</dt>
   <dd>chromosome name</dd>
@@ -85,8 +84,7 @@ region file) while other fields indicate the strand, exons etc.</p>
   id for gene)</dd>
 </dl>
 <p>Most genomecomb tools will accept some (commonly encounterd)
-alternative fieldnames if these are not present:</p>
-
+alternative fieldnames if these are not present:
 <dl>
   <dt>chromosome</dt>
   <dd>&quot;chrom&quot;, &quot;chr&quot;, &quot;chr1&quot;,
@@ -107,13 +105,12 @@ alternative fieldnames if these are not present:</p>
   <dd>&quot;gene&quot;,&quot;name2&quot;, &quot;geneid&quot;,
   &quot;gene_id&quot;</dd>
 </dl>
-<p>Any other fields can be added, but the following are common:</p>
-
+<p>Any other fields can be added, but the following are common:
 <dl>
   <dt>category</dt>
   <dd>field indicating if the transcript is known, novel or
   intergenic (transcript of a novel gene); for novel transcripts how
-  they differ from (the closest) known transcipt can be added after
+  they differ from (the closest) known transcript can be added after
   novel (, e.g. novl_in_catalog)</dd>
   <dt>exonCount</dt>
   <dd>number of exons</dd>

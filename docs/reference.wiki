@@ -1,4 +1,4 @@
-= Genomecomb 0.110.0 Reference =
+= Genomecomb 0.111.0 Reference =
 
 == Format ==
 cg subcommand ?options? ....
@@ -137,6 +137,7 @@ and quality to 0) given a set of target amplicons.
 ; [[cg_liftchain2tsv|liftchain2tsv]]: Converts data in UCSC chain file format (for liftOver) to a tsv (tab separated) format to be used
 in e.g. cg liftregion.
 ; [[cg_correctvariants|correctvariants]]: Complete or correct a variants file
+; [[cg_bam_index|bam_index]]: index a bam/cram/sam file.
 ; [[cg_bam_sort|bam_sort]]: sort a bam file.
 ; [[cg_bamreorder|bamreorder]]: Changes the order of the contigs/chromosomes in a bam file
 ; [[cg_fastq_split|fastq_split]]: split a (large) fastq file in multiple smaller ones

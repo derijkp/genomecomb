@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/help/howto_query</title>
+<title>howto_query</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -59,8 +59,7 @@ href="cg_viz.html">cg viz</a></p>
 <h2 id="h329">Example files</h2>
 <p>We created a smaller data set for testing by extracting a few
 chromosomes out of a number of publically available genome sequences
-made using 2 different technologies:</p>
-
+made using 2 different technologies:
 <ul>
   <li>chromosomes 21 and 22 of NA19238, NA19239, NA19240 sequenced by
   Complete Genomics</li>
@@ -72,8 +71,7 @@ made using 2 different technologies:</p>
 through the <a href="install.html">install</a> page). A detailed
 description of the columns present in this file are presented in the <a
 href="example_header.html">example_header</a> section.</p>
-<p>The files used are:</p>
-
+<p>The files used are:
 <dl>
   <dt>annot_compar-yri_chr2122.tsv.zst </dt>
   <dd>an annotated <a href="format_tsv.html">multicompar variant
@@ -90,8 +88,7 @@ href="example_header.html">example_header</a> section.</p>
 </dl>
 <p>Some queries are quite long. For readability they are split into
 several lines, but allways in a way that they only execute after
-typing the entire query into bash (or copy/pasting):</p>
-
+typing the entire query into bash (or copy/pasting):
 <ul>
   <li>parameters enclosed in '' may contain newlines</li>
   <li>a line ending in a pipe symbol (|) will continue on the next
@@ -576,7 +573,7 @@ cg select -g '-refGene_gene' refexome.tsv.zst | less
 <p>We could also use this type of summary to look for genes with
 compound variants. However, there are some extra complexities:</p>
 <p>We want to count (and find multiple) variants in the same
-transcipt (rather than gene) with a given impact (e.g. ignoring
+transcript (rather than gene) with a given impact (e.g. ignoring
 intronic variants). This can be done using the transcripts function,
 used here to create the field refGene_transcripts that will contain a
 list of transcript names (together with gene name) for which the

@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_process_multicompar</title>
+<title>cg_process_multicompar</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -61,8 +61,7 @@ multicompar data</p>
 href="cg_process_project.html">cg process_project</a>. As input, the
 command expects a basic genomecomb project directory with sequencing
 data (projectdir) for which the samples have already been processed.</p>
-<p>Some of the steps/commands it uses can be used separately as well:</p>
-
+<p>Some of the steps/commands it uses can be used separately as well:
 <ul>
   <li><a href="cg_pmulticompar.html">cg pmulticompar</a>: combine
   variant data of multiple samples</li>
@@ -141,13 +140,15 @@ data (projectdir) for which the samples have already been processed.</p>
   size, but breaks can only occur in large (&gt;=100000 bases) repeat
   regions </b> a number preceded by an g: distribution into regions
   targeting the given size, but breaks can only occur in large
-  (&gt;=200000 bases) regions without known genes <b> a file name:
-  the regions in the file will be used for distribution</b></dd>
+  (&gt;=200000 bases) regions without known genes <b> g: distribution
+  into regions as given in the &lt;refdir&gt;/extra/reg_*_distrg.tsv
+  file; if this does not exist uses g5000000 </b> a file name: the
+  regions in the file will be used for distribution</dd>
 </dl>
 <p>This command can be distributed on a cluster or using multiple
 with <a href="joboptions.html">job options</a> (more info with cg
 help joboptions)</p>
-<h2 id="h4213">Category</h2>
+<h2 id="h4336">Category</h2>
 <p>Process</p>
 </div>
 

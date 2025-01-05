@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/help/jobsystem</title>
+<title>jobsystem</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -70,8 +70,7 @@ final target when (successfully) finished</p>
 (example in job_example.tcl):</p>
 <h2 id="h1113">job_init</h2>
 <p>job_init initializes the job system. It accept the following job
-options and returns the rest of the arguments:</p>
-
+options and returns the rest of the arguments:
 <dl>
   <dt>-d value (--distribute)</dt>
   <dd>if value is a number, the job is distributed over the given
@@ -222,8 +221,7 @@ target). It is advised (generally as well) to create <b>result files
 using a temporary name</b> (e.g. $target.temp), and rename them to
 $target when finished: This way, if a job crashes, there will never
 be a target file present that is incomplete.</p>
-<p>job supports following <b>options</b>:</p>
-
+<p>job supports following <b>options</b>:
 <dl>
   <dt>-deps dependencylist</dt>
   <dd>list of files on which this job is dependent.</dd>

@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>cg_bcol_update</title>
+<title>cg_bam_index</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,30 +49,36 @@
 
 <div id="middle">
 
-<h1 id="h1">Bcol_update</h1>
-<h2 id="h19">Format</h2>
-<p>cg bcol update newbcolfile oldbcolfile ?oldbcolfile2? ...</p>
-<h2 id="h91">Summary</h2>
-<p>updates bcol file(s) in the old format to the new</p>
-<h2 id="h156">Description</h2>
-<p>There was an older version of the <a href="bcol.html">bcol</a>
-format that did not support multiple chromosomes or multiple alleles.
-Files in this older format can be converted to the new using this
-command. Sometimes multiple bcol files were used for different
-chromosomes. To integrate thse into one new bcol file give the
-separate files for all chromosomes as parameters. &quot;cg
-update&quot; will (try to) extract the chromosomes from the file
-names.</p>
-<h2 id="h603">Arguments</h2>
+<h1 id="h1">bam_index</h1>
+<h2 id="h17">Format</h2>
+<p>cg bam_index ?options? bamfile ?bamfile? ...</p>
+<h2 id="h76">Summary</h2>
+<p>index a bam/cram/sam file.</p>
+<h2 id="h118">Description</h2>
+<p>Indexes the given bam/cram/sam files using samtools index, but
+with improvements:
+<ul>
+  <li>index file will only be put in place when completed (so no
+  corrupted index file when e.g. interrupted)</li>
+  <li>index file will get the same time as indexed bam file (reruns
+  will not unnecessarily cause reanalysis of everything dependent on
+  bam when you add indexes later)</li>
+  <li>supports <a href="joboptions.html">joboptions</a></li>
+</ul>
+<h2 id="h513">Arguments</h2>
 
 <dl>
-  <dt><b>newbcolfile</b></dt>
-  <dd>name of bcolfile to be created</dd>
-  <dt><b>oldbcolfile</b></dt>
-  <dd>Name of old bcolfile</dd>
+  <dt>bamfile</dt>
+  <dd>bam file to index</dd>
 </dl>
-<h2 id="h710">Category</h2>
-<p>Format Conversion</p>
+<h2 id="h559">Options</h2>
+
+<dl>
+  <dt>-threads number</dt>
+  <dd>number of threads to use for indexing</dd>
+</dl>
+<h2 id="h631">Category</h2>
+<p>Conversion</p>
 </div>
 
 <div id="right">
