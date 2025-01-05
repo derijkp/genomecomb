@@ -46,7 +46,7 @@ proc cg_download_genome {args} {
 		if {![file exists $build.analysisSet.chroms.tar.gz]} {error "Could not download $build chromosomes"}
 	} msg]} {
 		exec tar xvzf $build.analysisSet.chroms.tar.gz
-		set files [bsort [glob $build.analysisSet.chroms/*.fa]]
+		set files [bsort -sortchromosome [glob $build.analysisSet.chroms/*.fa]]
 		if {!$alt} {
 			set files [list_sub $files -exclude [list_find -regexp $files _hap]]
 		}
@@ -59,7 +59,7 @@ proc cg_download_genome {args} {
 		wgetfiles $source goldenPath-$build-chromosomes
 		if {![llength [glob goldenPath-$build-chromosomes/*.fa.gz]]} {error "Could not download $build chromosomes"}
 	} msg]} {
-		set files [bsort [glob goldenPath-$build-chromosomes/*.fa.gz]]
+		set files [bsort -sortchromosome [glob goldenPath-$build-chromosomes/*.fa.gz]]
 		if {!$alt} {
 			set files [list_sub $files -exclude [list_find -regexp $files _hap]]
 		}

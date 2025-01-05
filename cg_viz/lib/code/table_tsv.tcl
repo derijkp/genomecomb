@@ -352,7 +352,11 @@ table_tsv method values {field {samplevalues 0} {max 1000} {valuesonly 0}} {
 	if {$sample} {
 		set a(incomplete) 1
 	}
-	set result [bsort [list_subindex $result 0]]
+	if {$field in "chromosome chrom chr"} {
+		set result [bsort -sortchromosome [list_subindex $result 0]]
+	} else {
+		set result [bsort [list_subindex $result 0]]
+	}
 	if {$valuesonly} {return $result}
 	if {[isdouble [get a(min) {}]] && [isdouble [get a(max) {}]]} {
 		regsub {\.0+$} $a(min) {} min

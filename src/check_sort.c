@@ -60,12 +60,12 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,
 */
 	 	comp = DStringLocCompare(chromosome1,prevchromosome1);
 		if (type1pos != -1) {
-			comptype = DStringLocCompare(type1,prevtype1);
+			comptype = DStringCompare(type1,prevtype1);
 		} else {
 			comptype = 0;
 		}
 		if (alt1pos != -1) {
-			compalt = DStringLocCompare(alt1,prevalt1);
+			compalt = DStringCompare(alt1,prevalt1);
 		} else {
 			compalt = 0;
 		}

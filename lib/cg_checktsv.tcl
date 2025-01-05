@@ -28,7 +28,7 @@ proc cg_checktsv {args} {
 		incr linenr
 		if {$checksort} {
 			set cur [list_sub $line $poss]
-			if {[list $prev $cur] ne [bsort [list $prev $cur]]} {
+			if {[list $prev $cur] ne [bsort -sortchromosome [list $prev $cur]]} {
 				puts stderr "line $linenr is sorted wrong:\t$line (prev = $prev)"
 				set error 1
 			}

@@ -382,6 +382,26 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 	exec diff -I {@HD	} tmp/result.sam tmp/expected.sam
 } {}
 
+test cg_sam_catmerge {cg_sam_catmerge with mixed chr prefix} {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	20	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file_write tmp/temp2.sam [deindent $::sam_header]\n[deindent {
+		A4	147	2	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr21	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	147	2	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	20	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr21	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file delete tmp/result.sam
+	cg sam_catmerge -stack 1 -v 2 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
+	exec diff -I {@HD	} tmp/result.sam tmp/expected.sam
+} {}
+
 test cg_sam_catmerge {cg_sam_catmerge nosort} {
 	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
@@ -687,6 +707,40 @@ test cg_bam2sam {basic sortchr} {
 		A3	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A4	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A4	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	exec samtools view --no-PG -b -1 tmp/temp.sam > tmp/temp.bam
+	exec cg bam2sam tmp/temp.bam tmp/result.sam >@ stdout 2>@ stderr
+	exec diff tmp/result.sam tmp/expected.sam
+} {}
+
+test cg_bam2sam {sortchr mixed chr} {
+	file_write tmp/temp.sam [deindent {
+		@HD	VN:1.4	GO:none	SO:coordinate
+		@SQ	SN:2	LN:243199373
+		@SQ	SN:chr1	LN:249250621
+		@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
+		A3	99	2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	147	2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr1	102	60	4S2M2I12M	=	111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	111	60	30M	=	102	-39	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file_write tmp/expected.sam [deindent {
+		@HD	VN:1.4	GO:none	SO:coordinate
+		@SQ	SN:chr1	LN:249250621
+		@SQ	SN:2	LN:243199373
+		@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
+		A1	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr1	102	60	4S2M2I12M	=	111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	111	60	30M	=	102	-39	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	99	2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	147	2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
 	exec samtools view --no-PG -b -1 tmp/temp.sam > tmp/temp.bam
 	exec cg bam2sam tmp/temp.bam tmp/result.sam >@ stdout 2>@ stderr

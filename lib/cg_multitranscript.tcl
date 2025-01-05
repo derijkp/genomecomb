@@ -126,7 +126,7 @@ proc cg_multitranscript {args} {
 			lappend curids [lrange $a(curid,$fnum) 0 5]
 		}
 		if {![llength $curids]} break
-		set curid [lindex [bsort $curids] 0]
+		set curid [lindex [bsort -sortchromosome $curids] 0]
 		foreach {curchr curbegin curend} $curid break
 		# load all transcripts (from all files) that overlap
 		# loop until no files have overlapping transcripts
@@ -188,7 +188,7 @@ proc cg_multitranscript {args} {
 					set a(curline,$fnum) [split $a(curline,$fnum) \t]
 					set temp [list_sub $a(curline,$fnum) $a(id,$fnum)]
 					set ctemp [lrange $temp 0 5]
-					if {[lindex [bsort [list $curid $ctemp]] 1] ne $ctemp} {
+					if {[lindex [bsort -sortchromosome [list $curid $ctemp]] 1] ne $ctemp} {
 						error "file $file not sorted correctly; should be sorted on: chromosome begin end strand exonStarts exonEnds"
 					}
 					set a(curid,$fnum) $temp
@@ -205,7 +205,7 @@ proc cg_multitranscript {args} {
 			if {[llength $knowns]} {
 				# if it matches known transcript -> add there
 				set list {}
-				foreach line [bsort $setma(single)] {
+				foreach line [bsort -sortchromosome $setma(single)] {
 					foreach {chromosome begin end strand exonStarts exonEnds} $line break
 					set matched 0
 					foreach kline $knowns {
@@ -222,7 +222,7 @@ proc cg_multitranscript {args} {
 					}
 				}
 			} else {
-				set list [bsort $setma(single)]
+				set list [bsort -sortchromosome $setma(single)]
 			}
 			# merge
 			if {[llength $list] == 0} {

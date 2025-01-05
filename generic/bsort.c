@@ -51,6 +51,7 @@ typedef struct SortInfo {
     int resultCode;		/* Completion code for the lsort command.
 				 * If an error occurs during the sort this
 				 * is changed from TCL_OK to  TCL_ERROR. */
+    int sortchromosome;		/* c for chromosome sort. */
 } SortInfo;
 
 /*
@@ -243,7 +244,7 @@ genomecomb_bsortObjCmd(clientData, interp, objc, objv)
                                          * needs to be passed to the 
                                          * comparison function */
     static CONST char *switches[] =
-	    {"-decreasing", "-increasing", "-index", "-reflist", (char *) NULL};
+	    {"-decreasing", "-increasing", "-index", "-reflist", "-sortchromosome", (char *) NULL};
 
     resultPtr = Tcl_GetObjResult(interp);
     if (objc < 2) {
@@ -259,6 +260,7 @@ genomecomb_bsortObjCmd(clientData, interp, objc, objv)
     sortInfo.index = -1;
     sortInfo.interp = interp;
     sortInfo.resultCode = TCL_OK;
+    sortInfo.sortchromosome = 0;
     for (i = 1; i < objc-1; i++) {
 		if (Tcl_GetIndexFromObj(interp, objv[i], switches, "option", 0, &index)
 			!= TCL_OK) {
@@ -293,6 +295,9 @@ genomecomb_bsortObjCmd(clientData, interp, objc, objv)
 			}
 			reflist = objv[i+1];
 			i++;
+			break;
+		    case 4:			/* -sortchromosome */
+			sortInfo.sortchromosome = 1;
 			break;
 		}
     }
@@ -565,6 +570,24 @@ SortCompare(objPtr1, objPtr2, infoPtr)
 	int alen,blen;
 	a = Tcl_GetStringFromObj(objPtr1, &alen);
 	b = Tcl_GetStringFromObj(objPtr2, &blen);
+	if (infoPtr->sortchromosome) {
+		if (alen >= 3) {
+			if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+				a += 3; alen -= 3;
+				if (alen && a[0] == '-') {
+					a++; alen--;
+				}
+			}
+		}
+		if (blen >= 3) {
+			if ((b[0] == 'C' || b[0] == 'c') && (b[1] == 'H' || b[1] == 'h') && (b[2] == 'R' || b[2] == 'r')) {
+				b += 3; blen -= 3;
+				if (blen && b[0] == '-') {
+					b++; blen--;
+				}
+			}
+		}
+	}
 	order = naturalcompare(a,b,alen,blen);
 	 NODPRINT("sortcompare result: %s <> %s    -> %d", a, b, order);
 

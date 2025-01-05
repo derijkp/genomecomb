@@ -55,13 +55,13 @@ proc process_sample_cgi_job {workdir split} {
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
-		set chromosomes [bsort [list_remdup $chromosomes]]
+		set chromosomes [bsort -sortchromosome [list_remdup $chromosomes]]
 	} else {
 		set files [jobglob -checkcompressed 1 $workdir/coverage/coverage*.tsv]
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
-		set chromosomes [bsort [list_remdup $chromosomes]]
+		set chromosomes [bsort -sortchromosome [list_remdup $chromosomes]]
 	}
 	# start from CGI data
 	# convert overage files to bcol first (will be used to add coverage and refscore to vars)

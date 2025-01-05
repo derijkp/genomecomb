@@ -454,7 +454,7 @@ proc distrreg_regs {regfile refseq {type s} {addunaligned 1}} {
 				set a($chr) 1
 			}
 		}
-		return [distrreg_addunaligned [bsort [array names a]] $addunaligned]
+		return [distrreg_addunaligned [bsort -sortchromosome [array names a]] $addunaligned]
 	} elseif {$regfile in "schr schromosome"} {
 		return [distrreg_addunaligned [join [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai] " "] $addunaligned]
 	} elseif {[isint $regfile]} {

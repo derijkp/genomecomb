@@ -148,6 +148,78 @@ test select "-s -f -q$dboptt" {
 2	a2
 4	a4}
 
+test select "-s =chromosome$dboptt" {
+	global dbopt
+	file_write tmp/table.tsv [deindent {
+		chromosome	value
+		chr1	1
+		chr2	2
+		chr10	10
+		18	18
+		chr3	3
+		2	2
+		2	3
+		2	1
+	}]\n
+	exec cg select {*}$dbopt -s {=chromosome value} tmp/table.tsv
+} {chromosome	value
+chr1	1
+2	1
+chr2	2
+2	2
+2	3
+chr3	3
+chr10	10
+18	18}
+
+test select "-s ~chromosome$dboptt" {
+	global dbopt
+	file_write tmp/table.tsv [deindent {
+		chromosome	value
+		chr1	1
+		chr2	2
+		chr10	10
+		18	18
+		chr3	3
+		2	2
+		2	3
+		2	1
+	}]\n
+	exec cg select {*}$dbopt -s {~chromosome -value} tmp/table.tsv
+} {chromosome	value
+18	18
+chr10	10
+chr3	3
+2	3
+chr2	2
+2	2
+2	1
+chr1	1}
+
+test select "-s - with chr mix$dboptt" {
+	global dbopt
+	file_write tmp/table.tsv [deindent {
+		chromosome	begin
+		chr1	1
+		chr2	2
+		chr10	10
+		18	18
+		chr3	3
+		2	2
+		2	3
+		2	1
+	}]\n
+	exec cg select {*}$dbopt -s - tmp/table.tsv
+} {chromosome	begin
+chr1	1
+2	1
+chr2	2
+2	2
+2	3
+chr3	3
+chr10	10
+18	18}
+
 test select "-q multiple lines, tabs$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s num  -f "num mixed" -q {

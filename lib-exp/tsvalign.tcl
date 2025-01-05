@@ -13,7 +13,7 @@ proc tsv_align_compareoverlap {comp1 comp2} {
 		} elseif {$chr1 eq ""} {
 			return -2
 		}
-		if {[bsort [list $chr1 $chr2]] eq [list $chr1 $chr2]} {return -1} else {return -2}
+		if {[bsort -sortchromosome [list $chr1 $chr2]] eq [list $chr1 $chr2]} {return -1} else {return -2}
 	}
 	if {![isint $p11]} {
 		return -1

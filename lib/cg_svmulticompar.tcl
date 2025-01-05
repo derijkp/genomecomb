@@ -471,7 +471,7 @@ proc svmulticompar {args} {
 			}
 		}
 		if {[llength $list] > 1} {
-			set list [bsort $list]
+			set list [bsort -sortchromosome $list]
 		}
 		puts $o [join $list \n]
 	}

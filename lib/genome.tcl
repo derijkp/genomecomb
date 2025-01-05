@@ -34,7 +34,7 @@ proc cg_fas2ifas {srcfile destfile} {
 	close $o
 	gzclose $f
 	# sort
-	set sids [bsort $ids]
+	set sids [bsort -sortchromosome $ids]
 	if {$sids ne $ids} {
 		set f [open $destfile.temp]
 		set o [open $destfile.temp2 w]

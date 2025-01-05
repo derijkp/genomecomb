@@ -28,12 +28,25 @@ typedef struct MergeFile {
 
 void makesortfield(MergeFile *mergefile,int sortpos[6],int numpos) {
 	DString *sort = mergefile->sort;
+	DString *field;
+	char *a;
 	int i;
-	int curpos=sortpos[0];
-	DStringCopy(sort,mergefile->result->data+curpos);
+	int curpos=sortpos[0],alen;
+	field = mergefile->result->data+curpos;
+	a = field->string;
+	alen = field->size;
+	if (alen >= 3) {
+		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+			a += 3; alen -= 3;
+			if (alen && a[0] == '-') {
+				a++; alen--;
+			}
+		}
+	}
+	DStringSetS(sort,a,alen);
 	for (i = 1 ; i < numpos ; i++) {
 		curpos=sortpos[i];
-		DString *field = mergefile->result->data+curpos;
+		field = mergefile->result->data+curpos;
 		DStringAppendS(sort," ",1);
 		DStringAppendS(sort,field->string,field->size);
 	}

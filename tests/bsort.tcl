@@ -235,6 +235,10 @@ test bsort {bugfix: a00f a0e} {
 	checkbsort $list
 } {}
 
+test bsort {-chromosome} {
+	bsort -sortchromosome {chr1 chr10 chr2 chrX 2 1 11 3 *}
+} {chr1 1 chr2 2 3 chr10 11 chrX *}
+
 if 0 {
 
 	COPT="-g make ../bin/test_naturalcompare

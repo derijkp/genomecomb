@@ -168,7 +168,7 @@ proc sam_catmerge_job {args} {
 			# fputsvars ~/tmp/temp header deps regions resultfile outcmd headerlines threads
 			if {!$mergesort} {
 				if {$sort eq "coordinate"} {
-					set sortopt {-k3,3N -k4,4N -k1,1N -k2,2N}
+					set sortopt {-k3,3H -k4,4N -k1,1N -k2,2N}
 				} else {
 					set sortopt {-k1,1N}
 				}
