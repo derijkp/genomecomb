@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# This script builds a portable tiny (6.4MiB on my system) build environment based on tcc and musl,
-# using the Holy build box environment to create the portable binaries.
-# The build directory contains a (patched) tcc that will find out from which dir it is run, and use the included 
-# musl library for compiling portable, statically linked executables. 
-# The tcc-system will use system libraries (in /usr/lib/$arch-linux-gnu) instead
+# This script downloads a build of pandoc, and puts it in a portable directory
+# 32 bit option is ignored
 # options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
