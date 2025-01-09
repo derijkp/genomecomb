@@ -78,6 +78,89 @@ proc clair3_empty_vcf {vcffile} {
 	gzclose $o
 }
 
+proc var_clair3_find_model {sampledir} {
+	set clairscript [follow_links [exec which run_clair3.sh]]
+	set clairdir [file dir $clairscript]
+	set bcmodel {}
+	set fastq [gzfile $sampledir/ubam/*.bam]
+	if {[file exists $fastq]} {
+		set f [open "| samtools view $fastq"]
+		set line [gets $f]
+		catch {close $f}
+		regexp {RG:Z:([^ \t]+)} $line temp bcmodel
+		regsub {^[^_]+_} $bcmodel {} bcmodel
+	} else {
+		set fastq [gzfile $sampledir/fastq/*.f*q]
+		if {[file exists $fastq]} {
+			set f [gzopen $fastq]
+			set line [gets $f]
+			gzclose $f
+			regexp {basecall_model_version_id=([^ ]+)} $line temp bcmodel
+		}
+	}
+	if {$bcmodel ne ""} {
+		if {[file exists $clairdir/models/$bcmodel]} {
+			set model $clairdir/models/$bcmodel
+			return $model
+		}
+		regsub {^[dr]na_} $bcmodel {} bcmodel
+		set bcmodel2 {}
+		if {[regsub {_barcode[0-9]+$} $bcmodel {} bcmodel2]} {
+			set bcmodel2 [string_change $bcmodel2 {. {} @ _}]
+			set model $clairdir/models/$bcmodel2
+			if {[file exists $model]} {
+				return $model
+			}
+			regsub {_[^_]+$} $bcmodel2 {} bcmodel2
+			set model $model
+			if {[file exists $clairdir/models/$bcmodel2]} {
+				return $model
+			}
+		}
+		if {[regsub {(@v[0-9.]+)[^@]*$} $bcmodel {\1} bcmodel2]} {
+			set bcmodel2 [string_change $bcmodel2 {. {} @ _}]
+			set model $clairdir/models/$bcmodel2
+			if {[file exists $model]} {
+				return $model
+			}
+			set model [gzfile $clairdir/models/$bcmodel2*]
+			if {[file exists $model]} {
+				return $model
+			}
+		}
+		set bcmodel2 [string_change $bcmodel {. {}}]
+		if {[regexp {^([^_]+)_(.+)_([^@]+)@([^_]+)} $bcmodel2 temp pore machine mode version]} {
+			set model [gzfile $clairdir/models/${pore}_*_${mode}_$version]
+			if {[file exists $model]} {
+				return $model
+			}
+			set model [gzfile $clairdir/models/${pore}_*_${mode}_*]
+			if {[file exists $model]} {
+				return $model
+			}
+		}
+	}
+	set runinfofile [gzfile $sampledir/runinfo*.tsv]
+	if {[file exists $runinfofile]} {
+		set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
+	} else {
+		if {![regexp {_v([0-9]\.[0-9]+\.[0-9]+)} [file tail $sampledir] temp guppyversion]} {
+			set guppyversion ?
+		}
+	}
+	if {[string index $guppyversion 0] in "5 6"} {
+		set usemodel r941_prom_sup_g5014
+	} elseif {[string index $guppyversion 0] in "3 4"} {
+		set usemodel r941_prom_hac_g360+g422
+	} elseif {[string index $guppyversion 0] in "2"} {
+		set usemodel r941_prom_hac_g238
+	} else {
+		puts stderr "warning: -model for clair3 not given, could not be found in the fastq/ubam, and no runinfo file; using default r941_prom_sup_g5014"
+		set usemodel r941_prom_sup_g5014
+	}
+	return $usemodel
+}
+
 proc var_clair3_job {args} {
 	# putslog [list var_clair3_job {*}$args]
 	global appdir
@@ -249,61 +332,8 @@ proc var_clair3_job {args} {
 		mincoverage mingenoqual split platform model phasing
 	} -code {
 		if {$model eq ""} {
-			set clairscript [follow_links [exec which run_clair3.sh]]
-			set clairdir [file dir $clairscript]
 			set sampledir [file dir $dep]
-			set fastq [gzfile $sampledir/fastq/*.f*q]
-			set bcmodel {}
-			if {[file exists $fastq]} {
-				set f [gzopen $fastq]
-				set line [gets $f]
-				gzclose $f
-				regexp {basecall_model_version_id=([^ ]+)} $line temp bcmodel
-			} else {
-				set fastq [gzfile $sampledir/ubam/*.bam]
-				if {[file exists $fastq]} {
-					set f [open "| samtools view $fastq"]
-					set line [gets $f]
-					catch {close $f}
-					regexp {RG:Z:([^ \t]+)} $line temp bcmodel
-					regsub {^[^_]+_} $bcmodel {} bcmodel
-				}
-			}
-			if {$bcmodel ne ""} {
-				regsub {_barcode[0-9]+$} $bcmodel {} bcmodel
-				set bcmodel [string_change $bcmodel {. {} @ _}]
-				regsub {^[dr]na_} $bcmodel {} bcmodel
-				if {[file exists $clairdir/models/$bcmodel]} {
-					set model $clairdir/models/$bcmodel
-				} else {
-					regsub {_[^_]+$} $bcmodel {} bcmodel
-					if {[file exists $clairdir/models/$bcmodel]} {
-						set model $clairdir/models/$bcmodel
-					}
-				}
-			}
-		}
-		if {$model eq ""} {
-			set runinfofile [gzfile [file dir $dep]/runinfo*.tsv]
-			if {[file exists $runinfofile]} {
-				set guppyversion [lindex [cg select -f "basecaller_version" $runinfofile] end]
-			} else {
-				if {![regexp {_v([0-9]\.[0-9]+\.[0-9]+)} [file tail $dep] temp guppyversion]} {
-					set guppyversion ?
-				}
-			}
-			if {[string index $guppyversion 0] in "5 6"} {
-				set usemodel r941_prom_sup_g5014
-			} elseif {[string index $guppyversion 0] in "3 4"} {
-				set usemodel r941_prom_hac_g360+g422
-			} elseif {[string index $guppyversion 0] in "2"} {
-				set usemodel r941_prom_hac_g238
-			} else {
-				puts stderr "warning: -model for clair3 not given and no runinfo file; using default r941_prom_sup_g5014"
-				set usemodel r941_prom_sup_g5014
-			}
-		} else {
-			set usemodel $model
+			set usemodel [var_clair3_find_model $sampledir]
 		}
 		if {[file exists $usemodel]} {
 			set usemodel [file_absolute $usemodel]
@@ -343,7 +373,7 @@ proc var_clair3_job {args} {
 				--include_all_ctgs \
 				--threads $threads \
 				--platform=$platform \
-				--model_path=$model \
+				--model_path=$usemodel \
 				--bam_fn=$dep \
 				--ref_fn=$refseq \
 				--output=$tempvcfdir \
