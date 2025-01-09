@@ -208,6 +208,7 @@ proc reports_singlecell {sampledir} {
 		set validbarcoded_umis $validumis
 		set pct_validbarcoded_umis [format %.2f [expr {100.0*$validbarcoded_umis/$total_umis}]]
 	} else {
+		set countfile [gzfile $sampledir/sc_gene_counts_raw-*$rootname.tsv]
 		set barcoded_reads NA
 		set pct_barcoded_reads NA
 		set validbarcoded_reads NA
@@ -222,7 +223,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countfile]} {
 		set temp [cg select -g all -gc sum(count) $countfile]
 		set rawgenecount [lindex $temp end]
-		set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
+		} else {
+			set pct_rawgenecount NA
+		}
 	} else {
 		set rawgenecount NA
 		set pct_rawgenecount NA
@@ -231,7 +236,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(count) $countsfile]
 		set filteredgenecount [lindex $temp end]
-		set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
+		} else {
+			set pct_filteredgenecount NA
+		}
 		set genes_percell [cg select -optim memory -g {cell * gene *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $genes_percell \n] 1] 1 end]
 		set mean_genes_percell [lmath_average $temp]
@@ -246,7 +255,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(counts_weighed) $countsfile]
 		set filteredisoformcount [lindex $temp end]
-		set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
+		} else {
+			set pct_filteredisoformcount NA
+		}
 		set isoforms_percell [cg select -optim memory -g {cell * transcript *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $isoforms_percell \n] 1] 1 end]
 		set mean_isoforms_percell [lmath_average $temp]
@@ -723,13 +736,13 @@ proc process_reports_job {args} {
 	if {[inlist $reports singlecell]} {
 		set deps [list]
 		lappend deps ([jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv])
-		lappend deps [jobgzfile $sampledir/mergedbarcodes.tsv.zst]
+		lappend deps ([jobgzfile $sampledir/mergedbarcodes.tsv.zst])
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_raw-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_filtered-*$sample.tsv sc_gene_counts_filtered-*.tsv]
 		lappend deps [jobgzfile $sampledir/sc_isoform_counts_filtered-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_cellinfo_filtered-*$sample.tsv sc_cellinfo_filtered-*.tsv]
 		lappend deps [jobgzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv $sampledir/read_assignments-isoquant_sc*-$sample.tsv]
-		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
+		lappend deps ([jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv])
 		# set deps "([join $deps ") ("])"
 		job reports_singlecell-$sample -optional 1 -deps $deps -targets {
 			$sampledir/reports/report_singlecell-$sample.tsv
