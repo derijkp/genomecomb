@@ -7,9 +7,9 @@ proc sc_demultiplex_read_dmfile {dmfile dmaVar} {
 	if {$cellpos eq ""} {
 		error "no field \"cell\" or \"barcode\" found in $dmfile"
 	}
-	set dmsamplepos [lindex [list_remove [list_cor $header {sample donor_id}] -1] 0]
+	set dmsamplepos [lindex [list_remove [list_cor $header {sample donor_id subsample}] -1] 0]
 	if {$dmsamplepos eq ""} {
-		error "no field \"sample\" or \"donor_id\" found in $dmfile"
+		error "no field \"sample\" or \"donor_id\", or \"subsample\" found in $dmfile"
 	}
 	set poss [list $cellpos $dmsamplepos]
 	while {[gets $f line] != -1} {
@@ -20,10 +20,26 @@ proc sc_demultiplex_read_dmfile {dmfile dmaVar} {
 	gzclose $f
 }
 
-proc sc_demultiplex_job {sampledir dmfile refseq destVar} {
+proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 	upvar job_logdir job_logdir
 	set sampledir [file_absolute $sampledir]
-	upvar $destVar dest
+	set sample [file tail $sampledir]
+	if {$destVar ne ""} {
+		upvar $destVar dest
+	} else {
+		set f [gzopen $dmfile]
+		set header [tsv_open $f]
+		set field [lindex [list_common $header {sample donor_id subsample}] 0]
+		gzclose $f
+		set dmsamples [lrange [list_subindex [split [string trim [cg select -g $field $dmfile]] \n] 0] 1 end]
+		unset -nocomplain dest
+		foreach dmsample $dmsamples {
+			set dest($dmsample) [file dir $sampledir]/dm_${dmsample}__$sample
+			lappend dmsamplesdone $dest($dmsample)
+			file mkdir $dest($dmsample)
+		}
+	}
+
 	set dmsamples [array names dest]
 	set files [gzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
 		$sampledir/sc_cellinfo_*.tsv $sampledir/sc_group*.tsv \
