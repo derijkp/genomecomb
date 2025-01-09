@@ -4,7 +4,7 @@ proc cg_bams2crams {args} {
 	set refseq {}
 	set threads 1
 	set handlebam old
-	set links ignore
+	set links rename
 	cg_options cg_bam2cram args {
 		-refseq {
 			set refseq [refseq $value]

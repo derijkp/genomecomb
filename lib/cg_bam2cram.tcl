@@ -5,7 +5,7 @@ proc cg_bam2cram {args} {
 	set refseq {}
 	set threads 1
 	set handlebam {}
-	set links ignore
+	set links rename
 	set opt {}
 	cg_options cg_bam2cram args {
 		-refseq {
@@ -45,7 +45,7 @@ proc cg_bam2cram {args} {
 			}
 			mklink $link $cramfile
 			mklink $link.crai $cramfile.crai
-			if {[file exists $link.analysisinfo]} {
+			if {[file exists $bamfile.analysisinfo]} {
 				mklink $link.analysisinfo $cramfile.analysisinfo
 			}
 			if {![catch {file lstat $bamfile a}]} {
@@ -74,6 +74,10 @@ proc cg_bam2cram {args} {
 	file rename -force $cramfile.temp.cram.crai $cramfile.crai
 	file rename -force $cramfile.temp.cram $cramfile
 	exec touch -r $bamfile $cramfile
+	exec touch -r $bamfile $cramfile.crai
+	if {[file exists $bamfile.analysisinfo]} {
+		file rename $bamfile.analysisinfo $cramfile.analysisinfo
+	}
 	if {$handlebam eq "old"} {
 		catch {file rename -force $bamfile $bamfile.old}
 		catch {file rename -force $bamfile.bai $bamfile.bai.old}
