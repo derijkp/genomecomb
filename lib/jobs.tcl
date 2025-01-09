@@ -1303,6 +1303,7 @@ proc job_generate_code {job pwd adeps targetvars targets checkcompressed code {o
 proc job {jobname args} {
 	global curjobid cgjob job_logdir_submit
 	upvar job_logdir job_logdir
+	set jobname [string_change $jobname {/ __ : _ \" _ \' _ , _}]
 	if {![info exists job_logdir]} {
 		error "The variable job_logdir is not set, This must be set before calling job, either by using the command job_logdir, or by setting the variable directly"
 	}
@@ -1678,7 +1679,7 @@ proc job_relfile2name {prefix file {maxsize 247}} {
 			}
 		}
 	}
-	set filepart [string_change $file {/ __ : _ \" _ \' _}]
+	set filepart [string_change $file {/ __ : _ \" _ \' _ , _}]
 	set len [string length $filepart]
 	set start [expr {$len  - ($maxsize - [string length $prefix])}]
 	return $prefix[string range $filepart $start end]
