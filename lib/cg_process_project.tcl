@@ -288,6 +288,7 @@ proc process_project_job {args} {
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
+	mkdir $destdir
 	if {!$validate && $samplesheet ne ""} {
 		cg make_project $destdir $samplesheet
 	}

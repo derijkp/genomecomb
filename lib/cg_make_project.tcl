@@ -39,6 +39,8 @@ proc cg_make_project {args} {
 	} {projectdir samplesheet} 2
 	set projectdir [file_absolute $projectdir]
 	if {[regexp -- - [file tail $projectdir]]} {error "[file tail $projectdir] contains a - character (which is not allowed in a projectdir)"}
+	if {[regexp -- , [file tail $projectdir]]} {error "[file tail $projectdir] contains a , character (which is not allowed in a projectdir)"}
+	mkdir $projectdir
 	set f [gzopen $samplesheet]
 	set header [tsv_open $f]
 	set poss [list_cor $header {sample seqfiles}]
