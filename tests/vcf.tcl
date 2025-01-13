@@ -436,7 +436,7 @@ test sortvcf {sortvcf mixed chr} {
 		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 		##contig=<ID=chrM,length=16571>
 		##contig=<ID=chr1,length=249250621>
-		##contig=<ID=chr2,length=243199373>
+		##contig=<ID=2,length=243199373>
 		##contig=<ID=chr3,length=198022430>
 		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
 		M	17330	.	T	A	3	q10	DP=11	GT:GQ:DP	0|0:49:3
@@ -451,7 +451,7 @@ test sortvcf {sortvcf mixed chr} {
 		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 		##contig=<ID=chr1,length=249250621>
-		##contig=<ID=chr2,length=243199373>
+		##contig=<ID=2,length=243199373>
 		##contig=<ID=chr3,length=198022430>
 		##contig=<ID=chrM,length=16571>
 		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
