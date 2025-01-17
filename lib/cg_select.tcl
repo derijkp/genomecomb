@@ -1822,15 +1822,16 @@ proc cg_select {args} {
 	if {[string length $tclcode] > 20} {
 		set tempfile [tempfile]
 		file_write $tempfile $tclcode\n
-		lappend pipe [list cg source $tempfile]
+		lappend pipe [list cg source -stack [get ::stacktraceonerror 0] $tempfile]
 	} elseif {[string length $tclcode]} {
 		# file_write /tmp/temp.txt $tclcode\n
 		#putsvars tclcode
-		lappend pipe [list cg exec $tclcode]
+		lappend pipe [list cg exec -stack [get ::stacktraceonerror 0] $tclcode]
 	}
 # puts stderr "-------------pipe qfields=\"$qfields\" group=\"$group\" sortfields=\"$sortfields\"-------------------"
 # puts stderr "pipe: [join $pipe " | "]"
 # puts stderr ------------------------------------
+# file_write /tmp/temp.txt $tclcode\n
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
