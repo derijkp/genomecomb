@@ -470,6 +470,8 @@ group and column. Supported functions are
 ; count: number of lines (does not need a field argument)
 ; percent: count as percent versus total count in given column
 ; gpercent: count as percent versus total count in given group (row)
+; percentsum(field): sum of field as percent versus total sum in given column
+; gpercentsum(field): sum of field as percent versus total sum in given group (row)
 ; min(field): minimum of all values in the field (for the given group and column)
 ; max(field): maximum
 ; sum(field): sum of values in this field

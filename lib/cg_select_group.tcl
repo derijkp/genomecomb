@@ -1,4 +1,22 @@
-set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct ucount distinct list list sum sum median list q1 list q3 list}
+set typetodoa {
+	max max
+	min min
+	count {} 
+	percent total
+	gpercent gtotal 
+	percentsum {totalsum sum}
+	gpercentsum {gtotalsum sum}
+	avg {avg}
+	stddev {avg m2}
+	stdev {avg m2} 
+	distinct distinct
+	ucount distinct
+	list list 
+	sum sum
+	median list
+	q1 list
+	q3 list
+}
 
 proc select_parse_grouptypes {grouptypelist header} {
 	global typetodoa
@@ -209,6 +227,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 	append colactions \t\t\t\t\t {set resultdatacols($_colname) 1} \n
 	append colactions \t\t\t\t\t {incr resultcount($_groupname,$_colname)} \n
 	foreach {item todo} $todolist {
+		# valuetype=1 if it comes from sampleinfo (and is thus a "fixed" value)
 		foreach {field fieldused valuetype} $item break
 		append colactions \t\t\t\t\t [string_change {set _val {@val@}} [list @val@ $field]] \n
 		if {[inlist $todo total]} {
@@ -216,6 +235,48 @@ proc tsv_select_addaggregatecalc {todolist} {
 		}
 		if {[inlist $todo gtotal]} {
 			append colactions \t\t\t\t\t {incr resultdata($_groupname,gt)} \n
+		}
+		if {[inlist $todo totalsum]} {
+			append colactions {
+					if {![info exists resultdata($_colname,$_val,ts)]} {
+						set resultdata($_colname,$_val,ts) 0.0
+					}
+			}
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						set resultdata($_colname,$_val,ts) [expr {$resultdata($_colname,$_val,ts) + {@val@}}]
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
+					if {[string is double ${@val@}]} {
+						set resultdata($_colname,$_val,ts) [expr {$resultdata($_colname,$_val,ts) + ${@val@}}]
+					}
+				} [list @val@ $fieldused]]
+			}
+		}
+		if {[inlist $todo gtotalsum]} {
+			append colactions {
+					if {![info exists resultdata($_groupname,$_val,gts)]} {
+						set resultdata($_groupname,$_val,gts) 0.0
+					}
+			}
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						set resultdata($_groupname,$_val,gts) [expr {$resultdata($_groupname,$_val,gts) + {@val@}}]
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
+					if {[string is double ${@val@}]} {
+						set resultdata($_groupname,$_val,gts) [expr {$resultdata($_groupname,$_val,gts) + ${@val@}}]
+					}
+				} [list @val@ $fieldused]]
+			}
+		}
+		if {[inlist $todo gtotalsum]} {
 		}
 		if {[inlist $todo max]} {
 			if {$valuetype} {
@@ -358,6 +419,14 @@ proc tsv_select_addaggregateresult {grouptypes header sample} {
 			append calcresults {
 				lappend result [format %.2f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($_groupname,gt) 1]}]]
 			}
+		} elseif {$func eq "percentsum"} {
+			append calcresults [string_change {
+				lappend result [format %.2f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($col,@field@,ts) 1]}]]
+			} [list @field@ $field]]
+		} elseif {$func eq "gpercentsum"} {
+			append calcresults [string_change {
+				lappend result [format %.2f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($_groupname,@field@,gts) 1]}]]
+			} [list @field@ $field]]
 		} elseif {$func eq "max"} {
 			append calcresults [string_change {
 				lappend result [get resultdata($_groupname,$col,@field@,max) ""]
