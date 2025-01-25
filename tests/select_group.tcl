@@ -224,6 +224,33 @@ test select_group {group sample gpercent} {
 chr1	62.50	37.50
 chr2	64.29	35.71}
 
+test select_group {percentsum} {
+	file_write tmp/test.tsv [deindent {
+		group	value
+		a	1
+		a	3
+		b	5
+		b	1
+	}]\n
+	cg select -stack 1 -g group -gc {percentsum(value)} tmp/test.tsv
+} {group	percentsum_value
+a	40.00
+b	60.00}
+
+test select_group {group sample percentsum} {
+	# cg select -stack 1 -overwrite 1 -g chromosome -gc {sample * sequenced v sum(coverage)} data/expected_near-vars1-reg_annot.tsv
+	cg select -stack 1 -overwrite 1 -g chromosome -gc {sample * sequenced v percentsum(coverage)} data/expected_near-vars1-reg_annot.tsv
+} {chromosome	percentsum_coverage-sample1-v	percentsum_coverage-sample2-v
+chr1	27.78	20.11
+chr2	72.22	79.89}
+
+test select_group {group sample gpercentsum} {
+	# cg select -stack 1 -overwrite 1 -g chromosome -gc {sample * sequenced v sum(coverage)} data/expected_near-vars1-reg_annot.tsv
+	cg select -stack 1 -overwrite 1 -g chromosome -gc {sample * sequenced v gpercentsum(coverage)} data/expected_near-vars1-reg_annot.tsv
+} {chromosome	gpercentsum_coverage-sample1-v	gpercentsum_coverage-sample2-v
+chr1	79.41	20.59
+chr2	71.63	28.37}
+
 test select_group {group sample and query} {
 	cg select -overwrite 1 -q {$coverage-sample1 > 2} -g chromosome -gc {sample {} sequenced v count} data/expected_near-vars1-reg_annot.tsv
 } {chromosome	count-sample1-v	count-sample2-v
