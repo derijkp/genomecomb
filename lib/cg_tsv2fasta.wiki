@@ -10,6 +10,10 @@ Converts data in tab-separated format ([[tsv]]) format to fasta format.
 ; **infile**: file to be converted, if not given (or -), uses stdin. File may be compressed.
 ; **outfile**: write results to outfile, if not given, uses stdout
 
+== Options ==
+; -idfield fieldname: field in the tsv to use for the id line in the fasta file (default: will look for fields: id, qname, name)
+; -sequencefield fieldname: field in the tsv that contains the sequence (default: will look for fields: sequence, seq)
+
 == Category ==
 Format Conversion
 
