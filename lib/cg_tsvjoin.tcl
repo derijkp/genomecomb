@@ -90,14 +90,22 @@ proc cg_tsvjoin {args} {
 	} else {
 		set newheader {}
 		foreach field $header1 {
-			lappend newheader ${pre1}$field
+			if {$field in $idfields1} {
+				lappend newheader $field
+			} else {
+				lappend newheader ${pre1}$field
+			}
 		}
 	}
 	if {$pre2 eq ""} {
 		lappend newheader {*}$remain2
 	} else {
 		foreach field $remain2 {
-			lappend newheader ${pre2}$field
+			if {$field in $idfields2} {
+				lappend newheader $field
+			} else {
+				lappend newheader ${pre2}$field
+			}
 		}
 	}
 	if {!$sorted} {
