@@ -240,7 +240,7 @@ proc job_wait_slurm {} {
 	append cmd {#$ -V} \n
 	append cmd {#$ -cwd} \n
 	append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
-	append cmd "exec [job_timecmd $job] $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
+	append cmd "exec [job_timecmd $name] $cgjob(runcmd) \"\$0\" \"\$@\"\n\n"
 	append cmd "job_init -d slurm\n"
 	append cmd [list array set cgjob [array get cgjob]]\n
 	# append cmd [list putsvars wait cgjob(cleanupfiles) cgjob(logfile)]\n
