@@ -295,24 +295,30 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		# get convert data from models file
 		# converta: models that fully match known transcripts (oriname -> dbname)
 		# outputa: all transcripts that must be output separately from known (oriname -> newname)
+		# modelregiona: basic regions for transcripts -> needed for correctly assigning reads to novel transcripts when there are multiple alignment locations
 		unset -nocomplain converta
 		unset -nocomplain outputa
+		unset -nocomplain modelregiona
 		cg_gtf2tsv $mfile $destdir/transcripts_models-$sample.tsv.temp
 		# check for and fix transcript out of gene area error
 		# these were double assignments (one wrong), so wrong ones can be filtered out
 		set f [gzopen $destdir/transcripts_models-$sample.tsv.temp]
 		set header [tsv_open $f]
-		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 11 12 13}]
+		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 11 12 13 7 8}]
 		set o [wgzopen $destdir/transcripts_models-$sample.tsv.temp2]
 		puts $o [join $header \t]
-		while {[gets $f line] != -1} {
-			foreach {c b e s iso g gid} [list_sub [split $line \t] $poss] break
+		while 1 {
+			if {[gets $f line] == -1} break
+			foreach {c b e s iso g gid es ee} [list_sub [split $line \t] $poss] break
 			if {[info exists genebasica($g)]} {
 				foreach {gc gb ge gs} $genebasica($g) break
 				if {$s ne $gs || $c ne $gc || $e < $gb || $b >= $ge} {
 					puts "skipping $iso ($g) because not in gene region $genebasica($g): $line"
 					continue
 				}
+			}
+			if {[regexp ^transcript $iso]} {
+				set modelregiona($iso) [list $chr [lindex [split $es ,] 0] [lindex [split $ee ,] end] $strand]
 			}
 			puts $o $line
 		}
@@ -393,8 +399,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		gets $f
 		while {[gets $f line] != -1} {
 			foreach {read transcript} $line break
+			# only keep novel transcripts that are in the output models (so filter out known, *, and novel not in the output gtf)
+			# replace these with *
 			if {[info exists outputa($transcript)]} {
-				lappend read2isoa($read) $transcript
+				list_addnew read2isoa($read) $transcript
 			}
 		}
 		gzclose $f
@@ -402,7 +410,16 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	#
 	# check which reads have ambiguous mappings (from original read_assignmentsfile)
 	unset -nocomplain ambiga
-	array set ambiga [split [cg select -hc 1 -g read_id $read_assignmentsfile | cg select -q {$count > 1}] \n\t]
+	foreach {read exons count} [cg select -hc 1 -g {read_id * exons *} $read_assignmentsfile] {
+		dict set ambiga($read) $exons $count
+	}
+	foreach read [array names ambiga] {
+		set ra [dict values $ambiga($read)]
+		if {[llength $ra] <= 1 && [lindex $ra 0] <= 1} {
+			unset ambiga($read)
+		}
+	}
+	# foreach r [array names ambiga] {if {[llength $ambiga($r)] > 2} {puts [list set ambiga($r) $ambiga($r)]}}
 
 	#
 	# make read_assignments file
@@ -451,8 +468,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	unset -nocomplain tcounta
 	unset -nocomplain gcounta
 	unset -nocomplain donea
+	unset -nocomplain multirega
 	for {set p 0} {$p <= 100} {incr p} {set pcta($p) 0}
 	convert_isoquant_intron_getgene_init tocheck $genelist
+
 	while 1 {
 		set line [split $line \t]
 		set exons [lindex $line $exonspos]
@@ -480,7 +499,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		set begin [lindex $exonStarts 0]
 		set end [lindex $exonEnds end]
 		set geneid [lindex $line $geneidpos]
-		if {[info exists ambiga($read)]} {set ambig $ambiga($read)} else {set ambig 0}
+		if {[info exists ambiga($read)]} {
+			set temp [dict values $ambiga($read)]
+			set ambig [lindex $temp 0]
+			foreach v [lrange $temp 1 end] {
+				incr ambig $v
+			}
+		} else {
+			set ambig 0
+		}
 		set assignment_type [lindex $line $assignment_typepos]
 		lset line $beginpos $begin
 		lset line $endpos $end
@@ -527,8 +554,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set inconsistency 0
 		}
 		if {[info exists read2isoa($read)]} {
+			# if alternatives have no novel transcripts (because they e.g were not included in the final output),
+			# remove and handle normally
+			if {[lsearch -regexp $read2isoa($read) ^transcript] == -1} {
+				unset read2isoa($read)
+			}
+		}
+		if {[info exists read2isoa($read)]} {
 			if {$assignment_type in "inconsistent unique_minor_difference intergenic" 
-				|| $closest_known ne "."
+				|| $closest_known eq "."
 			} {
 				set knownmatch 0
 			} else {
@@ -538,30 +572,56 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 					set knownmatch 1
 				}
 			}
-			if {!$knownmatch} {
-				if {[info exists donea($read)]} {
+			if {[info exists ambiga($read)]} {
+				if {[info exists multirega($read)]} {
+					# multiple regions in readassignments, already encountered
+				} else {
+					set regions [dict keys $ambiga($read)]
+					if {[llength $regions] > 1} {
+						# multiple regions in readassignments, first encounter: try to find out which novels belong to which region
+						# add isos to regions they overlap
+						# this can still make some errors if we have a multilocal read where >1 are in the same region
+						# overlapped by one iso
+						# can only solve this fully by comparing full read exon structure iso and read
+						# not doing this yet ..
+						foreach iso $read2isoa($read) {
+							foreach {mchr mstart mend mstrand} $modelregiona($iso) break
+							set rpos 0
+							foreach region $regions {
+								set temp [split $region -]
+								set rs [lindex $temp 0]
+								set re [lindex $temp end]
+								if {$rs >= $mstart && $re <= $mend} {
+									dict lappend multirega($read) $region $iso
+								}
+								incr rpos
+							}
+						}
+					}
+				}
+			}
+			if {[info exists donea($exons,$read)]} {
+				if {!$knownmatch} {
+					# skip if already done: all (if more than one) knowns will be replaced by the novel ones
 					if {[gets $f line] == -1} break
 					continue
-				}
-				set modelisos {}
-				set knownisos {}
-				foreach iso $read2isoa($read) {
-					if {![info exists converta($iso)]} {
-						lappend modelisos $iso
-					} else {
-						lappend knownisos $converta($iso)
-					}
-				}
-				if {![llength $modelisos]} {
-					# known hits only (no new model) -> keep original known hits
-					# keep original readassignment if model was scrapped from output
-					if {![info exists outputa($iso)]} {
-						set isos [list $closest_known]
-					} else {
-						set isos [list $converta($iso)]
-					}
-					set inconsistencylist [list $inconsistency]
 				} else {
+					# new ones have been added already, proceed normally, adding this known one
+					set isos [list $closest_known]
+					set inconsistencylist [list $inconsistency]
+				}
+			} elseif {!$knownmatch} {
+				# the readassignment is not a known, or is inconsistent with known -> replace with novel
+				if {[info exists multirega($read)]} {
+					if {[dict exists $multirega($read) $exons]} {
+						set modelisos [dict get $multirega($read) $exons]
+					} else {
+						set modelisos {}
+					}
+				} else {
+					set modelisos $read2isoa($read)
+				}
+				if {[llength $modelisos]} {
 					# we have hits in models: use those, remove known hits (by setting donea)
 					set isos [list_remdup $modelisos]
 					set inconsistencylist [list_fill [llength $isos] 0]
@@ -573,45 +633,33 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 					}
 					lset line $assignment_typepos $assignment_type
 					if {$ambig == 1} {set ambig 0}
-					set ambiga($read) $ambig
+					dict set ambiga($read) $exons $ambig
 					# write only model hits
-					set donea($read) 1
-				}
-			} else {
-				if {[info exists donea($read)]} {
-					# new ones have been added already, proceed normally
+					set donea($exons,$read) 1
+				} else {
+					# not actually a replacement
 					set isos [list $closest_known]
 					set inconsistencylist [list $inconsistency]
-				} else {
-					set modelisos {}
-					set knownisos {}
-					foreach iso $read2isoa($read) {
-						if {![info exists converta($iso)]} {
-							lappend modelisos $iso
-						} else {
-							lappend knownisos $converta($iso)
-						}
-					}
-					if {[llength $modelisos]} {
-						if {$ambig == 0} {set ambig 1}
-						incr ambig [llength $modelisos]
-						set ambiga($read) $ambig
-						lset line $assignment_typepos ambiguous
-						set isos [list $closest_known {*}$modelisos]
-						set inconsistencylist [list $inconsistency]
-						lappend inconsistencylist {*}[list_fill [llength $modelisos] 0]
-					} else {
-						# no model hits -> proceed normally
-						# keep original readassignment if model was scrapped from output
-						if {![info exists outputa($iso)]} {
-							set isos [list $closest_known]
-						} else {
-							set isos [list $converta($iso)]
-						}
-						set inconsistencylist [list $inconsistency]
-					}
-					set donea($read) 1
 				}
+			} else {
+				# the readassignment is known -> add novel ones to readassignment
+				if {[info exists multirega($read)]} {
+					if {[dict exists $multirega($read) $exons]} {
+						set modelisos [dict get $multirega($read) $exons]
+					} else {
+						set modelisos {}
+					}
+				} else {
+					set modelisos $read2isoa($read)
+				}
+				if {$ambig == 0} {set ambig 1}
+				incr ambig [llength $modelisos]
+				dict set ambiga($read) $exons $ambig
+				lset line $assignment_typepos ambiguous
+				set isos [list $closest_known {*}$modelisos]
+				set inconsistencylist [list $inconsistency]
+				lappend inconsistencylist {*}[list_fill [llength $modelisos] 0]
+				set donea($exons,$read) 1
 			}
 		} else {
 			set isos [list $closest_known]
@@ -688,6 +736,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 		if {[gets $f line] == -1} break
 	}
+
 	gzclose $o
 	gzclose $f
 	cg select -overwrite 1 -s - $temptarget ${temptarget}2.zst
