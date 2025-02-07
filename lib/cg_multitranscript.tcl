@@ -45,6 +45,9 @@ proc multitranscript_open {isoformfiles aVar} {
 		set a(h,$fnum) $header
 		set a(id,$fnum) $poss
 		set a(data,$fnum) [list_find -glob $header *-*]
+		if {![llength $a(data,$fnum)]} {
+			set a(data,$fnum) [list_find -glob $header *count*]
+		}
 		set a(empty,$fnum) [list_fill [llength $a(data,$fnum)] 0.0]
 		set a(status,$fnum) [gets $a(f,$fnum) a(curline,$fnum)]
 		set a(curline,$fnum) [split $a(curline,$fnum) \t]
@@ -70,8 +73,15 @@ proc multitranscript_open {isoformfiles aVar} {
 	lappend header {*}$common
 	set fnum -1
 	foreach file $isoformfiles {
+		set root [file_rootname $file]
 		incr fnum
-		lappend header {*}[list_sub $a(h,$fnum) $a(data,$fnum)]
+		foreach field [list_sub $a(h,$fnum) $a(data,$fnum)] {
+			if {![regexp -- -${root}\$ $field]} {
+				lappend header $field-$root
+			} else {
+				lappend header $field
+			}
+		}
 	}
 	return $header
 }
