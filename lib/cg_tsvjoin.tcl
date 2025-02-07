@@ -139,18 +139,18 @@ proc cg_tsvjoin {args} {
 	while 1 {
 		# putsvars previd1 prevline1 id1 line1
 		# putsvars previd2 prevline2 id2 line2
-		set c [nat_compare $id1 $id2]
+		set c [loc_compare $id1 $id2]
 		if {$c == 0} {
 			puts $o [join $line1 \t]\t[join [list_sub $line2 -exclude $poss2] \t]
 			set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
 			set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
 			if {$r1 == -1 || $r2 == -1} break
 			while 1 {
-				if {[nat_compare $previd1 $id2] == 0} {
+				if {[loc_compare $previd1 $id2] == 0} {
 					puts $o [join $prevline1 \t]\t[join [list_sub $line2 -exclude $poss2] \t]
 					set r2 [cg_tsvjoin_next $file2 $f2 $idfields2 $poss2 previd2 prevline2 id2 line2]
 					if {$r2 < -1} break
-				} elseif {[nat_compare $id1 $previd2] == 0} {
+				} elseif {[loc_compare $id1 $previd2] == 0} {
 					puts $o [join $line1 \t]\t[join [list_sub $prevline2 -exclude $poss2] \t]
 					set r1 [cg_tsvjoin_next $file1 $f1 $idfields2 $poss1 previd1 prevline1 id1 line1]
 					if {$r1 < -1} break
