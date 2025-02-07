@@ -46,7 +46,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 	} else {
 		set root ${isocaller}-$exproot
 	}
-	set isoformfiles [bsort [jobglob -checkcompressed 1 samples/*/isoform_counts-${isocaller}-*.tsv]]	
+	set isoformfiles [bsort [jobgzfiles samples/*/isoform_counts-${isocaller}-*.tsv]]
 	if {[llength $isoformfiles]} {
 		job iso_compar-isoform_counts-$root \
 		-deps $isoformfiles \
@@ -56,10 +56,10 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 			isoformfiles exproot root isocaller iso_match
 		} -code {
 			set isoformcounts compar/isoform_counts-$root.tsv
-			cg multitranscript -match $iso_match $isoformcounts {*}$isoformfiles
+			cg_multitranscript -match $iso_match $isoformcounts {*}$isoformfiles
 		}
 	}
-	set genefiles [bsort [jobglob -checkcompressed 1 samples/*/gene_counts-${isocaller}-*.tsv]]
+	set genefiles [bsort [jobgzfiles samples/*/gene_counts-${isocaller}-*.tsv]]
 	if {[llength $genefiles]} {
 		job iso_compar-gene_counts-$root \
 		-deps $genefiles \
@@ -72,7 +72,7 @@ proc iso_combine_job {projectdir isocaller {iso_match {}}} {
 			cg_multigene $genecounts {*}$genefiles
 		}
 	}
-	set totalcountsfiles [bsort [jobglob -checkcompressed 1 samples/*/totalcounts-${isocaller}-*.tsv]]
+	set totalcountsfiles [bsort [jobgzfiles samples/*/totalcounts-${isocaller}-*.tsv]]
 	if {[llength $totalcountsfiles]} {
 		job iso_compar-totalcounts-$root \
 		-deps $totalcountsfiles \
