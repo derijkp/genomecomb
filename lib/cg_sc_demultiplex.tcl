@@ -20,6 +20,43 @@ proc sc_demultiplex_read_dmfile {dmfile dmaVar} {
 	gzclose $f
 }
 
+proc sc2bulk {scgenefile target} {
+	set f [gzopen $scgenefile]
+	set header [tsv_open $f]
+	set countposs [list_find -regexp $header count]
+	set cellpos [lindex [list_remove [list_cor $header {cell cellbarcode barcode}] -1] 0]
+	set rmposs [list $cellpos {*}$countposs]
+	set o [wgzopen $target]
+	puts $o [join [list {*}[list_sub $header -exclude $rmposs] {*}[list_sub $header $countposs]] \t]
+	set previd {}
+	set ::tcl_precision 2
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		set id [list_sub $line -exclude $rmposs]
+		if {$id ne $previd} {
+			if {$previd ne ""} {
+#				set out [join $previd \t]
+#				foreach v $counts {
+#					append out \t[format %.2f $v]
+#				}
+#				puts $o $out
+				puts $o [join $previd \t]\t[join $counts \t]
+			}
+			set counts [list_sub $line $countposs]
+			set previd $id
+		} else {
+			set newcounts {}
+			foreach pv $counts v [list_sub $line $countposs] {
+				lappend newcounts [expr {$pv+$v}]
+			}
+			set counts $newcounts
+		}
+	}
+	set ::tcl_precision 0
+	gzclose $f
+	gzclose $o
+}
+
 proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 	upvar job_logdir job_logdir
 	set sampledir [file_absolute $sampledir]
@@ -41,7 +78,7 @@ proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 	}
 
 	set dmsamples [array names dest]
-	set files [gzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
+	set files [jobgzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
 		$sampledir/sc_cellinfo_*.tsv $sampledir/sc_group*.tsv \
 		$sampledir/read_assignments-isoquant_sc-*.tsv $sampledir/map-*.bam $sampledir/map-*.cram]
 	foreach file $files {
@@ -116,25 +153,38 @@ proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 			}
 		}
 	}
+	# pre
 	foreach dmsample $dmsamples {
-		set destsample [file tail $dest($dmsample)]
-		set destfile $dest($dmsample)/$pre-$destsample$fullext
-		lappend targets $destfile
 		set sampledir $dest($dmsample)
 		set isocallers {}
-		foreach scgenefile [bsort [jobglob $sampledir/sc_gene_counts_filtered-*.tsv]] {
+		foreach scgenefile [bsort [jobgzfiles $sampledir/sc_gene_counts_filtered-*.tsv]] {
 			lappend isocallers [lindex [split [file tail $scgenefile] -] 1]
 		}
 		set isocallers [list_remdup $isocallers]
 		set sc_celltypers {}
-		foreach groupfile [bsort [jobglob $sampledir/sc_group-*.tsv]] {
+		foreach groupfile [bsort [jobgzfiles $sampledir/sc_group-*.tsv]] {
 			lappend sc_celltypers [lindex [split [file tail $groupfile] -] 1]
 		}
 		set sc_celltypers [list_remdup $sc_celltypers]
 		foreach isocaller $isocallers {
+			set scgenefile [jobgzfile $sampledir/sc_gene_counts_raw-$isocaller-*.tsv $sampledir/sc_gene_counts_filtered-$isocaller-*.tsv]
+			set scisoformfile [jobgzfile $sampledir/sc_isoform_counts_raw-$isocaller-*.tsv $sampledir/sc_isoform_counts_filtered-$isocaller-*.tsv]
+			set tail [file tail $scgenefile]
+			if {![regsub {^sc_gene_counts_[^-]+-} $tail gene_counts- tail]} {
+				regsub {^sc_} $tail {} tail
+			}
+			set target $sampledir/$tail
+			sc2bulk $scgenefile $target
+			set tail [file tail $scisoformfile]
+			if {![regsub {^sc_isoform_counts_[^-]+-} $tail isoform_counts- tail]} {
+				regsub {^sc_} $tail {} tail
+			}
+			set target $sampledir/$tail
+			sc2bulk $scisoformfile $target
+
+			set scgenefile [jobgzfile $sampledir/sc_gene_counts_filtered-$isocaller-*.tsv]
+			set scisoformfile [jobgzfile $sampledir/sc_isoform_counts_filtered-$isocaller-*.tsv]
 			foreach sc_celltyper $sc_celltypers {
-				set scgenefile [gzfile $sampledir/sc_gene_counts_filtered-$isocaller-*.tsv]
-				set scisoformfile [gzfile $sampledir/sc_isoform_counts_filtered-$isocaller-*.tsv]
 				set groupfile [gzfile $sampledir/sc_group-$sc_celltyper-$isocaller-*.tsv]
 				sc_pseudobulk_job $scgenefile $scisoformfile $groupfile
 			}
