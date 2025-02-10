@@ -334,6 +334,8 @@ proc var_clair3_job {args} {
 		if {$model eq ""} {
 			set sampledir [file dir $dep]
 			set usemodel [var_clair3_find_model $sampledir]
+		} else {
+			set usemodel $model
 		}
 		if {[file exists $usemodel]} {
 			set usemodel [file_absolute $usemodel]
@@ -343,7 +345,7 @@ proc var_clair3_job {args} {
 			if {![file exists $clairdir/models/$usemodel]} {
 				error "model does not exists: $clairdir/models/$usemodel"
 			}
-			set model $clairdir/models/$usemodel
+			set usemodel $clairdir/models/$usemodel
 		}
 		analysisinfo_write $dep $varfile \
 			analysis $root sample $root \
@@ -369,6 +371,9 @@ proc var_clair3_job {args} {
 				lappend opts --bed_fn=$tempbed
 			}
 			putslog "Running clair3"
+			if {![file exists $usemodel]} {
+				error "model not found: $usemodel"
+			}
 			set result [catch_exec run_clair3.sh {*}$opts \
 				--include_all_ctgs \
 				--threads $threads \

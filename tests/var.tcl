@@ -658,7 +658,7 @@ test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3
 	make_smallgiabonttest $::smalltestdir/tmp/clair3
-	cg var_clair3 {*}$::dopts -platform ont -model ont \
+	cg var_clair3 {*}$::dopts -platform ont -model r941_prom_hac_g360+g422 \
 		tmp/clair3/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3/compar.tsv
 	cg multicompar -reannot 1 tmp/clair3/compar.tsv \
@@ -699,7 +699,7 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 	make_smallgiabonttest $::smalltestdir/tmp/clair3_var
 	cg var -method clair3 \
 		-distrreg x5000000 \
-		{*}$::dopts -platform ont -model ont \
+		{*}$::dopts -platform ont -model r941_prom_hac_g360+g422 \
 		tmp/clair3_var/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3_var/compar.tsv
 	cg multicompar -reannot 1 tmp/clair3_var/compar.tsv \
