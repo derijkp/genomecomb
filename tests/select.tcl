@@ -374,6 +374,21 @@ test select "-hc with chars that must be escaped$dboptt" {
 	exec diff tmp/out.tsv tmp/expected.tsv
 } {}
 
+test select "-hc on empty compressed file$dboptt" {
+	global dbopt
+	write_tab tmp/temp.tsv {
+		{# a comment with ;}
+		#a b c
+	}
+	cg gzip tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		{# a comment with ;}
+		b c
+	}
+	exec cg select {*}$dbopt -overwrite 1 -hc 1 -f {b c} tmp/temp.tsv.gz tmp/out.tsv
+	exec diff tmp/out.tsv tmp/expected.tsv
+} {}
+
 test select "-hf$dboptt" {
 	global dbopt
 	write_tab tmp/temp_header.tsv {

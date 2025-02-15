@@ -1283,7 +1283,9 @@ proc tsv_skipcomments {f} {
 proc tsv_hcheader {f keepcommentsVar headerVar} {
 	upvar $keepcommentsVar keepcomments
 	upvar $headerVar header
-	if {$f eq "stdin" || [catch {
+	if {[eof $f] && ![llength $header]} {
+		# empty file, no need to rollback for getting dataline
+	} elseif {$f eq "stdin" || [catch {
 		# this does not work on a stream
 		if {[info exists ::keepfpos($f)]} {
 			seek $f $::keepfpos($f) start
