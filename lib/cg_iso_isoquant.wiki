@@ -55,19 +55,21 @@ Possible options are
 ** a number preceded by an g: distribution into regions targeting the given size, but breaks can only occur in large (>=200000 bases) regions without known genes
 ** g: distribution into regions as given in the <refdir>/extra/reg_*_distrg.tsv file; if this does not exist uses g5000000
 ** a file name: the regions in the file will be used for distribution
-; -refseq:
-; -reftranscripts:
-; -transcript_quantification:
-; -gene_quantification:
-; -data_type:
-; -splice_correction_strategy:
-; -model_construction_strategy:
-; -matching_strategy:
-; -threads:
-; -skip:
-; -regions:
-; -skipregions:
-; -cleanup:
+; -addumis 0/1: if 1, add umicount fileds to the result tables. 
+The reads in the bam file must have umi info incorporated in te read_id (as umi#readname)
+; -refseq file:
+; -reftranscripts file:
+; -transcript_quantification string:
+; -gene_quantification string:
+; -data_type string:
+; -splice_correction_strategy string:
+; -model_construction_strategy string:
+; -matching_strategy string:
+; -threads number:
+; -skip list:
+; -regions list:
+; -skipregions list:
+; -cleanup 0/1:
 
 
 == Results ==
@@ -105,7 +107,7 @@ not counted for an isoform)
 ; closest_known: 
 ; cellbarcode: 
 ; umi: 
-; umicount: 
+; umicount: number of reads with the same umi (and barcode)
 
 
 == Category ==

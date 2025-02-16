@@ -85,6 +85,22 @@ proc convert_isoquant_add {varVar {count 1}} {
 	}
 }
 
+proc iso_isoquant_add_gcounts {gcountaVar dgeneisos gene gambigcount} {
+	upvar $gcountaVar gcounta
+	if {[llength $dgeneisos]} {
+		if {![info exists gcounta($gene,w)]} {
+			set gcounta($gene,w) $gambigcount
+		} else {
+			set gcounta($gene,w) [expr {$gcounta($gene,w) + $gambigcount}]
+		}
+	}
+	if {![info exists gcounta($gene,i)]} {
+		set gcounta($gene,i) $gambigcount
+	} else {
+		set gcounta($gene,i) [expr {$gcounta($gene,i) + $gambigcount}]
+	}
+}
+
 proc iso_isoquant_add_tcounts {tcountaVar iso assignment_type ambiguity polya covered_pct strictpct ambigcount {count 1}} {
 	upvar $tcountaVar tcounta
 	convert_isoquant_add tcounta($iso,t) $ambigcount
@@ -921,7 +937,7 @@ proc iso_isoquant_mergeresults_old_monmerge {isofiles genefiles readfiles strict
 	file rename -force totalcounts-${root}.tsv.temp totalcounts-${root}.tsv
 }
 
-proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample root {analysisname isoquant}} {
+proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample root {analysisname isoquant} {addumis 0}} {
 	set tempreads [tempfile].tsv.zst
 	set tempreads2 [tempfile].tsv.zst
 	# set tempreads temp_sort_read_assignments-${root}.tsv.zst
@@ -937,6 +953,8 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	# also write readassignment with added gambiguity in $tempreads2, to be sorted later
 	unset -nocomplain tcounta
 	unset -nocomplain gcounta
+	unset -nocomplain utcounta
+	unset -nocomplain ugcounta
 	catch {close $f} ; catch {close $o}
 	set f [gzopen $tempreads]
 	set header [tsv_open $f comment]
@@ -949,10 +967,13 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set isopos [lsearch $header isoform_id]
 	set genepos [lsearch $header gene_id]
 	set ambpos [lsearch $header ambiguity]
+	set umicountpos [lsearch $header umicount]
 	set pctpos [lsearch $header covered_pct]
 	set o [wgzopen $tempreads2]
 	puts $o $comment[join $header \t]\tgambiguity
-	set prevread {}
+	set prevgrouper {}
+	set prevumi {}
+	unset -nocomplain todoa
 	set todo {}
 	set read 0
 	set nr 0
@@ -960,6 +981,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	#catch {close $odbg}
 	# set odbg [open ~/tmp/genedebug.tsv w]
 	# puts $odbg [join [list read_id gene gambigcount wcount icount dgenes dgeneisos genes] \t]
+	set umi {}
 	while 1 {
 		incr nr
 		if {![expr $nr%1000000]} {puts $nr}
@@ -967,144 +989,155 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		set read [gets $f line]
 		set line [split $line \t]
 		set read_id [lindex $line $readpos]
-		# not merging and filtering/counting based on umi (yet)
-		# set fullread [lindex $line $readpos]
-		# if {![regsub {#.*$} $fullread {} read_id]} {set read_id $fullread}
 		if {$read_id eq ""} continue
-		if {$read_id ne $prevread} {
-			set remtodo {}
-			set ambiguity [llength $todo]
-			if {$ambiguity == 1} {
-				set ambigcount 1
-				set gambigcount 1
-				set gambiguity 1
-				set genes [list_subindex $todo $genepos]
-				set isos [list_subindex $todo $isopos]
-				set inconsistency [lindex $todo 0 $inconsistencypos]
-				set ca([lindex $genes 0]) {1 1}
-			} elseif {$ambiguity > 1} {
-				set genes [list_subindex $todo $genepos]
-				set isos [list_subindex $todo $isopos]
-				set dgenes [list_remdup $genes]
-				if {[llength $dgenes] > 1} {
-					# filter out shorter alignments
-					set sizes [list_subindex $todo $sizepos]
-					set dsizes [list_remdup $sizes]
-					if {[llength $dsizes] > 1} {
-						set cutoff [expr {[lmath_max $dsizes]-100}]
-						set temp {}
-						foreach tline $todo {
-							set size [lindex $tline $sizepos]
-							if {$size >= $cutoff} {
-								lappend temp $tline
-							} else {
-								lappend remtodo $tline
+		if {$addumis} {
+			if {[regexp {^([A-ZA-Z_]+)#(.*)$} $read_id temp umi r]} {
+				set grouper $umi
+			} else {
+				set grouper $read_id
+			}
+		} else {
+			set grouper $read_id
+		}
+		if {$grouper ne $prevgrouper} {
+			set reads [array names todoa]
+			set umicount [llength $reads]
+			foreach read $reads {
+				set todo $todoa($read)
+				set remtodo {}
+				set ambiguity [llength $todo]
+				if {$ambiguity == 1} {
+					set ambigcount 1
+					set gambigcount 1
+					set gambiguity 1
+					set genes [list_subindex $todo $genepos]
+					set isos [list_subindex $todo $isopos]
+					set inconsistency [lindex $todo 0 $inconsistencypos]
+					set ca([lindex $genes 0]) {1 1}
+				} elseif {$ambiguity > 1} {
+					set genes [list_subindex $todo $genepos]
+					set isos [list_subindex $todo $isopos]
+					set dgenes [list_remdup $genes]
+					if {[llength $dgenes] > 1} {
+						# filter out shorter alignments
+						set sizes [list_subindex $todo $sizepos]
+						set dsizes [list_remdup $sizes]
+						if {[llength $dsizes] > 1} {
+							set cutoff [expr {[lmath_max $dsizes]-100}]
+							set temp {}
+							foreach tline $todo {
+								set size [lindex $tline $sizepos]
+								if {$size >= $cutoff} {
+									lappend temp $tline
+								} else {
+									lappend remtodo $tline
+								}
+							}
+							set todo $temp
+							set genes [list_subindex $todo $genepos]
+							set isos [list_subindex $todo $isopos]
+						}
+						if {[llength $todo] > 1} {
+							# filter out none-gene if there are gene
+							set nogene [list_find $genes .]
+							if {[llength $nogene] > 0 && [llength $nogene] < [llength $todo]} {
+								lappend remtodo {*}[list_sub $todo $nogene]
+								set todo [list_sub $todo -exclude $nogene]
+								set genes [list_subindex $todo $genepos]
+								set isos [list_subindex $todo $isopos]
 							}
 						}
-						set todo $temp
-						set genes [list_subindex $todo $genepos]
-						set isos [list_subindex $todo $isopos]
 					}
 					if {[llength $todo] > 1} {
-						# filter out none-gene if there are gene
-						set nogene [list_find $genes .]
-						if {[llength $nogene] > 0 && [llength $nogene] < [llength $todo]} {
-							lappend remtodo {*}[list_sub $todo $nogene]
-							set todo [list_sub $todo -exclude $nogene]
+						# filter out non-transcript if there are transcript
+						set transcripts [list_subindex $todo $transcriptpos]
+						set notranscript [list_find $transcripts .]
+						if {[llength $notranscript] > 0 && [llength $notranscript] < [llength $todo]} {
+							lappend remtodo {*}[list_sub $todo $notranscript]
+							set todo [list_sub $todo -exclude $notranscript]
 							set genes [list_subindex $todo $genepos]
 							set isos [list_subindex $todo $isopos]
 						}
 					}
-				}
-				if {[llength $todo] > 1} {
-					# filter out none-transcript if there are transcript
-					set transcripts [list_subindex $todo $transcriptpos]
-					set notranscript [list_find $transcripts .]
-					if {[llength $notranscript] > 0 && [llength $notranscript] < [llength $todo]} {
-						lappend remtodo {*}[list_sub $todo $notranscript]
-						set todo [list_sub $todo -exclude $notranscript]
-						set genes [list_subindex $todo $genepos]
-						set isos [list_subindex $todo $isopos]
+					if {[llength $todo] > 1} {
+						# filter out inconsistent (if there are more consistent)
+						set incs [list_subindex $todo $inconsistencypos]
+						set incs [lsort -integer [list_remdup $incs]]
+						set inconsistency [lindex $incs 0]
+						if {[llength $incs] > 1 && [llength [list_remove $incs 0 1]]} {
+							if {$inconsistency == 0} {set set {0 1}} else {set set [list $inconsistency]}
+							set temp {}
+							foreach l $todo {
+								set linc [lindex $l $inconsistencypos]
+								if {$linc in $set} {
+									lappend temp $l
+								}
+							}
+							set todo $temp
+							set ambiguity [llength $todo]
+							set genes [list_subindex $todo $genepos]
+							set isos [list_subindex $todo $isopos]
+						}
 					}
+					set ambiguity [llength $todo]
+					unset -nocomplain ca
+					set dgenes [list_remdup $genes]
+					foreach gene $dgenes {
+						set ambiguity [llength [list_find $genes $gene]]
+						set ambigcount [expr {1.0/$ambiguity}]
+						set ca($gene) [list $ambiguity $ambigcount]
+					}
+					set gambiguity [llength $dgenes]
+					set gambigcount [expr {1.0/$gambiguity}]
 				}
-				if {[llength $todo] > 1} {
-					# filter out inconsistent (if there are more consistent)
-					set incs [list_subindex $todo $inconsistencypos]
-					set incs [lsort -integer [list_remdup $incs]]
-					set inconsistency [lindex $incs 0]
-					if {[llength $incs] > 1 && [llength [list_remove $incs 0 1]]} {
-						if {$inconsistency == 0} {set set {0 1}} else {set set [list $inconsistency]}
-						set temp {}
-						foreach l $todo {
-							set linc [lindex $l $inconsistencypos]
-							if {$linc in $set} {
-								lappend temp $l
+				if {[llength $todo]} {
+					set dgenes [list_remdup $genes]
+					foreach gene $dgenes {
+						set dgeneisos [list_remdup [list_remove [list_sub $isos [list_find $genes $gene]] .]]
+						iso_isoquant_add_gcounts gcounta $dgeneisos $gene $gambigcount
+						if {$addumis} {
+							iso_isoquant_add_gcounts ugcounta $dgeneisos $gene [expr {$gambigcount/$umicount}]
+						}
+						# puts $odbg [join [list $read_id $gene $gambigcount [get gcounta($gene,w) 0] [get gcounta($gene,i) 0] $dgenes $dgeneisos $genes] \t]
+						# flush $odbg
+					}
+					foreach l $todo {
+						# add gamibiguity and write to (temp) read_assignments
+						set gene [lindex $l $genepos]
+						foreach {ambiguity ambigcount} $ca($gene) break
+						lset l $ambpos $ambiguity
+						lset l $umicountpos $umicount
+						lappend l $gambiguity
+						puts $o [join $l \t]
+						# count
+						foreach {assignment_type iso covered_pct polya inconsistency} [list_sub $l $poss] break
+						if {$inconsistency < 2 && $iso ne "."} {
+							iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount
+							if {$addumis} {
+								iso_isoquant_add_tcounts utcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct [expr {$ambigcount/$umicount}]
 							}
 						}
-						set todo $temp
-						set ambiguity [llength $todo]
-						set genes [list_subindex $todo $genepos]
-						set isos [list_subindex $todo $isopos]
 					}
 				}
-				set ambiguity [llength $todo]
-				unset -nocomplain ca
-				set dgenes [list_remdup $genes]
-				foreach gene $dgenes {
-					set ambiguity [llength [list_find $genes $gene]]
-					set ambigcount [expr {1.0/$ambiguity}]
-					set ca($gene) [list $ambiguity $ambigcount]
-				}
-				set gambiguity [llength $dgenes]
-				set gambigcount [expr {1.0/$gambiguity}]
-			}
-			if {[llength $todo]} {
-				set dgenes [list_remdup $genes]
-				foreach gene $dgenes {
-					set dgeneisos [list_remdup [list_remove [list_sub $isos [list_find $genes $gene]] .]]
-					if {[llength $dgeneisos]} {
-						if {![info exists gcounta($gene,w)]} {
-							set gcounta($gene,w) $gambigcount
-						} else {
-							set gcounta($gene,w) [expr {$gcounta($gene,w) + $gambigcount}]
-						}
-					}
-					if {![info exists gcounta($gene,i)]} {
-						set gcounta($gene,i) $gambigcount
-					} else {
-						set gcounta($gene,i) [expr {$gcounta($gene,i) + $gambigcount}]
-					}
-					# puts $odbg [join [list $read_id $gene $gambigcount [get gcounta($gene,w) 0] [get gcounta($gene,i) 0] $dgenes $dgeneisos $genes] \t]
-					# flush $odbg
-				}
-				foreach l $todo {
-					# add gamibiguity and write to (temp) read_assignments
-					set gene [lindex $l $genepos]
-					foreach {ambiguity ambigcount} $ca($gene) break
-					lset l $ambpos $ambiguity
-					lappend l $gambiguity
+				# add "removed" hits (because there are better, e.g. non-transcript if there are transcript matches) 
+				# with ambiguity and gambiguity set to 0
+				foreach l $remtodo {
+					lset l $ambpos 0
+					lset l $umicountpos $umicount
+					lappend l 0
 					puts $o [join $l \t]
-					# count
-					foreach {assignment_type iso covered_pct polya inconsistency} [list_sub $l $poss] break
-					if {$inconsistency < 2 && $iso ne "."} {
-						iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount
-					}
 				}
 			}
-			# add "removed" hits with ambiguity and gambiguity set to 0
-			foreach l $remtodo {
-				lset l $ambpos 0
-				lappend l 0
-				puts $o [join $l \t]
-			}
-			set todo {}
-			set prevread $read_id
+			# set todo {}
+			# set prevread $read_id
+			unset -nocomplain todoa
+			set prevgrouper $grouper
 		}
-		lappend todo $line
+		lappend todoa($read_id) $line
 	}
-	# close $odbg
 
 	close $o
+
 	putslog "write (bulk) isoform_counts -> isoform_counts-${root}.tsv"
 	# write (bulk) isoform_counts
 	set o [open isoform_counts-${root}.tsv.temp w]
@@ -1118,7 +1151,13 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			break
 		}
 	}
-	puts $o $comments[join $header \t]
+	if {$addumis} {
+		set temp [lrange $header end-5 end]
+		set temp [list_regsub ^ $temp umi]
+		puts $o $comments[join [list {*}$header {*}$temp] \t]
+	} else {
+		puts $o $comments[join $header \t]
+	}
 	unset -nocomplain donea
 	foreach isofile $isofiles {
 		set f [open $isofile]
@@ -1135,8 +1174,11 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			set line [split $line \t]
 			set iso [lindex $line $isopos]
 			if {![info exists tcounta($iso,t)]} continue
-			set t [get tcounta($iso,t) 0]
-			puts $o [join [lrange $line 0 end-6] \t]\t[format %.2f $t]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
+			if {$addumis} {
+				puts $o [join [lrange $line 0 end-6] \t]\t[format %.2f [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]\t[format %.2f [get utcounta($iso,t) 0]]\t[get utcounta($iso,u) 0]\t[get utcounta($iso,s) 0]\t[format %.2f [get utcounta($iso,a) 0]]\t[get utcounta($iso,au) 0]\t[get utcounta($iso,as) 0]
+			} else {
+				puts $o [join [lrange $line 0 end-6] \t]\t[format %.2f [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
+			}
 		}
 		close $f
 	}
@@ -1151,7 +1193,11 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set f [open [lindex $genefiles 0]]
 	set header [tsv_open $f comments]
 	close $f
-	puts $o $comments[join $header \t]\tnicounts-$root
+	if {$addumis} {
+		puts $o $comments[join $header \t]\tnicounts-$root\tumicounts-$root\tuminicounts-$root
+	} else {
+		puts $o $comments[join $header \t]\tnicounts-$root
+	}
 	unset -nocomplain donea
 	foreach genefile $genefiles {
 		set f [open $genefile]
@@ -1164,7 +1210,11 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			set line [split $line \t]
 			set gene [lindex $line $genepos]
 			if {![info exists gcounta($gene,w)] && ![info exists gcounta($gene,i)]} continue
-			puts $o [join [lrange $line 0 end-1] \t]\t[format %.2f [get gcounta($gene,i) 0]]\t[format %.2f [get gcounta($gene,w) 0]]
+			if {$addumis} {
+				puts $o [join [lrange $line 0 end-1] \t]\t[format %.2f [get gcounta($gene,i) 0]]\t[format %.2f [get gcounta($gene,w) 0]]\t[format %.2f [get ugcounta($gene,i) 0]]\t[format %.2f [get ugcounta($gene,w) 0]]
+			} else {
+				puts $o [join [lrange $line 0 end-1] \t]\t[format %.2f [get gcounta($gene,i) 0]]\t[format %.2f [get gcounta($gene,w) 0]]
+			}
 		}
 		close $f
 	}
@@ -1182,6 +1232,8 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	# totalcounts
 	cg select -overwrite 1 -g all -gc {sum(count*-*)} isoform_counts-${root}.tsv | cg select -rf all > totalcounts-${root}.tsv.temp
 	file rename -force totalcounts-${root}.tsv.temp totalcounts-${root}.tsv
+	cg select -overwrite 1 -g all -gc {sum(umicount*-*)} isoform_counts-${root}.tsv | cg select -rf all > totalumicounts-${root}.tsv.temp
+	file rename -force totalumicounts-${root}.tsv.temp totalumicounts-${root}.tsv
 }
 
 proc iso_isoquant_sc_ambigcount {ambiguity gambiguity umicount} {
@@ -1470,6 +1522,7 @@ proc iso_isoquant_job {args} {
 	set skipregions {}
 	set options {}
 	set singlecell 0
+	set addumis 0
 	cg_options iso_isoquant args {
 		-preset {
 			set preset $value
@@ -1510,6 +1563,9 @@ proc iso_isoquant_job {args} {
 			} else {
 				set analysisname isoquant_$preset
 			}
+		}
+		-addumis {
+			set addumis $value
 		}
 		-refseq {
 			set refseq $value
@@ -1772,12 +1828,12 @@ proc iso_isoquant_job {args} {
 		totalcounts-${root}.tsv
 	} -vars {
 		isofiles genefiles readfiles sample refseq regdir region reftranscripts genedb root analysisname
-		strictpct workdir singlecell resultfile skipregions
+		strictpct workdir singlecell resultfile skipregions addumis
 	} -code {
 		analysisinfo_write [lindex $isofiles 0] $resultfile isocaller_skipregions $skipregions
 		analysisinfo_write [lindex $genefiles 0] gene_counts-${root}.tsv isocaller_skipregions $skipregions
 		analysisinfo_write [lindex $readfiles 0] read_assignments-${root}.tsv isocaller_skipregions $skipregions
-		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname
+		iso_isoquant_mergeresults $isofiles $genefiles $readfiles $strictpct $sample $root $analysisname $addumis
 		cg tsv2gtf $resultfile isoforms-${root}.gtf
 		# if {!$singlecell} {catch {shadow_delete $workdir}}
 	}
