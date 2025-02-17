@@ -70,6 +70,14 @@ proc rm {args} {
 		set args [lrange $args 1 end]
 	}
 	foreach file $args {
+		if {[file isdir $file] && ![catch {file link $file} shadow] && [file exists $shadow/shadow_source]} {
+			file delete -force $shadow
+			if {[catch {file delete -force $shadow} msg]} {
+				if {![regexp "no such file or directory" $msg]} {
+					error "error deleting shadow dir $shadow of file $file: $msg"
+				}
+			}
+		}
 		if {[catch {file delete {*}$opts $file} msg]} {
 			if {![regexp "no such file or directory" $msg]} {
 				error "error deleting file $file: $msg"

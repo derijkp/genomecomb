@@ -41,6 +41,10 @@ To delete a shadow, use
 {{{
 cg shadow_delete dir
 }}}
+or
+{{{
+cg rm dir
+}}}
 shadow_delete will delete both the link and the shadow storage, after
 checking it is actually a shadow dir (It will give an error if the shadow
 dir contains a softlink named shadow_source, which shadow_mkdir makes to

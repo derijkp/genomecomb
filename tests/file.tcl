@@ -36,6 +36,15 @@ test shadow {cg shadow_delete} {
 	lappend result [file exists $shadowdir] [file exists tmp/dir]
 } {*/tmp/dir */tmp/shadow/shadow.*-dir 0 0} match
 
+test shadow {cg rm with shadows} {
+	test_cleantmp
+	cg shadow_mkdir -shadowdir tmp/shadow tmp/dir
+	set shadowdir [glob tmp/shadow/*]
+	set result [bsort [list [file link tmp/dir] [file link $shadowdir/shadow_source]]]
+	cg rm tmp/dir
+	lappend result [file exists $shadowdir] [file exists tmp/dir]
+} {*/tmp/dir */tmp/shadow/shadow.*-dir 0 0} match
+
 test shadow {cg shadow_clean} {
 	test_cleantmp
 	set shadowdir $::testdir/tmp/shadow
