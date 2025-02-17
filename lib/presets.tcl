@@ -75,7 +75,7 @@ proc preset_ontr {} {
 		removeduplicates 0
 		aligners minimap2_splice
 		realign 0
-		varcallers {clair3}
+		varcallers {}
 		svcallers {}
 		methcallers {}
 		counters {}
