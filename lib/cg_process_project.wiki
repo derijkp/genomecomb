@@ -171,6 +171,18 @@ fields in fieldlist (space separated) in the multicompar file. Default is
 to use all fields present in the file (*). All fields will still be used
 in the per sample output.
 
+Following options are available for singlecell or bulk UMI corrected analysis:
+; -singlecell o/1/ontr10x: set to 1 or ontr10x for (scywalker) long read single cell analysis, only supported for isoquant isoform caller
+: -sc_expectedcells number: gives the the number of cells expected.
+: -cellmarkerfile file: A tsv file providing genes that are indicative specific cell cell types.
+; -tissue string: The tissue type of the sample. If cellmarkerfile is given, only markers of the given tissue are used.
+; -sc_whitelist file: (for singlecell) file with all possible correct barcodes. By default the whitelist with the 10x version 3 barcodes is used. You can specify to use version 2 of the whitelist by using the shortcut v2
+; -sc_adaptorseq string: adapter sequence used to find the barcode and UMI. These should follow the given sequence in the reads (default is CTACACGACGCTCTTCCGATCT for singlecell)
+; -sc_barcodesize number: size of the barcode (default 16 for singlecell)
+; -sc_umisize number: size of the UMI (default 12 for singlecell)
+; -addumis 0/1: when 1, add barcode and UMI info to reads for bulk sequencing, in (bulk) isoquant analysis umicounts will be added in the results (barcodes are not used)
+    You can use -sc_adaptorseq, -sc_barcodesize and -sc_umisize to change how barcodes and UMIs are searched (default for -addumis is GATCGGAAGAGCACACGTCTGAACTCCAGTCAC,8,12)
+
 This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)
 The option -distrreg can be used to allow a greater distribution by
