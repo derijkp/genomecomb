@@ -4,6 +4,14 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc tsv_empty {file} {
+	set f [open $file]
+	tsv_open $f
+	set read [gets $f line]
+	close $f
+	if {$read == -1} {return 1} else {return 0}
+}
+
 proc tsv_open {f {commentVar {}} {lineVar {}}} {
 	if {$commentVar ne ""} {
 		upvar $commentVar comment

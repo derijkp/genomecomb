@@ -44,36 +44,8 @@ proc convert_isoquant_reggenedb {reftranscripts samregions refseq regreftranscri
 		cg regselect $reftranscripts $regfile > $regreftranscripts
 	}
 	# if empty
-	set f [open $regreftranscripts]
-	tsv_open $f
-	set read [gets $f line]
-	close $f
-	if {$read == -1} {
-		set header [cg select -h $reftranscripts]
-		catch {close $o}
-		set o [open $regreftranscripts w]
-		puts $o [join $header \t]
-		set line [list_fill [llength $header] {}]
-		set poss [list_sub [tsv_basicfields $header 9 0] {0 1 2 6 7 8}]
-		foreach pos $poss value {chr1 1 2 + 1, 2,} {
-			if {$pos == -1} continue
-			lset line $pos $value
-		}
-		foreach {field value} {
-			name dummy1 gene dummy2 cdsStart 1 cdsEnd 1 exonCount 1 
-			source dummy3 transcript_name dummy4 gene_id dummy5 gene_name dummy6
-			name2 dummyname2
-		} {
-			set pos [lsearch $header $field]
-			if {$pos == -1} continue
-			lset line $pos $value
-		}
-		puts $o [join $line \t]
-		close $o
-	}
 	set genecol [lindex [list_common {gene_id geneid gene} [cg select -h $regreftranscripts]] 0]
 	cg_tsv2gtf -genecol $genecol -addgene 1 $regreftranscripts $reggenedb
-	set tempgenedb [tempfile].db
 }
 
 proc convert_isoquant_add {varVar {count 1}} {
@@ -1727,6 +1699,15 @@ proc iso_isoquant_job {args} {
 				if {$reftranscripts ne "none"} {
 					convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 					set tempgenedb [tempfile].db
+					set emptyref [tsv_empty $reggenedb]
+					if {$emptyref} {
+						set tempfile [tempfile]
+						file_write $tempfile [deindent {
+							name	gene	chromosome	begin	end	strand	exonStarts	exonEnds	exonCount	source	transcript_name	gene_id	gene_name	name2
+							dummyname	dummygene	dummychr	1	1	+	1	1	1	dummysource	dummysource	dummytranscript	dummygene	dummyname2
+						}]\n
+						cg_tsv2gtf -genecol gene_id -addgene 1 $tempfile $reggenedb
+					}
 					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
 					lappend options --genedb $tempgenedb
 				}
