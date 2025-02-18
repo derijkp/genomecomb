@@ -1437,6 +1437,7 @@ proc process_sample_job {args} {
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
+			if {$addumis} {lappend options -addumis $addumis}
 			# validate_iso $isocaller $refseq $reftranscripts $organelles $distrreg
 			iso_${isocaller}_job \
 				-reftranscripts $reftranscripts \

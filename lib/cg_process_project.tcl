@@ -498,6 +498,7 @@ proc process_project_job {args} {
 			-iso_joint $iso_joint \
 			-iso_joint_min $iso_joint_min \
 			-iso_match $iso_match \
+			-addumis $addumis \
 			-threads $threads \
 			-distrreg $distrreg \
 			-dbdir $dbdir \

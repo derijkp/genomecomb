@@ -92,6 +92,7 @@ proc iso_joint_job {args} {
 	set iso_joint {}
 	set iso_joint_min 2
 	set iso_match {}
+	set addumis 0
 	set dbdir {}
 	set threads 2
 	set distrreg 0
@@ -109,6 +110,9 @@ proc iso_joint_job {args} {
 		}
 		-iso_match {
 			set iso_match $value
+		}
+		-addumis {
+			set addumis $value
 		}
 		-threads {
 			set threads $value
@@ -174,6 +178,7 @@ proc iso_joint_job {args} {
 			iso_${baseisocaller}_job \
 				-reftranscripts $ref \
 				{*}$options \
+				-addumis $addumis \
 				-cleanup $cleanup \
 				-distrreg $distrreg -threads $threads \
 				-refseq $refseq \
