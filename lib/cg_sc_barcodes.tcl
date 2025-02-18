@@ -52,7 +52,8 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 			if {[llength $todo] > 1} {
 				# remove hits with lower mapping quality
 				set qs [list_subindex $todo $mqpos]
-				set limitq [expr {[lmath_max $qs]-3}]
+				# set limitq [expr {[lmath_max $qs]-3}]
+				set limitq [lmath_max $qs]
 				set num 0
 				set keep {}
 				foreach q $qs {
