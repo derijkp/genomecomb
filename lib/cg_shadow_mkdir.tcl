@@ -66,6 +66,7 @@ proc cg_shadow_delete {args} {
 # shadow_delete is folded into rm ->
 # cg_rm is mostly the same as cg_shadow_delete (cg_shadow_delete uses -force by default)
 proc cg_rm {args} {
+	set force 0
 	cg_options rm args {
 		-force - -f {set force $value}
 	} {link} 1 ... {
