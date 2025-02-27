@@ -31,10 +31,12 @@ proc tcl::mathfunc::sum args {
 }
 
 proc tcl::mathfunc::median args {
+	if {[llength $args] == 0} {return NaN}
 	::median $args
 }
 
 proc tcl::mathfunc::q1 args {
+	if {[llength $args] == 0} {return NaN}
 	set args [bsort $args]
 	set len [::llength $args]
 	set len [expr {$len/2}]
@@ -49,6 +51,7 @@ proc tcl::mathfunc::q1 args {
 }
 
 proc tcl::mathfunc::q3 args {
+	if {[llength $args] == 0} {return NaN}
 	set args [bsort $args]
 	set len [::llength $args]
 	set len [expr {$len/2}]

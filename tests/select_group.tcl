@@ -968,6 +968,23 @@ test select_group "median" {
 sample1	1.5	3	4.5
 sample2	15.0	30	45.0}
 
+test select_group "median non-numbers" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name v-sample1 v-sample2
+		n1	1	10
+		n2	2	20
+		n3	3	30
+		n4	4	40
+		n4	5	50
+		n4	a	a
+	}
+	exec cg select -overwrite 1 -g sample -gc {q1(v),median(v),q3(v)} tmp/temp.tsv
+} {sample	q1_v	median_v	q3_v
+sample1	1.5	3	4.5
+sample2	15.0	30	45.0}
+
 test select_group "decompose lists" {
 	global dbopt
 	test_cleantmp

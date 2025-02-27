@@ -13,9 +13,9 @@ set typetodoa {
 	ucount distinct
 	list list 
 	sum sum
-	median list
-	q1 list
-	q3 list
+	median numlist
+	q1 numlist
+	q3 numlist
 }
 
 proc select_parse_grouptypes {grouptypelist header} {
@@ -372,6 +372,16 @@ proc tsv_select_addaggregatecalc {todolist} {
 			}
 			append colactions [string_change {
 					lappend resultdata($_groupname,$_colname,$_val,d) @val@
+			} [list @val@ $fieldused]]
+		}
+		if {[inlist $todo numlist]} {
+			if {!$valuetype} {
+				set fieldused \$\{$fieldused\}
+			} elseif {$fieldused eq ""} {
+				set fieldused {{}}
+			}
+			append colactions [string_change {
+					if {[isdouble @val@]} {lappend resultdata($_groupname,$_colname,$_val,d) @val@}
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo sum]} {
