@@ -19,7 +19,7 @@ proc reghisto {regfile} {
 	close $v
 	unset -nocomplain tota
 	set o stdout
-	set names [bsort [array names a]]
+	set names [bsort -sortchromosome [array names a]]
 	foreach name $names {
 		foreach {chr len} [split $name ,] break
 		puts $o $chr\t$len\t$a($name)

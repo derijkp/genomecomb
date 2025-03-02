@@ -18,7 +18,15 @@ The command supports parallel processing using the [[joboptions]]
 
 == Options ==
 ; -refseq file/dir: file or directory containing the reference genome sequence (this option must be given)
-; -handlebam old/keep/rm: what to do with the bam file (old) rename to file.old (is the default), (keep) keep it as is, (rm) delete the bam file after conversion
+; -handlebam old/keep/rm: what to do with the bam files:
+    old: rename to file.old (is the default).
+    keep: keep it as is.
+    rm: delete the bam file after conversion.
+; -links ignore/rename/convert/error: What to do with soft links:
+    rename (default): rename the link and the place it is pointing too, it will not convert the file it is/was pointing to.
+    convert: rename and convert the file pointed to (even if it is outside the directory that is being renamed).
+    ignore: do nothing with it.
+    error: give an error.
 ; -threads number: use **number** of threads for the conversion
 ; -index 0/1: if 1 (default), create the crai index of the cram file
 

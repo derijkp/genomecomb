@@ -76,8 +76,13 @@ proc cg_multigene {args} {
 		} else {
 			set restfields [list_sub $header -exclude [list_remove [list_remdup $poss] -1]]
 			set restposs [list_cor $header $restfields]
+			set root [file_rootname $file]
 			foreach field $restfields {
-				lappend newheader ${field}-[file_rootname $file]
+				if {![regexp -- -${root}\$ $field]} {
+					lappend newheader ${field}-$root
+				} else {
+					lappend newheader ${field}
+				}
 			}
 		}
 		set dummya($num) {}

@@ -21,6 +21,7 @@ from a number of known fields. If the field is unknown, type will be
 String(Z) and desciption empty. You can also specify type and field in the
 list as field:type:description where type is in the sam format (i,Z,..)
 ; -addfield field: add one field to fields; this option can be given multiple times.
+; -refseq refseq: genomic reference sequence (for some cram files)
 
 == Category ==
 Format Conversion

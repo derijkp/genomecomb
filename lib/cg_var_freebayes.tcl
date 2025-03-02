@@ -142,7 +142,7 @@ proc var_freebayes_job {args} {
 					set bedfile [tempbed $regionfile $refseq]
 				} else {
 					set bedfile [tempfile].bed
-					set temp [exec samtools view --no-PG -H $dep]
+					set temp [catch_exec samtools view --no-PG -H $dep]
 					regexp "\tSN:(\[^ \t\]+)\t" $temp temp chr
 					file_write $bedfile $chr\t0\t1\n
 				}

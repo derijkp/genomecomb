@@ -109,7 +109,7 @@ proc sv_npinv_job {args} {
 		if {$region ne ""} {
 			set usebam [scratchfile].bam
 			catch_exec samtools view -h -b -1 $bamfile {*}[samregions $region $refseq] > $usebam
-			exec samtools index $usebam
+			catch_exec samtools index $usebam
 		} else {
 			set usebam $bamfile
 		}

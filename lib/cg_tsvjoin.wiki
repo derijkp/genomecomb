@@ -24,7 +24,8 @@ between the 2 files)
 ; -idfields2 list: which fields identify the object in file2, and should be match the id fields in file1 (default is same fields as for file1)
 ; -pre1 string: prefix all fieldnames (except the idfields) coming from file1 with **string**
 ; -pre2 string: prefix all fieldnames (except the idfields) coming from file2 with **string**
-; -sorted 0/1: tsvjoin will by default () sort the input files properly to do the join, you can use -sorted 1 if the
+; -sorted 0/1: files to be joined must be sorted on the idfields; by default
+   tsvjoin will sort the input files properly to do the join, you can use -sorted 1 if the
    files are already properly sorted (avoiding the extra sort)
 ; -type inner/full/left/right: determines the type of join:
 In an **inner** join only lines are present where the id was found in both files. A **left**

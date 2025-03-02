@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_process_sample</title>
+<title>cg_process_sample</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -221,8 +221,10 @@ option (options given later overrule previous ones).</p>
   only occur in large (&gt;=100000 bases) repeat regions </b> a
   number preceded by an g: distribution into regions targeting the
   given size, but breaks can only occur in large (&gt;=200000 bases)
-  regions without known genes <b> a file name: the regions in the
-  file will be used for distribution</b></dd>
+  regions without known genes <b> g: distribution into regions as
+  given in the &lt;refdir&gt;/extra/reg_*_distrg.tsv file; if this
+  does not exist uses g5000000 </b> a file name: the regions in the
+  file will be used for distribution</dd>
   <dt>-maxfastqdistr maxfastqdistr</dt>
   <dd>if there are more than <b>maxfastqdistr</b> separate input
   fastqs, they will be merged into <b>maxfastqdistr</b> fastqs for
@@ -236,8 +238,8 @@ option (options given later overrule previous ones).</p>
   files (reg_*_amplicons.tsv for ampicons or reg_*_amplicons.tsv for
   exome)</dd>
   <dt>-hap_bam 0/1</dt>
-  <dd>if 1 produce a bam file with haplotype indictions (longshot
-  only) (default 0)</dd>
+  <dd>if 1 produce a bam/cram file with haplotype indications
+  (longshot only) (default 0)</dd>
   <dt>-depth_histo_max number</dt>
   <dd>in reports, count positions with up to <b>number</b> depth
   (default 1000). Larger dfepths will be counted under <b>number</b></dd>
@@ -250,9 +252,9 @@ cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combinfing the results</p>
-<h2 id="h9546">Sample types</h2>
+<h2 id="h9675">Sample types</h2>
 <p>Several types of sample data are supported:</p>
-<h3 id="h9611">(targeted) shotgun sequencing</h3>
+<h3 id="h9740">(targeted) shotgun sequencing</h3>
 <p>For Illumina sequencing the starting raw data for the sample is
 fastq files. These should be in a subdirectory of the sampledir named
 fastq. They can also be in a directory ori in the sampledir, in which
@@ -313,7 +315,7 @@ reg_cluster-strelka-rdsbwa-S0489.tsv</p>
 by the presence of a file named reg_targets.tsv (or matching
 reg_*_targets*.tsv) in the sampledir (or the option -targetfile). If
 present, coverage statistics will be calculated for this region.</p>
-<h3 id="h12544">ONT/nanopore sequencing</h3>
+<h3 id="h12673">ONT/nanopore sequencing</h3>
 <p>For ONT genome/targeted sequencing analysis similar steps are
 performed, but using the ont preset other programs and settings are
 selected, e.g. minimap2 for alignment, clair3 for (small) variant
@@ -324,7 +326,7 @@ fastqs in it per sample, but can also use unaligned bam files (in a
 direcory named ubam). You would typically use ubams instead of fastq
 to include methylation calling data produced by remora/dorado at the
 basecalling step.</p>
-<h3 id="h13191">Amplicon sequencing</h3>
+<h3 id="h13320">Amplicon sequencing</h3>
 <p>Amplicon sequencing samples are indicated by the presence of a
 file named reg_amplicons.tsv (or matching reg_*_amplicons*.tsv) in
 the sampledir. If the option -amplicons is given to the command, a
@@ -362,7 +364,7 @@ the expected amplicons in the bam file. (This is done by replacing
 the sequence by Ns and reducing quality to 0 for these positions)</p>
 <p>Several options use different defaults when amplicon sequencing is
 specified (-removeduplicates 0 -removeskew 0 -dt NONE).</p>
-<h3 id="h14824">Complete Genomics sequencing</h3>
+<h3 id="h14953">Complete Genomics sequencing</h3>
 <p>Complete Genomics source data is already aligned and variant
 called. The region and variant information is converted to a similar
 format as use for (Illumina) shotgun sequencing, with some
@@ -378,20 +380,20 @@ differences:</p>
   <li>CG data can include structural variant (cgsv-sample.tsv) and
   CNV (cgcnv-sample.tsv) calls</li>
 </ul>
-<h3 id="h15448">RNA-seq (rseq)</h3>
+<h3 id="h15577">RNA-seq (rseq)</h3>
 <p>Similar to genome analysis, the source data is either fastqs in a
 directory fastq or unaligned bams in a ubam directory. In addition to
 variant calls, the short read preset (rseq) will also produce a gene
 count matrix using QoRTs (changable to e.g. rnaseqc for human) and
 the ONT preset (ontr) will add isoform predictions and counts to
 this.</p>
-<h3 id="h15815">Precalculated data</h3>
+<h3 id="h15944">Precalculated data</h3>
 <p>The sampledir may contain precalculated data data from other
 pipelines. If these are in the correct format, they will be
 integrated in the project. vcf files (var-*.vcf) in the ori
 subdirectory of the sample will be converted to tsv files, and their
 variants included in the multicompar.</p>
-<h2 id="h16130">Category</h2>
+<h2 id="h16259">Category</h2>
 <p>Process</p>
 </div>
 

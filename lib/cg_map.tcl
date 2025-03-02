@@ -268,7 +268,7 @@ proc map_job {args} {
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
 					set out [tempfile].fastq.gz
-					catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file -o $out
+					catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file -0 $out
 					set file $out
 				}
 				if {!$mergesort || $sort eq "nosort"} {

@@ -88,7 +88,7 @@ proc cg_vcfcat {args} {
 	if {$sort} {
 		# get headersize
 		set headersize [llength $header]
-		append pipe "| gnusort8 --header-lines $headersize --parallel $threads -T \"[scratchdir]\" --buffer-size=500M --compress-program=zstd-mt-1 -t \\t -s -N "
+		append pipe "| gnusort8 --header-lines $headersize --parallel $threads -T \"[scratchdir]\" --buffer-size=500M --compress-program=zstd-mt-1 -t \\t -s --chromosome-sort "
 	}
 	if {[info exist outfile]} {
 		set compress [compresspipe $outfile {} $threads]

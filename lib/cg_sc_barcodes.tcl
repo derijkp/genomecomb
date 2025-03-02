@@ -16,7 +16,16 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
 	set sam [tempfile].sam
 	# set sam $resultfile.sam
-	catch_exec minimap2 -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $fastq > $sam 2>@ stderr
+	if {[file ext $fastq] in ".bam .cram .sam"} {
+		set usefastq [tempfile].fastq.gz
+		catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq | gzip > $usefastq
+		set ubams 1
+	} else {
+		set usefastq $fastq
+		set ubams 0
+	}
+	catch_exec minimap2 -Y -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq > $sam 2>@ stderr
+	if {$ubams} {file delete $usefastq}
 	# cg sam2tsv $sam | cg select -g chromosome
 	# exec ~/dev/genomecomb/bin/sc_getbarcodes adapter $begin 16 10 < $sam > temp
 	catch {close $f} ; catch {close $o}
@@ -26,35 +35,76 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	puts $o [join {id barcode umi start strand polyA} \t]
 	set header [tsv_open $f]
 	set poss [list_cor $header {chromosome begin end strand qname qstart qend cigar seq supplementary}]
+	set qnamepos [lsearch $header qname]
+	set mqpos [lsearch $header mapquality]
+	set strandpos [lsearch $header strand]
+	set qstartpos [lsearch $header qstart]
 	set num 0
+	set todo {}
+	set prevqname {}
 	while 1 {
-		if {[gets $f line] == -1} break
-		set line [split $line \t]
+		if {[gets $f nline] == -1} break
+		set nline [split $nline \t]
 		if {![expr [incr num]%10000]} {puts $num}
-		foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
-		if {$supplementary} continue
-		if {$chromosome eq "*"} {
-			puts $o [join [list $qname {} {} {} {} 0] \t]
-			continue
+		set nqname [lindex $nline $qnamepos]
+		if {$nqname ne $prevqname && [llength $todo]} {
+			# if more than one hit for adapter, select "best" one
+			if {[llength $todo] > 1} {
+				# remove hits with lower mapping quality
+				set qs [list_subindex $todo $mqpos]
+				# set limitq [expr {[lmath_max $qs]-3}]
+				set limitq [lmath_max $qs]
+				set num 0
+				set keep {}
+				foreach q $qs {
+					if {$q >= $limitq} {lappend keep $num}
+					incr num
+				}
+				if {[llength $keep] < [llength $todo]} {
+					set todo [list_sub $todo $keep]
+				}
+			}
+			if {[llength $todo] > 1} {
+				# if still multiple left with similar mapquality, pick the inner one
+				# (for e.g. when adapter/read1 also included in adapters added later, after 10x)
+				# for now ignoring that we can have multiple hits on different strands
+				# set starts [list_subindex $todo $qstartpos]
+				if {[lindex $todo 0 $strandpos] eq "+"} {
+					set line [lindex [lsort -integer -index $qstartpos $todo] end]
+				} else {
+					set line [lindex [lsort -integer -index $qstartpos $todo] 0]
+				}
+			} else {
+				set line [lindex $todo 0]
+			}
+			foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
+			if {$chromosome eq "*"} {
+				puts $o [join [list $qname {} {} {} {} 0] \t]
+			} else {
+				set start $qend
+				if {[regexp H $cigar]} {
+					error "hardclipped sequence in line: [list set line $line]"
+				}
+				set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+				set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
+				# check Ts
+				set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
+				set polya [regexp -all T $post]
+				# if {$polya < 1} {
+				# 	error "not enough Ts in line: [list set line $line]"
+				# }
+				if {![info exists a($barcode)]} {
+					set a($barcode) 1
+				} else {
+					incr a($barcode)
+				}
+				puts $o [join [list $qname $barcode $umi $start $strand $polya] \t]
+			}
+			set todo [list]
 		}
-		set start $qend
-		if {[regexp H $cigar]} {
-			error "hardclipped sequence in line: [list set line $line]"
-		}
-		set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
-		set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
-		# check Ts
-		set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
-		set polya [regexp -all T $post]
-#		if {$polya < 1} {
-#			error "not enough Ts in line: [list set line $line]"
-#		}
-		if {![info exists a($barcode)]} {
-			set a($barcode) 1
-		} else {
-			incr a($barcode)
-		}
-		puts $o [join [list $qname $barcode $umi $start $strand $polya] \t]
+		# if {$supplementary} continue
+		set prevqname $nqname
+		lappend todo $nline
 	}
 	gzclose $o
 	close $f
@@ -159,7 +209,24 @@ proc sc_barcodes_job args {
 		      read name (as @<cellbarcode>_<umi>#originalname) as well as in the info "fields" CB CR and MI
 		* files
 	}
-	if {$whitelist ne ""} {set usewhitelist 1} else {set usewhitelist 0}
+	if {$whitelist ne ""} {
+		if {![file exists $whitelist]} {
+			if {$whitelist in "10Xv3 v3"} {
+				set whitelist $::genomecombdir/whitelists/3M-february-2018.txt.gz
+			} elseif {$whitelist in "10Xv4 v4"} {
+				set whitelist $::genomecombdir/whitelists/3M-3pgex-may-2023.txt.gz
+			} elseif {$whitelist in "10Xp5v3 p5v3"} {
+				set whitelist $::genomecombdir/whitelists/3M-5pgex-jan-2023.txt.gz
+			} elseif {$whitelist in "10Xv2 v2"} {
+				set whitelist $::genomecombdir/whitelists/737K-august-2016.txt.gz
+			} else {
+				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2"
+			}
+		}
+		set usewhitelist 1
+	} else {
+		set usewhitelist 0
+	}
 	# logfile
 	set fastqdir [file_absolute $fastqdir]
 	if {![info exists resultdir]} {set resultdir [file dir $fastqdir]}
@@ -173,7 +240,7 @@ proc sc_barcodes_job args {
 	}
 	job_logfile $resultdir/sc_barcodes_[file tail $resultdir] $resultdir $cmdline \
 		{*}[versions minimap2]
-	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
+	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
 	set summaries {}
 	shadow_mkdir $resultdir/barcodes
 	job_cleanup_add_shadow $resultdir/barcodes
@@ -540,9 +607,15 @@ proc sc_barcodes_job args {
 			close $f
 			#
 			# process fastq
-			catch {close $ff} ; catch {close $fb}
-			catch {close $fqo} ; catch {close $fio}
-			set ff [gzopen $fastq]
+			catch {gzclose $ff} ; catch {gzclose $fb}
+			catch {gzclose $fqo} ; catch {gzclose $fio}
+			if {[file ext $fastq] in ".bam .cram .sam"} {
+				set ff [open [list | samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq]]
+				set ubams 1
+			} else {
+				set ff [gzopen $fastq]
+				set ubams 0
+			}
 			set fb [gzopen $dep2]
 			set header [tsv_open $fb]
 			if {$header ne {id barcode umi start strand polyA}} {error "wrong header for file $dep2"}
@@ -584,8 +657,13 @@ proc sc_barcodes_job args {
 				puts $fio [join [list $id $cellbarcode $umi $barcode $start $strand $polyA] \t]
 			}
 
-			close $ff ; close $fb
-			close $fqo ; close $fio
+			if {$ubams} {
+				gzclosesamtools $ff
+			} else {
+				gzclose $ff
+			}
+			gzclose $fb
+			gzclose $fqo ; gzclose $fio
 		}
 	}
 }

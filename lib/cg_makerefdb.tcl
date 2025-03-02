@@ -1,7 +1,7 @@
 proc groupchromosomes {refseq groupchromosomes} {
 	if {![llength $groupchromosomes]} return
 	if {![file exists $refseq.fai]} {
-		exec samtools faidx $refseq
+		catch_exec samtools faidx $refseq
 	}
 	set f [open $refseq.fai]
 	set o [open $refseq.groupchromosomes w]
@@ -214,7 +214,7 @@ proc makerefdb_job {args} {
 	} -targets {
 		genome_${build}.dict
 	} -code {
-		exec samtools dict -o $target.temp $dep
+		catch_exec samtools dict -o $target.temp $dep
 		file rename $target.temp $target
 	}
 

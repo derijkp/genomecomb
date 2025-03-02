@@ -130,10 +130,19 @@ proc var_job {args} {
 			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq $resultfile
 	} else {
 		# check what the resultfiles are for the method
-		set resultfiles [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
+		set resultfiles {} 
+		foreach resultfile [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
 			-pre $pre \
 			-datatype $datatype \
-			-split $split $bamfile $refseq $resultfile]
+			-split $split $bamfile $refseq $resultfile \
+		] {
+			if {[file extension $resultfile] in ".bam .cram"} {
+				# this is for the hapbam files: give same format/extension as bamfile
+				lappend resultfiles [file root $resultfile][file extension $bamfile]
+			} else {
+				lappend resultfiles $resultfile
+			}
+		}
 		set skips [list -skip [list_remove  $resultfiles {}]]
 		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {varfile sregfile varallfile vcffile} $resultfiles break
@@ -220,10 +229,13 @@ proc var_job {args} {
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
+			if {[file extension $resultfile] in ".bam .cram"} {
+				set resultfile [file root $resultfile][file extension $bamfile]
+			}
 			job var_combineresults-[file tail $resultfile] {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
-				list regionfile method bamfile
+				list regionfile method bamfile refseq
 			} -code {
 				set analysisinfo [analysisinfo_file $dep]
 				if {[file exists $analysisinfo]} {
@@ -237,11 +249,12 @@ proc var_job {args} {
 				# files are xxx-100 -> would sort reverse of what we want because of the -
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
-				} elseif {[file extension [gzroot $target]] in ".bam"} {
+				} elseif {[file extension [gzroot $target]] in ".bam .cram"} {
 					cg sam_catmerge \
 						-sort nosort \
 						-index 1 \
-						-deletesams 1 \
+						-deletesams 0 \
+						-refseq $refseq \
 						$target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
 					set empty 1

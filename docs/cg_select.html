@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_select</title>
+<title>cg_select</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -472,15 +472,15 @@ option.</p>
   for the given gene set, potentially filtered by impact type.
   <b>geneset</b> is the base name of the gene annotation, e.g. when
   it is &quot;refGene&quot;, the field &quot;refGene_descr&quot; will
-  be used to extract the transcipt names, &quot;refGene_gene&quot;
+  be used to extract the transcript names, &quot;refGene_gene&quot;
   for the gene name and &quot;refGene_impact&quot; for the filtering.
   If <b>filter</b> is given (a comma separated list if impacts), only
   transcripts where the variant has one of the given impacts are
   returned. You can use wildcards and &gt; to select multiple impacts
   in the filter (e.g. CDS* for CDS impacts and &gt;=CDSmis for
   anything at the level of missense and higher in the list).
-  <b>type</b> determines what is returned: t for only transcipt name,
-  gt for gene and transcript name and g for only the gene name.</dd>
+  <b>type</b> determines what is returned: t for only transcript
+  name, gt for gene and transcript name and g for only the gene name.</dd>
   <dt>maximpact(list,...)</dt>
   <dd>returns the maximum impact from one or more lists of impacts.
   The order of impact is as in the list given in <a
@@ -497,7 +497,7 @@ option.</p>
   parameter <b>includeins</b> can be set to 1 to include neighboring
   insertion sequences, or 0 (default) to not include them</dd>
 </dl>
-<h4 id="h17211">Number functions</h4>
+<h4 id="h17213">Number functions</h4>
 
 <dl>
   <dt>between(value,{min max})<b> or </b>between(value,min,max)</dt>
@@ -530,7 +530,7 @@ option.</p>
   specification, e.g. use &quot;%.2f&quot; to print a floating point
   number with two digits after the decimel point</dd>
 </dl>
-<h4 id="h18424">String functions</h4>
+<h4 id="h18426">String functions</h4>
 
 <dl>
   <dt>length(value)</dt>
@@ -563,7 +563,7 @@ option.</p>
   <dt>ncmatches(value,pattern)</dt>
   <dd>like matches but without taking into account case (nocase)</dd>
 </dl>
-<h4 id="h19535">multifield functions</h4>
+<h4 id="h19537">multifield functions</h4>
 <p>The following functions address multiple fields.</p>
 
 <dl>
@@ -581,7 +581,7 @@ option.</p>
   something like count($sequenced-*, == &quot;v&quot;) will give the
   number of samples for which a variant was found</dd>
 </dl>
-<h4 id="h20308">Sample and analysis aggregates</h4>
+<h4 id="h20310">Sample and analysis aggregates</h4>
 <p>Sometimes you want summary info for each (selected) variation over
 the samples in the file (e.g. in how many samples is the variant
 present, in which samples, ..). You can do this in a limited way
@@ -647,7 +647,7 @@ alist, ...) are available for caclculating aggregate functions
 looping over all analyses, e.g. aavg($quality) to calulated the
 average quality over all analyses in a line. The special variable
 &quot;analysis&quot; will be available within the arguments.</p>
-<h4 id="h23298">comparing samples</h4>
+<h4 id="h23300">comparing samples</h4>
 
 <dl>
   <dt>compare(analysisname1,analysisname2, ...)</dt>
@@ -672,11 +672,11 @@ average quality over all analyses in a line. The special variable
   <dt>un(analysis1,analysis2, ...)</dt>
   <dd>unsequenced in some analyses, variant in one of the others</dd>
 </dl>
-<h3 id="h24239">Vectors</h3>
+<h3 id="h24241">Vectors</h3>
 <p>Several functions and operators deal with vectors, fields
 containing multiple values in the form of a comma (or ; or space)
 separated list.</p>
-<h4 id="h24397">vector functions (comma separated lists)</h4>
+<h4 id="h24399">vector functions (comma separated lists)</h4>
 <p>The following functions allow use of vectors in queries</p>
 
 <dl>
@@ -755,7 +755,7 @@ separated list.</p>
   <dt>lcount(vector)</dt>
   <dd>number of elements in vector that are true</dd>
 </dl>
-<h4 id="h27637">vector operators</h4>
+<h4 id="h27639">vector operators</h4>
 <p>Several special operators are added that work on comma (or ; or
 space) separated lists (vectors). The result of such an operator is
 also a vector. The arguments to such an operator must be of the same
@@ -764,7 +764,7 @@ length 1, the same element will be used versus all elements in the
 other vector. Supported operators are: @<b>, @*, @/, @%, @-, @+,
 @&gt;, @&lt;, @&gt;=, @&lt;=, @==, @!=, @&amp;&amp;, @||, vand, vor,
 vin, vni</b></p>
-<h4 id="h28121">vector functions (that return vectors)</h4>
+<h4 id="h28123">vector functions (that return vectors)</h4>
 
 <dl>
   <dt>vdistinct(vector, ...)</dt>
@@ -791,7 +791,7 @@ vin, vni</b></p>
   <dd>same as format, but arg may be a vector, and the result is a
   vector</dd>
 </dl>
-<h2 id="h28962">Summaries using -g and -gc</h2>
+<h2 id="h28964">Summaries using -g and -gc</h2>
 <p>The -g (groupfields) and -gc (groupcols) allow the flexible
 creation of summaries by calculating summary or aggregate values for
 uniqe combinations of values in different fields. The default summary
@@ -805,7 +805,7 @@ the resulting summary!, so grouping on e.g. position in a file with
 millions of lines may exaust the memory. You can use the option
 <b>-optim memory</b> to use a method which uses litle memory, but is
 significantly slower.</p>
-<h3 id="h29743">groupfields</h3>
+<h3 id="h29745">groupfields</h3>
 <p>The <b>groupfields</b> option is used to enter the field(s) to
 aggregate upon (together with a filter to apply for each field) in
 the following format: &quot;fieldname1 filter1 fieldname2 filter2
@@ -855,7 +855,7 @@ triggered, even though the aggregate will not be separated per
 sample. e.g. using zyg (in a file with only zyg-samplexx fields) will
 result in counting zyg values for all variants in all
 samples/analyses together.</p>
-<h3 id="h32706">groupcols</h3>
+<h3 id="h32708">groupcols</h3>
 <p>The <b>groupcols (-gc)</b> option can be used to add other summary
 columns than the default count. <b>groupcols</b> is a list with the
 following format: &quot;field1 filter1 field2 filter2 ...
@@ -911,7 +911,7 @@ summary function; if it has a field &quot;argument&quot;, the name
 will start with function_field (e.g. max_freq). If other other
 grouping fields were used, the values are added in order concatenated
 by -</p>
-<h3 id="h34666">loop over list fields</h3>
+<h3 id="h34668">loop over list fields</h3>
 <p>Some fields (may) contain lists (e.g. genes, impacts), where you
 would like to summarize over the elements in the lists. You can do
 this by prepending the fieldname with a + or - on the groupfields or
@@ -923,7 +923,7 @@ the list, it is counted multiple times. If a - is prepended, the
 select command will first remove duplicates in each list before
 looping over them. When multiple looped lists are present, all
 possible combinations are counted.</p>
-<h2 id="h35393">sampleinfofile</h2>
+<h2 id="h35395">sampleinfofile</h2>
 <p>A sampleinfofile is a tab delimited file containing extra
 information about the samples in the datafile. It should contain one
 column named id, that will contain the sample names. other fields
@@ -939,12 +939,12 @@ named &quot;sample&quot; in the file (e.g. in the long format), that
 sample field will be used to make the link. In this case the
 sampleinfo will be available by using the plain fieldnames in
 sampleinfo (without -sample added)</p>
-<h2 id="h36310">Queryfile</h2>
+<h2 id="h36312">Queryfile</h2>
 <p>A queryfile is a tab delimited file with a header describing a
 query. The output will contain resultlines where all values in the
 columns given in the query header in the resultline are equal to the
 corresponding values given in one line of the query file.</p>
-<h2 id="h36584">Category</h2>
+<h2 id="h36586">Category</h2>
 <p>Query</p>
 </div>
 

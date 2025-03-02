@@ -11,13 +11,13 @@ proc cg_bamreorder {args} {
 		}
 	} {src dest ref}
 	if {![file exists $ref.fai]} {
-		exec samtools faidx $ref
+		catch_exec samtools faidx $ref
 	}
 	set index [csv_parse [file_read $ref.fai] \t]
 	set refchrs [list_subindex $index 0]
 	set reflens [list_subindex $index 3]
 	# check bam file to see if we need to rename some contigs
-	set bamheader [exec samtools view --no-PG -H $src]
+	set bamheader [catch_exec samtools view --no-PG -H $src]
 	if {$method eq "picard"} {
 		set bamchrs {}
 		set bamlens {}
@@ -59,8 +59,8 @@ proc cg_bamreorder {args} {
 			set tempfile [tempfile]
 			file_write $tempfile $bamheader
 			set tempsrc $dest.temp
-			exec samtools reheader $tempfile $src > $tempsrc
-			exec samtools index $tempsrc
+			catch_exec samtools reheader $tempfile $src > $tempsrc
+			catch_exec samtools index $tempsrc
 		} else {
 			set tempsrc $src
 		}
@@ -77,7 +77,7 @@ proc cg_bamreorder {args} {
 		}
 		picard ReorderSam R=$nref I=$tempsrc O=$dest.temp2 ALLOW_INCOMPLETE_DICT_CONCORDANCE=true VALIDATION_STRINGENCY=LENIENT 2>@ stderr >@ stdout
 		if {$nref ne $ref} {file delete $nref}
-		exec samtools index $dest.temp2
+		catch_exec samtools index $dest.temp2
 		file delete $dest.temp  $dest.temp.[indexext $dest]
 		file rename -- $dest.temp2 $dest
 		file rename -- $dest.temp2.[indexext $dest] $dest.[indexext $dest]
@@ -138,7 +138,7 @@ proc cg_bamreorder {args} {
 			close $f
 		}
 		close $o
-		exec samtools index $dest.temp
+		catch_exec samtools index $dest.temp
 		file rename -force -- $dest.temp $dest
 		file rename -force -- $dest.temp.[indexext $dest] $dest.[indexext $dest]
 	}

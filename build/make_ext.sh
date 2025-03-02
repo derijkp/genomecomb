@@ -52,6 +52,12 @@ set -x
 # set up environment
 # ------------------
 
+yuminstall centos-release-scl
+sudo yum upgrade -y
+yuminstall devtoolset-9
+# use source instead of scl enable so it can run in a script
+source /opt/rh/devtoolset-9/enable
+
 # locations
 base=/build
 tcldir=$base/tcl$tclversion
@@ -70,9 +76,8 @@ PATH=$base/bin:$PATH
 # -----
 
 # Compile
-cd /io
-mkdir -p linux-$arch
-cd linux-$arch
+mkdir -p /io/$arch
+cd /io/$arch
 ../build/version.tcl
 if [ "$clean" = 1 ] ; then
 	make distclean || true

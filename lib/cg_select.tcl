@@ -1283,7 +1283,9 @@ proc tsv_skipcomments {f} {
 proc tsv_hcheader {f keepcommentsVar headerVar} {
 	upvar $keepcommentsVar keepcomments
 	upvar $headerVar header
-	if {$f eq "stdin" || [catch {
+	if {[eof $f] && ![llength $header]} {
+		# empty file, no need to rollback for getting dataline
+	} elseif {$f eq "stdin" || [catch {
 		# this does not work on a stream
 		if {[info exists ::keepfpos($f)]} {
 			seek $f $::keepfpos($f) start
@@ -1542,14 +1544,26 @@ proc cg_select {args} {
 		set index {}
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 11 0] -exclude 4]
-			set poss [list_remove $poss -1]
 			set reverse [list_fill [llength $poss] 0]
+			# sort chromosome fields specially (ignoring chr prefix, =), if present
+			lset reverse 0 2
+			set empties [list_find $poss -1]
+			set poss [list_sub $poss -exclude $empties]
+			set reverse [list_sub $reverse -exclude $empties]
 		} else {
 			set poss {}
 			set reverse {}
 			foreach field $sortfields {
 				if {[string index $field 0] eq "-"} {
 					lappend reverse 1
+					lappend poss [lsearch $header [string range $field 1 end]]
+				} elseif {[string index $field 0] eq "="} {
+					# chromosome sort
+					lappend reverse 2
+					lappend poss [lsearch $header [string range $field 1 end]]
+				} elseif {[string index $field 0] eq "~"} {
+					# chromosome reverse sort
+					lappend reverse 3
 					lappend poss [lsearch $header [string range $field 1 end]]
 				} else {
 					lappend reverse 0
@@ -1562,8 +1576,12 @@ proc cg_select {args} {
 			set poss [lmath_calc $poss + 1]
 			set keys {}
 			foreach pos $poss r $reverse {
-				if {$r} {
+				if {$r == 1} {
 					lappend keys ${pos},${pos}Nr
+				} elseif {$r == 2} {
+					lappend keys ${pos},${pos}H
+				} elseif {$r == 3} {
+					lappend keys ${pos},${pos}Hr
 				} else {
 					lappend keys $pos,${pos}N
 				}
@@ -1806,15 +1824,16 @@ proc cg_select {args} {
 	if {[string length $tclcode] > 20} {
 		set tempfile [tempfile]
 		file_write $tempfile $tclcode\n
-		lappend pipe [list cg source $tempfile]
+		lappend pipe [list cg source -stack [get ::stacktraceonerror 0] $tempfile]
 	} elseif {[string length $tclcode]} {
 		# file_write /tmp/temp.txt $tclcode\n
 		#putsvars tclcode
-		lappend pipe [list cg exec $tclcode]
+		lappend pipe [list cg exec -stack [get ::stacktraceonerror 0] $tclcode]
 	}
 # puts stderr "-------------pipe qfields=\"$qfields\" group=\"$group\" sortfields=\"$sortfields\"-------------------"
 # puts stderr "pipe: [join $pipe " | "]"
 # puts stderr ------------------------------------
+# file_write /tmp/temp.txt $tclcode\n
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {

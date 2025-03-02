@@ -92,25 +92,30 @@ proc cg_viz_transcripts {args} {
 		tsv=read.table(tsvfile,header = T, sep = '\t')
 		# sort transcripts on counts_weight
 	}
+	set temp {}
+	foreach countfield $countfields {
+		lappend temp [string_change $countfield {+ .}]
+	}
+	set countfields $temp
 	if {![info exists sortcol]} {
 		set sortcol [lindex $countfields 1]
 	}
 	if {$sortcol ne ""} {
 		append cmd [subst -nocommands {
-			transcripts = tsv\$transcript[order(tsv\$$sortcol)]
+			transcripts = tsv\$transcript[order(tsv[["$sortcol"]])]
 		}]
 	}
 	if {$proportions} {
 		foreach {shortname countfield} $countfields {
 			append cmd [subst -nocommands {
-				tsv\$$countfield = 100*tsv\$$countfield/sum(tsv\$$countfield)
+				tsv[["$countfield"]] = 100*tsv[["$countfield"]]/sum(tsv[["$countfield"]])
 			}]
 		}
 	}
 	if {$round_digits != ""} {
 		foreach {shortname countfield} $countfields {
 			append cmd [subst -nocommands {
-				tsv\$$countfield = round(tsv\$$countfield,$round_digits)
+				tsv[["$countfield"]] = round(tsv[["$countfield"]],$round_digits)
 			}]
 		}
 	}
@@ -194,7 +199,7 @@ proc cg_viz_transcripts {args} {
 	set rcounts {}
 	foreach {shortname countfield} $countfields {
 		lappend count_types $shortname
-		lappend rcounts [subst {		$shortname=tsv\$$countfield}]
+		lappend rcounts [subst -nocommands {		$shortname=tsv[["$countfield"]]}]
 	}
 	append cmd [join $rcounts ,\n]
 	append cmd [subst {

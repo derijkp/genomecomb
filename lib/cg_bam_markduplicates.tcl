@@ -159,7 +159,7 @@ proc cg_bam_markduplicates {args} {
 		if {$sourcefile eq "-"} {
 			lappend optsio <@ stdin
 		}
-		 puts stderr [list samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
+		# puts stderr [list samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
 			{*}$opts $sourcefile $output {*}$optsio]
 		catch_exec samtools markdup --output-fmt $outputformat -l 500 --threads $threads -T [scratchfile] \
 			{*}$opts $sourcefile $output {*}$optsio 2>@ stderr

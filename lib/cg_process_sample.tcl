@@ -55,13 +55,13 @@ proc process_sample_cgi_job {workdir split} {
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
-		set chromosomes [bsort [list_remdup $chromosomes]]
+		set chromosomes [bsort -sortchromosome [list_remdup $chromosomes]]
 	} else {
 		set files [jobglob -checkcompressed 1 $workdir/coverage/coverage*.tsv]
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
-		set chromosomes [bsort [list_remdup $chromosomes]]
+		set chromosomes [bsort -sortchromosome [list_remdup $chromosomes]]
 	}
 	# start from CGI data
 	# convert overage files to bcol first (will be used to add coverage and refscore to vars)
@@ -486,18 +486,20 @@ proc checkminreads {fastqdir minfastqreads numVar} {
 		return 0
 	}
 	set file [lindex $files 0]
-	set f [open "| [convert_pipe $file .tsv]"]
-	set header [tsv_open $f]
-	set count $minfastqreads
-	while {$count} {
-		if {[gets $f line] == -1} {
-			gzclose $f
-			set num [expr {$minfastqreads-$count}]
-			return 0
+	if {[file exists $file]} {
+		set f [open "| [convert_pipe $file .tsv]"]
+		set header [tsv_open $f]
+		set count $minfastqreads
+		while {$count} {
+			if {[gets $f line] == -1} {
+				gzclose $f
+				set num [expr {$minfastqreads-$count}]
+				return 0
+			}
+			incr count -1
 		}
-		incr count -1
+		gzclose $f
 	}
-	gzclose $f
 	return 1
 }
 
@@ -526,6 +528,30 @@ proc codeback_empty {value} {
 	} else {
 		return $value
 	}
+}
+
+proc get_bam_skips {sampledir fastqfiles aligners aliformat resultbamprefix} {
+	set sample [file tail $sampledir]
+	set skips {}
+	set skipsresult {}
+	# make skips for clipping (do not do any of preliminaries if end product is already there)
+	# clipped fastqs are used for all aligners!
+	foreach aligner $aligners {
+		set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+		set bamfile $sampledir/map-${aligner}-$sample.$aliformat
+		lappend skips $bamfile $sampledir/barcode2celbarcode.tsv
+		lappend skipsresult $resultbamfile $sampledir/barcode2celbarcode.tsv
+		# if bam exists and is older than any of the fastqfiles -> remove (so newer fastq files are not skipped)
+		if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
+			putslog "$bamfile older than one of fastqfiles (renaming to .old)"
+			file rename -force $bamfile $bamfile.old
+		}
+		if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
+			putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
+			file rename -force $resultbamfile $resultbamfile.old
+		}
+	}
+	list $skips $skipsresult
 }
 
 proc process_sample_job {args} {
@@ -567,15 +593,16 @@ proc process_sample_job {args} {
 	set fastqdir {}
 	set singlecell {}
 	set sc_whitelist {}
-	set sc_umisize 10
-	set sc_barcodesize 16
-	set sc_adaptorseq CTACACGACGCTCTTCCGATCT
+	set sc_umisize {}
+	set sc_barcodesize {}
+	set sc_adaptorseq {}
 	set sc_filters {}
 	set sc_celltypers {}
 	set sc_expectedcells {}
 	set cellmarkerfile {}
 	set tissue {}
 	set validate 0
+	set addumis 0
 	cg_options process_sample args {
 		-preset {
 			if {$value ne ""} {
@@ -594,8 +621,10 @@ proc process_sample_job {args} {
 		-fastqdir {
 			set fastqdir $value
 		}
-		-dbdir - -refdir {
-			set dbdir $value
+		-dbdir - -refdir - -refseq {
+			# set dbdir $value
+			set refseq [refseq $value]
+			set dbdir [refdir $refseq]
 		}
 		-minfastqreads {
 			set minfastqreads $value
@@ -618,6 +647,10 @@ proc process_sample_job {args} {
 			if {$value ni {0 1 ontr10x {}}} {error "Unknown value $value for -singlecell, must be either empty or 0 (for no single cell analysis) or 1 for doing single cell analysis"}
 			if {$value eq "0"} {set value ""}
 			set singlecell [codeback_empty $value]
+		}
+		-addumis {
+			if {$value ni {0 1}} {error "Unknown value $value for -addumis, must be either 1 or 0"}
+			set addumis [codeback_empty $value]
 		}
 		-sc_whitelist {
 			set sc_whitelist [codeback_empty $value]
@@ -755,6 +788,7 @@ proc process_sample_job {args} {
 			set ::specialopt($key) $value
 		}
 	} {} 1 2
+
 	if {[llength $args] == 1} {
 		foreach {sampledir} $args break
 	} elseif {[llength $args] == 2} {
@@ -771,6 +805,15 @@ proc process_sample_job {args} {
 		} else {
 			set fastqdir $sampledir/fastq
 		}
+	}
+	if {$addumis} {
+		if {$sc_adaptorseq eq ""} {set sc_adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC}
+		if {$sc_barcodesize eq ""} {set sc_barcodesize 8}
+		if {$sc_umisize eq ""} {set sc_umisize 12}
+	} else {
+		if {$sc_adaptorseq eq ""} {set sc_adaptorseq CTACACGACGCTCTTCCGATCT}
+		if {$sc_barcodesize eq ""} {set sc_barcodesize 16}
+		if {$sc_umisize eq ""} {set sc_umisize 10}
 	}
 	set reports [reports_expand $reports]
 	set dbdir [file_absolute $dbdir]
@@ -975,7 +1018,6 @@ proc process_sample_job {args} {
 	# single cell fastq adaptation
 	# ----------------------------
 	if {$singlecell ne ""} {
-		# singlecell only works from fastqdir
 		# check if we have the minimum number of reads required (at least 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		set minreads [max 1 $minfastqreads]
@@ -983,27 +1025,9 @@ proc process_sample_job {args} {
 			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
 			return {}
 		}
-		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq]
+		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
 		# put bams in skips (don't actually run sc_barcodes if already exis)
-		set skips {}
-		set skipsresult {}
-		# make skips for clipping (do not do any of preliminaries if end product is already there)
-		# clipped fastqs are used for all aligners!
-		foreach aligner $aligners {
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			set bamfile $sampledir/map-${aligner}-$sample.$aliformat
-			lappend skips $bamfile $sampledir/barcode2celbarcode.tsv
-			lappend skipsresult $resultbamfile $sampledir/barcode2celbarcode.tsv
-			# if bam exists and is older than any of the fastqfiles -> remove (so older fastq files are not skipped)
-			if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
-				putslog "$bamfile older than one of fastqfiles (renaming to .old)"
-				file rename -force $bamfile $bamfile.old
-			}
-			if {[file exists $resultbamfile] && ![jobtargetexists $resultbamfile $fastqfiles]} {
-				putslog "$resultbamfile older than one of fastqfiles (renaming to .old)"
-				file rename -force $resultbamfile $resultbamfile.old
-			}
-		}
+		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
 		sc_barcodes_job -skip $skips -skip $skipsresult \
 			-whitelist $sc_whitelist \
 			-umisize $sc_umisize \
@@ -1033,6 +1057,25 @@ proc process_sample_job {args} {
 		} elseif {$tissue ne ""} {
 			if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
 		}
+	} elseif {$addumis} {
+		set minreads [max 1 $minfastqreads]
+		if {!$validate && ![checkminreads $fastqdir $minreads num]} {
+			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
+			return {}
+		}
+		set fastqfiles [bsort [jobglob \
+			$fastqdir/*.fastq.gz $fastqdir/*.fastq $fastqdir/*.fq.gz $fastqdir/*.fq \
+			$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam $fastqdir/*.sam.zst \
+		]]
+		# put bams in skips (don't actually run sc_barcodes if already exis)
+		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
+		add_umis_job -skip $skips -skip $skipsresult \
+			-umisize $sc_umisize \
+			-barcodesize $sc_barcodesize \
+			-adaptorseq $sc_adaptorseq \
+			-ASlimit 15 \
+			$fastqdir $sampledir/umifastq
+		set fastqdir $sampledir/umifastq
 	}
 	# use generic (fastq/bam source)
 	# ------------------------------
@@ -1301,6 +1344,16 @@ proc process_sample_job {args} {
 			}
 		}
 	}
+	if {$addumis ne ""} {
+		# clean up umifastq
+#		set umifastqs [jobglob -checkcompressed 1 $sampledir/umifastq/*]
+#		if {[llength $umifastqs]} {
+#			job delete_umifastq-$sample -optional 1 \
+#			-deps $cleanedbams -vars {sampledir} -rmtargets $umifastqs -code {
+#				shadow_delete $sampledir/umifastq
+#			}
+#		}
+	}
 	# make sure the bams are indexed
 	foreach bam $cleanedbams {
 		bam_index_job $bam
@@ -1384,6 +1437,7 @@ proc process_sample_job {args} {
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
+			if {$addumis} {lappend options -addumis $addumis}
 			# validate_iso $isocaller $refseq $reftranscripts $organelles $distrreg
 			iso_${isocaller}_job \
 				-reftranscripts $reftranscripts \

@@ -1476,6 +1476,12 @@ test bam2tsv {bam2tsv} {
 	exec diff tmp/bwa.tsv data/bwa.tsv
 } {}
 
+test sam2tsv {bam2tsv cram} {
+	cg bam2cram -refseq $::refseqdir/hg19 data/bwa.bam tmp/bwa.cram
+	cg sam2tsv -fields {AS XS MD NM RG} tmp/bwa.cram tmp/bwa.tsv
+	exec diff tmp/bwa.tsv data/bwa-fields.tsv
+} {}
+
 test sam2tsv {sam2tsv cases} {
 	file_write tmp/test.sam [deindent {
 		@HD	VN:1.3	SO:coordinate

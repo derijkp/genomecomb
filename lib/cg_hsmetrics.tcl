@@ -31,7 +31,7 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	} else {
 		set tsvfile $regionfile
 	}
-	set bamheader [split [exec samtools view --no-PG -H $bamfile] \n]
+	set bamheader [split [catch_exec samtools view --no-PG -H $bamfile] \n]
 	if {[regexp "@SQ\tSN:chr" $bamheader]} {set pre chr} else {set pre {}}
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f]

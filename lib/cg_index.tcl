@@ -21,7 +21,11 @@ proc cg_indexcol {args} {
 				select -v -$step -f $fields -sh $histofile.temph $file $histofile.temp
 			progress stop
 			progress next "Sorting (no progress shown)"
-			exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
+			if {$field in "chromosome chrom chr"} {
+				exec gnusort8 --chromosome-sort $histofile.temp | uniq > $histofile.temp2
+			} else {
+				exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
+			}
 			progress next "Sorting finished"
 			progress stop
 			file delete $histofile.temp $histofile.temph
@@ -63,7 +67,11 @@ proc cg_indexcol {args} {
 			}
 			gzclose $f
 			set result [array names a]
-			set result [bsort $result]
+			if {$field in "chromosome chrom chr"} {
+				set result [bsort -sortchromosome $result]
+			} else {	
+				set result [bsort $result]
+			}
 			set result [tsv_defaultvalues $field $result]
 			if {$haslists} {lappend result {present! lists}}
 			lappend result {...}
@@ -159,7 +167,11 @@ proc cg_index {args} {
 			gzclose $f
 			foreach o $os {close $o}
 			foreach field $header {
-				exec gnusort8 -N $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo
+				if {$field in "chromosome chrom chr"} {
+					exec gnusort8 --chromosome-sort $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo
+				} else {
+					exec gnusort8 -N $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo
+				}
 			}
 		}
 	}

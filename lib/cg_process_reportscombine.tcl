@@ -1501,10 +1501,13 @@ proc process_reportscombine_job {args} {
 				foreach field {predgender pg_yxratio pg_yxnratio pg_pctheterozygous} {
 					lappend line [pget data $sample,genomecomb,$field]
 				}
+				if {![llength [list_remove [lrange $line 1 end] {}]]} continue
 				lappend table $line
 			}
-			puts $o "\n<h2>Gender prediction overview</h2>"
-			puts $o [report_htmltable genderprediction $table]\n
+			if {[llength $table] > 1} {
+				puts $o "\n<h2>Gender prediction overview</h2>"
+				puts $o [report_htmltable genderprediction $table]\n
+			}
 			# depth histo
 			# -----------
 			if {[llength $histofiles]} {

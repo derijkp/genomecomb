@@ -90,7 +90,7 @@ proc cg_bam_histo {args} {
 		if {![info exists bamchrsa($pre$chr)]} {
 			if {$chr eq "M"} {set chr MT} elseif {$chr eq "MT"} {set chr M}
 		}
-		set temp [exec samtools depth -d1000000 -q 1 -r $pre$chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]
+		set temp [catch_exec samtools depth -d1000000 -q 1 -r $pre$chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]
 		set data [split [string trim $temp] \n]
 		set data [list_subindex $data 2]
 		set explen [expr {$end-$begin+1}]

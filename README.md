@@ -123,5 +123,4 @@ University of Antwerp
 Universiteitsplein 1
 B-2610 Antwerpen, Belgium
 
-tel.: +32-03-265.10.40
 E-mail: Peter.DeRijk@uantwerpen.be

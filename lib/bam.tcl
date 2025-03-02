@@ -1,5 +1,5 @@
 proc bam_chrs {bamfile} {
-	set bamheader [exec samtools view --no-PG -H $bamfile]
+	set bamheader [catch_exec samtools view --no-PG -H $bamfile]
 	list_unmerge [regexp -all -inline {SN:([^\t]+)} $bamheader] 1 result
 	return $result
 }

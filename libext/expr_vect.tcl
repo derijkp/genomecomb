@@ -85,6 +85,10 @@ proc tcl::mathfunc::lsort {args} {
 	join [bsort $result] ,
 }
 
+proc tcl::mathfunc::ljoin {list {joinstring {}}} {
+	join [split $list ";, "] $joinstring
+}
+
 proc tcl::mathfunc::vector {args} {
 	join $args ,
 }

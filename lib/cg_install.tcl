@@ -58,7 +58,7 @@ proc cg_install {args} {
 		star	bin	https://genomecomb.bioinf.be/download/extra/STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz
 		strelka	bin	https://genomecomb.bioinf.be/download/extra/strelka-2.9.10-linux-x86_64.tar.gz
 		qorts	bin	https://genomecomb.bioinf.be/download/extra/QoRTs-1.3.6.tar.gz
-		modkit	bin	https://genomecomb.bioinf.be/download/extra/modkit-0.2.4-linux-x86_64.tar.gz
+		modkit	bin	https://genomecomb.bioinf.be/download/extra/modkit-0.4.2-linux-x86_64.tar.gz
 
 		ont	preset	{minimap2 sniffles cutesv clair3 modkit}
 		ontr	preset	{minimap2 isoquant clair3}

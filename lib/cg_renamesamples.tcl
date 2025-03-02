@@ -36,7 +36,7 @@ proc renamesamples_newfilename {file changes} {
 	return $newfile
 }
 
-proc renamesamples_file {file changes {relink 0}} {
+proc renamesamples_file {file changes {relink 1}} {
 	set gzroot [gzroot $file]
 	set gzext [gzext $file]
 	set ext [file extension $gzroot]
@@ -61,11 +61,14 @@ proc renamesamples_file {file changes {relink 0}} {
 		set newfile $newbasefile$ext$gzext
 	}
 	if {![catch {file link $file} link]} {
-		set newlink [renamesamples_newfilename $link $changes]
+		set newlink [renamesamples_newfilename [file dir $file]/$link $changes]
 		if {$relink && $link ne $newlink && ![regexp ^/ $link]} {
 			puts "relinking $file to $newfile"
+			file lstat $file a
+			set mtime $a(mtime)
 			file delete $file
 			mklink $newlink $newfile
+			exec touch -h -d [clock format $mtime] $newfile
 		} elseif {$file ne $newfile} {
 			file_rename $file $newfile
 		}
@@ -126,7 +129,7 @@ proc renamesamples_file {file changes {relink 0}} {
 	}
 }
 
-proc renamesamples {dir changes {relink 0}} {
+proc renamesamples {dir changes {relink 1}} {
 	putslog "converting $dir"
 	foreach file [glob -nocomplain $dir/*] {
 		if {[file isdir $file] && [catch {file link $file} link]} {

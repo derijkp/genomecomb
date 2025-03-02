@@ -6,21 +6,6 @@ proc validate_meth_remora {refseq preset distrreg} {
 	return
 }
 
-# install modkit
-proc install_modkit {bindir} {
-	mkdir $bindir/modkit-0.2.1-linux-x86_64
-	cd $bindir/modkit-0.2.1-linux-x86_64
-	wgetfile https://github.com/nanoporetech/modkit/releases/download/v0.2.1/modkit_v0.2.1_centos7_x86_64.tar.gz
-	exec tar xvzf modkit_v0.2.1_centos7_x86_64.tar.gz
-	file delete modkit_v0.2.1_centos7_x86_64.tar.gz
-	foreach file [glob dist/*] {
-		file rename $file .
-	}
-	file delete dist
-	cd $bindir
-	exec ln -s modkit-0.2.1-linux-x86_64/modkit modkit
-}
-
 proc modkit_job {args} {
 	set refseq {}
 	set methodused remora
@@ -36,8 +21,8 @@ proc modkit_job {args} {
 	if {[file extension $bamfile] eq ".cram"} {
 		# modkit does not work well with cram (# "detected non-BAM input format, please consider using BAM, CRAM may be unstable")
 		set tempfile [tempfile].bam
-		exec samtools view -b -1 -T $refseq $bamfile > $tempfile
-		exec samtools index $tempfile
+		catch_exec samtools view -b -1 -T $refseq $bamfile > $tempfile
+		catch_exec samtools index $tempfile
 		set bamfile $tempfile
 	}
 	exec modkit pileup $bamfile $target.temp.gz \
@@ -122,8 +107,8 @@ proc meth_remora_job {args} {
 		if {[file extension $bamfile] eq ".cram"} {
 			# modkit does not work well with cram (# "detected non-BAM input format, please consider using BAM, CRAM may be unstable")
 			set tempfile [tempfile].bam
-			exec samtools view -b -1 -T $refseq $bamfile > $tempfile
-			exec samtools index $tempfile
+			catch_exec samtools view -b -1 -T $refseq $bamfile > $tempfile
+			catch_exec samtools index $tempfile
 			set bamfile $tempfile
 		}
 		exec modkit pileup $bamfile $target.temp \

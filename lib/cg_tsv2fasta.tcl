@@ -2,7 +2,11 @@ proc cg_tsv2fasta {args} {
 	set fields {}
 	set infile -
 	set outfile -
+	set idfield {}
+	set sequencefield {}
 	cg_options cg_fasta args {
+		-idfield {set idfield $value}
+		-sequencefield {set sequencefield $value}
 	} {infile outfile} 0 2
 	if {$infile ne "-"} {
 		set f [gzopen $infile]
@@ -17,9 +21,16 @@ proc cg_tsv2fasta {args} {
 		set o stdout
 	}
 	set header [tsv_open $f]
-	set cor [list_cor $header {id sequence}]
+	if {$idfield eq ""} {
+		set idfield [list_common {id qname name} $header]
+	}	
+	if {$sequencefield eq ""} {
+		set sequencefield [list_common {sequence seq} $header]
+	}	
+	set fields [list $idfield $sequencefield]
+	set cor [list_cor $header $fields]
 	if {-1 in $cor} {
-		error "tsv2fasta missing fields: [list_sub {id sequence} [list_find $cor -1]]"
+		error "tsv2fasta missing fields: [list_sub $fields [list_find $cor -1]]"
 	}
 	while {1} {
 		set read [gets $f line]

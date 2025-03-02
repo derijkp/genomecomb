@@ -82,13 +82,13 @@ proc cg_predictgender {args} {
 		if {![isint $end]} {
 			set xcov ?
 		} else {
-			set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+			set xcov [median [catch_exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
 		}
 		set end [lindex [exec tail -1 $tempyreg] end]
 		if {![isint $end]} {
 			set ycov ?
 		} else {
-			set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+			set ycov [median [catch_exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
 		}
 	} else {
 		if {![file exists $dbdir]} {
@@ -110,7 +110,7 @@ proc cg_predictgender {args} {
 		if {![isint $end]} {
 			set xcov ?
 		} else {
-			set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+			set xcov [median [catch_exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
 		}
 		#
 		if {![regexp {(.+):([0-9]+)-([0-9]+)$} $yreg temp chr y1 y2]} {
@@ -123,7 +123,7 @@ proc cg_predictgender {args} {
 		if {![isint $end]} {
 			set ycov ?
 		} else {
-			set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+			set ycov [median [catch_exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
 		}
 	}
 	if {![isdouble $xcov] || $xcov < 4} {
@@ -131,9 +131,9 @@ proc cg_predictgender {args} {
 	} else {
 		set yxcovratio [expr {double($ycov)/$xcov}]
 	}
-	set refcount [exec samtools view --no-PG -q 20 -c $bamfile $refreg]
-	set xcount [exec samtools view --no-PG -q 20 -c $bamfile $xreg]
-	set ycount [exec samtools view --no-PG -q 20 -c $bamfile $yreg]
+	set refcount [catch_exec samtools view --no-PG -q 20 -c $bamfile $refreg]
+	set xcount [catch_exec samtools view --no-PG -q 20 -c $bamfile $xreg]
+	set ycount [catch_exec samtools view --no-PG -q 20 -c $bamfile $yreg]
 	set refncount [expr {$refcount/double($refsize)}]
 	if {$xsize != 0} {
 		set xncount [expr {$xcount/double($xsize)}]

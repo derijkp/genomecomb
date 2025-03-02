@@ -5,10 +5,13 @@ proc cg_bam2cram {args} {
 	set refseq {}
 	set threads 1
 	set handlebam {}
-	set links ignore
+	set links rename
+	set opt {}
 	cg_options cg_bam2cram args {
 		-refseq {
-			set refseq [refseq $value]
+			if {$value ne ""} {
+				lappend opt -T [refseq $value]
+			}
 		}
 		-handlebam {
 			if {$value ni "rm old keep"} {
@@ -42,6 +45,9 @@ proc cg_bam2cram {args} {
 			}
 			mklink $link $cramfile
 			mklink $link.crai $cramfile.crai
+			if {[file exists $bamfile.analysisinfo]} {
+				mklink $link.analysisinfo $cramfile.analysisinfo
+			}
 			if {![catch {file lstat $bamfile a}]} {
 				set mtime $a(mtime)
 				exec touch -h -d [clock format $mtime] $cramfile
@@ -63,56 +69,19 @@ proc cg_bam2cram {args} {
 			error "$bam is a symlink"
 		}
 	}
-	exec samtools view --threads $threads --no-PG -h -C -T $refseq --no-PG $bamfile > $cramfile.temp.cram
+	exec samtools view --threads $threads --no-PG -h -C {*}$opt --no-PG $bamfile > $cramfile.temp.cram
 	exec samtools index $cramfile.temp.cram
 	file rename -force $cramfile.temp.cram.crai $cramfile.crai
 	file rename -force $cramfile.temp.cram $cramfile
 	exec touch -r $bamfile $cramfile
+	exec touch -r $bamfile $cramfile.crai
+	if {[file exists $bamfile.analysisinfo]} {
+		file rename $bamfile.analysisinfo $cramfile.analysisinfo
+	}
 	if {$handlebam eq "old"} {
 		catch {file rename -force $bamfile $bamfile.old}
 		catch {file rename -force $bamfile.bai $bamfile.bai.old}
 	} elseif {$handlebam eq "rm"} {
 		file delete $bamfile
 	}
-}
-
-proc cg_bams2crams {args} {
-	set args [job_init {*}$args]
-	job_logfile [pwd]/bams2crams [pwd] [list cg bams2crams $args]
-	set refseq {}
-	set threads 1
-	set handlebam old
-	set links ignore
-	cg_options cg_bam2cram args {
-		-refseq {
-			set refseq [refseq $value]
-		} 
-		-handlebam {
-			if {$value ni "rm old keep"} {
-				error "wrong value for -handlebam, must be one of: rm, old, keep"
-			}
-			set handlebam $value
-		}
-		-links {
-			if {$value ni "ignore rename convert error"} {
-				error "wrong value for -links, must be one of: ignore rename convert error"
-			}
-			set links $value
-		}
-		-threads {set threads $value}
-	} {bamfile} 1 ...
-	set bamfiles [list $bamfile {*}$args]
-	foreach bam $bamfiles {
-		set target [file root $bam].cram
-		job bams2crams-[file tail $bam] -cores $threads -deps {
-			$bam
-		} -targets {
-			$target
-		} -vars {
-			bam refseq threads handlebam links
-		} -code {
-			cg_bam2cram -index 1 -links $links -refseq $refseq -handlebam $handlebam -threads $threads $bam $target
-		} 
-	}
-	job_wait
 }

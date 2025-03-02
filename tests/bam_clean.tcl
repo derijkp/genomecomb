@@ -69,77 +69,77 @@ test realign {realign_srma pipe} {
 test markdup {bam_markduplicates picard} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method picard tmp/sbwa.bam tmp/result.bam
-	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
-	catch {exec cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
+	cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
+	catch {cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
 } 0
 
 test markdup {bam_markduplicates picard pipe} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
-	exec cg bam_markduplicates -stack 1 -method picard < tmp/sbwa.bam > tmp/result.bam
-	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
-	catch {exec cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
+	cg bam_markduplicates -stack 1 -method picard < tmp/sbwa.bam > tmp/result.bam
+	cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
+	catch {cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
 } 0
 
 test markdup {bam_markduplicates samtools} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools tmp/sbwa.bam tmp/result.bam
-	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
+	cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools < tmp/sbwa.bam > tmp/result.bam
-	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
+	cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe -compressionlevel} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools -compressionlevel 1 < tmp/sbwa.bam > tmp/result.bam
-	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
+	cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe to cram} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools -outputformat cram -refseq $::refseqdir/hg19 < tmp/sbwa.bam > tmp/result.cram
 	exec samtools view --no-PG -h -b -T [refseq $::refseqdir/hg19] tmp/result.cram > tmp/result.bam
-	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
-	catch {exec cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
+	cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
+	catch {cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
 } 0
 
 test markdup {bam_markduplicates biobambam} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method biobambam tmp/sbwa.bam tmp/result.bam
-	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
+	cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates biobambam pipe} {
 	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method biobambam < tmp/sbwa.bam > tmp/result.bam
-	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
+	cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test bam_clean {bam_clean} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
-	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
+	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
 	set cgversion [cg version]
 	file_write tmp/expected.analysisinfo [string trim [deindent [subst {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
 		genomecomb	$cgversion	samtools	1.15.1 (using htslib 1.15.1)	samtools	1.15.1 (using htslib 1.15.1)	gatk	3.8-1-0-gf15c1c3ef
 	}]]]\n
 	exec diff tmp/rdsbwa.bam.analysisinfo tmp/expected.analysisinfo
-	exec cg sam2tsv tmp/rdsbwa.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
-	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+	cg sam2tsv tmp/rdsbwa.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
 } {}
 
 test bam_clean {bam_clean to cram} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
-	exec cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
+	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
 		-sort 1 -removeduplicates 1 -realign 1 \
 		-outputformat cram tmp/bwa.sam
 	set cgversion [cg version]
@@ -152,9 +152,9 @@ test bam_clean {bam_clean to cram} {
 	if {![file exists tmp/rdsbwa.cram.crai]} {
 		error "could not index tmp/rdsbwa.cram"
 	}
-	exec cg sam2tsv tmp/rdsbwa.cram | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
-	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+	cg sam2tsv tmp/rdsbwa.cram | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	cg sam2tsv data/dsbwa.sam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
 } {}
 
 test bam_clean {bam_clean to cram 2} {
@@ -166,9 +166,9 @@ test bam_clean {bam_clean to cram 2} {
 	if {![file exists tmp/bwa.cram.crai]} {
 		error "could not index tmp/rdsbwa.cram"
 	}
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} tmp/bwa.cram | cg select -rf other > tmp/result.tsv
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} data/bwa.sam | cg select -rf other > tmp/expected.tsv
-	exec cg tsvdiff tmp/result.tsv tmp/expected.tsv
+	cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} tmp/bwa.cram | cg select -rf other > tmp/result.tsv
+	cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} data/bwa.sam | cg select -rf other > tmp/expected.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
 testsummarize

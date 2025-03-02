@@ -35,8 +35,8 @@ proc cg_realign_srma {args} {
 	if {$regionfile eq "" || ![file exists $regionfile]} {
 		if {$sourcefile eq "-"} {
 			set tempfile [tempfile].bam
-			exec samtools view --threads $threads --no-PG -b -u -o $tempfile <@ stdin
-			exec samtools index $tempfile
+			catch_exec samtools view --threads $threads --no-PG -b -u -o $tempfile <@ stdin
+			catch_exec samtools index $tempfile
 			set sourcefile $tempfile
 		}
 		putslog "making regionfile"

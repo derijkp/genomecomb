@@ -450,6 +450,46 @@ test var {var_longshot distrreg with -hap_bam 1 option} {
 	}
 } {}
 
+test var {var_longshot distrreg with -hap_bam 1 option and cram} {
+	cd $::smalltestdir
+	file delete -force tmp/longshot_hapcram
+	file mkdir tmp/longshot_hapcram
+	foreach file [glob ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
+		mklink $file tmp/longshot_hapcram/[file tail $file]
+	}
+	cg bam2cram -refseq ori/longshot_example_data/genome.fa ori/longshot_example_data/pacbio_reads_30x.bam tmp/longshot_hapcram/pacbio_reads_30x.cram
+	cg var {*}$::dopts -method longshot -distrreg 1 -hap_bam 1 tmp/longshot_hapcram/pacbio_reads_30x.cram tmp/longshot_hapcram/genome.fa
+	cg vcf2tsv tmp/longshot_hapcram/ground_truth_variants.vcf tmp/longshot_hapcram/ground_truth_variants.tsv
+	cg multicompar tmp/longshot_hapcram/compar.tsv tmp/longshot_hapcram/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapcram/ground_truth_variants.tsv
+	cg tsvdiff -brief 1 -x *.log -x *.finished -x *.zsti -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version} \
+		-refseq tmp/longshot_example_data/genome.fa \
+		tmp/longshot_hapcram expected/longshot_hapcram
+	set temp [string trim [exec cg sam2tsv -refseq tmp/longshot_hapcram/genome.fa -fields HP tmp/longshot_hapcram/map-hlongshot-pacbio_reads_30x.cram | cg select -q {$HP == 1} | cg regjoin | cg  covered]]
+	if {$temp ne [string trim [deindent {
+		chromosome	bases
+		contig1	185941
+		contig2	174729
+		contig3	175492
+		
+		total	536162
+	}]]} {
+		error "error in haplotyped crams"
+	}
+	set expected [string trim [deindent {
+		zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
+		?	m	2
+		?	t	9
+		m	m	228
+		t	?	1
+		t	t	475
+	}]]
+	set result [exec cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_hapcram/compar.tsv]
+	if {$result ne $expected} {
+		error "wrong result"
+	}
+} {}
+
 test var {var_longshot distrreg with -hap_bam 1 optionm contig1_ and empty contig and contig not in bam} {
 	cd $::smalltestdir
 	set files [glob -nocomplain tmp/longshot_hapbam2/*]
@@ -618,7 +658,7 @@ test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3
 	make_smallgiabonttest $::smalltestdir/tmp/clair3
-	cg var_clair3 {*}$::dopts -platform ont -model ont \
+	cg var_clair3 {*}$::dopts -platform ont -model r941_prom_hac_g360+g422 \
 		tmp/clair3/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3/compar.tsv
 	cg multicompar -reannot 1 tmp/clair3/compar.tsv \
@@ -659,7 +699,7 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 	make_smallgiabonttest $::smalltestdir/tmp/clair3_var
 	cg var -method clair3 \
 		-distrreg x5000000 \
-		{*}$::dopts -platform ont -model ont \
+		{*}$::dopts -platform ont -model r941_prom_hac_g360+g422 \
 		tmp/clair3_var/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
 	file delete tmp/clair3_var/compar.tsv
 	cg multicompar -reannot 1 tmp/clair3_var/compar.tsv \

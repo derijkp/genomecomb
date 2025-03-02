@@ -25,8 +25,8 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-isoquantversion=3.3.0
-conda_isoquantversion=3.2.0
+isoquantversion=3.6.3
+conda_isoquantversion=3.6.3
 
 all=1
 extra=1
@@ -121,7 +121,7 @@ mamba activate isoquant
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-mamba install -y isoquant=$conda_isoquantversion python=3.9
+mamba install -y isoquant=$conda_isoquantversion python=3.12
 
 mamba deactivate
 
@@ -141,21 +141,21 @@ mkdir /build/isoquant-$isoquantversion-$arch
 cd /build/isoquant-$isoquantversion-$arch
 tar xvzf ../isoquant.tar.gz
 
-# to 3.3.0
-cd /build/isoquant-$isoquantversion-$arch/share
-wget https://github.com/ablab/IsoQuant/releases/download/v$isoquantversion/IsoQuant-$isoquantversion.tar.gz
-tar xvzf IsoQuant-$isoquantversion.tar.gz
-rm -rf isoquant-$conda_isoquantversion*
-rm IsoQuant-$isoquantversion.tar.gz
-mv IsoQuant-$isoquantversion isoquant-$isoquantversion
-cd isoquant-$isoquantversion
-cd ../bin
-rm isoquant.py ; ln -s ../share/isoquant-3.3.0/isoquant.py .
+## to 3.3.0
+#cd /build/isoquant-$isoquantversion-$arch/share
+#wget https://github.com/ablab/IsoQuant/releases/download/v$isoquantversion/IsoQuant-$isoquantversion.tar.gz
+#tar xvzf IsoQuant-$isoquantversion.tar.gz
+#rm -rf isoquant-$conda_isoquantversion*
+#rm IsoQuant-$isoquantversion.tar.gz
+#mv IsoQuant-$isoquantversion isoquant-$isoquantversion
+#cd isoquant-$isoquantversion
+#cd ../bin
+#rm isoquant.py ; ln -s ../share/isoquant-3.3.0/isoquant.py .
 
-## patch
-cd /build/isoquant-$isoquantversion-$arch/share/isoquant-$isoquantversion*/src
-cp long_read_counter.py long_read_counter.py.ori || true
-cp /io/extern-src/isoquant/long_read_counter.py long_read_counter.py
+### patch
+#cd /build/isoquant-$isoquantversion-$arch/share/isoquant-$isoquantversion*/src
+#cp long_read_counter.py long_read_counter.py.ori || true
+#cp /io/extern-src/isoquant/long_read_counter.py long_read_counter.py
 
 cd /build/isoquant-$isoquantversion-$arch
 
@@ -206,7 +206,7 @@ ln -sf isoquant-$isoquantversion-$arch/isoquant_gtf2db isoquant3_gtf2db
 rm isoquant-$isoquantversion-$arch.tar.gz || true
 tar cvzf isoquant-$isoquantversion-$arch.tar.gz isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db
 rm -rf /io/extra$ARCH/isoquant-$isoquantversion-$arch
-cp -ra isoquant-$isoquantversion-$arch isoquant isoquant.py isoquant3 isoquant-$isoquantversion-$arch gtf2db isoquant_gtf2db isoquant3_gtf2db /io/extra$ARCH
+cp -ra isoquant-$isoquantversion-$arch isoquant isoquant.py isoquant3 gtf2db isoquant_gtf2db isoquant3_gtf2db /io/extra$ARCH
 cd /io/extra$ARCH/
 
 echo "Finished building isoquant-$isoquantversion-$arch"

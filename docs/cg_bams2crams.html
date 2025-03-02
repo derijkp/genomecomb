@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/lib/cg_bams2crams</title>
+<title>cg_bams2crams</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -73,15 +73,21 @@ href="joboptions.html">joboptions</a></p>
   <dd>file or directory containing the reference genome sequence
   (this option must be given)</dd>
   <dt>-handlebam old/keep/rm</dt>
-  <dd>what to do with the bam file (old) rename to file.old (is the
-  default), (keep) keep it as is, (rm) delete the bam file after
-  conversion</dd>
+  <dd>what to do with the bam files: old: rename to file.old (is
+  the default). keep: keep it as is. rm: delete the bam file after
+  conversion.</dd>
+  <dt>-links ignore/rename/convert/error</dt>
+  <dd>What to do with soft links: rename (default): rename the link
+  and the place it is pointing too, it will not convert the file it
+  is/was pointing to. convert: rename and convert the file pointed to
+  (even if it is outside the directory that is being renamed).
+  ignore: do nothing with it. error: give an error.</dd>
   <dt>-threads number</dt>
   <dd>use <b>number</b> of threads for the conversion</dd>
   <dt>-index 0/1</dt>
   <dd>if 1 (default), create the crai index of the cram file</dd>
 </dl>
-<h2 id="h825">Category</h2>
+<h2 id="h1198">Category</h2>
 <p>Format Conversion</p>
 </div>
 

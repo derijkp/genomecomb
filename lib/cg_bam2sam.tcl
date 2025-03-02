@@ -18,13 +18,13 @@ proc cg_bam2sam {args} {
 	}
 	if {!$sortchr} {
 		if {$samfile eq "-"} {
-			exec samtools view --no-PG -h $bamfile >@ stdout
+			catch_exec samtools view --no-PG -h $bamfile >@ stdout
 		} else {
-			exec samtools view --no-PG -h $bamfile {*}[compresspipe $samfile] > $samfile
+			catch_exec samtools view --no-PG -h $bamfile {*}[compresspipe $samfile] > $samfile
 		}
 	} else {
 		set o [wgzopen $samfile]
-		set header [split [exec samtools view --no-PG -H $bamfile] \n]
+		set header [split [catch_exec samtools view --no-PG -H $bamfile] \n]
 		set pos 0
 		foreach line $header {
 			if {[regexp ^@SQ $line]} break
@@ -33,13 +33,16 @@ proc cg_bam2sam {args} {
 		}
 		set list {}
 		while 1 {
-			lappend list $line
+			if {![regexp {\tSN:([^\t]+)\t} $line temp chr]} {
+				error "format error in SQ line: $line"
+			}
+			lappend list [list $chr $line]
 			incr pos
 			set line [lindex $header $pos]
 			if {![regexp ^@SQ $line]} break
 		}
-		set list [bsort $list]
-		puts $o [join $list \n]
+		set list [bsort -sortchromosome $list]
+		puts $o [join [list_subindex $list 1] \n]
 		set len [llength $header]
 		while {$pos < $len} {
 			incr pos
@@ -48,12 +51,9 @@ proc cg_bam2sam {args} {
 			incr pos
 		}
 		bam_index_job $bamfile
-		foreach line $list {
+		list_foreach {chr line} $list {
 			flush $o
-			if {![regexp {\tSN:([^\t]+)\t} $line temp chr]} {
-				error "format error in SQ line: $line"
-			}
-			exec samtools view --no-PG $bamfile $chr >@ $o
+			catch_exec samtools view --no-PG $bamfile $chr >@ $o
 		}
 		gzclose $o
 	}

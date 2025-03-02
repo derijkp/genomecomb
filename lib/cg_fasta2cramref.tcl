@@ -1,5 +1,5 @@
 proc cg_fasta2cramref {args} {
-	cg_options sam2tsv args {
+	cg_options fasta2cramref args {
 	} {fastafile outdir} 2 2 {
 		fill a reference directory with md5 coded sequences from a fasta file for
 		use in cram (REF_PATH)

@@ -133,7 +133,7 @@ proc var_bcf_job {args} {
 	# start
 	# make sure reference sequence is indexed
 	job ${pre}var_bcf_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
-		exec samtools faidx $dep
+		catch_exec samtools faidx $dep
 	}
 	set deps [list $bamfile $refseq $refseq.fai {*}$deps]
 	set cache [file dir $varallfile]/cache_varall_bcf_[file tail $refseq].temp
@@ -161,7 +161,7 @@ proc var_bcf_job {args} {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				# exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
+				# catch_exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
 				exec bcftools mpileup -Ou --fasta-ref $refseq \
 					--count-orphans --max-depth 1000 --min-BQ $BQ \
 					--annotate FORMAT/AD,FORMAT/ADF,FORMAT/ADR,FORMAT/DP,FORMAT/SP \

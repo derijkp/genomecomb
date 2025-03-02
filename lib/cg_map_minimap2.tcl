@@ -13,7 +13,7 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 	job [job_relfile2name minimap2_2refseq- $refseq] -deps {$refseq} -targets {$minimap2refseq} -vars {preset} -code {
 		set size 0
 		if {![file exists $dep.fai]} {
-			exec samtools faidx $dep
+			catch_exec samtools faidx $dep
 		}
 		set f [open $dep.fai]
 		while {[gets $f line] != -1} {

@@ -155,7 +155,7 @@ proc cg_sam_sort {args} {
 		if {$outputformat eq "cram"} {
 			lappend opts --output-fmt-option reference=[refseq $refseq]
 		}
-		if {[catch {exec samtools sort --no-PG --threads $threads -T [scratchfile] \
+		if {[catch {catch_exec samtools sort --no-PG --threads $threads -T [scratchfile] \
 			-O [string toupper $outputformat] \
 			 {*}$opts {*}$optsio 2>@ stderr
 		} msg]} {
@@ -205,9 +205,13 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} 
 			append header "@HD	VN:1.6	SO:$sort\n"
 			set hddone 1
 		} elseif {[regexp ^@SQ $line]} {
-			lappend sq $line
+			if {![regexp {\tSN:([^\t]+)\t} $line temp chr]} {
+				error "format error in SQ line: $line"
+			}
+			lappend sq [list $chr $line]
 		} elseif {[llength $sq]} {
-			append header [join [bsort $sq] \n]\n
+			set sq [bsort -sortchromosome $sq]
+			append header [join [list_subindex $sq 1] \n]\n
 			set sq {}
 			append header $line\n
 		} else {
@@ -218,14 +222,15 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} 
 		set header "@HD	VN:1.6	SO:$sort\n$header"
 	}
 	if {[llength $sq]} {
-		append header [join [bsort $sq] \n]\n
+		set sq [bsort -sortchromosome $sq]
+		append header [join [list_subindex $sq 1] \n]\n
 	}
 	if {$addm5} {
 		set header [sam_header_addm5 $header $refseq]
 	}
 	puts -nonewline stdout $header
 	if {$sort eq "coordinate"} {
-		set o [open "| gnusort8 --buffer-size=500M --compress-program=zstd-mt-1 --parallel $threads -T [scratchdir] -t \\t -s -k3,3N -k4,4N -k1,1N -k2,2N" w]
+		set o [open "| gnusort8 --buffer-size=500M --compress-program=zstd-mt-1 --parallel $threads -T [scratchdir] -t \\t -s -k3,3H -k4,4N -k1,1N -k2,2N" w]
 	} else {
 		set o [open "| gnusort8 --buffer-size=500M --compress-program=zstd-mt-1 --parallel $threads -T [scratchdir] -t \\t -s -k1,1N 2>@ stderr" w]
 	}

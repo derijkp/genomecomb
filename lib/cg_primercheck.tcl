@@ -65,7 +65,7 @@ proc primercheck_epcr {hits1 hits2 rhits1 rhits2 maxsize maxamplicons} {
 
 proc primercheck_overlappingamplicons {amplicons overlapVar} {
 	upvar $overlapVar overlap
-	set amplicons [bsort $amplicons]
+	set amplicons [bsort -sortchromosome $amplicons]
 	foreach {pchr pbegin pend psize pf pr} [lindex $amplicons 0] break
 	set overlap 0
 	set result {}
@@ -283,7 +283,7 @@ proc cg_primercheck {args} {
 		if {$targetfwd == 1} {set strand +} elseif {$targetfwd == 2} {set strand -} else {set strand ?}
 		lappend resultline $targetchrom $targetbegin $targetend $name \
 			$outer_begin $outer_end $strand \
-			$primer1 $primer2 $numamplicons [bsort $resultamplicons] \
+			$primer1 $primer2 $numamplicons [bsort -sortchromosome $resultamplicons] \
 			$numhits(1) $maxfreq(1) [join $primersnps(1) " "] \
 			$numhits(2) $maxfreq(2) [join $primersnps(2) " "] \
 			[join $ampliconfts " "] \

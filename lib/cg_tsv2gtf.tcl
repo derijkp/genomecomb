@@ -64,16 +64,17 @@ proc cg_tsv2gtf {args} {
 		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs 2000 $nocds]
 		set ftlist [dict get $geneobj ftlist]
 		foreach {chr begin end} [list_sub $line $regposs] break
-		if {$genename_pos != -1} {
-			set genename [lindex $line $genename_pos]
-		} else {
-			set genename [dict get $geneobj genename]
-		}
 		if {$geneid_pos != -1} {
 			set geneid [lindex $line $geneid_pos]
 		} else {
 			set geneid [dict get $geneobj genename]
 		}
+		if {$genename_pos != -1} {
+			set genename [lindex $line $genename_pos]
+		} else {
+			set genename [dict get $geneobj genename]
+		}
+		if {$genename eq ""} {set genename $geneid}
 		set transcript [dict get $geneobj transcriptname]
 		set compl [dict get $geneobj complement]
 		if {!$compl} {set strand +} else {set strand -}
@@ -84,12 +85,12 @@ proc cg_tsv2gtf {args} {
 		}
 		#
 		if {$addgene} {
-			if {![info exists genea($genename)]} {
-				set genea($genename) [list $chr $source gene [expr {$begin+1}] $end . $strand . \
+			if {![info exists genea($geneid)]} {
+				set genea($geneid) [list $chr $source gene [expr {$begin+1}] $end . $strand . \
 					"gene_id \"$geneid\"\; gene_name \"$genename\"\;"]
 			} else {
-				set gend [lindex $genea($genename) 4]
-				if {$end > $gend} {lset genea($genename) 4 $end}
+				set gend [lindex $genea($geneid) 4]
+				if {$end > $gend} {lset genea($geneid) 4 $end}
 			}
 		}
 		#
@@ -192,8 +193,8 @@ proc cg_tsv2gtf {args} {
 		}
 	}
 	if {$addgene} {
-		foreach genename [array names genea] {
-			puts $o [join $genea($genename) \t]
+		foreach geneid [array names genea] {
+			puts $o [join $genea($geneid) \t]
 		}
 	}
 	if {$o ne "stdout"} {

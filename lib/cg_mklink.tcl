@@ -106,7 +106,7 @@ proc cg_mklink {args} {
 		make a soflink (dest points to src)
 	}
 	if {[llength $args]} {
-		set srcs [list $dest]
+		set srcs [list $src $dest]
 		set dest [lindex $args end]
 		lappend srcs {*}[lrange $args 0 end-1]
 		if {![file isdir $dest]} {

@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>/home/peter/dev/genomecomb/help/howto_query</title>
+<title>howto_query</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -576,7 +576,7 @@ cg select -g '-refGene_gene' refexome.tsv.zst | less
 <p>We could also use this type of summary to look for genes with
 compound variants. However, there are some extra complexities:</p>
 <p>We want to count (and find multiple) variants in the same
-transcipt (rather than gene) with a given impact (e.g. ignoring
+transcript (rather than gene) with a given impact (e.g. ignoring
 intronic variants). This can be done using the transcripts function,
 used here to create the field refGene_transcripts that will contain a
 list of transcript names (together with gene name) for which the

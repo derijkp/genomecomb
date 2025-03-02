@@ -24,7 +24,7 @@ proc refseq_bwa_job {refseq} {
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
 		if {![file exists $dep.fai]} {
-			exec samtools faidx $dep
+			catch_exec samtools faidx $dep
 		}
 		mklink $dep.fai $target.temp/[file tail $dep].fai
 		exec bwa index $target.temp/[file tail $dep] 2>@ stderr

@@ -53,6 +53,7 @@ proc process_project_job {args} {
 	set depth_histo_max {}
 	set reftranscripts {}
 	set singlecell {}
+	set addumis 0
 	set sc_whitelist {}
 	set sc_umisize {}
 	set sc_barcodesize {}
@@ -81,9 +82,10 @@ proc process_project_job {args} {
 		-ori {
 			set oridir $value
 		}
-		-dbdir - -refdir {
-			set dbdir $value
-#			set refseq [refseq $dbdir]
+		-dbdir - -refdir - -refseq {
+			# set dbdir $value
+			set refseq [refseq $value]
+			set dbdir [refdir $refseq]
 		}
 		-minfastqreads {
 			set minfastqreads $value
@@ -113,6 +115,10 @@ proc process_project_job {args} {
 		-singlecell {
 			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
 			set singlecell [code_empty $value]
+		}
+		-addumis {
+			if {$value ni {0 1}} {error "Unknown value $value for -addumis, must be either 1 or 0"}
+			set addumis [code_empty $value]
 		}
 		-sc_whitelist {
 			set sc_whitelist [code_empty $value]
@@ -288,6 +294,7 @@ proc process_project_job {args} {
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
+	mkdir $destdir
 	if {!$validate && $samplesheet ne ""} {
 		cg make_project $destdir $samplesheet
 	}
@@ -389,7 +396,7 @@ proc process_project_job {args} {
 	set todo(reports) {}
 	set keys {
 		clip 
-		singlecell sc_whitelist sc_umisize sc_barcodesize sc_adaptorseq 
+		singlecell addumis sc_whitelist sc_umisize sc_barcodesize sc_adaptorseq 
 		sc_filters sc_celltypers sc_expectedcells cellmarkerfile tissue 
 		datatype aliformat aligners ali_keepcomments realign 
 		varcallers svcallers methcallers counters reftranscripts isocallers 
@@ -491,6 +498,7 @@ proc process_project_job {args} {
 			-iso_joint $iso_joint \
 			-iso_joint_min $iso_joint_min \
 			-iso_match $iso_match \
+			-addumis $addumis \
 			-threads $threads \
 			-distrreg $distrreg \
 			-dbdir $dbdir \

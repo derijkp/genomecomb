@@ -58,11 +58,11 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 			putslog "Making $target"
 			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
 			if {$option eq ""} {
-				exec samtools stats -@ $threads $dep > $target.temp
+				catch_exec samtools stats -@ $threads $dep > $target.temp
 			} elseif {$option eq "unaligned"} {
-				exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
+				catch_exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
 			} elseif {$option eq "aligned"} {
-				exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
+				catch_exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
 			} else {
 				error "unknown option $option"
 			}
@@ -193,7 +193,7 @@ proc reports_singlecell {sampledir} {
 			} elseif {$group eq "invalid"} {
 				set invalidreads $sum_count
 				set invalidumis $sum_umicount
-			} elseif {$group eq "invalid"} {
+			} elseif {$group eq "nobc"} {
 				set nobcreads $sum_count
 				set nobcumis $sum_umicount
 			}
@@ -208,6 +208,7 @@ proc reports_singlecell {sampledir} {
 		set validbarcoded_umis $validumis
 		set pct_validbarcoded_umis [format %.2f [expr {100.0*$validbarcoded_umis/$total_umis}]]
 	} else {
+		set countfile [gzfile $sampledir/sc_gene_counts_raw-*$rootname.tsv]
 		set barcoded_reads NA
 		set pct_barcoded_reads NA
 		set validbarcoded_reads NA
@@ -222,7 +223,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countfile]} {
 		set temp [cg select -g all -gc sum(count) $countfile]
 		set rawgenecount [lindex $temp end]
-		set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
+		} else {
+			set pct_rawgenecount NA
+		}
 	} else {
 		set rawgenecount NA
 		set pct_rawgenecount NA
@@ -231,7 +236,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(count) $countsfile]
 		set filteredgenecount [lindex $temp end]
-		set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
+		} else {
+			set pct_filteredgenecount NA
+		}
 		set genes_percell [cg select -optim memory -g {cell * gene *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $genes_percell \n] 1] 1 end]
 		set mean_genes_percell [lmath_average $temp]
@@ -246,7 +255,11 @@ proc reports_singlecell {sampledir} {
 	if {[file exists $countsfile]} {
 		set temp [cg select -g all -gc sum(counts_weighed) $countsfile]
 		set filteredisoformcount [lindex $temp end]
-		set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
+		if {$total_umis ni "0 NA"} {
+			set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
+		} else {
+			set pct_filteredisoformcount NA
+		}
 		set isoforms_percell [cg select -optim memory -g {cell * transcript *} $countsfile | cg select -g cell]
 		set temp [lrange [list_subindex [split $isoforms_percell \n] 1] 1 end]
 		set mean_isoforms_percell [lmath_average $temp]
@@ -332,7 +345,7 @@ proc reports_singlecell {sampledir} {
 }
 
 proc reports_expand {reports} {
-	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender}
+	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender singlecell}
 	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
 	if {$reports eq "all"} {
 		set reports $allreports
@@ -424,7 +437,7 @@ proc process_reports_job {args} {
 				bamroot threads
 			} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
-				exec samtools flagstat -@ $threads $dep > $target.temp
+				catch_exec samtools flagstat -@ $threads $dep > $target.temp
 				file rename -force -- $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
@@ -458,7 +471,7 @@ proc process_reports_job {args} {
 			} -vars {bamroot} -code {
 				analysisinfo_write $dep $target flagstat_tool samtools flagstat_version [version samtools]
 				if {[catch {
-					exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
+					catch_exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
 				} msg]} {
 					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
 				}
@@ -587,7 +600,14 @@ proc process_reports_job {args} {
 			cg predictgender -dbdir $dbdir $resultbamfile $target
 		}
 	}
-	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	set fastqfiles [bsort [jobglob \
+		$sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq \
+	]]
+	if {![llength $fastqfiles]} {
+		set fastqfiles [bsort [jobglob \
+			$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/uban/*.sam \
+		]]
+	}
 	if {$paired} {
 		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	} else {
@@ -603,7 +623,6 @@ proc process_reports_job {args} {
 			} -code {
 				analysisinfo_write $dep $target fastqc_prog falco falco_version [version falco]
 				file mkdir $target.temp
-				set gzcat [gzcat [lindex $deps 0]]
 				set foundreads 0
 				foreach fastq $deps {
 					if {[fastq_size $fastq 1]} {set foundreads 1 ; break}
@@ -614,8 +633,25 @@ proc process_reports_job {args} {
 				} else {
 					if {[llength $deps] == 1} {
 						set src [lindex $deps 0]
-						set format fastq[gzext $src]
+						if {[file ext $src] in ".cram .bam"} {
+							set tempfile [tempfile].fastq.gz
+							cg bam2fastq $src $tempfile
+							set format fastq.gz
+							set src $tempfile
+						} else {
+							set format fastq[gzext $src]
+						}
 					} else {
+						if {[file ext [lindex $deps 0]] in ".cram .bam"} {
+							set newdeps {}
+							foreach bam $deps {
+								set tempfile [tempfile].fastq.gz
+								cg bam2fastq $src $tempfile
+								lappend newdeps $tempfile
+							}
+							set deps $newdeps
+						}
+						set gzcat [gzcat [lindex $deps 0]]
 						set src [tempdir]/stdin
 						exec -ignorestderr {*}$gzcat {*}$deps > $src
 						set format fastq
@@ -645,14 +681,26 @@ proc process_reports_job {args} {
 					file_write $target2 ""
 					file_write $target3 ""
 				} else {
-					set gzcat [gzcat [lindex $deps 0]]
-					if {[llength $deps] >= 1000} {
+					if {[llength $deps] >= 1000 || [file extension [gzroot [lindex $deps 0]]] in ".bam .cram .sam"} {
 						set o [open [list | fastq-stats -x $target3 > $target2] w]
 						foreach file $deps {
-							exec {*}$gzcat $file >@ $o
+							if {[file extension [gzroot $file]] in ".bam .cram .sam"} {
+								if {[catch {
+									catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file >@ $o
+								} msg]} {
+									regsub -all {\[M::[^\n]+} $msg {} temp
+									set temp [list_remove [split $temp \n] {}]
+									if {[llength $temp]} {
+										error $msg
+									}
+								}
+							} else {
+								exec {*}[gzcat $file] $file >@ $o
+							}
 						}
 						close $o
 					} else {
+						set gzcat [gzcat [lindex $deps 0]]
 						exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
 					}
 					analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
@@ -687,16 +735,16 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports singlecell]} {
 		set deps [list]
-		lappend deps [jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv]
-		lappend deps [jobgzfile $sampledir/mergedbarcodes.tsv.zst]
+		lappend deps ([jobgzfile $sampledir/reports/report_fastq_fw-*$sample.tsv])
+		lappend deps ([jobgzfile $sampledir/mergedbarcodes.tsv.zst])
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_raw-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_gene_counts_filtered-*$sample.tsv sc_gene_counts_filtered-*.tsv]
 		lappend deps [jobgzfile $sampledir/sc_isoform_counts_filtered-*$sample.tsv]
 		lappend deps [jobgzfile $sampledir/sc_cellinfo_filtered-*$sample.tsv sc_cellinfo_filtered-*.tsv]
 		lappend deps [jobgzfile $sampledir/read_assignments-isoquant_sc-*$sample.tsv $sampledir/read_assignments-isoquant_sc*-$sample.tsv]
-		lappend deps [jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv]
+		lappend deps ([jobgzfile $sampledir/umis_per_cell_raw-*$sample.tsv $sampledir/umis_per_cell_raw*.tsv])
 		# set deps "([join $deps ") ("])"
-		job reports_singlecell-$sample -deps $deps -targets {
+		job reports_singlecell-$sample -optional 1 -deps $deps -targets {
 			$sampledir/reports/report_singlecell-$sample.tsv
 			$sampledir/reports/report_singlecell-cellgrouping-$sample.tsv
 			$sampledir/reports/singlecell-pseudobulk_isoforms-$sample.tsv

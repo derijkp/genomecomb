@@ -226,6 +226,8 @@ struct keyfield
   bool natural;			/* Flag for natural comparison.  Handle
                                    strings including digits with optional decimal
                                    point, but no exponential notation. */
+  bool chromosome;			/* Flag for chromosome natural comparison. like natural comparison,
+                                   but ignores starting chr or Chr. */
   bool traditional_used;	/* Traditional key option format is used. */
   struct keyfield *next;	/* Next keyfield to try. */
 };
@@ -457,6 +459,7 @@ Ordering options:\n\
       fputs (_("\
   -n, --numeric-sort          compare according to string numerical value\n\
   -N, --natural-sort          compare according to combined string-numerical value in natural way\n\
+  -H, --chromosome-sort       compare according to combined string-numerical value in natural way, ignoring starting chr or Chr\n\
   -R, --random-sort           shuffle, but group identical keys.  See shuf(1)\n\
       --random-source=FILE    get random bytes from FILE\n\
   -r, --reverse               reverse the result of comparisons\n\
@@ -561,7 +564,7 @@ enum
   PARALLEL_OPTION
 };
 
-static char const short_options[] = "-bcCdfghik:mMnNBo:rRsS:t:T:uVy:z";
+static char const short_options[] = "-bcCdfghik:mMnNHBo:rRsS:t:T:uVy:z";
 
 static struct option const long_options[] =
 {
@@ -580,6 +583,7 @@ static struct option const long_options[] =
   {"numeric-sort", no_argument, NULL, 'n'},
   {"natural-sort", no_argument, NULL, 'N'},
   {"human-numeric-sort", no_argument, NULL, 'h'},
+  {"chromosome-sort", no_argument, NULL, 'H'},
   {"version-sort", no_argument, NULL, 'V'},
   {"random-sort", no_argument, NULL, 'R'},
   {"random-source", required_argument, NULL, RANDOM_SOURCE_OPTION},
@@ -624,6 +628,7 @@ static char const check_types[] =
   _st_("month",           'M') \
   _st_("numeric",         'n') \
   _st_("natural",         'N') \
+  _st_("chromosome",      'H') \
   _st_("random",          'R') \
   _st_("version",         'V')
 
@@ -2699,6 +2704,31 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 	exit(1);
 }
 
+/* 
+    "chromosome" sort order: same as natural, but ignores starting chr or Chr
+    returns 0 if equal, -1 if a < b and 1 if a > b
+ */
+int chromosomecompare(char const *a, char const *b,int alen,int blen) {
+	if (alen >= 3) {
+		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+			a += 3; alen -= 3;
+			if (alen && a[0] == '-') {
+				a++; alen--;
+			}
+		}
+	}
+	if (blen >= 3) {
+		if ((b[0] == 'C' || b[0] == 'c') && (b[1] == 'H' || b[1] == 'h') && (b[2] == 'R' || b[2] == 'r')) {
+			b += 3; blen -= 3;
+			if (blen && b[0] == '-') {
+				b++; blen--;
+			}
+		}
+	}
+	return naturalcompare(a,b,alen,blen);
+}
+
+
 /* Return an integer in 1..12 of the month name MONTH.
    Return 0 if the name in S is not recognized.  */
 
@@ -3037,6 +3067,7 @@ default_key_compare (struct keyfield const *key)
             || key->skipeblanks
             || key_numeric (key)
             || key->natural
+            || key->chromosome
             || key->month
             || key->version
             || key->random
@@ -3153,6 +3184,7 @@ key_warnings (struct keyfield const *gkey, bool gkey_only)
       ugkey.month &= !key->month;
       ugkey.numeric &= !key->numeric;
       ugkey.natural &= !key->natural;
+      ugkey.chromosome &= !key->chromosome;
       ugkey.general_numeric &= !key->general_numeric;
       ugkey.human_numeric &= !key->human_numeric;
       ugkey.random &= !key->random;
@@ -3212,7 +3244,7 @@ keycompare (struct line const *a, struct line const *b)
       size_t lenb = limb - textb;
 
       if (hard_LC_COLLATE || key_numeric (key)
-          || key->month || key->random || key->version || key->natural)
+          || key->month || key->random || key->version || key->natural || key->chromosome)
         {
           char *ta;
           char *tb;
@@ -3267,7 +3299,10 @@ keycompare (struct line const *a, struct line const *b)
             diff = numcompare (ta, tb);
           } else if (key->natural) {
             diff = naturalcompare(ta, tb,strlen(ta),strlen(tb));
-            /* fprintf(stderr,"%s\t%s\t%d\n",ta,tb,diff);fflush(stderr); */
+            /* fprintf(stderr,"---N %s\t%s\t%d\n",ta,tb,diff);fflush(stderr); */
+          } else if (key->chromosome) {
+            diff = chromosomecompare(ta, tb,strlen(ta),strlen(tb));
+            /* fprintf(stderr,"---H %s\t%s\t%d\n",ta,tb,diff);fflush(stderr); */
           } else if (key->general_numeric)
             diff = general_numcompare (ta, tb);
           else if (key->human_numeric)
@@ -4723,7 +4758,7 @@ check_ordering_compatibility (void)
 
   for (key = keylist; key; key = key->next)
     if (1 < (key->numeric + key->general_numeric + key->human_numeric
-             + key->month + (key->version | key->natural | key->random | !!key->ignore)))
+             + key->month + (key->version | key->natural | key->chromosome | key->random | !!key->ignore)))
       {
         /* The following is too big, but guaranteed to be "big enough".  */
         char opts[sizeof short_options];
@@ -4827,6 +4862,9 @@ set_ordering (char const *s, struct keyfield *key, enum blanktype blanktype)
           break;
         case 'N':
           key->natural = true;
+          break;
+        case 'H':
+          key->chromosome = true;
           break;
         case 'R':
           key->random = true;
@@ -5066,6 +5104,7 @@ main (int argc, char **argv)
         case 'M':
         case 'n':
         case 'N': /* natural compare */
+        case 'H': /* natural chromosome compare */
         case 'B':
         case 'r':
         case 'R':
@@ -5321,6 +5360,7 @@ main (int argc, char **argv)
           key->human_numeric = gkey.human_numeric;
           key->version = gkey.version;
           key->natural = gkey.natural;
+          key->chromosome = gkey.chromosome;
           key->random = gkey.random;
           key->reverse = gkey.reverse;
         }

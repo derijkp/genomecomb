@@ -85,8 +85,8 @@ proc job_optdeps {deps} {
 	return \([join $deps \)\ \(]\)
 }
 
-proc job_reset_olds {dir {exclude log_jobs}} {
-	# putsvars dir
+proc job_reset_olds {dir {exclude log_jobs} {force 0}} {
+	# putsvars dir exclude force
 	foreach file [glob -nocomplain $dir/*] {
 		if {[file tail $file] in $exclude} {
 			puts "excluded $file"
@@ -94,11 +94,16 @@ proc job_reset_olds {dir {exclude log_jobs}} {
 			if {![file exists [file root $file]]} {
 				puts [list mv $file [file root $file]]
 				file rename $file [file root $file]
+			} elseif {$force} {
+				puts [list mv [file root $file] [file root $file].new]
+				file rename [file root $file] [file root $file].new
+				puts [list mv $file [file root $file]]
+				file rename $file [file root $file]
 			} else {
 				puts "skipped $file (exists without .old)"
 			}
 		} elseif {[file isdir $file]} {
-			job_reset_olds $file $exclude
+			job_reset_olds $file $exclude $force
 		}
 	}
 }

@@ -35,7 +35,7 @@ proc convert.wiki {file destfile} {
 	if {![checkdeps $destfile $file] && ![newtemplate]} return
 	puts "convert $file $destfile"
 	set c [file_read $file]
-	set title [file root $file]
+	set title [file tail [file root $file]]
 	puts subst:[regsub -all -nocase {\[\[cg_([^]|]+)\]\]} $c {[[cg_\1|cg \1]]} c]
 	file_write $tempfile $c	
 	set c [exec nme --autourllink --body --easylink {$.html} --xref < $tempfile]
@@ -139,8 +139,20 @@ foreach file $files {
 	tohtml $file $destdir
 }
 
+# make the reference overview for docs without using cg
+# by loading and using several parts of it
+set appdir $gcdir
 file delete -force $destdir/reference.wiki
-set help [exec cg help -format md overview]
+source $gcdir/lib/cg_help.tcl
+source $gcdir/lib/tools.tcl
+# standard version won't work, so use this hack
+proc version {args} {
+	set c [file_read $::gcdir/build/version.tcl]
+	regexp {set version ([^ \n]+)} $c temp version
+	return $version
+}
+set help [helptext_overview]
+
 regsub -all {\* +([^:]+):} $help {* [[cg_\1|\1]]:} help
 file_write $destdir/reference.wiki $help
 tohtml $destdir/reference.wiki $destdir

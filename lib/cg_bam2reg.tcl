@@ -52,7 +52,7 @@ proc bam2reg_job {args} {
 			analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 			set compress [compresspipe $target]
 			set temptarget [filetemp $target]
-			exec cg regextract -refseq $refseq -min $mincoverage $dep {*}$compress > $temptarget
+			cg regextract -refseq $refseq -min $mincoverage $dep {*}$compress > $temptarget
 			file rename -force -- $temptarget $target
 			if {[file extension $target] eq ".zst"} {zstindex $target}
 		}
@@ -73,14 +73,14 @@ proc bam2reg_job {args} {
 			} -vars {
 				bamfile mincoverage subtarget region refseq
 			} -code {
-				set bamheader [exec samtools view --no-PG -H $bamfile]
+				set bamheader [catch_exec samtools view --no-PG -H $bamfile]
 				set chr [lindex [split $region :-] 0]
 				if {![regexp \tSN:$chr\t $bamheader]} {
 					file_write $target ""
 				} else {
 					set compress [compresspipe $subtarget 1]
 					set temptarget [filetemp $subtarget]
-					exec cg regextract -stack 1 -region $region -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
+					cg regextract -stack 1 -region $region -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
 					file rename -force -- $temptarget $subtarget
 				}
 			}

@@ -37,6 +37,7 @@ proc cg_shadow_clean {args} {
 	shadow_clean $shadowdir 
 }
 
+# shadow_delete is folded into rm, so no longer really needed
 proc shadow_delete {link} {
 	if {![file isdir $link]} {
 		rm $link
@@ -47,20 +48,34 @@ proc shadow_delete {link} {
 		return
 	}
 	if {![file exists $shadow/shadow_source]} {
-		error "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist)"
+		puts stderr "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist), only removing link, not target"
+	} else {
+		rm -force $shadow
 	}
-	rm -force $shadow
 	rm $link
 }
 
 proc cg_shadow_delete {args} {
 	cg_options shadow_delete args {
 	} {link} 1 ... {
-		delete a shadow dir
+		delete shadow dirs
 	}
-	shadow_delete $link
-	foreach link $args {
-		shadow_delete $link
+	rm -force $link {*}$args
+}
+
+# shadow_delete is folded into rm ->
+# cg_rm is mostly the same as cg_shadow_delete (cg_shadow_delete uses -force by default)
+proc cg_rm {args} {
+	set force 0
+	cg_options rm args {
+		-force - -f {set force $value}
+	} {link} 1 ... {
+		delete files, includes support for deleting shadow dirs
+	}
+	if {$force} {
+		rm -f $link {*}$args
+	} else {
+		rm $link {*}$args
 	}
 }
 

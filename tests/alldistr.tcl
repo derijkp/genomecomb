@@ -3,7 +3,7 @@
 exec tclsh "$0" "$@"
 
 # $Format: "set version $ProjectMajorVersion$.$ProjectMinorVersion$.$ProjectPatchLevel$"$
-set version 0.110.0
+set version 0.111.0
 
 set keeppath $::env(PATH)
 set testlist [list $::env(HOME)/build/genomecomb-$version-Linux-i686 $::env(HOME)/build/genomecomb-$version-Linux-x86_64]

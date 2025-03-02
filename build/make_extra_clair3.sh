@@ -25,8 +25,7 @@ source "${dir}/start_hbb.sh"
 # Parse arguments
 # ===============
 
-# clair3version=0.1.12
-clair3version=1.0.4
+clair3version=1.0.10
 
 all=1
 extra=1
@@ -42,7 +41,6 @@ esac; shift; done
 echo "Entering Holy Build Box environment"
 
 # Activate Holy Build Box environment.
-# Tk does not compile with these settings (X)
 # only use HBB for glibc compat, not static libs
 source /hbb_exe/activate
 
@@ -99,42 +97,43 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
+# mamba
+# -----
 cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
 # clair3
 # -----
 cd /build
 
-conda create -y -n clair3
-conda activate clair3
+mamba create -y -n clair3
+mamba activate clair3
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda install -y clair3=$clair3version python=3.9
+mamba install -y clair3=$clair3version python=3.9
 
-conda deactivate
+mamba deactivate
 
 # make package
 # ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
+mamba install -y -c conda-forge conda-pack
+
 rm clair3.tar.gz || true
 conda pack -n clair3 -o clair3.tar.gz
 rm -rf clair3-$clair3version-$arch.old || true
@@ -143,8 +142,16 @@ mkdir /build/clair3-$clair3version-$arch
 cd /build/clair3-$clair3version-$arch
 tar xvzf ../clair3.tar.gz
 
+# add models
+mkdir /build/clair3-$clair3version-$arch/models || true
+cd /build/clair3-$clair3version-$arch/models
+wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
+tar xvzf clair3_models.tar.gz
+rm clair3_models.tar.gz
+
 ## (extra) ONT models
 # git clone https://github.com/nanoporetech/rerio
+mkdir /build/clair3-$clair3version-$arch/models || true
 cd /build/clair3-$clair3version-$arch/models
 for model in \
 	r1041_e82_400bps_sup_v500.tar.gz \
@@ -157,12 +164,16 @@ for model in \
 	r1041_e82_400bps_hac_v420.tar.gz \
 	r1041_e82_260bps_sup_v400.tar.gz \
 	r1041_e82_260bps_hac_v400.tar.gz \
+	r1041_e82_260bps_fast_g632.tar.gz \
 	r1041_e82_260bps_sup_g632.tar.gz \
 	r1041_e82_400bps_hac_g632.tar.gz \
+	r1041_e82_400bps_fast_g615.tar.gz \
 	r1041_e82_400bps_sup_g615.tar.gz \
 	r1041_e82_400bps_hac_g615.tar.gz \
+	r1041_e82_260bps_hac_g632.tar.gz \
+	r1041_e82_400bps_fast_g632.tar.gz \
 	r104_e81_sup_g5015.tar.gz \
-	r104_e81_hac_g5015.tar.gz \
+	r104_e81_hac_g5015.tar.gz
 do
 	wget https://cdn.oxfordnanoportal.com/software/analysis/models/clair3/$model
 	tar xvzf $model
@@ -211,19 +222,13 @@ if __name__ == '__main__':
 EOF
 chmod ugo+x bin/whatshap
 
-cd /build/clair3-$clair3version-$arch
-mkdir models
-cd models
-wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
-tar xvzf clair3_models.tar.gz
-rm clair3_models.tar.gz
-
 cd /build
 ln -sf clair3-$clair3version-$arch/clair3 .
+ln -sf clair3-$clair3version-$arch/clair3 clair3-$clair3version
 ln -sf clair3-$clair3version-$arch/run_clair3.sh .
 rm clair3-$clair3version-$arch.tar.gz || true
 tar cvzf clair3-$clair3version-$arch.tar.gz clair3-$clair3version-$arch clair3 run_clair3.sh
 rm -rf /io/extra$ARCH/clair3-$clair3version-$arch
-cp -ra clair3-$clair3version-$arch clair3-$clair3version-$arch clair3 run_clair3.sh /io/extra$ARCH
+cp -ra clair3-$clair3version-$arch clair3-$clair3version clair3 run_clair3.sh /io/extra$ARCH
 
 echo "Finished building clair3-$clair3version-$arch"

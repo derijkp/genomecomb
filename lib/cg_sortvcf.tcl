@@ -27,7 +27,15 @@ proc cg_sortvcf {args} {
 	set header [tsv_open $f comment]
 	set c [split [string range $comment 0 end-2] \n]
 	set poss [list_find -regexp $c {^##contig=}]
-	set neworder [bsort [list_sub $c $poss]] 
+	set list {}
+	foreach line [list_sub $c $poss] {
+		if {![regexp {contig=<ID=([^\t,]+)} $line temp chr]} {
+			error "format error in contig line: $line"
+		}
+		lappend list [list $chr $line]
+	}
+	set list [bsort -sortchromosome $list]
+	set neworder [list_subindex $list 1]
 	set c [list_sub $c -exclude $poss]
 	set insert [lindex $poss 0]
 	if {$insert == [llength $c]} {
@@ -37,7 +45,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#[join $header \t]
-	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" --buffer-size=500M --compress-program=zstd-mt-1 -t \\t -s -N"
+	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" --buffer-size=500M --compress-program=zstd-mt-1 -t \\t -s --chromosome-sort"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }
