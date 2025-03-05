@@ -147,7 +147,7 @@ proc job_args {jobargs} {
 				incr pos
 			}
 			-dsubmit {
-				set cgjob(dsubmit) [entry_memory [lindex $jobargs $pos]]
+				set cgjob(dsubmit) [lindex $jobargs $pos]
 				incr pos
 			}
 			-dtime {
