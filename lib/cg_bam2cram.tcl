@@ -83,5 +83,6 @@ proc cg_bam2cram {args} {
 		catch {file rename -force $bamfile.bai $bamfile.bai.old}
 	} elseif {$handlebam eq "rm"} {
 		file delete $bamfile
+		file delete $bamfile.bai
 	}
 }
