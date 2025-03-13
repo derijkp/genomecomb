@@ -321,7 +321,7 @@ proc map_job {args} {
 				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams use_ali_keepcomments
 			} -code {
 				if {$ubams} {
-					set temp [tempdir]/[file root [file tail $file]].fastq.gz
+					set temp [tempdir]/[file root [file tail $file1]].fastq.gz
 					set file2 [tempfile].fastq.gz
 					catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
 					set file1 $temp
