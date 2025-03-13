@@ -138,7 +138,7 @@ proc cg_map_minimap2 {args} {
 				lappend extraopts -Y
 			}
 		}
-	} {result refseq sample fastqfile1} 4 5 {
+	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using minimap2
 	}
 	if {$ali_keepcomments eq ""} {
