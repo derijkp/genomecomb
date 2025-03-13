@@ -162,8 +162,9 @@ job var_${build}evaSnp -deps {
 	}
 	gzclose $o
 	close $f
-	file rename -force ${build}_evaSnp5.tsv.temp.zst	var_${build}_evaSnp.tsv.zst
-	file delete ${build}_evaSnp5.bb.bed
+	cg select -s - ${build}_evaSnp5.tsv.temp.zst ${build}_evaSnp5.tsv.temp2.zst
+	file rename -force ${build}_evaSnp5.tsv.temp2.zst	var_${build}_evaSnp.tsv.zst
+	file delete ${build}_evaSnp5.bb.bed ${build}_evaSnp5.tsv.temp.zst
 }
 
 job_wait
