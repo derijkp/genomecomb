@@ -112,7 +112,7 @@ proc job_process_distr_jobmanager {} {
 	}
 	foreach line $cgjob_distr(queue) {
 		incr pos
-		foreach {jobnum deps name job runfile options mem} $line break
+		foreach {jobnum deps name job cmd options mem submitopts} $line break
 		# foreach {jobid jobname job_logdir pwd deps ftargetvars ftargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		set do 1
 		foreach dep $deps {
@@ -120,8 +120,8 @@ proc job_process_distr_jobmanager {} {
 		}
 		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
+		set waitingformem 0
 		if {$cgjob(dsubmit) eq ""} {
-			set waitingformem 0
 			set waitingmaxmem 0
 			if {$cgjob(dmaxmem) ne ""} {
 				set testmem [expr {$currentmem + $mem}]
@@ -134,17 +134,25 @@ proc job_process_distr_jobmanager {} {
 				set currentmem $testmem
 			}
 			if {!$cgjob(silent)} {puts "   -=- [timestamp] starting $job"}
+			# make runscript
+			set runcmd {}
+			append runcmd {#!/bin/sh}
+			append runcmd $cmd
+			set runfile [job.file run $job]
+			file_write $runfile $runcmd
+			file attributes $runfile -permissions u+x
+			# and run in background job
 			set cgjob_pid [lindex [exec $runfile > [job.file out $job] 2> [job.file err $job] &] end]
 			file_write [job.file pid $job] $cgjob_pid
 			set cgjob_distr_running($jobnum) [list $cgjob_pid $job $mem]
 		} elseif {$cgjob(dsubmit) eq "sge"} {
-			set jnum [job_process_submit_sge $job $cmd -mem $mem]
+			set jnum [job_process_submit_sge $job $cmd {*}$submitopts]
 			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
 		} elseif {$cgjob(dsubmit) eq "slurm"} {
-			set jnum [job_process_submit_slurm $job $cmd -mem $mem]
+			set jnum [job_process_submit_slurm $job $cmd {*}$submitopts]
 			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
 		} else {
-			set jnum [exec $cgjob(dsubmit) submit -mem $mem -o [job.file out $job] -e [job.file err $job] $runfile]
+			set jnum [exec $cgjob(dsubmit) submit {*}$submitopts -o [job.file out $job] -e [job.file err $job] $job $cmd]
 			set cgjob_distr_running($jobnum) [list $jnum $job $mem]
 		}
 		incr torun -1
@@ -176,6 +184,7 @@ proc job_process_submit_distr {job cmd args} {
 #set jobnum [incr cgjob_distr(num)]
 #return $jobnum
 	global cgjob cgjob_distr cgjob_distr_queue
+	set submitopts {}
 	set options {}
 	set deps {}
 	set cores 1
@@ -191,6 +200,7 @@ proc job_process_submit_distr {job cmd args} {
 			-cores {
 				# not used yet
 				set cores $value
+				lappend submitopts -cores $cores
 				incr pos 2
 			}
 			-hard {
@@ -205,15 +215,31 @@ proc job_process_submit_distr {job cmd args} {
 			-io {
 				# not used yet
 				set io $value
+				lappend submitopts -io $value
 				incr pos 2
+			}
+			-priority {
+				set priority $value
+				lappend submitopts -priority $value
+				incr pos
 			}
 			-mem {
 				set mem $value
+				lappend submitopts -mem $value
 				incr pos 2
 			}
 			-time {
 				# not used yet
 				set time $value
+				lappend submitopts -time $value
+				incr pos 2
+			}
+			-hard {
+				lappend submitopts -hard $value
+				incr pos 2
+			}
+			-soft {
+				lappend submitopts -soft $value
 				incr pos 2
 			}
 			-- {
@@ -235,25 +261,14 @@ proc job_process_submit_distr {job cmd args} {
 	set jobnum [incr cgjob_distr(num)]
 	catch {file delete [job.file out $job]}
 	catch {file delete [job.file err $job]}
-	# make runscript
-	set runcmd {}
-	append runcmd {#!/bin/sh}
-	append runcmd \n
-	append runcmd {#$ -S /bin/bash} \n
-	append runcmd {#$ -V} \n
-	append runcmd {#$ -cwd} \n
-	append runcmd $cmd
-	set runfile [job.file run $job]
-	file_write $runfile $runcmd
-	file attributes $runfile -permissions u+x
 	# submit
 	if {$cgjob(nosubmit) || $cgjob(dry)} {
-		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options]"
+		putslog "nosubmit run, would be distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile [job.file run $job] options $options]"
 	} else {
-		putslog "distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile $runfile options $options mem $mem]"
+		putslog "distr_submit: added to queue [list jobnum $jobnum deps $deps name $name job $job runfile [job.file run $job] options $options mem $mem]"
 		if {$mem eq ""} {set mem 500m}
 		set mem [entry_memory $mem]
-		lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options $mem]
+		lappend cgjob_distr(queue) [list $jobnum $deps $name $job $cmd $options $mem $submitopts]
 		set cgjob_distr_queue($jobnum) 1
 		job_process_distr_jobmanager
 	}

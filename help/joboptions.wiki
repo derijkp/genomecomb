@@ -61,7 +61,7 @@ you can get more info by updating and checking the log file.
 === grid engine distribution ===
 There are two ways to distribute jobs on a sge cluster:
 Using "**-d sge**" the submitting command will submit all jobs to the Grid
-Engine as grid engine jobs with proper dependencies between the jobs. The
+Engine as grid engine jobs immediately with proper dependencies between the jobs. The
 program itself will stop when all jobs are submitted. You can check
 progress/errors by updating and checking the logfile.
 
@@ -70,7 +70,7 @@ method may submit 1000s of jobs, this cannot be used on such cluster. You
 can use an alternative method by specifying the options -d <number> -dsubmit sge
 This method will submit a maximum of <number> jobs at a time, managing part of
 the job management itself. Using this method, the submit command will stay running
-for the entire time.
+until all jobs are finished.
 
 Some tools request multiple cores/slots for one job on a grid engine cluster
 using the parallel environment (pe) local (using -pe local <nr of slots> -R y).
@@ -146,4 +146,4 @@ will set the default requested memory to 2G and time to 2h, but for
 mapping with bwa 10G of memory will be re	quested and 10h.
 
 == Category ==
-Format Conversion
+Options

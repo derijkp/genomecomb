@@ -43,6 +43,8 @@ if {$pos != -1} {
 		"-d 30" {uplevel job_init -d 30 $args}
 		"-d sge" {uplevel job_init -d sge $args}
 		"-d slurm" {uplevel job_init -d slurm $args}
+		"-d 4 -dsubmit sge" {uplevel job_init -d 4 -dsubmit sge $args}
+		"-d 4 -dsubmit slurm" {uplevel job_init -d 4 -dsubmit slurm $args}
 	}
 }
 
@@ -105,6 +107,23 @@ if 0 {
 	}
 	interp alias {} job_wait {} job_wait_slurm
 	interp alias {} gridwait {} grid_wait_slurm
+
+	set testname "-d 4 -dsubmit sge"
+	proc test_job_init {args} {
+		uplevel job_init -d 4 -dsubmit sge $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	}
+	interp alias {} job_wait {} job_wait_distr
+	proc gridwait {} {}
+
+	set testname "-d 4 -dsubmit slurm"
+	proc test_job_init {args} {
+		uplevel job_init -d 4 -dsubmit slurm $args
+		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
+	}
+	interp alias {} job_wait {} job_wait_distr
+	proc gridwait {} {}
+
 }
 
 proc writetestfiles {args} {
@@ -348,7 +367,7 @@ test job {job_expandvarslist} {
 foreach {testname initcode} $tests {
 # start of block
 
-if {$testname eq "-d sge"} {
+if {$testname eq "-d sge" || $testname eq "-d 4 -dsubmit sge"} {
 	if {![get testsge 0]} {
 		puts "skipping sge tests because testsge is not set (default), set testsge 1 or give testsge as a parameter to all.tcl to run"
 		continue
@@ -366,7 +385,7 @@ if {$testname eq "-d sge"} {
 			if {[exec qstat] eq ""} break
 		}
 	}
-} elseif {$testname eq "-d slurm"} {
+} elseif {$testname eq "-d slurm" || $testname eq "-d 4 -dsubmit slurm"} {
 	if {![get testslurm 0]} {
 		puts "skipping slurm tests because testslurm is not set (default), set testslurm 1 or give testslurm as a parameter to all.tcl to run"
 		continue
