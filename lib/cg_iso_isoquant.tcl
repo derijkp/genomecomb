@@ -1078,7 +1078,9 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 						set gene [lindex $l $genepos]
 						foreach {ambiguity ambigcount} $ca($gene) break
 						lset l $ambpos $ambiguity
-						lset l $umicountpos $umicount
+						if {$addumis} {
+							lset l $umicountpos $umicount
+						}
 						lappend l $gambiguity
 						puts $o [join $l \t]
 						# count
@@ -1095,7 +1097,9 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 				# with ambiguity and gambiguity set to 0
 				foreach l $remtodo {
 					lset l $ambpos 0
-					lset l $umicountpos $umicount
+					if {$addumis} {
+						lset l $umicountpos $umicount
+					}
 					lappend l 0
 					puts $o [join $l \t]
 				}
