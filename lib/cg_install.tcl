@@ -32,7 +32,7 @@ proc cg_install {args} {
 		dm6	ref	https://genomecomb.bioinf.be/download/refdb_dm6-0.106.0.tar.gz
 		dm6-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_dm6-minimap2-0.106.0.tar.gz
 
-		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-1.0.4-linux-x86_64.tar.gz
+		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-1.0.10-linux-x86_64.tar.gz
 		cutesv	bin	https://genomecomb.bioinf.be/download/extra/cutesv-1.0.11-linux-x86_64.tar.gz
 		dirR	bin	https://genomecomb.bioinf.be/download/extra/dirR-4.2.1-2-linux-x86_64.tar.gz
 		flair	bin	https://genomecomb.bioinf.be/download/extra/flair-2.0-linux-x86_64.tar.gz
@@ -41,7 +41,7 @@ proc cg_install {args} {
 		gatk3	bin	https://genomecomb.bioinf.be/download/extra/GATK-3.8.1.0-gf15c1c3ef-java.tar.gz
 		gatk	bin	https://genomecomb.bioinf.be/download/extra/gatk-4.1.8.1-java.tar.gz
 		hisat2	bin	https://genomecomb.bioinf.be/download/extra/hisat2-2.2.1-linux-x86_64.tar.gz
-		isoquant	bin	https://genomecomb.bioinf.be/download/extra/isoquant-3.3.0-linux-x86_64.tar.gz
+		isoquant	bin	https://genomecomb.bioinf.be/download/extra/isoquant-3.6.3-linux-x86_64.tar.gz
 		java-1.8	bin	https://genomecomb.bioinf.be/download/extra/java-1.8.0-openjdk-1.8.0.275.b01-0-linux-x86_64.tar.gz
 		longshot	bin	https://genomecomb.bioinf.be/download/extra/longshot-0.4.1-linux-x86_64.tar.gz
 		lumpy	bin	https://genomecomb.bioinf.be/download/extra/lumpy-0.3.1-linux-x86_64.tar.gz
