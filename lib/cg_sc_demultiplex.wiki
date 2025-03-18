@@ -1,0 +1,30 @@
+= sc_demultiplex =
+
+== Format ==
+cg sc_demultiplex sampledir dmfile refseq
+
+== Summary ==
+demultiplexes ont single cell results into separate samples based on a demultiplexing file
+
+== Description ==
+cg sc_demultiplex takes as arguments a sample directory and a demultiplexing file.
+
+The source is a normal sample directory produced by scywalker analysis of ont single cell data.
+
+The demultiplexing file is a tsv file with (at least) the fields cell and sample,
+in which each line assigns a cell to a sample. (If these fields are not present, alternatives are accepted:
+barcode or cellbarcode for cell; donor_id or subsample for sample
+
+Foreach sample in the demultiplexing file, a new sample is created next to the original sample, named dm_<dmsamplename>__<sample>
+where <sample> is the original sample name, and <dmsamplename> is the name for the "new" sample given in the demultiplexing file
+In these all important analysis files are recreated containing only the cells assigned to the dmsample.
+The original pooled sample is not removed, as it has information not in the demultiplexed samples (unassigned cells, reads not assigned to cells, ...)
+
+== Arguments ==
+; sampledir: original (pooled) sample directory (result fo scywalker analysis)
+; dmfile: tsv file assigning cells to (new/demultiplexed) samples
+; refseq: genome reference sequence, needed for (oa) making crams
+
+== Category ==
+Singlecell
+

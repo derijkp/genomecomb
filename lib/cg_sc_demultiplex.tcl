@@ -3,7 +3,7 @@ proc sc_demultiplex_read_dmfile {dmfile dmaVar} {
 	unset -nocomplain dma
 	set f [gzopen $dmfile]
 	set header [tsv_open $f]
-	set cellpos [lindex [list_remove [list_cor $header {cell barcode callbarcode}] -1] 0]
+	set cellpos [lindex [list_remove [list_cor $header {cell barcode cellbarcode}] -1] 0]
 	if {$cellpos eq ""} {
 		error "no field \"cell\" or \"barcode\" found in $dmfile"
 	}
