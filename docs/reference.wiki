@@ -141,6 +141,7 @@ in e.g. cg liftregion.
 ; [[cg_bam_sort|bam_sort]]: sort a bam file.
 ; [[cg_bamreorder|bamreorder]]: Changes the order of the contigs/chromosomes in a bam file
 ; [[cg_fastq_split|fastq_split]]: split a (large) fastq file in multiple smaller ones
+; [[cg_samcat|samcat]]: concatenates sam files outputting to stdout.
 
 === Format Conversion ===
 ; [[cg_10x2tsv|10x2tsv]]: Converts data in 10x format to the tab-separated format ([[tsv]]).
@@ -224,10 +225,10 @@ A histo file is generated at the location of the bam file
 ; [[cg_iso_isoquant|iso_isoquant]]: Call and count isoforms and genes using isoquant.
 ; [[cg_multigene|multigene]]: Compare multiple gene files
 ; [[cg_multitranscript|multitranscript]]: Compare multiple transcript files
-; [[cg_sc_pseudobulk|sc_pseudobulk]]: make pseudobulk files of sc_gene and sc_transcript files based on an sc_group file
 
-=== singlecell ===
+=== Singlecell ===
 ; [[cg_sc_demultiplex|sc_demultiplex]]: demultiplexes ont single cell results into separate samples based on a demultiplexing file
+; [[cg_sc_pseudobulk|sc_pseudobulk]]: make pseudobulk files of sc_gene and sc_transcript files based on an sc_group file
 
 === Compression ===
 ; [[cg_bgzip|bgzip]]: Compresses files using bgzip
@@ -246,7 +247,6 @@ A histo file is generated at the location of the bam file
 === Convenience ===
 ; [[cg_install|install]]: easy install of optional dependencies (external software used by genomecomb for some analysis) 
 and some reference databases.
-; [[cg_samcat|samcat]]: concatenates sam files outputting to stdout.
 
 === Dev ===
 ; [[cg_qjobs|qjobs]]: returns the running jobs on the cluster in [[tsv]] format.
