@@ -58,8 +58,7 @@
 <p>The command can be used to call and count isoforms and genes using
 a method based on isoquant (https://github.com/ablab/IsoQuant).</p>
 <p>Following adaptations are done when running isoquant within
-genomecomb</p>
-
+genomecomb
 <ul>
   <li>running is (can be) heavily parallelised in a way that
   distribution over a cluster is also possible</li>
@@ -129,35 +128,39 @@ read_assignments-isoquant-$root.tsv).</p>
   into regions as given in the &lt;refdir&gt;/extra/reg_*_distrg.tsv
   file; if this does not exist uses g5000000 </b> a file name: the
   regions in the file will be used for distribution</dd>
-  <dt>-refseq</dt>
+  <dt>-addumis 0/1</dt>
+  <dd>if 1, add umicount fileds to the result tables. The reads in
+  the bam file must have umi info incorporated in te read_id (as
+  umi#readname)</dd>
+  <dt>-refseq file</dt>
   <dd></dd>
-  <dt>-reftranscripts</dt>
+  <dt>-reftranscripts file</dt>
   <dd></dd>
-  <dt>-transcript_quantification</dt>
+  <dt>-transcript_quantification string</dt>
   <dd></dd>
-  <dt>-gene_quantification</dt>
+  <dt>-gene_quantification string</dt>
   <dd></dd>
-  <dt>-data_type</dt>
+  <dt>-data_type string</dt>
   <dd></dd>
-  <dt>-splice_correction_strategy</dt>
+  <dt>-splice_correction_strategy string</dt>
   <dd></dd>
-  <dt>-model_construction_strategy</dt>
+  <dt>-model_construction_strategy string</dt>
   <dd></dd>
-  <dt>-matching_strategy</dt>
+  <dt>-matching_strategy string</dt>
   <dd></dd>
-  <dt>-threads</dt>
+  <dt>-threads number</dt>
   <dd></dd>
-  <dt>-skip</dt>
+  <dt>-skip list</dt>
   <dd></dd>
-  <dt>-regions</dt>
+  <dt>-regions list</dt>
   <dd></dd>
-  <dt>-skipregions</dt>
+  <dt>-skipregions list</dt>
   <dd></dd>
-  <dt>-cleanup</dt>
+  <dt>-cleanup 0/1</dt>
   <dd></dd>
 </dl>
-<h2 id="h3835">Results</h2>
-<h3 id="h3850">read_asignments</h3>
+<h2 id="h4068">Results</h2>
+<h3 id="h4083">read_asignments</h3>
 <p>The read_assignment files returns for each read where it aligns
 and which genes/isoforms it supports. For reads that could have come
 from multiple isoforms/genes, multiple lines are present (one for
@@ -234,9 +237,9 @@ indicate how many isoforms and genes are supported.</p>
   <dt>umi</dt>
   <dd></dd>
   <dt>umicount</dt>
-  <dd></dd>
+  <dd>number of reads with the same umi (and barcode)</dd>
 </dl>
-<h2 id="h5505">Category</h2>
+<h2 id="h5785">Category</h2>
 <p>RNA</p>
 </div>
 

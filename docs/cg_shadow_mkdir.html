@@ -94,12 +94,16 @@ being snapshot or synced to backup) on the experiment storage.</p>
 <pre>
 cg shadow_delete dir
 </pre>
+<p>or</p>
+<pre>
+cg rm dir
+</pre>
 <p>shadow_delete will delete both the link and the shadow storage,
 after checking it is actually a shadow dir (It will give an error if
 the shadow dir contains a softlink named shadow_source, which
 shadow_mkdir makes to point to dir). If dir is not a link, the
 directory will be deleted.</p>
-<h2 id="h1868">Clean</h2>
+<h2 id="h1889">Clean</h2>
 <p>If you would use e.g. ```rm dir``` only the link would be deleted;
 the actual (orphaned now) storage dir would remain. You can clean out
 orphaned storage dirs from shadowdir using</p>
@@ -111,7 +115,7 @@ shadow_source in the shadow dir. If shadow_source no longer exists,
 the shadow is deleted; Beware that if you moved shadow_source (by
 e.g. moving the directory in which it is located), it will not be
 found, and the shadow dir deleted on shadow_clean.</p>
-<h2 id="h2416">Category</h2>
+<h2 id="h2437">Category</h2>
 <p>Tools</p>
 </div>
 

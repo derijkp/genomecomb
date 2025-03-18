@@ -37,7 +37,7 @@ genomecomb executable (cg) and all needed depencies compiled in a way they
 should work on all (except very ancient) Linux systems.
 
 Installation of the package is as simple as downloading the 
-[archive](https://github.com/derijkp/genomecomb/releases/download/0.110.0/genomecomb-0.110.0-Linux-x86_64.tar.gz)
+[archive](https://github.com/derijkp/genomecomb/releases/download/0.111.0/genomecomb-0.111.0-Linux-x86_64.tar.gz)
 and unpacking it somewhere. You can either call the executable (cg) directly
 from the directory, or put a soft-link to it somehwere in the path. (The
 executable itself must stay in the application directory to work.)
@@ -60,13 +60,13 @@ install](https://derijkp.github.io/genomecomb/cg_install.html) command
 Installation quickstart example:
 ```
 cd ~/bin
-wget https://genomecomb.bioinf.be/download/genomecomb-0.110.0-Linux-x86_64.tar.gz
-tar xvzf genomecomb-0.110.0-Linux-x86_64.tar.gz
+wget https://genomecomb.bioinf.be/download/genomecomb-0.111.0-Linux-x86_64.tar.gz
+tar xvzf genomecomb-0.111.0-Linux-x86_64.tar.gz
 
 # optional if ~/bin is not in your PATH already
 export PATH=$HOME/bin:$PATH
 # or make a softlink to something in the PATH already
-ln -s ~/bin/genomecomb-0.110.0-Linux-x86_64/cg /usr/local/bin/cg
+ln -s ~/bin/genomecomb-0.111.0-Linux-x86_64/cg /usr/local/bin/cg
 
 # Install the hg38 reference databases (including the minimap2 index) and
 # the software needed to run the ont and srs (short read) presets.

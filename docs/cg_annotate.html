@@ -191,8 +191,7 @@ it will be considered a regions database.</p>
 <p>If a file dbfile.opt exists, it will be scanned for database
 parameters. It should be a tab separated list, where each line
 contains a key and a value (separated by a tab)</p>
-<p>Possible keys are:</p>
-
+<p>Possible keys are:
 <dl>
   <dt><b>name</b></dt>
   <dd>this will be the base for names of added columns (in stead of
@@ -206,8 +205,7 @@ contains a key and a value (separated by a tab)</p>
 <h2 id="h6681">Gene annotation</h2>
 <p>Annotation with a gene database will add the three columns
 describing the effect of the variant on transcripts and resulting
-proteins.</p>
-
+proteins.
 <dl>
   <dt>dbname_impact</dt>
   <dd>short code indicating impact/severity of the effect</dd>
@@ -222,8 +220,7 @@ indicate different effects on different transcripts. If all values in
 such a list would be the same (e.g. gene name in case of multiple
 transcripts of the same gene), only this one value is shown (not a
 list).</p>
-<p>Possible <b>impact</b> codes are:</p>
-
+<p>Possible <b>impact</b> codes are:
 <dl>
   <dt>downstream</dt>
   <dd>downstream of gene (up to 2000 bases)</dd>
@@ -303,8 +300,7 @@ href="http://varnomen.hgvs.org/recommendations">http://varnomen.hgvs.org/recomme
 href="http://www.ncbi.nlm.nih.gov/pubmed/26931183">http://www.ncbi.nlm.nih.gov/pubmed/26931183</a>, <a
 href="http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf">http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf</a>).
 There are some (useful or necessary) deviations from from the
-recommendations:</p>
-
+recommendations:
 <ul>
   <li>The reference is allways the transcript name given in the
   database used; if a variant affects multiple transcripts, a
@@ -323,8 +319,7 @@ recommendations:</p>
   <li>For brevity, single letter AA codes are used.</li>
 </ul>
 <p>The description consists of the following elements, separated by
-colons</p>
-
+colons
 <dl>
   <dt>transcript</dt>
   <dd>name or id of the affected transcript, prefixed with a + if
@@ -353,8 +348,7 @@ colons</p>
   This is only present if the protein is affected.</dd>
 </dl>
 <h2 id="h11722">miRNA annotation</h2>
-<p>A miRNA gene file is a tsv file containing the following fields:</p>
-
+<p>A miRNA gene file is a tsv file containing the following fields:
 <dl>
   <dt>chromosome,begin,end,strand</dt>
   <dd>indicate the location of the hairpin in the genome</dd>
@@ -377,8 +371,7 @@ colons</p>
   <dd>(optional) field indicating the status of the miRNA gene</dd>
 </dl>
 <p>Based on this miRNA gene file, the genomecomb miRNA annotation
-adds the following fields:</p>
-
+adds the following fields:
 <dl>
   <dt>dbname_impact</dt>
   <dd>indicates which transcript is affected and the functional
@@ -393,8 +386,7 @@ adds the following fields:</p>
   annotation file If multiple miRNA genes are affected, the fields
   will contain a semi-colon separated list of impacts and genes.</dd>
 </dl>
-<p>Potential annotation elements are</p>
-
+<p>Potential annotation elements are
 <dl>
   <dt>mature5p</dt>
   <dd>variant in the sequence that ends up in the mature miRNA of

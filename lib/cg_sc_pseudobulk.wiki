@@ -20,4 +20,4 @@ of the given groupfile
 ; groupfile: tsv file containing assignement of cells/barcodes to cell-types (or any other grouping)
 
 == Category ==
-RNA
+Singlecell

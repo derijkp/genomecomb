@@ -10,6 +10,6 @@ concatenates sam files outputting to stdout.
 ; **samfile**: file to be concatenated
 
 == Category ==
-Convenience
+Conversion
 
 

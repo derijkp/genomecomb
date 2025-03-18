@@ -95,8 +95,7 @@ process_sample</a>.</p>
 <p>In the final step process_project will call <a
 href="cg_process_multicompar.html">cg process_multicompar</a> to
 combine sample results in the subdirectory compar. Different result
-files may be present depending on the type of analysis:</p>
-
+files may be present depending on the type of analysis:
 <dl>
   <dt>annot_compar-projectname.tsv</dt>
   <dd>multicompar file containing information for all variants in
@@ -322,12 +321,46 @@ option (options given later overrule previous ones).</p>
   use all fields present in the file (*). All fields will still be
   used in the per sample output.</dd>
 </dl>
+<p>Following options are available for singlecell or bulk UMI
+corrected analysis:
+<dl>
+  <dt>-singlecell o/1/ontr10x</dt>
+  <dd>set to 1 or ontr10x for (scywalker) long read single cell
+  analysis, only supported for isoquant isoform caller</dd>
+  <dd>-sc_expectedcells number: gives the the number of cells
+  expected.</dd>
+  <dd>-cellmarkerfile file: A tsv file providing genes that are
+  indicative specific cell cell types.</dd>
+  <dt>-tissue string</dt>
+  <dd>The tissue type of the sample. If cellmarkerfile is given,
+  only markers of the given tissue are used.</dd>
+  <dt>-sc_whitelist file</dt>
+  <dd>(for singlecell) file with all possible correct barcodes. By
+  default the whitelist with the 10x version 3 barcodes is used. You
+  can specify to use version 2 of the whitelist by using the shortcut
+  v2</dd>
+  <dt>-sc_adaptorseq string</dt>
+  <dd>adapter sequence used to find the barcode and UMI. These
+  should follow the given sequence in the reads (default is
+  CTACACGACGCTCTTCCGATCT for singlecell)</dd>
+  <dt>-sc_barcodesize number</dt>
+  <dd>size of the barcode (default 16 for singlecell)</dd>
+  <dt>-sc_umisize number</dt>
+  <dd>size of the UMI (default 12 for singlecell)</dd>
+  <dt>-addumis 0/1</dt>
+  <dd>when 1, add barcode and UMI info to reads for bulk
+  sequencing, in (bulk) isoquant analysis umicounts will be added in
+  the results (barcodes are not used) You can use -sc_adaptorseq,
+  -sc_barcodesize and -sc_umisize to change how barcodes and UMIs are
+  searched (default for -addumis is
+  GATCGGAAGAGCACACGTCTGAACTCCAGTCAC,8,12)</dd>
+</dl>
 <p>This command can be distributed on a cluster or using multiple
 cores with <a href="joboptions.html">job options</a> (more info with
 cg help joboptions) The option -distrreg can be used to allow a
 greater distribution by doing some analyses (variantcalling,
 annotations) split by region (chromosomes) and combining the results</p>
-<h2 id="h13109">Sample specific options</h2>
+<h2 id="h14496">Sample specific options</h2>
 <p>Different options can be given to different samples within the
 same experiment run by storing a file named <b>options.tsv</b> in the
 experiment/project dir with the following fields: sample option value</p>
@@ -342,7 +375,7 @@ of different technologies (e.g. ont and srs) in one run. Beware that
 presets just change base/default settings; Options explicitely given
 on the process_project commandline will overrule settings from a
 preset, even if sample specific).</p>
-<h2 id="h14008">Dependencies</h2>
+<h2 id="h15395">Dependencies</h2>
 <p>Some of the programs used in this workflow are not distributed
 with genomecomb itself (e.g. gatk, strelka) and should be installed
 separately. To make this easier, they are available as portable
@@ -350,11 +383,11 @@ application directories from the [genomecomb
 website](https://derijkp.github.io/genomecomb/install.html) or can be
 directly installed using the <a href="cg_install.html">cg install</a>
 command.</p>
-<h2 id="h14402">Example</h2>
+<h2 id="h15789">Example</h2>
 <pre>
 cg process_project -d sge testproject /complgen/refseq/hg19
 </pre>
-<h2 id="h14485">Category</h2>
+<h2 id="h15872">Category</h2>
 <p>Process</p>
 </div>
 

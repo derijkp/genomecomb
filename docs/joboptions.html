@@ -105,11 +105,19 @@ must keep running untill all jobs are finished. it will output some
 progress, but you can get more info by updating and checking the log
 file.</p>
 <h3 id="h2866">grid engine distribution</h3>
-<p>Using &quot;<b>-d sge</b>&quot; the submitting command will submit
-all jobs to the Grid Engine as grid engine jobs with proper
+<p>There are two ways to distribute jobs on a sge cluster: Using
+&quot;<b>-d sge</b>&quot; the submitting command will submit all jobs
+to the Grid Engine as grid engine jobs immediately with proper
 dependencies between the jobs. The program itself will stop when all
 jobs are submitted. You can check progress/errors by updating and
 checking the logfile.</p>
+<p>Some clusters limit the number of submitted jobs you can have. As
+the previous method may submit 1000s of jobs, this cannot be used on
+such cluster. You can use an alternative method by specifying the
+options -d &lt;number&gt; -dsubmit sge This method will submit a
+maximum of &lt;number&gt; jobs at a time, managing part of the job
+management itself. Using this method, the submit command will stay
+running until all jobs are finished.</p>
 <p>Some tools request multiple cores/slots for one job on a grid
 engine cluster using the parallel environment (pe) local (using -pe
 local &lt;nr of slots&gt; -R y). This will only work if the pe local
@@ -118,22 +126,35 @@ If no pe local is defined, multiple slots are not requested and nodes
 may be overloaded. if the local pe is defined, but not in a way that
 allows for this, jobs may not run. The following settings (create
 with &quot;qconf -ap local&quot; or modify with &quot;qconf -mp
-local&quot;) work on our cluster pe_name local slots 9999999
-user_lists NONE xuser_lists NONE start_proc_args /bin/true
-stop_proc_args /bin/true allocation_rule $pe_slots control_slaves
-TRUE job_is_first_task TRUE urgency_slots min accounting_summary
-FALSE</p>
-<h3 id="h4001">slurm distribution</h3>
+local&quot;) work on our cluster</p>
+<pre>
+pe_name            local
+slots              9999999
+user_lists         NONE
+xuser_lists        NONE
+start_proc_args    /bin/true
+stop_proc_args     /bin/true
+allocation_rule    $pe_slots
+control_slaves     TRUE
+job_is_first_task  TRUE
+urgency_slots      min
+accounting_summary FALSE
+</pre>
+<h3 id="h4503">slurm distribution</h3>
 <p>Using &quot;<b>-d slurm</b>&quot; the submitting command will
 submit all jobs to slurm with proper dependencies between the jobs.
 The program itself will stop when all jobs are submitted. You can
 check progress/errors by updating and checking the logfile.</p>
-<h2 id="h4271">Options</h2>
-<p>List of all options supported by job enabled commands:</p>
-
+<p>The alternate submision method (with a limit of concurrently
+submitted jobs) can also be used with slurm by specifying the options
+-d &lt;number&gt; -dsubmit slurm.</p>
+<h2 id="h4933">Options</h2>
+<p>List of all options supported by job enabled commands:
 <dl>
   <dt>-d value (--distribute)</dt>
   <dd>distribute method, see in description (also -distribute)</dd>
+  <dt>-dsubmit value</dt>
+  <dd>alternate distribute method, see in description</dd>
   <dt>-dpriority value</dt>
   <dd>run jobs with the given priority (default is 0; for sge
   negative numbers decrease priority; for slurm this is given through
@@ -182,8 +203,7 @@ right amount for all occasions (as it can be highly dependent on
 data). Many genomcomb tools have the options -mem and -time to
 increase the amount requested (vs the default). However not all, so
 the following two generic job options can change these requested
-amounts for any job:</p>
-
+amounts for any job:
 <dl>
   <dt>-dmem</dt>
   <dd>memory value (given as e.g. 2G for 2 gigbyte or 4M for 4
@@ -206,8 +226,8 @@ amounts for any job:</p>
 </pre>
 <p>will set the default requested memory to 2G and time to 2h, but
 for mapping with bwa 10G of memory will be re quested and 10h.</p>
-<h2 id="h7723">Category</h2>
-<p>Format Conversion</p>
+<h2 id="h8451">Category</h2>
+<p>Options</p>
 </div>
 
 <div id="right">

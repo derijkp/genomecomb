@@ -86,9 +86,10 @@ sorted on their respective id fields.</p>
   <dd>prefix all fieldnames (except the idfields) coming from file2
   with <b>string</b></dd>
   <dt>-sorted 0/1</dt>
-  <dd>tsvjoin will by default () sort the input files properly to
-  do the join, you can use -sorted 1 if the files are already
-  properly sorted (avoiding the extra sort)</dd>
+  <dd>files to be joined must be sorted on the idfields; by default
+  tsvjoin will sort the input files properly to do the join, you can
+  use -sorted 1 if the files are already properly sorted (avoiding
+  the extra sort)</dd>
   <dt>-type inner/full/left/right</dt>
   <dd>determines the type of join: In an <b>inner</b> join only
   lines are present where the id was found in both files. A
@@ -102,7 +103,7 @@ sorted on their respective id fields.</p>
   included in the result (1), select 2 to include comments from
   file2, or 0 to not include comments</dd>
 </dl>
-<h2 id="h1802">Category</h2>
+<h2 id="h1853">Category</h2>
 <p>tsv</p>
 </div>
 

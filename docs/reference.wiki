@@ -226,6 +226,9 @@ A histo file is generated at the location of the bam file
 ; [[cg_multitranscript|multitranscript]]: Compare multiple transcript files
 ; [[cg_sc_pseudobulk|sc_pseudobulk]]: make pseudobulk files of sc_gene and sc_transcript files based on an sc_group file
 
+=== singlecell ===
+; [[cg_sc_demultiplex|sc_demultiplex]]: demultiplexes ont single cell results into separate samples based on a demultiplexing file
+
 === Compression ===
 ; [[cg_bgzip|bgzip]]: Compresses files using bgzip
 ; [[cg_compress|compress]]: Compresses files using a choice of methods

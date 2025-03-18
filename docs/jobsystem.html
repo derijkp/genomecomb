@@ -51,9 +51,9 @@
 
 <h1 id="h1">Job system</h1>
 <p>The genomecomb job system allows you to create workflows by
-writing and debugging (easy) sequential code, which you can
-(optionally) make distributed by indicating subtasks (jobs) and their
-dependencies in the code using the &quot;job&quot; commmand.</p>
+writing and debugging (easy) procedural/sequential code, which you
+can (optionally) make distributed by indicating subtasks (jobs) and
+their dependencies in the code using the &quot;job&quot; commmand.</p>
 <p>Subtasks can be run sequentially, locally distributed (using a
 number of worker processes) or distributed on a cluster (using sun
 grid engine). On a cluster the program will run briefly, submitting
@@ -68,10 +68,9 @@ write results to temporary files during processing, and rename to the
 final target when (successfully) finished</p>
 <p>The job system is used by including the following commands
 (example in job_example.tcl):</p>
-<h2 id="h1113">job_init</h2>
+<h2 id="h1124">job_init</h2>
 <p>job_init initializes the job system. It accept the following job
-options and returns the rest of the arguments:</p>
-
+options and returns the rest of the arguments:
 <dl>
   <dt>-d value (--distribute)</dt>
   <dd>if value is a number, the job is distributed over the given
@@ -121,7 +120,7 @@ options and returns the rest of the arguments:</p>
 <pre>
 set argv [job_init {*}$argv]
 </pre>
-<h2 id="h3184">job_logfile</h2>
+<h2 id="h3195">job_logfile</h2>
 <p>job_logfile sets the (base) filename of the logfile. A timestamp
 and changing extension (.submitting, .running, .finished, .error
 according to status) will be added. The optional extra parameters are
@@ -142,7 +141,7 @@ change this. (The -logfile option in job_init will override a
 subsequent call to job_logfile) set_job_logfile also sets the
 variable job_logdir to [file dir $logdir]/log_jobs (or to any
 directory given as an argument)</p>
-<h2 id="h4248">job_logdir</h2>
+<h2 id="h4259">job_logdir</h2>
 <p>The job log directory is a directory where per job output, job
 scripts, logs, etc. will be stored while jobs are running. Each job
 is (should be) uniquely defined by the combination of log dir and
@@ -163,7 +162,7 @@ set_job_logdir log_jobs
 </pre>
 <p>job_init will set log_jobs to a default value (log_jobs in the
 directory of the logfile).</p>
-<h2 id="h5342">job</h2>
+<h2 id="h5353">job</h2>
 <p>The job command is used to define a subtask that may be
 distributed and to state dependencies (files the job uses) and
 targets (files the job will create). In the program between job
@@ -222,8 +221,7 @@ target). It is advised (generally as well) to create <b>result files
 using a temporary name</b> (e.g. $target.temp), and rename them to
 $target when finished: This way, if a job crashes, there will never
 be a target file present that is incomplete.</p>
-<p>job supports following <b>options</b>:</p>
-
+<p>job supports following <b>options</b>:
 <dl>
   <dt>-deps dependencylist</dt>
   <dd>list of files on which this job is dependent.</dd>
@@ -278,7 +276,7 @@ be a target file present that is incomplete.</p>
   <dt>-soft softlimits</dt>
   <dd>on sge: extra options passed on as soft limits</dd>
 </dl>
-<h2 id="h11059">tools</h2>
+<h2 id="h11070">tools</h2>
 <p>jobglob: same as glob, but takes into account files that will be
 available at that stage of the program (targets of previous jobs) You
 can use this command to start a separate job for each file/dependency
@@ -310,7 +308,7 @@ that will be cleaned up after the run. Deletion will be done without
 -force, so if <b>file</b> is a directory, it will only be deleted if
 empty. These are deleted after regular cleanup (which should delete
 all files in the directory)</p>
-<h2 id="h12573">job_runall</h2>
+<h2 id="h12584">job_runall</h2>
 <p>Jobs that will make targets that cannot (easily) be determined
 beforehand, e.g. a number of output files with file names based on
 calculation, are best avoided if these results must be processed
@@ -325,7 +323,7 @@ script. This works because the targets are then actually made and can
 be (job)globbed. (This does severily limits parallelisation.) For
 direct runs (-d direct), the command has no effect (not needed, as
 all jobs are allways directly run).</p>
-<h2 id="h13493">job_wait</h2>
+<h2 id="h13504">job_wait</h2>
 <p>job_wait must be added at the end of the program. It will wait (if
 needed) for all jobs to finish. Then it will cleanup temporary files
 and update the log file. On a cluster (sge) the program will actually
@@ -334,7 +332,7 @@ will run after all other jobs are finished.</p>
 <pre>
 job_wait
 </pre>
-<h2 id="h13845">Category</h2>
+<h2 id="h13856">Category</h2>
 <p>Dev</p>
 </div>
 

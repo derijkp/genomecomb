@@ -73,8 +73,7 @@ cg subcommand -h
 <h2 id="h561">Options</h2>
 <p>The following options are generic and available for all
 subcommands. They must however always preceed the subcommand specific
-options.</p>
-
+options.
 <dl>
   <dt>-v number (--verbose)</dt>
   <dd>Setting this to 1 or 2 (instead of the default 0) makes some
@@ -91,8 +90,7 @@ options.</p>
 </dl>
 <p>Many commands will transparantly compress a result file if it
 has an extension indicating this (.zst, .gz, ...). Following options
-are for this case:</p>
-
+are for this case:
 <dl>
   <dt>-compressionlevel number</dt>
   <dd>number indicating the level of compression (1 for fast
@@ -111,9 +109,8 @@ are for this case:</p>
  
  
   href="cg_threads_(default_1)_to_compress_the_result_file_(if_the_result_needs_to_be_compressed,_and_the_compression_method_supports_threads).html">cg_threads
-  (default 1) to compress the result 
-file (if the result needs to be compressed, and the compression
-  method supports threads)</a></dd>
+  (default 1) to compress the result file (if the result needs to be
+  compressed, and the compression method supports threads)</a></dd>
 </dl>
 
 <dl>
@@ -514,7 +511,14 @@ file (if the result needs to be compressed, and the compression
   <dd>make pseudobulk files of sc_gene and sc_transcript files
   based on an sc_group file</dd>
 </dl>
-<h3 id="h15108">Compression</h3>
+<h3 id="h15108">singlecell</h3>
+
+<dl>
+  <dt><a href="cg_sc_demultiplex.html">sc_demultiplex</a></dt>
+  <dd>demultiplexes ont single cell results into separate samples
+  based on a demultiplexing file</dd>
+</dl>
+<h3 id="h15259">Compression</h3>
 
 <dl>
   <dt><a href="cg_bgzip.html">bgzip</a></dt>
@@ -538,14 +542,14 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_zst.html">zst</a></dt>
   <dd>Compresses files using zstd</dd>
 </dl>
-<h3 id="h15670">Mapping</h3>
+<h3 id="h15821">Mapping</h3>
 
 <dl>
   <dt><a href="cg_map.html">map</a></dt>
   <dd>align reads in fastq files to a reference genome using a
   variety of methods</dd>
 </dl>
-<h3 id="h15781">Convenience</h3>
+<h3 id="h15932">Convenience</h3>
 
 <dl>
   <dt><a href="cg_install.html">install</a></dt>
@@ -554,7 +558,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_samcat.html">samcat</a></dt>
   <dd>concatenates sam files outputting to stdout.</dd>
 </dl>
-<h3 id="h16023">Dev</h3>
+<h3 id="h16174">Dev</h3>
 
 <dl>
   <dt><a href="cg_qjobs.html">qjobs</a></dt>
@@ -571,7 +575,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_tsvdiff.html">tsvdiff</a></dt>
   <dd>compare tsv files</dd>
 </dl>
-<h3 id="h16427">Tools</h3>
+<h3 id="h16578">Tools</h3>
 
 <dl>
   <dt><a href="cg_cplinked.html">cplinked</a></dt>
@@ -584,7 +588,7 @@ file (if the result needs to be compressed, and the compression
   <dt><a href="cg_shadow_mkdir.html">shadow_mkdir</a></dt>
   <dd>create a shadowed dir</dd>
 </dl>
-<h3 id="h16763">Visualization</h3>
+<h3 id="h16914">Visualization</h3>
 
 <dl>
   <dt><a href="cg_viz_transcripts.html">viz_transcripts</a></dt>

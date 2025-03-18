@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>cg_lz4</title>
+<title>cg_sc_demultiplex</title>
 
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="MSSmartTagsPreventParsing" content="TRUE">
@@ -49,39 +49,43 @@
 
 <div id="middle">
 
-<h1 id="h1">lz4</h1>
-<h2 id="h11">Format</h2>
-<p>cg lz4 ?options? file ...</p>
-<h2 id="h51">Summary</h2>
-<p>Compresses files using lz4</p>
-<h2 id="h93">Description</h2>
-<p>The given files are compressed using lz4, and the original
-uncompressed files are removed (by default). Files already compressed
-using another method, are recompressed using lz4. lz4 is a fast
-compression method, it compresses and decompresses an order of
-magnitude faster than gzip, at the cost of some compression.</p>
-<h2 id="h429">Options</h2>
-<p>supports options:
+<h1 id="h1">sc_demultiplex</h1>
+<h2 id="h22">Format</h2>
+<p>cg sc_demultiplex sampledir dmfile refseq</p>
+<h2 id="h78">Summary</h2>
+<p>demultiplexes ont single cell results into separate samples based
+on a demultiplexing file</p>
+<h2 id="h184">Description</h2>
+<p>cg sc_demultiplex takes as arguments a sample directory and a
+demultiplexing file.</p>
+<p>The source is a normal sample directory produced by scywalker
+analysis of ont single cell data.</p>
+<p>The demultiplexing file is a tsv file with (at least) the fields
+cell and sample, in which each line assigns a cell to a sample. (If
+these fields are not present, alternatives are accepted: barcode or
+cellbarcode for cell; donor_id or subsample for sample</p>
+<p>Foreach sample in the demultiplexing file, a new sample is created
+next to the original sample, named
+dm_&lt;dmsamplename&gt;<u>&lt;sample&gt; where &lt;sample&gt; is the
+original sample name, and &lt;dmsamplename&gt; is the name for the
+&quot;new&quot; sample given in the demultiplexing file In these all
+important analysis files are recreated containing only the cells
+assigned to the dmsample. The original pooled sample is not removed,
+as it has information not in the demultiplexed samples (unassigned
+cells, reads not assigned to cells, ...)</u></p>
+<h2 id="h1155">Arguments</h2>
+
 <dl>
-  <dt>-k 0/1 (--keep)</dt>
-  <dd>keep the original uncompressed file if 1 (default 0)</dd>
-  <dt>-c number (--compressionlevel)</dt>
-  <dd>number between 1 and 12 indicating compression level, where 1
-  = fast compression, 9 = high compression (default 9) At high
-  compression (9), compression level and speed is similar to gzip,
-  but decompression is still an order of magnitude faster</dd>
-  <dt>-b number (--blocksize)</dt>
-  <dd>number indicating the blocksize where: 4 = 64KB, 5 = 256KB, 6
-  = 1MB, 7 = 4MB (default 5)</dd>
-  <dt>-i 0/1 (--index)</dt>
-  <dd>also create an lz4 index file</dd>
-  <dt>-o filename (--outputfile)</dt>
-  <dd>The compressed file will be written to <b>filename</b>. If
-  the --keep option is not explicitely given, using -o will change
-  the &quot;default&quot; for -k to 1.</dd>
+  <dt>sampledir</dt>
+  <dd>original (pooled) sample directory (result fo scywalker
+  analysis)</dd>
+  <dt>dmfile</dt>
+  <dd>tsv file assigning cells to (new/demultiplexed) samples</dd>
+  <dt>refseq</dt>
+  <dd>genome reference sequence, needed for (oa) making crams</dd>
 </dl>
-<h2 id="h1158">Category</h2>
-<p>Compression</p>
+<h2 id="h1383">Category</h2>
+<p>singlecell</p>
 </div>
 
 <div id="right">
