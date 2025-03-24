@@ -248,14 +248,14 @@ proc var_job {args} {
 				# using bsort because
 				# files are xxx-100 -> would sort reverse of what we want because of the -
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
-					cg vcfcat -i 1 -o $target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
+					cg vcfcat -i 1 -o $target {*}$list
 				} elseif {[file extension [gzroot $target]] in ".bam .cram"} {
 					cg sam_catmerge \
 						-sort nosort \
 						-index 1 \
 						-deletesams 0 \
 						-refseq $refseq \
-						$target {*}[bsort [jobglob -checkcompressed 1 {*}$list]]
+						$target {*}$list
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
 					set empty 1
 					foreach {file} $list {
@@ -266,12 +266,12 @@ proc var_job {args} {
 						file_write $tempfile chromosome\tbegin\tend\n
 						exec cat $tempfile {*}[compresspipe $target] > $target.temp
 					} else {
-						cg cat -m 1 -c f {*}[bsort [jobglob -checkcompressed 1 {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+						cg cat -m 1 -c f {*}$list | cg regjoin {*}[compresspipe $target] > $target.temp
 					}
 					file rename -force $target.temp $target
 					cg_zindex $target
 				} else {
-					cg cat -m 1 -c f {*}[bsort [jobglob -checkcompressed 1 {*}$list]] {*}[compresspipe $target] > $target.temp
+					cg cat -m 1 -c f {*}$list {*}[compresspipe $target] > $target.temp
 					file rename -force $target.temp $target
 					cg_zindex $target
 				}
