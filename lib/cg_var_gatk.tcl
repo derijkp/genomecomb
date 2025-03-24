@@ -96,8 +96,8 @@ proc annotvar_clusters_job {args} {
 		}
 		analysisinfo_write $dep $resultfile
 		foreach rmfile $rmtargets {
-			rm -force $rmfile
-			rm -force [analysisinfo_file $rmfile]
+			rm -force 1 $rmfile
+			rm -force 1 [analysisinfo_file $rmfile]
 		}
 	}
 }

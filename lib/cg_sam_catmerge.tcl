@@ -218,7 +218,7 @@ proc sam_catmerge_job {args} {
 						{*}$deps {*}$finaloutcmd
 				} else {
 					set workdir [scratchdir]/merge
-					file delete -force $workdir
+					rm -warning 1 -force 1 -recursive 1 $workdir
 					file mkdir $workdir
 					set todo $deps
 					set len [llength $todo]
@@ -237,7 +237,7 @@ proc sam_catmerge_job {args} {
 								exec cg mergesorted -commentchar @ -headerline 0 -header $header -sortpos $sortopt \
 									{*}$part | cg zst -compressionlevel 1 > $parttarget.temp.zst
 								# catch_exec samtools merge {*}$sortopt -t $threads $parttarget.temp {*}$part
-								if {$delete} {file delete {*}$part}
+								if {$delete} {rm -warning 1 {*}$part}
 								file rename -force -- $parttarget.temp.zst $parttarget
 							} elseif {!$delete} {
 								set part [lindex $part 0]
@@ -256,7 +256,7 @@ proc sam_catmerge_job {args} {
 					}
 					exec cg mergesorted -commentchar @ -headerline 0 -header $header -sortpos $sortopt \
 						{*}$todo {*}$finaloutcmd
-					if {$delete} {file delete {*}$todo}
+					if {$delete} {rm -warning 1 {*}$todo}
 				}
 			}
 		}
@@ -267,7 +267,7 @@ proc sam_catmerge_job {args} {
 				result_rename $tempregresult $regresult
 			}
 		}
-		foreach rmfile $rmfiles {shadow_delete $rmfile}
+		foreach rmfile $rmfiles {rm -warning 1 -recursive 1 $rmfile}
 	}
 	if {$index} {
 		bam_index_job $resultfile

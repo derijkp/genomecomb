@@ -64,19 +64,19 @@ proc cleanup_job {args} {
 
 proc cleanup_one {file forcedirs delassociated} {
 	if {$forcedirs} {
-		shadow_delete $file
+		shadow_delete $file 1
 	} else {
 		job_delete_ifempty $file
 	}
 	if {$delassociated} {
 		set indexfile [index_file $file]
 		if {[file exists $indexfile]} {
-			shadow_delete $indexfile
+			shadow_delete $indexfile 1
 		}
 		set analysisinfofile [analysisinfo_file $file]
 		if {[file exists $analysisinfofile]} {shadow_delete $analysisinfofile}
 		if {[file exists [gzroot $file].index] && ($forcedirs || $delassociated > 1)} {
-			shadow_delete [gzroot $file].index
+			shadow_delete [gzroot $file].index 1
 		}
 	}
 }

@@ -1633,7 +1633,7 @@ proc job_cleanup_add_shadow {args} {
 	}
 }
 
-proc job_delete_ifempty {file {subdirs 0}} {
+proc job_delete_ifempty {file {subdirs 0} {warning 0}} {
 	if {![file exists $file]} return
 	if {[file isdir $file]} {
 		if {![file readable $file]} return
@@ -1651,11 +1651,11 @@ proc job_delete_ifempty {file {subdirs 0}} {
 				if {$empty} {set content {}}
 			}
 			if {![llength $content]} {
-				shadow_delete $file
+				shadow_delete $file $warning
 			}
 		}
 	} else {
-		shadow_delete $file
+		shadow_delete $file $warning
 	}
 	
 }

@@ -63,24 +63,43 @@ proc mkdir {dir} {
 
 proc rm {args} {
 	set opts {}
-	if {[lindex $args 0] in "-f -force"} {
-		lappend opts -force
-		set args [lrange $args 1 end]
-	} elseif {[lindex $args] eq "--"} {
-		set args [lrange $args 1 end]
+	set pos 0
+	set force 0
+	set warning 0
+	set recursive 0
+	cg_options rm args {
+		-force {set force $value}
+		-recursive {set recursive $value}
+		-warning {set warning $value}
+	} file 1 ... {
+		delete files, includes support for deleting shadow dirs
 	}
-	foreach file $args {
+	set files [list $file {*}$args]
+	foreach file $files {
 		if {[file isdir $file] && ![catch {file link $file} shadow] && [file exists $shadow/shadow_source]} {
 			file delete -force $shadow
 			if {[catch {file delete -force $shadow} msg]} {
 				if {![regexp "no such file or directory" $msg]} {
-					error "error deleting shadow dir $shadow of file $file: $msg"
+					if {$warning} {
+						putswarning "warning: could not delete shadow dir $shadow of file $file: $msg"
+					} else {
+						error "error deleting shadow dir $shadow of file $file: $msg"
+					}
 				}
+			}
+		}
+		if {$recursive && [file isdir $file]} {
+			foreach subfile [glob -nocomplain $file/*] {
+				rm -force $force -recursive $recursive -warning $warning $subfile
 			}
 		}
 		if {[catch {file delete {*}$opts $file} msg]} {
 			if {![regexp "no such file or directory" $msg]} {
-				error "error deleting file $file: $msg"
+				if {$warning} {
+					putswarning "warning: could not delete file $file: $msg"
+				} else {
+					error "error deleting file $file: $msg"
+`				}
 			}
 		}
 	}

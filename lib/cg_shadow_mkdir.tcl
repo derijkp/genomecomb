@@ -38,21 +38,22 @@ proc cg_shadow_clean {args} {
 }
 
 # shadow_delete is folded into rm, so no longer really needed
-proc shadow_delete {link} {
+# if warning = 1, a warning is sent to stderr if the file cannot be deleted, but no error is generated
+proc shadow_delete {link {warning 0}} {
 	if {![file isdir $link]} {
-		rm $link
+		rm -warning $warning $link
 		return
 	}
 	if {[catch {file link $link} shadow]} {
-		rm -force $link
+		rm -warning $warning -force 1 -recursive 1 $link
 		return
 	}
 	if {![file exists $shadow/shadow_source]} {
 		puts stderr "$link links to $shadow is not a shadow (file $shadow/shadow_source does not exist), only removing link, not target"
 	} else {
-		rm -force $shadow
+		rm -warning $warning -force 1 -recursive 1 $shadow
 	}
-	rm $link
+	rm -warning $warning $link
 }
 
 proc cg_shadow_delete {args} {
@@ -60,23 +61,13 @@ proc cg_shadow_delete {args} {
 	} {link} 1 ... {
 		delete shadow dirs
 	}
-	rm -force $link {*}$args
+	rm -force 1 -recursive 1 $link {*}$args
 }
 
 # shadow_delete is folded into rm ->
 # cg_rm is mostly the same as cg_shadow_delete (cg_shadow_delete uses -force by default)
 proc cg_rm {args} {
-	set force 0
-	cg_options rm args {
-		-force - -f {set force $value}
-	} {link} 1 ... {
-		delete files, includes support for deleting shadow dirs
-	}
-	if {$force} {
-		rm -f $link {*}$args
-	} else {
-		rm $link {*}$args
-	}
+	rm {*}$args
 }
 
 # shadow_mkdir creates a temp or workdir for distributed analysis.
