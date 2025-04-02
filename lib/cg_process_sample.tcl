@@ -797,6 +797,9 @@ proc process_sample_job {args} {
 	if {$ali_keepcomments eq "" && "remora" in $methcallers} {
 		set ali_keepcomments 1
 	}
+	if {$ali_keepcomments eq "" && ($singlecell ne "" || $addumis)} {
+		set ali_keepcomments 1
+	}
 	# If ubam dir is present, prefer this
 	# we will handle ubams "as fastqs" mostly (keep in var fastqdir, etc.)
 	if {$fastqdir eq ""} {
