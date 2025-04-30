@@ -1,6 +1,8 @@
 *~
 *.o
 /work/*
+/exp/*
+/wip/*
 /old/*
 /bin-x86_64/*
 /bin-ix86/*
@@ -13,7 +15,6 @@
 /experimental/*
 /bin/*
 !/bin/.keep
-/lib-exp/*
 /src-exp/*
 /tests-exp/*
 /tests/log_jobs/*
