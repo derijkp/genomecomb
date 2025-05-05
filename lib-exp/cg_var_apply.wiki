@@ -1,0 +1,27 @@
+= var_apply (wip) =
+
+== Format ==
+cg csv2tsv sequencefile varfile resultfile
+
+== Summary ==
+Applies the variants in varfile ([[tsv]] format) to the sequencefile in FASTA format.
+
+== Description ==
+Creates a resultfile containing the sequence in sequencefile with the variants in varfile applied. 
+This (wip) command has several limitations:
+* does not support multiple sequences/chromosomes in one file
+* only supports variants of type snp, del, ins, sub
+* limited testing
+
+== Arguments ==
+; **sequencefile**: FASTA file with the original sequence
+; **varfile**: variant file in [[tsv]] format to be applied
+; **resultfile**: write result to resultfile (in FASTA format)
+
+== Options ==
+; -checkchromosome 0/1: default 1, set to 0 to not check if the chromosome in varfile matches the name in the FASTA file
+; -skipunknowntype 0/1: by default (0) an error will be given on unsupported variant types, set to 1 to skip these (givin only a warning on stderr)
+
+== Category ==
+Format Conversion
+
