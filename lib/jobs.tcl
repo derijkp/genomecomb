@@ -996,6 +996,7 @@ proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	# This will only set the log file the first time it is called, allowing subcommands to set it if called separately
 	# but not when called from a larger workflow
 	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
+	putslog "logfile: $logfile"
 	if {$dir ne ""} {
 		putslog "basedir: $dir"
 	}
