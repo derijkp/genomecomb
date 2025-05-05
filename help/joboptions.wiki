@@ -67,7 +67,7 @@ progress/errors by updating and checking the logfile.
 
 Some clusters limit the number of submitted jobs you can have. As the previous
 method may submit 1000s of jobs, this cannot be used on such cluster. You
-can use an alternative method by specifying the options -d <number> -dsubmit sge
+can use an alternative method by specifying the options **-d <number> -dsubmit sge**
 This method will submit a maximum of <number> jobs at a time, managing part of
 the job management itself. Using this method, the submit command will stay running
 until all jobs are finished.
@@ -100,7 +100,7 @@ when all jobs are submitted. You can check progress/errors by updating and
 checking the logfile.
 
 The alternate submision method (with a limit of concurrently submitted jobs)
-can also be used with slurm by specifying the options -d <number> -dsubmit slurm.
+can also be used with slurm by specifying the options **-d <number> -dsubmit slurm**.
 
 == Options ==
 List of all options supported by job enabled commands:
