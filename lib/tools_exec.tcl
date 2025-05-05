@@ -64,6 +64,20 @@ proc catch_exec {args} {
 	return $msg
 }
 
+proc catch_exec_nowarnings {args} {
+	set error [catch {
+		exec {*}$args
+	} msg opt]
+	if {$error} {
+		if {$::errorCode ne "NONE"} {
+			dict unset opt -level
+			set errorInfo "$msg\n    while executing\n$args"
+			return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
+		}
+	}
+	return $msg
+}
+
 proc catch_fileaccess {cmd args} {
 	set error [catch {uplevel $cmd} msg]
 	if {$error} {
