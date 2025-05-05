@@ -77,7 +77,6 @@ proc rm {args} {
 	set files [list $file {*}$args]
 	foreach file $files {
 		if {[file isdir $file] && ![catch {file link $file} shadow] && [file exists $shadow/shadow_source]} {
-			file delete -force $shadow
 			if {[catch {file delete -force $shadow} msg]} {
 				if {![regexp "no such file or directory" $msg]} {
 					if {$warning} {
