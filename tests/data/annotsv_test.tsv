@@ -1,0 +1,42 @@
+chromosome	begin	end	type	Biologist_annotation	Biologist_ranking
+1	149041933	149209289	del		Benign
+1	196756231	196799302	del		Benign
+1	248738898	248785562	del		Benign
+2	242865920	243028452	del		Benign
+3	62939217	65268743	del	VOUS in 2017, reclassified in 2020	Pathogenic
+3	97483033	97487074	del	BBS3/ARL6 promotor overlapped	Pathogenic
+3	195419168	195472855	del		Benign
+4	71552	9371067	del	4p- syndrom	Pathogenic
+4	69392545	69462438	del		Benign
+5	723194	777000	dup		Benign
+5	88774328	91802402	del	TAD MEF2C	Pathogenic
+6	266079	362290	del		Benign
+6	29854870	29896710	del		Benign
+6	78979172	79023328	del		Benign
+7	33397467	33397607	del	BBS9 inframe	Pathogenic
+7	38296176	38352444	del		Benign
+7	72726578	74139390	del	Williams syndrom	Pathogenic
+8	7169490	7753583	dup		Benign
+8	7169490	7753583	del		Benign
+8	56986129	57169684	del	VOUS in 2017, reclassified in 2020	Pathogenic
+8	141035363	141061798	del	DI AR	Pathogenic
+10	46976157	47590995	dup		Benign
+11	66287088	66288847	del	BBS1 internal frameshift	Pathogenic
+12	63935481	64130626	del	DPY19L2 (both del and dup LCR mediated, precise breakpoints)	Pathogenic
+12	63935481	64130626	dup	DPY19L2 (both del and dup LCR mediated, precise breakpoints)	Pathogenic
+14	22323879	22952279	del		Benign
+14	74001651	74022324	del		Benign
+14	107152092	107180095	del		Benign
+15	20432851	22765687	dup		Benign
+15	20564608	22409391	del		Benign
+15	34735949	34806953	del		Benign
+16	1565629	1571297	dup	IFT140 tandem duplication 	Pathogenic
+16	31955076	34702366	dup		Benign
+16	32471625	33487672	del		Benign
+16	33371443	34285848	dup		Benign
+16	34493206	34702366	dup		Benign
+17	14100118	15442066	dup	PMP22 (CMT1A)	Pathogenic
+17	34437475	34817481	dup		Benign
+17	44171888	44297143	dup		Benign
+22	18894835	21464119	del	Di George syndrom	Pathogenic
+X	53250653	53856257	dup	HUWE1	Pathogenic

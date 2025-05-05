@@ -2070,6 +2070,24 @@ test annotsv {options} {
 > 5	1000	1000	ins	100	
 child process exited abnormally} error
 
+test annotsv {AnnotSV} {
+	test_cleantmp
+	file copy -force data/annotsv_test.tsv tmp/test.tsv
+	set svfile tmp/test.tsv
+	set annotsvresultfile tmp/annotsv.tsv
+	set resultfile tmp/annot_test.tsv
+	set refseq GRCh37
+	set args [list \
+		-refseq $refseq \
+		-hpo "HP:0001156,HP:0001363,HP:0011304" \
+		$svfile $resultfile $annotsvresultfile \
+	]
+	AnnotSV {*}$args
+
+	cg annotate tmp/cgsv1.tsv tmp/result.tsv tmp/sv_testannot.tsv
+	exec diff tmp/result.tsv data/expected-annotsv.tsv
+} {} 
+
 file delete -force tmp/temp.tsv
 file delete -force tmp/temp2.tsv
 
