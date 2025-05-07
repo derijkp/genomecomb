@@ -1,0 +1,30 @@
+= Annotate =
+
+== Format ==
+cg annotate_AnnotSV ?options? svfile resultfile annotsvresultfile
+
+== Summary ==
+Annotate a structural variant file using AnnotSV, typically used in addition to the gnomecomb annotations
+
+== Description ==
+Adds new columns with annotation to a structural variant file in [[tsv]] format using AnnotSV. 
+All column names will be prefixed with AnnotSV_
+The command AnnotSV should be available on the path. You can easily install a portable binary version of this using [[cg_install]]:
+{{{
+cg install AnnotSV
+}}}
+or download the portable binary from the genomecomb website. This version includes all annotation for human, but 
+does not support mouse annotation.
+
+== Arguments ==
+; **svfile**: structural variant file in [[tsv]] format
+; **resultfile**: resulting file in [[tsv]] format with new columns added
+; **annotsvresultfile**: Output from AnnotSV, check this file if you want to check the split annotations: 
+Only annotions of Annotation_mode full are added to resultfile (one line per variant)
+
+== Options ==
+; **-ref reference**: which reference to use (default hg38); only supported values are: hg38 GRCh38 hg37 GRCh37 mm10 mm9
+; **-hpo value**: is given to AnnotSV as option
+
+== Category ==
+Annotation
