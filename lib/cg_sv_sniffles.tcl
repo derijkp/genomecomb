@@ -183,9 +183,8 @@ proc sv_sniffles_job {args} {
 				--snf $varallfile.temp \
 				--input $usebam --vcf $target.temp.gz \
 				2>@ stderr >@ stdout
-			file rename -force -- $target.temp.gz $target
-			file rename -force -- $target.temp.gz.tbi $target.tbi
-			file rename -force -- $varallfile.temp $varallfile
+			result_rename $target.temp.gz $target
+			result_rename $varallfile.temp $varallfile
 		} else {
 			if {[catch {
 				exec sniffles {*}$opts --threads $threads --skip_parameter_estimation \
@@ -193,8 +192,7 @@ proc sv_sniffles_job {args} {
 					--genotype --cluster \
 					--min_support $min_support --min_seq_size $min_seq_size \
 					-m $usebam -v $target.temp 2>@ stderr >@ stdout
-				file rename -force -- $target.temp.gz $target
-				file rename -force -- $target.temp.gz.tbi $target.tbi
+				result_rename $target.temp.gz $target
 			} msg]} {
 				# sniffles sometimes (allways?) crashes on empty or small bam
 				# only give error on larger bam, otherwise write empty result

@@ -139,4 +139,6 @@ proc result_rename {src target} {
 	if {[file exists $src.$indexext]} {file rename -force -- $src.$indexext $target.$indexext}
 	if {[file exists $src.tbi]} {file rename -force -- $src.tbi $target.tbi}
 	if {[file exists $src.zsti]} {file rename -force -- $src.zsti $target.zsti}
+	if {[file exists $src.bai]} {file rename -force -- $src.tbi $target.bai}
+	if {[file exists $src.crai]} {file rename -force -- $src.tbi $target.crai}
 }
