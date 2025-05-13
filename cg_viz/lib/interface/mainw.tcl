@@ -308,6 +308,9 @@ mainw method opentsv {args} {
 		if {[file exists $root/compar]} break
 		if {[llength [glob -nocomplain $root/*.cgproj]]} break
 		lappend path [file tail $root]
+		if {[catch {glob -nocomplain [file dir $root]/*}]} {
+			break
+		}
 		set root [file dir $root]
 	}
 	$object.tree selection set node $file
