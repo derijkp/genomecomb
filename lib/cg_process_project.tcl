@@ -67,6 +67,7 @@ proc process_project_job {args} {
 	set process_msamples 0
 	set samplesheet {}
 	set validate 0
+	set extraannot {}
 	cg_options process_project args {
 		-preset {
 			if {$value ne ""} {
@@ -181,6 +182,12 @@ proc process_project_job {args} {
 		}
 		-iso_joint_min {
 			set iso_joint_min $value
+		}
+		-extraannot {
+			if {[llength [list_remove $value AnnotSV]]} {
+				error "Unknown value(s) given for -extraannot: [list_remove $value AnnotSV]"
+			}
+			set extraannot $value
 		}
 		-reftranscripts {
 			set reftranscripts [code_empty $value]
@@ -478,6 +485,7 @@ proc process_project_job {args} {
 		-isocallers $isocallers \
 		-iso_match $iso_match \
 		-sc_celltypers $sc_celltypers \
+		-extraannot $extraannot \
 		-threads $threads \
 		-distrreg $distrreg \
 		-keepfields $keepfields \

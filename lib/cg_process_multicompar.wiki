@@ -48,6 +48,7 @@ quotes. You can still use * as a wildcard, as cg will resolve the wildcards itse
 (default is to use all found in the project dir).
 They should be given as a list of files in this option, so enclose in
 quotes. You can still use * as a wildcard, as cg will resolve the wildcards itself.
+; -extraannot list: lst of extra annotations to add, currently only AnnotSV (for human SVs) is supported
 ; -keepfields fieldlist: Besides the obligatory fields, include only the fields
 in fieldlist (space separated) in the output multicompar. Default is to use all fields
 present in the file (*)

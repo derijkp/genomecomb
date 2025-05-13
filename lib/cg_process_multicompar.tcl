@@ -20,6 +20,7 @@ proc process_multicompar_job {args} {
 	set isocallers {}
 	set iso_match {}
 	set sc_celltypers {}
+	set extraannot {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -76,6 +77,12 @@ proc process_multicompar_job {args} {
 		}
 		-sc_celltypers {
 			set sc_celltypers $value
+		}
+		-extraannot {
+			if {[llength [list_remove $value AnnotSV]]} {
+				error "Unknown value(s) given for -extraannot: [list_remove $value AnnotSV]"
+			}
+			set extraannot $value
 		}
 		-experiment {
 			set experiment $value
@@ -295,12 +302,36 @@ proc process_multicompar_job {args} {
 				cg svmulticompar -overlap 40 $target.temp {*}$todo
 			}
 			zst $target.temp
-			file rename -force -- $target.temp.zst $target
+			result_rename $target.temp.zst $target
 		}
 		# annotate svmulticompar
 		# --------------------
 		putslog "Starting annotation"
-		cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.zst $dbdir {*}$dbfiles
+		if {"AnnotSV" in $extraannot} {
+			cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.temp.zst $dbdir {*}$dbfiles
+			job annotate_AnnotSV -deps {
+				compar/annot_sv-$experiment.tsv.temp.zst
+			} -targets {
+				compar/annot_sv-$experiment.tsv.zst
+				compar/annot_sv-$experiment.AnnotSV.tsv
+			} -rmtargets {
+				compar/annot_sv-$experiment.tsv.temp.zst
+			} -vars {
+				refseq experiment
+			} -code {
+				analysisinfo_write $dep $target AnnotSV [version AnnotSV]
+				cg annotate_AnnotSV -ref [file tail [refdir $refseq]] \
+					compar/annot_sv-$experiment.tsv.temp.zst \
+					compar/annot_sv-$experiment.tsv.zst \
+					compar/annot_sv-$experiment.AnnotSV.tsv
+				file delete -force compar/annot_sv-$experiment.tsv.temp.zst \
+					compar/annot_sv-$experiment.tsv.temp.zst.zsti \
+					compar/annot_sv-$experiment.tsv.temp.analysisinfo \
+					compar/annot_sv-$experiment.tsv.temp.analysisinfo.old
+			}
+		} else {
+			cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.zst $dbdir {*}$dbfiles
+		}
 		job indexannotsvcompar-$experiment -deps {
 			compar/annot_sv-$experiment.tsv.zst
 		} -targets {
@@ -445,7 +476,7 @@ proc process_multicompar_job {args} {
 				cg svmulticompar $target.temp {*}$todo
 			}
 			zst $target.temp
-			file rename -force -- $target.temp.zst $target
+			result_rename $target.temp.zst $target
 		}
 		job cgcnv_annotate -optional 1 \
 		-deps {compar/cgcnv-$experiment.tsv.zst} \

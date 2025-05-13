@@ -56,7 +56,7 @@ test process_sv {process_project ont} {
 	join [list_remove $result {}] \n
 } {}
 
-test process_sv {process_project ont_minimap2} {
+test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 	cd $::smalltestdir
 	set dest tmp/ont_minimap2
 	file delete -force tmp/ont_minimap2
@@ -65,12 +65,13 @@ test process_sv {process_project ont_minimap2} {
 	cg process_project {*}$::dopts -distrreg 1 -split 1 \
 	  -dbdir $::refseqdir/hg19 -reports {-fastqc predictgender fastqstats} \
 	  -clip 0 -paired 0 -aligner minimap2 -removeduplicates 0 -realign 0 -svcallers {sniffles cuteSV cuteSV_pacbio} -varcallers {} \
+	  -extraannot AnnotSV \
 	  tmp/ont_minimap2 >& tmp/ont_minimap2.log
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.tbi -x *.submitting -x *.xml \
-		-x *.analysisinfo -x *.png -x *.vcf \
+		 -x *.png -x *.vcf \
 		tmp/ont_minimap2 expected/ont_minimap2]
 	foreach file1 [glob tmp/ont_minimap2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
