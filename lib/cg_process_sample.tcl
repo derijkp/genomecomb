@@ -1272,6 +1272,10 @@ proc process_sample_job {args} {
 				# and distribute again over if -distrreg i set (for distributed cleaning)
 				# do not do any of preliminaries if end product is already there
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+				set resultbamfile_analysisinfo [analysisinfo_file $resultbamfile]
+				if {[file exists $resultbamfile] && ![file exists $resultbamfile_analysisinfo]} {
+					file_write $resultbamfile_analysisinfo "sample\tsource\n[file tail $sampledir]\tprovided\n"
+				}
 				set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 				if {$distrreg in {0 ""}} {
 					set tempbamfile $bamfile
@@ -1286,7 +1290,7 @@ proc process_sample_job {args} {
 				# if {$udistrreg ne $distrreg} {validate_distrreg $udistrreg $refseq}
 				set bamfiles [sam_catmerge_job \
 					-skip [list $bamfile [analysisinfo_file $bamfile]] \
-					-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
+					-skip [list $resultbamfile $resultbamfile_analysisinfo] \
 					-name mergesams-$aligner-$sample -refseq $refseq \
 					-sort coordinate -mergesort 1 \
 					-distrreg $udistrreg \
@@ -1309,7 +1313,7 @@ proc process_sample_job {args} {
 					setdefcompressionlevel 1
 					foreach bam $bamfiles {
 						lappend cleanbams [bam_clean_job -sort 2 -outputformat sam.zst -distrreg $distrreg \
-							-skip [list $resultbamfile [analysisinfo_file $resultbamfile]] \
+							-skip [list $resultbamfile $resultbamfile_analysisinfo] \
 							-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 							-regionfile 5 -refseq $refseq -threads $threads \
 							 $bam]
