@@ -71,3 +71,11 @@ proc tcl::mathfunc::maximpact {args} {
 	set pos [::max [list_cor $varlist $list]]
 	lindex $varlist $pos
 }
+
+proc tcl::mathfunc::exonlist {exonStarts exonEnds} {
+	set result {}
+	foreach s [split [string trim $exonStarts ,] ,;] e [split [string trim $exonEnds ,] ,;] {
+		lappend result $s-$e
+	}
+	return [join $result \,]
+}

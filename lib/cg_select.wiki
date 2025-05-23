@@ -237,6 +237,7 @@ of missense and higher in the list).
 gene and transcript name and g for only the gene name.
 ; maximpact(list,...): returns the maximum impact from one or more lists of impacts. The order of impact
 is as in the list given in [[cg_annotate]]
+; exonlist(exonStarts,exonEnds): returns a list of exons in the format exon1start-exon1end,exon2start-exon2end,...
 ; alignedseq(region,?includeins?): for an alignment tsv (typically converted from a bam/sam file) 
 this will return the allele of the aligned sequence at the specifield (reference) position.
 The fields chromosome, begin, end, cigar and seq must be present in the tsv file.
