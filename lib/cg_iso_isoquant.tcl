@@ -527,7 +527,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		}
 # if {$read eq "dd5ac6a9-2c67-4d86-a628-a0c74e8d6619"} {error selread}
 		set assignment_events [lindex $line $assignment_eventspos]
-		if {$assignment_type in "unique"} {
+		if {$assignment_type in "unique ambiguous"} {
 			set inconsistency 0
 		} elseif {[regexp {major_exon_elongation|extra|alternative_structure|alt_donor_site|alt_acceptor_site|intron_alternation|migration|exclusive|skip|merge|gain|detach|terminal_exon_shift} $assignment_events]} {
 			# significant inconsistencies
@@ -535,7 +535,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		} elseif {[regexp {intron_retention|unspliced_intron_retention|incomplete_intron_retention} $assignment_events]} {
 			# intron retentions
 			set inconsistency 2
-		} elseif {[regexp {fake_terminal|alternative_polya|intron|exon} $assignment_events]} {
+		} elseif {[regexp {fake_terminal|alternative_polya|intron_|exon_} $assignment_events]} {
 			# alignment artifacts, alternative transcription start / end
 			set inconsistency 1
 		} else {
