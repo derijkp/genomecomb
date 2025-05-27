@@ -1,5 +1,6 @@
-proc refseq_ngmlr_job {refseq preset} {
+proc refseq_ngmlr_job {refseq {preset ont}} {
 	upvar job_logdir job_logdir
+	if {$preset eq ""} {set preset ont}
 	set tail [file tail $refseq]
 	set ngmlrrefseqdir $refseq.ngmlr.$preset
 	set ngmlrrefseq $ngmlrrefseqdir/$tail
@@ -37,8 +38,9 @@ proc cg_refseq_ngmlr args {
 	return $return
 }
 
-proc refseq_ngmlr {refseq preset} {
+proc refseq_ngmlr {refseq {preset ont}} {
 	upvar job_logdir job_logdir
+	if {$preset eq ""} {set preset ont}
 	set refseq [file_absolute $refseq]
 	set ngmlrrefseq $refseq.ngmlr.$preset/[file tail $refseq]
 	if {![file exists $ngmlrrefseq]} {
