@@ -81,17 +81,17 @@ if [ ! -f /hbb_exe/activate ]; then
 	gid=$(id -g $uid)
 	
 	if [ "$arch" = "linux-ix86" ] ; 	then
-		if docker image list | grep --quiet 'hbb32.*3.0.2'; then
-			buildbox=hbb32:3.0.2
+		if docker image list | grep --quiet 'hbb32.*3.0.5'; then
+			buildbox=hbb32:3.0.5
 		else
-			buildbox=phusion/holy-build-box-32:3.0.2
+			buildbox=phusion/holy-build-box-32:3.0.5
 		fi
 		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" linux32 bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" "$srcdir" "$builddir" "$clear" ${arguments[*]}
 	else
-		if docker image list | grep --quiet 'hbb64.*3.0.2'; then
-			buildbox=hbb64:3.0.2
+		if docker image list | grep --quiet 'hbb64.*3.0.5'; then
+			buildbox=hbb64:3.0.5
 		else
-			buildbox=phusion/holy-build-box-64:3.0.2
+			buildbox=phusion/holy-build-box-64:3.0.5
 		fi
 		docker run --net=host -t -i --rm -v "$srcdir:/io" -v "$builddir:/build" "$buildbox" bash "/io/$file" "stage2" "$file" "$arch" "$uid" "$gid" "$srcdir" "$builddir" "$clear" ${arguments[*]}
 	fi
