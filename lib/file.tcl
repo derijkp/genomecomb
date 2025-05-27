@@ -88,7 +88,8 @@ proc rm {args} {
 			}
 		}
 		if {$recursive && [file isdir $file]} {
-			foreach subfile [glob -nocomplain $file/*] {
+			foreach subfile [glob -nocomplain $file/* $file/.*] {
+				if {$subfile in [list $file/. $file/..]} continue
 				rm -force $force -recursive $recursive -warning $warning $subfile
 			}
 		}
