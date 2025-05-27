@@ -149,11 +149,11 @@ proc checkdiff args {
 proc test_cleantmp {} {
 	foreach file [list_remove [glob -nocomplain $::testdir/tmp/* $::testdir/tmp/.*] $::testdir/tmp/.. $::testdir/tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
-		catch {shadow_delete $file}
+		rm --recursive 1 $file
 	}
 	foreach file [list_remove [glob -nocomplain tmp/* tmp/.*] tmp/.. tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
-		catch {shadow_delete $file}
+		rm --recursive 1 $file
 	}
 	cg indexclean
 }

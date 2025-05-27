@@ -48,6 +48,7 @@ test process_sv {process_project ont} {
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf -x *.submitting \
+		-x *.snf \
 		tmp/ont expected/ont]
 	foreach file1 [glob tmp/ont/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
@@ -71,7 +72,8 @@ test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.tbi -x *.submitting -x *.xml \
-		 -x *.png -x *.vcf \
+		-x *.png -x *.vcf \
+		-x *.snf \
 		tmp/ont_minimap2 expected/ont_minimap2]
 	foreach file1 [glob tmp/ont_minimap2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
@@ -98,6 +100,7 @@ test process_sv {manta} {
 		-x *.tbi -x *.submitting -x *.xml \
 		-x *dupmetrics -x colinfo -x *.lz4i -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf \
+		-x svLocusGraphStats.tsv \
 		tmp/sv_chr21part expected/sv_chr21part]
 	join [list_remove $result {}] \n
 } {}

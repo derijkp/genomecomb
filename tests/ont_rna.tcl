@@ -474,6 +474,7 @@ test ont_rna {process_project multi methods using -preset} {
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 \
 		-preset ontr \
+		-iso_joint {} \
 		-d 4 \
 		-threads 2 \
 		-isocallers {isoquant flair flames} \

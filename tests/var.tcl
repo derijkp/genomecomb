@@ -639,7 +639,7 @@ test var {var_clair3 basic pepperdata} {
 	set result {}
 	lappend result [tsvdiff -q 1 \
 		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
-		-ignorefields {varcaller_cg_version sammerge_version} \
+		-ignorefields {varcaller_cg_version sammerge_version varcaller_model} \
 		tmp/clair3_ppr expected/clair3_ppr]
 	lappend result [cg select -g chromosome tmp/clair3_ppr/compar.tsv]
 	lappend result [cg select -g {zyg-clair3-test * zyg-truth *} tmp/clair3_ppr/compar.tsv]
@@ -675,7 +675,7 @@ test var {var_clair3 basic giab data} {
 	lappend result [tsvdiff -q 1\
 		-x *.log -x *.finished  -x *.zsti -x *.bai \
 		-x compar.tsv.reannot \
-		-ignorefields {varcaller_cg_version} \
+		-ignorefields {varcaller_cg_version varcaller_model} \
 		tmp/clair3 expected/clair3]
 	lappend result [cg select -g chromosome tmp/clair3/compar.tsv]
 	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3/compar.tsv]
@@ -716,7 +716,7 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 	lappend result [tsvdiff -q 1\
 		-x *.log -x *.finished  -x *.zsti -x *.tbi -x *.bai \
 		-x compar.tsv.reannot \
-		-ignorefields {varcaller_cg_version} \
+		-ignorefields {varcaller_cg_version varcaller_model} \
 		tmp/clair3_var expected/clair3_var]
 	lappend result [cg select -g chromosome tmp/clair3_var/compar.tsv]
 	lappend result [cg select -g {zyg-clair3-sminimap2-pHG002_hg38 * zyg-truth_HG002_hg38 *} tmp/clair3_var/compar.tsv]
