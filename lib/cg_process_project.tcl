@@ -501,6 +501,7 @@ proc process_project_job {args} {
 	}
 	if {[llength $iso_joint]} {
 		set reftranscripts [ref_tsvtranscripts $dbdir]
+		if {$iso_joint_min == ""} {set iso_joint_min 2}
 		iso_joint_job \
 			-reftranscripts $reftranscripts \
 			-iso_joint $iso_joint \
