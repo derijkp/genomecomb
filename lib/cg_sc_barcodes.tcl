@@ -625,8 +625,8 @@ proc sc_barcodes_job args {
 			while 1 {
 				set fbread [gets $fb line]
 				set fqread [gets $ff fqname]
-				if {$fqread == -1} {
-					if {$fbread != -1} {
+				if {$fqread == -1 || $fbread == -1} {
+					if {$fbread != -1 || $fbread != -1} {
 						error "mismatch between $fastq and $dep2"
 					}
 					break
