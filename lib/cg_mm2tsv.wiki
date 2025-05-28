@@ -1,0 +1,19 @@
+== Format ==
+cg mm2tsv ?options? ?infile? ?outfile?
+
+== Summary ==
+Convert data in MatrixMarket (MM) format to tab-separated format ([[tsv]]) format.
+
+== Arguments ==
+; **infile**: MatrixMarket file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **destfile**: write results to destfile, if not given, uses stdout
+
+== Options ==
+; -col1file filename: get corresponding values for numbers in column 1 from filename
+; -col2file filename:  get corresponding values for numbers in column 2 from filename
+; -col1fields list: name of fields in the resulting tsv for the values taken from col1file
+; -col2fields list: name of fields in the resulting tsv for the values taken from col2file
+
+== Category ==
+Format Conversion
+

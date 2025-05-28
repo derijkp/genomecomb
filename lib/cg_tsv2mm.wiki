@@ -1,0 +1,25 @@
+= tsv2mm =
+
+== Format ==
+cg tsv2mm ?options? ?infile? ?outfile?
+
+== Summary ==
+Convert data in tab-separated format ([[tsv]]) format to the MatrixMarket (MM) format.
+
+== Arguments ==
+; **infile**: tsv file to be converted, if not given (or -), uses stdin. File may be compressed.
+; **matrixmarkerfile**: write results to matrixmarkerfile, if not given, uses stdout
+
+== Options ==
+; -col1file filename: if not empty (default), information about the first column in the MatrixMarket file will be listed in filename
+; -col2file filename: if not empty (default), information about the second column in the MatrixMarket file will be listed in filename
+; -col1fields list: fields in the tsv file to use to make entries in the first column and col1file (default genomic location fields in the inputfile)
+; -col2fields list: fields in the tsv file to use to make entries in the second column and col2file (default cell or cellbarcode)
+; -valuefields list: fields in the tsv file to use to make entries in the value column of the MM file. 
+  This will typically have only one field; if it has more, for each one a separate MM file will be made with 
+  a filename based on matrixmarkerfile. If output is to stdout, only one field can be given
+; -limitbarcodes filename: export only lines that have col2field values col2values, typically (cell)barcodes, in the given file
+; -valuetypes string: specify type of data for each valuefield
+
+== Category ==
+Format Conversion
