@@ -20,12 +20,12 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
 
-clair3version=1.0.10
+clair3version=1.1.1
 
 all=1
 extra=1
@@ -42,7 +42,7 @@ echo "Entering Holy Build Box environment"
 
 # Activate Holy Build Box environment.
 # only use HBB for glibc compat, not static libs
-source /hbb_exe/activate
+#source /hbb_exe/activate
 
 # print all executed commands to the terminal
 set -x
@@ -56,14 +56,12 @@ yuminstall git
 yuminstall wget
 yuminstall gcc-c++
 yuminstall centos-release-scl
+yuminstall zstd
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-9
-# yuminstall rh-python36
+yuminstall devtoolset-11
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-8 rh-python36 bash
-source /opt/rh/devtoolset-9/enable
-#source /opt/rh/rh-python36/enable
+source /opt/rh/devtoolset-11/enable
 
 
 for dir in lib include bin share ; do
@@ -100,32 +98,80 @@ cd /build
 # mamba
 # -----
 cd /build
-export mambaversion=22.11.1-4
-curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
+export mambaversion=25.3.0-3
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Miniforge3-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /home/build/mambaforge
-bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
+rm -rf /home/build/miniforge
+bash Miniforge3-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/home/build/mambaforge/bin:$PATH
+PATH=/home/build/miniforge3/bin:$PATH
 
-mamba init bash
+#mamba init bash
+mamba shell init
 . ~/.bash_profile
+
 
 # clair3
 # -----
+
 cd /build
+mamba create -y -n clair3 -c bioconda -c conda-forge clair3=$clair3version
 
-mamba create -y -n clair3
-mamba activate clair3
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-mamba install -y clair3=$clair3version python=3.9
+# version 1.1.0 did not want to install due to conda dependency problems, but this is solved in 1.1.1
+# I am leaving the solution (I had a hard time finding) here (in comments) in case I need it again later
+# problem: clair3 required samtools 1.15.1 and openssl 1.1.1w. Somehow a requirement for a more recent (than 1.15.1) htslib gets pulled in (don't know where) that requires openssl 3 leading to the conflict
+# solution: install deps via conda, adding samtools from genomecomb, and install clair3 from source
 
-mamba deactivate
+#cd /build
+
+# mamba deactivate
+# mamba env remove -n clair3
+# mamba search clair3
+# mamba repoquery depends -c bioconda -c conda-forge clair3=1.1.1 --recursive --tree
+
+#mamba create -y -n clair3 -c bioconda -c conda-forge \
+#    openssl=1.1.1w \
+#    xz=5.2.10 \
+#    bzip2=1.0.8 \
+#    cffi=1.14.4 \
+#    libcurl=7.87.0 \
+#    libgcc=13 \
+#    libstdcxx=13 \
+#    libzlib=1.2.13 \
+#    numpy \
+#    parallel \
+#    pigz \
+#    pypy3.6 \
+#    pytables \
+#    python=3.9 \
+#    python_abi=3.9 \
+#    tensorflow=2.8.0 \
+#    whatshap=1.7 \
+#    zstd
+#mamba activate clair3
+#cp /io/extern/samtools $CONDA_PREFIX/bin
+#
+#cd /build
+#rm -rf Clair3-$clair3version || true
+#wget https://github.com/HKU-BAL/Clair3/archive/refs/tags/v$clair3version.tar.gz
+#tar xvzf v1.1.1.tar.gz
+#rm v$clair3version.tar.gz
+#cd /build/Clair3-$clair3version
+#
+#make PREFIX=${CONDA_PREFIX}
+#cp -rv clair3 preprocess postprocess scripts shared $CONDA_PREFIX/bin
+#cp clair3.py $CONDA_PREFIX/bin/
+#cp run_clair3.sh $CONDA_PREFIX/bin/
+#cp longphase libclair3* $CONDA_PREFIX/bin
+#
+#cd ${CONDA_PREFIX}/bin
+#wget https://downloads.python.org/pypy/pypy3.10-v7.3.19-linux64.tar.bz2 && tar -jxvf ${CONDA_PREFIX}/bin/pypy3.10-v7.3.19-linux64.tar.bz2
+#ln -sf pypy3.10-v7.3.19-linux64/bin/pypy3 ${CONDA_PREFIX}/bin/pypy3
+#
+#mamba deactivate
 
 # make package
 # ------------
@@ -150,8 +196,15 @@ tar xvzf clair3_models.tar.gz
 rm clair3_models.tar.gz
 
 ## (extra) ONT models
-# git clone https://github.com/nanoporetech/rerio
 mkdir /build/clair3-$clair3version-$arch/models || true
+
+# git clone https://github.com/nanoporetech/rerio
+cd /build
+
+rm -rf rerio || true
+git clone https://github.com/nanoporetech/rerio
+cp -ral rerio/clair3_models/* /build/clair3-$clair3version-$arch/models
+
 cd /build/clair3-$clair3version-$arch/models
 for model in \
 	r1041_e82_400bps_sup_v500.tar.gz \
