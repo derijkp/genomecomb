@@ -3,8 +3,13 @@ chromosome	begin	end	type	Biologist_annotation	Biologist_ranking
 1	196756231	196799302	del		Benign
 1	248738898	248785562	del		Benign
 2	242865920	243028452	del		Benign
+2	242865920	243028452	inv		notprocessed
+2_KI270715v1_random	1000	2000		DEL	notprocessed
 3	62939217	65268743	del	VOUS in 2017, reclassified in 2020	Pathogenic
+3	97483033	97483033	bnd		bnd
+3	97483033	97483033	ins		ins
 3	97483033	97487074	del	BBS3/ARL6 promotor overlapped	Pathogenic
+3	97483033	97487074	inv	BBS3/ARL6 promotor overlapped	Pathogenic
 3	195419168	195472855	del		Benign
 4	71552	9371067	del	4p- syndrom	Pathogenic
 4	69392545	69462438	del		Benign
@@ -16,8 +21,8 @@ chromosome	begin	end	type	Biologist_annotation	Biologist_ranking
 7	33397467	33397607	del	BBS9 inframe	Pathogenic
 7	38296176	38352444	del		Benign
 7	72726578	74139390	del	Williams syndrom	Pathogenic
-8	7169490	7753583	dup		Benign
 8	7169490	7753583	del		Benign
+8	7169490	7753583	dup		Benign
 8	56986129	57169684	del	VOUS in 2017, reclassified in 2020	Pathogenic
 8	141035363	141061798	del	DI AR	Pathogenic
 10	46976157	47590995	dup		Benign

@@ -45,9 +45,10 @@ test process_sv {process_project ont} {
 	  -clip 0 -paired 0 -aligner ngmlr -removeduplicates 0 -realign 0 -svcallers {sniffles cuteSV cuteSV_pacbio} -varcallers {} \
 	  tmp/ont >& tmp/ont.log
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.zsti -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf -x *.submitting \
+		-x info_analysis.tsv \
 		-x *.snf \
 		tmp/ont expected/ont]
 	foreach file1 [glob tmp/ont/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
@@ -77,7 +78,7 @@ test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 		tmp/ont_minimap2 expected/ont_minimap2]
 	foreach file1 [glob tmp/ont_minimap2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb|param_::maxopenfiles}]
 	}
 	join [list_remove $result {}] \n
 } {}
@@ -96,7 +97,7 @@ test process_sv {manta} {
 	  -dbdir $::refseqdir/hg19 \
 	  tmp/sv_chr21part >& tmp/sv_chr21part.log
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.zsti -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *.tbi -x *.submitting -x *.xml \
 		-x *dupmetrics -x colinfo -x *.lz4i -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf \

@@ -142,10 +142,17 @@ mkdir /build/AnnotSV-$annotsvversion-$arch
 cd /build/AnnotSV-$annotsvversion-$arch
 tar xvzf ../annotsv.tar.gz
 
-cd /build/AnnotSV-$annotsvversion-$arch
+# install from source because conda install misses some files (application.properties)
+wget https://github.com/lgmgeo/AnnotSV/archive/refs/tags/v3.4.6.tar.gz
+tar xvzf v3.4.6.tar.gz
+rm v3.4.6.tar.gz
+cd AnnotSV-3.4.6
+make PREFIX=/build/AnnotSV-$annotsvversion-$arch install
+make PREFIX=/build/AnnotSV-$annotsvversion-$arch install-human-annotation
+cd /build
+rm -rf /build/AnnotSV-3.4.6
 
-make PREFIX=. install-human-annotation
-make PREFIX=. install-mouse-annotation
+cd /build/AnnotSV-$annotsvversion-$arch
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"

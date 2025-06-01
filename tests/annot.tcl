@@ -2078,11 +2078,28 @@ test annotsv {cg annotate_AnnotSV} {
 	set resultfile tmp/annot_test.tsv
 	set ref GRCh37
 	set args [list \
-		-ref $ref \
+		-refseq $::refseqdir/hg38 \
 		-hpo "HP:0001156,HP:0001363,HP:0011304" \
 		$svfile $resultfile $annotsvresultfile \
 	]
 	cg annotate_AnnotSV {*}$args
+	exec diff tmp/annot_test.tsv data/annot_test_d.tsv
+} {} 
+
+test annotsv {cg annotate_AnnotSV -distrreg 0} {
+	test_cleantmp
+	cg select -overwrite 1 -s - data/annotsv_test.tsv tmp/test.tsv
+	set svfile tmp/test.tsv
+	set annotsvresultfile tmp/test.AnnotSV.tsv
+	set resultfile tmp/annot_test.tsv
+	set ref GRCh37
+	set args [list \
+		-distrreg 0 \
+		-refseq $::refseqdir/hg38 \
+		-hpo "HP:0001156,HP:0001363,HP:0011304" \
+		$svfile $resultfile $annotsvresultfile \
+	]
+	cg annotate_AnnotSV -stack 1 -v 2 {*}$args
 	exec diff tmp/annot_test.tsv data/annot_test.tsv
 } {} 
 

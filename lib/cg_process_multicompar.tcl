@@ -308,27 +308,12 @@ proc process_multicompar_job {args} {
 		# --------------------
 		putslog "Starting annotation"
 		if {"AnnotSV" in $extraannot} {
-			cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.temp.zst $dbdir {*}$dbfiles
-			job annotate_AnnotSV -deps {
-				compar/annot_sv-$experiment.tsv.temp.zst
-			} -targets {
-				compar/annot_sv-$experiment.tsv.zst
-				compar/annot_sv-$experiment.AnnotSV.tsv
-			} -rmtargets {
-				compar/annot_sv-$experiment.tsv.temp.zst
-			} -vars {
-				refseq experiment
-			} -code {
-				analysisinfo_write $dep $target AnnotSV [version AnnotSV]
-				cg annotate_AnnotSV -ref [file tail [refdir $refseq]] \
-					compar/annot_sv-$experiment.tsv.temp.zst \
-					compar/annot_sv-$experiment.tsv.zst \
-					compar/annot_sv-$experiment.AnnotSV.tsv
-				file delete -force compar/annot_sv-$experiment.tsv.temp.zst \
-					compar/annot_sv-$experiment.tsv.temp.zst.zsti \
-					compar/annot_sv-$experiment.tsv.temp.analysisinfo \
-					compar/annot_sv-$experiment.tsv.temp.analysisinfo.old
-			}
+			cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.temp.tsv.zst $dbdir {*}$dbfiles
+			AnnotSV_job -refseq $refseq \
+				compar/annot_sv-$experiment.tsv.temp.tsv.zst \
+				compar/annot_sv-$experiment.tsv.zst \
+				compar/annot_sv-$experiment.AnnotSV.tsv.zst
+			job_cleanup_add compar/annot_sv-$experiment.tsv.temp.tsv.zst compar/annot_sv-$experiment.tsv.temp.tsv.zst.zsti compar/annot_sv-$experiment.tsv.temp.tsv.zst.analysisinfo
 		} else {
 			cg_annotate_job -type sv -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.zst $dbdir {*}$dbfiles
 		}
