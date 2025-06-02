@@ -98,12 +98,17 @@ proc AnnotSV_job {args} {
 						lappend options -hpo $hpo
 					}
 					# AnnotSV gave intermittent errors in testing larger data sets
-					# to avoid/reduce these, do one retry
+					# to avoid/reduce these, do a retry
 					if {[catch {
 						exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 					} m]} {
-						puts stderr "warning: retrying AnnotSV after error: $m"
-						exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+						# really trying, a third retry
+						if {[catch {
+							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+						} m]} {
+							puts stderr "warning: retrying AnnotSV after error: $m"
+							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+						}
 					}
 				} else {
 					file_write $workdir/result.$chromosome.temp.tsv {}
@@ -236,7 +241,7 @@ proc AnnotSV_job {args} {
 		gzclose $o
 		gzclose $f
 		gzclose $fa
-		file rename $tempresultfile $resultfile
+		file rename -force $tempresultfile $resultfile
 	}
 
 }
