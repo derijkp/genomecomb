@@ -70,7 +70,7 @@ test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 	  -extraannot AnnotSV \
 	  tmp/ont_minimap2 >& tmp/ont_minimap2.log
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.zsti -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.tbi -x *.submitting -x *.xml \
 		-x *.png -x *.vcf \
