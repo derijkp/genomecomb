@@ -32,7 +32,7 @@ proc cg_install {args} {
 		dm6	ref	https://genomecomb.bioinf.be/download/refdb_dm6-0.106.0.tar.gz
 		dm6-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_dm6-minimap2-0.106.0.tar.gz
 
-		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-1.0.10-linux-x86_64.tar.gz
+		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-1.1.1-linux-x86_64.tar.gz
 		cutesv	bin	https://genomecomb.bioinf.be/download/extra/cutesv-1.0.11-linux-x86_64.tar.gz
 		dirR	bin	https://genomecomb.bioinf.be/download/extra/dirR-4.2.1-2-linux-x86_64.tar.gz
 		flair	bin	https://genomecomb.bioinf.be/download/extra/flair-2.0-linux-x86_64.tar.gz
@@ -59,7 +59,7 @@ proc cg_install {args} {
 		strelka	bin	https://genomecomb.bioinf.be/download/extra/strelka-2.9.10-linux-x86_64.tar.gz
 		qorts	bin	https://genomecomb.bioinf.be/download/extra/QoRTs-1.3.6.tar.gz
 		modkit	bin	https://genomecomb.bioinf.be/download/extra/modkit-0.4.2-linux-x86_64.tar.gz
-		AnnotSV	bin	https://genomecomb.bioinf.be/download/extra/AnnotSV-3.4.4-linux-x86_64.tar.gz
+		AnnotSV	bin	https://genomecomb.bioinf.be/download/extra/AnnotSV-3.4.6-linux-x86_64.tar.gz
 
 		ont	preset	{minimap2 sniffles cutesv clair3 modkit}
 		ontr	preset	{minimap2 isoquant clair3}
