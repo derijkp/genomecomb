@@ -188,6 +188,12 @@ mkdir /build/clair3-$clair3version-$arch
 cd /build/clair3-$clair3version-$arch
 tar xvzf ../clair3.tar.gz
 
+# add libraries needed but missed by conda-pack
+# perl needs libnsl.so.1
+cd /build/clair3-$clair3version-$arch
+cp -ra /lib64/libnsl-2.17.so lib/
+cp -ra /lib64/libnsl.so.1 lib/
+
 # add models
 mkdir /build/clair3-$clair3version-$arch/models || true
 cd /build/clair3-$clair3version-$arch/models
@@ -245,8 +251,11 @@ cd /build/clair3-$clair3version-$arch
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-PATH=$dir/bin:$PATH
-LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+export PATH=$dir/bin:$PATH
+export LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+export LANG=C
+export LC_ALL=C
+export TF_CPP_MIN_LOG_LEVEL=2
 $dir/bin/run_clair3.sh ${1+"$@"}
 ' > run_clair3.sh
 chmod ugo+x run_clair3.sh
@@ -254,8 +263,11 @@ chmod ugo+x run_clair3.sh
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-PATH=$dir/bin:$PATH
-LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+export PATH=$dir/bin:$PATH
+export LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+export LANG=C
+export LC_ALL=C
+export TF_CPP_MIN_LOG_LEVEL=2
 $dir/bin/run_clair3.sh ${1+"$@"}
 ' > clair3
 chmod ugo+x clair3
