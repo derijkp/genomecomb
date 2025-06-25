@@ -214,13 +214,17 @@ proc sc_barcodes_job args {
 			if {$whitelist in "10Xv3 v3"} {
 				set whitelist $::genomecombdir/whitelists/3M-february-2018.txt.gz
 			} elseif {$whitelist in "10Xv4 v4"} {
-				set whitelist $::genomecombdir/whitelists/3M-3pgex-may-2023.txt.gz
+				set whitelist $::scywalkerdir/whitelists/3M-3pgex-may-2023_TRU.txt.gz
 			} elseif {$whitelist in "10Xp5v3 p5v3"} {
 				set whitelist $::genomecombdir/whitelists/3M-5pgex-jan-2023.txt.gz
 			} elseif {$whitelist in "10Xv2 v2"} {
 				set whitelist $::genomecombdir/whitelists/737K-august-2016.txt.gz
+			} elseif {$whitelist in "multiome"} {
+				set whitelist $::genomecombdir/whitelists/737K-arc-gex-v1.txt.gz
+			} elseif {$whitelist in "multiome_atac"} {
+				set whitelist $::genomecombdir/whitelists/737K-arc-atac-v1.txt.gz
 			} else {
-				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2"
+				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2, multiome, multiome_atac"
 			}
 		}
 		set usewhitelist 1
