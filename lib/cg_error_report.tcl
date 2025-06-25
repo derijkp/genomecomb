@@ -82,7 +82,7 @@ proc cg_error_report args {
 			puts $foutput $omsg
 			puts $foutput ""
 			puts $foutput "${yellow}time: $starttime - $endtime ($duration)$normal"
-			puts $foutput "${yellow}maxmem: $maxmem$normal"
+			puts $foutput "${yellow}maxmem: $maxmem kb$normal"
 			puts $foutput "${yellow}run_file: $pre/run/$post.run$normal"
 			flush $foutput
 		}
