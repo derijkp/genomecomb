@@ -331,6 +331,8 @@ proc var_clair3_job {args} {
 		region opts index threads
 		mincoverage mingenoqual split platform model phasing
 	} -code {
+		set ::env(LANG) C
+		set ::env(LC_ALL) C
 		if {$model eq ""} {
 			set sampledir [file dir $dep]
 			set usemodel [var_clair3_find_model $sampledir]

@@ -654,6 +654,39 @@ t	t	12
 t	u	153
 u	u	223}
 
+test var {var_clair3 error} {
+	cd $::smalltestdir
+	file delete -force tmp/clair3_ppr
+	file mkdir tmp/clair3_ppr
+	
+	cp ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/clair3_ppr/test.bam
+	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/clair3_ppr/test.bam.bai
+	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/clair3_ppr/var-truth.tsv
+	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/clair3_ppr/sreg-truth.tsv
+	#
+	cg var_clair3 {*}$::dopts \
+		tmp/clair3_ppr/test.bam $::refseqdir/hg38
+	file delete tmp/clair3_ppr/compar.tsv
+	cg multicompar -reannot 1 tmp/clair3_ppr/compar.tsv tmp/clair3_ppr/var-clair3-test.tsv.zst tmp/clair3_ppr/var-truth.tsv
+	cg benchmarkvars -refcurve_cutoffs {{} 10 20 30 40 50 60} tmp/clair3_ppr/compar.tsv truth tmp/clair3_ppr/benchmark.tsv
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.log -x *.finished  -x *.zsti -x *.submitting -x *.tsv.reannot -x *.tbi \
+		-ignorefields {varcaller_cg_version sammerge_version varcaller_model} \
+		tmp/clair3_ppr expected/clair3_ppr]
+	lappend result [cg select -g chromosome tmp/clair3_ppr/compar.tsv]
+	lappend result [cg select -g {zyg-clair3-test * zyg-truth *} tmp/clair3_ppr/compar.tsv]
+	join [list_remove $result {}] \n
+} {chromosome	count
+20	510
+zyg-clair3-test	zyg-truth	count
+m	m	36
+m	r	1
+m	u	85
+t	t	12
+t	u	153
+u	u	223}
+
 test var {var_clair3 basic giab data} {
 	cd $::smalltestdir
 	file delete -force tmp/clair3
