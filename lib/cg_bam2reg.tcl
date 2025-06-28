@@ -85,10 +85,12 @@ proc bam2reg_job {args} {
 				}
 			}
 		}
-		job cov$mincoverage-$root-merge -optional 1 {*}$skips -deps $todo -targets {
+		job cov$mincoverage-$root-merge -optional 1 {*}$skips -deps $todo \
+		-rmtargets $todo \
+		-targets {
 			$target
 		} -vars {
-			bamfile
+			bamfile todo
 		} -code {
 			analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 			set compress [compresspipe $target]
@@ -99,6 +101,7 @@ proc bam2reg_job {args} {
 				file delete $file [analysisinfo_file $file] [index_file $file]
 			}
 			catch {file delete [file dir $file]}
+			foreach file $todo {file delete $todo}
 		}
 	}
 	return $target

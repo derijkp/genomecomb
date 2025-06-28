@@ -190,7 +190,7 @@ proc sv_job {args} {
 			if {$tail eq ""} continue
 			set list [list_subindex $todo $pos]
 			set deps $list
-			job sv_combineresults-$tail -checkcompressed 1 {*}$skips -deps $list -rmtargets $list -targets {
+			job sv_combineresults-$tail -checkcompressed 1 {*}$skips -deps $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list method regfile distrreg sample
@@ -233,7 +233,7 @@ proc sv_job {args} {
 				lappend cleanupfiles [analysisinfo_file $file]
 			}
 		}
-		if {[llength $regfiles]} {
+		if {[llength $cleanupfiles]} {
 			cleanup_job {*}$skips cleanup-sv_${method}_[file tail $bamfile] [list {*}$cleanupfiles] $resultfiles
 		}
 		cd $keeppwd
