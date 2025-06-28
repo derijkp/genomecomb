@@ -116,12 +116,12 @@ Currently supported are: flair, isoquant, flames
 ; -iso_joint isocallers: perform joint analysis on the given list of isoform callers: the resulting isoforms of 
   all per sample runs using the isoform caller (so must be in -isocallers) are combined, and each sample is recalled
   with the combination of isoforms (including novel ones found in at least 2 samples default) as reference
-; -extraannot list: lst of extra annotations to add, currently only AnnotSV (for human SVs) is supported
 ; -iso_joint_min integer: minimum number of samples an isoform has to be found in to be included in the joint analysis
 ; -organelles organelles: (space separated) list of chromosomes that are organelles (that are treated differently in some analysis)
 If not given explicitely, the ones indicated in the file $refdb/extra/reg_*_organelles.tsv (if present) will be used
 ; -counters counters: (space separated) list of counter programs to be used for rna-seq data.
 Currently supported are: rnaseqc, qorts
+; -extraannot list: lst of extra annotations to add, currently only AnnotSV (for human SVs) is supported
 ; -split 1/0: split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use basic (default) for creating most reports, or all for all reports. If you only
