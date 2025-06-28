@@ -284,6 +284,9 @@ proc process_project_job {args} {
 			}
 		}
 		-process_msamples {
+			if {$process_msamples ni "0 1 fastqreport"} {
+				error "Unknown value for option -process_msamples $value, must be one of: 0 1 fastqreport"
+			}
 			set process_msamples $value
 		}
 		-samplesheet {
@@ -371,7 +374,7 @@ proc process_project_job {args} {
 			}
 			set a($sample) 1
 		}
-		if {$process_msamples} {
+		if {$process_msamples ne "0"} {
 			foreach dir [jobglob $destdir/msamples/*] {
 				set sample [file tail $dir]
 				if {[regexp {[- ]} $sample]} {
@@ -470,7 +473,13 @@ proc process_project_job {args} {
 				}
 			}
 		}
-		process_sample_job {*}$sampleargs $dir
+		if {$process_msamples eq "1"} {
+			process_sample_job {*}$sampleargs $dir
+		} else {
+			if {[llength $reports]} {
+				process_reports_job -paired $paired -depth_histo_max $depth_histo_max -threads $threads $dir $dbdir {fastqstats}
+			}
+		}
 	}
 	set_job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]
