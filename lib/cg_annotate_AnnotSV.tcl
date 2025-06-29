@@ -56,7 +56,7 @@ proc AnnotSV_job {args} {
 			# convert to the bed format as used by AnnotSV (ins and bnd end gets, incorrectly, +1)
 			cg select -sh /dev/null \
 				-f {chromosome begin {end=if($type in "ins bnd",$end+1,$end)} {type=toupper($type)}} \
-				-q {$type in "del ins dup inv bnd" and not($chromosome regexp "_") and not($chromosome regexp "EBV")} \
+				-q {$type in "del ins dup inv bnd" and (chr_clip($chromosome) regexp "^\[0-9XYM\]\[0-9\]?\$")} \
 				$svfile $tempfile
 			set options {}
 			if {$hpo ne ""} {
@@ -76,7 +76,7 @@ proc AnnotSV_job {args} {
 		set distrsrcs [distrreg_job -skip [list $annotsvresultfile] -refseq $refseq $svfile $workdir/svfile.part- .tsv $chromosomes]
 		set todo {}
 		foreach chromosome $chromosomes src $distrsrcs {
-			if {[regexp _ $chromosome] || [regexp EBV $chromosome]} continue
+			if {![regexp "^\[0-9XYM\]\[0-9\]?\$" [chr_clip $chromosome]]} continue
 			lappend todo $workdir/result.$chromosome
 			job AnnotSV-$resultname-$chromosome -mem 4G -skip {
 				$annotsvresultfile
@@ -211,7 +211,7 @@ proc AnnotSV_job {args} {
 # putsvars sline
 			foreach {chr begin end type} [list_sub $sline $poss] break
 			set add 0
-			if {$type in "del ins dup inv bnd" && ![regexp _ $chr] && ![regexp EBV $chr]} {
+			if {$type in "del ins dup inv bnd" && [regexp "^\[0-9XYM\]\[0-9\]?\$" [chr_clip $chr]]} {
 				while 1 {
 					if {[gets $fa aline] == -1} break
 					set aline [split $aline \t]
