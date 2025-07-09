@@ -29,7 +29,7 @@ proc modkit_job {args} {
 		--ref $refseq \
 		--preset traditional \
 		>@ stdout 2>@ stderr
-	file rename $target.temp.gz $target
+	file rename -force $target.temp.gz $target
 	if {[file extension $bamfile] eq ".cram"} {
 		file delete $tempfile
 	}
@@ -117,7 +117,7 @@ proc meth_remora_job {args} {
 			--only-tabs \
 			>@ stdout 2>@ stderr
 		cg gzip $target.temp
-		file rename $target.temp.gz $target
+		file rename -force $target.temp.gz $target
 		set o [wgzopen $target2]
 		puts $o [join {chromosome begin end modification_code score strand thickstart thickend color coverage modified_frequency n_mod n_canonical n_othermod n_delete n_fail n_diff n_nocall} \t]
 		set f [gzopen $target]
