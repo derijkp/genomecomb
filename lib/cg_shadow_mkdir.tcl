@@ -93,7 +93,7 @@ proc shadow_mkdir {link {shadowdir {}}} {
 	set shadowdir [file_absolute $shadowdir]
 	# find unused dir for shadow and create
 	for {set i 0} {$i < 20} {incr i} {
-		set shadow [file join $shadowdir shadow.[pid]-[Extral::randstring 20]]-[file tail $link]
+		set shadow [file join $shadowdir shadow.[pid]-[Extral::randstring 20]]-[string range [file tail $link] 0 200]
 		if {[file exists $shadow]} continue
 		if {[catch {
 			file mkdir $shadow
