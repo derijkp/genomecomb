@@ -9,7 +9,7 @@ proc cg_sortvcf {args} {
 	set refseq {}
 	set dbdir {}
 	set threads 1
-	cg_options vcf2tsv args {
+	cg_options sortvcf args {
 		-threads {set threads $value}
 	} {infile outfile} 0 2 {
 		sort a vcf file, chromosome will be in natural sort order
