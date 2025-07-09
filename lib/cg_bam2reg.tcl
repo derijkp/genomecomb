@@ -101,7 +101,7 @@ proc bam2reg_job {args} {
 				file delete $file [analysisinfo_file $file] [index_file $file]
 			}
 			catch {file delete [file dir $file]}
-			foreach file $todo {file delete $todo}
+			foreach file $todo {file delete $file}
 		}
 	}
 	return $target
