@@ -47,7 +47,7 @@ proc mklink {args} {
 		set make 0
 	}
 	if {$make} {
-		file delete $dest
+		catch {file delete $dest}
 		if {[file exists $keepsrc]} {
 			file link -symbolic $dest $src
 		} else {
