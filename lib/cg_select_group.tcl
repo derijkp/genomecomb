@@ -423,19 +423,19 @@ proc tsv_select_addaggregateresult {grouptypes header sample} {
 			}
 		} elseif {$func eq "percent"} {
 			append calcresults {
-				lappend result [format %.2f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($col,t) 1]}]]
+				lappend result [format %.4f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($col,t) 1]}]]
 			}
 		} elseif {$func eq "gpercent"} {
 			append calcresults {
-				lappend result [format %.2f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($_groupname,gt) 1]}]]
+				lappend result [format %.4f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($_groupname,gt) 1]}]]
 			}
 		} elseif {$func eq "percentsum"} {
 			append calcresults [string_change {
-				lappend result [format %.2f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($col,@field@,ts) 1]}]]
+				lappend result [format %.4f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($col,@field@,ts) 1]}]]
 			} [list @field@ $field]]
 		} elseif {$func eq "gpercentsum"} {
 			append calcresults [string_change {
-				lappend result [format %.2f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($_groupname,@field@,gts) 1]}]]
+				lappend result [format %.4f [expr {100.0*[get resultdata($_groupname,$col,@field@,s) 0]/[get resultdata($_groupname,@field@,gts) 1]}]]
 			} [list @field@ $field]]
 		} elseif {$func eq "max"} {
 			append calcresults [string_change {
