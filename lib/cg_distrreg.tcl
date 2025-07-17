@@ -70,6 +70,12 @@ proc cg_distrreg {args} {
 		set target $resultprefix$region$resultsuffix
 		analysisinfo_write $file $target
 	}
+	if {[llength $regions] == 1 && [lindex $regions 0] eq ""} {
+		# regions = {{}} -> everything in one file (no distribution)
+		# only convert (if needed)
+		convert -refseq $refseq $file $target
+		return
+	}
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	gzclose $f

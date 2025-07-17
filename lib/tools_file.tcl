@@ -595,6 +595,22 @@ proc convert_pipe {infile outfile args} {
 	return $pipe
 }
 
+proc convert {args} {
+	set newargs {}
+	cg_options distrreg args {
+		default {
+			lappend newargs $key $value
+		}
+	} {src dest} 2 2 {
+		convert src to dest
+	}
+	if {[gzext $src] eq [gzext $dest] && [file extension [gzroot $src]] eq [file extension [gzroot $dest]]} {
+		hardcopy $src $dest
+	} else {
+		exec {*}[convert_pipe $src $dest {*}$args -endpipe 1]
+	}
+}
+
 proc tempramdir {size} {
 	# caclulate usable space in shared mem (keep 8G free for other)
 	set useablespace [expr {1024*[lindex [exec df /dev/shm] end-2] - 8598323200}]
