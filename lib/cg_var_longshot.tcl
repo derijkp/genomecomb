@@ -101,7 +101,7 @@ proc var_longshot_job {args} {
 	set hap_bam 0
 	set index 1
 	set resultfile {}
-	set mem 8G
+	set mem 16G
 	set time 3:00:00
 	cg_options var_longshot args {
 		-L - -deps {

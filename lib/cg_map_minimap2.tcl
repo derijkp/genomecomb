@@ -57,7 +57,7 @@ proc map_mem_minimap2 {mem threads preset deps} {
 		if {[file exists $refseq.minimap2.$preset]} {
 			# scale according to size index file
 			set size [file size $refseq.minimap2.$preset]
-			set mem [expr {2*$size}]
+			set mem [expr {round(2.5*$size)}]
 			# but require minimum 6G
 			if {$mem < 6442450944} {set mem 6442450944}
 		} else {
