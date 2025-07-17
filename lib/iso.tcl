@@ -243,6 +243,7 @@ proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcounta
 	set basefields {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
 	# lappend remove {*}$basefields
 	set newheader $basefields
+	set comments ""
 	if {$regreftranscripts ne ""} {
 		catch {close $f}
 		set f [gzopen $regreftranscripts]
