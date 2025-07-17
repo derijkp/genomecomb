@@ -331,10 +331,10 @@ proc process_project_job {args} {
 	set dbdir [dbdir $dbdir]
 	projectinfo $destdir dbdir {split 1}
 	set ref [file tail $dbdir]
-	if {$cellmarkerfile ne ""} {
-		if {$sc_celltypers eq ""} {set sc_celltypers {scsorter sctype}}
+	if {$cellmarkerfile ni {{} -}} {
+		if {$sc_celltypers in {{} -}} {set sc_celltypers {scsorter sctype}}
 	} elseif {$tissue ne ""} {
-		if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
+		if {$sc_celltypers in {{} -}} {set sc_celltypers {sctype}}
 	}
 	# logfile
 	# -------
