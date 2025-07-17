@@ -114,7 +114,7 @@ proc process_project_job {args} {
 			set ali_keepcomments [code_empty $value]
 		}
 		-singlecell {
-			if {$value ni {ontr10x {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x (or empty)"}
+			if {$value ni {ontr10x pre {}}} {error "Unknown value $value for -singlecell, must be one of: ontr10x, pre (or empty)"}
 			set singlecell [code_empty $value]
 		}
 		-addumis {

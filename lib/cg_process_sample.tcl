@@ -644,7 +644,7 @@ proc process_sample_job {args} {
 		-singlecell {
 			# this is (for now) only checked in the code if it is empty (no single cell analysis) or not
 			# The preset and/or other options actually determine the analysis methods.
-			if {$value ni {0 1 ontr10x {}}} {error "Unknown value $value for -singlecell, must be either empty or 0 (for no single cell analysis) or 1 for doing single cell analysis"}
+			if {$value ni {0 1 ontr10x pre {}}} {error "Unknown value $value for -singlecell, must be either empty or 0 (for no single cell analysis), 1 or ontr10x (10x single cell analysis), pre (for fastqs with prefilled barcode and umi in readname)"}
 			if {$value eq "0"} {set value ""}
 			set singlecell [codeback_empty $value]
 		}
@@ -797,7 +797,7 @@ proc process_sample_job {args} {
 	if {$ali_keepcomments eq "" && "remora" in $methcallers} {
 		set ali_keepcomments 1
 	}
-	if {$ali_keepcomments eq "" && ($singlecell ne "" || $addumis)} {
+	if {$ali_keepcomments eq "" && ($singlecell ni {{} pre} || $addumis)} {
 		set ali_keepcomments 1
 	}
 	# If ubam dir is present, prefer this
@@ -1029,15 +1029,21 @@ proc process_sample_job {args} {
 			return {}
 		}
 		set fastqfiles [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
-		# put bams in skips (don't actually run sc_barcodes if already exis)
-		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
-		sc_barcodes_job -skip $skips -skip $skipsresult \
-			-whitelist $sc_whitelist \
-			-umisize $sc_umisize \
-			-barcodesize $sc_barcodesize \
-			-adaptorseq $sc_adaptorseq \
-			$fastqdir $sampledir
-		set fastqdir $sampledir/bcfastq
+		if {$singlecell ne "pre"} {
+			# make sumary files needed for furhter processing
+			# put bams in skips (don't actually run sc_barcodes if already exis)
+			foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
+			sc_barcodes_job -skip $skips -skip $skipsresult \
+				-whitelist $sc_whitelist \
+				-umisize $sc_umisize \
+				-barcodesize $sc_barcodesize \
+				-adaptorseq $sc_adaptorseq \
+				$fastqdir $sampledir
+			set fastqdir $sampledir/bcfastq
+		}
+		# create summary files needed for further sc processing (if not already made by e.g. sc_barcodes_job)
+		sc_pre_job $fastqdir $sampledir
+		# various singlecell settings
 		if {$sc_filters eq ""} {
 			set sc_filters default
 		}
@@ -1129,7 +1135,7 @@ proc process_sample_job {args} {
 		}
 	}
 	# put check here, because fastqs might be generated from bams, etc.
-	if {!$validate && $singlecell eq "" && $minfastqreads > 0 && ![llength $cleanedbams]} {
+	if {!$validate && ($singlecell ni {{} pre}) && $minfastqreads > 0 && ![llength $cleanedbams]} {
 		# check if we have the minimum number of reads required (default 1)
 		# if not, write minimum nr of reports, and return (quit processing this sample)
 		if {![checkminreads $fastqdir $minfastqreads num]} {
@@ -1218,6 +1224,7 @@ proc process_sample_job {args} {
 				foreach aligner $aligners {
 					set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+					shadow_mkdir $resultbamfile.temp
 					set target $resultbamfile.temp/[file_root [file tail [lindex $files 0]]].sam.zst
 					lappend cleanupdeps $resultbamfile.temp/$pbase.sam.zst
 				}
@@ -1237,9 +1244,10 @@ proc process_sample_job {args} {
 					# do not do any of preliminaries if end product is already there
 					set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 					set bamfile $sampledir/map-${aligner}-$sample.$aliformat
+					set workdir [shadow_workdir $resultbamfile]
 					# file mkdir $resultbamfile.temp
-					job_cleanup_add $resultbamfile.temp
-					set target $resultbamfile.temp/$pbase.sam.zst
+					job_cleanup_add $workdir
+					set target $workdir/$pbase.sam.zst
 					lappend partsa($aligner) $target
 					# map using ${aligner}
 					set opts {}
@@ -1341,7 +1349,7 @@ proc process_sample_job {args} {
 			}
 		}
 	}
-	if {$singlecell ne ""} {
+	if {$singlecell ni {{} pre}} {
 		# clean up bcfastq
 		set bcfastqs [jobglob -checkcompressed 1 $sampledir/bcfastq/*]
 		if {[llength $bcfastqs]} {
