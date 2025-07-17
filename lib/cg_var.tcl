@@ -138,6 +138,7 @@ proc var_job {args} {
 		] {
 			if {[file extension $resultfile] in ".bam .cram"} {
 				# this is for the hapbam files: give same format/extension as bamfile
+				# will be converted in the combination of regions
 				lappend resultfiles [file root $resultfile][file extension $bamfile]
 			} else {
 				lappend resultfiles $resultfile

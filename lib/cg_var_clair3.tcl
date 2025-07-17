@@ -112,7 +112,7 @@ proc var_clair3_find_model {sampledir} {
 				return $model
 			}
 			regsub {_[^_]+$} $bcmodel2 {} bcmodel2
-			set model $model
+			set model $clairdir/models/$bcmodel2
 			if {[file exists $clairdir/models/$bcmodel2]} {
 				return $model
 			}
@@ -344,10 +344,10 @@ proc var_clair3_job {args} {
 		} else {
 			set clairscript [follow_links [exec which run_clair3.sh]]
 			set clairdir [file dir $clairscript]
-			if {![file exists $clairdir/models/$usemodel]} {
-				error "model does not exists: $clairdir/models/$usemodel"
+			set usemodel $clairdir/models/[file tail $usemodel]
+			if {![file exists $usemodel]} {
+				error "model does not exists: $usemodel"
 			}
-			set usemodel $clairdir/models/$usemodel
 		}
 		analysisinfo_write $dep $varfile \
 			analysis $root sample $root \
