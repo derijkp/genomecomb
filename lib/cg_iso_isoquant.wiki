@@ -19,6 +19,8 @@ Following adaptations are done when running isoquant within genomecomb
 ; weighed: reads supporting multiple (N) transcripts are weighed as 1/N
 ; unique: count only reads uniquely supporting one transcript
 ; strict: only unique reads that cover >= 90% of the transcript
+; sweighed, sunique, sstrict: same as above, but reads must must have at least one splice junction 
+  (i.e. not counting "single-exon" reads, which are more often artefacts; single exon transcripts cannot be detected using these counts)
 ; aweighed, aunique, astrict: same as above, but reads must have polyA (detected)
 
 By default (if resultfile is not given) the names of the resultfiles are

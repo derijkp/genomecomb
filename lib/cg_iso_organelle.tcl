@@ -294,7 +294,8 @@ proc iso_organelle_job {args} {
 			newheader \
 			[list \
 				counts_iqall-$root iq counts_weighed-$root t counts_unique-$root u counts_strict-$root s \
-				counts_aweighed-$root a counts_aunique-$root au counts_astrict-$root as\
+				counts_sweighed-$root ts counts_sunique-$root us counts_sstrict-$root ss \
+				counts_aweighed-$root a counts_aunique-$root au counts_astrict-$root as \
 			]
 		]
 		gzclose $o

@@ -234,7 +234,7 @@ proc cigar2exons {cigar begin} {
 }
 
 proc iso_write_isoform_counts {targetisoformcountsfile regreftranscripts tcountaVar newheaderVar
-	{fields {iqall iq weighedb i unique u strict s aweighed a aunique au astrict as}} {sizeaVar {}}
+	{fields {iqall iq weighed t unique u strict s sweighed ts sunique us sstrict ss aweighed a aunique au astrict as}} {sizeaVar {}}
 } {
 	upvar $tcountaVar tcounta
 	upvar $newheaderVar newheader

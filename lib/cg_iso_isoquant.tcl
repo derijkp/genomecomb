@@ -73,15 +73,18 @@ proc iso_isoquant_add_gcounts {gcountaVar dgeneisos gene gambigcount} {
 	}
 }
 
-proc iso_isoquant_add_tcounts {tcountaVar iso assignment_type ambiguity polya covered_pct strictpct ambigcount {count 1}} {
+proc iso_isoquant_add_tcounts {tcountaVar iso assignment_type ambiguity polya covered_pct strictpct ambigcount spliced {count 1}} {
 	upvar $tcountaVar tcounta
 	convert_isoquant_add tcounta($iso,t) $ambigcount
+	if {$spliced} {convert_isoquant_add tcounta($iso,ts) $ambigcount}
 	if {$ambiguity <= 1 && $assignment_type ne "inconsistent"} {
 		# unique
 		convert_isoquant_add tcounta($iso,u) $ambigcount
+		if {$spliced} {convert_isoquant_add tcounta($iso,us) $ambigcount}
 		if {$covered_pct >= $strictpct} {
 			# strict
 			convert_isoquant_add tcounta($iso,s) $ambigcount
+			if {$spliced} {convert_isoquant_add tcounta($iso,ss) $ambigcount}
 		}
 	}
 	if {$polya eq "True"} {
@@ -489,12 +492,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		set geneid [lindex $line $geneidpos]
 		if {[info exists ambiga($read)]} {
 			set temp [dict values $ambiga($read)]
-			set ambig [lindex $temp 0]
+			set ambiguity [lindex $temp 0]
 			foreach v [lrange $temp 1 end] {
-				incr ambig $v
+				incr ambiguity $v
 			}
 		} else {
-			set ambig 0
+			set ambiguity 0
 		}
 		set assignment_type [lindex $line $assignment_typepos]
 		lset line $beginpos $begin
@@ -613,15 +616,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 					# we have hits in models: use those, remove known hits (by setting donea)
 					set isos [list_remdup $modelisos]
 					set inconsistencylist [list_fill [llength $isos] 0]
-					set ambig [llength $isos]
-					if {$ambig > 1} {
+					set ambiguity [llength $isos]
+					if {$ambiguity > 1} {
 						set assignment_type ambiguous_$assignment_type
 					} else {
 						set assignment_type unique_$assignment_type
 					}
 					lset line $assignment_typepos $assignment_type
-					if {$ambig == 1} {set ambig 0}
-					dict set ambiga($read) $exons $ambig
+					if {$ambiguity == 1} {set ambiguity 0}
+					dict set ambiga($read) $exons $ambiguity
 					# write only model hits
 					set donea($exons,$read) 1
 				} else {
@@ -640,9 +643,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				} else {
 					set modelisos $read2isoa($read)
 				}
-				if {$ambig == 0} {set ambig 1}
-				incr ambig [llength $modelisos]
-				dict set ambiga($read) $exons $ambig
+				if {$ambiguity == 0} {set ambiguity 1}
+				incr ambiguity [llength $modelisos]
+				dict set ambiga($read) $exons $ambiguity
 				lset line $assignment_typepos ambiguous
 				set isos [list $closest_known {*}$modelisos]
 				set inconsistencylist [list $inconsistency]
@@ -653,7 +656,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set isos [list $closest_known]
 			set inconsistencylist [list $inconsistency]
 		}
-		set ambigcount [convert_isoquant_ambigcount $ambig 1]
+		set ambigcount [convert_isoquant_ambigcount $ambiguity 1]
 		if {$singlecell} {
 			set umicount [get umicounta($cellbarcode,$umi) 1]
 			if {$umicount > 1} {
@@ -664,6 +667,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		} else {
 			set count 1
 		}
+		if {[llength $exonStarts] > 1} {set spliced 1} else {set spliced 0}
 		foreach iso $isos inconsistency $inconsistencylist {
 			if {[info exists outputa($iso)]} {
 				lset line $isopos $outputa($iso)
@@ -684,39 +688,20 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				lset line $geneidpos $geneid
 			}
 			if {[info exists sizea($iso)]} {
-				set pct [expr {100*$size/$sizea($iso)}]
-				if {$pct > 100} {set pct 100}
-				incr pcta($pct)
+				set covered_pct [expr {100*$size/$sizea($iso)}]
+				if {$covered_pct > 100} {set covered_pct 100}
+				incr pcta($covered_pct)
 			} else {
-				set pct 0
+				set covered_pct 0
 			}
 			if {$singlecell} {
-				puts $o [join $line \t]\t$ambig\t$inconsistency\t$pct\t$polya\t$classification\t$closest_known\t$cellbarcode\t$umi\t$umicount
+				puts $o [join $line \t]\t$ambiguity\t$inconsistency\t$covered_pct\t$polya\t$classification\t$closest_known\t$cellbarcode\t$umi\t$umicount
 			} else {
-				puts $o [join $line \t]\t$ambig\t$inconsistency\t$pct\t$polya\t$classification\t$closest_known
+				puts $o [join $line \t]\t$ambiguity\t$inconsistency\t$covered_pct\t$polya\t$classification\t$closest_known
 			}
 			# counts
 			if {$inconsistency < 2} {
-				convert_isoquant_add tcounta($iso,t) $ambigcount
-				if {!$ambig && $assignment_type ne "inconsistent"} {
-					# unique
-					convert_isoquant_add tcounta($iso,u) $count
-					if {$pct >= $strictpct} {
-						# strict
-						convert_isoquant_add tcounta($iso,s) $count
-					}
-				}
-				if {$polya eq "True"} {
-					convert_isoquant_add tcounta($iso,a) $ambigcount
-					if {!$ambig && $assignment_type ne "inconsistent"} {
-						# unique
-						convert_isoquant_add tcounta($iso,au) $count
-						if {$pct >= $strictpct} {
-							# strict
-							convert_isoquant_add tcounta($iso,as) $count
-						}
-					}
-				}
+				iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount $spliced
 			}
 			# don't try to add gambiguity here (per region)
 			# we'll (have to) do it in the merge stage (to account for matches in other regions)
@@ -753,6 +738,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	# open isoformcountsfile, write header and reference transcripts; novel transcripts will be added in next part
 	set fields [list \
 		counts_iqall-$root iq counts_weighed-$root t counts_unique-$root u counts_strict-$root s \
+		counts_sweighed-$root ts counts_sunique-$root us counts_sstrict-$root ss \
 		counts_aweighed-$root a counts_aunique-$root au counts_astrict-$root as\
 	]
 	set o [iso_write_isoform_counts \
@@ -786,8 +772,8 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				lset line $isopos $iso
 				set category known
 			} else {
-				set gene [lindex $line $genepos]
-				if {[regexp {novel} $gene]} {
+				set geneid [lindex $line $geneidpos]
+				if {[regexp {novel} $geneid]} {
 					set category novel_gene
 				} elseif {[regexp {\.nnic$} $oriname]} {
 					set category novel_not_in_catalog
@@ -798,9 +784,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 				}
 			}
 			lset line $isopos $outputa($oriname)
-			if {[info exists geneconva($gene)]} {
-				lset line $genepos $geneconva($gene)
-				lset line $geneidpos $geneconva($gene)
+			if {[info exists geneconva($geneid)]} {
+				lset line $genepos $geneconva($geneid)
+				lset line $geneidpos $geneconva($geneid)
 			} else {
 				lset line $genepos [get geneid2genea($geneid) $gene]
 			}
@@ -809,7 +795,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {![info exists genebasica($geneid)]} {
 				set genebasica($geneid) [list_sub $line {0 1 2 3}]
 			}
-			puts $o [join $line \t]\t$category\t$sizea($oriname)\t$iq\t[format %.2f $t]\t[get tcounta($oriname,u) 0]\t[get tcounta($oriname,s) 0]\t[format %.2f [get tcounta($oriname,a) 0]]\t[get tcounta($oriname,au) 0]\t[get tcounta($oriname,as) 0]
+			puts $o [join $line \t]\t$category\t$sizea($oriname)\t$iq\t[formatnum $t]\t[get tcounta($oriname,u) 0]\t[get tcounta($oriname,s) 0]\t[get tcounta($oriname,ts) 0]\t[get tcounta($oriname,us) 0]\t[get tcounta($oriname,ss) 0]\t[formatnum [get tcounta($oriname,a) 0]]\t[get tcounta($oriname,au) 0]\t[get tcounta($oriname,as) 0]
 		}
 		close $f
 	}
@@ -930,7 +916,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	catch {close $f} ; catch {close $o}
 	set f [gzopen $tempreads]
 	set header [tsv_open $f comment]
-	set poss [list_cor $header {assignment_type isoform_id covered_pct polya inconsistency}]
+	set poss [list_cor $header {assignment_type isoform_id covered_pct polya inconsistency exonStarts}]
 	set chrpos [lsearch $header chromosome]
 	set readpos [lsearch $header read_id]
 	set inconsistencypos [lsearch $header inconsistency]
@@ -1084,11 +1070,12 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 						lappend l $gambiguity
 						puts $o [join $l \t]
 						# count
-						foreach {assignment_type iso covered_pct polya inconsistency} [list_sub $l $poss] break
+						foreach {assignment_type iso covered_pct polya inconsistency exonstarts} [list_sub $l $poss] break
 						if {$inconsistency < 2 && $iso ne "."} {
-							iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount
+							set spliced [regexp , $exonstarts]
+							iso_isoquant_add_tcounts tcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount $spliced
 							if {$addumis} {
-								iso_isoquant_add_tcounts utcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct [expr {$ambigcount/$umicount}]
+								iso_isoquant_add_tcounts utcounta $iso $assignment_type $ambiguity $polya $covered_pct $strictpct [expr {$ambigcount/$umicount}] $spliced
 							}
 						}
 					}
@@ -1128,7 +1115,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		}
 	}
 	if {$addumis} {
-		set temp [lrange $header end-5 end]
+		set temp [lrange $header end-8 end]
 		set temp [list_regsub ^ $temp umi]
 		puts $o $comments[join [list {*}$header {*}$temp] \t]
 	} else {
@@ -1151,9 +1138,9 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			set iso [lindex $line $isopos]
 			if {![info exists tcounta($iso,t)]} continue
 			if {$addumis} {
-				puts $o [join [lrange $line 0 end-6] \t]\t[format %.2f [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]\t[format %.2f [get utcounta($iso,t) 0]]\t[get utcounta($iso,u) 0]\t[get utcounta($iso,s) 0]\t[format %.2f [get utcounta($iso,a) 0]]\t[get utcounta($iso,au) 0]\t[get utcounta($iso,as) 0]
+				puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]\t[formatnum [get utcounta($iso,t) 0]]\t[get utcounta($iso,u) 0]\t[get utcounta($iso,s) 0]\t[formatnum [get utcounta($iso,ts) 0]]\t[get utcounta($iso,us) 0]\t[get utcounta($iso,ss) 0]\t[formatnum [get utcounta($iso,a) 0]]\t[get utcounta($iso,au) 0]\t[get utcounta($iso,as) 0]
 			} else {
-				puts $o [join [lrange $line 0 end-6] \t]\t[format %.2f [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[format %.2f [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
+				puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
 			}
 		}
 		close $f
@@ -1187,9 +1174,9 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 			set gene [lindex $line $genepos]
 			if {![info exists gcounta($gene,w)] && ![info exists gcounta($gene,i)]} continue
 			if {$addumis} {
-				puts $o [join [lrange $line 0 end-1] \t]\t[format %.2f [get gcounta($gene,i) 0]]\t[format %.2f [get gcounta($gene,w) 0]]\t[format %.2f [get ugcounta($gene,i) 0]]\t[format %.2f [get ugcounta($gene,w) 0]]
+				puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]\t[formatnum [get ugcounta($gene,i) 0]]\t[formatnum [get ugcounta($gene,w) 0]]
 			} else {
-				puts $o [join [lrange $line 0 end-1] \t]\t[format %.2f [get gcounta($gene,i) 0]]\t[format %.2f [get gcounta($gene,w) 0]]
+				puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]
 			}
 		}
 		close $f
@@ -1324,14 +1311,14 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 	catch {close $f}
 	set f [gzopen $readfile]
 	set header [tsv_open $f]
-	set poss [list_cor $header {chromosome begin end strand isoform_id gene_id ambiguity inconsistency assignment_type covered_pct polya cellbarcode umi umicount gambiguity}]
+	set poss [list_cor $header {chromosome begin end strand isoform_id gene_id ambiguity inconsistency assignment_type covered_pct polya cellbarcode umi umicount gambiguity exonStarts}]
 	set readidpos [lsearch $header read_id]
 	putslog "get counts from $readfile"
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
 		# set read_id [lindex $line $readidpos]
-		foreach {chr begin end strand isoform_id gene_id ambiguity inconsistency assignment_type covered_pct polya cellbarcode umi umicount gambiguity} [list_sub $line $poss] break
+		foreach {chr begin end strand isoform_id gene_id ambiguity inconsistency assignment_type covered_pct polya cellbarcode umi umicount gambiguity exonstarts} [list_sub $line $poss] break
 		if {$gambiguity == 0} continue
 		if {![info exists allcellsa($cellbarcode)]} {
 			continue
@@ -1340,7 +1327,8 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 		foreach {ambigcount gambigcount} [iso_isoquant_sc_ambigcount $ambiguity $gambiguity $umicount] break
 		if {$isoform_id ne "."} {
 			if {$inconsistency < 2} {
-				iso_isoquant_add_tcounts ctcounta $isoform_id,$cellbarcode $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount $umicount
+				set spliced [regexp , $exonstarts]
+				iso_isoquant_add_tcounts ctcounta $isoform_id,$cellbarcode $assignment_type $ambiguity $polya $covered_pct $strictpct $ambigcount $spliced $umicount
 			}
 			if {![info exists cgcounta($gene_id,$cellbarcode,w)]} {
 				lappend genea($gene_id) $cellbarcode
@@ -1420,8 +1408,8 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 			}
 			# append resultline \t$count
 			if {$count > 0 || $nicount > 0 || $maxcount > 0} {
-				set count [format %.2f $count]
-				set nicount [format %.2f $nicount]
+				set count [formatnum $count]
+				set nicount [formatnum $nicount]
 				puts $o2 $temp\t$cell\t$count\t$nicount\t$maxcount\t$ucount
 			}
 		}
@@ -1447,7 +1435,7 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 	set genepos [lsearch $header geneid]
 	# set name [file tail $isofile]
 	set o [wgzopen $target2.temp.zst]
-	lappend newheader cell counts_weighed counts_unique counts_strict counts_aweighed counts_aunique counts_astrict
+	lappend newheader cell counts_weighed counts_unique counts_strict counts_sweighed counts_sunique counts_sstrict counts_aweighed counts_aunique counts_astrict
 	puts $o [join $newheader \t]
 	set num 0
 	while 1 {
@@ -1461,7 +1449,7 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 		# puts "[incr num] $iso"
 		foreach cell $rcells {
 			if {![info exists ctcounta($iso,$cell,t)] || $ctcounta($iso,$cell,t) == 0} continue
-			puts $o [join $sline \t]\t$cell\t[format %.2f $ctcounta($iso,$cell,t)]\t[get ctcounta($iso,$cell,u) 0]\t[get ctcounta($iso,$cell,s) 0]\t[format %.2f [get ctcounta($iso,$cell,a) 0]]\t[get ctcounta($iso,$cell,au) 0]\t[get ctcounta($iso,$cell,as) 0]
+			puts $o [join $sline \t]\t$cell\t[formatnum $ctcounta($iso,$cell,t)]\t[get ctcounta($iso,$cell,u) 0]\t[get ctcounta($iso,$cell,s) 0]\t[formatnum [get ctcounta($iso,$cell,ts) 0]]\t[get ctcounta($iso,$cell,us) 0]\t[get ctcounta($iso,$cell,ss) 0]\t[formatnum [get ctcounta($iso,$cell,a) 0]]\t[get ctcounta($iso,$cell,au) 0]\t[get ctcounta($iso,$cell,as) 0]
 		}
 	}
 	gzclose $o
@@ -1470,7 +1458,7 @@ proc iso_isoquant_sc_counts {genefile isofile readfile target target2 strictpct 
 }
 
 proc iso_isoquant_job {args} {
-	# putslog [list iso_isoquant_job {*}$args]
+# putslog [list iso_isoquant_job {*}$args]
 	upvar job_logdir job_logdir
 	global appdir
 	set cmdline [clean_cmdline cg iso_isoquant {*}$args]
@@ -1754,6 +1742,7 @@ proc iso_isoquant_job {args} {
 				set header {chromosome begin end strand exonStarts exonEnds transcript gene geneid}
 				lappend header category size \
 					counts_iqall-$root counts_weighed-$root counts_unique-$root counts_strict-$root \
+					counts_sweighed-$root counts_sunique-$root counts_sstrict-$root \
 					counts_aweighed-$root counts_aunique-$root counts_astrict-$root
 				file_write $regdir/isoform_counts-${root}.tsv [join $header \t]\n
 				file_write $regdir/gene_counts-${root}.tsv \
@@ -1858,7 +1847,7 @@ proc iso_isoquant_job {args} {
 			job isquant_sc_count-$region-$root \
 			-skip [list sc_gene_counts_raw-${root}.tsv.zst sc_isoform_counts_raw-${root}.tsv.zst] \
 			-deps {
-				$readfile $genefile $sampledir/reads_per_cell_raw.tsv
+				$readfile $genefile $isofile $sampledir/reads_per_cell_raw.tsv
 			} -targets {
 				$target $target2
 			} -vars {
@@ -1872,7 +1861,7 @@ proc iso_isoquant_job {args} {
 		-deps [list {*}$sc_gene_counts_files {*}$sc_iso_counts_files] \
 		-targets {
 			sc_gene_counts_raw-${root}.tsv.zst
-		} -vars {
+		} -vars {root
 			sc_gene_counts_files root
 		} -code {
 			analysisinfo_write [lindex $sc_gene_counts_files 0] sc_gene_counts_raw-${root}.tsv
@@ -1897,5 +1886,6 @@ proc cg_iso_isoquant {args} {
 	iso_isoquant_job {*}$args
 	job_wait
 }
+
 
 
