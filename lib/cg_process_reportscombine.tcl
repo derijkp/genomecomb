@@ -21,7 +21,7 @@ proc ppercent {value ref} {
 	if {![isint $value] || ![isint $ref] || $ref == 0} {
 		return ""
 	} else {
-		return [format %.2f [expr {100.0*$value/$ref}]]
+		return [formatnum [expr {100.0*$value/$ref}]]
 	}
 }
 
@@ -364,7 +364,7 @@ proc reportscombine_singlecell {reportdirs dataVar} {
 		foreach field $fields {
 			set value [get a(sc_$field) ?]
 			if {[regexp \\. $value]} {
-				set value [format %.2f $value]
+				set value [formatnum $value]
 			}
 			lappend line $value
 		}

@@ -37,7 +37,7 @@ proc sc2bulk {scgenefile target} {
 			if {$previd ne ""} {
 #				set out [join $previd \t]
 #				foreach v $counts {
-#					append out \t[format %.2f $v]
+#					append out \t[formatnum $v]
 #				}
 #				puts $o $out
 				puts $o [join $previd \t]\t[join $counts \t]

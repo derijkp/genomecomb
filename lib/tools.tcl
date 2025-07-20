@@ -438,3 +438,9 @@ proc command_list {pattern} {
 	list_union [array names ::auto_index $pattern] [info commands $pattern]
 }
 
+proc formatnum {number {decimals 2}} {
+	if {$number eq ""} {return ""}
+	set number [format %.${decimals}f $number]
+	regsub {[.]?0+$} $number {} number
+	return $number
+}

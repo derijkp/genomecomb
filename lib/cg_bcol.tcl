@@ -540,7 +540,7 @@ proc cg_bcol_histo {args} {
 			if {$size == 0} {
 				lappend result ""
 			} else {
-				lappend result [format %.2f [expr {$sum/double($size)}]]
+				lappend result [formatnum [expr {$sum/double($size)}]]
 			}
 			lappend result $min
 			lappend result $max
@@ -580,11 +580,11 @@ proc cg_bcol_histo {args} {
 		lappend result $tota($limit)
 	}
 	set tot [lmath_sum $result]
-	set presult [list [format %.2f [expr {100*$tota($biv)/$tot}]]]
+	set presult [list [formatnum [expr {100*$tota($biv)/$tot}]]]
 	foreach limit $intervals {
-		lappend presult [format %.2f [expr {100*$tota($limit)/$tot}]]
+		lappend presult [formatnum [expr {100*$tota($limit)/$tot}]]
 	}
-	lappend result $totsize [format %.2f [expr {$totsum/double($totsize)}]] $totmin $totmax
+	lappend result $totsize [formatnum [expr {$totsum/double($totsize)}]] $totmin $totmax
 	puts Total\t[join $result \t]
 	puts Totalpercent\t[join $presult \t]
 }

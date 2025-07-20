@@ -199,14 +199,14 @@ proc reports_singlecell {sampledir} {
 			}
 		}
 		set barcoded_reads [expr {$invalidreads + $validreads}]
-		set pct_barcoded_reads [format %.2f [expr {100.0*$barcoded_reads/$total_reads}]]
+		set pct_barcoded_reads [formatnum [expr {100.0*$barcoded_reads/$total_reads}]]
 		set validbarcoded_reads $validreads
-		set pct_validbarcoded_reads [format %.2f [expr {100.0*$validbarcoded_reads/$total_reads}]]
+		set pct_validbarcoded_reads [formatnum [expr {100.0*$validbarcoded_reads/$total_reads}]]
 		set total_umis [expr {$invalidumis + $validumis + $nobcreads}]
 		set barcoded_umis [expr {$invalidumis + $validumis}]
-		set pct_barcoded_umis [format %.2f [expr {100.0*$barcoded_umis/$total_umis}]]
+		set pct_barcoded_umis [formatnum [expr {100.0*$barcoded_umis/$total_umis}]]
 		set validbarcoded_umis $validumis
-		set pct_validbarcoded_umis [format %.2f [expr {100.0*$validbarcoded_umis/$total_umis}]]
+		set pct_validbarcoded_umis [formatnum [expr {100.0*$validbarcoded_umis/$total_umis}]]
 	} else {
 		set countfile [gzfile $sampledir/sc_gene_counts_raw-*$rootname.tsv]
 		set barcoded_reads NA
@@ -224,7 +224,7 @@ proc reports_singlecell {sampledir} {
 		set temp [cg select -g all -gc sum(count) $countfile]
 		set rawgenecount [lindex $temp end]
 		if {$total_umis ni "0 NA"} {
-			set pct_rawgenecount [format %.2f [expr {100.0*$rawgenecount/$total_umis}]]
+			set pct_rawgenecount [formatnum [expr {100.0*$rawgenecount/$total_umis}]]
 		} else {
 			set pct_rawgenecount NA
 		}
@@ -237,7 +237,7 @@ proc reports_singlecell {sampledir} {
 		set temp [cg select -g all -gc sum(count) $countsfile]
 		set filteredgenecount [lindex $temp end]
 		if {$total_umis ni "0 NA"} {
-			set pct_filteredgenecount [format %.2f [expr {100.0*$filteredgenecount/$total_umis}]]
+			set pct_filteredgenecount [formatnum [expr {100.0*$filteredgenecount/$total_umis}]]
 		} else {
 			set pct_filteredgenecount NA
 		}
@@ -256,7 +256,7 @@ proc reports_singlecell {sampledir} {
 		set temp [cg select -g all -gc sum(counts_weighed) $countsfile]
 		set filteredisoformcount [lindex $temp end]
 		if {$total_umis ni "0 NA"} {
-			set pct_filteredisoformcount [format %.2f [expr {100.0*$filteredisoformcount/$total_umis}]]
+			set pct_filteredisoformcount [formatnum [expr {100.0*$filteredisoformcount/$total_umis}]]
 		} else {
 			set pct_filteredisoformcount NA
 		}

@@ -197,7 +197,7 @@ proc iso_organelle_job {args} {
 					foreach {cbegin cend cstrand} $cline break
 					if {$cend < $begin} continue
 					if {$cbegin >= $end} break
-					set covered_pct [format %.2f [expr {100.0*(min($cend,$end) - max($cbegin,$begin))/($cend - $cbegin)}]]
+					set covered_pct [formatnum [expr {100.0*(min($cend,$end) - max($cbegin,$begin))/($cend - $cbegin)}]]
 					# putsvars cbegin begin end cend
 					if {[expr {abs($cbegin - $begin)}] <= 3 && [expr {abs($cend - $end)}] <= 3} {
 						set assignment_events mono_exon_match

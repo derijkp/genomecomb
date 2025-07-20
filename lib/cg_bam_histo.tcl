@@ -68,7 +68,7 @@ proc cg_bam_histo {args} {
 			if {$size == 0} {
 				lappend result ""
 			} else {
-				lappend result [format %.2f [expr {$sum/double($size)}]]
+				lappend result [formatnum [expr {$sum/double($size)}]]
 			}
 			lappend result $min
 			lappend result $max
@@ -120,17 +120,17 @@ proc cg_bam_histo {args} {
 	}
 	set tot [lmath_sum $result]
 	if {$tot > 0} {
-		set presult [list [format %.2f [expr {100*$tota($biv)/$tot}]]]
+		set presult [list [formatnum [expr {100*$tota($biv)/$tot}]]]
 		foreach limit $intervals {
-			lappend presult [format %.2f [expr {100*$tota($limit)/$tot}]]
+			lappend presult [formatnum [expr {100*$tota($limit)/$tot}]]
 		}
-		lappend result $totsize [format %.2f [expr {$totsum/double($totsize)}]] $totmin $totmax
+		lappend result $totsize [formatnum [expr {$totsum/double($totsize)}]] $totmin $totmax
 	} else {
-		set presult [list [format %.2f 0]]
+		set presult [list [formatnum 0]]
 		foreach limit $intervals {
-			lappend presult [format %.2f 0]
+			lappend presult [formatnum 0]
 		}
-		lappend result $totsize [format %.2f 0] $totmin $totmax
+		lappend result $totsize [formatnum 0] $totmin $totmax
 	}
 	puts Total\t[join $result \t]
 	puts Totalpercent\t[join $presult \t]
