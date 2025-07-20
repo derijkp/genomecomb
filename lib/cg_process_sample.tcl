@@ -642,7 +642,6 @@ proc process_sample_job {args} {
 			set ali_keepcomments [codeback_empty $value]
 		}
 		-singlecell {
-			# this is (for now) only checked in the code if it is empty (no single cell analysis) or not
 			# The preset and/or other options actually determine the analysis methods.
 			if {$value ni {0 1 ontr10x pre {}}} {error "Unknown value $value for -singlecell, must be either empty or 0 (for no single cell analysis), 1 or ontr10x (10x single cell analysis), pre (for fastqs with prefilled barcode and umi in readname)"}
 			if {$value eq "0"} {set value ""}
@@ -1446,15 +1445,16 @@ proc process_sample_job {args} {
 		}
 		foreach isocaller $isocallers {
 			set preset {}
-			foreach {isocaller preset} [split $isocaller _] break
-			if {![auto_load iso_${isocaller}_job]} {
-				error "isocaller $isocaller not supported"
+			foreach {useisocaller preset} [split $isocaller _] break
+			if {![auto_load iso_${useisocaller}_job]} {
+				error "isocaller $useisocaller not supported"
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
 			if {$addumis} {lappend options -addumis $addumis}
-			# validate_iso $isocaller $refseq $reftranscripts $organelles $distrreg
-			iso_${isocaller}_job \
+			# validate_iso $useisocaller $refseq $reftranscripts $organelles $distrreg
+			# it knows to do singlecell based on the preset (starts with sc, ony for isoquant_sc)
+			iso_${useisocaller}_job \
 				-reftranscripts $reftranscripts \
 				{*}$options \
 				-organelles $organelles \
