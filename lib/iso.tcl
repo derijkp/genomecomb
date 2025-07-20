@@ -166,6 +166,7 @@ proc iso_joint_job {args} {
 			file delete -force $ref.temp $ref.temp $ref.temp2 $ref.temp3
 		}
 		foreach bam [jobglob $projectdir/samples/*/*.bam $projectdir/samples/*/*.cram] {
+			set sampledir [file dir $bam]
 			set preset {}
 			foreach {baseisocaller preset} [split $isocaller _] break
 			if {![auto_load iso_${baseisocaller}_job]} {
@@ -173,8 +174,9 @@ proc iso_joint_job {args} {
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
+			if {$addumis} {lappend options -addumis $addumis}
 			set root [file_rootname $bam]
-			set resultfile [file dir $bam]/isoform_counts-${isocaller}_joint-$root.tsv
+			set resultfile $sampledir/isoform_counts-${isocaller}_joint-$root.tsv
 			iso_${baseisocaller}_job \
 				-reftranscripts $ref \
 				{*}$options \
