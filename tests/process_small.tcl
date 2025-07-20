@@ -32,9 +32,11 @@ test process_small {process_project mastr_mx2} {
 		}
 	}
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/${basename}/samplicons-wgs2.tsv
+	mkdir $::smalltestdir/shadow
 	# file copy ori/${basename}/demultiplex_stats.tsv tmp/${basename}
 	# if you want to see output while running
 	exec cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-shadowdir $::smalltestdir/shadow \
 		-varcallers {gatk sam} \
 		-reports -predictgender \
 		-minfastqreads 10 \

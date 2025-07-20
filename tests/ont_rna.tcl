@@ -532,4 +532,41 @@ test ont_rna {isoquant joint analysis} {
 	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-isoquant_joint-tmp.tsv
 } {}
 
+test ont_rna {isoquant joint analysis no ref} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in "SIRV101"} > tmp/ref/sirv/gene_sirv.tsv
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	exec cg process_project -stack 1 -v 2 -d 4 \
+		-split 1 \
+		-threads 2 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2_splice} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-distrreg 0 \
+		-svcallers {} \
+		-varcallers {} \
+		-isocallers {isoquant} \
+		-iso_match . \
+		-iso_joint {isoquant} \
+		-reports {} \
+		-dbdir tmp/ref/sirv \
+		tmp \
+		>& tmp/ontrna.log
+	# check vs expected
+	exec diff tmp/compar/isoform_counts-isoquant_joint-tmp.tsv data/ontrna/isoform_counts-isoquant_joint-tmp_noref.tsv
+	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-mapamapaisoquant_joint-tmp_noref.tsv
+} {}
+
 testsummarize

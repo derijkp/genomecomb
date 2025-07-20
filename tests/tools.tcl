@@ -90,7 +90,7 @@ proc testdir {args} {
 }
 
 proc test {args} {
-	set ::testdir [testdir {*}$args]
+	global testdir
 	set numargs [llength $args]
 	if {$numargs == 0} {
 		set ::testdir $::appdir/tests
