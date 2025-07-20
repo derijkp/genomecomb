@@ -1465,9 +1465,11 @@ proc process_sample_job {args} {
 		}
 	}
 	set sampledir [file_absolute $sampledir]
+	# singlecell (if basic files is present)
 	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_raw-*.tsv]
 	foreach scgenefile $scgenefiles {
 		set scisoformfile [file dir $scgenefile]/[regsub ^sc_gene_counts_raw- [file tail $scgenefile] sc_isoform_counts_raw-]
+		if {![jobfileexists $scisoformfile]} continue
 		foreach sc_filter $sc_filters {
 			if {![auto_load sc_filter_${sc_filter}_job]} {
 				error "sc_filter $sc_filter not supported"
@@ -1482,6 +1484,7 @@ proc process_sample_job {args} {
 	set scgenefiles [jobgzfiles $sampledir/sc_gene_counts_filtered-*.tsv]
 	foreach scgenefile $scgenefiles {
 		set scisoformfile [file dir $scgenefile]/[regsub ^sc_gene_counts_filtered- [file tail $scgenefile] sc_isoform_counts_filtered-]
+		if {![jobfileexists $scisoformfile]} continue
 		foreach sc_celltyper $sc_celltypers {
 			if {![auto_load sc_celltyper_${sc_celltyper}_job]} {
 				error "sc_celltyper $sc_celltyper not supported"
