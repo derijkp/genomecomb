@@ -31,7 +31,7 @@ proc sc_celltyper_scsorter_job {args} {
 		cg tsv210x $scgenefile $scgenefile10x.temp
 		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
-	job sc_celltyper_$extrarootname-$rootname -mem 10G -deps {
+	job sc_celltyper_$extrarootname-$rootname -mem 24G -deps {
 		$scgenefile10x
 	} -targets {
 		$groupfile $umappng

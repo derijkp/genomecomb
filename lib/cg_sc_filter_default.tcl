@@ -60,7 +60,7 @@ proc sc_filter_default_job {args} {
 	}
 	set genefields [findfields [cg select -h $tsvreftranscripts] {gene}]
 	set mitgenes [cg select -sh /dev/null -f $genefields -q "\$$cfield eq \"$mitchr\"" $tsvreftranscripts]
-	job sc_filter_default_r-$rootname -deps {
+	job sc_filter_default_r-$rootname -mem 24G -deps {
 		$scgenefile10x
 		$scisoformfile10x
 	} -targets {

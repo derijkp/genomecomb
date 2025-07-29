@@ -35,7 +35,7 @@ proc sc_celltyper_sctype_job {args} {
 	set R [file_resolve [findR]]
 	set dirR [file dir $R]
 	set sctypedir [lindex [bsort [glob $dirR/lib64/R/library/sc-type-*]] end]
-	job sc_celltyper_$extrarootname-$rootname -deps {
+	job sc_celltyper_$extrarootname-$rootname -mem 24G -deps {
 		$scgenefile10x
 	} -targets {
 		$groupfile $umappng $outrds
