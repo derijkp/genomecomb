@@ -162,13 +162,13 @@ makerefdb_job \
 # rest after this is hg38 specific code
 # -------------------------------------
 
-set target extra/reg_${ref}_distrg.tsv
-job reg_${ref}_nolowgene -deps {
-	extra/gene_${ref}_cgencode.tsv.zst
-	extra/reg_${ref}_nolowgene200k.tsv.zst
+set target extra/reg_${build}_distrg.tsv
+job reg_${build}_nolowgene -deps {
+	extra/gene_${build}_cgencode.tsv.zst
+	extra/reg_${build}_nolowgene200k.tsv.zst
 } -targets {
 	$target
-} -vars {ref} -code {
+} -vars {build} -code {
 	proc sizes {list} {
 		set list [split [string trim $list] \n]
 		set list [list_subindex $list 0]
@@ -198,9 +198,11 @@ job reg_${ref}_nolowgene -deps {
 		return $regions
 	}
 	set problemregions {
-		chr11-54985028-79789552 chr19-0-25900983
+		chr11-54985028-79789552
+		chr19-0-25900983
 		chr21-5371491-11824755
-		chr17-24847945-52275265 chr16-0-9238611
+		chr16-0-9238611
+		chr17-24847945-52275265
 		chr19-25900983-56983846
 		chr1-144101052-157398672
 		chr3-43888438-61406513
@@ -244,7 +246,6 @@ job reg_${ref}_nolowgene -deps {
 		chr16-69515678-75984075
 		chr17-24847945-27710211
 		chr17-27710211-34421252
-		chr17-24847945-34421252
 		chr17-34421252-36794009
 		chr17-36794009-46430772
 		chr17-46430772-52275265
@@ -273,7 +274,7 @@ job reg_${ref}_nolowgene -deps {
 	close $o
 	file rename -force $target.temp $target
 	# check
-	cg regsubtract extra/reg_${ref}_fullgenome.tsv.zst $target | cg covered
+	cg regsubtract extra/reg_${build}_fullgenome.tsv.zst $target | cg covered
 }
 
 #job gtf -targets {
