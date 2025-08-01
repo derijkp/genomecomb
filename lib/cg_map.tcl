@@ -145,6 +145,8 @@ proc map_job {args} {
 	set readgroupdata [array get a]
 
 	#
+	set workdir [shadow_workdir $result]
+	job_cleanup_add_shadow $workdir
 	dbdir [file dir $refseq]
 	set resultbase [file root $result]
 	set samfiles {}
@@ -244,8 +246,6 @@ proc map_job {args} {
 		}
 		return $result
 	}
-	set workdir [shadow_workdir $result]
-	job_cleanup_add_shadow $workdir
 	if {!$paired} {
 		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
