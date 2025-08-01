@@ -294,9 +294,9 @@ test ont_rna {isoquant SIRV test no ref -skipregions} {
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-noref_sirv.tsv
 } {53a54,56
-> SIRV7	1000	147946	-	1000,2993,3809,114680,147608	2675,3111,3896,114988,147946	novelt_SIRV7_1000-e1675i318e118i698e87i110784e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript1.SIRV7.nnic	novel_gene	2526	16.50	16.50	6	5	0.00	0	0
-> SIRV7	1000	147946	-	1000,2993,43028,114680,147608	2675,3111,43077,114988,147946	novelt_SIRV7_1000-e1675i318e118i39917e49i71603e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript3.SIRV7.nnic	novel_gene	2488	23.50	23.50	13	12	0.00	0	0
-> SIRV7	56033	147947	-	56033,70883,78841,114680,147608	56097,70987,78965,114960,147947	novelt_SIRV7_56033-e64i14786e104i7854e124i35715e280i32648e339	novelg_SIRV7_m_56034_147947	novelg_SIRV7_m_56034_147947	transcript				5	IsoQuant		transcript6.SIRV7.nnic	novel_gene	911	29.00	29.00	29	19	0.00	0	0
+> SIRV7	1000	147946	-	1000,2993,3809,114680,147608	2675,3111,3896,114988,147946	novelt_SIRV7_1000-e1675i318e118i698e87i110784e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript1.SIRV7.nnic	novel_gene	2526	16.50	16.5	6	5	6.5	6	5	0	0	0
+> SIRV7	1000	147946	-	1000,2993,43028,114680,147608	2675,3111,43077,114988,147946	novelt_SIRV7_1000-e1675i318e118i39917e49i71603e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript3.SIRV7.nnic	novel_gene	2488	23.50	23.5	13	12	13.5	13	12	0	0	0
+> SIRV7	56033	147947	-	56033,70883,78841,114680,147608	56097,70987,78965,114960,147947	novelt_SIRV7_56033-e64i14786e104i7854e124i35715e280i32648e339	novelg_SIRV7_m_56034_147947	novelg_SIRV7_m_56034_147947	transcript				5	IsoQuant		transcript6.SIRV7.nnic	novel_gene	911	29.00	29	29	19	29	29	19	0	0	0
 child process exited abnormally} error
 
 test ont_rna {isoquant_sens SIRV test no ref} {
@@ -452,7 +452,7 @@ test ont_rna {process_project multi methods} {
 	cg tsvdiff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 } {diff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 header diff
-<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
+<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_sweighed-isoquant-sminimap2_splice-sirv1 counts_sunique-isoquant-sminimap2_splice-sirv1 counts_sstrict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
 ---
 >extrafields: gene_name gene_id
 
@@ -489,7 +489,7 @@ test ont_rna {process_project multi methods using -preset} {
 	cg tsvdiff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 } {diff tmp/samples/sirv1/isoform_counts-isoquant-sminimap2_splice-sirv1.tsv tmp/ref/sirv/gene_sirv.tsv
 header diff
-<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
+<extrafields: geneid gene_ori category size counts_iqall-isoquant-sminimap2_splice-sirv1 counts_weighed-isoquant-sminimap2_splice-sirv1 counts_unique-isoquant-sminimap2_splice-sirv1 counts_strict-isoquant-sminimap2_splice-sirv1 counts_sweighed-isoquant-sminimap2_splice-sirv1 counts_sunique-isoquant-sminimap2_splice-sirv1 counts_sstrict-isoquant-sminimap2_splice-sirv1 counts_aweighed-isoquant-sminimap2_splice-sirv1 counts_aunique-isoquant-sminimap2_splice-sirv1 counts_astrict-isoquant-sminimap2_splice-sirv1
 ---
 >extrafields: gene_name gene_id
 
@@ -542,7 +542,8 @@ test ont_rna {isoquant joint analysis no ref} {
 		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
 	}
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
-	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in "SIRV101"} > tmp/ref/sirv/gene_sirv.tsv
+	file delete tmp/ref/sirv/gene_sirv.gtf
+	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in ""} > tmp/ref/sirv/gene_sirv.tsv
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
 	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
 	file delete tmp/compar/isoform_counts-tmp.tsv

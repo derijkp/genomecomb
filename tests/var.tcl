@@ -659,8 +659,8 @@ test var {var_clair3 error} {
 	file delete -force tmp/clair3_ppr
 	file mkdir tmp/clair3_ppr
 	
-	cp ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/clair3_ppr/test.bam
-	mklink ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/clair3_ppr/test.bam.bai
+	file copy ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam tmp/clair3_ppr/test.bam
+	file copy ori/pepperdeepvariant_example_data/HG002_ONT_50x_2_GRCh38.chr20.quickstart.bam.bai tmp/clair3_ppr/test.bam.bai
 	cg vcf2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark.quickstart.vcf.gz tmp/clair3_ppr/var-truth.tsv
 	cg bed2tsv ori/pepperdeepvariant_example_data/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.quickstart.bed tmp/clair3_ppr/sreg-truth.tsv
 	#

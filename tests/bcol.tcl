@@ -288,7 +288,7 @@ test bcol_histo {2 chromosomes} {
 } {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
 t1	0	11	5	0	16	5.81	2	9
 t2	10	0	0	10	20	6.25	0	14
-t3	3	0	0	7	10	7749.80	0	60000
+t3	3	0	0	7	10	7749.8	0	60000
 ----------
 Total	13	11	5	17	46	1689.48	0	60000
 Totalpercent	28.26	23.91	10.87	36.96}
@@ -313,7 +313,7 @@ test bcol_histo {old multifile format 2 chromosomes} {
 } {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
 t1	0	11	5	0	16	5.81	2	9
 t2	10	0	0	10	20	6.25	0	14
-t3	3	0	0	7	10	7749.80	0	60000
+t3	3	0	0	7	10	7749.8	0	60000
 ----------
 Total	13	11	5	17	46	1689.48	0	60000
 Totalpercent	28.26	23.91	10.87	36.96}
