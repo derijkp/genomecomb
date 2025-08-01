@@ -43,6 +43,7 @@ sizes)
 category, though this will still be used to see which name will be given
 to the result; known preferred)
 ; -skipempty 0/1: skip isoform files which are empty (size = 0) (default 1)
+; -keeptranscriptid 0/1: if 1, keep the original transcript ids per sample (in e.g. fields transcript-<sample>) (default = 0)
 
 == Category ==
 RNA

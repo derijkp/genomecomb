@@ -8,7 +8,7 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc multitranscript_open {isoformfiles aVar} {
+proc multitranscript_open {isoformfiles aVar {keeptranscriptid 0}} {
 	upvar $aVar a
 	# prepare: open files, parse headers, load first line
 	set fnum -1
@@ -49,6 +49,13 @@ proc multitranscript_open {isoformfiles aVar} {
 			set a(data,$fnum) [list_find -glob $header *count*]
 		}
 		set a(empty,$fnum) [list_fill [llength $a(data,$fnum)] 0.0]
+		if {$keeptranscriptid} {
+			set field [lindex $poss 8]
+			if {$field != -1} {
+				lappend a(data,$fnum) $field
+				lappend a(empty,$fnum) {}
+			}
+		}
 		set a(status,$fnum) [gets $a(f,$fnum) a(curline,$fnum)]
 		set a(curline,$fnum) [split $a(curline,$fnum) \t]
 		set a(curid,$fnum) [list_sub $a(curline,$fnum) $poss]
@@ -90,6 +97,7 @@ proc cg_multitranscript {args} {
 	set match {}
 	set exact 0
 	set skipempty 1
+	set keeptranscriptid 0
 	cg_options multitranscript args {
 		-exact {
 			set exact 1
@@ -100,6 +108,9 @@ proc cg_multitranscript {args} {
 		}
 		-skipempty {
 			set skipempty $value
+		}
+		-keeptranscriptid {
+			set keeptranscriptid $value
 		}
 	} compar_file 2
 	set isoformfiles $args
@@ -119,7 +130,7 @@ proc cg_multitranscript {args} {
 	foreach file $isoformfiles {
 		catch {close $a(f,$file)}
 	}
-	set header [multitranscript_open $isoformfiles a]
+	set header [multitranscript_open $isoformfiles a $keeptranscriptid]
 	# open result file
 	catch {close $o}
 	set o [wgzopen $compar_file.temp[gzext $compar_file]]
@@ -305,7 +316,7 @@ proc cg_multitranscript {args} {
 				if {$p == -1} {
 					set p [lsearch $cats {}]
 				}
-				if {$p == -1} {
+				if {$p == -1 || $match ne ""} {
 					set line [lindex $ts 0]
 					set name [iso_name [lindex $line 0] $strand $starts $ends]
 					lset line 8 $name
