@@ -1,0 +1,35 @@
+= genomecomb logfile file =
+
+Depending on what [[joboptions]] are used, a logfile will be created
+when running genomecomb commands. This logfile is in [[tsv]] format with the following fields
+
+This log file is not continually updated: When starting, all jobs get status "submitted" (or "skipped" if the 
+targets are already made. During a run, progress is recored in small per job files in the log_jobs directory. The log
+file is only (automatically) updated at the end of a run (when all jobs are finished)
+You can update the log file during a run using the job_update command:
+```
+cg job_update logfile
+```
+
+The log file has the following fields:
+
+; job: job name, this can be a path
+; jobid: number identifying job in job management system
+; status: status of the job (run cg job_update before checking): 
+finished (job was successful), error (job ended with an error), 
+skipped (job did not have to be started this run because, all targets were already there)
+submitted (job was submitted), running (job is running)
+; submittime: time the job was submitted
+; starttime: time the job was started
+; endtime: time the job finished
+; duration: time taken
+; time_seconds: time taken in seconds
+; targets: files to make by the job
+; msg: output of the job, possibly error message
+; run: name of the run (will be the same for all jobs)
+; cores: number of cores assigned
+; pct_cpu: percent cpu use (total, so can be e.g. 400 for fully using 4 cores)
+; maxmem: maximum memory used in kilobytes
+; bytes_read: number of bytes read for storage by job
+; bytes_written: number of bytes written to storage by job
+
