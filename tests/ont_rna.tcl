@@ -567,7 +567,7 @@ test ont_rna {isoquant joint analysis no ref} {
 		>& tmp/ontrna.log
 	# check vs expected
 	exec diff tmp/compar/isoform_counts-isoquant_joint-tmp.tsv data/ontrna/isoform_counts-isoquant_joint-tmp_noref.tsv
-	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-mapamapaisoquant_joint-tmp_noref.tsv
+	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-isoquant_joint-tmp_noref.tsv
 } {}
 
 testsummarize

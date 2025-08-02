@@ -802,7 +802,7 @@ test var {var_medaka basic giab ont} {
 	set workdir tmp/medaka_sgiab
 	make_smallgiabonttest $workdir
 	cg var_medaka {*}$::dopts \
-		$workdir/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38
+		$workdir/map-sminimap2-pHG002_hg38.bam $::refseqdir/hg38 >& tmp/medaka_sgiab.log
 	file delete $workdir/compar.tsv
 	cg multicompar -reannot 1 $workdir/compar.tsv \
 		$workdir/var-medaka-sminimap2-pHG002_hg38.tsv.zst \

@@ -13,7 +13,7 @@ if {$pos != -1} {
 	if {$distribute eq "direct"} {
 		puts "testing direct only"
 		set tests {
-			"direct" {uplevel job_init -skipjoberrors 1 {*}\$args}
+			"direct" {uplevel job_init -skipjoberrors 1 -d direct {*}\$args}
 		}
 	} elseif {[string is int $distribute]} {
 		puts "testing -d $distribute only"
@@ -37,7 +37,7 @@ if {$pos != -1} {
 	}
 } else {
 	set tests {
-		"direct" {uplevel job_init -skipjoberrors 1 -d 0 $args}
+		"direct" {uplevel job_init -skipjoberrors 1 -d direct $args}
 		"-d 2" {uplevel job_init -d 2 $args}
 		"-d 4" {uplevel job_init -d 4 $args}
 		"-d 30" {uplevel job_init -d 30 $args}
@@ -54,7 +54,7 @@ set keepdir [pwd]
 # use these for trying out individual tests
 set testname "-d direct"
 proc test_job_init {args} {
-	uplevel job_init -skipjoberrors 1 -d 0 $args
+	uplevel job_init -skipjoberrors 1 -d direct $args
 	uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 }
 proc gridwait {} {}
@@ -62,7 +62,7 @@ proc gridwait {} {}
 if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
-		uplevel job_init -skipjoberrors 1 $args
+		uplevel job_init -skipjoberrors 1 -d direct $args
 		uplevel job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	interp alias {} job_wait {} job_wait_direct
@@ -1620,7 +1620,7 @@ test3}
 
 # only test in direct
 foreach {testname initcode} {
-	"direct" {uplevel job_init -skipjoberrors 1 $args}
+	"direct" {uplevel job_init -skipjoberrors 1 -d direct $args}
 } break 
 proc test_job_init {args} $initcode
 proc gridwait {} {}

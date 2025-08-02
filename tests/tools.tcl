@@ -116,6 +116,7 @@ proc test {args} {
 	}
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
+	unset -nocomplain ::env(SHADOWDIR)
 	set description [lindex $args 1]
 	append description " ($::testdir)"
 	lset args 1 $description

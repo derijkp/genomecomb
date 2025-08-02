@@ -82,7 +82,6 @@ test cplinked {relative extra level} {
 	set result
 } {{tmp/out/test2/testl/subdir - {dir {{tmp/out/test2/testl/subdir/test3 ../../../../test/subdir/test3 3}}}} {tmp/out/test2/testl/test1 ../../../test/test1 1} {tmp/out/test2/testl/test2 ../../../test/test2 2}} 
 
-set dir [testdir cplinked {absolute}]
 test cplinked {absolute} {
 	misc_testfiles
 	file delete -force /tmp/test2
@@ -90,7 +89,7 @@ test cplinked {absolute} {
 	set result [dirinfo /tmp/test2]
 	file delete -force /tmp/test2
 	set result
-} [list [list /tmp/test2/subdir - [list dir [list [list /tmp/test2/subdir/test3 $dir/tmp/test/subdir/test3 3]]]] [list /tmp/test2/test1 $dir/tmp/test/test1 1] [list /tmp/test2/test2 $dir/tmp/test/test2 2]]
+} {{/tmp/test2/subdir - {dir {{/tmp/test2/subdir/test3 */tmp/test/subdir/test3 3}}}} {/tmp/test2/test1 */tmp/test/test1 1} {/tmp/test2/test2 */tmp/test/test2 2}} match
 
 test cplinked {backup existing} {
 	misc_testfiles
