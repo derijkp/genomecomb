@@ -8,21 +8,86 @@ proc shadow_clean {{shadowdir {}}} {
 		error "shadowdir not given, and could not find env var SHADOWDIR"
 	}
 	set shadowdir [file_absolute $shadowdir]
-	foreach shadow [glob $shadowdir/*] {
+	set todo {}
+	set deleted 0
+	foreach shadow [glob $shadowdir/shadow.*] {
 		# if link exists, but points to non-existing file, file exists wil return 0
 		# so check with file link as well for that
 		if {[catch {file link $shadow/shadow_source} link] && ![file exists $shadow/shadow_source]} {
-			puts "\nskipping $shadow : does not have shadow_source"
+			puts stderr "skipping $shadow : does not have shadow_source"
+			lappend todo $shadow
 			continue
 		}
 		if {
 			[file exists $link] &&
 			![catch {file link $link} linklink] &&
 			$linklink eq $shadow
-		} continue
-		puts -nonewline .
+		} {
+			puts stderr "\nskipping $shadow : ok"
+			continue
+		}
+		puts "deleting $shadow"
 		file delete -force $shadow
+		incr deleted
 	}
+	if {[llength $todo]} {
+		puts "You can remove the following potential shadows that shave no shadow_source manually if you want:"
+		foreach shadow $todo {
+			puts "rm -rf $shadow"
+		}
+		puts "Previous commands can be used to remove potential shadows that shave no shadow_source manually"
+	}
+	puts "deleted $deleted"
+}
+
+proc cg_shadow_fix {{shadowdir {}}} {
+	global env
+	if {$shadowdir ne ""} {
+		# shadowdir given directly, do nothing extra
+	} elseif {[info exists env(SHADOWDIR)]} {
+		set shadowdir $env(SHADOWDIR)
+	} else {
+		error "shadowdir not given, and could not find env var SHADOWDIR"
+	}
+	set shadowdir [file_absolute $shadowdir]
+	set fixed 0 ; set ok 0 ; set notlink 0; set notshadow 0
+	puts "shadow\tstatus\tshadow_source"
+	set shadows [glob $shadowdir/shadow.*]
+	foreach shadow $shadows {
+		# if link exists, but points to non-existing file, file exists wil return 0
+		# so check with file link as well for that
+		if {[catch {file link $shadow/shadow_source} link] && ![file exists $shadow/shadow_source]} {
+			puts stderr "\nskipping $shadow : does not have shadow_source"
+			incr notshadow
+			puts "$shadow\tnotshadow\t"
+			continue
+		}
+		if {[catch {file link $link} linklink]} {
+			if {![file exists $link]} {
+				puts stderr "\ndeleting $shadow : \$shadow_source does not exists"
+			} else {
+				puts stderr "\ndeleting $shadow : \$shadow_source exists, but is not a link"
+			}
+			incr notlink
+			puts "$shadow\tnotlink\t"
+			continue
+		}
+		if {$linklink eq $shadow} {
+			puts stderr "\nskipping $shadow : link ok ($link)"
+			incr ok
+			puts "$shadow\tok\t$link"
+			continue
+		}
+		# fix
+		puts stderr "\nfixing $shadow : from $link"
+		mklink $shadow $link
+		incr fixed
+		puts "$shadow\tfixed\t$link"
+	}
+	puts "notlink: $notlink"
+	puts "notshadow: $notshadow"
+	puts "ok: $ok"
+	puts "fixed: $fixed"
 }
 
 proc cg_shadow_clean {args} {
