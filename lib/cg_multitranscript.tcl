@@ -316,12 +316,16 @@ proc cg_multitranscript {args} {
 				if {$p == -1} {
 					set p [lsearch $cats {}]
 				}
-				if {$p == -1 || $match ne ""} {
+				if {$p == -1} {
 					set line [lindex $ts 0]
 					set name [iso_name [lindex $line 0] $strand $starts $ends]
 					lset line 8 $name
 				} else {
 					set line [lindex $ts $p]
+					if {$match ne ""} {
+						set name [iso_name [lindex $line 0] $strand $starts $ends]
+						lset line 8 $name
+					}
 				}
 			} else {
 				set line [lindex $ts 0]
