@@ -905,8 +905,8 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	putslog "Merging readfiles"
 	cg cat -m 1 {*}$readfiles | cg select -s read_id | cg zst -c 1 > $tempreads
 
-	catch {close $f} ; catch {close $o}
 	putslog "gathering (bulk) counts"
+	catch {close $f} ; catch {close $o}
 	# gather counts in memory (tcounta,gcounta)
 	# also write readassignment with added gambiguity in $tempreads2, to be sorted later
 	unset -nocomplain tcounta
@@ -935,16 +935,18 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 	set todo {}
 	set read 0
 	set nr 0
-
 	#catch {close $odbg}
 	# set odbg [open ~/tmp/genedebug.tsv w]
 	# puts $odbg [join [list read_id gene gambigcount wcount icount dgenes dgeneisos genes] \t]
 	set umi {}
+	set prevline {}
 	while 1 {
 		incr nr
 		if {![expr $nr%1000000]} {puts $nr}
 		if {$read == -1} break
 		set read [gets $f line]
+		if {$line eq $prevline} continue
+		set prevline $line
 		set line [split $line \t]
 		set read_id [lindex $line $readpos]
 		if {$read_id eq ""} continue
@@ -1098,22 +1100,17 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		}
 		lappend todoa($read_id) $line
 	}
-
 	close $o
 
 	putslog "write (bulk) isoform_counts -> isoform_counts-${root}.tsv"
+	# concatenate and sort isofiles
+	set tempfile [tempfile].zst
+	cg cat -m 1 -s 0 -c m {*}$isofiles | cg select -s - | cg zst -c 1 > $tempfile
+
 	# write (bulk) isoform_counts
+	set f [gzopen $tempfile]
+	set header [tsv_open $f comments]
 	set o [open isoform_counts-${root}.tsv.temp w]
-	foreach refisofile $isofiles {
-		set f [open $refisofile]
-		set header [tsv_open $f comments]
-		if {[gets $f line] == -1} {
-			close $f
-		} else {
-			close $f
-			break
-		}
-	}
 	if {$addumis} {
 		set temp [lrange $header end-8 end]
 		set temp [list_regsub ^ $temp umi]
@@ -1122,69 +1119,63 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 		puts $o $comments[join $header \t]
 	}
 	unset -nocomplain donea
-	foreach isofile $isofiles {
-		set f [open $isofile]
-		set cheader [tsv_open $f comments]
-		if {$cheader ne $header} {
-			if {[gets $f line] == -1} {
-				# different header because empty file -> just skip
-				continue
-			}
-			error "header of $isofile differs from header of $refisofile"
+	set isopos [lsearch $header transcript]
+	set previso {}
+	while 1 {
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
+		set iso [lindex $line $isopos]
+		if {![info exists tcounta($iso,t)]} continue
+		if {$iso eq $previso} {
+			putslog "skipping duplicate iso $iso: $line"
+			continue
 		}
-		set isopos [lsearch $cheader transcript]
-		while {[gets $f line] != -1} {
-			set line [split $line \t]
-			set iso [lindex $line $isopos]
-			if {![info exists tcounta($iso,t)]} continue
-			if {$addumis} {
-				puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]\t[formatnum [get utcounta($iso,t) 0]]\t[get utcounta($iso,u) 0]\t[get utcounta($iso,s) 0]\t[formatnum [get utcounta($iso,ts) 0]]\t[get utcounta($iso,us) 0]\t[get utcounta($iso,ss) 0]\t[formatnum [get utcounta($iso,a) 0]]\t[get utcounta($iso,au) 0]\t[get utcounta($iso,as) 0]
-			} else {
-				puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
-			}
+		set previso $iso
+		if {$addumis} {
+			puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]\t[formatnum [get utcounta($iso,t) 0]]\t[get utcounta($iso,u) 0]\t[get utcounta($iso,s) 0]\t[formatnum [get utcounta($iso,ts) 0]]\t[get utcounta($iso,us) 0]\t[get utcounta($iso,ss) 0]\t[formatnum [get utcounta($iso,a) 0]]\t[get utcounta($iso,au) 0]\t[get utcounta($iso,as) 0]
+		} else {
+			puts $o [join [lrange $line 0 end-9] \t]\t[formatnum [get tcounta($iso,t) 0]]\t[get tcounta($iso,u) 0]\t[get tcounta($iso,s) 0]\t[formatnum [get tcounta($iso,ts) 0]]\t[get tcounta($iso,us) 0]\t[get tcounta($iso,ss) 0]\t[formatnum [get tcounta($iso,a) 0]]\t[get tcounta($iso,au) 0]\t[get tcounta($iso,as) 0]
 		}
-		close $f
 	}
+	close $f
 	close $o
-	cg select -s - isoform_counts-${root}.tsv.temp isoform_counts-${root}.tsv.temp2
-	file rename -force isoform_counts-${root}.tsv.temp2 isoform_counts-${root}.tsv
-	file delete isoform_counts-${root}.tsv.temp
+	file rename -force isoform_counts-${root}.tsv.temp isoform_counts-${root}.tsv
 
 	putslog "write (bulk) gene_counts -> gene_counts-${root}.tsv"
+	# concatenate and sort isofiles
+	set tempfile [tempfile].zst
+	cg cat -m 1 -s 0 -c m {*}$genefiles | cg select -s - | cg zst -c 1 > $tempfile
+
 	# write (bulk) gene_counts
 	set o [open gene_counts-${root}.tsv.temp w]
-	set f [open [lindex $genefiles 0]]
+	set f [gzopen $tempfile]
 	set header [tsv_open $f comments]
-	close $f
 	if {$addumis} {
 		puts $o $comments[join $header \t]\tnicounts-$root\tumicounts-$root\tuminicounts-$root
 	} else {
 		puts $o $comments[join $header \t]\tnicounts-$root
 	}
+	set genepos [lsearch $header geneid]
 	unset -nocomplain donea
-	foreach genefile $genefiles {
-		set f [open $genefile]
-		set cheader [tsv_open $f comments]
-		if {$cheader ne $header} {
-			error "header of $genefile differs from header of [lindex $genefiles 0]"
+	set prevgene {}
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		set gene [lindex $line $genepos]
+		if {$gene eq $prevgene} {
+			putslog "skipping duplicate gene $gene: $line"
+			continue
 		}
-		set genepos [lsearch $cheader geneid]
-		while {[gets $f line] != -1} {
-			set line [split $line \t]
-			set gene [lindex $line $genepos]
-			if {![info exists gcounta($gene,w)] && ![info exists gcounta($gene,i)]} continue
-			if {$addumis} {
-				puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]\t[formatnum [get ugcounta($gene,i) 0]]\t[formatnum [get ugcounta($gene,w) 0]]
-			} else {
-				puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]
-			}
+		set prevgene $gene
+		if {![info exists gcounta($gene,w)] && ![info exists gcounta($gene,i)]} continue
+		if {$addumis} {
+			puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]\t[formatnum [get ugcounta($gene,i) 0]]\t[formatnum [get ugcounta($gene,w) 0]]
+		} else {
+			puts $o [join [lrange $line 0 end-1] \t]\t[formatnum [get gcounta($gene,i) 0]]\t[formatnum [get gcounta($gene,w) 0]]
 		}
-		close $f
 	}
+	close $f
 	close $o
-	cg select -s - gene_counts-${root}.tsv.temp gene_counts-${root}.tsv.temp2
-	file rename -force gene_counts-${root}.tsv.temp2 gene_counts-${root}.tsv
-	file delete gene_counts-${root}.tsv.temp
+	file rename -force gene_counts-${root}.tsv.temp gene_counts-${root}.tsv
 
 	putslog "sort read_assignment file -> read_assignments-${root}.tsv.zst"
 	# sort read_assignment file
@@ -1886,6 +1877,3 @@ proc cg_iso_isoquant {args} {
 	iso_isoquant_job {*}$args
 	job_wait
 }
-
-
-

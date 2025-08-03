@@ -293,7 +293,7 @@ test ont_rna {isoquant SIRV test no ref -skipregions} {
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv tmp/sirv/ref.tsv 
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-noref_sirv.tsv
-} {53a54,56
+} {54a55,57
 > SIRV7	1000	147946	-	1000,2993,3809,114680,147608	2675,3111,3896,114988,147946	novelt_SIRV7_1000-e1675i318e118i698e87i110784e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript1.SIRV7.nnic	novel_gene	2526	16.50	16.5	6	5	6.5	6	5	0	0	0
 > SIRV7	1000	147946	-	1000,2993,43028,114680,147608	2675,3111,43077,114988,147946	novelt_SIRV7_1000-e1675i318e118i39917e49i71603e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript3.SIRV7.nnic	novel_gene	2488	23.50	23.5	13	12	13.5	13	12	0	0	0
 > SIRV7	56033	147947	-	56033,70883,78841,114680,147608	56097,70987,78965,114960,147947	novelt_SIRV7_56033-e64i14786e104i7854e124i35715e280i32648e339	novelg_SIRV7_m_56034_147947	novelg_SIRV7_m_56034_147947	transcript				5	IsoQuant		transcript6.SIRV7.nnic	novel_gene	911	29.00	29	29	19	29	29	19	0	0	0
@@ -568,6 +568,99 @@ test ont_rna {isoquant joint analysis no ref} {
 	# check vs expected
 	exec diff tmp/compar/isoform_counts-isoquant_joint-tmp.tsv data/ontrna/isoform_counts-isoquant_joint-tmp_noref.tsv
 	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-isoquant_joint-tmp_noref.tsv
+} {}
+
+test ont_rna {isoquant SIRV test overlap distrreg borders} {
+	file delete -force tmp/sirv
+	file mkdir tmp/sirv/fastq
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/sirv/fastq/[file tail $file]
+	}
+	foreach file [glob -nocomplain data/SIRV-flames/*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/sirv/[file tail $file]
+	}
+	file copy tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta tmp/sirv/genome_sirv.ifas
+	exec samtools faidx tmp/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/sirv/genome_sirv.ifas splice
+	mkdir tmp/sirv/extra
+	file_write tmp/sirv/extra/reg_sirv_distrg.tsv [deindent {
+		chromsomoe	begin	end
+		SIRV1	0	7000
+		SIRV1	7000	12643
+		SIRV2	0	6911
+		SIRV3	0	10943
+		SIRV4	0	16122
+		SIRV5	0	14606
+		SIRV6	0	12837
+		SIRV7	0	148957
+	}]\n
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		-ali_keepcomments 0 \
+		tmp/sirv/map-minimap2-sirv.bam \
+		tmp/sirv/genome_sirv.ifas \
+		tmp/sirv/sirv \
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+	exec samtools index tmp/sirv/map-minimap2-sirv.bam
+	cg iso_isoquant -stack 1 \
+		-refseq tmp/sirv \
+		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		-distrreg g \
+		tmp/sirv/map-minimap2-sirv.bam
+	# check vs expected
+	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-minimap2-sirv-regoverlap.tsv
+	exec diff tmp/sirv/gene_counts-isoquant-minimap2-sirv.tsv data/gene_counts-isoquant-minimap2-sirv-regoverlap.tsv
+} {}
+
+test ont_rna {isoquant SIRV test no ref overlap distrreg borders} {
+	test_cleantmp
+	file mkdir tmp/samples/sirv1/fastq
+	file mkdir tmp/samples/sirv2/fastq
+	file mkdir tmp/ref/sirv
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/samples/sirv1/fastq/[file tail $file]
+		exec cg fastq2tsv $file | cg select -q {$ROW < 1000} | cg tsv2fastq | cg bgzip > tmp/samples/sirv2/fastq/[file tail $file]
+	}
+	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
+	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	file delete tmp/ref/sirv/gene_sirv.gtf
+	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in ""} > tmp/ref/sirv/gene_sirv.tsv
+	mkdir tmp/ref/sirv/extra
+	file_write tmp/ref/sirv/extra/reg_sirv_distrg.tsv [deindent {
+		chromsomoe	begin	end
+		SIRV1	0	7000
+		SIRV1	7000	12643
+		SIRV2	0	6911
+		SIRV3	0	10943
+		SIRV4	0	16122
+		SIRV5	0	14606
+		SIRV6	0	12837
+		SIRV7	0	148957
+	}]\n
+	file delete tmp/compar/isoform_counts-tmp.tsv
+	exec cg process_project -stack 1 -v 2 -d 4 \
+		-split 1 \
+		-threads 2 \
+		-paired 0 -clip 0 \
+		-maxfastqdistr 250 \
+		-aligner {minimap2_splice} \
+		-removeduplicates 0 \
+		-realign 0 \
+		-svcallers {} \
+		-varcallers {} \
+		-isocallers {isoquant} \
+		-iso_match . \
+		-iso_joint {isoquant} \
+		-reports {} \
+		-dbdir tmp/ref/sirv \
+		-distrreg g \
+		tmp \
+		>& tmp/ontrna.log
+	# check vs expected
+	exec diff tmp/compar/isoform_counts-isoquant_joint-tmp.tsv data/ontrna/isoform_counts-isoquant_joint-tmp_noref-regoverlap.tsv
+	exec diff tmp/compar/gene_counts-isoquant_joint-tmp.tsv data/ontrna/gene_counts-isoquant_joint-tmp_noref-regoverlap.tsv
 } {}
 
 testsummarize

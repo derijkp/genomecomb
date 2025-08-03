@@ -25,6 +25,7 @@
 #fields	associated_gene	1	String	the reference gene name
 #fields	associated_transcript	1	String	the reference transcript name
 #fields	counts	1	Integer	Number of reads mapping to isoform
+#
 chromosome	begin	end	strand	exonStarts	exonEnds	transcript	gene	geneid	type	gene_ori	cdsStart	cdsEnd	exonCount	source	exon_assignment	transcript_id	category	size	counts_iqall-isoquant_all-minimap2-sirv	counts_weighed-isoquant_all-minimap2-sirv	counts_unique-isoquant_all-minimap2-sirv	counts_strict-isoquant_all-minimap2-sirv	counts_sweighed-isoquant_all-minimap2-sirv	counts_sunique-isoquant_all-minimap2-sirv	counts_sstrict-isoquant_all-minimap2-sirv	counts_aweighed-isoquant_all-minimap2-sirv	counts_aunique-isoquant_all-minimap2-sirv	counts_astrict-isoquant_all-minimap2-sirv
 SIRV1	1000	10773	-	1000,7552,10535	1484,7784,10773	novelt_SIRV1_1000-e484i6068e232i2751e238	novelg_SIRV1_m_1001_10780	novelg_SIRV1_m_1001_10780	transcript				3	IsoQuant		transcript53.SIRV1.nnic	novel_gene	954	17.00	17	9	1	9	9	1	0	0	0
 SIRV1	1000	10775	-	1000,6337,6549,7552,10282,10447	1484,6432,6813,7814,10366,10775	novelt_SIRV1_1000-e484i4853e95i117e264i739e262i2468e84i81e328	novelg_SIRV1_m_1001_10780	novelg_SIRV1_m_1001_10780	transcript				6	IsoQuant		transcript1.SIRV1.nnic	novel_gene	1517	62.83	62.83	1	1	62.5	1	1	0	0	0
