@@ -593,7 +593,7 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports predictgender]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
-		set varfile [jobglob -checkcompressed 1 $sampledir/var-*[file_rootname $resultbamfile].tsv]
+		set varfile [lindex [jobglob -checkcompressed 1 $sampledir/var-*[file_rootname $resultbamfile].tsv] 0]
 		set indexfile $resultbamfile.[indexext $resultbamfile]
 		job predictgender-[file_rootname $resultbamfile] -optional 1 -deps {$resultbamfile $indexfile ($varfile)} -vars {resultbamfile dbdir sampledir} -targets {$target} -code {
 			analysisinfo_write $dep $target predictgender_tool genomecomb predictgender_version [version genomecomb]

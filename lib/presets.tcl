@@ -63,7 +63,7 @@ proc preset_ont {} {
 		isocallers {}
 		singlecell {}
 		distrreg chr
-		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo}
+		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
 	}
 }
 

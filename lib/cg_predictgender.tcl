@@ -168,16 +168,18 @@ proc cg_predictgender {args} {
 			} else {
 				set f {}
 			}
-			set c [exec cg select -f $f -q "region(\"$xreg\") and \$coverage >= 20" -g zyg $varfile]
+			set header [cg select -h $varfile]
+			set covfield [lindex [list_common $header {coverage totalcoverage}] 0]
+			set c [exec cg select -f $f -q "region(\"$xreg\") and \$$covfield >= 20" -g zyg $varfile]
 			array set a $c
 			set htvars [expr {[get a(t) 0] + [get a(c) 0]}]
 			set totalvars [expr {$htvars + [get a(m) 0]}]
 			set pctheterozygous [format %.4f [expr {100.0*$htvars/$totalvars}]]
 			# pctheterozygous
-			set c [exec cg select -f $f -q "region(\"$xreg\") and \$coverage >= 20 and \$quality >= 50" -g zyg $varfile]
+			set c [exec cg select -f $f -q "region(\"$xreg\") and \$$covfield >= 20 and \$quality >= 50" -g zyg $varfile]
 			array set a $c
-			set hthqvars [expr {$a(t) + $a(c)}]
-			set totalvars [expr {$hthqvars + $a(m)}]
+			set hthqvars [expr {[get a(t) 0] + [get a(c) 0]}]
+			set totalvars [expr {$hthqvars + [get a(m) 0]}]
 			set pcthqheterozygous [format %.4f [expr {100.0*$hthqvars/$totalvars}]]
 		}
 	}
