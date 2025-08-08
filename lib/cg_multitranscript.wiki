@@ -21,15 +21,18 @@ count_weighed-isoquant-sample1.tsv.
 
 When a transcript was not detected in a sample, the value in the table is set to 0.0.
 
+=== Approximate matching ===
 By default multitranscript will use approximate matching for novel
-transcripts (based on the content of the field "category"): Novel
-transcripts will be matched if they have identical junction chains, even
+transcripts (based on the content of the field "category", using the -match option you can specify to treat
+all transcripts with a specific pattern in the name as novel): 
+Novel transcripts will be matched if they have identical junction chains, even
 if the (predicted) ends differ.  The resulting transcript will have the
-lowest start and highest end position of these matches. The id of these
-result transcripts will be changed to one unique for that transcript and
-consistent over different experiments (based on location and intron/exon
-sizes)
+lowest start and highest end position of these matches. 
 
+The ids of novel result transcripts will be changed to one unique for that transcript and
+consistent over different experiments (based on location and intron/exon
+sizes). The new ids follow this pattern: 
+novelt_<chromosome>_<startposition><strand>e<exon1size>i<intron1size>...
 
 == Arguments ==
 ; multitranscriptfile: resultfile, will be created if it does not exist

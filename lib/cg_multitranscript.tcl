@@ -220,6 +220,7 @@ proc cg_multitranscript {args} {
 		}
 		if {[info exists setma(single)]} {
 			# hande single exon transcripts
+			# put the processed novel single exon transcripts in seta
 			# join $setma(single) \n
 			# check for matches to known
 			set knowns [array names seta]
@@ -252,6 +253,7 @@ proc cg_multitranscript {args} {
 				set line [lindex $list 0]
 				foreach {chromosome begin end strand exonStarts exonEnds} $line break
 				set id [list $begin $end $strand $exonStarts $exonEnds]
+				lset line 8 [iso_name $chromosome $strand $exonStarts $exonEnds]
 				lappend seta($id) $line
 			} else {
 				# merge overlapping (take min begin and max end)
@@ -269,6 +271,7 @@ proc cg_multitranscript {args} {
 							lset l 2 $curend
 							lset l 4 $curbegin
 							lset l 5 $curend
+							lset l 8 [iso_name $chr $strand $curbegin $curend]
 							lappend seta($id) $l
 						}
 						set result [list $line]
@@ -281,21 +284,27 @@ proc cg_multitranscript {args} {
 			}
 			unset setma(single)
 		}
+		# handle novel transcripts (name matching pattern given in match)
+		# put the processed transcripts in seta
 		foreach id [array names setma] {
 			set list $setma($id)
 			if {[llength $list] > 1} {
 				# calculate min begin and max end for merged transcript
 				set begin [lmath_min [list_subindex $list 1]]
 				set end [lmath_max [list_subindex $list 2]]
-				foreach {strand starts ends} [list_sub [lindex $list 0] {3 4 5}] break
+				foreach {chromosome strand starts ends} [list_sub [lindex $list 0] {0 3 4 5}] break
 				set starts [join [lreplace [split $starts ,] 0 0 $begin] ,]
 				set ends [join [lreplace [split $ends ,] end end $end] ,]
 				lset list 0 4 $starts
 				lset list 0 5 $ends
 				set id [list $begin $end $strand $starts $ends]
-				set seta($id) $list
+				set name [iso_name $chromosome $strand $starts $ends]
+				lset list 0 8 $name
+				lappend seta($id) {*}$list
 			} else {
 				set line [lindex $list 0]
+				set name [iso_name {*}[list_sub $line {0 3 4 5}]]
+				lset line 8 $name
 				set id [list_sub $line {1 2 3 4 5}]
 				lappend seta($id) $line
 			}
@@ -311,29 +320,23 @@ proc cg_multitranscript {args} {
 				set va($fnum) $data
 			}
 			if {[llength $ts] > 1} {
+				# we shouldn't get mixed known and novel, but in case we do, pick known
 				set cats [list_subindex $ts 11]
 				set p [lsearch $cats known]
 				if {$p == -1} {
 					set p [lsearch $cats {}]
 				}
 				if {$p == -1} {
-					set line [lindex $ts 0]
-					set name [iso_name [lindex $line 0] $strand $starts $ends]
-					lset line 8 $name
-				} else {
-					set line [lindex $ts $p]
 					if {$match ne ""} {
-						set name [iso_name [lindex $line 0] $strand $starts $ends]
-						lset line 8 $name
+						set names [list_subindex $ts 8]
+						set p [lsearch -not -regexp $name $match]
+					} else {
+						set p 0
 					}
 				}
+				set line [lindex $ts $p]
 			} else {
 				set line [lindex $ts 0]
-				set cat [lindex $line 11]
-				if {$cat ni {known {}}} {
-					set name [iso_name [lindex $line 0] $strand $starts $ends]
-					lset line 8 $name
-				}
 			}
 			set common [lindex $line end-2]
 			set line [lrange $line 0 end-3]
