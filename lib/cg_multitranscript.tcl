@@ -330,10 +330,9 @@ proc cg_multitranscript {args} {
 					if {$match ne ""} {
 						set names [list_subindex $ts 8]
 						set p [lsearch -not -regexp $name $match]
-					} else {
-						set p 0
 					}
 				}
+				if {$p == -1} {set p 0}
 				set line [lindex $ts $p]
 			} else {
 				set line [lindex $ts 0]
