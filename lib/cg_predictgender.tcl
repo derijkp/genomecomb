@@ -135,7 +135,7 @@ proc cg_predictgender {args} {
 	set xcount [catch_exec samtools view --no-PG -q 20 -c $bamfile $xreg]
 	set ycount [catch_exec samtools view --no-PG -q 20 -c $bamfile $yreg]
 	set refncount [expr {$refcount/double($refsize)}]
-	if {$xsize != 0} {
+	if {$xsize != 0 && $xcount >= 100} {
 		set xncount [expr {$xcount/double($xsize)}]
 	} else {
 		set xncount ?
@@ -145,7 +145,7 @@ proc cg_predictgender {args} {
 	} else {
 		set yncount ?
 	}
-	if {![isdouble $xcount] || $xcount == 0 || ![isdouble $ycount]} {
+	if {![isdouble $xcount] || $xcount < 100 || ![isdouble $ycount]} {
 		set yxratio ?
 	} else {
 		set yxratio [expr {double($ycount)/$xcount}]
