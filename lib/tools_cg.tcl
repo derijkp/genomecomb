@@ -173,7 +173,7 @@ proc bgcg {progresscommand channelvar cmd args} {
 			set redirect {}
 		}
 		set temprunfile [tempfile]
-		file_write $temprunfile [list cg_$cmd {*}$code]\n
+		file_write $temprunfile [list exec cg $cmd {*}$code >@ stdout 2>@ stderr]\n
 		set ::bgerror {}
 		Extral::bgexec -progresscommand [list $progresscommand $channelvar] -no_error_redir -channelvar $channelvar \
 				cg source $temprunfile {*}$redirect 2>@1
