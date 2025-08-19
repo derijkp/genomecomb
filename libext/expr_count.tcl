@@ -1,5 +1,5 @@
 proc tcl::mathop::~ {value pattern} {
-	regexp $pattern $value
+	::regexp $pattern $value
 }
 
 proc tcl::mathfunc::hasone {list operand value} {

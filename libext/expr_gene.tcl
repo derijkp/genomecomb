@@ -1,11 +1,11 @@
 proc tcl::mathfunc::codingcat {args} {
-	if {[regexp CDS $args]} {
+	if {[::regexp CDS $args]} {
 		return C
-	} elseif {[regexp UTR $args]} {
+	} elseif {[::regexp UTR $args]} {
 		return U
-	} elseif {[regexp RNA $args]} {
+	} elseif {[::regexp RNA $args]} {
 		return R
-	} elseif {[regexp splice $args]} {
+	} elseif {[::regexp splice $args]} {
 		return s
 	} else {
 		return -
@@ -39,11 +39,12 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 	}
 	foreach gene $genes descr $descrs impact $impacts {
 		if {[::llength $filter] && $impact ni $filter} continue
-		if {[regexp {^[+-]([^:]+):} $descr temp transcript]} {
+		set m [::regexp {^[+-]([^:]+):} $descr temp transcript]
+		if {$m} {
 			# ok
-		} elseif {[regexp {^[+-]?([^:]+):} $descr temp transcript]} {
+		} elseif {[::regexp {^[+-]?([^:]+):} $descr temp transcript]} {
 			# alt ok
-		} elseif {[regexp {^[+-]?([^:]+)$} $descr temp transcript]} {
+		} elseif {[::regexp {^[+-]?([^:]+)$} $descr temp transcript]} {
 			# only transcript given, no actual descr (e.g. with GENECOMP)
 		} else {
 			error "$descr has wrong format (should be a x_descr field)"
