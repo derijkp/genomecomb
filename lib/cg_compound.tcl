@@ -11,6 +11,7 @@ proc cg_compound {args} {
 	set impact {>=CDSMIS}
 	set limitsamples {}
 	set resultfile {}
+	set phasing {}
 	cg_options compound args {
 		-per {
 			if {$value ni "sample analysis"} {error "unknown value $value for -per, must be one of: sample analysis"}
@@ -35,6 +36,9 @@ proc cg_compound {args} {
 		}
 		-dbdir {
 			set dbdir $value
+		}
+		-phasing {
+			set phasing $value
 		}
 	} {varfile resultfile} 1 2
 	if {$per eq ""} {
@@ -70,78 +74,85 @@ proc cg_compound {args} {
 	set f [gzopen $varfile]
 	set header [tsv_open $f]
 	gzclose $f
+	if {$phasing in {1 g genotypes}} {
+		set phasing genotypes
+	}
 	set fields [list *]
 	set neededfields {}
 	set tokens [tsv_select_tokenize $header $criteria neededfields]
 	if {$per eq "sample"} {
 		set samples [listsamples $header]
-		if {[llength $limitsamples]} {
-			set samples [list_common $limitsamples $samples]
-			if {[llength $samples] != [llength $limitsamples]} {
-				error "some samples given in -samples are not in the file $varfile: [list_remove $limitsamples $samples]"
-			}
+		set show samples
+	} else {
+		set samples [listanalyses $header]
+		set show analyses
+	}
+	if {[llength $limitsamples]} {
+		set samples [list_common $limitsamples $samples]
+		if {[llength $samples] != [llength $limitsamples]} {
+			error "some $show given in -$show are not in the file $varfile: [list_remove $limitsamples $samples]"
 		}
-		foreach sample $samples {
-			set temp [tsv_select_replacevars $tokens $header $sample]
-			set code [tsv_select_saggr_detokenize $temp $header neededfields missing]
-			lappend fields "hqv-$sample=if($code,1,0)"
+	}
+	foreach sample $samples {
+		set temp [tsv_select_replacevars $tokens $header $sample]
+		set code [tsv_select_saggr_detokenize $temp $header neededfields missing]
+		lappend fields "hqv-$sample=if($code,1,0)"
+		if {$phasing ne ""} {
+			lappend fields "$phasing-$sample=regsub(regsub(\$$phasing-$sample,\"\,\",\"_\"),\";\",\"-\")"
 		}
-		lappend fields "transcripts=transcripts(\"$geneset\",\"$impact\")"
+	}
+	lappend fields "transcripts=transcripts(\"$geneset\",\"$impact\")"
+	if {$per eq "sample"} {
 		cg select -overwrite 1 -f $fields -q {
 			scount($hqv == 1) > 0
 		} $varfile $tempfile
 	} else {
-		set samples [listanalyses $header]
-		if {[llength $limitsamples]} {
-			set samples [list_common $limitsamples $samples]
-			if {[llength $samples] != [llength $limitsamples]} {
-				error "some analyses given in -analyses are not in the file $varfile: [list_remove $limitsamples $samples]"
-			}
-		}
-		foreach sample $samples {
-			set temp [tsv_select_replacevars $tokens $header $sample]
-			set code [tsv_select_saggr_detokenize $temp $header neededfields missing]
-			lappend fields "hqv-$sample=if($code,1,0)"
-		}
-		lappend fields "transcripts=transcripts(\"$geneset\",\"$impact\")"
-		# cg select -overwrite 1 -f $fields $varfile $tempfile
 		cg select -overwrite 1 -f $fields -q {
 			acount($hqv == 1) > 0
 		} $varfile $tempfile
 	}
-#	set fields {}
-#	lappend fields "hqv-*=if($criteria,1,0)"
-#	lappend fields "transcripts=transcripts(\"$geneset\",\"$impact\")"
-#	# make tempfile with hqv
-#	if {$per eq "sample"} {
-#		cg select -overwrite 1 -f [list * {*}$fields] -q {
-#			scount($hqv == 1) > 0
-#		} $varfile $tempfile
-#	} else {
-#		cg select -overwrite 1 -f [list * {*}$fields] -q {
-#			acount($hqv == 1) > 0
-#		} $varfile $tempfile
-#	}
 	# look for compound vars
-	exec cg select -g {
-		analysis * -transcripts
-	} -gc {
-		hqv 1 count
-	} $tempfile | cg select -sh /dev/null -q {$count-1 > 1} {*}[compresspipe $resultgenelist] > $resultgenelist.temp
+	if {$phasing eq ""} {
+		exec cg select -g {
+			analysis * -transcripts
+		} -gc {
+			hqv 1 count
+		} $tempfile | cg select -q {$count-1 > 1} {*}[compresspipe $resultgenelist] > $resultgenelist.temp
+	} else {
+		exec cg select -g {
+			analysis * -transcripts
+		} -gc "hqv 1 count,list($phasing)" $tempfile \
+			| cg select -q {$count-1 > 1} {*}[compresspipe $resultgenelist] > $resultgenelist.temp
+	}
 	file rename -force -- $resultgenelist.temp $resultgenelist
 
 	#
 	# parse $resultgenelist for info on coumpounds
 	#
-	set temp [exec {*}[gzcat $resultgenelist] $resultgenelist]
+	set temp [cg select -sh /dev/null $resultgenelist]
 	unset -nocomplain a
 	unset -nocomplain transcripta
 	unset -nocomplain samplea
 	foreach line [split [string trim $temp] \n] {
-		foreach {sample transcript num} [split $line \t] break
+		foreach {sample transcript num genotypes} [split $line \t] break
 		set samplea($sample) 1
 		set transcripta($transcript) 1
 		set a($transcript,$sample) $num
+		if {$phasing ne ""} {
+			set genotypes [split $genotypes ,]
+			if {[lsearch -regexp $genotypes 1_] != -1 && [lsearch -regexp $genotypes _1] != -1} {
+				set phase b
+			} elseif {[lsearch -regexp $genotypes -] != -1} {
+				set phase u
+			} elseif {[lsearch -regexp $genotypes 1_] != -1} {
+				set phase 1
+			} elseif {[lsearch -regexp $genotypes _1] != -1} {
+				set phase 2
+			} else {
+				set phase u
+			}
+			set pa($transcript,$sample) $phase
+		}
 	}
 	# set samples [bsort [array names samplea]]
 	set transcripts [bsort [array names transcripta]]
@@ -171,6 +182,9 @@ proc cg_compound {args} {
 	set newheader $header
 	foreach sample $samples {
 		lappend newheader compound-$sample
+		if {$phasing ne ""} {
+			lappend newheader compoundphase-$sample
+		}
 	}
 	puts $o [join $newheader \t]
 	while 1 {
@@ -187,16 +201,21 @@ proc cg_compound {args} {
 		set found 0
 		foreach hqv [list_sub $line $poss] sample $samples {
 			set compound {}
+			set compoundphase {}
 			if {$hqv} {
 				foreach t $ltranscripts {
 					if {[info exists a($t,$sample)]} {
 						set compound $a($t,$sample)
+						if {$phasing ne ""} {set compoundphase $pa($t,$sample)}
 						set found 1
 						break
 					}
 				}
 			}
 			lappend line $compound
+			if {$phasing ne ""} {
+				lappend line $compoundphase
+			}
 		}
 		if {$found} {
 			puts $o [join $line \t]

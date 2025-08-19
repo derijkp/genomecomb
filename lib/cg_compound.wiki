@@ -9,9 +9,11 @@ finds potential compound heterozygosity in a variantfile
 == Description ==
 This command helps in finding potential compound heterozygosity in a variantfile:
 It searches for 2 (or more) variants (limited by given criteria) affecting
-the same trasncript/gene in one sample or analysis. The command does not
-take into account phasing (yet): Even if both variants are in cis they
-will be reported.
+the same trasncript/gene in one sample or analysis. By default the command does not
+take into account phasing): Even if both variants are in cis they
+will be reported. If there are "genotypes" fields in the data, you can use
+the -phasing option to add information to the possible compounds if they
+were found in both phases.
 
 The input is a [[format_tsv|variant file]] [[cg_annotate|annotated]] with gene information.
 First a secundary result file (named <resultfile_base>-genelist.tsv) is generated that
@@ -25,6 +27,11 @@ interaction. The following extra fields are added:
 in a compound in this sample, the field gives the number of variants
 affecting the same transcript in this sample. It is empty if the variant
 is not in a compound with other variants in this sample.
+; compoundphase-<sample>: (optional) this is "b" if variants were detected
+(in the phased variants, according to the given criteria) in both phases;
+"u" is given if not "b" and there were unphased variants in the set;
+"1" if there were only variants in the first phase (and no unphased); 
+"2" if there were only variants in the second phase (and no unphased);
 
 === impact ===
 By default, only variants causing a coding missense (CDSMIS) or higher
@@ -82,6 +89,9 @@ Possible values are described in the criteria section of the description. defaul
 ; -per analysis/sample: By default the compound variants are searched per analysis, meaning you will get e.g.
 compound-gatkh-bwa-sample1, compound-strelka-bwa-sample1, compound-gatkh-bwa-sample2, ...
 If set to **sample**, compounds will be search per sample.
+; -phasing field: For per analysis, you can specify "genotypes" or "g" or "1" to add phasing info to the result. 
+The fields genotypes-<analysis> will be used for determining phase. 
+For per sample analysis, you have to specify which genotypes (analysis) will be used, e.g. genotypes-clair3-sminimap2
 ; -samples samples: a space-separated list of samples, only look in samples given by this parameter
 If given, -per sample analysis is used. if you give -per analysis, an error is returned
 ; -analyses analyses: a space-separated list of analyses, only look in analyses given by this parameter
