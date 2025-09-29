@@ -20,6 +20,7 @@ proc tcl::mathfunc::zyg args {
 	::zyg {*}$args
 }
 
+# when using the function transcripts in cg select, it transformed to this in tsv_select_transcripts (including expanding >impact in filter)
 proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 	set result {}
 	set descrs [split $descrs {,;}]
@@ -46,8 +47,10 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 			# alt ok
 		} elseif {[::regexp {^[+-]?([^:]+)$} $descr temp transcript]} {
 			# only transcript given, no actual descr (e.g. with GENECOMP)
+		} elseif {$descr eq ""} {
+			continue
 		} else {
-			error "$descr has wrong format (should be a x_descr field)"
+			puts stderr "warning: $descr has wrong format (should be a x_descr field)"
 		}
 		if {$gene eq "" || $format eq "t"} {
 			lappend result $transcript
@@ -56,7 +59,7 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 		} elseif {$format eq "gt"} {
 			lappend result $gene:$transcript
 		} else {
-			error "unknown format $format"
+			puts stderr "warning: unknown format $format"
 		}
 	}
 	return [join $result \;]
