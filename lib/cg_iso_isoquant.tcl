@@ -576,7 +576,11 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 						# can only solve this fully by comparing full read exon structure iso and read
 						# not doing this yet ..
 						foreach iso $read2isoa($read) {
-							foreach {mchr mstart mend mstrand} $modelregiona($iso) break
+							if {[info exists modelregiona($iso)]} {
+								foreach {mchr mstart mend mstrand} $modelregiona($iso) break
+							} else {
+								foreach {mchr mstart mend mstrand} $genebasica($transcript2genea($iso)) break
+							}
 							set rpos 0
 							foreach region $regions {
 								set temp [split $region -]
