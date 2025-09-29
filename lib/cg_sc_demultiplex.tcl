@@ -1,23 +1,58 @@
-proc sc_demultiplex_read_dmfile {dmfile dmaVar} {
+proc sc_demultiplex_read_dmfile {dmfile dmaVar {cellfiles {}}} {
 	upvar $dmaVar dma
 	unset -nocomplain dma
 	set f [gzopen $dmfile]
 	set header [tsv_open $f]
-	set cellpos [lindex [list_remove [list_cor $header {cell barcode cellbarcode}] -1] 0]
-	if {$cellpos eq ""} {
-		error "no field \"cell\" or \"barcode\" found in $dmfile"
-	}
 	set dmsamplepos [lindex [list_remove [list_cor $header {sample donor_id subsample}] -1] 0]
 	if {$dmsamplepos eq ""} {
 		error "no field \"sample\" or \"donor_id\", or \"subsample\" found in $dmfile"
 	}
-	set poss [list $cellpos $dmsamplepos]
-	while {[gets $f line] != -1} {
-		foreach {cell dmsample} [list_sub [split $line \t] $poss] break
-		regsub -- {-1$} $cell {} cell
-		set dma($cell) $dmsample
+	set ocmpos [lsearch $header ocm]
+	if {$ocmpos != -1} {
+		set limit 0
+		if {[llength $cellfiles]} {
+			set limit 1
+			unset -nocomplain limita
+			foreach cellfile $cellfiles {
+				set f2 [gzopen $cellfile]
+				set header [tsv_open $f2]
+				set cellpos [lindex [list_remove [list_cor $header {cell barcode cellbarcode}] -1] 0]
+				while {[gets $f2 line] != -1} {
+					set cell [lindex [split $line \t] $cellpos]
+					regsub -- {-1$} $cell {} cell
+					set limita($cell) 1
+				}
+				gzclose $f2
+			}
+		}
+		set poss [list $ocmpos $dmsamplepos]
+		while {[gets $f line] != -1} {
+			foreach {ocm dmsample} [list_sub [split $line \t] $poss] break
+			if {![file exists $ocm]} {
+				set ocm [gzfile $::genomecombdir/whitelists/${ocm}-3pgex-may-2023.txt $::genomecombdir/whitelists/${ocm}_3M-3pgex-may-2023.txt]
+			}
+			set f2 [gzopen $ocm]
+			while {[gets $f2 cell] != -1} {
+				if {!$limit || [info exists limita($cell)]} {
+					set dma($cell) $dmsample
+				}
+			}
+			gzclose $f2
+		}
+		gzclose $f
+	} else {
+		set cellpos [lindex [list_remove [list_cor $header {cell barcode cellbarcode}] -1] 0]
+		if {$cellpos eq ""} {
+			error "no field \"cell\" or \"barcode\" found in $dmfile"
+		}
+		set poss [list $cellpos $dmsamplepos]
+		while {[gets $f line] != -1} {
+			foreach {cell dmsample} [list_sub [split $line \t] $poss] break
+			regsub -- {-1$} $cell {} cell
+			set dma($cell) $dmsample
+		}
+		gzclose $f
 	}
-	gzclose $f
 }
 
 proc sc2bulk {scgenefile target} {
@@ -57,8 +92,13 @@ proc sc2bulk {scgenefile target} {
 	gzclose $o
 }
 
-proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
+proc sc_demultiplex_job {args} {
 	upvar job_logdir job_logdir
+	set destVar {}
+	set reports {singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
+	cg_options sc_demultiplex args {
+		-reports {set reports $value}
+	} {sampledir dmfile refseq destVar} 3 4
 	set sampledir [file_absolute $sampledir]
 	set sample [file tail $sampledir]
 	if {$destVar ne ""} {
@@ -76,6 +116,32 @@ proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 			file mkdir $dest($dmsample)
 		}
 	}
+	
+	set f [gzopen $dmfile]
+	set header [tsv_open $f]
+	set ocmpos [lsearch $header ocm]
+	gzclose $f
+	if {$ocmpos != -1} {
+		set cellfiles [jobgzfiles $sampledir/sc_cellinfo_raw-*.tsv]
+		if {[llength $cellfiles]} {
+			set newdm [file root [gzroot $dmfile]].ocmcells.tsv.zst
+			job demultiplex-[file tail $file] -deps [list $dmfile {*}$cellfiles]  -targets {
+				$newdm
+			} -vars {
+				newdm dmfile cellfiles
+			} -code {
+				sc_demultiplex_read_dmfile $dmfile dma $cellfiles
+				set o [wgzopen $newdm]
+				puts $o cell\tsample
+				foreach cell [array names dma] {
+					puts $o $cell\t$dma($cell)
+				}
+				gzclose $o
+			}
+			set dmfile $newdm
+		}
+	}
+
 
 	set dmsamples [array names dest]
 	set files [jobgzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
@@ -204,6 +270,11 @@ proc sc_demultiplex_job {sampledir dmfile refseq {destVar {}}} {
 				}
 			}
 		}
+		process_reports_job -dbdir [dbdir $refseq] -paired 0 -reports $reports $sampledir 
+	}
+	set expdir [file dir [file dir $sampledir]]
+	if {[file exists $expdir/compar]} {
+		process_reportscombine_job -dbdir [dbdir $refseq] $expdir/reports {*}[jobglob $expdir/samples/*/reports]
 	}
 }
 
