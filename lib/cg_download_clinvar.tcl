@@ -34,11 +34,9 @@ proc cg_download_clinvar {args} {
 	file_write [gzroot $resultfile].opt "fields\t{CLNDISDB CLNDN CLNSIG}\nheaderfields\t{clinvar_acc clinvar_disease clinvar_sig}\n"
 	# info
 	file_write [gzroot $resultfile].info [deindent [subst {
-		clinvar variants (version $version)
-		================
+		= clinvar variants (version $version) =
 		
-		Download info
-		-------------
+		= Download info =
 		dbname	clinvar (clinvar variants)
 		version	$version
 		website	http://www.ncbi.nlm.nih.gov/clinvar
@@ -46,8 +44,7 @@ proc cg_download_clinvar {args} {
 		time	[timestamp]
 		summary	ClinVar aggregates information about genomic variation and its relationship to human health.
 		
-		README
-		------
+		= README =
 	}]]\n
 	exec cat $tempdir/README.txt >> [gzroot $resultfile].info
 	# var file

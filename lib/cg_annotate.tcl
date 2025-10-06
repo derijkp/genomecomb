@@ -218,6 +218,25 @@ proc annotatedb_info {dbfile {near -1}} {
 	return $a
 }
 
+proc annotatedb_infofile {dbfile} {
+	set infofile [gzroot $dbfile].info
+	set result [dict create]
+	if {![file exists $infofile]} {
+		return $result
+	}
+	set c [split [file_read $infofile] \n]
+	if {[regexp {^= ?(.*) ?=$} [lindex $c 0] temp description]} {
+		dict set result description [string trim $description]
+	}
+	foreach field {dbname version source time liftover citation} {
+		set pos [lsearch -regexp $c "$field\\t"]
+		if {$pos != -1} {
+			dict set result $field [lindex [split [lindex $c $pos] \t] end]
+		}
+	}
+	return $result
+}
+
 proc cg_annotatedb_info {args} {
 	puts [annotatedb_info {*}$args]
 }

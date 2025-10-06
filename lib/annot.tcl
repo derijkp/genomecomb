@@ -395,3 +395,59 @@ proc annot_varall_close {varallfile sample} {
 	unset annot(varallinfo,$varallfile,$sample)
 }
 
+
+proc dict_getdef {dict field {default {}}} {
+	if {[dict exists $dict $field]} {
+		return [dict get $dict $field]
+	} else {
+		return $default
+	}
+}
+
+proc annot_databases_list {dblistfile refdir args} {
+	set args [list $refdir {*}$args]
+	set types {var sv gene mir reg bcol}
+	set o [open $dblistfile w]
+	puts $o [join {field annotation type dbname dbversion dbtime dbdescription dbsource refdir annotationfile liftover citation} \t]
+	foreach refdir $args {
+		set dbfiles {}
+		if {[file isdir $refdir]} {
+			foreach type $types {
+				if {$type eq "bcol"} {
+					lappend dbfiles {*}[bsort [gzfiles $refdir/*.bcol]]
+				} else {
+					lappend dbfiles {*}[bsort [gzfiles $refdir/${type}_*.tsv]]
+				}
+			}
+		} elseif {![file exists $refdir]} {
+			set refdir [gzfile $refdir]
+			if {![file exists $refdir]} {
+				error "File $refdir does not exist"
+			} else {
+				lappend dbfiles $refdir
+			}
+		} else {
+			lappend dbfiles $refdir
+		}
+		set dbfiles [list_remdup $dbfiles]
+		foreach dbfile $dbfiles {
+			set dbinfo [annotatedb_info $dbfile -1]
+			set addedfields [dict get $dbinfo newh]
+			set name [dict get $dbinfo name]
+			set type [dict get $dbinfo dbtype]
+			set file [file tail $dbfile]
+			set info [annotatedb_infofile $dbfile]
+			set dbname [dict_getdef $info dbname $name]
+			set dbversion [dict_getdef $info version ""]
+			set dbtime [dict_getdef $info time ""]
+			set dbdescription [dict_getdef $info description ""]
+			set dbsource [dict_getdef $info source ""]
+			set liftover [dict_getdef $info liftover ""]
+			set citation [dict_getdef $info citation ""]
+			foreach field $addedfields {
+				puts $o [join [list $field $name $type $dbname $dbversion $dbtime $dbdescription $dbsource [file tail $refdir] $file $liftover $citation] \t]
+			}
+		}
+	}
+	close $o
+}

@@ -25,6 +25,9 @@ proc cg_download_1000g3 {args} {
 	wgetfile $readmeurl $tempdir/[file tail $readmeurl]
 	set readme [lindex [glob -nocomplain $tempdir/README_phase3_callset_20150220 $tempdir/README_*callset* $tempdir/README_*] 0]
 	set o [open $tempdir/result.info w]
+	puts $o "= 1000g (1000 genomes variants) ="
+	puts $o ""
+	puts $o "== Download info =="
 	puts $o dbname\t1000g3
 	puts $o "version\t$dir"
 	puts $o "citation\tThe 1000 Genomes Project Consortium. 2015. A Global Reference for Human Genetic Variation. Nature 526 (7571): 68\u201374. doi:10.1038/nature15393."
@@ -32,6 +35,7 @@ proc cg_download_1000g3 {args} {
 	puts $o "source\t$url"
 	puts $o "time\t[timestamp]"
 	puts $o ""
+	puts $o "== README =="
 	close $o
 	exec cat $readme >> $tempdir/result.info
 	file rename -force -- $tempdir/result.info [gzroot $resultfile].info

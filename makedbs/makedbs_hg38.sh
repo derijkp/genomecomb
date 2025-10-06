@@ -810,8 +810,6 @@ job var_${build}_gnomad-info -targets {
 		All data here are released for the benefit of the wider biomedical
 		community, without restriction on use - see the terms of use here.
 
-		More information on realeas 2.1 at https://macarthurlab.org/2018/10/17/gnomad-v2-1/
-
 		== Category ==
 		Annotation
 	}]]
@@ -929,6 +927,40 @@ job var_${build}_gnomad-final -deps $deps -targets {
 set finaltarget var_${build}_gnomadex.tsv.zst
 set tempdir $finaltarget.temp
 file mkdir $tempdir
+
+job var_${build}_gnomadex-info -targets {
+	var_${build}_gnomadex.tsv.info
+} -vars {dest db build gnomadexversion gnomadexurl gnomadexbuild} -code {
+	file_write var_${build}_gnomadex.tsv.info [subst [deindent {
+		= gnomAD (genome Aggregation Database) exomes =
+		
+		== Download info ==
+		dbname	gnomadex
+		version	$gnomadexversion
+		citation	Lek, M., Karczewski, K. J., Minikel, E. V., Samocha, K. E., Banks, E., Fennell, T., Exome Aggregation Consortium. (2016). Analysis of protein-coding genetic variation in 60,706 humans. Nature, 536(7616), 285-291. https://doi.org/10.1038/nature19057
+		source	$gnomadexurl
+		time	[timestamp]
+		
+		== Description ==
+		The Genome Aggregation Database (gnomAD) is a resource developed by an
+		international coalition of investigators, with the goal of aggregating and
+		harmonizing both exome and genome sequencing data from a wide variety of
+		large-scale sequencing projects, and making summary data available for the
+		wider scientific community.
+		
+		The data set provided on this website spans 123,136 exome sequences and
+		15,496 whole-genome sequences from unrelated individuals sequenced as part
+		of various disease-specific and population genetic studies. The gnomAD
+		Principal Investigators and groups that have contributed data to the
+		current release are listed here.
+		
+		All data here are released for the benefit of the wider biomedical
+		community, without restriction on use - see the terms of use here.
+
+		== Category ==
+		Annotation
+	}]]
+}
 
 set deps {}
 foreach chromosome {
@@ -1312,6 +1344,18 @@ foreach file [glob -nocomplain $defaultdest/downloads/reg_*_exome_*.zst] {
 		liftover_refdb extra/$tail extra/$newtail $dest $filebuild $build
 	}
 }
+
+set deps [glob ${dest}/${build}/*.info]
+set target ${dest}/${build}/annot_overview.tsv
+job annot_databases_list -deps $deps -targets {
+	$target
+} -vars {
+	dest build
+} -code {
+	annot_databases_list $target.temp ${dest}/${build}
+	file rename -force $target.temp $target
+}
+
 
 job_wait
 
