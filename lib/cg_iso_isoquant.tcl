@@ -400,16 +400,27 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	}
 	#
 	# check which reads have ambiguous mappings (from original read_assignmentsfile)
+	set tempfile [tempfile].tsv.zst
+	cg select -optim memory -hc 1 -g {read_id * exons *} $read_assignmentsfile $tempfile
+	set f [gzopen $tempfile]
+	set header [tsv_open $f comments]
 	unset -nocomplain ambiga
-	foreach {read exons count} [cg select -hc 1 -g {read_id * exons *} $read_assignmentsfile] {
-		dict set ambiga($read) $exons $count
-	}
-	foreach read [array names ambiga] {
-		set ra [dict values $ambiga($read)]
-		if {[llength $ra] <= 1 && [lindex $ra 0] <= 1} {
-			unset ambiga($read)
+	set prevread {}
+	set ambiga($prevread) {1 {}}
+	while 1 {
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
+		foreach {read exons count} $line break
+		if {$read ne $prevread} {
+			set ra [dict values $ambiga($prevread)]
+			if {[llength $ra] <= 1 && [lindex $ra 0] <= 1} {
+				unset ambiga($prevread)
+			}
 		}
+		dict set ambiga($read) $exons $count
+		set prevread $read
 	}
+	gzclose $f
 	# foreach r [array names ambiga] {if {[llength $ambiga($r)] > 2} {puts [list set ambiga($r) $ambiga($r)]}}
 
 	#
