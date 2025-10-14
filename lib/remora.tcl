@@ -118,7 +118,7 @@ proc meth_remora_job {args} {
 			>@ stdout 2>@ stderr
 		cg gzip $target.temp
 		file rename -force $target.temp.gz $target
-		set o [wgzopen $target2]
+		set o [wgzopen $target2.temp.zst]
 		puts $o [join {chromosome begin end modification_code score strand thickstart thickend color coverage modified_frequency n_mod n_canonical n_othermod n_delete n_fail n_diff n_nocall} \t]
 		set f [gzopen $target]
 		while {[gets $f line] != -1} {
@@ -127,6 +127,9 @@ proc meth_remora_job {args} {
 		}
 		gzclose $f
 		gzclose $o
+		cg select -s - $target2.temp.zst $target2.temp2.zst
+		file rename -force $target2.temp2.zst $target2
+		file delete $target2.temp.zst
 	}
 	return [list $target2 $resultfile]
 }
