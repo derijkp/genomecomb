@@ -37,7 +37,7 @@ where
         let range = bins.index(index);
         bin_edges.push(range.start);
     }
-    let hist_counts = histogram.counts().to_owned().into_raw_vec();
+    let (hist_counts, _offset) = histogram.counts().to_owned().into_raw_vec_and_offset();
     Bar::new(bin_edges, hist_counts).name("Read length")
 }
 

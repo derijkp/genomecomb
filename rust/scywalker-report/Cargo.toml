@@ -1,22 +1,22 @@
 [package]
 name = "scywalker-report"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.4.2", features = ["derive"] }
-env_logger = "0.10.1"
-glob = "0.3.1"
+clap = { version = "4.5.51", features = ["derive"] }
+env_logger = "0.11.8"
+glob = "0.3.3"
 image-base64 = "0.1.0"
-log = "0.4.20"
-ndarray = "0.15.6"
-ndarray-stats = "0.5.1"
-num = "0.4.1"
-num-traits = "0.2.17"
-plotly = "0.8.4"
-rand = "0.8.5"
+log = "0.4.28"
+ndarray = "0.16"
+ndarray-stats = "0.6.0"
+num = "0.4.3"
+num-traits = "0.2.19"
+plotly = "0.13.5"
+rand = "0.9.2"
 rust-htslib = "0.44.1"
-serde = "1.0.192"
-zstd = "0.13.0"
+serde = "1.0.228"
+zstd = "0.13.3"

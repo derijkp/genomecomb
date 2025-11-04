@@ -17,7 +17,7 @@ pub fn extract(
         .expect("Failure setting decompression threads");
     for read in bam
         .rc_records()
-        .choose_multiple(&mut rand::thread_rng(), num_reads)
+        .choose_multiple(&mut rand::rng(), num_reads)
         .into_iter()
         .map(|r| r.expect("Failure parsing Bam file"))
         .filter(|record| record.flags() & (htslib::BAM_FUNMAP | htslib::BAM_FSECONDARY) as u16 == 0)
