@@ -81,3 +81,90 @@ fn plot(genes_per_cell: Vec<u32>) -> String {
         plot.to_inline_html(Some("genes_per_cell"))
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::io::Write;
+    use tempfile::TempDir;
+
+    fn create_test_gene_counts_file(temp_dir: &TempDir, filename: &str) -> PathBuf {
+        let file_path = temp_dir.path().join(filename);
+        let file = fs::File::create(&file_path).unwrap();
+        let mut encoder = zstd::Encoder::new(file, 0).unwrap();
+        
+        // Write header
+        writeln!(encoder, "col1\tcol2\tcol3\tcol4\tcol5\tcol6\tcell_barcode\tcol8").unwrap();
+        
+        // Cell1 has 3 genes
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL1\tx").unwrap();
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL1\tx").unwrap();
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL1\tx").unwrap();
+        
+        // Cell2 has 2 genes
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL2\tx").unwrap();
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL2\tx").unwrap();
+        
+        // Cell3 has 1 gene
+        writeln!(encoder, "x\tx\tx\tx\tx\tx\tCELL3\tx").unwrap();
+        
+        encoder.finish().unwrap();
+        file_path
+    }
+
+    #[test]
+    fn test_get_genes_per_cell() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = create_test_gene_counts_file(&temp_dir, "test_counts.tsv.zst");
+        
+        let mut result = get_genes_per_cell(file_path).unwrap();
+        result.sort_unstable();
+        
+        assert_eq!(result.len(), 3);
+        assert_eq!(result, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_plot_returns_valid_html() {
+        let genes_per_cell = vec![1, 2, 3, 4, 5];
+        let html = plot(genes_per_cell);
+        
+        assert!(html.contains("<div class=\"plot\">"));
+        assert!(html.contains("<h2>Genes per cell</h2>"));
+        assert!(html.contains("</div>"));
+    }
+
+    #[test]
+    fn test_genes_creates_valid_table() {
+        let temp_dir = TempDir::new().unwrap();
+        create_test_gene_counts_file(
+            &temp_dir,
+            "sc_gene_counts_filtered-isoquant_sc-test.tsv.zst",
+        );
+
+        let metrics = KneeMetrics {
+            num_cells: 100,
+            num_good_cells: 80,
+            median_umi_count: 1500.0,
+            percent_reads_in_good_cells: 85.5,
+        };
+
+        let result = genes(temp_dir.path().to_str().unwrap(), metrics).unwrap();
+        
+        assert!(result.table.contains("<h2>Cells and genes metrics</h2>"));
+        assert!(result.table.contains("Total cells"));
+        assert!(result.table.contains("100"));
+        assert!(result.table.contains("Cells passing filter"));
+        assert!(result.table.contains("80"));
+        assert!(result.table.contains("% umis in cells passing filter"));
+        assert!(result.table.contains("85.50%"));
+        assert!(result.table.contains("Median UMI count"));
+        assert!(result.table.contains("1500"));
+        assert!(result.table.contains("Median genes per cell"));
+        assert!(result.table.contains("2")); // median of [1, 2, 3]
+        
+        assert!(result.plot.contains("<div class=\"plot\">"));
+        assert!(result.plot.contains("<h2>Genes per cell</h2>"));
+    }
+}

@@ -37,7 +37,7 @@ where
         let range = bins.index(index);
         bin_edges.push(range.start);
     }
-    let hist_counts = histogram.counts().to_owned().into_raw_vec();
+    let (hist_counts, _offset) = histogram.counts().to_owned().into_raw_vec_and_offset();
     Bar::new(bin_edges, hist_counts).name("Read length")
 }
 
@@ -53,4 +53,61 @@ pub fn find_file(directory: &str, pattern: &str) -> Option<PathBuf> {
     glob_iter
         .next()
         .map(|x| x.expect(format!("Failed to glob path {pattern}", pattern = pattern).as_str()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_median_odd_length() {
+        let values = vec![1, 2, 3, 4, 5];
+        assert_eq!(median(&values), 3.0);
+    }
+
+    #[test]
+    fn test_median_even_length() {
+        let values = vec![1, 2, 3, 4];
+        assert_eq!(median(&values), 2.5);
+    }
+
+    #[test]
+    fn test_median_single_element() {
+        let values = vec![42];
+        assert_eq!(median(&values), 42.0);
+    }
+
+    #[test]
+    fn test_median_two_elements() {
+        let values = vec![10, 20];
+        assert_eq!(median(&values), 15.0);
+    }
+
+    #[test]
+    fn test_median_large_values() {
+        let values = vec![1000, 2000, 3000, 4000, 5000];
+        assert_eq!(median(&values), 3000.0);
+    }
+
+    #[test]
+    fn test_histogram_to_bar_creates_valid_bar() {
+        let values = vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4];
+        // Just verify it doesn't panic and creates a bar
+        let _bar = histogram_to_bar(values);
+        // If we get here without panicking, the test passes
+    }
+
+    #[test]
+    fn test_histogram_to_bar_with_range() {
+        // Test with a proper range of values
+        let values = vec![1, 5, 10, 15, 20, 25, 30];
+        let _bar = histogram_to_bar(values);
+    }
+
+    #[test]
+    fn test_histogram_to_bar_larger_dataset() {
+        // Test with a larger, more varied dataset
+        let values = (1..100).collect::<Vec<u32>>();
+        let _bar = histogram_to_bar(values);
+    }
 }
