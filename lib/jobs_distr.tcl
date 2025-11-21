@@ -191,6 +191,7 @@ proc job_process_submit_distr {job cmd args} {
 	set io 1
 	set pos 0
 	set mem 500m
+	set gpu {}
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
@@ -226,6 +227,11 @@ proc job_process_submit_distr {job cmd args} {
 			-mem {
 				set mem $value
 				lappend submitopts -mem $value
+				incr pos 2
+			}
+			-gpu {
+				set gpu $value
+				lappend submitopts -gpu $value
 				incr pos 2
 			}
 			-time {

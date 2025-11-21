@@ -38,6 +38,7 @@ proc job_process_submit_sge {job cmd args} {
 	set priority [get cgjob(priority) 0]
 	set cores 1
 	set mem {}
+	set gpu {}
 	set time {}
 	set pos 0
 	set dqueue [get cgjob(dqueue) all.q]
@@ -101,6 +102,10 @@ proc job_process_submit_sge {job cmd args} {
 				set mem $value
 				incr pos 2
 			}
+			-gpu {
+				set gpu $value
+				incr pos 2
+			}
 			-time {
 				set time $value
 				incr pos 2
@@ -141,6 +146,13 @@ proc job_process_submit_sge {job cmd args} {
 		# not using h_vmem, because that would kill any job going (even a bit) above reserved memory
 		set temp [job_mempercore $mem $cores]
 		lappend hard -l mem_free=$temp,virtual_free=$temp
+	}
+	if {$gpu ne ""} {
+		if {[isint $gpu]} {
+			lappend hard -l ngpus=$gpu
+		} else {
+			lappend hard -l $gpu
+		}
 	}
 	if {$time ne ""} {
 		# (time format is hh:mm:ss)

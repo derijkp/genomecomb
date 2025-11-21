@@ -42,6 +42,7 @@ proc job_process_submit_slurm {job cmd args} {
 	set priority [get cgjob(priority) 0]
 	set cores 1
 	set mem {}
+	set gpu {}
 	set time {}
 	set pos 0
 	set dqueue {}
@@ -84,6 +85,10 @@ proc job_process_submit_slurm {job cmd args} {
 				set mem $value
 				incr pos 2
 			}
+			-gpu {
+				set gpu $value
+				incr pos 2
+			}
 			-time {
 				set time $value
 				incr pos 2
@@ -119,6 +124,13 @@ proc job_process_submit_slurm {job cmd args} {
 	if {$mem ne ""} {
 		set temp [string tolower [job_mempercore $mem $cores]]
 		lappend options --mem-per-cpu=$temp
+	}
+	if {$gpu ne ""} {
+		if {[isint $gpu]} {
+			lappend options --gres=gpu:$gpu
+		} else {
+			lappend options --gres=gpu:$gpu
+		}
 	}
 	if {$time ne ""} {
 		lappend options --time=$time

@@ -1392,6 +1392,10 @@ proc job {jobname args} {
 				lappend submitopts -mem [lindex $args $pos]
 				incr pos
 			}
+			-gpu {
+				lappend submitopts -gpu [lindex $args $pos]
+				incr pos
+			}
 			-time {
 				lappend submitopts -time [lindex $args $pos]
 				incr pos
