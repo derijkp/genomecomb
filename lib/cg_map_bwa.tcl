@@ -85,7 +85,11 @@ proc cg_map_bwa {args} {
 			set paired $value
 		}
 		-x - -preset - -p {
-			# not used
+			if {$value eq "short"} {
+				lappend extraopts -k 10 -T 15 -a
+			} elseif {$value ne ""} {
+				error "unknown bwa preset $value"
+			}
 		}		
 		-readgroupdata {
 			set readgroupdata $value

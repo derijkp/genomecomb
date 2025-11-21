@@ -22,7 +22,11 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 		close $f
 		incr size 1000
 		if {$size < 10000000000} {set size 10000000000}
-		set temp [catch_exec minimap2 -I $size -x $preset -d $target.temp $dep]
+		if {$preset eq "ontshort"} {
+			set temp [catch_exec minimap2 -I $size -x map-ont -k 5 -w 1 -d $target.temp $dep
+		} else {
+			set temp [catch_exec minimap2 -I $size -x $preset -d $target.temp $dep]
+		}
 		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
 			error "could not properly index $dep: contains no sequences"
 		}
@@ -106,6 +110,9 @@ proc cg_map_minimap2 {args} {
 				set platform PACBIO
 			} elseif {$value in "ont"} {
 				set value map-ont
+			} elseif {$value in "ontshort"} {
+				set value map-ont
+				lappend extraopts -n 1 -m 1 -k 5 -w 1 -s 20
 			} elseif {$value in "avapb"} {
 				set value ava-pb
 				set platform PACBIO
@@ -115,6 +122,12 @@ proc cg_map_minimap2 {args} {
 			} elseif {$value eq "splicesmall"} {
 				set value splice
 				lappend extraopts -B3 -O3,6
+			} elseif {$value eq "splicesens"} {
+				set value splice
+				lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
+			} elseif {$value eq "splicesrsens"} {
+				set value splice:sr
+				lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
 			}
 			set preset $value
 		}
