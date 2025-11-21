@@ -97,11 +97,16 @@ proc cg_map_bwa {args} {
 			# not used yet
 			set ali_keepcomments $value
 		}
+		-nohardclips {
+			if {[true $value]} {
+				lappend extraopts -Y
+			}
+		}
 		-threads - -t {
 			set threads $value
 		}
 		-extraopts {
-			set extraopts $value
+			lappend extraopts {*}$value
 		}
 	} {result refseq sample fastqfile1 fastqfile2} 4 5 {
 		align reads in fastq files to a reference genome using bwa-mem

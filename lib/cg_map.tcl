@@ -63,6 +63,7 @@ proc map_job {args} {
 	set joinfastqs 0
 	set extraopts {}
 	set ali_keepcomments {}
+	set nohardclips 0
 	cg_options map args {
 		-method {
 			set method [methods_map $value]
@@ -101,6 +102,9 @@ proc map_job {args} {
 		}
 		-ali_keepcomments {
 			set ali_keepcomments $value
+		}
+		-nohardclips {
+			set nohardclips $value
 		}
 		-threads - -t {
 			set threads $value
@@ -174,7 +178,7 @@ proc map_job {args} {
 		-deps $deps -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams use_ali_keepcomments
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams use_ali_keepcomments nohardclips
 		} -code {
 			set cleanupfiles {}
 			if {$joinfastqs || $ubams} {
@@ -223,16 +227,20 @@ proc map_job {args} {
 			}
 			set tempfile [filetemp_ext $result]
 			if {$sort eq "nosort"} {
-				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+				catch_exec cg map_${method} -ignore_unknownoptions 1 \
+					-extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-ali_keepcomments $use_ali_keepcomments \
+					-nohardclips $nohardclips \
 					-threads $threads \
 					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
-				catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+				catch_exec cg map_${method} -ignore_unknownoptions 1 \
+					-extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-ali_keepcomments $use_ali_keepcomments \
+					-nohardclips $nohardclips \
 					-threads $threads \
 					-.sam $refseq $sample {*}$fastqfiles \
 					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 \
