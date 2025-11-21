@@ -1,4 +1,4 @@
-proc refseq_bwa_job {refseq} {
+proc refseq_bwa_job {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set bwarefseq $refseq.bwa/[file tail $refseq]

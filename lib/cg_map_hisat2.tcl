@@ -1,4 +1,4 @@
-proc refseq_hisat2_job {refseq} {
+proc refseq_hisat2_job {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set hisat2refseq $refseq.hisat2
 	if {[file exists $hisat2refseq]} {return $hisat2refseq}
