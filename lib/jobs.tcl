@@ -1468,7 +1468,15 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	foreach proc $procs {
-		append newcode [list proc $proc [info args $proc] [info body $proc]]\n
+		set arguments {}
+		foreach arg [info args $proc] {
+			if {[info default $proc $arg def]} {
+				lappend arguments [list $arg $def]
+			} else {
+				lappend arguments $arg
+			}
+		}
+		append newcode [list proc $proc $arguments [info body $proc]]\n
 	}
 	append newcode $code
 	if {[get ::job_getinfo 0]} {
