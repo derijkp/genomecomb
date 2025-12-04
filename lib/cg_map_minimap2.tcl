@@ -22,10 +22,11 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 		close $f
 		incr size 1000
 		if {$size < 10000000000} {set size 10000000000}
+		map_minimap2_presets $preset mpreset refpreset extraopts
 		if {$preset eq "ontshort"} {
-			set temp [catch_exec minimap2 -I $size -x map-ont -k 5 -w 1 -d $target.temp $dep
+			set temp [catch_exec minimap2 -I $size -x map-ont -k 5 -w 1 -d $target.temp $dep]
 		} else {
-			set temp [catch_exec minimap2 -I $size -x $preset -d $target.temp $dep]
+			set temp [catch_exec minimap2 -I $size -x $mpreset -d $target.temp $dep]
 		}
 		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
 			error "could not properly index $dep: contains no sequences"
@@ -87,6 +88,54 @@ proc map_mem_minimap2 {mem threads preset deps} {
 # ava-pb : PacBio read overlap
 # ava-ont : Nanopore read overlap
 
+proc map_minimap2_presets {value mpresetVar refpresetVar extraoptsVar} {
+	upvar $mpresetVar mpreset
+	upvar $refpresetVar refpreset
+	upvar $extraoptsVar extraopts
+	set mpreset $value
+	set refpreset $value
+	if {$value eq "splicehq"} {
+		set mpreset splice:hq
+		set refpreset splice:hq
+	} elseif {$value in "pb pacbio"} {
+		set mpreset map-pb
+		set refpreset map-pb
+		set platform PACBIO
+	} elseif {$value in "ont"} {
+		set mpreset map-ont
+		set refpreset map-ont
+	} elseif {$value in "ontshort"} {
+		# have to keep this and change just before using because it needs a different index
+		set mpreset map-ont
+		set refpreset ontshort
+		lappend extraopts -n 1 -m 1 -k 5 -w 1 -s 20
+	} elseif {$value in "avapb"} {
+		set mpreset ava-pb
+		set refpreset ava-pb
+		set platform PACBIO
+	} elseif {$value in "pb avaont"} {
+		set mpreset ava-ont
+		set refpreset ava-ont
+		set platform PACBIO
+	} elseif {$value eq "splicesmall"} {
+		set mpreset splice
+		set refpreset splice
+		lappend extraopts -B3 -O3,6
+	} elseif {$value eq "splicesens"} {
+		set mpreset splice
+		set refpreset splice
+		lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
+	} elseif {$value eq "splicesrsens"} {
+		set mpreset splice:sr
+		set refpreset splice:sr
+		lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
+	} else {
+		set mpreset $value
+		set refpreset $value
+	}
+	
+}
+
 proc cg_map_minimap2 {args} {
 	if {[info exists ::cgextraopts(minimap2)]} {set extraopts $::cgextraopts(minimap2)} else {set extraopts {}}
 	set paired 0
@@ -103,33 +152,8 @@ proc cg_map_minimap2 {args} {
 			set paired $value
 		}
 		-x - -preset {
-			if {$value eq "splicehq"} {
-				set value splice:hq
-			} elseif {$value in "pb pacbio"} {
-				set value map-pb
-				set platform PACBIO
-			} elseif {$value in "ont"} {
-				set value map-ont
-			} elseif {$value in "ontshort"} {
-				set value map-ont
-				lappend extraopts -n 1 -m 1 -k 5 -w 1 -s 20
-			} elseif {$value in "avapb"} {
-				set value ava-pb
-				set platform PACBIO
-			} elseif {$value in "pb avaont"} {
-				set value ava-ont
-				set platform PACBIO
-			} elseif {$value eq "splicesmall"} {
-				set value splice
-				lappend extraopts -B3 -O3,6
-			} elseif {$value eq "splicesens"} {
-				set value splice
-				lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
-			} elseif {$value eq "splicesrsens"} {
-				set value splice:sr
-				lappend extraopts -N50 -p0.1 -A2 -B4 -O4,24 -E2,1
-			}
 			set preset $value
+			map_minimap2_presets $preset mpreset refpreset extraopts
 		}
 		-readgroupdata {
 			set readgroupdata $value
@@ -162,10 +186,12 @@ proc cg_map_minimap2 {args} {
 	}
 	if {$preset eq ""} {
 		if {$paired} {
-			set preset sr
+			set mpreset sr
+			set refpreset sr
 			set platform illumina
 		} else {
-			set preset map-ont
+			set mpreset map-ont
+			set refpreset map-ont
 			set platform ONT
 		}
 	}
@@ -177,7 +203,7 @@ proc cg_map_minimap2 {args} {
 	set refseq [refseq $refseq]
 	#
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
-	set minimap2refseq [refseq_minimap2 $refseq $preset]
+	set minimap2refseq [refseq_minimap2 $refseq $refpreset]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner minimap2 aligner_version [version minimap2] aligner_preset $preset reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {
@@ -187,7 +213,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -x $mpreset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$outpipe
@@ -212,7 +238,7 @@ proc cg_map_minimap2 {args} {
 			lappend rg "$key:$value"
 		}
 		if {[catch {
-			exec minimap2 -a -x $preset -t $threads --MD \
+			exec minimap2 -a -x $mpreset -t $threads --MD \
 				-R @RG\\tID:$sample\\t[join $rg \\t] \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
