@@ -258,9 +258,9 @@ proc var_clair3_job {args} {
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
-	if {$time eq ""} {set time ${threads}:00:00}
-	# if {$mem eq ""} {set mem [expr {2*$threads}]G}
-	if {$mem eq ""} {set mem 24G}
+	if {$time eq ""} {set time 2:00:00}
+	if {$mem eq ""} {set mem [expr {2+$threads}]G}
+	# if {$mem eq ""} {set mem 24G}
 	# if {$phasing} {lappend opts	--enable_phasing --use_longphase_for_final_output_phasing}
 	if {$preset ne ""} {
 		switch $preset {
