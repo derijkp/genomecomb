@@ -320,6 +320,7 @@ proc cg_job_update args {
 	set cleanup success
 	set force 0
 	set removeold 0
+	set rundone 0
 	cg_options job_update args {
 		-dcleanup - -cleanup - -c {
 			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
@@ -343,6 +344,7 @@ proc cg_job_update args {
 		if {[string index $line 0] ne "\#"} break
 		if {[regexp {# *distribute: *(.+)} $line temp distribute]} break
 	}
+	close $f
 	job_init -d $distribute
-	job_update $logfile $cleanup $force $removeold
+	job_update $logfile $cleanup $force $removeold $rundone
 }
