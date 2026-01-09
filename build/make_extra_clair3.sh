@@ -231,6 +231,8 @@ for model in \
 	r1041_e82_400bps_hac_g615.tar.gz \
 	r1041_e82_260bps_hac_g632.tar.gz \
 	r1041_e82_400bps_fast_g632.tar.gz \
+	r1041_e82_400bps_hac_v520.tar.gz \
+	r1041_e82_400bps_sup_v520.tar.gz \
 	r104_e81_sup_g5015.tar.gz \
 	r104_e81_hac_g5015.tar.gz
 do
@@ -251,6 +253,7 @@ cd /build/clair3-$clair3version-$arch
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
+export CONDA_PREFIX=$dir
 export PATH=$dir/bin:$PATH
 export LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
 export LANG=C
@@ -263,6 +266,7 @@ chmod ugo+x run_clair3.sh
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
+export CONDA_PREFIX=$dir
 export PATH=$dir/bin:$PATH
 export LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
 export LANG=C
