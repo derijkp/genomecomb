@@ -115,6 +115,7 @@ proc test {args} {
 		mklink $::appdir/tests/data $::testdir/data
 	}
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
+	unset -nocomplain ::specialopt
 	catch {job_init}
 	unset -nocomplain ::env(SHADOWDIR)
 	set description [lindex $args 1]

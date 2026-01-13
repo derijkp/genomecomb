@@ -239,7 +239,38 @@ test cg_options {specialopts with optsVar} {
 		}
 	} {p1 p2} 2 ... {} opts
 	list $opt $opt2 $opt3 $p1 $p2 $args $opts
+	# unset -nocomplain ::specialopt
 } {o o2 3 1 2 {3 4} {-sopt so}}
+
+test cg_options {unknown option} {
+	set args {-opt o -unknown 1 value}
+	set opt 1
+	set opt2 2
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+		-opt2 {
+			set opt2 $value
+		}
+	} p
+	list $opt $opt2 $p $args
+} {error calling cg test: unknown option "-unknown", must be one of: -opt,-opt2} error
+
+test cg_options {-ignore_unknownoptions 1} {
+	set args {-ignore_unknownoptions 1 -opt o -unknown 1 value}
+	set opt 1
+	set opt2 2
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+		-opt2 {
+			set opt2 $value
+		}
+	} p
+	list $opt $opt2 $p $args
+} {o 2 value {}}
 
 test tsvdiff {basic} {
 	write_tab tmp/file1.tsv {
