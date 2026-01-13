@@ -110,6 +110,15 @@ test map {map -method bwa multiple} {
 	catch {exec diff -I {@PG	} tmp/ali.sam data/bwa.sam}
 } 0
 
+test map {map -method bwa -nohardclips 1 } {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map -stack 1 -method bwa -nohardclips 1 -sort coordinate -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
+	exec samtools view --no-PG -h tmp/ali.bam > tmp/ali.sam
+	cg sam_sort -sort coordinate data/bwa.sam tmp/expected.sam
+	catch {exec diff -I {@PG	} -I {@HD	} tmp/ali.sam tmp/expected.sam}
+} 0
+
 test map {map_bwa paired -.sam} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
