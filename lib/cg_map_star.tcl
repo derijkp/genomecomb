@@ -68,7 +68,7 @@ proc refseq_star {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set starrefseq $refseq.star
-	if {![file exists $starrefseq]} {
+	if {![jobfileexists $starrefseq]} {
 		error "The star index of the refseq does not exist (should be at $starrefseq)
 You can create it using:
 cg refseq_star \'$refseq\'"

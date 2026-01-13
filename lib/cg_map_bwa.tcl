@@ -65,7 +65,7 @@ proc refseq_bwa {refseq {preset {}}} {
 	set refseq [file_absolute $refseq]
 	set bwarefseq $refseq.bwa/[file tail $refseq]
 	set bwarefseqfa [file root $bwarefseq].fa
-	if {![file exists $bwarefseqfa]} {
+	if {![jobfileexists $bwarefseqfa]} {
 		error "The bwa version of the refseq does not exist (should be at $bwarefseqfa)
 You can create it using:
 cg refseq_bwa \'$refseq\'"

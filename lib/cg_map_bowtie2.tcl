@@ -22,7 +22,7 @@ proc refseq_bowtie2 {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
-	if {![file exists $bowtie2refseq]} {
+	if {![jobfileexists $bowtie2refseq]} {
 		error "The bowtie2 version of the refseq does not exist (should be at $bowtie2refseq)
 You can create it using:
 cg refseq_bowtie2 \'$refseq\'"

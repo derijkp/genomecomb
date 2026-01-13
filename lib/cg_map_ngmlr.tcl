@@ -43,7 +43,7 @@ proc refseq_ngmlr {refseq {preset ont}} {
 	if {$preset eq ""} {set preset ont}
 	set refseq [file_absolute $refseq]
 	set ngmlrrefseq $refseq.ngmlr.$preset/[file tail $refseq]
-	if {![file exists $ngmlrrefseq]} {
+	if {![jobfileexists $ngmlrrefseq]} {
 		error "The ngmlr version of the refseq (preset $preset) does not exist (should be $ngmlrrefseq)
 You can create it using:
 cg refseq_ngmlr \'$refseq\' $preset"

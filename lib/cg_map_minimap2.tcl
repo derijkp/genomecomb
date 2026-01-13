@@ -48,7 +48,7 @@ proc refseq_minimap2 {refseq preset} {
 	if {$preset eq ""} {set preset map-ont}
 	set refseq [file_absolute $refseq]
 	set minimap2refseq $refseq.minimap2.$preset
-	if {![file exists $minimap2refseq]} {
+	if {![jobfileexists $minimap2refseq]} {
 		error "The minimap2 version for preset $preset of the refseq does not exist (should be at $minimap2refseq)
 You can create it using:
 cg refseq_minimap2 \'$refseq\' $preset"
@@ -186,10 +186,12 @@ proc cg_map_minimap2 {args} {
 	}
 	if {$preset eq ""} {
 		if {$paired} {
+			set preset sr
 			set mpreset sr
 			set refpreset sr
 			set platform illumina
 		} else {
+			set preset map-ont
 			set mpreset map-ont
 			set refpreset map-ont
 			set platform ONT
@@ -203,7 +205,7 @@ proc cg_map_minimap2 {args} {
 	set refseq [refseq $refseq]
 	#
 	set readgroupdata [map_readgroupdata $readgroupdata $sample]
-	set minimap2refseq [refseq_minimap2 $refseq $refpreset]
+	set minimap2refseq [refseq_minimap2 $refseq $preset]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner minimap2 aligner_version [version minimap2] aligner_preset $preset reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {

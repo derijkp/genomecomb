@@ -170,7 +170,8 @@ proc map_job {args} {
 	} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $fastqfiles 0]
-		set deps [list $refseq {*}$fastqfiles]
+		set refseqindex [refseq_$method $refseq $preset]
+		set deps [list $refseq $refseqindex {*}$fastqfiles]
 		job [job_relfile2name map_${method}- $result] {*}$skips \
 		-mem [map_mem $method $mem $threads $preset $deps] \
 		-time [map_time $method $time $threads $preset $deps] \

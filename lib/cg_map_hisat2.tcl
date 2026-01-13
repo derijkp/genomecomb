@@ -34,7 +34,7 @@ proc refseq_hisat2 {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set hisat2refseq $refseq.hisat2/[file tail $refseq]
-	if {![file exists $hisat2refseq]} {
+	if {![jobfileexists $hisat2refseq]} {
 		error "The hisat2 index of the refseq does not exist (should be at $hisat2refseq)
 You can create it using:
 cg refseq_hisat2 \'$refseq\'"
