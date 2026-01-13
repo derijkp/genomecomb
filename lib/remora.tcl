@@ -114,7 +114,6 @@ proc meth_remora_job {args} {
 		exec modkit pileup $bamfile $target.temp \
 			--ref $refseq \
 			--preset traditional \
-			--only-tabs \
 			>@ stdout 2>@ stderr
 		cg gzip $target.temp
 		file rename -force $target.temp.gz $target
@@ -127,7 +126,7 @@ proc meth_remora_job {args} {
 		}
 		gzclose $f
 		gzclose $o
-		cg select -s - $target2.temp.zst $target2.temp2.zst
+		cg select -overwrite 1 -s - $target2.temp.zst $target2.temp2.zst
 		file rename -force $target2.temp2.zst $target2
 		file delete $target2.temp.zst
 	}
