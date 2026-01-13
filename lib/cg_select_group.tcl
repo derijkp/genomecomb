@@ -168,9 +168,9 @@ proc tsv_select_addforeach {varVar typesVar code} {
 		set values $loopsa($loop)
 		if {$values eq ""} {
 			if {$loopstypea($loop) == 1} {
-				append pre "foreach _$loop \[split \$\{$loop\} {;,}\] \{\n"
+				append pre "foreach _$loop \[split \$\{$loop\} {;, }\] \{\n"
 			} else {
-				append pre "foreach _$loop \[list_remdup \[split \$\{$loop\} {;,}\]\] \{\n"
+				append pre "foreach _$loop \[list_remdup \[split \$\{$loop\} {;, }\]\] \{\n"
 			}
 		} else {
 			# this is for when values is known beforehand, e.g. coming from sampleinfo
@@ -768,7 +768,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 				}
 			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
 				if {$loop} {
-					set list [tsv_select_applyfilter $filter [split $value {;,}]]
+					set list [tsv_select_applyfilter $filter [split $value {;, }]]
 					set sloopsa($field) [list_concat [get sloopsa($field) ""] $list]
 					set sloopstypea($field) $loop
 					lappend groupname \$\{_$field\}
@@ -856,7 +856,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 				}
 			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
 				if {$loop} {
-					set list [tsv_select_applyfilter $filter [split $value {;,}]]
+					set list [tsv_select_applyfilter $filter [split $value {;, }]]
 					set sloopsa($field) [list_concat [get sloopsa($field) ""] $list]
 					set sloopstypea($field) $loop
 					lappend col \$\{_$field\}
