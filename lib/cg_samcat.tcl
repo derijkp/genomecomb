@@ -1,5 +1,7 @@
 proc cg_samcat {args} {
+	set checkheaders 1
 	cg_options samcat args {
+		-checkheaders {set checkheaders $value}
 	} {} 1
 	foreach sam $args {
 		if {[gziscompressed $sam]} {
@@ -11,7 +13,7 @@ proc cg_samcat {args} {
 			set refheader $header
 			puts $header
 		} else {
-			if {$header ne "$refheader"} {
+			if {$checkheaders && $header ne "$refheader"} {
 				puts stderr "cannot samcat: differences in header"
 				exit 1
 			}

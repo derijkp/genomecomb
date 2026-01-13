@@ -9,6 +9,11 @@ concatenates sam files outputting to stdout.
 == Arguments ==
 ; **samfile**: file to be concatenated
 
+== Options ==
+; -checkheaders 0/1: default(1) will give an error if headers differ between multiple sam files. 
+Use -checkheaders 0 to ignore differences in header (header of the first sam file will be used)
+
+
 == Category ==
 Conversion
 
