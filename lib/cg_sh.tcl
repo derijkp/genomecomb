@@ -57,7 +57,7 @@ proc cg_sh {args} {
 			}
 		}
 		uplevel #0 interactive
-	} elseif {[lsearch $args nox] == -1 && [loadTclX]} {
+	} elseif {[lsearch $args tclx] != -1 && [loadTclX]} {
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
 		package require TclReadLine
