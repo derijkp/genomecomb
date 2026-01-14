@@ -77,6 +77,21 @@ int cigar_refsize(Cigar *cigar) {
 	return result;
 }
 
+int cigar_querysize(Cigar *cigar) {
+	int count = cigar->size;
+	int *num = cigar->num;
+	char *action = cigar->action;
+	int result = 0;
+	while(count--) {
+		if (*action == 'M' || *action == 'I' || *action == '=' || *action == 'X') {
+			result += *num;
+		}
+		action++;
+		num++;
+	}
+	return result;
+}
+
 int cigar_clipleft(Cigar *cigar) {
 	int *num = cigar->num;
 	char *action = cigar->action;
@@ -151,7 +166,7 @@ int main(int argc, char *argv[]) {
 	size_t read;
 	unsigned int curpos=0, flag;
 	unsigned int numfields,pos1;
-	int start,end,fpos;
+	int start,end,qstart,fpos;
 	char *fields = NULL, *cur,*keep;
 	if (argc < 1) {
 		fprintf(stderr,"Format is: sam2tsv ?field? ...\n");
@@ -269,9 +284,10 @@ int main(int argc, char *argv[]) {
 		fputc('\t',stdout);
 		DStringputs(result1->data+0,stdout); /* qname */
 		fputc('\t',stdout);
-		fprintf(stdout,"%d",cigar_clipleft(&cigar)); /* qstart */
+		qstart = cigar_clipleft(&cigar);
+		fprintf(stdout,"%d",qstart); /* qstart */
 		fputc('\t',stdout);
-		end = result1->data[9].size - cigar_clipright(&cigar);
+		end = qstart + cigar_querysize(&cigar);
 		fprintf(stdout,"%d",end); /* qend */
 		fputc('\t',stdout);
 		DStringputs(result1->data+4,stdout); /* mapq */

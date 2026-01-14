@@ -1482,6 +1482,12 @@ test sam2tsv {bam2tsv cram} {
 	exec diff tmp/bwa.tsv data/bwa-fields.tsv
 } {}
 
+test sam2tsv {sam2tsv qend when no sequences present} {
+	file copy data/SRR22027682.17.ali.sam tmp/SRR22027682.17.ali.sam
+	cg sam2tsv tmp/SRR22027682.17.ali.sam tmp/SRR22027682.17.ali.tsv
+	exec diff tmp/SRR22027682.17.ali.tsv data/SRR22027682.17.ali.tsv
+} {}
+
 test sam2tsv {sam2tsv cases} {
 	file_write tmp/test.sam [deindent {
 		@HD	VN:1.3	SO:coordinate
