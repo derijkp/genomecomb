@@ -11,7 +11,7 @@ the following columns:
 ; phased: 1 if genotype is phased, 0 otherwise
 ; genotypes: list of allele numbers (0 for ref, 1 for first alt, ...) (GT in vcf)
 The alleles are comma (,) separated for phased genotypes (| in vcf), and ";" separated for unphased (/ in vcf).
-In contrast to alleleSeq1 and alleleSe2, this field allows for ploidies other than 2
+In contrast to alleleSeq1 and alleleSeq2, this field allows for ploidies other than 2
 ; loglikelihood: Likelihoods for RR,RA,AA genotypes (R=ref,A=alt)
 ; DV: number of high-quality non-reference bases
 ; SP: Phred-scaled strand bias P-value
