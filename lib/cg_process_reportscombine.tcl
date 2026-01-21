@@ -573,6 +573,7 @@ proc reportscombine_table_alignment {alignments dataVar dbdir} {
 			}
 		} else {
 			lappend line [catchexpr {$targetbases/1000000.0}]
+			set numbases_ontarget [pget data $alignment,numbases_ontarget]
 			set avg_target_depth [catchexpr {double($numbases_ontarget)/$targetbases}]
 			lappend line [catchformat %.2f $avg_target_depth]
 			foreach num {1 2 10 20 30} {
