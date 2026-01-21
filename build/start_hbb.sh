@@ -116,6 +116,13 @@ if [ "$1" = "stage2" ] ; then
 			yum install -q -y yum-plugin-ovl
 		fi
 	fi
+	if [[ $arch =~ "linux" ]]; then
+		# move epel access to archive
+		# sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/epel.repo
+#		sed -i 's|^mirrorlist=|#mirrorlist=|;s|^baseurl=.*|baseurl=http://mirror.math.princeton.edu/pub/fedora-archive/epel/6/$basearch|' /etc/yum.repos.d/epel.repo
+		yum clean all
+		yum makecache
+	fi
 	if ! rpm --quiet --query sudo; then
 		yum install -q -y sudo
 	fi

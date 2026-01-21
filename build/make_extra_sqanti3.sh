@@ -20,12 +20,12 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
 
-sqanti3version=4.2
+sqanti3version=5.5.1
 
 all=1
 extra=1
@@ -43,7 +43,7 @@ echo "Entering Holy Build Box environment"
 # Activate Holy Build Box environment.
 # Tk does not compile with these settings (X)
 # only use HBB for glibc compat, not static libs
-source /hbb_exe/activate
+# source /hbb_exe/activate
 
 # print all executed commands to the terminal
 set -x
@@ -59,12 +59,12 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-8
-yuminstall rh-python36
+yuminstall devtoolset-11
+#yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
 # scl enable devtoolset-8 rh-python36 bash
-source /opt/rh/devtoolset-8/enable
-source /opt/rh/rh-python36/enable
+source /opt/rh/devtoolset-11/enable
+#source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -98,50 +98,80 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# mamba
+# -----
+cd /build
+export mambaversion=25.3.0-3
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Miniforge3-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda || true
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+rm -rf /home/build/miniforge
+bash Miniforge3-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda/bin:$PATH
+PATH=/home/build/miniforge3/bin:$PATH
 
-#conda install -y -c conda-forge conda-pack
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda config --add channels r
-conda init bash
+#mamba init bash
+mamba shell init
 . ~/.bash_profile
+
+
+## miniconda
+## ---------
+#wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+#unset PYTHONPATH
+#rm -rf /build/miniconda || true
+#bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+#
+## bioconda
+## --------
+#
+#PATH=/build/miniconda/bin:$PATH
+#
+##conda install -y -c conda-forge conda-pack
+#
+#conda config --add channels defaults
+#conda config --add channels bioconda
+#conda config --add channels conda-forge
+#conda config --add channels r
+#conda init bash
+#. ~/.bash_profile
 
 # sqanti3
 # -------
 cd /build
 
-conda create -y -n sqanti3
-conda activate sqanti3
+wget https://github.com/ConesaLab/SQANTI3/releases/download/v$sqanti3version/SQANTI3_v$sqanti3version.zip
+rm -rf sqanti3-$sqanti3version
+mkdir sqanti3-$sqanti3version
+cd sqanti3-$sqanti3version
+unzip ../SQANTI3_v$sqanti3version.zip
 
-wget https://github.com/ConesaLab/SQANTI3/archive/refs/tags/v$sqanti3version.tar.gz
-tar -xvf v$version.tar.gz
-cd SQANTI3-$version
+mamba env create -y -n sqanti3 -f SQANTI3.conda_env.yml
 
-# install dependencies
-conda install -y cdna_cupcake
-conda install -y ucsc-gtftogenepred
-
-# install dependencies in SQANTI3.conda_env.yml
-conda install -y samtools scipy star slamem bcbiogff bedtools 
-conda install -y python>=3.7.6 biopython bioconductor-noiseq bx-python desalt gffread gmap kallisto minimap2 numpy openssl pandoc perl psutil pybedtools pysam
-conda install -y r>=3.6.0 r-dplyr r-ggplot2 r-ggplotify r-gridbase r-gridextra r-htmltools r-reshape r-scales r-rmarkdown r-stringi r-dt r-plotly r-plyr
-conda install -y ultra-bioinformatics
+#
+#
+#
+#mamba create -y -n sqanti3
+#conda activate sqanti3
+#
+#wget https://github.com/ConesaLab/SQANTI3/archive/refs/tags/v$sqanti3version.tar.gz
+#tar -xvf v$version.tar.gz
+#cd SQANTI3-$version
+#
+## install dependencies
+#conda install -y cdna_cupcake
+#conda install -y ucsc-gtftogenepred
+#
+## install dependencies in SQANTI3.conda_env.yml
+#conda install -y samtools scipy star slamem bcbiogff bedtools 
+#conda install -y python>=3.7.6 biopython bioconductor-noiseq bx-python desalt gffread gmap kallisto minimap2 numpy openssl pandoc perl psutil pybedtools pysam
+#conda install -y r>=3.6.0 r-dplyr r-ggplot2 r-ggplotify r-gridbase r-gridextra r-htmltools r-reshape r-scales r-rmarkdown r-stringi r-dt r-plotly r-plyr
+#conda install -y ultra-bioinformatics
 
 # make portable appdir
-conda install -y conda-pack
+mamba install -y conda-pack
 cd /build
 rm sqanti3.tar.gz || true
 conda pack -n sqanti3 -o sqanti3.tar.gz
@@ -150,22 +180,24 @@ mv sqanti3-$sqanti3version-$arch sqanti3-$sqanti3version-$arch.old || true
 mkdir sqanti3-$sqanti3version-$arch
 cd /build/sqanti3-$sqanti3version-$arch
 tar xvzf ../sqanti3.tar.gz
-cp -ra /build/SQANTI3-$version .
 
-# replace sqanti3 gtfToGenePred with hbb compiled one (that should work on more systems)
-cd /build/sqanti3-$sqanti3version-$arch
-mv ./SQANTI3-$version/utilities/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred.sqanti3
-cp -al ./bin/gtfToGenePred ./SQANTI3-$version/utilities/gtfToGenePred
+cp -ra /build/sqanti3-$sqanti3version .
+cp /usr/bin/sed bin/
 
-
-# make import from cdna_cupcake work
-cd /build/sqanti3-$sqanti3version-$arch
-git clone https://github.com/Magdoll/cDNA_Cupcake.git
-cd /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake
-#pip install Cython
-#python setup.py build
-# clean a bit
-rm -rf /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake/.git
+## replace sqanti3 gtfToGenePred with hbb compiled one (that should work on more systems)
+#cd /build/sqanti3-$sqanti3version-$arch
+#mv ./sqanti3-$sqanti3version/utilities/gtfToGenePred ./sqanti3-$sqanti3version/utilities/gtfToGenePred.sqanti3
+#cp -al ./bin/gtfToGenePred ./sqanti3-$sqanti3version/utilities/gtfToGenePred
+#
+#
+## make import from cdna_cupcake work
+#cd /build/sqanti3-$sqanti3version-$arch
+#git clone https://github.com/Magdoll/cDNA_Cupcake.git
+#cd /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake
+##pip install Cython
+##python setup.py build
+## clean a bit
+#rm -rf /build/sqanti3-$sqanti3version-$arch/cDNA_Cupcake/.git
 
 # make excutables in appdir root that will use the appdir env
 cd /build/sqanti3-$sqanti3version-$arch
@@ -175,7 +207,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_qc.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/sqanti3-5.5.1/sqanti3_qc.py ${1+"$@"}
 ' > sqanti3_qc.py
 chmod ugo+x sqanti3_qc.py
 
@@ -184,7 +216,7 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_qc.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/sqanti3-5.5.1/sqanti3_qc.py ${1+"$@"}
 ' > sqanti3_qc
 chmod ugo+x sqanti3_qc
 
@@ -193,7 +225,16 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/SQANTI3-$version/sqanti3_RulesFilter.py ${1+"$@"}
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/sqanti3-5.5.1/sqanti3 ${1+"$@"}
+' > sqanti3
+chmod ugo+x sqanti3
+
+echo '#!/bin/bash
+script="$(readlink -f "$0")"
+dir="$(dirname "$script")"
+PATH=$dir/bin:$PATH
+LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
+PYTHONPATH=$dir/cDNA_Cupcake/sequence $dir/sqanti3-5.5.1/sqanti3_RulesFilter.py ${1+"$@"}
 ' > sqanti3_RulesFilter.py
 chmod ugo+x sqanti3_RulesFilter.py
 
@@ -202,15 +243,14 @@ mv /build/sqanti3-$sqanti3version-$arch/bin/R /build/sqanti3-$sqanti3version-$ar
 mv /build/sqanti3-$sqanti3version-$arch/bin/Rscript /build/sqanti3-$sqanti3version-$arch/bin/Rscript.conda || true
 cp /io/build/sqanti3_files/R* /build/sqanti3-$sqanti3version-$arch/bin
 
-rm /build/sqanti3-$sqanti3version-$arch.tar.gz
+rm /build/sqanti3-$sqanti3version-$arch.tar.gz || true
 cd /build
+ln -sf sqanti3-$sqanti3version-$arch/sqanti3_qc .
 ln -sf sqanti3-$sqanti3version-$arch/sqanti3_qc.py .
 ln -sf sqanti3-$sqanti3version-$arch/sqanti3_RulesFilter.py .
 
-tar cvzf sqanti3-$sqanti3version-$arch.tar.gz sqanti3-$sqanti3version-$arch sqanti3_qc.py sqanti3_RulesFilter.py
+tar cvzf sqanti3-$sqanti3version-$arch.tar.gz sqanti3-$sqanti3version-$arch sqanti3_qc sqanti3_qc.py sqanti3_RulesFilter.py
 cp -ra sqanti3-$sqanti3version-$arch sqanti3_qc.py sqanti3_RulesFilter.py /io/extra$ARCH
 cd /io/extra$ARCH/
-
-conda deactivate
 
 echo "Finished building sqanti3"
