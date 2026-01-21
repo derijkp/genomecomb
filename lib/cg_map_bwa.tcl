@@ -1,3 +1,27 @@
+proc map_mem_bwa {mem threads preset deps} {
+	upvar job_logdir job_logdir
+# todo
+	if {$mem eq ""} {
+		set refseq [lindex $deps 0]
+		set bwarefseq [refseq_bwa_job $refseq $preset]
+		if {[file exists $bwarefseq.bwt]} {
+			# scale according to size index file
+			set size [file size $bwarefseq.bwt]
+			set mem [expr {round(2*$size) + $threads*100000000}]
+			if {$preset eq "short"} {set mem [expr {2*$mem}]}
+			# but require minimum 6G
+			if {$mem < 6442450944} {set mem 6442450944}
+		} else {
+			if {[regexp splice $preset]} {
+				set mem 20G
+			} else {
+				set mem 10G
+			}
+		}
+	}
+	return $mem
+}
+
 proc refseq_bwa_job {refseq {preset {}}} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
@@ -86,7 +110,7 @@ proc cg_map_bwa {args} {
 		}
 		-x - -preset - -p {
 			if {$value eq "short"} {
-				lappend extraopts -k 10 -T 15 -a
+				lappend extraopts -k 12 -T 18 -a
 			} elseif {$value ne ""} {
 				error "unknown bwa preset $value"
 			}
