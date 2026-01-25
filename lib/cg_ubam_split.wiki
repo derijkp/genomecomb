@@ -1,0 +1,30 @@
+= ubam_split =
+
+== Format ==
+cg ubam_split ?options? infile outtemplate
+
+== Summary ==
+split a (large) ubam file in multiple smaller ones
+
+== Description ==
+cg ubam_split will split a (large) ubam file in several smaller ubam
+files. You can either specify the target number of sequences per output
+file (-numseq option), or the target number of files you want to generate
+(-parts option).
+outtemplate is a filename (which may contain a path) that determines
+the names of the files the parts of the ubam file will be written to.
+The file part will be prepended with p<part>_., 
+e.g. if outtemplate is results/test.bam, the results files will be named:
+results/p1_test.bam results/p2_test.bam ...
+
+== Arguments ==
+; **infile** ...: ubam file to split
+; **outtemplate** ...: template for filenames that will be generated
+
+== Options ==
+; **-parts number**: number of output files to generate (this option has preference)
+; **-numseq number**: number of sequences to store per output file
+; **-maxparts number**: maximum number of parts that will be generated (if numseq is small, last part will contain all remaining sequenced)
+
+== Category ==
+Conversion

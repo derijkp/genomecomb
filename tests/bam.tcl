@@ -1336,4 +1336,44 @@ test bam_index {bam_index multiple} {
 		[llength [split [exec samtools view tmp/minimap2-p.sam.gz chr21:42733807-42733958] \n]]
 } {2 2 2}
 
+test ubam_split {ubam_split -parts} {
+	test_cleantmp
+	file copy data/bwa.bam tmp/bwa.bam
+	exec samtools view -h tmp/bwa.bam > tmp/expect.sam
+	set bam tmp/bwa.bam
+	cg ubam_split -parts 4 $bam tmp/split/ubam.bam
+	set results [bsort [glob tmp/split/p*ubam.bam]]
+	cg samcat {*}$results > tmp/test.sam
+	catch {exec diff tmp/test.sam tmp/expect.sam} m
+	append results \n$m
+	set results
+} {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam
+88,89c88
+< @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -H tmp/bwa.bam
+< @PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.15.1	CL:samtools view -bhS -@ 1
+---
+> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
+child process exited abnormally} 
+
+test ubam_split {ubam_split -numseq} {
+	test_cleantmp
+	file copy data/bwa.bam tmp/bwa.bam
+	exec samtools view -h tmp/bwa.bam > tmp/expect.sam
+	set bam tmp/bwa.bam
+	cg ubam_split -numseq 40 $bam tmp/split/ubam.bam
+	set results [bsort [glob tmp/split/p*ubam.bam]]
+	cg samcat {*}$results > tmp/test.sam
+	catch {exec diff tmp/test.sam tmp/expect.sam} m
+	append results \n$m
+	set results
+} {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam tmp/split/p5_ubam.bam
+88,89c88
+< @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -H tmp/bwa.bam
+< @PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.15.1	CL:samtools view -bhS -@ 1
+---
+> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
+child process exited abnormally} 
+
+
+
 testsummarize
