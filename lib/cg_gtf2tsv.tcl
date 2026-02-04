@@ -216,7 +216,9 @@ proc gtf2tsv {filename outfile {transcripts 1} {ignorecodon 1} {sort 1}} {
 				[join $curexonStarts ,] [join $curexonEnds ,] [join [list_remdup $cursource] ,]] \t]
 			set attrlist $attrtemplate
 			foreach {key value} [array get curattra] {
-				if {![info exists attra($key)]} {
+				if {$key in $nheader} {
+					# do not add if conflicts with data in default header
+				} elseif {![info exists attra($key)]} {
 					set attra($key) [llength $attrtemplate]
 					lappend attrheader $key
 					lappend attrtemplate {}
