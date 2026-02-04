@@ -1194,7 +1194,7 @@ proc iso_isoquant_mergeresults {isofiles genefiles readfiles strictpct sample ro
 
 	putslog "sort read_assignment file -> read_assignments-${root}.tsv.zst"
 	# sort read_assignment file
-	cg select -s - $tempreads2 read_assignments-${root}.tsv.temp.zst
+	cg select -overwrite 1 -s - $tempreads2 read_assignments-${root}.tsv.temp.zst
 	file rename -force read_assignments-${root}.tsv.temp.zst read_assignments-${root}.tsv.zst
 
 	putslog "totalcounts totalcounts-${root}.tsv"
