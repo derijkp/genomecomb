@@ -224,6 +224,7 @@ proc gzclosesamtools {f} {
 	if {[catch {gzclose $f} msg]} {
 		regsub {^error closing file [^:]+: } $msg {} temp
 		regsub -all {\[M::[^\n]+} $temp {} temp
+		regsub -all {samtools fastq: Coordinate sorted file.  Read pairs may be out of order} $temp {} temp
 		set temp [list_remove [split $temp \n] {}]
 		if {[llength $temp]} {
 			error $msg
