@@ -92,6 +92,23 @@ proc sc_filter_default_job {args} {
 			suppressMessages(library(DoubletFinder))
 			suppressMessages(library(scDblFinder))
 			suppressMessages(library(Seurat))
+			make_error_png <- function(message, filename = "error_message.png", width = 800, base_cex = 1.4, line_height = 1.5,	margin = 40) {
+				# Wrap text to fit approximate width
+				# Estimate characters per line based on image width
+				chars_per_line <- floor(width / (12 * base_cex))
+				wrapped <- strwrap(message, width = chars_per_line)
+				n_lines <- length(wrapped)
+				# Calculate required height dynamically
+				height <- margin * 2 + (n_lines * 20 * base_cex * line_height)
+				png(filename, width = width, height = height)
+				par(bg = "white", mar = c(0, 0, 0, 0))
+				plot.new()
+				plot.window(xlim = c(0, 1), ylim = c(0, 1))
+				# Vertical positioning
+				y_positions <- seq(0.9, 0.1, length.out = n_lines)
+				text(x = 0.5, y = y_positions, labels = wrapped, col = "red", cex = base_cex, font = 2)
+				dev.off()
+			}
 			# not yet
 			usescrublet <- 0
 			#
@@ -99,18 +116,24 @@ proc sc_filter_default_job {args} {
 			mat=Read10X(scgenefile10x)
 			#
 			# kneeplot
-			bcrank <- barcodeRanks(mat)
-			inflection <- metadata(bcrank)$inflection
-			knee <- metadata(bcrank)$knee
-			if (outkneeplot != "") {
-				png(file=outkneeplot)
-				uniq <- !duplicated(bcrank$rank)
-				plot(bcrank$rank[uniq], bcrank$total[uniq], log="xy", xlab="Rank", ylab="Total UMI count", cex.lab=1.2)
-				abline(h=inflection, col="darkgreen", lty=2)
-				abline(h=knee, col="dodgerblue", lty=2)
-				legend("bottomleft", legend=c(paste0("Inflection (",round(inflection),")"), paste0("Knee (",knee,")")), col=c("darkgreen", "dodgerblue"), lty=2, cex=1.2)
-				dev.off()
-			}
+			tryCatch({
+				bcrank <- barcodeRanks(mat)
+				inflection <- metadata(bcrank)$inflection
+				knee <- metadata(bcrank)$knee
+				if (outkneeplot != "") {
+					png(file=outkneeplot)
+					uniq <- !duplicated(bcrank$rank)
+					plot(bcrank$rank[uniq], bcrank$total[uniq], log="xy", xlab="Rank", ylab="Total UMI count", cex.lab=1.2)
+					abline(h=inflection, col="darkgreen", lty=2)
+					abline(h=knee, col="dodgerblue", lty=2)
+					legend("bottomleft", legend=c(paste0("Inflection (",round(inflection),")"), paste0("Knee (",knee,")")), col=c("darkgreen", "dodgerblue"), lty=2, cex=1.2)
+					dev.off()
+				}
+			}, error = function(e) {
+				cat("warning: kneeplot failed, error was:\n")
+				print(e$message)
+				make_error_png(e$message,outkneeplot)
+			})
 			#
 			# 2. EmptyDrops
 			cat("running EmptyDrops\n")
@@ -193,22 +216,29 @@ proc sc_filter_default_job {args} {
 			})
 			#
 			# Mitochondrial cut-off and standard processing (scDblFinder does not prefer this processing step first, DoubletFinder does)
-			cat("running Mitochondrial cutoff")
+			# cat("running Mitochondrial cutoff")
 			# error if no mitochondrial genes were found
 			# SOB_filtered <- subset(SOB, subset = percent.mt < 5)
-			SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
-			SOB@assays$RNA_org@key <- "newkey_"
-			genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
-			SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
-			SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
-			SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
-			SOB <- ScaleData(SOB)
-			if (ncol(SOB) > 50) {npcs = 50} else {npcs=ncol(SOB)-1}
-			SOB <- RunPCA(SOB, npcs = npcs)
-			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:npcs)
-			SOB <- FindClusters(SOB, resolution = 0.5)
-			SOB <- RunUMAP(SOB, dims = 1:npcs)
-			ggsave(umappng,DimPlot(SOB))
+			cat("Making UMAP")
+			e.out <- tryCatch({
+				SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
+				SOB@assays$RNA_org@key <- "newkey_"
+				genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
+				SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
+				SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
+				SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
+				SOB <- ScaleData(SOB)
+				if (ncol(SOB) > 50) {npcs = 50} else {npcs=ncol(SOB)-1}
+				SOB <- RunPCA(SOB, npcs = npcs)
+				SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:npcs)
+				SOB <- FindClusters(SOB, resolution = 0.5)
+				SOB <- RunUMAP(SOB, dims = 1:npcs)
+				ggsave(umappng,DimPlot(SOB))
+			}, error = function(err) {
+				cat("warning: UMAP failed, error was:\n")
+				print(err)
+				make_error_png(err,umappng)
+			})
 			e.out <- tryCatch({
 				SOB <- RunTSNE(SOB, dims = 1:npcs)
 				ggsave(tsnepng,DimPlot(SOB,reduction="tsne"))
@@ -240,30 +270,35 @@ proc sc_filter_default_job {args} {
 				cat("warning: DoubletFinder failed\n")
 			})
 			#
-			if (usescrublet == 1)	{
-				# 3.3 Scrublet
-				cat("running Scrublet")
-				reticulate::use_condaenv("~/miniconda3/envs/scrublet")
-				scrub <- reticulate::import(module = "scrublet", convert = FALSE,delay_load = TRUE)
-				counts_matrix = reticulate::r_to_py(Seurat::GetAssayData(object = SOB[["RNA"]], slot = "counts"))$T$tocsc()
-				
-				scr <- eval(rlang::expr(scrub$Scrublet(counts_matrix = counts_matrix, expected_doublet_rate = expected_doublet_rate_per_10000_cells))) 
-				doublet_results <- eval(rlang::expr(reticulate::py_to_r(scr$scrub_doublets())))
-				doublet_score <- doublet_results[[1]]
-				names(doublet_score) <- colnames(SOB)
-				doublet_prediction <- doublet_results[[2]]
-				names(doublet_prediction) <- colnames(SOB)
-				SOB <- Seurat::AddMetaData(SOB, metadata = doublet_score, col.name = "scrublet_doublet_score")
-				SOB <- Seurat::AddMetaData(SOB, metadata = doublet_prediction, col.name = "scrublet_doublet_prediction")
-				SOB@meta.data$scrublet_doublet_prediction <- gsub("FALSE", "Singlet", SOB@meta.data$scrublet_doublet_prediction)
-				SOB@meta.data$scrublet_doublet_prediction <- gsub("TRUE", "Doublet", SOB@meta.data$scrublet_doublet_prediction)
-				rm(counts_matrix, scr, doublet_results, doublet_score, doublet_prediction)
-				
-				# Doublet Score
-				SOB@meta.data <- SOB@meta.data %>% mutate(doublet_score = ifelse(scDblFinder.class == "Doublet", 1,0) + ifelse(scrublet_doublet_prediction == "Doublet", 1, 0) + ifelse(DoubletFinder == "Doublet", 0.3, 0) + ifelse(DoubletFinder.adj == "Doublet", 0.7, 0))
-			} else {
-				SOB@meta.data <- SOB@meta.data %>% mutate(doublet_score = ifelse(scDblFinder.class == "Doublet", 1,0) + ifelse(DoubletFinder == "Doublet", 0.3, 0) + ifelse(DoubletFinder.adj == "Doublet", 0.7, 0))
-			}
+			e.out <- tryCatch({
+				if (usescrublet == 1)	{
+					# 3.3 Scrublet
+					cat("running Scrublet")
+					reticulate::use_condaenv("~/miniconda3/envs/scrublet")
+					scrub <- reticulate::import(module = "scrublet", convert = FALSE,delay_load = TRUE)
+					counts_matrix = reticulate::r_to_py(Seurat::GetAssayData(object = SOB[["RNA"]], slot = "counts"))$T$tocsc()
+					
+					scr <- eval(rlang::expr(scrub$Scrublet(counts_matrix = counts_matrix, expected_doublet_rate = expected_doublet_rate_per_10000_cells))) 
+					doublet_results <- eval(rlang::expr(reticulate::py_to_r(scr$scrub_doublets())))
+					doublet_score <- doublet_results[[1]]
+					names(doublet_score) <- colnames(SOB)
+					doublet_prediction <- doublet_results[[2]]
+					names(doublet_prediction) <- colnames(SOB)
+					SOB <- Seurat::AddMetaData(SOB, metadata = doublet_score, col.name = "scrublet_doublet_score")
+					SOB <- Seurat::AddMetaData(SOB, metadata = doublet_prediction, col.name = "scrublet_doublet_prediction")
+					SOB@meta.data$scrublet_doublet_prediction <- gsub("FALSE", "Singlet", SOB@meta.data$scrublet_doublet_prediction)
+					SOB@meta.data$scrublet_doublet_prediction <- gsub("TRUE", "Doublet", SOB@meta.data$scrublet_doublet_prediction)
+					rm(counts_matrix, scr, doublet_results, doublet_score, doublet_prediction)
+					
+					# Doublet Score
+					SOB@meta.data <- SOB@meta.data %>% mutate(doublet_score = ifelse(scDblFinder.class == "Doublet", 1,0) + ifelse(scrublet_doublet_prediction == "Doublet", 1, 0) + ifelse(DoubletFinder == "Doublet", 0.3, 0) + ifelse(DoubletFinder.adj == "Doublet", 0.7, 0))
+				} else {
+					SOB@meta.data <- SOB@meta.data %>% mutate(doublet_score = ifelse(scDblFinder.class == "Doublet", 1,0) + ifelse(DoubletFinder == "Doublet", 0.3, 0) + ifelse(DoubletFinder.adj == "Doublet", 0.7, 0))
+				}
+			}, error = function(err) {
+				cat("warning: integration DoubletFinder failed\n")
+				print(err)
+			})
 			cat(paste0("Quality control for ", scgenefile10x, "Completed!"), "\n")
 			#
 			if (metadatafile != "") {

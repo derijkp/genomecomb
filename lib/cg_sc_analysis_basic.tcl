@@ -87,6 +87,23 @@ proc sc_analysis_basic_job {args} {
 			suppressMessages(library(argparser))
 			suppressMessages(library(DropletUtils))
 			suppressMessages(library(Seurat))
+			make_error_png <- function(message, filename = "error_message.png", width = 800, base_cex = 1.4, line_height = 1.5,	margin = 40) {
+				# Wrap text to fit approximate width
+				# Estimate characters per line based on image width
+				chars_per_line <- floor(width / (12 * base_cex))
+				wrapped <- strwrap(message, width = chars_per_line)
+				n_lines <- length(wrapped)
+				# Calculate required height dynamically
+				height <- margin * 2 + (n_lines * 20 * base_cex * line_height)
+				png(filename, width = width, height = height)
+				par(bg = "white", mar = c(0, 0, 0, 0))
+				plot.new()
+				plot.window(xlim = c(0, 1), ylim = c(0, 1))
+				# Vertical positioning
+				y_positions <- seq(0.9, 0.1, length.out = n_lines)
+				text(x = 0.5, y = y_positions, labels = wrapped, col = "red", cex = base_cex, font = 2)
+				dev.off()
+			}
 			# not yet
 			usescrublet <- 0
 			#
@@ -112,19 +129,26 @@ proc sc_analysis_basic_job {args} {
 			cat("running Mitochondrial cutoff")
 			# error if no mitochondrial genes were found
 			# SOB_filtered <- subset(SOB, subset = percent.mt < 5)
-			SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
-			SOB@assays$RNA_org@key <- "newkey_"
-			genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
-			SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
-			SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
-			SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
-			SOB <- ScaleData(SOB)
-			if (ncol(SOB) > 50) {npcs = 50} else {npcs=ncol(SOB)-1}
-			SOB <- RunPCA(SOB, npcs = npcs)
-			SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:npcs)
-			SOB <- FindClusters(SOB, resolution = 0.5)
-			SOB <- RunUMAP(SOB, dims = 1:npcs)
-			ggsave(umappng,DimPlot(SOB))
+			# UMAP
+			e.out <- tryCatch({
+				SOB@assays$RNA_org <- CreateAssayObject(SOB@assays$RNA@counts)
+				SOB@assays$RNA_org@key <- "newkey_"
+				genes_to_remove <- rownames(SOB)[grep("^novelg-", rownames(SOB))]
+				SOB <- SOB[!rownames(SOB) %in% genes_to_remove, ]
+				SOB <- NormalizeData(SOB, normalization.method = "LogNormalize", scale.factor = 10000)
+				SOB <- FindVariableFeatures(SOB, selection.method = "vst", nfeatures = 2000)
+				SOB <- ScaleData(SOB)
+				if (ncol(SOB) > 50) {npcs = 50} else {npcs=ncol(SOB)-1}
+				SOB <- RunPCA(SOB, npcs = npcs)
+				SOB <- FindNeighbors(SOB, reduction = "pca", dims = 1:npcs)
+				SOB <- FindClusters(SOB, resolution = 0.5)
+				SOB <- RunUMAP(SOB, dims = 1:npcs)
+				ggsave(umappng,DimPlot(SOB))
+			}, error = function(err) {
+				cat("warning: UMAP failed, error was:\n")
+				print(err)
+				make_error_png(err,umappng)
+			})
 			e.out <- tryCatch({
 				SOB <- RunTSNE(SOB, dims = 1:npcs)
 				ggsave(tsnepng,DimPlot(SOB,reduction="tsne"))
