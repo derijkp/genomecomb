@@ -108,7 +108,8 @@ Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes
 ; -svcallers svcallers: (space separated) list of structural variant callers to be used (default empty).
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
-Currently supported are: nanopolish
+Currently supported are: nanopolish, remora.
+The remora option only processes the methylation information using modkit (actual remora analysis must have been done before, with methylation data present in the source unaligned bams)
 ; -reftranscripts reftranscripts: file with reference transcripts for isoform calling. (default empty -> finds default in refdb)
 Currently supported are: flair, isoquant, flames
 ; -isocallers isocallers: (space separated) list of isofrom calling (and counting) programs to be used for rna-seq data.
