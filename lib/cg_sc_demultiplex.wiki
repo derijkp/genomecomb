@@ -25,6 +25,18 @@ The original pooled sample is not removed, as it has information not in the demu
 ; dmfile: tsv file assigning cells to (new/demultiplexed) samples
 ; refseq: genome reference sequence, needed for (oa) making crams
 
+
+This command can demultiplex 10x OCM (on-chip-multiplexing) data by using an adapted demultiplexing file with the fields 
+ocm (with the relevant OCM whitelist name) and sample, e.g.
+
+{{{
+ocm	sample
+OB1_3M	sample1
+OB2_3M	sample2
+OB3_3M	sample3
+OB4_3M	sample4
+}}}
+
 == Category ==
 Singlecell
 

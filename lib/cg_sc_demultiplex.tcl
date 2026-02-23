@@ -94,6 +94,7 @@ proc sc2bulk {scgenefile target} {
 
 proc sc_demultiplex_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [clean_cmdline cg sc_demultiplex {*}$args]
 	set destVar {}
 	set reports {singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
 	cg_options sc_demultiplex args {
@@ -101,6 +102,8 @@ proc sc_demultiplex_job {args} {
 	} {sampledir dmfile refseq destVar} 3 4
 	set sampledir [file_absolute $sampledir]
 	set sample [file tail $sampledir]
+	job_logfile $sampledir/sc_demultiplex-$sample-[file_root $dmfile] $sampledir $cmdline \
+		{*}[versions genomecomb samtools]
 	if {$destVar ne ""} {
 		upvar $destVar dest
 	} else {
@@ -125,7 +128,7 @@ proc sc_demultiplex_job {args} {
 		set cellfiles [jobgzfiles $sampledir/sc_cellinfo_raw-*.tsv]
 		if {[llength $cellfiles]} {
 			set newdm [file root [gzroot $dmfile]].ocmcells.tsv.zst
-			job demultiplex-[file tail $file] -deps [list $dmfile {*}$cellfiles]  -targets {
+			job demultiplex-[file_root $dmfile] -deps [list $dmfile {*}$cellfiles]  -targets {
 				$newdm
 			} -vars {
 				newdm dmfile cellfiles
@@ -141,7 +144,6 @@ proc sc_demultiplex_job {args} {
 			set dmfile $newdm
 		}
 	}
-
 
 	set dmsamples [array names dest]
 	set files [jobgzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
@@ -160,7 +162,7 @@ proc sc_demultiplex_job {args} {
 			set destfile $dest($dmsample)/$pre-$destsample$fullext
 			lappend targets $destfile
 		}
-		job demultiplex-[file tail $file] -deps {
+		job demultiplex-[file_root $file] -deps {
 			$file $refseq
 		} -targets $targets -vars {
 			file dmfile dmsamples refseq
