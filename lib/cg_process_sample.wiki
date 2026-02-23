@@ -139,6 +139,7 @@ Following options are available for singlecell or bulk UMI corrected analysis:
 ; -sc_adaptorseq string: adapter sequence used to find the barcode and UMI. These should follow the given sequence in the reads (default is CTACACGACGCTCTTCCGATCT for singlecell)
 ; -sc_barcodesize number: size of the barcode (default 16 for singlecell)
 ; -sc_umisize number: size of the UMI (default 12 for singlecell)
+; -sc_barcodemethod method: default "normal", use "filter" for filtering out some common artefacts
 ; -addumis 0/1: when 1, add barcode and UMI info to reads for bulk sequencing, in (bulk) isoquant analysis umicounts will be added in the results (barcodes are not used)
     You can use -sc_adaptorseq, -sc_barcodesize and -sc_umisize to change how barcodes and UMIs are searched (default for -addumis is GATCGGAAGAGCACACGTCTGAACTCCAGTCAC,8,12)
 

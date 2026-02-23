@@ -595,6 +595,7 @@ proc process_sample_job {args} {
 	set sc_whitelist {}
 	set sc_umisize {}
 	set sc_barcodesize {}
+	set sc_barcodemethod {}
 	set sc_adaptorseq {}
 	set sc_filters {}
 	set sc_celltypers {}
@@ -659,6 +660,9 @@ proc process_sample_job {args} {
 		}
 		-sc_barcodesize {
 			set sc_barcodesize [codeback_empty $value]
+		}
+		-sc_barcodemethod {
+			set sc_barcodemethod [codeback_empty $value]
 		}
 		-sc_adaptorseq {
 			set sc_adaptorseq [codeback_empty $value]
@@ -1036,6 +1040,7 @@ proc process_sample_job {args} {
 				-whitelist $sc_whitelist \
 				-umisize $sc_umisize \
 				-barcodesize $sc_barcodesize \
+				-barcodemethod $sc_barcodemethod \
 				-adaptorseq $sc_adaptorseq \
 				$fastqdir $sampledir
 			set fastqdir $sampledir/bcfastq

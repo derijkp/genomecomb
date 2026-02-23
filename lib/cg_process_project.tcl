@@ -57,6 +57,7 @@ proc process_project_job {args} {
 	set sc_whitelist {}
 	set sc_umisize {}
 	set sc_barcodesize {}
+	set sc_barcodemethod {}
 	set sc_adaptorseq {}
 	set sc_filters {}
 	set sc_celltypers {}
@@ -129,6 +130,9 @@ proc process_project_job {args} {
 		}
 		-sc_barcodesize {
 			set sc_barcodesize [code_empty $value]
+		}
+		-sc_barcodemethod {
+			set sc_barcodemethod [code_empty $value]
 		}
 		-sc_adaptorseq {
 			set sc_adaptorseq [code_empty $value]
@@ -406,7 +410,7 @@ proc process_project_job {args} {
 	set todo(reports) {}
 	set keys {
 		clip 
-		singlecell addumis sc_whitelist sc_umisize sc_barcodesize sc_adaptorseq 
+		singlecell addumis sc_whitelist sc_umisize sc_barcodesize sc_barcodemethod sc_adaptorseq 
 		sc_filters sc_celltypers sc_expectedcells cellmarkerfile tissue 
 		datatype aliformat aligners ali_keepcomments realign 
 		varcallers svcallers methcallers counters reftranscripts isocallers 

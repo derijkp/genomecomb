@@ -10,8 +10,13 @@ proc sc_barcodes_ref {ref {adaptorseq CTACACGACGCTCTTCCGATCT}} {
 	return $ref.map-ont
 }
 
-proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {umisize 12}} {
+proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {umisize 12} {barcodemethod normal}} {
 	# version 2 umisize = 10, v3 umi is 12
+	if {$barcodemethod eq "filter"} {
+		set filter 1
+	} else {
+		set filter 0
+	}
 	set reffile [tempfile].fa
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
 	set sam [tempfile].sam.zst
@@ -35,21 +40,74 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	set o [wgzopen $resultfile]
 	puts $o [join {id barcode umi start strand polyA} \t]
 	set header [tsv_open $f]
-	set poss [list_cor $header {chromosome begin end strand qname qstart qend cigar seq supplementary}]
+	set poss [list_cor $header {chromosome begin end strand qname qstart qend cigar seq supplementary mapquality}]
 	set qnamepos [lsearch $header qname]
-	set mqpos [lsearch $header mapquality]
-	set strandpos [lsearch $header strand]
-	set qstartpos [lsearch $header qstart]
+	set mqpos 10
+	set strandpos 3
+	set qstartpos 5
 	set num 0
 	set todo {}
 	set prevqname {}
+	if {$filter} {
+		unset -nocomplain filtera
+		array set filtera {
+			CGACGCTCTTCCGATC        87
+			ACGACGCTCTTCCGAT        92
+			CACGACGCTCTTCCGA        511
+			AAGCAGTGATATCAAC        90
+			TGACAGTGGTATCAAC        58
+			AATCAGTGGTATCAAC        68
+			AAGAAGTGGTATCAAC        70
+			AAGCAGTAGTATCAAC        73
+			AGACAGTGGTATCAAC        73
+			AAGCGGTGGTATCAAC        75
+			AAGCAATGGTATCAAC        95
+			AAGCAGTCGTATCAAC        132
+			AAGCAAGTGGTATCAA        1
+		}
+	}
+	set nrread 0
 	while 1 {
-		if {[gets $f nline] == -1} break
+		# if we are at end of file ($nrread == -1), we go one extra round to finish up what is in the todo list
+		# check first if previous get was EOF
+		if {$nrread == -1} break
+		set nrread [gets $f nline]
 		set nline [split $nline \t]
 		if {![expr [incr num]%10000]} {puts $num}
 		set nqname [lindex $nline $qnamepos]
 		if {$nqname ne $prevqname && [llength $todo]} {
 			# if more than one hit for adapter, select "best" one
+			set todo [list_subindex $todo $poss]
+			if {$filter} {
+				set remove {}
+				set polytnr {}
+				set pos -1
+				foreach line $todo {
+					incr pos
+					foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
+					set start $qend
+					set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+					if {[info exists filtera($barcode)] || [regexp GCAGTGGTATCA|AAGCAGTGG|GTGGTATCAAC|ACACGACGCTCT|ACGCTCTTCCGA $barcode]} {
+						lappend remove $pos
+						continue
+					}
+					# check Ts
+					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+6}]]
+					lappend polytnr [regexp -all T $post]
+				}
+				if {[llength $polytnr]} {
+					set todo [list_sub $todo -exclude $remove]
+					if {[llength $polytnr] > 1} {
+						set max [lmath_max $polytnr]
+						if {$max >= 4} {
+							set todo [list_sub $todo [list_find $polytnr $max]]
+						}
+					}
+				} else {
+					set todo [list [lindex $todo 0]]
+					lset todo 0 0 *
+				}
+			}
 			if {[llength $todo] > 1} {
 				# remove hits with lower mapping quality
 				set qs [list_subindex $todo $mqpos]
@@ -78,7 +136,8 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 			} else {
 				set line [lindex $todo 0]
 			}
-			foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
+			# foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
+			foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
 			if {$chromosome eq "*"} {
 				puts $o [join [list $qname {} {} {} {} 0] \t]
 			} else {
@@ -107,6 +166,7 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 		set prevqname $nqname
 		lappend todo $nline
 	}
+
 	gzclose $o
 	close $f
 	#
@@ -166,6 +226,7 @@ proc sc_barcodes_job args {
 	set adaptorseq CTACACGACGCTCTTCCGATCT
 	set barcodesize 16
 	set umisize 12
+	set barcodemethod normal
 	# cutoff at 2 means that the actual maximum cost/difference is 1
 	set costcutoff 2
 	set bcparts 50
@@ -192,6 +253,9 @@ proc sc_barcodes_job args {
 		}
 		-umisize {
 			set umisize $value
+		}
+		-barcodemethod {
+			set barcodemethod $value
 		}
 		-bcparts {
 			set bcparts $value
@@ -266,11 +330,11 @@ proc sc_barcodes_job args {
 		} -targets {
 			$target $target2
 		} -vars {
-			 adaptorseq fastq barcodesize umisize
+			 adaptorseq fastq barcodesize umisize barcodemethod
 		} -procs {
 			find_barcodes
 		} -code {
-			find_barcodes $fastq $target $target2 $adaptorseq $barcodesize $umisize
+			find_barcodes $fastq $target $target2 $adaptorseq $barcodesize $umisize $barcodemethod
 		}
 	}
 	# merge barcodes and find cell barcodes
@@ -615,7 +679,7 @@ proc sc_barcodes_job args {
 			catch {gzclose $ff} ; catch {gzclose $fb}
 			catch {gzclose $fqo} ; catch {gzclose $fio}
 			if {[file ext $fastq] in ".bam .cram .sam"} {
-				set ff [open [list | samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq]]
+				set ff [open [list | samtools fastq --verbosity 2 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq]]
 				set ubams 1
 			} else {
 				set ff [gzopen $fastq]
