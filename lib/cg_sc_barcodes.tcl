@@ -14,18 +14,19 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	# version 2 umisize = 10, v3 umi is 12
 	set reffile [tempfile].fa
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
-	set sam [tempfile].sam
+	set sam [tempfile].sam.zst
 	# set sam $resultfile.sam
 	if {[file ext $fastq] in ".bam .cram .sam"} {
 		set usefastq [tempfile].fastq.gz
-		catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq | gzip > $usefastq
+		catch_exec samtools fastq --verbosity 2 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq | gzip > $usefastq
 		set ubams 1
 	} else {
 		set usefastq $fastq
 		set ubams 0
 	}
-	catch_exec minimap2 -Y -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq > $sam 2>@ stderr
+	catch_exec minimap2 -Y -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq | cg zst -c 1 > $sam 2>@ stderr
 	if {$ubams} {file delete $usefastq}
+
 	# cg sam2tsv $sam | cg select -g chromosome
 	# exec ~/dev/genomecomb/bin/sc_getbarcodes adapter $begin 16 10 < $sam > temp
 	catch {close $f} ; catch {close $o}
@@ -109,14 +110,14 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	gzclose $o
 	close $f
 	#
-	set o [wgzopen $sumresultfile.temp w]
+	set o [wgzopen $sumresultfile.temp[gzext $sumresultfile]]
 	puts $o barcode\tcount
 	foreach barcode [array names a] {
 		puts $o $barcode\t$a($barcode)
 	}
 	gzclose $o
-	cg select -overwrite 1 -s count $sumresultfile.temp $sumresultfile.temp2
-	file rename -force $sumresultfile.temp2 $sumresultfile
+	cg select -overwrite 1 -s count $sumresultfile.temp[gzext $sumresultfile] $sumresultfile.temp2[gzext $sumresultfile]
+	file rename -force $sumresultfile.temp2[gzext $sumresultfile] $sumresultfile
 	file delete $sumresultfile.temp
 	file delete $sam
 }
