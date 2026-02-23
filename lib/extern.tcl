@@ -326,6 +326,38 @@ proc R {args} {
 	# dirR --vanilla --slave --no-restore --file=rfile --args arg1 arg2
 }
 
+proc putsvarsR {args} {
+	foreach var $args {
+		if {[string index $var 0] ne "+"} {
+			upvar 1 $var uvar
+			if {![info exists uvar]} {
+				error "error running R with -vars: variable $var does not exist"
+			}
+			if {$uvar ne "" && [string is double $uvar]} {
+				append pre "$var=$uvar\n"
+			} else {
+				append pre "$var=\"$uvar\"\n"
+			}
+		} else {
+			set var [string range $var 1 end]
+			upvar 1 $var uvar
+			if {![info exists uvar]} {
+				error "error running R with -vars: variable $var does not exist"
+			}
+			set type num
+			foreach el $uvar {
+				if {![string is double $el]} {set type string ; break}
+			}
+			if {$type eq "num"} {
+				append pre "$var=c([join $uvar ,])\n"
+			} else {
+				append pre "$var=c(\"[join $uvar \",\"]\")\n"
+			}
+		}
+	}
+	return $pre
+}
+
 proc findpython3 {} {
 	global python3
 	if {![info exists python3]} {
