@@ -174,6 +174,8 @@ proc gatkexec {args} {
 			if {$finishedpattern eq "" || ![regexp $finishedpattern $msg] || [regexp ERROR $msg] || [regexp EXCEPTION $msg]} {
 				dict unset opt -level
 				return -options $opt $msg
+			} else {
+				error $msg
 			}
 		}
 	}
