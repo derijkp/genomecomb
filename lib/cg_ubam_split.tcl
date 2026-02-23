@@ -32,12 +32,12 @@ proc ubam_split_job {args} {
 		for {set part 1} {$part <= $parts} {incr part} {
 			lappend files $outdir/p${part}_$outfile.temp
 		}
-		set totalnumseq [exec samtools view $infile | countlines]
+		set totalnumseq [exec samtools view --no-PG $infile | countlines]
 		set numseq [expr {$totalnumseq / $parts}]
 		set maxparts $parts
 	}
-	set header [exec samtools view -H $infile]
-	exec samtools view $infile | splitubam $outdir $outfile.temp $numseq $header\n $threads $maxparts
+	set header [exec samtools view --no-PG -H $infile | grep -v ^@PG]
+	exec samtools view --no-PG $infile | splitubam $outdir $outfile.temp $numseq $header\n $threads $maxparts
 	if {![info exists files]} {
 		set files [glob $outdir/p*_$outfile.temp]
 	}
@@ -51,8 +51,6 @@ proc ubam_split_job {args} {
 }
 
 proc cg_ubam_split {args} {
-	set args [job_init {*}$args]
 	set result [ubam_split_job {*}$args]
-	job_wait
 	return $result
 }

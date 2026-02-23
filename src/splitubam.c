@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 		if (count == 0) {
 			if (o != NULL) {pclose(o);}
 			DStringSetS(filename,"",0);
-			DStringPrintf(filename,"samtools view -bhS -@ %d > ",threads);
+			DStringPrintf(filename,"samtools view -bhS --no-PG -@ %d > ",threads);
 			fprintf(stdout,"1 %*.*s\n",filename->size,filename->size,filename->string);
 			DStringAppendS(filename,output_dir,output_dir_size);
 			fprintf(stdout,"2 %*.*s\n",filename->size,filename->size,filename->string);

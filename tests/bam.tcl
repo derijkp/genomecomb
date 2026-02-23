@@ -1348,10 +1348,7 @@ test ubam_split {ubam_split -parts} {
 	append results \n$m
 	set results
 } {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam
-88,89c88
-< @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -H tmp/bwa.bam
-< @PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.15.1	CL:samtools view -bhS -@ 1
----
+87a88
 > @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
 child process exited abnormally} 
 
@@ -1367,13 +1364,8 @@ test ubam_split {ubam_split -numseq} {
 	append results \n$m
 	set results
 } {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam tmp/split/p5_ubam.bam
-88,89c88
-< @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -H tmp/bwa.bam
-< @PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.15.1	CL:samtools view -bhS -@ 1
----
+87a88
 > @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
 child process exited abnormally} 
-
-
 
 testsummarize
