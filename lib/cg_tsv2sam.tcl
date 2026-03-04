@@ -26,7 +26,7 @@ proc cg_tsv2sam {args} {
 	if {$samfile eq "-"} {
 		set pipe {}
 	} elseif {$tsvcompressed} {
-		set pipe [list {*}[gzcat $tsvfile] $tsvfile]
+		set pipe [list {*}[gzcat $tsvfile] $tsvfile \|]
 	}
 	lappend pipe tsv2sam
 	if {$outformat eq "bam"} {

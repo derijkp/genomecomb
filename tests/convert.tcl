@@ -1567,6 +1567,14 @@ test tsv2bam {tsv2bam} {
 	exec diff tmp/bwa.sam tmp/expected.sam
 } {}
 
+test tsv2bam {tsv2bam from compressed tsv file} {
+	exec samtools view --no-PG -h data/bwa.bam > tmp/expected.sam
+	cg sam2tsv tmp/expected.sam | cg zst > tmp/bwa.tsv.zst
+	cg tsv2bam tmp/bwa.tsv.zst tmp/bwa.bam
+	exec samtools view --no-PG --no-PG -h tmp/bwa.bam > tmp/bwa.sam
+	exec diff tmp/bwa.sam tmp/expected.sam
+} {}
+
 test tsv2sam {tsv2sam cases} {
 	file_write tmp/test.tsv [deindent {
 		#@HD	VN:1.3	SO:coordinate
