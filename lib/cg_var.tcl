@@ -58,10 +58,14 @@ proc var_job {args} {
 			set hap_bam [true $value]
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 		default {
 			lappend var_opts $key $value

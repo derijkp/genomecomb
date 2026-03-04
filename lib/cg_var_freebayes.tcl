@@ -69,10 +69,14 @@ proc var_freebayes_job {args} {
 			# not actually used
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 		-skip {
 			lappend skips -skip $value
