@@ -60,6 +60,21 @@ test process_sample {bwa distrreg} {
 	cg tsvdiff tmp/NA19240m/varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo tmp/expected_varall-gatk-rdsbwa-NA19240m.tsv.analysisinfo
 } {}
 
+test process_sample {bwa distrreg filename too long} {
+	test_cleantmp
+	file mkdir tmp/NA19240m/fastq
+	set base abc[string_fill 123456789 24]
+	set base abc[string_fill 123456789 27]
+	file copy data/seq_R1.fq.gz tmp/NA19240m/fastq/${base}_R1.fq.gz
+	file copy data/seq_R2.fq.gz tmp/NA19240m/fastq/${base}_R2.fq.gz
+	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
+	exec cg process_sample {*}$::dopts -threads 1 -clip 0 -realign 0 -aligners bwa -distrreg chr \
+		-dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m > tmp/NA19240m.startuplog 2> tmp/NA19240m.startuperror
+	grid_wait
+	# chr21:42730799-42762826
+	cg tsvdiff tmp/NA19240m/var-gatk-dsbwa-NA19240m.tsv.zst data/NA19240m/var-gatk-rdsbwa-NA19240m.tsv
+} {}
+
 test process_sample {bwa distrreg ubam source} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/ubam

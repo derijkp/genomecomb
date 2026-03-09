@@ -228,3 +228,16 @@ proc close f {
 	genomecomb::close.ori $f
 	unset -nocomplain ::genomecomb_gzopen_info($f)
 }
+
+package require md5
+
+proc shorten {filename {maxsize 255} {insert 99}} {
+	set tail [file tail $filename]
+	if {[string length $tail] <= $maxsize} {
+		return $filename
+	}
+	set endstart [expr {$insert + [string length $tail] - $maxsize + 14}]
+	set md5 [string range [md5::md5 -hex $tail] 0 10]
+	set newtail [string range $tail 0 $insert]^$md5^[string range $tail $endstart end]
+	return [file dir $filename]/$newtail
+}
