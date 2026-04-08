@@ -25,6 +25,8 @@ proc refseq_minimap2_job {refseq {preset {}}} {
 		map_minimap2_presets $preset mpreset refpreset extraopts
 		if {$preset eq "ontshort"} {
 			set temp [catch_exec minimap2 -I $size -x map-ont -k 5 -w 1 -d $target.temp $dep]
+		} elseif {$preset eq "short"} {
+			set temp [catch_exec minimap2 -I $size -x sr -k 6 -w 2 -d $target.temp $dep]
 		} else {
 			set temp [catch_exec minimap2 -I $size -x $mpreset -d $target.temp $dep]
 		}
@@ -109,6 +111,11 @@ proc map_minimap2_presets {value mpresetVar refpresetVar extraoptsVar} {
 		set mpreset map-ont
 		set refpreset ontshort
 		lappend extraopts -n 1 -m 1 -k 5 -w 1 -s 20
+	} elseif {$value in "short"} {
+		# have to keep this and change just before using because it needs a different index
+		set mpreset sr
+		set refpreset short
+		lappend extraopts -n 1 -m 5 -k 6 -w 2 -s 20 -r 50 --no-long-join --secondary=yes -N 50
 	} elseif {$value in "avapb"} {
 		set mpreset ava-pb
 		set refpreset ava-pb
