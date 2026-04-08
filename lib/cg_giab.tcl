@@ -111,6 +111,7 @@ proc cg_giab_gettruth {args} {
 		}
 		foreach file [glob $basedir19/*_hg19_*] {
 			regsub -all _hg19_ $file _hg38_ file38
+			mkdir [file dir $file38]
 			cg liftover $file $file38 $refbase/liftover/hg19ToHg38.over.tsv
 		}
 		cg select -q {$filter eq "PASS"} sv_hg38_[file root [gzroot $vcf]].tsv.zst sv_hg38_pass_[file root [gzroot $vcf]].tsv.zst
