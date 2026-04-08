@@ -44,10 +44,14 @@ proc sv_gridss_job {args} {
 			lappend skips -skip $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}

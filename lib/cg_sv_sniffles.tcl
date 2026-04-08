@@ -106,10 +106,14 @@ proc sv_sniffles_job {args} {
 			set regmincoverage $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -sniffles] {
@@ -172,7 +176,7 @@ proc sv_sniffles_job {args} {
 			set usebam $bamfile
 		}
 		if {$version2} {
-			if {![catch {glob [file dir $refseq]/extra/sniffles_*.trf.bed} trffile]} {
+			if {![catch {glob [file dir $refseq]/extra/sniffles_*.trf.bed} trffile] && $trffile ne ""} {
 				lappend opts --tandem-repeats $trffile
 			}
 			if {[file exists $target.temp.gz]} {file delete $target.temp.gz}

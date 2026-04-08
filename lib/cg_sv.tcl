@@ -49,10 +49,14 @@ proc sv_job {args} {
 			lappend opts $key $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]

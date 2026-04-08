@@ -62,10 +62,14 @@ proc sam_catmerge_job {args} {
 			lappend skips -skip $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {resultfile samfile} 1 ... {
 		merge sam files by concatenating (no problem with max open files) and then sorting them.

@@ -73,10 +73,14 @@ proc sv_cuteSV_job {args} {
 			lappend opts {*}$value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {bamfile resultfile} 1 2
 	foreach {key value} [specialopts -cuteSV] {

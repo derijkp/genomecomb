@@ -87,6 +87,7 @@ proc cg_map_star {args} {
 	set readgroupdata {}
 	set threads 2
 	set mem 30G
+	set time {}
 	set fixmate 1
 	set aliformat bam
 	set ali_keepcomments {}
@@ -118,7 +119,14 @@ proc cg_map_star {args} {
 			set extraopts $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
+		}
+		-time {
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using star

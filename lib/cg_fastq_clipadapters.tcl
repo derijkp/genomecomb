@@ -31,10 +31,14 @@ proc fastq_clipadapters_job {args} {
 			set compress $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
 		}
 		-time {
-			set time $value
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {fastqfile} 1 ... {
 		Use fastq-mcf to clip adaptors from fastqs, results are in a dir

@@ -53,6 +53,7 @@ proc cg_map_hisat2 {args} {
 	set readgroupdata {}
 	set threads 2
 	set mem 5G
+	set time {}
 	set fixmate 1
 	set aliformat bam
 	set ali_keepcomments {}
@@ -77,7 +78,14 @@ proc cg_map_hisat2 {args} {
 			set threads $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
+		}
+		-time {
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 		-extraopts {
 			lappend extraopts {*}$value

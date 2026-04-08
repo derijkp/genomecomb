@@ -38,6 +38,7 @@ proc count_rnaseqc_job {args} {
 	set keepargs $args
 	set threads 2
 	set mem 1G
+	set time {}
 	set preset {}
 	set gtffile {}
 	set resultfile {}
@@ -59,7 +60,14 @@ proc count_rnaseqc_job {args} {
 			set gtffile $value
 		}
 		-mem {
-			set mem $value
+			if {$value ne ""} {
+				set mem $value
+			}
+		}
+		-time {
+			if {$value ne ""} {
+				set time $value
+			}
 		}
 	} {bamfile resultfile} 1 2 {
 		count reads for genes in rna-seq experiment
