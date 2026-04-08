@@ -19,5 +19,9 @@ of the given groupfile
 ; scisoformfile: tab separated file with transcript information (in the [[transcript]] tsv format, output of e.g. scywalker) and UMI counts per gene/per cell
 ; groupfile: tsv file containing assignement of cells/barcodes to cell-types (or any other grouping)
 
+== Options ==
+; -cellfield string: field in groupfile to use to determine cell(barcode) (default cell)
+; -groupfield string: field in groupfile to use to determine the group the given cell belongs to (default group)
+
 == Category ==
 Singlecell

@@ -1,6 +1,10 @@
 proc sc_pseudobulk_job {args} {
 	upvar job_logdir job_logdir
+	set cellfield cell
+	set groupfield group
 	cg_options sc_pseudobulk args {
+		-celfield {set cellfield $value}
+		-groupfield {set groupfield $value}
 	} {scgenefile scisoformfile groupfile} 3 3
 	#
 	set scgenefile [file_absolute $scgenefile]
@@ -18,7 +22,8 @@ proc sc_pseudobulk_job {args} {
 		cg tsv210x $scgenefile $scgenefile10x.temp
 		file rename -force $scgenefile10x.temp $scgenefile10x
 	}
-	set rootname [file_rootname $groupfile]
+	set grouproot [lindex [split [file_rootname $groupfile] -] 0]
+	set rootname $grouproot-[file_rootname $scgenefile]
 	set groupfile [file_absolute $groupfile]
 	set pb_genefile $dir/pb_gene_counts-$rootname.tsv.zst
 	set pb_isoformfile $dir/pb_isoform_counts-$rootname.tsv.zst
@@ -36,7 +41,9 @@ proc sc_pseudobulk_job {args} {
 		set f [gzopen $groupfile]
 		set header [tsv_open $f]
 		set cellpos [lsearch $header cell]
-		if {$cellpos == -1} {error "group file $groupfile does not have a cell field"}
+		if {$cellpos == -1} {set cellpos [lsearch $header barcode]"}
+		if {$cellpos == -1} {set cellpos [lsearch $header cellbarcode]"}
+		if {$cellpos == -1} {error "group file $groupfile does not have a cell field (or barcode or cellbarcode)"}
 		set grouppos [lsearch $header group]
 		if {$grouppos == -1} {error "group file $groupfile does not have a group field"}
 		set poss [list $cellpos $grouppos]
