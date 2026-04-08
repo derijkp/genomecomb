@@ -12,5 +12,8 @@ The given tsv file will be checked for two types of "errors":
 * Wrong sort order: If the fields  chromosome, begin, end, type are present in a tsv file,
 lines that are not correctly sorted according to those fields a reported.
 
+== Options ==
+; **-checksort 0/1**: check if lines are sorted correctly (1 = default) or not (0)
+
 == Category ==
 tsv
