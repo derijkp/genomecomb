@@ -308,7 +308,7 @@ mainw method opentsv {args} {
 		if {[file exists $root/compar]} break
 		if {[llength [glob -nocomplain $root/*.cgproj]]} break
 		lappend path [file tail $root]
-		if {[catch {glob -nocomplain [file dir $root]/*}]} {
+		if {[catch {glob -nocomplain [file dir $root]/*} list] || ![llength $list]} {
 			break
 		}
 		set root [file dir $root]
