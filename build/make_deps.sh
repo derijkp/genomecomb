@@ -93,6 +93,7 @@ function download {
 # ---
 if [[ $all -eq 1 || ! -f /io/extern$ARCH/lz4 ]] ; then
     zlibversion=1.2.11
+    zlibversion=1.3.1
     download https://zlib.net/zlib-$zlibversion.tar.gz
     cd /build/zlib-$zlibversion
     make distclean
@@ -297,8 +298,9 @@ fi
 # ---------------------------------------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
 
-    htsversion=1.15.1
+    htsversion=1.23
     # also a library, needs -fPIC, so compile as lib
+    cg /build
     source /hbb_shlib/activate
     download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
     cd /build/htslib-$htsversion
@@ -322,7 +324,7 @@ fi
 # samtools
 # --------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/samtools ] ; then
-    samversion=1.15.1
+    samversion=1.23
     download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
     cd /build/samtools-$samversion
     make distclean
@@ -331,7 +333,11 @@ if [ $all -eq 1 || ! -f /io/extern$ARCH/samtools ] ; then
     make
     gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
                 -o samtools bam.o bam_aux.o bam_index.o bam_plcmd.o sam_view.o bam_fastq.o bam_cat.o bam_md.o bam_plbuf.o bam_reheader.o bam_sort.o bam_rmdup.o bam_rmdupse.o bam_mate.o bam_stat.o bam_color.o bamtk.o bam2bcf.o sample.o cut_target.o phase.o bam2depth.o coverage.o padding.o bedcov.o bamshuf.o faidx.o dict.o stats.o stats_isize.o bam_flags.o bam_split.o bam_tview.o bam_tview_curses.o bam_tview_html.o bam_lpileup.o bam_quickcheck.o bam_addrprg.o bam_markdup.o tmp_file.o bam_ampliconclip.o amplicon_stats.o bam_import.o bam_samples.o bam_consensus.o consensus_pileup.o \
-                ./lz4/lz4.o libst.a htslib-1.15.1/libhts.a \
+                ./lz4/lz4.o libst.a htslib-1.23/libhts.a \
+                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
+    gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
+                -o samtools *.o \
+                ./lz4/lz4.o libst.a htslib-1.23/libhts.a \
                 -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
     make install
     cp samtools /io/extern$ARCH
@@ -341,7 +347,7 @@ fi
 # bcftools
 # --------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/bcftools ] ; then
-    bcfversion=1.15
+    bcfversion=1.23
     download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
     cd /build/bcftools-$bcfversion
     make distclean
@@ -356,12 +362,16 @@ fi
 # bwa
 # ---
 if [ $all -eq 1 || ! -f /io/extern$ARCH/bwa ] ; then
-    bwaversion=0.7.17
-    download https://sourceforge.net/projects/bio-bwa/files/bwa-$bwaversion.tar.bz2
+    bwaversion=0.7.19
+    download https://github.com/lh3/bwa/archive/refs/tags/v$bwaversion.tar.gz
+    rm v$bwaversion.tar.gz
     cd /build/bwa-$bwaversion
     make
-    cp /build/bin/bwa /io/extern$ARCH
-    strip /io/extern$ARCH/bwa
+    cp bwa /io/extern$ARCH/bwa-$bwaversion-$arch
+    strip /io/extern$ARCH/bwa-$bwaversion-$arch
+    cd /io/extern$ARCH/
+    ln -s bwa-$bwaversion-$arch bwa
+    ln -s bwa-$bwaversion-$arch bwa-$bwaversion
 fi
 
 # ea-utils

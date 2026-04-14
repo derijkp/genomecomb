@@ -98,23 +98,23 @@ test compress {basic combinations} {
 		bz2 281 bz2 281 sample.bed - tmp/test.bz2
 		{} 618974 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
 		{} 618974 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		{} 618974 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		{} 618974 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
 		{} 618974 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
 		lz4 209708 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
 		lz4 209708 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		lz4 209708 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		lz4 209708 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
 		lz4 209708 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
 		rz 178075 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
 		rz 178075 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		rz 178075 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		rz 178075 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
 		rz 178075 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
-		bgz 172630 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
-		bgz 172630 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		bgz 172630 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
-		bgz 172630 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
+		bgz 172546 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
+		bgz 172546 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
+		bgz 172546 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		bgz 172546 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
 		bz2 133936 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4
 		bz2 133936 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		bz2 133936 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		bz2 133936 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
 		bz2 133936 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
 	}]]\n
 	exec diff tmp/expected.txt tmp/result.txt
@@ -165,23 +165,23 @@ test compress {basic combinations -keep 1 -index 1} {
 		bz2 281 bz2 281 sample.bed - tmp/test.bz2
 		{} 618974 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test tmp/test.lz4 tmp/test.lz4.lz4i
 		{} 618974 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test tmp/test.rz
-		{} 618974 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test tmp/test.bgz
+		{} 618974 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test tmp/test.bgz
 		{} 618974 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test tmp/test.bz2
 		lz4 209708 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4 tmp/test.lz4.lz4i
 		lz4 209708 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4 tmp/test.rz
-		lz4 209708 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.lz4
+		lz4 209708 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.lz4
 		lz4 209708 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2 tmp/test.lz4
 		rz 178075 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.lz4 tmp/test.lz4.lz4i tmp/test.rz
 		rz 178075 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.rz
-		rz 178075 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.rz
+		rz 178075 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.rz
 		rz 178075 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2 tmp/test.rz
-		bgz 172630 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.lz4 tmp/test.lz4.lz4i
-		bgz 172630 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.rz
-		bgz 172630 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
-		bgz 172630 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.bz2
+		bgz 172546 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.lz4 tmp/test.lz4.lz4i
+		bgz 172546 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.rz
+		bgz 172546 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz
+		bgz 172546 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.bz2
 		bz2 133936 lz4 209708 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2 tmp/test.lz4 tmp/test.lz4.lz4i
 		bz2 133936 rz 178075 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2 tmp/test.rz
-		bz2 133936 bgz 172630 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.bz2
+		bz2 133936 bgz 172546 annot_compar-exomes_yri_parts.tsv - tmp/test.bgz tmp/test.bz2
 		bz2 133936 bz2 133936 annot_compar-exomes_yri_parts.tsv - tmp/test.bz2
 	}]]\n
 	exec diff tmp/expected.txt tmp/result.txt
@@ -227,7 +227,7 @@ bgz 521 294 sample.bed
 bz2 521 281 sample.bed
 lz4 618974 209708 annot_compar-exomes_yri_parts.tsv
 rz 618974 178075 annot_compar-exomes_yri_parts.tsv
-bgz 618974 172630 annot_compar-exomes_yri_parts.tsv
+bgz 618974 172546 annot_compar-exomes_yri_parts.tsv
 bz2 618974 133936 annot_compar-exomes_yri_parts.tsv
 }
 
@@ -250,7 +250,7 @@ bgz 521 294 sample.bed
 bz2 521 281 sample.bed
 lz4 618974 209708 annot_compar-exomes_yri_parts.tsv
 rz 618974 178075 annot_compar-exomes_yri_parts.tsv
-bgz 618974 172630 annot_compar-exomes_yri_parts.tsv
+bgz 618974 172546 annot_compar-exomes_yri_parts.tsv
 bz2 618974 133936 annot_compar-exomes_yri_parts.tsv
 }
 
@@ -273,7 +273,7 @@ bgz 521 294 sample.bed
 bz2 521 281 sample.bed
 lz4 618974 209708 annot_compar-exomes_yri_parts.tsv
 rz 618974 178075 annot_compar-exomes_yri_parts.tsv
-bgz 618974 172630 annot_compar-exomes_yri_parts.tsv
+bgz 618974 172546 annot_compar-exomes_yri_parts.tsv
 bz2 618974 133936 annot_compar-exomes_yri_parts.tsv
 }
 

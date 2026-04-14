@@ -1348,9 +1348,10 @@ test ubam_split {ubam_split -parts} {
 	append results \n$m
 	set results
 } {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam
-87a88
-> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
-child process exited abnormally} 
+86a87,88
+> @PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
+> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.23	CL:samtools view -h tmp/bwa.bam
+child process exited abnormally}
 
 test ubam_split {ubam_split -numseq} {
 	test_cleantmp
@@ -1364,8 +1365,9 @@ test ubam_split {ubam_split -numseq} {
 	append results \n$m
 	set results
 } {tmp/split/p1_ubam.bam tmp/split/p2_ubam.bam tmp/split/p3_ubam.bam tmp/split/p4_ubam.bam tmp/split/p5_ubam.bam
-87a88
-> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.15.1	CL:samtools view -h tmp/bwa.bam
+86a87,88
+> @PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
+> @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.23	CL:samtools view -h tmp/bwa.bam
 child process exited abnormally} 
 
 testsummarize

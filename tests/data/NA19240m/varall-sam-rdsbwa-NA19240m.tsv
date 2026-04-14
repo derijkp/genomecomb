@@ -132,13 +132,13 @@
 #contig	chrX	155270560
 #contig	chrY	59373566
 #vcf_samtoolsVersion	1.13+htslib-1.13
-#vcf_bcftools_callVersion	1.13+htslib-1.13
+#vcf_bcftools_callVersion	1.23+htslib-1.23
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
-#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/tests_genomecomb/process_sample__bwa_distrreg/tmp/NA19240m/map-rdsbwa-NA19240m.bam
+#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /home/peter/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /home/peter/dev/genomecomb/tests/tmp/NA19240m/var-sam-rdsbwa-NA19240m.tsv.temp/varall-sam-rdsbwa-NA19240m.tsv-chr1.bed /home/peter/dev/genomecomb/tests/tmp/NA19240m/map-rdsbwa-NA19240m.bam
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Mon Jul 19 01:12:20 2021
+#vcf_bcftools_callCommand	call --threads 1 -c -; Date=Thu Apr  9 16:03:21 2026
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
