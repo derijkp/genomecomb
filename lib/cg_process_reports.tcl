@@ -601,11 +601,11 @@ proc process_reports_job {args} {
 		}
 	}
 	set fastqfiles [bsort [jobglob \
-		$sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq \
+		$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/ubam/*.sam \
 	]]
 	if {![llength $fastqfiles]} {
 		set fastqfiles [bsort [jobglob \
-			$sampledir/ubam/*.bam $sampledir/ubam/*.cram $sampledir/uban/*.sam \
+			$sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq \
 		]]
 	}
 	if {$paired} {
