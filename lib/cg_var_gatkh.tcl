@@ -168,9 +168,10 @@ proc var_gatkh_job {args} {
 			}
 			# -finishedpattern is a hack to catch an error that sometimes seems to happen, after fully processing the data
 			# Do not use redirect to stdout/stderr, as the code needs the output to check if actual analysis was finished
+			set usebam [usebam $dep]
 			gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} HaplotypeCaller \
 				{*}$opts -R $gatkrefseq \
-				-I $dep \
+				-I $usebam \
 				-O $varallfile.temp.gz \
 				--annotate-with-num-discovered-alleles \
 				-ERC $ERC \
@@ -178,6 +179,7 @@ proc var_gatkh_job {args} {
 				-G StandardHCAnnotation \
 				-G AS_StandardAnnotation \
 				--max-reads-per-alignment-start 0
+			file delete $usebam
 			file rename -force -- $varallfile.temp.gz $varallfile
 			file rename -force -- $varallfile.temp.gz.tbi $varallfile.tbi
 			# file delete $varallfile.temp

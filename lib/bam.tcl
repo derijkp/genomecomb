@@ -37,3 +37,33 @@ proc sam_filter {list} {
 	}
 	format %.0f [lmath_sum $els]
 }
+
+proc usebam {bam {max cramv3} {index 1}} {
+	set ext [file extension $bam]
+	if {$ext eq ".bam"} {
+		set tempbam [tempdir]/[file root [file tail $bam]].bam
+		mklink $bam $tempbam
+		mklink $bam.bai $tempbam.bai
+	} elseif {$max eq "cramv3"} {
+		set fh [open $bam rb]
+		set hdr [read $fh 6]
+		close $fh
+		binary scan $hdr a4cc magic major minor
+		if {$magic ne "CRAM"} {
+			error "$bam is not a cram file"
+		} elseif {$major == 3 && $minor == 1} {
+			set tempbam [tempdir]/[file root [file tail $bam]].bam
+			exec samtools view -h -b $bam > $tempbam
+			exec samtools index $tempbam
+		} else {
+			set tempbam [tempdir]/[file root [file tail $bam]]$ext
+			mklink $bam $tempbam
+			mklink $bam.crai $tempbam.crai
+		}
+	} elseif {$max eq "bam"} {
+		set tempbam [tempdir]/[file root [file tail $bam]].bam
+		exec samtools view -h -b $bam > $tempbam
+		exec samtools index $tempbam
+	}
+	return $tempbam
+}

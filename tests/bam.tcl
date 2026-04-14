@@ -1370,4 +1370,35 @@ test ubam_split {ubam_split -numseq} {
 > @PG	ID:samtools	PN:samtools	PP:bwa	VN:1.23	CL:samtools view -h tmp/bwa.bam
 child process exited abnormally} 
 
+test usebam {usebam various options} {
+	file copy data/bwa.bam tmp/bwa.bam
+	set usebam [usebam tmp/bwa.bam]
+	if {![regexp ^[tempdir] $usebam]} {
+		error "$usebam not a temp file"
+	} elseif {[file extension $usebam] ne ".bam"} {
+		error "$usebam should have extension .bam"
+	} elseif {[catch {file link $usebam}]} {
+		error "$usebam should be a link"
+	}
+	file delete $usebam
+	exec samtools view -C -T [refseq $::refseqdir/hg19] data/bwa.bam > tmp/bwa.cram
+	set usebam [usebam tmp/bwa.cram]
+	if {![regexp ^[tempdir] $usebam]} {
+		error "$usebam not a temp file"
+	} elseif {[file extension $usebam] ne ".bam"} {
+		error "$usebam should have extension .bam"
+	} elseif {![catch {file link $usebam}]} {
+		error "$usebam should not be a link"
+	}
+	exec samtools view -C -T [refseq $::refseqdir/hg19] -O cram,version=3.0 -o tmp/bwa.cram data/bwa.bam
+	set usebam [usebam tmp/bwa.cram]
+	if {![regexp ^[tempdir] $usebam]} {
+		error "$usebam not a temp file"
+	} elseif {[file extension $usebam] ne ".cram"} {
+		error "$usebam should have extension .cram"
+	} elseif {[catch {file link $usebam}]} {
+		error "$usebam should be a link"
+	}
+} {} 
+
 testsummarize

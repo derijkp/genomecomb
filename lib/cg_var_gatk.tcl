@@ -253,11 +253,13 @@ proc var_gatk_job {args} {
 				set bedfile [tempbed $regionfile $refseq]
 				lappend opts -L $bedfile
 			}
+			set usebam [usebam $dep]
 			gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} UnifiedGenotyper \
-				{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
+				{*}$opts -nct $threads -R $dep2 -I $usebam -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
 				-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES
+			file delete $usebam
 			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
@@ -305,11 +307,13 @@ proc var_gatk_job {args} {
 				set bedfile [tempbed $regionfile $refseq]
 				lappend opts -L $bedfile
 			}
+			set usebam [usebam $dep]
 			gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx4g} UnifiedGenotyper \
-				{*}$opts -R $dep2 -I $dep -o $target.temp \
+				{*}$opts -R $dep2 -I $usebam -o $target.temp \
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
 				-glm INDEL
+			file delete $usebam
 			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
