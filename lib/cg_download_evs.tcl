@@ -1,5 +1,5 @@
 proc cg_download_evs {args} {
-	cg_options download_phenotype args {
+	cg_options download_evs args {
 	} {resultfile url}
 	set resultfile [file_absolute $resultfile]
 	if {$url eq ""} {

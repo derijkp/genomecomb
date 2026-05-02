@@ -10,15 +10,22 @@ proc cg_download_phenotype {args} {
 	}
 	set tempdir $resultfile.temp
 	file mkdir $tempdir
-	# hsapiens_gene_ensembl
-	cg_download_mart $tempdir/ens_phenotype.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol phenotype_description}
+	wgetfile https://www.ebi.ac.uk/gene2phenotype/api/panel/all/download $tempdir/gene2phenotype.csv
+	cg csv2tsv $tempdir/gene2phenotype.csv | cg select -f {
+		{gene symbol} {disease name} {disease mim} confidence
+	} -nh {
+		gene phenotype_description disease_mim confidence
+	} > $tempdir/gene2phenotype.tsv
+
 	# clinvar
 	set url ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_$nbuild/clinvar.vcf.gz
-	wgetfile $url $tempdir/clinvar_hg19.vcf.gz
-	cg vcf2tsv $tempdir/clinvar_hg19.vcf.gz $tempdir/clinvar_hg19.tsv
+	wgetfile $url $tempdir/clinvar_$nbuild.vcf.gz
+	cg vcf2tsv $tempdir/clinvar_$nbuild.vcf.gz $tempdir/clinvar_$nbuild.tsv
+
+	# make final
 	unset -nocomplain a
 	# process hsapiens_gene_ensembl
-	set f [open $tempdir/ens_phenotype.tsv]
+	set f [open $tempdir/gene2phenotype.tsv]
 	set header [tsv_open $f]
 	while 1 {
 		if {[gets $f line] == -1} break
@@ -30,9 +37,11 @@ proc cg_download_phenotype {args} {
 	}
 	close $f
 	# process clinvar
-	set f [gzopen $tempdir/clinvar_hg19.tsv]
+
+	catch {gzclose $f}
+	set f [gzopen $tempdir/clinvar_$nbuild.tsv]
 	set header [tsv_open $f]
-	set poss [list_cor $header {GENEINFO CLNDBN}]
+	set poss [list_cor $header {GENEINFO CLNDN}]
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
@@ -41,7 +50,7 @@ proc cg_download_phenotype {args} {
 		if {$gene eq ""} continue
 		set pheno [string_change $pheno {_ { } {\x2c} {-}}]
 		set pheno [string tolower $pheno]
-		set pheno [split $pheno |,]
+		set pheno [split $pheno |]
 		set pheno [list_lremove $pheno {{not specified} {not provided}}]
 		if {![llength $pheno]} continue
 		set a($gene) [list_union [get a($gene) ""] $pheno]
@@ -56,31 +65,24 @@ proc cg_download_phenotype {args} {
 	}
 	close $o
 	# info
-	regsub -all \n\t\t {
+	file_write [gzroot $resultfile].info [subst [deindent {
+		phenotype
+		=========
+		
+		Download info
+		-------------
+		dbname	phenotype
+		version	[timestamp]
+		website	https://www.ncbi.nlm.nih.gov/clinvar/ , http://www.ensembl.org
+		source	$url, https://www.ebi.ac.uk/gene2phenotype/api/panel/all/download
+		time	[timestamp]
+		
+		Description
+		-----------
 		Gene-phenotype data file
 		
 		These gene-phenotype correlations are extracted from the ensembl gene database 
 		using biomart combined with those found in the clinvar database.
-	} \n temp
-	file_write [gzroot $resultfile].info [string trim $temp]
-file_write [gzroot $resultfile].info [subst [string trim {
-phenotype
-=========
-
-Download info
--------------
-dbname	phenotype
-version	[timestamp]
-website	https://www.ncbi.nlm.nih.gov/clinvar/ , http://www.ensembl.org
-source	$url, http://www.ensembl.org/biomart
-time	[timestamp]
-
-Description
------------
-Gene-phenotype data file
-
-These gene-phenotype correlations are extracted from the ensembl gene database 
-using biomart combined with those found in the clinvar database.
-}]]
+	}]]\n
 	compress $tempdir/phenotype.tsv $resultfile
 }

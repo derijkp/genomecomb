@@ -1,3 +1,11 @@
+proc mart_check {file} {
+	if {![file exists $file]} {return 0}
+	set f [open $file]
+	set line [gets $f]
+	close $f
+	if {[regexp ERROR: $line]} {return 0} else {return 1}
+}
+
 proc cg_download_mart {file dataset config attributes} {
 	set attributesxml "<Attribute name=\"[join $attributes "\"/><Attribute name=\""]\"/>"
 	set query [string trim [regsub -all \n [subst {
@@ -12,6 +20,12 @@ proc cg_download_mart {file dataset config attributes} {
 		exec wget --quiet -O $file.temp http://central.biomart.org/biomart/martview/results?$query
 	}]} {
 		exec wget --quiet -O $file.temp http://www.ensembl.org/biomart/martservice?$query
+	}
+	if {![mart_check $file.temp]} {
+		exec wget --quiet -O $file.temp http://useast.ensembl.org/biomart/martservice?$query
+	}
+	if {![mart_check $file.temp]} {
+		exec wget --quiet -O $file.temp http://asia.ensembl.org/biomart/martservice?$query
 	}
 	set header [list_change $attributes {external_gene_name gene name_1006 go_name namespace_1003 go_domain go_linkage_type go_evidence}]
 	cg select -overwrite 1 -nh $header $file.temp $file.temp2

@@ -46,7 +46,7 @@ set regionsdb_join {
 	chainSelf dgvMerged genomicSuperDups
 }
 
-set gencodeversion 45
+set gencodeversion 49
 # list with geneset name (first word) and one or more of the following keywords
 # int : include in intGene
 # extra : place in the extra dir instead of in base annotation dir
@@ -67,25 +67,25 @@ set genesdb [list \
 set 1000g3url http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
-set clinvarurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20240407.vcf.gz
-set clinvarpapuurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20240407_papu.vcf.gz
+set clinvarurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260426.vcf.gz
+set clinvarpapuurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260426_papu.vcf.gz
 #set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-${build}-trim.vcf.tar
 #set kaviarbuild hg19
-set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
-set evsbuild hg19
-set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
-set exacbuild hg19
+#set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+#set evsbuild hg19
+#set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
+#set exacbuild hg19
 set caddversion 1.7
 set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/whole_genome_SNVs.tsv.gz
 set caddbuild hg38
 set gnomadbuild hg38
-set gnomadversion 4.1
+set gnomadversion 4.1.1
 set gnomadbaseurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadversion
 set gnomadexbuild hg38
-set gnomadexversion 4.1
+set gnomadexversion 4.1.1
 set gnomadexurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadexversion/vcf/exomes
 set gnomadlofbuild hg38
-set gnomadlofversion 4.1
+set gnomadlofversion 4.1.1
 set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.constraint_metrics.tsv
 set gnomadsvbuild hg38
 set gnomadsvversion 4.1
@@ -101,8 +101,9 @@ set dbnsfpbuild hg38
 #set gtffile genes_hg38_ensGene.gtf.gz
 #set gencodegtfurl ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
 #set gencodegtffile extra/gene_hg38_gencode.v39.gtf
-set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.annotation.gtf.gz
-set transcriptsgtf extra/gene_hg38_gencode.v45.gtf
+set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.annotation.gtf.gz
+set transcriptsgtf extra/gene_hg38_gencode.v49.gtf
+# https://huggingface.co/datasets/katielink/dm_alphamissense
 set dm_alphamissense_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_isoforms_hg38.tsv.gz
 set dm_alphamissense_canonical_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz
 
@@ -436,20 +437,20 @@ job reg_${build}_go -deps {
 #	}
 #}
 
-# exac
-job var_${build}_exac -targets {
-	extra/var_${build}_exac.tsv.zst
-	extra/var_${build}_exac.tsv.opt
-	extra/var_${build}_exac.tsv.info
-} -vars {dest build db exacurl exacbuild} -code {
-	set target [gzroot $target].zst
-	if {$exacbuild eq $build} {
-		cg download_exac --stack 1 --verbose 2 $target $exacurl
-	} else {
-		cg download_exac --stack 1 --verbose 2 $target.$exacbuild.zst $exacurl
-		liftover_refdb $target.$exacbuild.zst $target $dest $exacbuild $build 0
-	}
-}
+## exac
+#job var_${build}_exac -targets {
+#	extra/var_${build}_exac.tsv.zst
+#	extra/var_${build}_exac.tsv.opt
+#	extra/var_${build}_exac.tsv.info
+#} -vars {dest build db exacurl exacbuild} -code {
+#	set target [gzroot $target].zst
+#	if {$exacbuild eq $build} {
+#		cg download_exac --stack 1 --verbose 2 $target $exacurl
+#	} else {
+#		cg download_exac --stack 1 --verbose 2 $target.$exacbuild.zst $exacurl
+#		liftover_refdb $target.$exacbuild.zst $target $dest $exacbuild $build 0
+#	}
+#}
 
 # encode
 foreach {jobname resultname infosrc tables} {
@@ -567,12 +568,13 @@ job ccr -deps {
 	wgetfile $ccrurl $target.temp/$tail
 	if {$build ne $ccrbuild} {
 		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.$ccrbuild.temp
-		liftover_refdb $target.$ccrbuild.temp $target.zst $dest $ccrbuild $build
+		rm $target
+		liftover_refdb $target.$ccrbuild.temp $target $dest $ccrbuild $build
 	} else {
 		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
 		file rename -force -- $target.temp.zst $target.zst
 	}
-	cg zstindex $target.zst
+	cg zstindex $target
 	file delete -force $target.temp
 }
 
@@ -1268,7 +1270,7 @@ foreach {srcbuild targetname url file} {
 	hg38 twistrefseq https://twistbioscience.com/sites/default/files/resources/2019-09/Twist_Exome_RefSeq_targets_hg38.bed {}
 } {
 	job reg_exome_$targetname -targets {
-		extra/reg_${build}_exome_$targetname.tsv
+		extra/reg_${build}_exome_$targetname.tsv.zst
 	} -vars {targetname url file dest srcbuild build} -code {
 		cd ${dest}/${build}
 		set fulltarget [file_absolute $target]
@@ -1306,11 +1308,11 @@ foreach {srcbuild targetname url file} {
 		}
 		compress reg_${build}_exome_$targetname.tsv reg_${build}_exome_$targetname.tsv.zst
 		file delete temp.bed s$targetname.tsv u$targetname.tsv
-		file rename -force -- reg_${build}_exome_$targetname.tsv.zst $fulltarget.zst
+		file rename -force -- reg_${build}_exome_$targetname.tsv.zst $fulltarget
 		cd ${dest}/${build}
 		file delete -force $fulltarget.temp
 		if {$targetname eq "SeqCap_EZ_v3"} {
-			mklink $fulltarget.zst [file dir $fulltarget]/reg_${build}_exome_seqcapv3.tsv.zst
+			mklink $fulltarget [file dir $fulltarget]/reg_${build}_exome_seqcapv3.tsv.zst
 		}
 	}
 }
