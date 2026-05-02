@@ -1251,7 +1251,7 @@ proc process_sample_job {args} {
 					set workdir [shadow_workdir $resultbamfile]
 					# file mkdir $resultbamfile.temp
 					job_cleanup_add $workdir
-					set target [shorten $workdir/$pbase.sam.zst 242]
+					set target [shorten $workdir/$pbase.sam.zst 234]
 					lappend partsa($aligner) $target
 					# map using ${aligner}
 					set opts {}

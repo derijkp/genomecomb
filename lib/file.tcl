@@ -231,7 +231,7 @@ proc close f {
 
 package require md5
 
-proc shorten {filename {maxsize 255} {insert 99}} {
+proc shorten {filename {maxsize 234} {insert 99}} {
 	set tail [file tail $filename]
 	if {[string length $tail] <= $maxsize} {
 		return $filename
