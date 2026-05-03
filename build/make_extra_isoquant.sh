@@ -20,13 +20,13 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
 
-isoquantversion=3.6.3
-conda_isoquantversion=3.6.3
+isoquantversion=3.12.2
+conda_isoquantversion=3.12.2
 
 all=1
 extra=1
@@ -58,10 +58,10 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-9
+yuminstall devtoolset-11
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-9 bash
-source /opt/rh/devtoolset-9/enable
+# scl enable devtoolset-11 bash
+source /opt/rh/devtoolset-11/enable
 
 
 for dir in lib include bin share ; do
@@ -159,30 +159,37 @@ tar xvzf ../isoquant.tar.gz
 
 cd /build/isoquant-$isoquantversion-$arch
 
-echo '#!/bin/bash
-script="$(readlink -f "$0")"
-dir="$(dirname "$script")"
-PATH=$dir/bin:$PATH
-LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/isoquant.py ${1+"$@"}
-' > isoquant.py
-chmod ugo+x isoquant.py
+mv bin/isoquant bin/isoquant.ori
+cat << 'EOF' > bin/isoquant
+#!/bin/sh
+'''exec' python "$0" "$@"
+' '''
+import sys
+from isoquant import main_entry
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main_entry())
+EOF
+chmod ugo+x bin/isoquant
 
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/bin/isoquant.py ${1+"$@"}
+$dir/bin/isoquant ${1+"$@"}
 ' > isoquant
 chmod ugo+x isoquant
 
+chmod u+x lib/python3.12/site-packages/isoquant_lib/gtf2db.py
+
 echo '#!/bin/bash
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-*/src/gtf2db.py ${1+"$@"}
+PYTHONPATH=$dir/lib/python3.12/site-packages:$PYTHONPATH
+python -m isoquant_lib.gtf2db ${1+"$@"}
 ' > gtf2db
 chmod ugo+x gtf2db
 
@@ -191,7 +198,8 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 PATH=$dir/bin:$PATH
 LD_LIBRARY_PATH=$dir/lib:$LD_LIBRARY_PATH
-$dir/share/isoquant-*/src/gtf2db.py ${1+"$@"}
+PYTHONPATH=$dir/lib/python3.12/site-packages:$PYTHONPATH
+python -m isoquant_lib.gtf2db ${1+"$@"}
 ' > isoquant_gtf2db
 chmod ugo+x isoquant_gtf2db
 

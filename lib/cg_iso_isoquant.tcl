@@ -202,7 +202,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	unset -nocomplain genebasica
 	unset -nocomplain transcript2genea
 	unset -nocomplain geneconva
-	array set transcriptidsa [split [cg select -hc 1 -g isoform_id $read_assignmentsfile] \n\t]
+	# earlier versions of isoquant put header in a comment line, try this first
+	if {[catch {
+		array set transcriptidsa [split [cg select -hc 1 -g isoform_id $read_assignmentsfile] \n\t]
+	} m]} {
+		array set transcriptidsa [split [cg select -g isoform_id $read_assignmentsfile] \n\t]
+	}
 	catch {close $f}
 	if {$regreftranscripts ne ""} {
 		set f [gzopen $regreftranscripts]
@@ -362,7 +367,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		if {[string index $line 0] ne {#}} break
 		set prev $line
 	}
-	set header [split [string range $prev 1 end] \t]
+	# earlier versions of isoquant put header in a comment line, try this first
+	if {[regexp isoform_id $prev]} {
+		set header [split [string range $prev 1 end] \t]
+	} else {
+		set header [split $line \t]
+		gets $f line
+	}
 	set readpos [lsearch $header read_id]
 	while 1 {
 		set line [split $line \t]
@@ -401,7 +412,12 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	#
 	# check which reads have ambiguous mappings (from original read_assignmentsfile)
 	set tempfile [tempfile].tsv.zst
-	cg select -optim memory -hc 1 -g {read_id * exons *} $read_assignmentsfile $tempfile
+	# earlier versions of isoquant put header in a comment line, try this first
+	if {[catch {
+		cg select -optim memory -hc 1 -g {read_id * exons *} $read_assignmentsfile $tempfile
+	} m]} {
+		cg select -overwrite 1 -optim memory -g {read_id * exons *} $read_assignmentsfile $tempfile
+	}
 	set f [gzopen $tempfile]
 	set header [tsv_open $f comments]
 	unset -nocomplain ambiga
@@ -436,7 +452,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		if {[string index $line 0] ne {#}} break
 		set prev $line
 	}
-	set header [split [string range $prev 1 end] \t]
+	# earlier versions of isoquant put header in a comment line, try this first
+	if {[regexp isoform_id $prev]} {
+		set header [split [string range $prev 1 end] \t]
+	} else {
+		set header [split $line \t]
+		gets $f line
+	}
 	set newheader {read_id chromosome begin end strand exonStarts exonEnds aligned_size}
 	lappend newheader {*}[list_remove $header read_id chromosome chr strand exons]
 	set poss [list_cor $header $newheader]
@@ -742,6 +764,10 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	}
 	gzclose $f
 	set mfile [gzfile $isodir/*.transcript_model_counts.tsv]
+	if {![file exists $mfile]} {
+		# newer versions of isoquant use this name
+		set mfile [gzfile $isodir/*.discovered_transcript_counts.tsv]
+	}
 	if {[file exists $mfile]} {
 		set f [gzopen $mfile]
 		gets $f
@@ -1710,7 +1736,13 @@ proc iso_isoquant_job {args} {
 					lappend options --genedb $tempgenedb
 				}
 				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/OUT $regdir.temp/isoquant.log 
+				if {[package vsatisfies [version isoquant3] 3.4]} {
+					set outputoptions {--large_output read_assignments read2transcripts}
+				} else {
+					set outputoptions {}
+				}
 				exec isoquant3 \
+					{*}$outputoptions \
 					--data_type $data_type \
 					--model_construction_strategy $model_construction_strategy \
 					--splice_correction_strategy $splice_correction_strategy \
