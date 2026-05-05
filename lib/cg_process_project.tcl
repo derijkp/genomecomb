@@ -54,6 +54,7 @@ proc process_project_job {args} {
 	set reftranscripts {}
 	set singlecell {}
 	set addumis 0
+	set useaddumis 0
 	set sc_whitelist {}
 	set sc_umisize {}
 	set sc_barcodesize {}
@@ -119,8 +120,9 @@ proc process_project_job {args} {
 			set singlecell [code_empty $value]
 		}
 		-addumis {
-			if {$value ni {0 1}} {error "Unknown value $value for -addumis, must be either 1 or 0"}
 			set addumis [code_empty $value]
+			if {$addumis ni {0 1 RX adapter}} {error "Unknown value $value for -addumis, must be one of: 0 1 RX adapter"}
+			if {$addumis ne "0"} {set useaddumis 1}
 		}
 		-sc_whitelist {
 			set sc_whitelist [code_empty $value]
@@ -520,7 +522,7 @@ proc process_project_job {args} {
 			-iso_joint $iso_joint \
 			-iso_joint_min $iso_joint_min \
 			-iso_match $iso_match \
-			-addumis $addumis \
+			-addumis $useaddumis \
 			-threads $threads \
 			-distrreg $distrreg \
 			-dbdir $dbdir \

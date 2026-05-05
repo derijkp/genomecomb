@@ -604,6 +604,7 @@ proc process_sample_job {args} {
 	set tissue {}
 	set validate 0
 	set addumis 0
+	set useaddumis 0
 	cg_options process_sample args {
 		-preset {
 			if {$value ne ""} {
@@ -649,8 +650,9 @@ proc process_sample_job {args} {
 			set singlecell [codeback_empty $value]
 		}
 		-addumis {
-			if {$value ni {0 1}} {error "Unknown value $value for -addumis, must be either 1 or 0"}
 			set addumis [codeback_empty $value]
+			if {$addumis ni {0 1 RX adapter}} {error "Unknown value $value for -addumis, must be one of: 0 1 RX adapter"}
+			if {$addumis ne "0"} {set useaddumis 1}
 		}
 		-sc_whitelist {
 			set sc_whitelist [codeback_empty $value]
@@ -800,7 +802,7 @@ proc process_sample_job {args} {
 	if {$ali_keepcomments eq "" && "remora" in $methcallers} {
 		set ali_keepcomments 1
 	}
-	if {$ali_keepcomments eq "" && ($singlecell ni {{} pre} || $addumis)} {
+	if {$ali_keepcomments eq "" && ($singlecell ni {{} pre} || $useaddumis)} {
 		set ali_keepcomments 1
 	}
 	# If ubam dir is present, prefer this
@@ -812,7 +814,7 @@ proc process_sample_job {args} {
 			set fastqdir $sampledir/fastq
 		}
 	}
-	if {$addumis} {
+	if {$useaddumis} {
 		if {$sc_adaptorseq eq ""} {set sc_adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC}
 		if {$sc_barcodesize eq ""} {set sc_barcodesize 8}
 		if {$sc_umisize eq ""} {set sc_umisize 12}
@@ -1070,7 +1072,7 @@ proc process_sample_job {args} {
 		} elseif {$tissue ne ""} {
 			if {$sc_celltypers eq ""} {set sc_celltypers {sctype}}
 		}
-	} elseif {$addumis} {
+	} elseif {$useaddumis} {
 		set minreads [max 1 $minfastqreads]
 		if {!$validate && ![checkminreads $fastqdir $minreads num]} {
 			process_sample_reports_minfastqreads $sampledir $sample $reports $num todo
@@ -1083,6 +1085,7 @@ proc process_sample_job {args} {
 		# put bams in skips (don't actually run sc_barcodes if already exis)
 		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
 		add_umis_job -skip $skips -skip $skipsresult \
+			-method $addumis \
 			-umisize $sc_umisize \
 			-barcodesize $sc_barcodesize \
 			-adaptorseq $sc_adaptorseq \
@@ -1363,7 +1366,7 @@ proc process_sample_job {args} {
 			}
 		}
 	}
-	if {$addumis ne ""} {
+	if {$useaddumis} {
 		# clean up umifastq
 #		set umifastqs [jobglob -checkcompressed 1 $sampledir/umifastq/*]
 #		if {[llength $umifastqs]} {
@@ -1456,7 +1459,7 @@ proc process_sample_job {args} {
 			}
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
-			if {$addumis} {lappend options -addumis $addumis}
+			if {$useaddumis} {lappend options -addumis $useaddumis}
 			# validate_iso $useisocaller $refseq $reftranscripts $organelles $distrreg
 			# it knows to do singlecell based on the preset (starts with sc, ony for isoquant_sc)
 			iso_${useisocaller}_job \

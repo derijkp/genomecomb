@@ -1,13 +1,46 @@
-proc find_umis {fastq target {adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC} {barcodesize 8} {umisize 12} {ASlimit 0}} {
+proc find_umis {batch target {adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC} {barcodesize 8} {umisize 12} {ASlimit 0} {method 1}} {
 	set reffile [tempfile].fa
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
 	# set resultdir [file dir $target]
 	# set sam [tempfile].umi.sam
+	mkdir [file dir $target]
 	set temptarget $target.temp[gzext $target]
 	set sam $temptarget.umi_sam
+	if {$method eq "RX"} {
+		catch {close $o}
+		set o [wgzopen $temptarget]
+		foreach fastq $batch {
+			catch {close $ff} ; 
+			if {[file ext $fastq] in ".bam .cram .sam"} {
+				set ff [open "| samtools fastq -T {CB,QT,MI,MM,ML,Mm,Ml,RX} $fastq"]
+			} else {
+				set ff [gzopen $fastq]
+			}
+			while 1 {
+				if {[gets $ff ffline] == -1} break
+				if {[regexp {RX:Z:([A-Z]+)} $ffline temp umi]} {
+					set ffline @$umi\#[string range $ffline 1 end]
+				}
+				puts $o $ffline
+				set ffline [gets $ff]
+				puts $o $ffline
+				set ffline [gets $ff]
+				puts $o $ffline
+				set ffline [gets $ff]
+				puts $o $ffline
+			}
+			catch {gzclose $ff}
+		}
+		gzclose $o
+		file rename -force $temptarget $target
+		return
+	}
+	if {[llength $batch] > 1} {error "add_umis multiple fastq/ubam processing only supported for method RX"}
+	set fastq [lindex $batch 0]
+
 	if {[file ext $fastq] in ".bam .cram .sam"} {
 		set usefastq [tempfile].fastq.gz
-		catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq | gzip > $usefastq
+		catch_exec samtools fastq -T "CB,QT,MI,MM,ML,Mm,Ml,RX" $fastq | gzip > $usefastq
 		set ubams 1
 	} else {
 		set usefastq $fastq
@@ -25,14 +58,12 @@ proc find_umis {fastq target {adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC} {bar
 	# -O Gap open penalty
 	# -E Gap extension penalty
 	catch_exec minimap2 -Y -a --secondary=no -x map-ont -Y -t 4 -n 1 -k 5 -w 1 -m 10 -s 20 -A 2 -B 4 -O 2 -E 2 $ref $usefastq > $sam 2>@ stderr
-	if {$ubams} {file delete $usefastq}
-
 	catch {close $ff} ; catch {close $f} ; catch {close $o}
 	unset -nocomplain a
 	unset -nocomplain ba
 	set a() 0
 	set ba() 0
-	set ff [gzopen $fastq]
+	set ff [gzopen $usefastq]
 	set ffline [gets $ff]
 	set ffid [lindex [string range $ffline 1 end] 0]
 	set f [open "| cg sam2tsv -fields AS $sam"]
@@ -126,10 +157,10 @@ proc find_umis {fastq target {adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC} {bar
 		set prevqname $nqname
 		lappend todo $nline
 	}
-
 	gzclose $o
 	gzclose $f
 	file rename -force $temptarget $target
+	if {$ubams} {file delete $usefastq}
 	#
 	if {[info exists sumresultfile]} {
 		set o [wgzopen $sumresultfile.temp w]
@@ -151,7 +182,6 @@ proc find_umis {fastq target {adaptorseq GATCGGAAGAGCACACGTCTGAACTCCAGTCAC} {bar
 		file rename -force $sumresultfile.tempb2 [file_root [gzroot $sumresultfile]]_bc[file ext [gzroot $sumresultfile]][gzext $sumresultfile]
 		file delete $sumresultfile.tempb
 	}
-
 #	file delete $sam
 }
 
@@ -166,9 +196,15 @@ proc add_umis_job args {
 	set barcodesize 8
 	set umisize 12
 	set ASlimit 20
-	# set maxfastqdistr {} # todo
+	set maxfastqdistr {}
 	set skips {}
+	set method 1
 	cg_options add_umis args {
+		-method {
+			if {$value ni "1 RX adaptor"} {error "-method must be one of: 1 RX adaptor"}
+			if {$value eq "1"} {set value adaptor}
+			set method $value
+		}
 		-adaptorseq {
 			set adaptorseq $value
 		}
@@ -181,6 +217,9 @@ proc add_umis_job args {
 		-ASlimit {
 			set ASlimit $value
 		}
+		-maxfastqdistr {
+			set maxfastqdistr [codeback_empty $value]
+		}
 		-skip {
 			lappend skips -skip $value
 		}
@@ -190,7 +229,7 @@ proc add_umis_job args {
 	set fastqdir [file_absolute $fastqdir]
 	if {![info exists resultdir]} {set resultdir [file dir $fastqdir]}
 	set resultdir [file_absolute $resultdir]
-	set sample [file tail $resultdir]
+	set sample [file tail [file dir $resultdir]]
 	# set workdir [shadow_workdir $resultdir]
 	# set workdir [workdir $resultdir]
 	set cleanupfiles {}
@@ -198,23 +237,44 @@ proc add_umis_job args {
 		error "$fastqdir is not a directory"
 	}
 	mkdir $resultdir
-	job_logfile $resultdir/sc_barcodes_[file tail $resultdir] $resultdir $cmdline \
+	job_logfile $resultdir/sc_addumis_[file tail $resultdir] $resultdir $cmdline \
 		{*}[versions minimap2]
 	set fastqs [gzfiles $fastqdir/*.fq $fastqdir/*.fastq $fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam]
+	set len [llength $fastqs]
+	if {$method eq "RX" && [isint $maxfastqdistr] && $len > $maxfastqdistr} {
+		set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+		for {set pos 0} {$pos < $len} {incr pos $perbatch} {
+			set batch [lrange $fastqs $pos [expr {$pos + $perbatch - 1}]]
+			set root [file root [gzroot [file tail [lindex $batch 0]]]]
+			set target [shorten $resultdir/${root}__-umi.fastq.gz]
+			job find_umis-$sample-${root}__ {*}$skips \
+			  -deps $batch \
+			  -targets {
+				$target
+			} -vars {
+				 adaptorseq batch barcodesize umisize ASlimit method
+			} -procs {
+				find_umis
+			} -code {
+				find_umis $batch $target $adaptorseq $barcodesize $umisize $ASlimit $method
+			}
+		}
+		return
+	}
 	foreach fastq $fastqs {
 		set root [file root [gzroot [file tail $fastq]]]
-		set target $resultdir/$root-umi.fastq.gz
+		set target [shorten $resultdir/$root-umi.fastq.gz]
 		job find_umis-$sample-[file tail $fastq] {*}$skips \
 		  -deps {
 			$fastq
 		} -targets {
 			$target
 		} -vars {
-			 adaptorseq fastq barcodesize umisize ASlimit
+			 adaptorseq fastq barcodesize umisize ASlimit method
 		} -procs {
 			find_umis
 		} -code {
-			find_umis $fastq $target $adaptorseq $barcodesize $umisize $ASlimit
+			find_umis [list $fastq] $target $adaptorseq $barcodesize $umisize $ASlimit $method
 		}
 	}
 }
