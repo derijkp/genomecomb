@@ -530,7 +530,7 @@ proc codeback_empty {value} {
 	}
 }
 
-proc get_bam_skips {sampledir fastqfiles aligners aliformat resultbamprefix} {
+proc get_bam_skips {sampledir fastqfiles aligners aliformat resultbamprefix {barcode2celbarcode 1}} {
 	set sample [file tail $sampledir]
 	set skips {}
 	set skipsresult {}
@@ -539,8 +539,14 @@ proc get_bam_skips {sampledir fastqfiles aligners aliformat resultbamprefix} {
 	foreach aligner $aligners {
 		set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 		set bamfile $sampledir/map-${aligner}-$sample.$aliformat
-		lappend skips $bamfile $sampledir/barcode2celbarcode.tsv
-		lappend skipsresult $resultbamfile $sampledir/barcode2celbarcode.tsv
+		lappend skips $bamfile
+		if {$barcode2celbarcode} {
+			lappend skips $sampledir/barcode2celbarcode.tsv
+		}
+		lappend skipsresult $resultbamfile
+		if {$barcode2celbarcode} {
+			lappend skips $sampledir/barcode2celbarcode.tsv
+		}
 		# if bam exists and is older than any of the fastqfiles -> remove (so newer fastq files are not skipped)
 		if {[file exists $bamfile] && (![jobtargetexists $bamfile $fastqfiles] || [file mtime $bamfile] < [file mtime [file dir [lindex $fastqfiles 0]]])} {
 			putslog "$bamfile older than one of fastqfiles (renaming to .old)"
@@ -1037,7 +1043,7 @@ proc process_sample_job {args} {
 		if {$singlecell ne "pre"} {
 			# make sumary files needed for furhter processing
 			# put bams in skips (don't actually run sc_barcodes if already exis)
-			foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
+			foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix 1] break
 			sc_barcodes_job -skip $skips -skip $skipsresult \
 				-whitelist $sc_whitelist \
 				-umisize $sc_umisize \
@@ -1083,7 +1089,7 @@ proc process_sample_job {args} {
 			$fastqdir/*.bam $fastqdir/*.cram $fastqdir/*.sam $fastqdir/*.sam.zst \
 		]]
 		# put bams in skips (don't actually run sc_barcodes if already exis)
-		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
+		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix 0] break
 		add_umis_job -skip $skips -skip $skipsresult \
 			-maxfastqdistr $maxfastqdistr \
 			-method $addumis \
