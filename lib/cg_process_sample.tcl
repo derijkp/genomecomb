@@ -1085,6 +1085,7 @@ proc process_sample_job {args} {
 		# put bams in skips (don't actually run sc_barcodes if already exis)
 		foreach {skips skipsresult} [get_bam_skips $sampledir $fastqfiles $aligners $aliformat $resultbamprefix] break
 		add_umis_job -skip $skips -skip $skipsresult \
+			-maxfastqdistr $maxfastqdistr \
 			-method $addumis \
 			-umisize $sc_umisize \
 			-barcodesize $sc_barcodesize \
