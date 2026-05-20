@@ -62,6 +62,7 @@ proc AnnotSV_job {args} {
 			if {$hpo ne ""} {
 				lappend options -hpo $hpo
 			}
+			cd [tempdir]
 			exec AnnotSV -SVinputFile $tempfile -outputFile $annotsvresultfile.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 			if {[gziscompressed $annotsvresultfile]} {
 				# compress already takes care of temp and rename
@@ -99,6 +100,9 @@ proc AnnotSV_job {args} {
 					}
 					# AnnotSV gave intermittent errors in testing larger data sets
 					# to avoid/reduce these, do a retry
+					# intermittent errors are likely because AnnotSV writes temp files in cwd
+					# causing interference between jobs sometimes, cd to tempdir first to fix
+					cd [tempdir]
 					if {[catch {
 						exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 					} m]} {
