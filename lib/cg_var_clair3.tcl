@@ -161,6 +161,17 @@ proc var_clair3_find_model {sampledir} {
 	return $usemodel
 }
 
+proc limitcram3.1 {dep regions} {
+	set temp [exec [clair3_dir]/bin/htsfile $dep]
+	if {![regexp {CRAM version ([0-9.]+)} $temp t version] || [package vcompare $version 3.1] < 0} {
+		return $dep
+	}
+	set tempbam [tempfile].bam
+	exec samtools view -h -b -1 $dep {*}$regions > $tempbam
+	exec samtools index $tempbam
+	return $tempbam
+}
+
 proc var_clair3_job {args} {
 	# putslog [list var_clair3_job {*}$args]
 	global appdir
@@ -380,12 +391,13 @@ proc var_clair3_job {args} {
 			if {![file exists $usemodel]} {
 				error "model not found: $usemodel"
 			}
+			set usebam [limitcram3.1 $dep $regions]
 			set result [catch_exec run_clair3.sh {*}$opts \
 				--include_all_ctgs \
 				--threads $threads \
 				--platform=$platform \
 				--model_path=$usemodel \
-				--bam_fn=$dep \
+				--bam_fn=$usebam \
 				--ref_fn=$refseq \
 				--output=$tempvcfdir \
 				--gvcf \
