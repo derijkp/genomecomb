@@ -25,7 +25,7 @@ source "${dir}/start_hbb3.sh"
 # Parse arguments
 # ===============
 
-clair3version=2.0.1
+clair3version=1.1.1
 
 all=1
 extra=1
@@ -118,7 +118,7 @@ mamba shell init
 # -----
 
 cd /build
-mamba create -y -n clair3 -c bioconda -c conda-forge clair3=$clair3version samtools=1.23 htslib=1.23
+mamba create -y -n clair3 -c bioconda -c conda-forge clair3=$clair3version
 
 # version 1.1.0 did not want to install due to conda dependency problems, but this is solved in 1.1.1
 # I am leaving the solution (I had a hard time finding) here (in comments) in case I need it again later
@@ -195,23 +195,51 @@ cp -ra /lib64/libnsl-2.17.so lib/
 cp -ra /lib64/libnsl.so.1 lib/
 
 # add models
-
 mkdir /build/clair3-$clair3version-$arch/models || true
 cd /build/clair3-$clair3version-$arch/models
+wget http://www.bio8.cs.hku.hk/clair3/clair3_models/clair3_models.tar.gz
+tar xvzf clair3_models.tar.gz
+rm clair3_models.tar.gz
 
-# HKU provided models
-wget -r -np -nH --cut-dirs=2 -R "index.html*" -P . https://www.bio8.cs.hku.hk/clair3/clair3_models_pytorch/
+## (extra) ONT models
+mkdir /build/clair3-$clair3version-$arch/models || true
 
-# ont converted rerio models
-wget -r -np -nH --cut-dirs=2 -R "index.html*" -P . https://www.bio8.cs.hku.hk/clair3/clair3_models_rerio_pytorch/
+# git clone https://github.com/nanoporetech/rerio
+cd /build
 
+rm -rf rerio || true
+git clone https://github.com/nanoporetech/rerio
+cp -ral rerio/clair3_models/* /build/clair3-$clair3version-$arch/models
 
-## git clone https://github.com/nanoporetech/rerio
-#cd /build
-#
-#rm -rf rerio || true
-#git clone https://github.com/nanoporetech/rerio
-#cp -ral rerio/clair3_models/* /build/clair3-$clair3version-$arch/models
+cd /build/clair3-$clair3version-$arch/models
+for model in \
+	r1041_e82_400bps_sup_v500.tar.gz \
+	r1041_e82_400bps_hac_v500.tar.gz \
+	r1041_e82_400bps_sup_v410.tar.gz \
+	r1041_e82_400bps_hac_v410.tar.gz \
+	r1041_e82_400bps_sup_v430.tar.gz \
+	r1041_e82_400bps_hac_v430.tar.gz \
+	r1041_e82_400bps_sup_v420.tar.gz \
+	r1041_e82_400bps_hac_v420.tar.gz \
+	r1041_e82_260bps_sup_v400.tar.gz \
+	r1041_e82_260bps_hac_v400.tar.gz \
+	r1041_e82_260bps_fast_g632.tar.gz \
+	r1041_e82_260bps_sup_g632.tar.gz \
+	r1041_e82_400bps_hac_g632.tar.gz \
+	r1041_e82_400bps_fast_g615.tar.gz \
+	r1041_e82_400bps_sup_g615.tar.gz \
+	r1041_e82_400bps_hac_g615.tar.gz \
+	r1041_e82_260bps_hac_g632.tar.gz \
+	r1041_e82_400bps_fast_g632.tar.gz \
+	r1041_e82_400bps_hac_v520.tar.gz \
+	r1041_e82_400bps_sup_v520.tar.gz \
+	r104_e81_sup_g5015.tar.gz \
+	r104_e81_hac_g5015.tar.gz
+do
+	wget https://cdn.oxfordnanoportal.com/software/analysis/models/clair3/$model
+	tar xvzf $model
+	rm $model
+done
 
 cd /build/clair3-$clair3version-$arch
 
