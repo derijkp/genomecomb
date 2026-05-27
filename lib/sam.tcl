@@ -100,3 +100,25 @@ proc sam_readgroupdata_fix {readgroupdata} {
 	}
 	return $result
 }
+
+proc sam_readgroup {readgroupdata sample} {
+	unset -nocomplain a
+	array set a [list PL illumina ID $sample PU $sample SM $sample]
+	foreach {key value} $readgroupdata {
+		if {[string length $key] != 2} {
+			set value $key=$value
+			set key CO
+		}
+		set a($key) $value
+	}
+	set rg @RG\\tID:$a(ID)
+	unset a(ID)
+	foreach {key value} [array get a] {
+		if {[string length $key] != 2} {
+			set value $key=$value
+			set key CO
+		}
+		append rg "\\t$key:$value"
+	}
+	return $rg
+}

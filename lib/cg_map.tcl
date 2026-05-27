@@ -1,9 +1,14 @@
-proc map_readgroupdata {readgroupdata sample} {
-	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
-	if {$readgroupdata ne ""} {
-		array set a $readgroupdata
+proc bam2readgroup {bam} {
+	set h [exec samtools view -H $bam]
+	if {![regexp {RG\t([^\n]+)} $h temp rg]} {
+		return {}
 	}
-	set readgroupdata [array get a]
+	set readgroupdata {}
+	foreach line [split $rg \t] {
+		foreach {key value} [split $line :] break
+		lappend readgroupdata $key $value
+	}
+	return $readgroupdata
 }
 
 proc methods_map {args} {
@@ -146,12 +151,6 @@ proc map_job {args} {
 	job_logfile $resultdir/map_${method}_[file tail $result] $resultdir $cmdline \
 		{*}[versions $method]
 	# start
-	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
-	if {$readgroupdata ne ""} {
-		array set a $readgroupdata
-	}
-	set readgroupdata [array get a]
-
 	#
 	set workdir [shadow_workdir $result]
 	job_cleanup_add_shadow $workdir
@@ -190,9 +189,11 @@ proc map_job {args} {
 				set tempfastq1 [tempfile].fastq.gz
 				if {!$paired} {
 					if {$ubams} {
+						set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
+						if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
 						set o [wgzopen $tempfastq1]
 						foreach fastq $fastqfiles {
-							catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
+							catch_exec samtools fastq -T "CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
 						}
 						gzclose $o
 						set fastqfiles $tempfastq1
@@ -207,10 +208,12 @@ proc map_job {args} {
 					set deps1 {}
 					set deps2 {}
 					if {$ubams} {
+						set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
+						if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
 						foreach ubam $fastqfiles {
 							set out1 [tempfile].fastq.gz
 							set out2 [tempfile].fastq.gz
-							catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $ubam -1 $out1 -2 $out2
+							catch_exec samtools fastq -c 1 -T "CB,QT,MI,MM,ML,Mm,Ml" $ubam -1 $out1 -2 $out2
 							lappend deps1 $out1
 							lappend deps2 $out2
 						}
@@ -229,6 +232,9 @@ proc map_job {args} {
 					set fastqfiles [list $tempfastq1 $tempfastq2]
 					lappend cleanupfiles $tempfastq1 $tempfastq2
 				}
+			}
+			if {$readgroupdata eq ""} {
+				set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 			}
 			set tempfile [filetemp_ext $result]
 			if {$sort eq "nosort"} {
@@ -280,9 +286,14 @@ proc map_job {args} {
 			} -code {
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
+					set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
+					if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
 					set out [tempfile].fastq.gz
-					catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file -0 $out
+					catch_exec samtools fastq -c 1 -T "CB,QT,MI,MM,ML,Mm,Ml" $file -0 $out
 					set file $out
+				}
+				if {$readgroupdata eq ""} {
+					set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 				}
 				if {!$mergesort || $sort eq "nosort"} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
@@ -334,10 +345,15 @@ proc map_job {args} {
 				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams use_ali_keepcomments
 			} -code {
 				if {$ubams} {
+					set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
+					if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
 					set temp [tempdir]/[file root [file tail $file1]].fastq.gz
 					set file2 [tempfile].fastq.gz
 					catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
 					set file1 $temp
+				}
+				if {$readgroupdata eq ""} {
+					set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 				}
 				set tempfile [filetemp_ext $target]
 				if {!$mergesort || $sort eq "nosort"} {

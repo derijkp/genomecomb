@@ -217,13 +217,10 @@ proc cg_map_minimap2 {args} {
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner minimap2 aligner_version [version minimap2] aligner_preset $preset reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {
 		putslog "making $result"
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
+		set rg [sam_readgroup $readgroupdata $sample]
 		if {[catch {
 			exec minimap2 -a -x $mpreset -t $threads --MD \
-				-R @RG\\tID:$sample\\t[join $rg \\t] \
+				-R $rg \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$outpipe
 		} msg]} {
@@ -242,13 +239,10 @@ proc cg_map_minimap2 {args} {
 			error "minimap2 needs even number of files for paired analysis"
 		}
 		putslog "making $result"
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
+		set rg [sam_readgroup $readgroupdata $sample]
 		if {[catch {
 			exec minimap2 -a -x $mpreset -t $threads --MD \
-				-R @RG\\tID:$sample\\t[join $rg \\t] \
+				-R $rg \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
 		} msg]} {
