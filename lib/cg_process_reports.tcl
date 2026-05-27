@@ -57,14 +57,31 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 		if {![file exists $target]} {
 			putslog "Making $target"
 			analysisinfo_write $dep $target ${option}samstats_tool samtools ${option}samstats_version [version samtools]
-			if {$option eq ""} {
-				catch_exec samtools stats -@ $threads $dep > $target.temp
-			} elseif {$option eq "unaligned"} {
-				catch_exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp
-			} elseif {$option eq "aligned"} {
-				catch_exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp
-			} else {
+			if {$option ni {{} unaligned aligned}} {
 				error "unknown option $option"
+			}
+			if {[catch {
+				if {$option eq ""} {
+					exec samtools stats -@ $threads $dep > $target.temp 2> $target.err
+				} elseif {$option eq "unaligned"} {
+					exec samtools view -b -u -f 4 $dep | samtools stats > $target.temp 2> $target.err
+				} elseif {$option eq "aligned"} {
+					exec samtools view -b -u -F 4 $dep | samtools stats > $target.temp 2> $target.err
+				}
+			} m]} {
+				if {$::errorCode ne "NONE"} {
+					dict unset opt -level
+					set errorInfo " error while executing\n$args\nerror output in $target.err"
+					return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
+				} else {
+					puts stderr " warnings while executing\n$args\nwarning output in $target.err"
+				}
+			} else {
+				if {[file size $target.err]} {
+					puts stderr " warnings while executing\n$args\nwarning output in $target.err"
+				} else {
+					file delete $target.err
+				}
 			}
 			cg zst $target.temp
 			file rename -force -- $target.temp.zst $target
@@ -159,7 +176,7 @@ proc reports_samstats {bamfile {option {}} {resultdir {}} {threads 1}} {
 				puts $o $x\t$a($el)
 			}
 			gzclose $o
-			file rename $reportsdir/${option}samstats_${key}s-$bamroot.tsv.temp.zst $reportsdir/${option}samstats_${key}s-$bamroot.tsv.zst
+			file rename -force $reportsdir/${option}samstats_${key}s-$bamroot.tsv.temp.zst $reportsdir/${option}samstats_${key}s-$bamroot.tsv.zst
 		}
 		foreach file [lrange $targets 2 end] {
 			if {![file exists $file]} {file_write $file ""}
