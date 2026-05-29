@@ -190,33 +190,52 @@ proc cg_sam_sort {args} {
 	}
 }
 
-proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} {
+proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0} {readgroupheader}} {
 	if {$sort eq "name"} {
 		set sort queryname
 	} elseif {$sort ne "coordinate"} {
 		error "cg__sam_sort_gnusort only supports coordinate or name sort"
 	}
+	set f stdin
 	set header {}
 	set sq {}
 	set hddone 0
-	while {[gets stdin line] != -1} {
+	if {[llength $readgroupheader]} {set addrgh 1} else {set addrgh 1}
+	while 1 {
+		if {[gets $f line] == -1} break
 		if {[string index $line 0] ne "@"} break
-		if {[regexp ^@HD $line]} {
-			append header "@HD	VN:1.6	SO:$sort\n"
-			set hddone 1
-		} elseif {[regexp ^@SQ $line]} {
+		if {[regexp ^@SQ $line]} {
 			if {![regexp {\tSN:([^\t]+)\t} $line temp chr]} {
 				error "format error in SQ line: $line"
 			}
 			lappend sq [list $chr $line]
-		} elseif {[llength $sq]} {
+			continue
+		}
+		if {[llength $sq]} {
 			set sq [bsort -sortchromosome $sq]
 			append header [join [list_subindex $sq 1] \n]\n
 			set sq {}
+		}
+		if {[regexp ^@HD $line]} {
+			append header "@HD	VN:1.6	SO:$sort\n"
+			set hddone 1
+		} elseif {[regexp ^@RG $line] || [regexp ^@PG $line]} {
+			if {$addrgh} {
+				foreach rgline $readgroupheader {
+					append header $rgline\n
+				}
+				set addrgh 0
+			}
 			append header $line\n
 		} else {
 			append header $line\n
 		}
+	}
+	if {$addrgh} {
+		foreach rgline $readgroupheader {
+			append header $rgline\n
+		}
+		set addrgh 0
 	}
 	if {!$hddone} {
 		set header "@HD	VN:1.6	SO:$sort\n$header"
@@ -229,6 +248,10 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} 
 		set header [sam_header_addm5 $header $refseq]
 	}
 	puts -nonewline stdout $header
+	if {$sort eq "nosort"} {
+		if {$line ne ""} {puts $o $line}
+		fcopy stdin stdout
+	}
 	if {$sort eq "coordinate"} {
 		set o [open "| gnusort8 --buffer-size=500M --compress-program=zstd-mt-1 --parallel $threads -T [scratchdir] -t \\t -s -k3,3H -k4,4N -k1,1N -k2,2N" w]
 	} else {

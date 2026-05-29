@@ -79,7 +79,6 @@ proc map_bowtie2_job {args} {
 		align reads in fastq files to a reference genome using bowtie2
 	}
 	set files [list $fastqfile1 {*}$args]
-	set readgroupdata [map_readgroupdata $readgroupdata $sample]
 	set resultbase [file root $result]
 	set refseq [refseq $refseq]
 	dbdir [file dir $refseq]
@@ -87,8 +86,8 @@ proc map_bowtie2_job {args} {
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner bowtie2 aligner_version [version bowtie2] reference [file2refname $bowtie2refseq] aligner_paired $paired
 	set rg {}
-	foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-		lappend rg --rg "$key:$value"
+	foreach {entry} [sam_readgroup $readgroupdata $sample] {
+		lappend rg --rg "$entry"
 	}
 	if {$paired} {
 		if {[expr {[llength $files]%2}]} {

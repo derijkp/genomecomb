@@ -139,19 +139,18 @@ proc cg_map_bwa {args} {
 	} {result refseq sample fastqfile1 fastqfile2} 4 5 {
 		align reads in fastq files to a reference genome using bwa-mem
 	}
-	set readgroupdata [map_readgroupdata $readgroupdata $sample]
 	set refseq [refseq $refseq]
 	dbdir [file dir $refseq]
 	set bwarefseq [refseq_bwa $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	putslog "making $result"
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired $paired
+	set rg [sam_readgroup $readgroupdata $sample]
+	if {$rg ne ""} {
+		lappend extraopts -R $rg
+	}
 	if {!$paired} {
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
-		catch_exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+		catch_exec bwa mem -t $threads \
 			{*}$extraopts \
 			$bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
 	} else {
@@ -161,11 +160,7 @@ proc cg_map_bwa {args} {
 		if {![info exists fastqfile2]} {
 			error "bwa needs 2 files for paired analysis"
 		}
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
-		catch_exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] \
+		catch_exec bwa mem -t $threads -M \
 			{*}$extraopts \
 			$bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
 	}

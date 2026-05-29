@@ -1,14 +1,12 @@
 proc bam2readgroup {bam} {
 	set h [exec samtools view -H $bam]
-	if {![regexp {RG\t([^\n]+)} $h temp rg]} {
-		return {}
+	set readgroupheader {}
+	foreach line [split $h \n] {
+		if {[regexp {@RG\t} $line]} {
+			lappend readgroupheader $line
+		}
 	}
-	set readgroupdata {}
-	foreach line [split $rg \t] {
-		foreach {key value} [split $line :] break
-		lappend readgroupdata $key $value
-	}
-	return $readgroupdata
+	return $readgroupheader
 }
 
 proc methods_map {args} {
@@ -185,19 +183,23 @@ proc map_job {args} {
 			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress extraopts ubams use_ali_keepcomments nohardclips
 		} -code {
 			set cleanupfiles {}
+			set readgroupheader {}
 			if {$joinfastqs || $ubams} {
 				set tempfastq1 [tempfile].fastq.gz
 				if {!$paired} {
 					if {$ubams} {
-						set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
-						if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
 						set o [wgzopen $tempfastq1]
+						unset -nocomplain rga
 						foreach fastq $fastqfiles {
-							catch_exec samtools fastq -T "CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
+							foreach rgh [bam2readgroup $fastq] {
+								set rga($rgh) 1
+							}
+							catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $fastq >@ $o
 						}
 						gzclose $o
 						set fastqfiles $tempfastq1
 						lappend cleanupfiles $tempfastq1
+						set readgroupheader [array names rga]
 					} elseif {[llength $fastqfiles] > 1} {
 						exec cg zcat {*}$fastqfiles | gzip --fast > $tempfastq1
 						set fastqfiles $tempfastq1
@@ -208,15 +210,18 @@ proc map_job {args} {
 					set deps1 {}
 					set deps2 {}
 					if {$ubams} {
-						set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
-						if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
+						unset -nocomplain rga
 						foreach ubam $fastqfiles {
+							foreach rgh [bam2readgroup $ubam] {
+								set rga($rgh) 1
+							}
 							set out1 [tempfile].fastq.gz
 							set out2 [tempfile].fastq.gz
-							catch_exec samtools fastq -c 1 -T "CB,QT,MI,MM,ML,Mm,Ml" $ubam -1 $out1 -2 $out2
+							catch_exec samtools fastq -c 1 -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $ubam -1 $out1 -2 $out2
 							lappend deps1 $out1
 							lappend deps2 $out2
 						}
+						set readgroupheader [array names rga]
 					} else {
 						foreach {dep1 dep2} $fastqfiles {
 							lappend deps1 $dep1
@@ -233,11 +238,13 @@ proc map_job {args} {
 					lappend cleanupfiles $tempfastq1 $tempfastq2
 				}
 			}
-			if {$readgroupdata eq ""} {
+			if {[llength $readgroupheader]} {
+				set readgroupdata -
+			} elseif {$readgroupdata eq ""} {
 				set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 			}
 			set tempfile [filetemp_ext $result]
-			if {$sort eq "nosort"} {
+			if {$sort eq "nosort" && $readgroupheader eq ""} {
 				catch_exec cg map_${method} -ignore_unknownoptions 1 \
 					-extraopts $extraopts -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
@@ -254,8 +261,8 @@ proc map_job {args} {
 					-nohardclips $nohardclips \
 					-threads $threads \
 					-.sam $refseq $sample {*}$fastqfiles \
-					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 \
-					{*}[convert_pipe -.sam $tempfile -compressionlevel $compressionlevel -refseq $refseq -threads $threads -endpipe 1]
+					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 $readgroupheader \
+					 {*}[convert_pipe -.sam $tempfile -compressionlevel $compressionlevel -refseq $refseq -threads $threads -endpipe 1]
 			}
 			result_rename $tempfile $result
 			analysisinfo_write [lindex $fastqfiles 0] $result sample [file tail $sample] aligner $method aligner_version [version $method] aligner_preset $preset reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
@@ -284,31 +291,37 @@ proc map_job {args} {
 			} -vars {
 				method sort mergesort preset sample readgroupdata fixmate paired threads refseq file extraopts ubams use_ali_keepcomments
 			} -code {
+				unset -nocomplain rga
 				set tempfile [filetemp $target 1 1]
 				if {$ubams} {
-					set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
-					if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
+					foreach rgh [bam2readgroup $file] {
+						set rga($rgh) 1
+					}
 					set out [tempfile].fastq.gz
 					catch_exec samtools fastq -c 1 -T "CB,QT,MI,MM,ML,Mm,Ml" $file -0 $out
 					set file $out
 				}
-				if {$readgroupdata eq ""} {
+				set readgroupheader [array names rga]
+				if {[llength $readgroupheader]} {
+					set readgroupdata -
+				} elseif {$readgroupdata eq ""} {
 					set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 				}
-				if {!$mergesort || $sort eq "nosort"} {
-					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+				if {(!$mergesort || $sort eq "nosort") && $readgroupheader eq ""} {
+					catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						$tempfile $refseq $sample $file
 				} else {
 					if {[file_ext $target] eq ".cram"} {set addm5 1} else {set addm5 0}
-					exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
+					catch_exec cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset \
 						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file \
-						| cg _sam_sort_gnusort $sort $threads $refseq $addm5 {*}[compresspipe -.*.sam.zst 1] > $tempfile
+						| cg _sam_sort_gnusort $sort $threads $refseq $addm5 $readgroupheader \
+						 {*}[compresspipe -.*.sam.zst 1] > $tempfile
 				}
 				result_rename $tempfile $target
 			}
@@ -344,19 +357,25 @@ proc map_job {args} {
 			} -vars {
 				method fastqtype mergesort preset sample readgroupdata fixmate paired threads refseq file1 file2 extraopts ubams use_ali_keepcomments
 			} -code {
+				set readgroupheader {}
 				if {$ubams} {
-					set treadgroupdata [bam2readgroup [lindex $fastqfiles 0]]
-					if {$treadgroupdata ne ""} {set readgroupdata $treadgroupdata}
+					unset -nocomplain rga
+					foreach rgh [bam2readgroup $file] {
+						set rga($rgh) 1
+					}
 					set temp [tempdir]/[file root [file tail $file1]].fastq.gz
 					set file2 [tempfile].fastq.gz
 					catch_exec samtools fastq -T "RG,CB,QT,MI,MM,ML,Mm,Ml" $file1 -1 $temp -2 $file2
 					set file1 $temp
+					set readgroupheader [array names rga]
 				}
-				if {$readgroupdata eq ""} {
+				if {[llength $readgroupheader]} {
+					set readgroupdata -
+				} elseif {$readgroupdata eq ""} {
 					set readgroupdata [list PL illumina LB solexa-123 PU $sample SM $sample]
 				}
 				set tempfile [filetemp_ext $target]
-				if {!$mergesort || $sort eq "nosort"} {
+				if {(!$mergesort || $sort eq "nosort") && $readgroupheader eq ""} {
 					cg map_${method} -extraopts $extraopts -paired $paired	-preset $preset	\
 						-ali_keepcomments $use_ali_keepcomments \
 						-readgroupdata $readgroupdata -fixmate $fixmate \
@@ -369,7 +388,8 @@ proc map_job {args} {
 						-readgroupdata $readgroupdata -fixmate $fixmate \
 						-threads $threads \
 						-.sam $refseq $sample $file1 $file2 \
-						| cg _sam_sort_gnusort $sort $threads $refseq $addm5 {*}[compresspipe -.*.sam.zst 1] > $tempfile
+						| cg _sam_sort_gnusort $sort $threads $refseq $addm5 $readgroupheader \
+						 {*}[compresspipe -.*.sam.zst 1] > $tempfile
 				}
 				result_rename $tempfile $target
 			}

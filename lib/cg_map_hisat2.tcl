@@ -97,19 +97,17 @@ proc cg_map_hisat2 {args} {
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	#
-	set readgroupdata [map_readgroupdata $readgroupdata $sample]
+	set rg [sam_readgroup $readgroupdata $sample]
+	if {$rg ne ""} {
+		lappend extraopts --rg-id $rg
+	}
 	set hisat2refseq [refseq_hisat2 $refseq]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner hisat2 aligner_version [version hisat2] reference [file2refname $hisat2refseq] aligner_paired $paired
 	if {!$paired} {
 		putslog "making $result"
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
 		if {[catch {
 			exec hisat2 -t $threads \
-				--rg-id @RG\\tID:$sample\\t[join $rg \\t] \
 				-x $hisat2refseq -U [join $files ,] \
 				{*}$extraopts \
 				{*}$outpipe
@@ -134,13 +132,8 @@ proc cg_map_hisat2 {args} {
 			lappend files2 $file2
 		}
 		putslog "making $result"
-		set rg {}
-		foreach {key value} [sam_readgroupdata_fix $readgroupdata] {
-			lappend rg "$key:$value"
-		}
 		if {[catch {
 			exec hisat2 --threads $threads \
-				--rg-id @RG\\tID:$sample\\t[join $rg \\t] \
 				-x $hisat2refseq \
 				-1 [join $files1 ,] -2 [join $files2 ,] \
 				{*}$extraopts \

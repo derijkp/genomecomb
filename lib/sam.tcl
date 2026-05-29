@@ -101,9 +101,13 @@ proc sam_readgroupdata_fix {readgroupdata} {
 	return $result
 }
 
-proc sam_readgroup {readgroupdata sample} {
+proc sam_readgroup {readgroupdata sample {format RG} args} {
+	if {$readgroupdata eq "-"} {return ""}
 	unset -nocomplain a
 	array set a [list PL illumina ID $sample PU $sample SM $sample]
+	foreach {key value} $args {
+		set a($key) $value
+	}
 	foreach {key value} $readgroupdata {
 		if {[string length $key] != 2} {
 			set value $key=$value
@@ -111,14 +115,80 @@ proc sam_readgroup {readgroupdata sample} {
 		}
 		set a($key) $value
 	}
-	set rg @RG\\tID:$a(ID)
-	unset a(ID)
-	foreach {key value} [array get a] {
-		if {[string length $key] != 2} {
-			set value $key=$value
-			set key CO
+	if {$format eq "RG"} {
+		set rg @RG\\tID:$a(ID)
+		unset a(ID)
+		foreach {key value} [array get a] {
+			if {[string length $key] != 2} {
+				set value $key=$value
+				set key CO
+			}
+			append rg "\\t$key:$value"
 		}
-		append rg "\\t$key:$value"
+	} else {
+		set rg [list ID:$a(ID)]
+		unset a(ID)
+		foreach {key value} [array get a] {
+			if {[string length $key] != 2} {
+				set value $key=$value
+				set key CO
+			}
+			lappend rg "$key:$value"
+		}
+		if {$format eq "list"} {
+			return $rg
+		}
 	}
 	return $rg
 }
+
+proc sam_header_get {samfile} {
+	if {![file size $samfile]} {return ""}
+	if {[gziscompressed $samfile]} {
+		set header [exec cg zcat $samfile | samtools view --no-PG -H]
+	} else {
+		set header [catch_exec samtools view --no-PG -H $samfile]
+	}
+	return $header
+}
+
+proc sam_header_extract {samheader key} {
+	set result {}
+	foreach line [split $samheader \n] {
+		if {[regexp $key\\t $line]} {
+			lappend result $line
+		}
+	}
+	return $result
+}
+
+proc sam_header_add {header args} {
+	unset -nocomplain a
+	set newkeys {}
+	set keys {}
+	foreach line [split $header \n] {
+		set key [lindex [split $line \t] 0]
+		lappend a($key) $line
+		list_addnew keys $key
+	}
+	foreach line $args {
+		set key [lindex [split $line \t] 0]
+		if {![info exists a($key)]} {list_addnew newkeys $key}
+		list_addnew a($key) $line
+	}
+	if {[llength $newkeys]} {
+		if {[lindex $keys end] eq @PG} {
+			set keys [linsert $keys end-1 {*}$newkeys]
+		} else {
+			lappend keys {*}$newkeys
+		}
+	}
+	set newheader {}
+	foreach key $keys {
+		foreach line $a($key) {
+			lappend newheader $line
+		}
+	}
+	return [join $newheader \n]
+}
+

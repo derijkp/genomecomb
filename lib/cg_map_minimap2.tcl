@@ -204,23 +204,21 @@ proc cg_map_minimap2 {args} {
 			set platform ONT
 		}
 	}
-	if {![dict exists $readgroupdata PL]} {
-		dict set readgroupdata PL $platform
-	}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	#
-	set readgroupdata [map_readgroupdata $readgroupdata $sample]
+	set rg [sam_readgroup $readgroupdata $sample RG PL $platform]
+	if {$rg ne ""} {
+		lappend extraopts -R $rg
+	}
 	set minimap2refseq [refseq_minimap2 $refseq $preset]
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result sample [file tail $sample] aligner minimap2 aligner_version [version minimap2] aligner_preset $preset reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {
 		putslog "making $result"
-		set rg [sam_readgroup $readgroupdata $sample]
 		if {[catch {
 			exec minimap2 -a -x $mpreset -t $threads --MD \
-				-R $rg \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$outpipe
 		} msg]} {
@@ -239,10 +237,8 @@ proc cg_map_minimap2 {args} {
 			error "minimap2 needs even number of files for paired analysis"
 		}
 		putslog "making $result"
-		set rg [sam_readgroup $readgroupdata $sample]
 		if {[catch {
 			exec minimap2 -a -x $mpreset -t $threads --MD \
-				-R $rg \
 				{*}$extraopts \
 				$minimap2refseq {*}$files {*}$fixmate {*}$outpipe
 		} msg]} {

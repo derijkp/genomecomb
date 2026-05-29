@@ -130,10 +130,17 @@ proc sam_catmerge_job {args} {
 				analysisinfo_write $testsam $regresult sammerge genomecomb sammerge_version [version genomecomb] sammerge_sort $sort sammerge_mergesort $mergesort
 			}
 		}
-		if {[gziscompressed $testsam]} {
-			set header [exec cg zcat $testsam | samtools view --no-PG -H]
-		} else {
-			set header [catch_exec samtools view --no-PG -H $testsam]
+		set header [sam_header_get $testsam]
+		unset -nocomplain rgha
+		set rgh [sam_header_extract $header @RG]
+		foreach samfile $samfiles {
+			foreach rgh [sam_header_extract [sam_header_get $samfile] @RG] {
+				set rgha($rgh) 1
+			}
+		}
+		set readgroupheader [array names rgha]
+		if {[llength $readgroupheader]} {
+			set header [sam_header_add $header {*}$readgroupheader]
 		}
 		if {[file_ext $resultfile] eq ".cram"} {
 			set refseq [refseq $refseq]
@@ -217,8 +224,8 @@ proc sam_catmerge_job {args} {
 				set maxopenfiles [maxopenfiles $maxopenfiles]
 				set len [llength $deps]
 				if {$len <= $maxopenfiles} {
-					# puts [list cg mergesorted -headerline 0 -commentchar @ -sortpos $sortopt {*}$deps {*}$finaloutcmd]
-					exec cg mergesorted -headerline 0 -commentchar @ -sortpos $sortopt \
+					# puts [list cg mergesorted -headerline 0 -header $header -commentchar @ -sortpos $sortopt {*}$deps {*}$finaloutcmd]
+					exec cg mergesorted -headerline 0 -header $header -commentchar @ -sortpos $sortopt \
 						{*}$deps {*}$finaloutcmd
 				} else {
 					set workdir [scratchdir]/merge
