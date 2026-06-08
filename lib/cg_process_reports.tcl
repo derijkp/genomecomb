@@ -699,7 +699,7 @@ proc process_reports_job {args} {
 					file_write $target3 ""
 				} else {
 					if {[llength $deps] >= 1000 || [file extension [gzroot [lindex $deps 0]]] in ".bam .cram .sam"} {
-						set o [open [list | fastq-stats -x $target3 > $target2] w]
+						set o [open [list | fastq-stats -x $target3.temp > $target2.temp] w]
 						foreach file $deps {
 							if {[file extension [gzroot $file]] in ".bam .cram .sam"} {
 								if {[catch {
@@ -718,8 +718,10 @@ proc process_reports_job {args} {
 						close $o
 					} else {
 						set gzcat [gzcat [lindex $deps 0]]
-						exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+						exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3.temp > $target2.temp
 					}
+					file_rename $target2.temp $target2
+					file_rename $target3.temp $target3
 					analysisinfo_write $dep $target fastq_stats_version [version fastq-stats]
 					set o [open $target.temp w]
 					puts $o [join {sample source parameter value} \t]
