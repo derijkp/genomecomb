@@ -88,7 +88,8 @@ proc AnnotSV_job {args} {
 			} -vars {
 				workdir chromosome hpo ref
 			} -code {
-				set tempfile $workdir/svfile.part-$chromosome.bed
+				mkdir $workdir/$chromosome
+				set tempfile $workdir/$chromosome/svfile.part-$chromosome.bed
 				cg select -overwrite 1 -sh /dev/null \
 					-f {chromosome begin {end=if($type in "ins bnd",$end+1,$end)} {type=toupper($type)}} \
 					-q {$type in "del ins dup inv bnd"} \
@@ -104,20 +105,20 @@ proc AnnotSV_job {args} {
 					# causing interference between jobs sometimes, cd to tempdir first to fix
 					cd [tempdir]
 					if {[catch {
-						exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+						exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/$chromosome/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 					} m]} {
 						# really trying, a third retry
 						if {[catch {
-							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/$chromosome/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 						} m]} {
 							puts stderr "warning: retrying AnnotSV after error: $m"
-							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
+							exec AnnotSV -SVinputFile $tempfile -outputFile $workdir/$chromosome/result.$chromosome.temp -svtBEDcol 4 -genomeBuild $ref {*}$options
 						}
 					}
 				} else {
-					file_write $workdir/result.$chromosome.temp.tsv {}
+					file_write $workdir/$chromosome/result.$chromosome.temp.tsv {}
 				}
-				file rename -force $workdir/result.$chromosome.temp.tsv $workdir/result.$chromosome
+				file rename -force $workdir/$chromosome/result.$chromosome.temp.tsv $workdir/result.$chromosome
 				file delete $tempfile
 			}
 		}
