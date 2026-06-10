@@ -67,6 +67,7 @@ proc cg_sh {args} {
 
 proc cg_source {file args} {
 	set file [file_absolute $file]
+	set ::cg_source_file $file
 	set ::argv $args
 	uplevel #0 [list source $file]
 }
