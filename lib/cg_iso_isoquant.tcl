@@ -57,6 +57,119 @@ proc convert_isoquant_add {varVar {count 1}} {
 	}
 }
 
+# different from fix_isogene (don't have exons from query, so do genelevel for that)
+proc checkexonoverlaps {overlaps checkisosaVar} {
+	upvar $checkisosaVar checkisosa
+	set newoverlaps {}
+	set bestoverlap 0
+	foreach line $overlaps {
+		foreach {tgeneid overlap ipct opct obegin oend} $line break
+		if {![info exists checkisosa(exons,$tgeneid)]} {
+			unset -nocomplain a
+			foreach t $checkisosa($tgeneid) {
+				set texonStarts [split [string trim [lindex $t 0] ,] ,]
+				set texonEnds [split [string trim [lindex $t 1] ,] ,]
+				foreach tb $texonStarts te $texonEnds {
+					set a([list $tb $te]) 1
+				}
+			}
+			set exons {}
+			set temp [lsort -integer -index 1 [array names a]]
+			set cb [lindex $temp 0 0]
+			set ce [lindex $temp 0 1]
+			set maxeoverlap 0
+			foreach exon $temp {
+				foreach {b e} $exon break
+				if {$b > $ce} {
+					lappend exons [list $cb $ce]
+					set maxeoverlap [expr {$maxeoverlap + $ce-$cb}]
+					set cb $b ; set ce $e
+				} else {
+					set ce $e
+				}
+			}
+			lappend exons [list $cb $ce]
+			set maxeoverlap [expr {$maxeoverlap + $ce-$cb}]
+			set checkisosa(exons,$tgeneid) $exons
+			set checkisosa(max,$tgeneid) $maxeoverlap
+		} else {
+			set exons $checkisosa(exons,$tgeneid)
+			set maxeoverlap $checkisosa(max,$tgeneid)
+		}
+		# not most efficient, but will do for now
+		set eoverlap 0
+		# putsvars exonStarts exonEnds texonStarts texonEnds
+		list_foreach {b e} $exons {
+			if {$b >= $oend} break
+			if {$e < $obegin} continue
+			set ob [max $obegin $b]
+			set oe [min $oend $e]
+			set eoverlap [expr {$eoverlap + $oe - $ob}]
+		}
+		set eoverlap [expr {100.0*$eoverlap/$maxeoverlap}]
+		lappend line $eoverlap
+		lappend newoverlaps $line
+#		if {$eoverlap == $bestoverlap} {
+#			lappend checkisosanewoverlaps $line
+#		} elseif {$eoverlap > $bestoverlap} {
+#			set bestoverlap $eoverlap
+#			set newoverlaps [list $line]
+#		}
+	}
+#	if {$bestoverlap > 0} {
+#		return $newoverlaps
+#	} else {
+#		return $overlaps
+#	}
+	return $newoverlaps
+}
+
+# different from fix_isogene (don't have exons from query, so do genelevel for that)
+proc gene_name_check {chr strand begin end checkaVar checkisosaVar} {
+	upvar $checkaVar checka
+	upvar $checkisosaVar checkisosa
+	if {![info exists checka($chr,$strand)]} {
+		return [gene_name $chr $strand $begin $end]
+	} else {
+		set list $checka($chr,$strand)
+		set overlaps {}
+		list_foreach {tbegin tend tgeneid} $list {
+			if {$tbegin >= $end} break
+			if {$tend < $begin} continue
+			# putsvars tbegin tend tgeneid tgene texonStarts texonEnds
+			set obegin [max $begin $tbegin]
+			set oend [min $end $tend]
+			set overlap [expr {$oend - $obegin}]
+			set ipct [expr {100.0*$overlap/($end-$begin)}]
+			if {$ipct < 5} continue
+			set opct [expr {100.0*$overlap/($tend-$tbegin)}]
+			lappend overlaps [list $tgeneid $overlap $ipct $opct $obegin $oend $tbegin $tend]
+		}
+		# join $overlaps \n
+		if {[llength $overlaps] > 1} {
+			# calculate overlap with exons
+			set overlaps [lsort -real -decreasing -index end [checkexonoverlaps $overlaps checkisosa]]
+			# check for nested gene
+			foreach {gbegin gend} [lrange [lindex $overlaps 0] 6 7] break
+			list_foreach {tgeneid tbegin tend eoverlap} [list_subindex [lrange $overlaps 1 end] {0 6 7 8}] {
+				if {$eoverlap <= 0.0001} break
+				if {$tbegin < $gbegin && $tend > $gend} {
+					# found a enclosing gene that still has exon overlap -> pick this one
+					return $tgeneid
+				}
+			}
+			# pick the one with the largest overlap
+			return [lindex $overlaps 0 0]
+		} elseif {[llength $overlaps] == 1} {
+			set geneid [lindex $overlaps 0 0]
+			puts stderr "isoquant novelgene ($chr:$begin-$end) -> $geneid"
+			return $geneid
+		} else {
+			return [gene_name $chr $strand $begin $end]
+		}
+	}
+}
+
 proc iso_isoquant_add_gcounts {gcountaVar dgeneisos gene gambigcount} {
 	upvar $gcountaVar gcounta
 	if {[llength $dgeneisos]} {
@@ -202,6 +315,8 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 	unset -nocomplain genebasica
 	unset -nocomplain transcript2genea
 	unset -nocomplain geneconva
+	unset -nocomplain checka
+	unset -nocomplain checkisosa
 	# earlier versions of isoquant put header in a comment line, try this first
 	if {[catch {
 		array set transcriptidsa [split [cg select -hc 1 -g isoform_id $read_assignmentsfile] \n\t]
@@ -218,7 +333,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {[gets $f line] == -1} break
 			set split [split $line \t]
 			foreach {chr begin end strand starts ends oriname gene geneid} [list_sub $split $poss] break
+			lappend checkisosa($geneid) [list $starts $ends]
 			if {![info exists genebasica($geneid)]} {
+				lappend checka($chr,$strand) $geneid
 				set genebasica($geneid) [list $chr $begin $end $strand]
 			} else {
 				set prevbegin [lindex $genebasica($geneid) 2]
@@ -242,6 +359,15 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set transcriptsa($transcript) $oriname
 		}
 		close $f
+		# prepare for know gene assignment fix
+		foreach name [array names checka] {
+			set list {}
+			foreach g [list_remdup $checka($name)] {
+				lappend list [list {*}[list_sub $genebasica($g) {1 2}] $g]
+			}
+			set list [bsort $list]
+			set checka($name) $list
+		}
 	}
 	# gene info from extended
 	set file [gzfile $isodir/*.extended_annotation.gtf]
@@ -253,13 +379,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set line [split $line \t]
 			foreach {chr src type begin end temp strand temp info} $line break
 			if {$type ne "gene"} continue
-			if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
-			if {[regexp ^novel_gene $gene]} {
-				set geneconva($gene) [gene_name $chr $strand $begin $end]
-				set gene $geneconva($gene)
+			if {![regexp {gene_id "([^"]+)"} $info temp geneid]} continue
+			if {[regexp ^novel_gene $geneid]} {
+				set geneconva($geneid) [gene_name_check $chr $strand $begin $end checka checkisosa]
+				set geneid $geneconva($geneid)
 			}
-			if {![info exists genebasica($gene)]} {
-				set genebasica($gene) [list $chr $begin $end $strand]
+			if {![info exists genebasica($geneid)]} {
+				set genebasica($geneid) [list $chr $begin $end $strand]
 			}
 		}
 		close $f
@@ -277,13 +403,13 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			set line [split $line \t]
 			foreach {chr src type begin end temp strand temp info} $line break
 			if {$type ne "gene"} continue
-			if {![regexp {gene_id "([^"]+)"} $info temp gene]} continue
-			if {[regexp ^novel_gene $gene]} {
-				set geneconva($gene) [gene_name $chr $strand $begin $end]
-				set gene $geneconva($gene)
+			if {![regexp {gene_id "([^"]+)"} $info temp geneid]} continue
+			if {[regexp ^novel_gene $geneid]} {
+				set geneconva($geneid) [gene_name_check $chr $strand $begin $end checka checkisosa]
+				set geneid $geneconva($geneid)
 			}
-			if {![info exists genebasica($gene)]} {
-				set genebasica($gene) [list $chr $begin $end $strand]
+			if {![info exists genebasica($geneid)]} {
+				set genebasica($geneid) [list $chr $begin $end $strand]
 			}
 		}
 		close $f
@@ -296,16 +422,30 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 		unset -nocomplain outputa
 		unset -nocomplain modelregiona
 		cg_gtf2tsv $mfile $destdir/transcripts_models-$sample.tsv.temp
+		# if we have both gene and gene_name fields, remove one to avoid confusion (and one not getting updated when needed)
+		set header [cg select -header $destdir/transcripts_models-$sample.tsv.temp]
 		# check for and fix transcript out of gene area error
 		# these were double assignments (one wrong), so wrong ones can be filtered out
 		set f [gzopen $destdir/transcripts_models-$sample.tsv.temp]
 		set header [tsv_open $f]
+		set genepos [lsearch $header gene]
+		set genenamepos [lsearch $header gene_name]
+		if {$genepos != -1 && $genenamepos != -1} {
+			set removepos $genenamepos
+			set header [list_sub $header -exclude $removepos]
+		} else {
+			set removepos -1
+		}
 		set poss [list_sub [tsv_basicfields $header 14 0] {0 1 2 6 11 12 13 7 8}]
 		set o [wgzopen $destdir/transcripts_models-$sample.tsv.temp2]
 		puts $o [join $header \t]
 		while 1 {
 			if {[gets $f line] == -1} break
-			foreach {c b e s iso g gid es ee} [list_sub [split $line \t] $poss] break
+			set line [split $line \t]
+			if {$removepos != -1} {
+				set line [list_sub $line -exclude $removepos]
+			}
+			foreach {c b e s iso g gid es ee} [list_sub $line $poss] break
 			if {[info exists genebasica($g)]} {
 				foreach {gc gb ge gs} $genebasica($g) break
 				if {$s ne $gs || $c ne $gc || $e < $gb || $b >= $ge} {
@@ -316,7 +456,7 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			if {[regexp ^transcript $iso]} {
 				set modelregiona($iso) [list $chr [lindex [split $es ,] 0] [lindex [split $ee ,] end] $strand]
 			}
-			puts $o $line
+			puts $o [join $line \t]
 		}
 		gzclose $o
 		close $f
@@ -826,8 +966,9 @@ proc convert_isoquant {isodir destdir sample refseq reggenedb regreftranscripts 
 			}
 			lset line $isopos $outputa($oriname)
 			if {[info exists geneconva($geneid)]} {
-				lset line $genepos $geneconva($geneid)
-				lset line $geneidpos $geneconva($geneid)
+				set cgeneid $geneconva($geneid)
+				lset line $geneidpos $cgeneid
+				lset line $genepos [get geneid2genea($cgeneid) $cgeneid]
 			} else {
 				lset line $genepos [get geneid2genea($geneid) $gene]
 			}
@@ -1736,7 +1877,7 @@ proc iso_isoquant_job {args} {
 					lappend options --genedb $tempgenedb
 				}
 				file delete -force $regdir.temp/.params $regdir.temp/00_regali $regdir.temp/OUT $regdir.temp/isoquant.log 
-				if {[package vsatisfies [version isoquant3] 3.4]} {
+				if {[package vsatisfies [version isoquant3] 3.11]} {
 					set outputoptions {--large_output read_assignments read2transcripts}
 				} else {
 					set outputoptions {}
