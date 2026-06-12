@@ -139,7 +139,8 @@ Following options are available for singlecell or bulk UMI corrected analysis:
 ; -sc_adaptorseq string: adapter sequence used to find the barcode and UMI. These should follow the given sequence in the reads (default is CTACACGACGCTCTTCCGATCT for singlecell)
 ; -sc_barcodesize number: size of the barcode (default 16 for singlecell)
 ; -sc_umisize number: size of the UMI (default 12 for singlecell)
-; -sc_barcodemethod method: default "normal", use "filter" for filtering out some common artefacts
+; -sc_barcodemethod method: default "normal", use "filter" for filtering out some common artefacts, 
+    Use bde, bd1 or bd2 for BD-rhapsody enhanced, V1, and enhanced V2 respectively. For BD-rhapsody, also use the -sc_whitelist bde option (to use included whitelists)
 ; -addumis 0/1/RX: when 1, add barcode and UMI info to reads for bulk sequencing, in (bulk) isoquant analysis umicounts will be added in the results (barcodes are not used)
     You can use -sc_adaptorseq, -sc_barcodesize and -sc_umisize to change how barcodes and UMIs are searched (default for -addumis is GATCGGAAGAGCACACGTCTGAACTCCAGTCAC,8,12)
     If RX, the UMI sequence should be in the ubam under the RX tag

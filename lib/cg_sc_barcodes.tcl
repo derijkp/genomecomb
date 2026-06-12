@@ -17,6 +17,9 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	} else {
 		set filter 0
 	}
+	if {$barcodemethod ni "normal filter bde bd1 bd2"} {
+		error "barcodemethod $barcodemethod unsupported, must be one of: normal filter bde"
+	}
 	set reffile [tempfile].fa
 	set ref [sc_barcodes_ref $reffile $adaptorseq]
 	set sam [tempfile].sam.zst
@@ -67,6 +70,9 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 		}
 	}
 	set nrread 0
+
+	# set ok 0
+	# set notok {}
 	while 1 {
 		# if we are at end of file ($nrread == -1), we go one extra round to finish up what is in the todo list
 		# check first if previous get was EOF
@@ -108,48 +114,99 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 					lset todo 0 0 *
 				}
 			}
-			if {[llength $todo] > 1} {
-				# remove hits with lower mapping quality
-				set qs [list_subindex $todo $mqpos]
-				# set limitq [expr {[lmath_max $qs]-3}]
-				set limitq [lmath_max $qs]
-				set num 0
-				set keep {}
-				foreach q $qs {
-					if {$q >= $limitq} {lappend keep $num}
-					incr num
+			if {$barcodemethod ni "bde bd1 bd2"} {
+				# for bd, let the bd pattern choose, otherwise
+				if {[llength $todo] > 1} {
+					# remove hits with lower mapping quality
+					set qs [list_subindex $todo $mqpos]
+					# set limitq [expr {[lmath_max $qs]-3}]
+					set limitq [lmath_max $qs]
+					set num 0
+					set keep {}
+					foreach q $qs {
+						if {$q >= $limitq} {lappend keep $num}
+						incr num
+					}
+					if {[llength $keep] < [llength $todo]} {
+						set todo [list_sub $todo $keep]
+					}
 				}
-				if {[llength $keep] < [llength $todo]} {
-					set todo [list_sub $todo $keep]
-				}
-			}
-			if {[llength $todo] > 1} {
-				# if still multiple left with similar mapquality, pick the inner one
-				# (for e.g. when adapter/read1 also included in adapters added later, after 10x)
-				# for now ignoring that we can have multiple hits on different strands
-				# set starts [list_subindex $todo $qstartpos]
-				if {[lindex $todo 0 $strandpos] eq "+"} {
-					set line [lindex [lsort -integer -index $qstartpos $todo] end]
+				if {[llength $todo] > 1 && $barcodemethod ni "bde bd1 bd2"} {
+					# if still multiple left with similar mapquality, pick the inner one
+					# (for e.g. when adapter/read1 also included in adapters added later, after 10x)
+					# for now ignoring that we can have multiple hits on different strands
+					# set starts [list_subindex $todo $qstartpos]
+					if {[lindex $todo 0 $strandpos] eq "+"} {
+						set line [lindex [lsort -integer -index $qstartpos $todo] end]
+					} else {
+						set line [lindex [lsort -integer -index $qstartpos $todo] 0]
+					}
 				} else {
-					set line [lindex [lsort -integer -index $qstartpos $todo] 0]
+					set line [lindex $todo 0]
 				}
+				# foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
+				foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
 			} else {
-				set line [lindex $todo 0]
+				set chromosome [lindex $todo 0 0]
+				set qname [lindex $todo 0 4]
 			}
-			# foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} [list_sub $line $poss] break
-			foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
 			if {$chromosome eq "*"} {
 				puts $o [join [list $qname {} {} {} {} 0] \t]
 			} else {
-				set start $qend
-				if {[regexp H $cigar]} {
-					error "hardclipped sequence in line: [list set line $line]"
+				if {$barcodemethod in "bde bd1 bd2"} {
+					set barcode {}
+					foreach line $todo {
+						foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
+						if {[regexp H $cigar]} {
+							error "hardclipped sequence in line: [list set line $line]"
+						}
+						set start $qend
+						set range [string range $seq $start [expr {$start+80}]]
+						switch $barcodemethod {
+							bde {
+								set found [expr {
+									[regexp {(.........)GTGA(.........)GACA(.........)(........)(.+)} $range temp cls1 cls2 cls3 umi post] ||
+									[regexp {^(|A|GT|TCA)(.........?.?)(GTGA|GTA)(.........?.?)(GACA|GCA)(.........)(........)(.+)} $range temp pre cls1 l1 cls2 l2 cls3 umi post]
+								}]
+							}
+							bd1 {
+								set found [expr {
+									[regexp {(.........)ACTGGCCTGCGA(.........)GGTAGCGGTGACA(.........)(........)(.+)} $range temp cls1 cls2 cls3 umi post] ||
+								}]
+							}
+							bd2 {
+								set found [expr {
+									[regexp {(.........)AATG(.........)CCAC(.........)(........)(.+)} $range temp cls1 cls2 cls3 umi post] ||
+								}]
+							}
+						}
+						if {$found} {
+							set barcode $cls1$cls2$cls3
+							set post [string range $post 0 14]
+							set polya [regexp -all T $post]
+							# puts ok:$range
+							# incr ok
+							break
+						}
+					}
+					if {$barcode eq ""} {
+						# puts notok:$range
+						# lappend notok [list $range $prevqname]
+						puts $o [join [list $qname {} {} {} {} 0] \t]
+						set todo [list]
+						continue
+					}
+				} else {
+					if {[regexp H $cigar]} {
+						error "hardclipped sequence in line: [list set line $line]"
+					}
+					set start $qend
+					set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+					set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
+					# check Ts
+					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
+					set polya [regexp -all T $post]
 				}
-				set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
-				set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
-				# check Ts
-				set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
-				set polya [regexp -all T $post]
 				# if {$polya < 1} {
 				# 	error "not enough Ts in line: [list set line $line]"
 				# }
@@ -288,8 +345,14 @@ proc sc_barcodes_job args {
 				set whitelist $::genomecombdir/whitelists/737K-arc-gex-v1.txt.gz
 			} elseif {$whitelist in "multiome_atac"} {
 				set whitelist $::genomecombdir/whitelists/737K-arc-atac-v1.txt.gz
+			} elseif {$whitelist in "bde"} {
+				set whitelist $::genomecombdir/whitelists/bde.txt.gz
+			} elseif {$whitelist in "bd1"} {
+				set whitelist $::genomecombdir/whitelists/bd1.txt.gz
+			} elseif {$whitelist in "bd2"} {
+				set whitelist $::genomecombdir/whitelists/bd2.txt.gz
 			} else {
-				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2, multiome, multiome_atac"
+				error "given sc_whitelist file \"$whitelist\" does not exist, must be an existing file or one of: v4, p5v3, v3, v2, multiome, multiome_atac, bde, bd1, bd2"
 			}
 		}
 		set usewhitelist 1
