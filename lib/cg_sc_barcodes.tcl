@@ -273,6 +273,49 @@ Y   1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  0  1
 Z   1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  0  }
 }
 
+proc sc_autowhitelist {file dir {mincount 50}} {
+	catch {gzclose $f}
+	set list [cg select -f barcode -sh /dev/null -q "\$count >= $mincount" $file]
+	unset -nocomplain a
+	foreach barcode $list {
+		set a($barcode) 1
+	}
+	#
+	set result {}
+	foreach tfile [gzfiles $dir/*.txt] {
+		set count 0
+		set f [gzopen $tfile]
+		while {[gets $f barcode] != -1} {
+			if {[info exists a($barcode)]} {
+				incr count
+			}
+		}
+		gzclose $f
+		puts $tfile\t$count
+		lappend [list $tfile $count]
+	}
+	return $result
+}
+
+proc sc_checkbarcodes {whitelist resultfile {field cellbarcode}} {
+	unset -nocomplain a
+	catch {gzclose $f} ; set f [gzopen $whitelist]
+	foreach barcode [read $f] {
+		set a($barcode) 1
+	}
+	catch {gzclose $f}
+	#
+	set valid 0 ; set other 0
+	foreach barcode [split [cg select -f $field -sh /dev/null $resultfile] \n] {
+		if {[info exists a($barcode)]} {
+			incr valid
+		} else {
+			incr other
+		}
+	}
+	return "valid\t$valid\nother\t$other"
+}
+
 proc sc_barcodes_job args {
 	upvar job_logdir job_logdir
 	global appdir
