@@ -33,7 +33,7 @@ proc cg_tsv2sam {args} {
 		lappend pipe \| samtools view --threads $threads --no-PG -h -b --no-PG
 	} elseif {$outformat eq "cram"} {
 		if {$refseq eq ""} {error "tsv2sam error: outformat cram requires a reference sequence (user -refseq option)"}
-		lappend pipe \| samtools view --threads $threads --no-PG -h -C -T $refseq --no-PG
+		lappend pipe \| samtools view --threads $threads --no-PG -h -C -T $refseq -O cram,version=3.0 --no-PG
 	}
 	if {$samfile eq "-"} {
 		lappend pipe >@ stdout

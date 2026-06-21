@@ -526,7 +526,7 @@ proc convert_pipe {infile outfile args} {
 		if {$outformat eq "bam"} {
 			lappend pipe -b
 		} elseif {$outformat eq "cram"} {
-			lappend pipe -C
+			lappend pipe -C -O cram,version=3.0s
 		}
 		if {$informat eq "cram" || $outformat eq "cram"} {
 			lappend pipe -T [refseq $refseq]
