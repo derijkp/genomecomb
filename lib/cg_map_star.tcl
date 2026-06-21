@@ -128,6 +128,9 @@ proc cg_map_star {args} {
 				set time $value
 			}
 		}
+		-nohardclips {
+			# not used
+		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using star
 	}

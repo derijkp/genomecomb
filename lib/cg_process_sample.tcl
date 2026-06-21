@@ -611,6 +611,7 @@ proc process_sample_job {args} {
 	set validate 0
 	set addumis 0
 	set useaddumis 0
+	set nohardclips {}
 	cg_options process_sample args {
 		-preset {
 			if {$value ne ""} {
@@ -645,6 +646,9 @@ proc process_sample_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligners $value
+		}
+		-nohardclips {
+			set nohardclips $value
 		}
 		-ali_keepcomments {
 			set ali_keepcomments [codeback_empty $value]
@@ -807,6 +811,9 @@ proc process_sample_job {args} {
 	}
 	if {$ali_keepcomments eq "" && "remora" in $methcallers} {
 		set ali_keepcomments 1
+	}
+	if {$nohardclips eq "" && "remora" in $methcallers} {
+		set nohardclips 1
 	}
 	if {$ali_keepcomments eq "" && ($singlecell ni {{} pre} || $useaddumis)} {
 		set ali_keepcomments 1
@@ -1280,6 +1287,7 @@ proc process_sample_job {args} {
 						-sort coordinate \
 						-compressionlevel 1 \
 						-ali_keepcomments $ali_keepcomments \
+						-nohardclips $nohardclips \
 						$target $refseq $sample {*}$files
 				}
 				if {$cleanup} {

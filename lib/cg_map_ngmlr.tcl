@@ -85,6 +85,9 @@ proc cg_map_ngmlr {args} {
 		-extraopts {
 			set extraopts $value
 		}
+		-nohardclips {
+			# not used
+		}
 	} {result refseq sample fastqfile} 4 4 {
 		align reads in fastq files to a reference genome using ngmlr
 	}

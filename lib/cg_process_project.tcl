@@ -18,6 +18,7 @@ proc process_project_job {args} {
 	set clip {}
 	set removeskew {}
 	set aligners {}
+	set nohardclips {}
 	set ali_keepcomments {}
 	set varcallers {}
 	set isocallers {}
@@ -111,6 +112,9 @@ proc process_project_job {args} {
 		}
 		-a - -aligner - -aligners {
 			set aligners $value
+		}
+		-nohardclips {
+			set nohardclips $value
 		}
 		-ali_keepcomments {
 			set ali_keepcomments [code_empty $value]
@@ -414,7 +418,7 @@ proc process_project_job {args} {
 		clip 
 		singlecell addumis sc_whitelist sc_umisize sc_barcodesize sc_barcodemethod sc_adaptorseq 
 		sc_filters sc_celltypers sc_expectedcells cellmarkerfile tissue 
-		datatype aliformat aligners ali_keepcomments realign 
+		datatype aliformat aligners nohardclips ali_keepcomments realign 
 		varcallers svcallers methcallers counters reftranscripts isocallers 
 		organelles hap_bam dbdir split paired maxfastqdistr adapterfile 
 		reports samBQ cleanup removeduplicates amplicons threads distrreg 

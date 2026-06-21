@@ -90,6 +90,9 @@ proc cg_map_hisat2 {args} {
 		-extraopts {
 			lappend extraopts {*}$value
 		}
+		-nohardclips {
+			# not used
+		}
 	} {result refseq sample fastqfile1} 4 5 {
 		align reads in fastq files to a reference genome using hisat2
 	}

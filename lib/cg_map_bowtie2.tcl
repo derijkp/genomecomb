@@ -75,6 +75,9 @@ proc map_bowtie2_job {args} {
 			if {$value ne "bam"} {puts stderr "map_bowtie2 ignores aliformat, bam will always be made"}
 			set aliformat $value
 		}
+		-nohardclips {
+			# not used
+		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using bowtie2
 	}
