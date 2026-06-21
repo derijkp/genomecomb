@@ -41,6 +41,7 @@ proc cg_install {args} {
 		gatk3	bin	https://genomecomb.bioinf.be/download/extra/GATK-3.8.1.0-gf15c1c3ef-java.tar.gz
 		gatk	bin	https://genomecomb.bioinf.be/download/extra/gatk-4.1.8.1-java.tar.gz
 		hisat2	bin	https://genomecomb.bioinf.be/download/extra/hisat2-2.2.1-linux-x86_64.tar.gz
+		bowtie2	bin	https://genomecomb.bioinf.be/download/extra/bowtie2-2.5.5-linux-x86_64.tar.gz
 		isoquant	bin	https://genomecomb.bioinf.be/download/extra/isoquant-3.6.3-linux-x86_64.tar.gz
 		java-1.8	bin	https://genomecomb.bioinf.be/download/extra/java-1.8.0-openjdk-1.8.0.275.b01-0-linux-x86_64.tar.gz
 		longshot	bin	https://genomecomb.bioinf.be/download/extra/longshot-0.4.1-linux-x86_64.tar.gz
