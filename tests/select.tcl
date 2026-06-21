@@ -1452,6 +1452,27 @@ test select "maximpact" {
 test1	GENEDEL
 test2	CDSMIS}
 
+test select {impactgte} {
+	file_write tmp/testsort.tsv [deindent {
+		id	impact
+		test1	GENEDEL
+		test2	CDSsilent,RNA,CDSMIS
+	}]\n
+	exec cg select -q {impactgte($impact,"CDSFRAME")} tmp/testsort.tsv
+} {id	impact
+test1	GENEDEL}
+
+test select {impactgte} {
+	file_write tmp/testsort.tsv [deindent {
+		id	impact
+		test1	GENEDEL
+		test2	CDSsilent,RNA,CDSMIS
+	}]\n
+	exec cg select -q {$impact impactgte "CDSMIS")} tmp/testsort.tsv
+} {id	impact
+test1	GENEDEL
+test2	CDSsilent,RNA,CDSMIS}
+
 test select "select -n" {
 	global dbopt
 	write_tab tmp/test.tsv {

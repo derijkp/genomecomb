@@ -76,6 +76,18 @@ proc tcl::mathfunc::maximpact {args} {
 	lindex $varlist $pos
 }
 
+proc tcl::mathfunc::impactgte {args} {
+	if {[llength $args] != 2} {
+		error "wrong # args for function impactgte: should be impactgte list minimpact"
+	}
+	foreach {list minimpact} $args break
+	set list [split $list {,;}]
+	set varlist [var_impact_list]
+	set min [lsearch $varlist $minimpact]
+	set max [::max [list_cor $varlist $list]]
+	if {$max >= $min} {return 1} else {return 0}
+}
+
 proc tcl::mathfunc::exonlist {exonStarts exonEnds} {
 	set result {}
 	foreach s [split [string trim $exonStarts ,] ,;] e [split [string trim $exonEnds ,] ,;] {
