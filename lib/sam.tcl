@@ -108,6 +108,9 @@ proc sam_readgroup {readgroupdata sample {format RG} args} {
 	foreach {key value} $args {
 		set a($key) $value
 	}
+	if {$a(PL) eq "illumina" && ![info exists a(LB)]} {
+		set a(LB) solexa-123
+	}
 	foreach {key value} $readgroupdata {
 		if {[string length $key] != 2} {
 			set value $key=$value
