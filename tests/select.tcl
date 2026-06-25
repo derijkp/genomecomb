@@ -1462,13 +1462,13 @@ test select {impactgte} {
 } {id	impact
 test1	GENEDEL}
 
-test select {impactgte} {
+test select {impactgte 2} {
 	file_write tmp/testsort.tsv [deindent {
 		id	impact
 		test1	GENEDEL
 		test2	CDSsilent,RNA,CDSMIS
 	}]\n
-	exec cg select -q {$impact impactgte "CDSMIS")} tmp/testsort.tsv
+	exec cg select -q {$impact impactgte "CDSMIS"} tmp/testsort.tsv
 } {id	impact
 test1	GENEDEL
 test2	CDSsilent,RNA,CDSMIS}

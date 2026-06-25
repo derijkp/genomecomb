@@ -6,28 +6,28 @@ source tools.tcl
 
 test realign {realign_gatk basic} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_gatk -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	cg realign_gatk -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19 >& tmp/realign.log
 	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign_gatk pipe} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	cg realign_gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam 2> tmp/ratest.log
 	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign -method gatk pipe} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign -method gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	cg realign -method gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam 2> tmp/ratest.log
 	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign_abra basic} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_abra -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	cg realign_abra -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19 >& tmp/ratest.log
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
@@ -35,7 +35,7 @@ test realign {realign_abra basic} {
 
 test realign {realign_abra pipe} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_abra -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	cg realign_abra -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam 2> tmp/ratest.log
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
@@ -44,7 +44,7 @@ test realign {realign_abra pipe} {
 test realign {realign_abra from compressed sam} {
 	file copy data/bwa.sam tmp/bwa.sam
 	cg zst tmp/bwa.sam
-	cg realign_abra -stack 1 tmp/bwa.sam.zst tmp/ratest.bam $::refseqdir/hg19
+	cg realign_abra -stack 1 tmp/bwa.sam.zst tmp/ratest.bam $::refseqdir/hg19 >& tmp/ratest.log
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
@@ -52,7 +52,7 @@ test realign {realign_abra from compressed sam} {
 
 test realign {realign_srma basic} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_srma -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	cg realign_srma -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19 >& tmp/ratest.log
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
@@ -60,7 +60,7 @@ test realign {realign_srma basic} {
 
 test realign {realign_srma pipe} {
 	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
-	cg realign_srma -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	cg realign_srma -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam 2> tmp/ratest.log
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}

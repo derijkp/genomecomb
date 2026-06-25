@@ -78,8 +78,11 @@ testsummarize
 # take long time, run separately
 # ./meth.tcl
 # ./process_small.tcl
-
 # ./process_sv.tcl
+
+# or not run at all
+# ./var_medaka.tcl
+
 
 # take longer still, run separately on cluster (will be run in ~/genomecomb_giab_testdata)
 # without parameter, the code will only check previous runs (should be run after analysis is finished on the cluster)

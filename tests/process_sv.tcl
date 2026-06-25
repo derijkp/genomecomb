@@ -55,6 +55,7 @@ test process_sv {process_project ont} {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	}
+	file_write tmp/ont.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -74,12 +75,13 @@ test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.tbi -x *.submitting -x *.xml \
 		-x *.png -x *.vcf \
-		-x *.snf \
+		-x *.snf {*}[get optx {}] \
 		tmp/ont_minimap2 expected/ont_minimap2]
 	foreach file1 [glob tmp/ont_minimap2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb|param_::maxopenfiles}]
 	}
+	file_write tmp/ont_minimap2.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -101,8 +103,9 @@ test process_sv {manta} {
 		-x *.tbi -x *.submitting -x *.xml \
 		-x *dupmetrics -x colinfo -x *.lz4i -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf \
-		-x svLocusGraphStats.tsv \
+		-x svLocusGraphStats.tsv {*}[get optx {}] \
 		tmp/sv_chr21part expected/sv_chr21part]
+	file_write tmp/sv_chr21part.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 

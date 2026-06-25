@@ -145,6 +145,7 @@ test meth {meth_nanopolish preset gpc} {
 		-x smeth-*.tsv.zst \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index \
+		{*}[get optx {}] \
 		-x *.html \
 		tmp/methgpc expected/methgpc]
 	lappend result [diffhtmlreport tmp/methgpc/reports/report-methgpc.html expected/methgpc/reports/report-methgpc.html]
@@ -152,5 +153,3 @@ test meth {meth_nanopolish preset gpc} {
 } {}
 
 testsummarize
-
-

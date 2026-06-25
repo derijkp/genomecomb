@@ -16,19 +16,21 @@ test ont_rna {flames basic SIRV test} {
 	}
 	# flames works directly form fastq (and we could give the fastq directory instead of the bam file
 	# going via bam to fit into the the typical workflow
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	cg iso_flames -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/flames.log
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-flames-fastqs-sirv.tsv data/isoform_counts-flames-fastqs-sirv.tsv
 	exec diff tmp/sirv/gene_counts-flames-fastqs-sirv.tsv data/gene_counts-flames-fastqs-sirv.tsv
@@ -44,18 +46,20 @@ test ont_rna {flames empty fastq} {
 	}
 	# flames works directly form fastq (and we could give the fastq directory instead of the bam file
 	# going via bam to fit into the the typical workflow
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/empty.fastq
+		tmp/sirv/fastq/empty.fastq \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	cg iso_flames -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/flames.log
 	# check vs expected
 	cg select -overwrite 1 -q 0 data/isoform_counts-flames-fastqs-sirv.tsv tmp/expected-isoform_counts-flames-fastqs-sirv.tsv
 	cg select -overwrite 1 -q 0 data/gene_counts-flames-fastqs-sirv.tsv tmp/expected-gene_counts-flames-fastqs-sirv.tsv
@@ -73,19 +77,21 @@ test ont_rna {flair basic SIRV test} {
 		if {$file eq "data/SIRV-flames/fastq"} continue
 		mklink $file tmp/sirv/[file tail $file]
 	}
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	cg flair -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/flair.log
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-flair-minimap2-sirv.tsv data/isoform_counts-flair-minimap2-sirv.tsv
 	exec diff tmp/sirv/gene_counts-flair-minimap2-sirv.tsv data/gene_counts-flair-minimap2-sirv.tsv
@@ -101,19 +107,21 @@ test ont_rna {flair basic SIRV test resultfile} {
 		if {$file eq "data/SIRV-flames/fastq"} continue
 		mklink $file tmp/sirv/[file tail $file]
 	}
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	cg flair -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam tmp/result/iso_count-flair-result.tsv
+		tmp/sirv/map-minimap2-sirv.bam tmp/result/iso_count-flair-result.tsv \
+		>& tmp/flair.log
 	# check vs expected
 	cg select -overwrite 1 -f {transcript gene geneid chromosome strand begin end exonStarts exonEnds cdsStart cdsEnd exonCount type transcripttype counts-flair-result=$counts-flair-minimap2-sirv} \
 		data/isoform_counts-flair-minimap2-sirv.tsv expected.tsv 
@@ -134,19 +142,21 @@ test ont_rna {isoquant basic SIRV test} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	cg iso_isoquant -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-minimap2-sirv.tsv
 	exec diff tmp/sirv/gene_counts-isoquant-minimap2-sirv.tsv data/gene_counts-isoquant-minimap2-sirv.tsv
@@ -163,14 +173,15 @@ test ont_rna {flames SIRV test no ref} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	# does not seem to find new genes, so add one of each
 	exec grep SIRV101 tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf > tmp/sirv/part_SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf
@@ -180,7 +191,8 @@ test ont_rna {flames SIRV test no ref} {
 	cg iso_flames \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/flames.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-flames-fastqs-sirv.tsv tmp/sirv/ref.tsv 
@@ -200,14 +212,15 @@ test ont_rna {flair SIRV test no ref} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	exec grep SIRV101 tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf > tmp/sirv/part_SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf
 	foreach id {SIRV201N SIRV205P SIRV301P SIRV308N SIRV403N SIRV409P SIRV501P SIRV512N SIRV601P SIRV617N SIRV701N} {
@@ -216,7 +229,8 @@ test ont_rna {flair SIRV test no ref} {
 	cg flair -stack 1 -v 2 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/flair.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-flair-minimap2-sirv.tsv tmp/sirv/ref.tsv 
@@ -236,14 +250,15 @@ test ont_rna {isoquant SIRV test no ref} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	# isoquant will find the "novel" genes so only giving one (not all). It will find a few more isoforms with all genes given though
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - > tmp/sirv/ref.tsv
@@ -251,7 +266,8 @@ test ont_rna {isoquant SIRV test no ref} {
 	cg iso_isoquant -stack 1 \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_ref.tsv \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv tmp/sirv/ref.tsv 
@@ -271,14 +287,15 @@ test ont_rna {isoquant SIRV test no ref -skipregions} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	# isoquant will find the "novel" genes so only giving one (not all). It will find a few more isoforms with all genes given though
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - > tmp/sirv/ref.tsv
@@ -287,16 +304,17 @@ test ont_rna {isoquant SIRV test no ref -skipregions} {
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_ref.tsv \
 		-skipregions SIRV7 \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv tmp/sirv/ref.tsv 
 	# check vs expected
 	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-noref_sirv.tsv
 } {54a55,57
-> SIRV7	1000	147946	-	1000,2993,3809,114680,147608	2675,3111,3896,114988,147946	novelt_SIRV7_1000-e1675i318e118i698e87i110784e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript1.SIRV7.nnic	novel_gene	2526	16.50	16.5	6	5	6.5	6	5	0	0	0
-> SIRV7	1000	147946	-	1000,2993,43028,114680,147608	2675,3111,43077,114988,147946	novelt_SIRV7_1000-e1675i318e118i39917e49i71603e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript3.SIRV7.nnic	novel_gene	2488	23.50	23.5	13	12	13.5	13	12	0	0	0
-> SIRV7	56033	147947	-	56033,70883,78841,114680,147608	56097,70987,78965,114960,147947	novelt_SIRV7_56033-e64i14786e104i7854e124i35715e280i32648e339	novelg_SIRV7_m_56034_147947	novelg_SIRV7_m_56034_147947	transcript				5	IsoQuant		transcript6.SIRV7.nnic	novel_gene	911	29.00	29	29	19	29	29	19	0	0	0
+> SIRV7	1000	147946	-	1000,2993,3809,114680,147608	2675,3111,3896,114988,147946	novelt_SIRV7_1000-e1675i318e118i698e87i110784e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript1.SIRV7.nnic	novel_gene	2526	16.00	16	6	5	6	6	5	0	0	0
+> SIRV7	1000	147946	-	1000,2993,43028,114680,147608	2675,3111,43077,114988,147946	novelt_SIRV7_1000-e1675i318e118i39917e49i71603e308i32620e338	novelg_SIRV7_m_1001_147946	novelg_SIRV7_m_1001_147946	transcript				5	IsoQuant		transcript3.SIRV7.nnic	novel_gene	2488	23.00	23	13	12	13	13	12	0	0	0
+> SIRV7	56033	147947	-	56033,70883,78841,114680,147608	56097,70987,78963,114960,147947	novelt_SIRV7_56033-e64i14786e104i7854e122i35717e280i32648e339	novelg_SIRV7_m_56034_147947	novelg_SIRV7_m_56034_147947	transcript				5	IsoQuant		transcript6.SIRV7.nnic	novel_gene	909	34.00	34	34	20	34	34	20	0	0	0
 child process exited abnormally} error
 
 test ont_rna {isoquant_sens SIRV test no ref} {
@@ -310,14 +328,15 @@ test ont_rna {isoquant_sens SIRV test no ref} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		-ali_keepcomments 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	# isoquant will find the "novel" genes so only giving one (not all). It will find a few more isoforms with all genes given though
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - > tmp/sirv/ref.tsv
@@ -326,7 +345,8 @@ test ont_rna {isoquant_sens SIRV test no ref} {
 		-preset sens \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_ref.tsv \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-isoquant_sens-minimap2-sirv.tsv tmp/sirv/ref.tsv 
@@ -346,13 +366,14 @@ test ont_rna {isoquant_all SIRV test no ref} {
 		mklink $file tmp/sirv/[file tail $file]
 	}
 	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
-	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
 		tmp/sirv/map-minimap2-sirv.bam \
 		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		tmp/sirv/sirv \
-		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/sirv/map-minimap2-sirv.bam
 	# isoquant will find the "novel" genes so only giving one (not all). It will find a few more isoforms with all genes given though
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - > tmp/sirv/ref.tsv
@@ -361,7 +382,8 @@ test ont_rna {isoquant_all SIRV test no ref} {
 		-preset all \
 		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
 		-reftranscripts tmp/sirv/part_ref.tsv \
-		tmp/sirv/map-minimap2-sirv.bam
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
 	cg gtf2tsv tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -f {* structural_category="known" counts-ref=1} > tmp/sirv/ref.tsv
 	file delete tmp/sirv/multitranscript.tsv
 	cg multitranscript -match . tmp/sirv/multitranscript.tsv tmp/sirv/isoform_counts-isoquant_all-minimap2-sirv.tsv tmp/sirv/ref.tsv 
@@ -387,7 +409,7 @@ test ont_rna {flair basic SIRV test -compar joint} {
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
@@ -395,7 +417,8 @@ test ont_rna {flair basic SIRV test -compar joint} {
 		tmp/samples/sirv1/map-minimap2-sirv1.bam \
 		tmp/ref/sirv/genome_sirv.ifas \
 		tmp/samples/sirv1/sirv1 \
-		tmp/samples/sirv1/fastq/sample1.fastq.gz tmp/samples/sirv1/fastq/sample2.fastq.gz
+		tmp/samples/sirv1/fastq/sample1.fastq.gz tmp/samples/sirv1/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
 	exec samtools index tmp/samples/sirv1/map-minimap2-sirv1.bam
 	cg map \
 		-method minimap2 -preset splice -paired 0 \
@@ -404,11 +427,13 @@ test ont_rna {flair basic SIRV test -compar joint} {
 		tmp/ref/sirv/genome_sirv.ifas \
 		tmp/samples/sirv2/sirv2 \
 		tmp/samples/sirv2/fastq/sample1.fastq.gz tmp/samples/sirv2/fastq/sample2.fastq.gz
-	exec samtools index tmp/samples/sirv2/map-minimap2-sirv2.bam
+	exec samtools index tmp/samples/sirv2/map-minimap2-sirv2.bam \
+		>& tmp/mapping2.log
 	cg flair -stack 1 -compar joint \
 		-refseq tmp/ref/sirv/genome_sirv.ifas \
 		-reftranscripts tmp/ref/sirv/gene_sirv.gtf \
-		tmp
+		tmp \
+		>& tmp/flair.log
 	# check vs expected
 	exec diff tmp/compar/isoform_counts-flair-tmp.tsv data/isoform_counts-flair-tmp.tsv
 	exec diff tmp/compar/gene_counts-flair-tmp.tsv data/gene_counts-flair-tmp.tsv
@@ -426,7 +451,7 @@ test ont_rna {process_project multi methods} {
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 \
 		-split 1 \
@@ -470,7 +495,7 @@ test ont_rna {process_project multi methods using -preset} {
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 \
 		-preset ontr \
@@ -507,7 +532,7 @@ test ont_rna {isoquant joint analysis} {
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf tmp/ref/sirv/gene_sirv.gtf
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 -d 4 \
 		-split 1 \
@@ -545,7 +570,7 @@ test ont_rna {isoquant joint analysis no ref} {
 	file delete tmp/ref/sirv/gene_sirv.gtf
 	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in ""} > tmp/ref/sirv/gene_sirv.tsv
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/compar/isoform_counts-tmp.tsv
 	exec cg process_project -stack 1 -v 2 -d 4 \
 		-split 1 \
@@ -582,7 +607,7 @@ test ont_rna {isoquant SIRV test overlap distrreg borders} {
 	}
 	file copy tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta tmp/sirv/genome_sirv.ifas
 	exec samtools faidx tmp/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	mkdir tmp/sirv/extra
 	file_write tmp/sirv/extra/reg_sirv_distrg.tsv [deindent {
 		chromsomoe	begin	end
@@ -624,7 +649,7 @@ test ont_rna {isoquant SIRV test no ref overlap distrreg borders} {
 	}
 	mklink data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta tmp/ref/sirv/genome_sirv.ifas
 	exec samtools faidx tmp/ref/sirv/genome_sirv.ifas
-	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice
+	cg refseq_minimap2 tmp/ref/sirv/genome_sirv.ifas splice >& tmp/refseq.log
 	file delete tmp/ref/sirv/gene_sirv.gtf
 	cg gtf2tsv data/SIRV-flames/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf | cg select -s - -q {$transcript in ""} > tmp/ref/sirv/gene_sirv.tsv
 	mkdir tmp/ref/sirv/extra

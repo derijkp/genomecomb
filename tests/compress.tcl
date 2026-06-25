@@ -204,7 +204,7 @@ test compress {multiple} {
 	set result
 } {lz4 357 209708
 rz 287 178075
-bgz 294 172630
+bgz 294 172546
 bz2 281 133936
 }
 

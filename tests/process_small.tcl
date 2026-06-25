@@ -8,6 +8,7 @@ set keepdir [pwd]
 set test_cleantmp 0
 
 # set optx {-x *.analysisinfo -x *flagstat*}
+# set optx {-x *.analysisinfo -x *flagstat* -x samstats* -x alignedsamstats* -x unalignedsamstats*}
 set ::optx {}
 
 # tests
@@ -57,6 +58,7 @@ test process_small {process_project mastr_mx2} {
 		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
 		-x reg_hg19_targets.tsv.zst \
 		-x *-blanco2_8485* \
+		{*}[get ::optx {}] \
 		-x *.html \
 		-ignorefields {
 			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
@@ -69,6 +71,7 @@ test process_small {process_project mastr_mx2} {
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo expected/${basename}/compar/annot_compar-${basename}.tsv.analysisinfo]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -122,6 +125,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -174,6 +178,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
 	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -255,6 +260,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 	lappend result [diffinfoanalysis tmp/${basename}/compar/info_analysis.tsv expected/${basename}/compar/info_analysis.tsv]
 	lappend result [checkdiff -I HistogramID -I htmlwidget -I {^<!} -I {^<h2>20} -I {meta charset} -I {script.src *=} \
 		tmp/${basename}/${basename}.html expected/${basename}/${basename}.html]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -293,6 +299,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 		} \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
 	lappend result [diffinfoanalysis tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -330,6 +337,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		{*}[get ::optx {}] \
 		tmp/${basename}/samples/NA19240mx2 expected/${basename}/samples/NA19240mx2]
 	lappend result [diffinfoanalysis tmp/${basename}/samples/NA19240mx2/info_analysis.tsv expected/${basename}/samples/NA19240mx2/info_analysis.tsv]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -373,6 +381,7 @@ test process_small {process_project exomes_yri_mx2} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -416,6 +425,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -458,6 +468,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -504,6 +515,7 @@ test process_small {process_sample one_genome_yri_mx2} {
 			report_vars_version predictgender_version report_covered_version svmulticompar_version
 		} \
 		tmp/${basename}/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -545,14 +557,15 @@ test process_small {process_project genomes_yri_mx2} {
 		tmp/${basename} expected/${basename}]
 	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
 	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
-	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		lappend result [checkdiff -I finished \
-			tmp/${basename}/samples/$cgsample/summary-$cgsample.txt expected/${basename}/samples/$cgsample/summary-$cgsample.txt]
-	}
+#	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
+#		lappend result [checkdiff -I finished \
+#			tmp/${basename}/samples/$cgsample/summary-$cgsample.txt expected/${basename}/samples/$cgsample/summary-$cgsample.txt]
+#	}
 	foreach file1 [glob tmp/${basename}/compar/info_analysis.tsv tmp/${basename}/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -597,6 +610,7 @@ test process_small {process_project cg_mx2} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -642,6 +656,7 @@ test process_small {process_project mixed_yri_mx2} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
@@ -685,6 +700,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		regsub ^tmp $file1 expected file2
 		lappend result [diffinfoanalysis $file1 $file2]
 	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 

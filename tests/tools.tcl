@@ -81,9 +81,9 @@ package require genomecomb
 if {![info exists ::genomecombdir]} {genomecombenv}
 
 proc testdir {args} {
-#	if {$::test_interactive} {
-#		return $::basetestdir
-#	}
+	if {$::test_interactive} {
+		return $::basetestdir
+	}
 	set testname [join [lrange $args 0 1] __]
 	set testname [string_change $testname {{ } _ : _ / _ \\ _ \; _ * _ ? _ \} _ \{ _ \n _ \t _ \[ _ \] _ ( _ ) _}]
 	return $::basetestdir/$testname
@@ -108,6 +108,7 @@ proc test {args} {
 		error "wrong # parameters, format is : test group description script expected ..."
 		group description script expected args
 	}
+	set ::testdir [testdir {*}$args]
 	file mkdir $::testdir
 	file mkdir $::testdir/tmp
 	cd $::testdir
@@ -245,7 +246,7 @@ set sam_header {
 	@SQ	SN:chrX	LN:155270560
 	@SQ	SN:chrY	LN:59373566
 	@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
-	@PG	ID:GATK IndelRealigner	VN:2.4-9-g532efad	CL:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null
+	@PG	ID:GATK IndelRealigner	VN:S:2.4-9-g532efad	CL:S:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null
 }
 
 proc write_sam {file data {namebase A}} {
