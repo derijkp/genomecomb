@@ -48,7 +48,7 @@ proc cg_install {args} {
 		lumpy	bin	https://genomecomb.bioinf.be/download/extra/lumpy-0.3.1-linux-x86_64.tar.gz
 		manta	bin	https://genomecomb.bioinf.be/download/extra/manta-1.6.0-linux-x86_64.tar.gz
 		medaka	bin	https://genomecomb.bioinf.be/download/extra/medaka-1.4.4-linux-x86_64.tar.gz
-		minimap2	bin	https://genomecomb.bioinf.be/download/extra/minimap2-2.24-linux-x86_64.tar.gz
+		minimap2	bin	https://genomecomb.bioinf.be/download/extra/minimap2-2.31-linux-x86_64.tar.gz
 		nanopolish	bin	https://genomecomb.bioinf.be/download/extra/nanopolish-0.13.2-linux-x86_64.tar.gz
 		nextflow	bin	https://genomecomb.bioinf.be/download/extra/nextflow-22.10.0-linux-x86_64.tar.gz
 		java	bin	https://genomecomb.bioinf.be/download/extra/openjdk-22-linux-x86_64.tar.gz
