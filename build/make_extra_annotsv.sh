@@ -25,7 +25,7 @@ source "${dir}/start_hbb3.sh"
 # Parse arguments
 # ===============
 
-annotsvversion=3.4.4
+annotsvversion=3.5.10
 
 all=1
 extra=1
@@ -137,20 +137,21 @@ mamba install -y -c conda-forge conda-pack
 rm annotsv.tar.gz || true
 conda pack -n annotsv -o annotsv.tar.gz
 rm -rf AnnotSV-$annotsvversion-$arch.old || true
-mv AnnotSV-$annotsvversion-$arch annotsv-$annotsvversion-$arch.old || true
+mv AnnotSV-$annotsvversion-$arch AnnotSV-$annotsvversion-$arch.old || true
 mkdir /build/AnnotSV-$annotsvversion-$arch
 cd /build/AnnotSV-$annotsvversion-$arch
 tar xvzf ../annotsv.tar.gz
 
 # install from source because conda install misses some files (application.properties)
-wget https://github.com/lgmgeo/AnnotSV/archive/refs/tags/v3.4.6.tar.gz
-tar xvzf v3.4.6.tar.gz
-rm v3.4.6.tar.gz
-cd AnnotSV-3.4.6
+wget https://github.com/lgmgeo/AnnotSV/archive/refs/tags/v$annotsvversion.tar.gz
+tar xvzf v$annotsvversion.tar.gz
+rm v$annotsvversion.tar.gz
+cd AnnotSV-$annotsvversion
+rm -rf /build/AnnotSV-3.5.3-linux-x86_64/share/python3/variantconvert || true
 make PREFIX=/build/AnnotSV-$annotsvversion-$arch install
 make PREFIX=/build/AnnotSV-$annotsvversion-$arch install-human-annotation
 cd /build
-rm -rf /build/AnnotSV-3.4.6
+rm -rf /build/AnnotSV-$annotsvversion
 
 cd /build/AnnotSV-$annotsvversion-$arch
 
@@ -175,8 +176,10 @@ cp -ra AnnotSV-$annotsvversion-$arch AnnotSV-$annotsvversion AnnotSV /io/extra$A
 
 echo "Running test"
 cd /tmp
-cp /build/AnnotSV-$annotsvversion-linux-x86_64/share/doc/AnnotSV/Example/test.bed .
-/build/AnnotSV-$annotsvversion-linux-x86_64/AnnotSV -SVinputFile test.bed -genomeBuild GRCh37 -outputDir /tmp -outputFile test.annotated.tsv -svtBEDcol 4
+build=/build
+cp $build/AnnotSV-$annotsvversion-linux-x86_64/share/doc/AnnotSV/Example/test1.bed .
+$build/AnnotSV-$annotsvversion-linux-x86_64/AnnotSV -SVinputFile test1.bed -genomeBuild GRCh37 -outputDir /tmp -outputFile test1.annotated.tsv -svtBEDcol 4
+# diff test1.annotated.tsv $build/AnnotSV-$annotsvversion-linux-x86_64/share/doc/AnnotSV/Example/test1.annotated.tsv
 
 echo "Finished building AnnotSV-$annotsvversion-$arch"
 
