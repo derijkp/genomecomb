@@ -33,7 +33,7 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 		set ubams 0
 	}
 	catch_exec minimap2 -Y -a --secondary=no -x map-ont -t 4 -n 1 -m 1 -k 5 -w 1 -s 20 $ref $usefastq | cg zst -c 1 > $sam 2>@ stderr
-	if {$ubams} {file delete $usefastq}
+	# if {$ubams} {file delete $usefastq}
 
 	# cg sam2tsv $sam | cg select -g chromosome
 	# exec ~/dev/genomecomb/bin/sc_getbarcodes adapter $begin 16 10 < $sam > temp
@@ -54,19 +54,26 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 	if {$filter} {
 		unset -nocomplain filtera
 		array set filtera {
-			CGACGCTCTTCCGATC        87
-			ACGACGCTCTTCCGAT        92
-			CACGACGCTCTTCCGA        511
-			AAGCAGTGATATCAAC        90
-			TGACAGTGGTATCAAC        58
-			AATCAGTGGTATCAAC        68
-			AAGAAGTGGTATCAAC        70
-			AAGCAGTAGTATCAAC        73
-			AGACAGTGGTATCAAC        73
-			AAGCGGTGGTATCAAC        75
-			AAGCAATGGTATCAAC        95
-			AAGCAGTCGTATCAAC        132
-			AAGCAAGTGGTATCAA        1
+			CGACGCTCTTCCGATC 87
+			ACGACGCTCTTCCGAT 92
+			CACGACGCTCTTCCGA 511
+			AAGCAGTGATATCAAC 90
+			TGACAGTGGTATCAAC 58
+			AATCAGTGGTATCAAC 68
+			AAGAAGTGGTATCAAC 70
+			AAGCAGTAGTATCAAC 73
+			AGACAGTGGTATCAAC 73
+			AAGCGGTGGTATCAAC 75
+			AAGCAATGGTATCAAC 95
+			AAGCAGTCGTATCAAC 132
+			AAGCAAGTGGTATCAA 1
+			CTGCACGACGCTCTTC 1
+			CTAACGACGCTCTTCC 1
+			CACACCACGCTCTTCC 1
+			CTACACAACACTCTCC 1
+			CTCACACCACGCTCTT 1
+			CTACGACGCTCTTCCG 1
+			CTCACGACGCTCTTCC 1
 		}
 	}
 	set nrread 0
@@ -85,37 +92,39 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 			# if more than one hit for adapter, select "best" one
 			set todo [list_subindex $todo $poss]
 			if {$filter} {
+				set starts [list_subindex $todo 5]
 				set remove {}
-				set polytnr {}
+				set ok 0
 				set pos -1
 				foreach line $todo {
 					incr pos
 					foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
+					if {$qend in $starts} {
+						# remove if another read1 hit starts at the end of this hit
+						# no longer need to add all variants of read1 to check
+						lappend remove $pos
+						continue
+					}
 					set start $qend
 					set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+					# puts $barcode:[info exists wla($barcode)]
 					if {[info exists filtera($barcode)] || [regexp GCAGTGGTATCA|AAGCAGTGG|GTGGTATCAAC|ACACGACGCTCT|ACGCTCTTCCGA $barcode]} {
 						lappend remove $pos
 						continue
 					}
-					# check Ts
-					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+6}]]
-					lappend polytnr [regexp -all T $post]
+					incr ok
 				}
-				if {[llength $polytnr]} {
-					set todo [list_sub $todo -exclude $remove]
-					if {[llength $polytnr] > 1} {
-						set max [lmath_max $polytnr]
-						if {$max >= 4} {
-							set todo [list_sub $todo [list_find $polytnr $max]]
-						}
-					}
-				} else {
+				if {!$ok} {
+					# no line passed filter
 					set todo [list [lindex $todo 0]]
 					lset todo 0 0 *
+				} elseif {[llength $remove]} {
+					# remove filtered lines
+					set todo [list_sub $todo -exclude $remove]
 				}
 			}
 			if {$barcodemethod ni "bde bd1 bd2"} {
-				# for bd, let the bd pattern choose, otherwise
+				# for bd, let the bd pattern choose, otherwise do the following
 				if {[llength $todo] > 1} {
 					# remove hits with lower mapping quality
 					set qs [list_subindex $todo $mqpos]
@@ -131,7 +140,21 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 						set todo [list_sub $todo $keep]
 					}
 				}
-				if {[llength $todo] > 1 && $barcodemethod ni "bde bd1 bd2"} {
+				if {[llength $todo] > 1} {
+					# if still > 1, pick the one with the best T stretch
+					set polytnr {}
+					foreach line $todo {
+						foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
+						set start $qend
+						set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+6}]]
+						lappend polytnr [regexp -all T $post]
+					}
+					set max [lmath_max $polytnr]
+					if {$max >= 4} {
+						set todo [list_sub $todo [list_find $polytnr $max]]
+					}
+				}
+				if {[llength $todo] > 1} {
 					# if still multiple left with similar mapquality, pick the inner one
 					# (for e.g. when adapter/read1 also included in adapters added later, after 10x)
 					# for now ignoring that we can have multiple hits on different strands
@@ -153,7 +176,19 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 			if {$chromosome eq "*"} {
 				puts $o [join [list $qname {} {} {} {} 0] \t]
 			} else {
-				if {$barcodemethod in "bde bd1 bd2"} {
+				if {$barcodemethod ni "bde bd1 bd2"} {
+					if {[regexp H $cigar]} {
+						error "hardclipped sequence in line: [list set line $line]"
+					}
+					set start $qend
+					set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
+					set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
+					# check Ts
+					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
+					set polya [regexp -all T $post]
+#if {![info exists wla($barcode)] && [llength $keeptodo] > 1} {error "barcode not in wl"}
+ if {$barcode eq "CTCACGACGCTCTTCC"} {error "target barcode"}
+				} else {
 					set barcode {}
 					foreach line $todo {
 						foreach {chromosome begin end strand qname qstart qend cigar seq supplementary} $line break
@@ -196,16 +231,6 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 						set todo [list]
 						continue
 					}
-				} else {
-					if {[regexp H $cigar]} {
-						error "hardclipped sequence in line: [list set line $line]"
-					}
-					set start $qend
-					set barcode [string range $seq $start [expr {$start+$barcodesize-1}]]
-					set umi [string range $seq [expr {$start+$barcodesize}] [expr {$start+$barcodesize+$umisize-1}]]
-					# check Ts
-					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
-					set polya [regexp -all T $post]
 				}
 				# if {$polya < 1} {
 				# 	error "not enough Ts in line: [list set line $line]"
