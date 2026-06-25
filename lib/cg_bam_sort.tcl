@@ -190,7 +190,7 @@ proc cg_sam_sort {args} {
 	}
 }
 
-proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0} {readgroupheader}} {
+proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0} {readgroupheader {}}} {
 	if {$sort eq "name"} {
 		set sort queryname
 	} elseif {$sort ne "coordinate"} {
