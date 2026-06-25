@@ -1867,10 +1867,26 @@ proc iso_isoquant_job {args} {
 					set emptyref [tsv_empty $reggenedb]
 					if {$emptyref} {
 						set tempfile [tempfile]
-						file_write $tempfile [deindent {
-							name	gene	chromosome	begin	end	strand	exonStarts	exonEnds	exonCount	source	transcript_name	gene_id	gene_name	name2
-							dummyname	dummygene	dummychr	1	1	+	1	1	1	dummysource	dummysource	dummytranscript	dummygene	dummyname2
-						}]\n
+						if {$region ne ""} {
+							set chr [lindex [split $region {:- }] 0]
+							set chrs [list $chr]
+						} else {
+							set faidx [refseq $refseq].fai
+							if {![file exists $faidx]} {
+								exec samtools faidx [refseq $refseq]
+							}
+							set f [gzopen $faidx]
+							set chrs {}
+							while {[gets $f line] != -1} {
+								lappend chrs [lindex [split $line \t] 0]
+							}
+							close $f
+						}
+						set temp [list {name	gene	chromosome	begin	end	strand	exonStarts	exonEnds	exonCount	source	transcript_name	gene_id	gene_name	name2}]
+						foreach chr $chrs {
+							lappend temp "dummyname_$chr	dummygene_$chr	$chr	1	1	+	1	1	1	dummysource	dummysource	dummytranscript_$chr	dummygene_$chr	dummyname2_$chr"
+						}
+						file_write $tempfile [join $temp \n]\n
 						cg_tsv2gtf -genecol gene_id -addgene 1 $tempfile $reggenedb
 					}
 					exec isoquant3_gtf2db --complete_genedb --input $reggenedb --output $tempgenedb
