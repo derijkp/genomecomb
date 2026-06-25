@@ -44,7 +44,7 @@ proc cg_install {args} {
 		bowtie2	bin	https://genomecomb.bioinf.be/download/extra/bowtie2-2.5.5-linux-x86_64.tar.gz
 		isoquant	bin	https://genomecomb.bioinf.be/download/extra/isoquant-3.6.3-linux-x86_64.tar.gz
 		java-1.8	bin	https://genomecomb.bioinf.be/download/extra/java-1.8.0-openjdk-1.8.0.275.b01-0-linux-x86_64.tar.gz
-		longshot	bin	https://genomecomb.bioinf.be/download/extra/longshot-0.4.1-linux-x86_64.tar.gz
+		longshot	bin	https://genomecomb.bioinf.be/download/extra/longshot-1.0.0-linux-x86_64.tar.gz
 		lumpy	bin	https://genomecomb.bioinf.be/download/extra/lumpy-0.3.1-linux-x86_64.tar.gz
 		manta	bin	https://genomecomb.bioinf.be/download/extra/manta-1.6.0-linux-x86_64.tar.gz
 		medaka	bin	https://genomecomb.bioinf.be/download/extra/medaka-1.4.4-linux-x86_64.tar.gz

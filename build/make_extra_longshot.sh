@@ -22,7 +22,8 @@ script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 source "${dir}/start_hbb.sh"
 
-longshotversion=0.4.5
+# longshotversion=0.4.5
+longshotversion=1.0.0
 
 # Parse arguments
 # ===============
