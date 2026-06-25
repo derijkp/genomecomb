@@ -412,10 +412,12 @@ proc ucsc_epcr {p1 p2} {
 	if {[file exists $cachedir/$p1-$p2.epcr]} {
 		return [file_read $cachedir/$p1-$p2.epcr]
 	}
+	if {![info exists ::env(UCSC_APIKEY)]} {return ?}
 	package require http
 	package require tls
 	http::register https 443 tls::socket
-	set h [http::geturl "https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&amp;org=Human&amp;db=hg38&amp;wp_target=genome&amp;wp_f=$p1&amp;wp_r=$p2&amp;Submit=submit&amp;wp_size=4000&amp;wp_perfect=15&amp;wp_good=15&amp;boolshad.wp_flipReverse=0"]
+	set apikey $::env(UCSC_APIKEY)
+	set h [http::geturl "https://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&amp;org=Human&amp;db=hg38&amp;wp_target=genome&amp;wp_f=$p1&amp;wp_r=$p2&amp;Submit=submit&amp;wp_size=4000&amp;wp_perfect=15&amp;wp_good=15&amp;boolshad.wp_flipReverse=0&apiKey=$apikey"]
 	set data [http::data $h]
 	http::cleanup $h
 	regexp {<PRE>(.*)</PRE>} $data temp pre
