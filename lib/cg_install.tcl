@@ -39,7 +39,7 @@ proc cg_install {args} {
 		flames	bin	https://genomecomb.bioinf.be/download/extra/flames-c1_413e09c-linux-x86_64.tar.gz
 		flye	bin	https://genomecomb.bioinf.be/download/extra/flye-2.9.2-linux-x86_64.tar.gz
 		gatk3	bin	https://genomecomb.bioinf.be/download/extra/GATK-3.8.1.0-gf15c1c3ef-java.tar.gz
-		gatk	bin	https://genomecomb.bioinf.be/download/extra/gatk-4.1.8.1-java.tar.gz
+		gatk	bin	https://genomecomb.bioinf.be/download/extra/gatk-4.6.2.0-linux-x86_64.tar.gz
 		hisat2	bin	https://genomecomb.bioinf.be/download/extra/hisat2-2.2.1-linux-x86_64.tar.gz
 		bowtie2	bin	https://genomecomb.bioinf.be/download/extra/bowtie2-2.5.5-linux-x86_64.tar.gz
 		isoquant	bin	https://genomecomb.bioinf.be/download/extra/isoquant-3.12.2-linux-x86_64.tar.gz

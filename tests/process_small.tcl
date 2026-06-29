@@ -129,7 +129,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 	join [list_remove $result {}] \n
 } {}
 
-test process_small {process_project mastr_mx2 cram gatkh and strelka} {
+test process_small {process_project mastr_mx2_cram cram gatkh and strelka} {
 	cd $::smalltestdir
 	set basename mastr_mx2_cram
 	file delete -force tmp/${basename}
