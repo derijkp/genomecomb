@@ -52,7 +52,7 @@ proc cg_install {args} {
 		nanopolish	bin	https://genomecomb.bioinf.be/download/extra/nanopolish-0.13.2-linux-x86_64.tar.gz
 		nextflow	bin	https://genomecomb.bioinf.be/download/extra/nextflow-22.10.0-linux-x86_64.tar.gz
 		java	bin	https://genomecomb.bioinf.be/download/extra/openjdk-22-linux-x86_64.tar.gz
-		picard	bin	https://genomecomb.bioinf.be/download/extra/picard-2.21.3-java.tar.gz
+		picard	bin	https://genomecomb.bioinf.be/download/extra/picard-3.4.0-linux-x86_64.tar.gz
 		python3	bin	https://genomecomb.bioinf.be/download/extra/python3-3.9-linux-x86_64.tar.gz
 		sniffles	bin	https://genomecomb.bioinf.be/download/extra/sniffles-2.8.0-linux-x86_64.tar.gz
 		sqanti3	bin	https://genomecomb.bioinf.be/download/extra/sqanti3-4.2-linux-x86_64.tar.gz

@@ -24,15 +24,29 @@ proc picard {cmd args} {
 	set picard [findpicard]
 	if {[file exists $picard/$cmd.jar]} {
 		catch_exec java1.8 -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args
-	} else {
+	} elseif {[file exists $picard/picard.jar]} {
 		catch_exec java1.8 -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/picard.jar $cmd {*}$args
+	} else {
+		catch_exec picard $cmd {*}$args
+	}
+}
+
+proc picard_cmdline {cmd args} {
+	set maxmem 8G
+	set picard [findpicard]
+	if {[file exists $picard/$cmd.jar]} {
+		return [list java1.8 -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args]
+	} elseif {[file exists $picard/picard.jar]} {
+		return [list java1.8 -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/picard.jar $cmd {*}$args]
+	} else {
+		return [list picard $cmd {*}$args]
 	}
 }
 
 proc findpicard {} {
 	global picard
 	if {![info exists picard]} {
-		set picard [searchpath PICARD picard2 picard*]
+		set picard [searchpath PICARD picard picard2 picard*]
 		if {$picard eq ""} {
 			set picard [searchpath PICARD picard picard*]
 		}
