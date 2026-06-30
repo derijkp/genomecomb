@@ -25,7 +25,7 @@ source "${dir}/start_hbb3.sh"
 # settings
 # ========
 
-modkitversion=0.4.2
+modkitversion=0.6.4
 
 # Script run within Holy Build box
 # ================================
@@ -49,6 +49,7 @@ yuminstall wget
 # yuminstall openssl-devel
 yuminstall perl-devel
 yuminstall perl-IPC-Cmd
+yuminstall perl-Time-Piece
 
 # yuminstall xz
 sudo yum install curl gcc -y
@@ -122,7 +123,8 @@ mv /build/modkit-${modkitversion} /build/modkit-${modkitversion}-build
 cd /build/modkit-${modkitversion}-build
 rm -rf /build/modkit-${modkitversion}-$arch || true
 mkdir /build/modkit-${modkitversion}-$arch
-cargo install --root /build/modkit-${modkitversion}-$arch --path .
+cargo install --root /build/modkit-${modkitversion}-$arch --path modkit
+
 cp -ra README.md LICENCE.txt docs /build/modkit-${modkitversion}-$arch
 mv /build/modkit-${modkitversion}-$arch/bin/modkit /build/modkit-${modkitversion}-$arch
 rmdir /build/modkit-${modkitversion}-$arch/bin
