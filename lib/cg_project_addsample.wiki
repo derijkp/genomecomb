@@ -11,7 +11,7 @@ Add a sample directory to a project directory.
 project_addsample is a convenience function to add a sample to a
 [[projectdir|project directory]] in the proper structure. (You can do the
 same manually by creating the directories, adding links ot copying raw
-data files) If the project directoy does not exist yet, it will be
+data files) If the project directory does not exist yet, it will be
 created. The command creates a sample directory under projectdir/samples,
 and adds the given raw data under projectdir/samples/samplename/ori (by
 default using softlinks).

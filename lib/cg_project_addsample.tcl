@@ -44,14 +44,22 @@ proc cg_project_addsample {args} {
 	if {[llength $args] == 1 && [file isdir $dir] && $dir ne "ASM"} {
 		project_transfer $dir $projectdir/samples/$samplename/ori $transfertype $force
 	} else {
-		file mkdir $projectdir/samples/$samplename/ori
-		file mkdir $projectdir/samples/$samplename/fastq
+		set bams {}
+		set fastqs {}
 		foreach file $args {
 			if {![file exists $file]} {error "file $file does not exist"}
-			project_transfer $file $projectdir/samples/$samplename/ori/[file tail $file] $transfertype $force
-			if {[file extension [gzroot $file]] in ".fastq .fq"} {
+			if {[file extension [gzroot $file]] eq ".bam"} {
+				file mkdir $projectdir/samples/$samplename/ubam
+				project_transfer $file $projectdir/samples/$samplename/ubam/[file tail $file] $transfertype $force
+				lappend bams $file
+			} elseif {[file extension [gzroot $file]] ne ".fastq .fq"} {
+				file mkdir $projectdir/samples/$samplename/fastq
 				project_transfer $file $projectdir/samples/$samplename/fastq/[file tail $file] $transfertype $force
+				lappend fastqs $file
 			}
+		}
+		if {[llength $bams] && [llength $fastqs]} {
+			puts stderr "Raw data files are from different types: only the bams (in ubam) will be used"
 		}
 	}
 	if {$amplicons ne ""} {
