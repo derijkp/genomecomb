@@ -33,7 +33,7 @@ proc cg_install {args} {
 		dm6-minimap2	ref	https://genomecomb.bioinf.be/download/refdb_dm6-minimap2-0.106.0.tar.gz
 
 		clair3	bin	https://genomecomb.bioinf.be/download/extra/clair3-2.0.1-linux-x86_64.tar.gz
-		cutesv	bin	https://genomecomb.bioinf.be/download/extra/cutesv-1.0.11-linux-x86_64.tar.gz
+		cutesv	bin	https://genomecomb.bioinf.be/download/extra/cutesv-2.1.3-linux-x86_64.tar.gz
 		dirR	bin	https://genomecomb.bioinf.be/download/extra/dirR-4.2.1-2-linux-x86_64.tar.gz
 		flair	bin	https://genomecomb.bioinf.be/download/extra/flair-2.0-linux-x86_64.tar.gz
 		flames	bin	https://genomecomb.bioinf.be/download/extra/flames-c1_413e09c-linux-x86_64.tar.gz

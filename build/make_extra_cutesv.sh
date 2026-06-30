@@ -20,12 +20,12 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
 
-cutesvversion=1.0.11
+cutesvversion=2.1.3
 
 all=1
 extra=1
@@ -59,12 +59,12 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-8
-yuminstall rh-python36
+yuminstall devtoolset-11
+#yuminstall rh-python36
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-8 rh-python36 bash
-source /opt/rh/devtoolset-8/enable
-source /opt/rh/rh-python36/enable
+# scl enable devtoolset-11 rh-python36 bash
+source /opt/rh/devtoolset-11/enable
+#source /opt/rh/rh-python36/enable
 
 
 for dir in lib include bin share ; do
@@ -98,41 +98,48 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# mamba
+# -----
+cd /build
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda || true
-bash Miniconda3-latest-Linux-x86_64.sh -b -p /build/miniconda
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda install -y -c conda-forge conda-pack
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
 # cuteSV
 # -----
 cd /build
 
-githubversion=cuteSV-v$cutesvversion
+mamba create -y -n cutesv
+mamba activate cutesv
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+mamba install -y cutesv=$cutesvversion python=3.10
 
-conda create -y -n cutesv
-conda activate cutesv
-conda install -y cutesv
+mamba deactivate
+
+# make package
+# ------------
+
+cd /build
+
+# installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
+mamba install -y -c conda-forge conda-pack
 
 rm cutesv.tar.gz || true
 conda pack -n cutesv -o cutesv.tar.gz
 rm -rf cutesv-$cutesvversion-$arch.old
 mv cutesv-$cutesvversion-$arch cutesv-$cutesvversion-$arch.old || true
-
 mkdir /build/cutesv-$cutesvversion-$arch
 cd /build/cutesv-$cutesvversion-$arch
 tar xvzf ../cutesv.tar.gz
@@ -154,7 +161,6 @@ tar cvzf cutesv-$cutesvversion-$arch.tar.gz cutesv-$cutesvversion-$arch cuteSV c
 cp -ra cutesv-$cutesvversion-$arch cuteSV cuteSV-$cutesvversion /io/extra$ARCH
 cd /io/extra$ARCH/
 
-
-conda deactivate
-
-echo "Finished building cuteSV"
+echo "Finished building cutesv-$cutesvversion-$arch"
+echo "build in $builddir/cutesv-$cutesvversion-$arch"
+echo "installed in $srcdir/cutesv-$cutesvversion-$arch"
