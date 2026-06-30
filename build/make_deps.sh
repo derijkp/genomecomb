@@ -92,8 +92,8 @@ function download {
 # zlib
 # ---
 if [[ $all -eq 1 || ! -f /io/extern$ARCH/lz4 ]] ; then
-    zlibversion=1.2.11
     zlibversion=1.3.1
+    zlibversion=1.3.2
     download https://zlib.net/zlib-$zlibversion.tar.gz
     cd /build/zlib-$zlibversion
     make distclean
@@ -106,7 +106,7 @@ fi
 # zstd (for lib)
 # --------------
 cd /build
-zstdversion=1.5.2
+zstdversion=1.5.7
 if [ ! -f "/build/zstd-$zstdversion/lib/libzstd.a" ] ; then
     source /hbb_shlib/activate
     wget -c https://github.com/facebook/zstd/releases/download/v$zstdversion/zstd-$zstdversion.tar.gz
@@ -298,7 +298,7 @@ fi
 # ---------------------------------------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
 
-    htsversion=1.23
+    htsversion=1.23.1
     # also a library, needs -fPIC, so compile as lib
     cg /build
     source /hbb_shlib/activate
@@ -324,20 +324,20 @@ fi
 # samtools
 # --------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/samtools ] ; then
-    samversion=1.23
+    samversion=1.23.1
     download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
     cd /build/samtools-$samversion
     make distclean
     env CFLAGS="-I/build/include -L/build/lib $STATICLIB_CFLAGS -fPIC -lcrypto -lssl" LDFLAGS="-L/build/lib $LDFLAGS" \
                 ./configure --prefix=/build --disable-shared --enable-static --enable-libcurl
     make
-    gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
-                -o samtools bam.o bam_aux.o bam_index.o bam_plcmd.o sam_view.o bam_fastq.o bam_cat.o bam_md.o bam_plbuf.o bam_reheader.o bam_sort.o bam_rmdup.o bam_rmdupse.o bam_mate.o bam_stat.o bam_color.o bamtk.o bam2bcf.o sample.o cut_target.o phase.o bam2depth.o coverage.o padding.o bedcov.o bamshuf.o faidx.o dict.o stats.o stats_isize.o bam_flags.o bam_split.o bam_tview.o bam_tview_curses.o bam_tview_html.o bam_lpileup.o bam_quickcheck.o bam_addrprg.o bam_markdup.o tmp_file.o bam_ampliconclip.o amplicon_stats.o bam_import.o bam_samples.o bam_consensus.o consensus_pileup.o \
-                ./lz4/lz4.o libst.a htslib-1.23/libhts.a \
-                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
+#    gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
+#                -o samtools bam.o bam_aux.o bam_index.o bam_plcmd.o sam_view.o bam_fastq.o bam_cat.o bam_md.o bam_plbuf.o bam_reheader.o bam_sort.o bam_rmdup.o bam_rmdupse.o bam_mate.o bam_stat.o bam_color.o bamtk.o bam2bcf.o sample.o cut_target.o phase.o bam2depth.o coverage.o padding.o bedcov.o bamshuf.o faidx.o dict.o stats.o stats_isize.o bam_flags.o bam_split.o bam_tview.o bam_tview_curses.o bam_tview_html.o bam_lpileup.o bam_quickcheck.o bam_addrprg.o bam_markdup.o tmp_file.o bam_ampliconclip.o amplicon_stats.o bam_import.o bam_samples.o bam_consensus.o consensus_pileup.o \
+#                ./lz4/lz4.o libst.a htslib-$htsversion/libhts.a \
+#                -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
     gcc -L/build/lib -L/hbb_exe/lib -static-libstdc++ -L./lz4 -L/build/lib -L/hbb_exe/lib -static-libstdc++ \
                 -o samtools *.o \
-                ./lz4/lz4.o libst.a htslib-1.23/libhts.a \
+                ./lz4/lz4.o libst.a htslib-$htsversion/libhts.a \
                 -Wl,-Bstatic -llzma -lbz2 -lz -lcurl -lssl -lssh2 -lcares -lcrypto -lncurses -Wl,-Bdynamic -ldl -lrt -lm -lpthread
     make install
     cp samtools /io/extern$ARCH
@@ -347,7 +347,7 @@ fi
 # bcftools
 # --------
 if [ $all -eq 1 || ! -f /io/extern$ARCH/bcftools ] ; then
-    bcfversion=1.23
+    bcfversion=1.23.1
     download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
     cd /build/bcftools-$bcfversion
     make distclean
@@ -413,6 +413,7 @@ cd /build
 wget https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/10.0.1/graphviz-10.0.1.tar.gz
 tar xvzf graphviz-10.0.1.tar.gz
 cd /build/graphviz-10.0.1
+
 # ./configure --help
 ./configure --prefix=/build/graphviz-bin --enable-shared=no --enable-static=yes
 make
