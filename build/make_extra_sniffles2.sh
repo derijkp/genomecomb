@@ -20,12 +20,12 @@ set -e
 
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
-source "${dir}/start_hbb.sh"
+source "${dir}/start_hbb3.sh"
 
 # Parse arguments
 # ===============
 
-snifflesversion=2.2
+snifflesversion=2.8.0
 
 all=1
 extra=1
@@ -57,12 +57,9 @@ yuminstall gcc-c++
 yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
-yuminstall devtoolset-9
-# yuminstall rh-python36
+yuminstall devtoolset-11
 # use source instead of scl enable so it can run in a script
-# scl enable devtoolset-9 bash
-source /opt/rh/devtoolset-9/enable
-# source /opt/rh/rh-python36/enable
+source /opt/rh/devtoolset-11/enable
 
 
 for dir in lib include bin share ; do
@@ -96,45 +93,47 @@ function download {
 
 cd /build
 
-# miniconda
-# ---------
-export minicondaversion=py38_4.9.2
+# mamba
+# -----
 cd /build
-wget -c https://repo.anaconda.com/miniconda/Miniconda3-$minicondaversion-Linux-x86_64.sh
+export mambaversion=22.11.1-4
+curl -L -O "https://github.com/conda-forge/miniforge/releases/download/$mambaversion/Mambaforge-$mambaversion-Linux-x86_64.sh"
 unset PYTHONPATH
-rm -rf /build/miniconda-$minicondaversion
-bash Miniconda3-$minicondaversion-Linux-x86_64.sh -b -p /build/miniconda-$minicondaversion
+rm -rf /home/build/mambaforge
+bash Mambaforge-$mambaversion-Linux-x86_64.sh -b
 
 # bioconda
 # --------
 
-PATH=/build/miniconda-$minicondaversion/bin:$PATH
+PATH=/home/build/mambaforge/bin:$PATH
 
-conda init bash
+mamba init bash
 . ~/.bash_profile
 
 # sniffles
 # -----
 cd /build
 
-conda create -y -n sniffles
-conda activate sniffles
+mamba create -y -n sniffles
+mamba activate sniffles
+conda config --add channels defaults
 conda config --add channels bioconda
-conda install -y sniffles=$snifflesversion python=3.7
+conda config --add channels conda-forge
+mamba install -y sniffles=$snifflesversion python=3.10
 
-conda deactivate
+mamba deactivate
 
 # make package
 # ------------
 
 cd /build
 # installing conda-pack in the beginning causes further commands to fail (network/ssl), so we do it here at the end
-conda install -y -c conda-forge conda-pack
+mamba install -y -c conda-forge conda-pack
+
 rm sniffles.tar.gz || true
 conda pack -n sniffles -o sniffles.tar.gz
 rm -rf sniffles-$snifflesversion-$arch.old || true
 mv sniffles-$snifflesversion-$arch sniffles-$snifflesversion-$arch.old || true
-
 mkdir /build/sniffles-$snifflesversion-$arch
 cd /build/sniffles-$snifflesversion-$arch
 tar xvzf ../sniffles.tar.gz

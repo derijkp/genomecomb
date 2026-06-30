@@ -54,7 +54,7 @@ proc cg_install {args} {
 		java	bin	https://genomecomb.bioinf.be/download/extra/openjdk-22-linux-x86_64.tar.gz
 		picard	bin	https://genomecomb.bioinf.be/download/extra/picard-2.21.3-java.tar.gz
 		python3	bin	https://genomecomb.bioinf.be/download/extra/python3-3.9-linux-x86_64.tar.gz
-		sniffles	bin	https://genomecomb.bioinf.be/download/extra/sniffles-2.2-linux-x86_64.tar.gz
+		sniffles	bin	https://genomecomb.bioinf.be/download/extra/sniffles-2.8.0-linux-x86_64.tar.gz
 		sqanti3	bin	https://genomecomb.bioinf.be/download/extra/sqanti3-4.2-linux-x86_64.tar.gz
 		star	bin	https://genomecomb.bioinf.be/download/extra/STAR-2.7.9a_2021-06-25-linux-x86_64.tar.gz
 		strelka	bin	https://genomecomb.bioinf.be/download/extra/strelka-2.9.10-linux-x86_64.tar.gz
