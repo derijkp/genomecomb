@@ -85,7 +85,7 @@ test process_sv {process_project ont_minimap2 and -extraannot AnnotSV} {
 	join [list_remove $result {}] \n
 } {}
 
-test process_sv {manta} {
+test process_sv {manta sv_chr21part} {
 	cd $::smalltestdir
 	file delete -force tmp/sv_chr21part
 	file mkdir tmp/sv_chr21part

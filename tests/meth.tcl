@@ -48,10 +48,11 @@ test meth {meth_nanopolish} {
 		-x *.analysisinfo -x *.png -x *.submitting \
 		-x *log_jobs -x *.index -x *.log \
 		tmp/meth_nanopolish expected/meth_nanopolish]
+	file_write tmp/meth_nanopolish.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
-test meth {meth_nanopolish with gz results} {
+test meth {meth_nanopolish methgz with gz results} {
 	cd $::smalltestdir
 	file delete -force tmp/methgz
 	file mkdir tmp/methgz/samples/methtest/fast5
@@ -99,10 +100,11 @@ test meth {meth_nanopolish with gz results} {
 		-x *.html \
 		tmp/methgz expected/methgz]
 	lappend result [diffhtmlreport tmp/methgz/reports/report-methgz.html expected/methgz/reports/report-methgz.html]
+	file_write tmp/methgz.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
-test meth {meth_nanopolish preset gpc} {
+test meth {meth_nanopolish methgpc preset gpc} {
 	cd $::smalltestdir
 	file delete -force tmp/methgpc
 	file mkdir tmp/methgpc/samples/methtest/fast5
@@ -149,6 +151,7 @@ test meth {meth_nanopolish preset gpc} {
 		-x *.html \
 		tmp/methgpc expected/methgpc]
 	lappend result [diffhtmlreport tmp/methgpc/reports/report-methgpc.html expected/methgpc/reports/report-methgpc.html]
+	file_write tmp/methgpc.diffs [join [list_remove $result {}] \n]
 	join [list_remove $result {}] \n
 } {}
 
