@@ -97,7 +97,24 @@ proc cg_genome_seq {args} {
 			set namefield $value
 		}
 	}  {regionfile dbdir outfile} 2 3
-	set dbdir [dbdir $dbdir]
+	if {![file isdir $dbdir]} {
+		if {[file extension $dbdir] eq ".ifas"} {
+			set genomefile $dbdir
+		} elseif {[file exists $dbdir.ifas]} {
+			set genomefile $dbdir.ifas
+		} else {
+			set genomefile $dbdir.ifas
+			cg_fas2ifas $dbdir $genomefile.temp
+			file rename $genomefile.temp $genomefile
+		}
+		if {![info exists $genomefile.fai]} {
+			exec samtools faidx $genomefile
+		}
+		set dbdir [file dir $dbdir]
+	} else {
+		set dbdir [dbdir $dbdir]
+		set genomefile [lindex [glob $dbdir/genome_*.ifas] 0]
+	}
 	if {$outfile ne ""} {
 		set root [file root $outfile]
 		set ext [file extension $outfile]
@@ -131,7 +148,7 @@ proc cg_genome_seq {args} {
 		}
 		set outf $fo
 	}
-	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
+	set fg [genome_open $genomefile]
 	if {![file exists $regionfile]} {
 		set regionlist [list_remove [split $regionfile ":-, \n"] {}]
 		set regionfile [tempfile]
