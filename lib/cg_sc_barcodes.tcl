@@ -187,7 +187,7 @@ proc find_barcodes {fastq resultfile sumresultfile adaptorseq {barcodesize 16} {
 					set post [string range $seq [expr {$start+$barcodesize+$umisize}] [expr {$start+$barcodesize+$umisize+14}]]
 					set polya [regexp -all T $post]
 #if {![info exists wla($barcode)] && [llength $keeptodo] > 1} {error "barcode not in wl"}
- if {$barcode eq "CTCACGACGCTCTTCC"} {error "target barcode"}
+# if {$barcode eq "CTCACGACGCTCTTCC"} {error "target barcode"}
 				} else {
 					set barcode {}
 					foreach line $todo {
