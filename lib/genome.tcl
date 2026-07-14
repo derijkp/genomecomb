@@ -4,6 +4,8 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+namespace eval genomecomb {}
+
 proc cg_fas2ifas {srcfile destfile} {
 	# make new one
 	set f [gzopen $srcfile]
@@ -41,7 +43,7 @@ proc cg_fas2ifas {srcfile destfile} {
 		set oi [open $destfile.index.temp2 w]
 		foreach name $sids {
 			if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
-				if {![regexp {chr([^ ,]+)} $name temp chr]} {
+				if {![regexp {^chr([^ ,]+)} $name temp chr]} {
 					set chr [lindex $name end]
 				}
 			}
@@ -61,7 +63,7 @@ proc cg_fas2ifas {srcfile destfile} {
 		set oi [open $destfile.index.temp w]
 		foreach name $sids {
 			if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
-				if {![regexp {chr([^ ,]+)} $name temp chr]} {
+				if {![regexp {^chr([^ ,]+)} $name temp chr]} {
 					set chr [lindex $name 0]
 				}
 			}
@@ -86,7 +88,7 @@ proc cg_genome_indexfasta {resultfile} {
 		if {$len == 0} continue
 		set name [string range $line 1 end]
 		if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
-			if {![regexp {chr([^ ,]+)} $name temp chr]} {
+			if {![regexp {^chr([^ ,]+)} $name temp chr]} {
 				set chr [lindex $name end]
 			}
 		}
@@ -126,7 +128,7 @@ proc genome_makefastaindex {fastafile} {
 		set line [gets $f]
 		set name [string range $line 1 end]
 		if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
-			if {![regexp {chr([^ ,]+)} $name temp chr]} {
+			if {![regexp {^chr([^ ,]+)} $name temp chr]} {
 				set chr [lindex $name end]
 			}
 		}
@@ -142,7 +144,6 @@ proc genome_makefastaindex {fastafile} {
 }
 
 proc genome_open {file} {
-	global genomefasta
 	if {[file isdir $file]} {
 		set file [lindex [glob $file/genome_*.ifas] 0]
 	}
@@ -152,22 +153,20 @@ proc genome_open {file} {
 		genome_makefastaindex $file
 	}
 	foreach {name data} [split [string trim [file_read $file.index]] \t\n] {
-		if {![regexp {chr([^ ,]+)} $name temp chr]} {set chr [lindex $name end]}
+		if {![regexp {^chr([^ ,]+)} $name temp chr]} {set chr [lindex $name end]}
 		dict set fastaindex $chr $data
 	}
-	set genomefasta($f) $fastaindex
+	set ::genomecomb::genomefasta($f) $fastaindex
 	return $f
 }
 
 proc genome_close {f} {
-	global genomefasta
 	close $f
-	unset genomefasta($f)
+	unset ::genomecomb::genomefasta($f)
 }
 
 proc genome_chrsize {f chr} {
-	global genomefasta
-	set fastaindex $genomefasta($f)
+	set fastaindex $::genomecomb::genomefasta($f)
 	set chr [chr_clip $chr]
 	if {[catch {dict get $fastaindex $chr} temp]} {
 		set temp [dict get $fastaindex $chr]
@@ -176,9 +175,8 @@ proc genome_chrsize {f chr} {
 }
 
 proc genome_get {f chr start end {correctend 0} {unknownchr 0}} {
-	global genomefasta
 	if {$end < $start} {error "end ($end) is smaller than start ($start)"}
-	set fastaindex $genomefasta($f)
+	set fastaindex $::genomecomb::genomefasta($f)
 	if {[catch {
 		set temp [dict get $fastaindex $chr]
 	}]} {
@@ -296,7 +294,7 @@ proc cg_make_genomecindex {ifasfile} {
 		puts $name
 		if {![string length $name]} break
 		if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
-			if {![regexp {chr([^ ,]+)} $name temp chr]} {
+			if {![regexp {^chr([^ ,]+)} $name temp chr]} {
 				set chr [lindex $name end]
 			}
 		}
@@ -327,9 +325,8 @@ proc cg_genome_get {args} {
 		puts [genome_get $f $chr $start $end]
 		close $f
 	} elseif {[llength $args] == 2} {
-		global genomefasta
 		set f [genome_open $genome]
-		set fastaindex $genomefasta($f)
+		set fastaindex $::genomecomb::genomefasta($f)
 		foreach {gstart glen} [dict get $fastaindex $chr] break
 		seek $f $gstart
 		fcopy $f stdout -size $glen
