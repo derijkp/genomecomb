@@ -172,7 +172,7 @@ proc giab_getdata_job {args} {
 	set parts 200
 	set align {}
 	set refseq {}
-	cg_options giab_gettruth args {
+	cg_options giab_getdata args {
 		-paralleldownload {set paralleldownload $value}
 		-todo {set todo $value}
 		-parts {set parts $value}
@@ -181,11 +181,14 @@ proc giab_getdata_job {args} {
 		-threads {set threads $value}
 	} {version basedir} 0 2
 	if {$basedir eq ""} {
+		set list {}
+		regexp {^([^:]+):(.*)$} $version temp version list
 		set basedir $::env(HOME)/public/giab/$version
 	}
 	job_logfile $basedir/giab_getdata_$version $basedir
 	puts stderr "Making $basedir"
 	mkdir $basedir
+	set aligned 0
 	if {[regexp ^precisionfda $version]} {
 		if {$version ne "precisionfda_v2016_04"} {
 			error "error downloading precision FDA data: only version precisionfda_v2016_04 supported"
@@ -268,22 +271,61 @@ proc giab_getdata_job {args} {
 			}
 		}
 		set parts 1000
+	} elseif {[regexp ^ont_giab_2025.01 $version]} {
+		set aligned 1
+		unset -nocomplain prea
+		foreach {sample flowcells} {
+			HG001 {PAW81754 PAW79146}
+			HG002 {PAW71238 PAW70337}
+			HG003 {PAY87794 PAY87954}
+			HG004 {PAY88428 PAY87778}
+			HG005 {PAW88001 PAW87816}
+			HG006 {PBA16846 PAY77227}
+			HG007 {PBA20413 PAY12990}
+		} {
+			set urls {}
+			foreach flowcell $flowcells {
+				lappend urls https://42basepairs.com/download/s3/ont-open-data/giab_2025.01/basecalling/sup/$sample/$flowcell/calls.sorted.bam->${sample}_${flowcell}.sorted.bam
+			}
+			set prea($sample) $urls
+		}
+		if {$list eq ""} {
+			set list [array names prea]
+		} else {
+			regsub -all {[_:,]} $list { } list
+		}
+		set todo {}
+		foreach el $list {
+			if {![info exists prea($el)]} {error "sample $el not supported for ont_giab_2025.01_*"}
+			lappend todo $el $prea($el)
+		}
 	} elseif {![llength $todo]} {
 		error "version $version not supported by cg giab_getdata; must be one of: platinum_genomes precisionfda_v2016_04"
 	}
 	foreach {sample urls} $todo {
 		mkdir $basedir/$sample
 		cd $basedir/$sample
-		mkdir fastqsplit
 		set files {}
 		set endtargets {}
 		foreach url $urls {
-			set file [file tail $url]
+			set pos [string first -> $url]
+			if {$pos != -1} {
+				set file [string range $url [expr $pos + 2] end]
+			} else {
+				set file [file tail $url]
+			}
 			set ext [file extension [gzroot $file]]
 			lappend files $file
-			if {$ext ni ".fastq .fq"} continue
-			for {set part 1} {$part <= $parts} {incr part} {
-				lappend endtargets fastqsplit/p${part}_$file
+			if {$ext in ".fastq .fq"} {
+				mkdir fastqsplit
+				for {set part 1} {$part <= $parts} {incr part} {
+					lappend endtargets fastqsplit/p${part}_$file
+				}
+			} elseif {$ext in ".bam"} {
+				mkdir ubamsplit
+				for {set part 1} {$part <= $parts} {incr part} {
+					lappend endtargets ubamsplit/p${part}_$file
+				}
 			}
 		}
 		if {$paralleldownload} {
@@ -291,13 +333,20 @@ proc giab_getdata_job {args} {
 			} -targets $files -vars {
 				basedir version sample urls parts
 			} -code {
-				mkdir tmp
-				cd tmp
+				mkdir $basedir/$sample/tmp
+				cd $basedir/$sample/tmp
 				foreach url $urls {
-					exec wget -c $url >@ stdout 2>@ stderr
-					lappend files tmp/[file tail $url]
+					set pos [string first -> $url]
+					if {$pos != -1} {
+						set file [string range $url [expr $pos + 2] end]
+						set url [string range $url 0 [expr $pos -1]]
+					} else {
+						set file [file tail $url]
+					}
+					exec wget -O $file -c $url >@ stdout 2>@ stderr
+					lappend files $basedir/tmp/$file
 				}
-				cd ..
+				cd $basedir/$sample
 				file rename {*}$files .
 				file delete tmp
 			}
@@ -312,15 +361,21 @@ proc giab_getdata_job {args} {
 			}
 			if {![llength $endtargets]} {set done 0}
 			if {!$done && !$donedownload} {
-				mkdir tmp
-				cd tmp
+				mkdir $basedir/$sample/tmp
+				cd $basedir/$sample/tmp
 				set tempfiles {}
 				foreach url $urls {
-					if {[file exists ../[file tail $url]]} continue
-					exec wget -c $url >@ stdout 2>@ stderr
-					lappend tempfiles tmp/[file tail $url]
+					set pos [string first -> $url]
+					if {$pos != -1} {
+						set file [string range $url [expr $pos + 2] end]
+						set url [string range $url 0 [expr $pos -1]]
+					} else {
+						set file [file tail $url]
+					}
+					exec wget -O $file -c $url >@ stdout 2>@ stderr
+					lappend tempfiles $basedir/$sample/tmp/$file
 				}
-				cd ..
+				cd $basedir/$sample
 				if {[llength $tempfiles]} {
 					file rename {*}$tempfiles .
 				}
@@ -330,12 +385,17 @@ proc giab_getdata_job {args} {
 		cd $basedir/$sample
 		foreach file $files {
 			set ext [file extension [gzroot $file]]
-			if {$ext ni ".fastq .fq"} continue
-			puts stderr "splitting $file"
-			fastq_split_job -parts $parts -threads $threads $file fastqsplit/$file
+			if {$ext in ".fastq .fq"} {
+				puts stderr "splitting $file"
+				fastq_split_job -parts $parts -threads $threads $file fastqsplit/$file
+			} elseif {$ext in ".bam"} {
+				puts stderr "splitting $file"
+				ubam_split_job -aligned $aligned -parts $parts -threads $threads $file ubamsplit/$file
+				catch {file delete [glob ubamsplit/ubam_split*]}
+			}
 		}
 		if {$align ne ""} {
-			set fastqs [jobglob fastqsplit/*.fastq.gz]
+			set fastqs [jobglob fastqsplit/*.fastq.gz ubamsplit/*.bam]
 			if {[llength $fastqs]} {
 				map_job -method $align -paired 0 -threads 8 \
 					map-sminimap2-${sample}_hg38.bam \
