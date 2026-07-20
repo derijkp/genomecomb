@@ -79,16 +79,26 @@ proc map_mem_minimap2 {mem threads preset deps} {
 }
 
 # presets
-# map-pb : PacBio genomic reads
-# map-ont : Oxford Nanopore genomic reads
+# ont : Oxford Nanopore genomic reads (map-ont) (default)
+# pb : PacBio genomic reads (map-pb)
+# pacbio : PacBio genomic reads (map-pb)
+# hifi : PacBio hifi genomic reads (map-hifi)
 # asm20 : PacBio CCS genomic reads
 # sr : short genomic paired-end reads
 # splice : spliced long reads (strand unknown)
 # splice : noisy Nanopore Direct RNA-seq
-# splice:hq : Final PacBio Iso-seq or traditional cDNA
+# splicehq : Final PacBio Iso-seq or traditional cDNA (splice:hq)
 # asm5 : intra-species asm-to-asm alignment
-# ava-pb : PacBio read overlap
-# ava-ont : Nanopore read overlap
+# avaob : PacBio read overlap (ava-pb)
+# avaont : Nanopore read overlap (ava-ont)
+# any preset minimap2 version accepts can also be given
+#
+# custom presets
+# ontshort : ONT optimized to find (very) short matches
+# short : short read optimized to find (very) short matches
+# splicesmall : minimap2 splice  preset with parameters set to detect small exons (can lead to errors in others)
+# splicesens : minimap2 splice  preset with parameters set to be more sensitive
+# splicesrsens : minimap2 splice:sr  preset with parameters set to be more sensitive
 
 proc map_minimap2_presets {value mpresetVar refpresetVar extraoptsVar} {
 	upvar $mpresetVar mpreset
@@ -103,9 +113,16 @@ proc map_minimap2_presets {value mpresetVar refpresetVar extraoptsVar} {
 		set mpreset map-pb
 		set refpreset map-pb
 		set platform PACBIO
+		lappend extraopts -L
+	} elseif {$value in "hifi"} {
+		set mpreset map-hifi
+		set refpreset map-hifi
+		set platform PACBIO
+		lappend extraopts -L
 	} elseif {$value in "ont"} {
 		set mpreset map-ont
 		set refpreset map-ont
+		lappend extraopts -L
 	} elseif {$value in "ontshort"} {
 		# have to keep this and change just before using because it needs a different index
 		set mpreset map-ont
@@ -120,7 +137,7 @@ proc map_minimap2_presets {value mpresetVar refpresetVar extraoptsVar} {
 		set mpreset ava-pb
 		set refpreset ava-pb
 		set platform PACBIO
-	} elseif {$value in "pb avaont"} {
+	} elseif {$value in "avaont"} {
 		set mpreset ava-ont
 		set refpreset ava-ont
 		set platform PACBIO

@@ -89,7 +89,8 @@ not processed and not added to the final compar.
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
 ; -aligners aligner (-a): use the given aligner for mapping to the reference genome (default bwa)
-Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, minimap2_pb, minimap2_asm20, ngmlr ; for rna-seq: star, star_2p, hisat2, minimap2_splice, minimap2_splicehq
+Currently supported are: bwa, bowtie2, minimap2_sr, minimap2, minimap2_pb, minimap2_hifi, minimap2_sr, minimap2_<preset> , ngmlr; 
+for rna-seq: star, star_2p, hisat2, minimap2_splice, minimap2_splicehq, minimap2_splicesens
 ; -nohardclips 0/1: if 1, aligners (that support it) will allways use softclipping instead of hardclipping.
 By default it is 0 (hardclipping allowed) unless remora is given as a methylation caller (as hardclipping can cause invalid methylation tags)
 ; -ali_keepcomments 1/0: set to 1 to transfer sequence comments in the source fastq or ubams to the alignment (default don't keep for fastq, keep for ubams). 
@@ -106,7 +107,9 @@ can still use picard for removing duplicates (third option)
 in [[cg_process_sample]]) using the amplicons defained in **ampliconfile** for all samples
 that do not have a sample specific amplicon file yet.
 ; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatkh strelka").
-Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, 
+Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, clair3_pacbio
+; -var_mindepth integer: improve speed by skipping calling variants in regions with a depth below the value given here (default 5). Only applies to variant callers that support -regionfile (gatk, clair3, ...)
+Set to 0 to call all regions even for those variant callers.
 ; -svcallers svcallers: (space separated) list of structural variant callers to be used (default empty).
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).
