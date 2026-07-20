@@ -27,7 +27,7 @@ proc modkit_job {args} {
 	}
 	exec modkit pileup $bamfile $target.temp.gz \
 		--ref $refseq \
-		--preset traditional \
+		--cpg --combine-strands --modified-bases C --combine-mods \
 		>@ stdout 2>@ stderr
 	file rename -force $target.temp.gz $target
 	if {[file extension $bamfile] eq ".cram"} {
@@ -113,7 +113,7 @@ proc meth_remora_job {args} {
 		}
 		exec modkit pileup $bamfile $target.temp \
 			--ref $refseq \
-			--preset traditional \
+			--cpg --combine-strands --modified-bases C --combine-mods \
 			>@ stdout 2>@ stderr
 		cg gzip $target.temp
 		file rename -force $target.temp.gz $target
