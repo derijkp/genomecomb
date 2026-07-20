@@ -71,6 +71,7 @@ proc process_project_job {args} {
 	set samplesheet {}
 	set validate 0
 	set extraannot {}
+	set var_mindepth 5
 	cg_options process_project args {
 		-preset {
 			if {$value ne ""} {
@@ -171,6 +172,9 @@ proc process_project_job {args} {
 		}
 		-v - -varcallers {
 			set varcallers [code_empty $value]
+		}
+		-var_mindepth {
+			set var_mindepth $value
 		}
 		-svcallers {
 			set svcallers [code_empty $value]
@@ -349,6 +353,7 @@ proc process_project_job {args} {
 		}
 		gzclose $f
 	}
+	if {$distrreg eq ""} {set distrreg 0}
 	# check projectinfo
 	set dbdir [dbdir $dbdir]
 	projectinfo $destdir dbdir {split 1}
@@ -435,6 +440,7 @@ proc process_project_job {args} {
 		organelles hap_bam dbdir split paired maxfastqdistr adapterfile 
 		reports samBQ cleanup removeduplicates amplicons threads distrreg 
 		keepsams removeskew dt targetfile minfastqreads depth_histo_max validate
+		var_mindepth
 	}
 	foreach sample $samples {
 		putslog "Processing sample $sample"

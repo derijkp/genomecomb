@@ -612,6 +612,7 @@ proc process_sample_job {args} {
 	set addumis 0
 	set useaddumis 0
 	set nohardclips {}
+	set var_mindepth 5
 	cg_options process_sample args {
 		-preset {
 			if {$value ne ""} {
@@ -709,6 +710,9 @@ proc process_sample_job {args} {
 		}
 		-v - -varcallers {
 			set varcallers [codeback_empty $value]
+		}
+		-var_mindepth {
+			set var_mindepth $value
 		}
 		-svcallers {
 			set svcallers [codeback_empty $value]
@@ -836,6 +840,7 @@ proc process_sample_job {args} {
 		if {$sc_barcodesize eq ""} {set sc_barcodesize 16}
 		if {$sc_umisize eq ""} {set sc_umisize 10}
 	}
+	if {$sc_barcodemethod eq ""} {set sc_barcodemethod normal}
 	set reports [reports_expand $reports]
 	set dbdir [file_absolute $dbdir]
 	set sampledir [file_absolute $sampledir]
@@ -1403,8 +1408,12 @@ proc process_sample_job {args} {
 	# varcaller from bams
 	foreach cleanedbam $cleanedbams {
 		set bambase [file_rootname $cleanedbam]
-		# make 5x coverage regfile from cleanedbam
-		set cov5reg [bam2reg_job -mincoverage 5 -distrreg $distrreg -refseq $refseq $cleanedbam]
+		# make $var_mindepth (default 5x) coverage regfile from cleanedbam
+		if {$var_mindepth <= 0} {
+			set cov5reg [bam2reg_job -mincoverage 5 -distrreg $distrreg -refseq $refseq $cleanedbam]
+		} else {
+			set cov5reg [bam2reg_job -mincoverage $var_mindepth -distrreg $distrreg -refseq $refseq $cleanedbam]
+		}
 		# make 20x coverage regfile
 		set cov20reg [bam2reg_job -mincoverage 20 -compress 1 -distrreg $distrreg -refseq $refseq $cleanedbam]
 		if {$amplicons eq ""} {

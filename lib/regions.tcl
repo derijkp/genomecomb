@@ -61,6 +61,18 @@ proc findregionfile {file} {
 	return [file dir $file]/sreg-$tail
 }
 
+proc regions2bed {regions refseq} {
+	set result {}
+	foreach region $regions {
+		foreach r [samregions $region $refseq 1] {
+			foreach {c b e} [split $r :-] break
+			incr b -1
+			lappend $c\t%b\t$e
+		}
+	}
+	return [join $result \n]\n
+}
+
 proc samregions {region {refseq {}} {full 0}} {
 	if {$region eq ""} {return $region}
 	set split [split $region :-]
