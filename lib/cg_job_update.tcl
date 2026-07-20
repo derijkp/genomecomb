@@ -97,7 +97,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run cores"} {
 			set addtimeresults 1
 		} elseif {$header ne $expectedheader} {
-			error "error in format of logfile $oldlogfile"
+			puts stderr "error in format of logfile $oldlogfile: skipping"
+			continue
 		}
 		while {[gets $f line] != -1} {
 			set line [split $line \t]
@@ -212,7 +213,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
 		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
-			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
+			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores pct_cpu maxmem bytes_read bytes_written} $oldlogsa($jobo) break
 			if {$status in "error skipped" && [file_or_link_exists [job.file log $job]]} {
 				set jobloginfo [job_parse_log $job]
 				foreach {status starttime endtime run duration submittime time_seconds} $jobloginfo break
