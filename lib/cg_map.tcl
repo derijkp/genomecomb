@@ -1,5 +1,5 @@
 proc bam2readgroup {bam} {
-	set h [exec samtools view -H $bam]
+	set h [catch_exec samtools view -H $bam]
 	set readgroupheader {}
 	foreach line [split $h \n] {
 		if {[regexp {@RG\t} $line]} {
