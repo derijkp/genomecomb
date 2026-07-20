@@ -608,7 +608,7 @@ proc process_reports_job {args} {
 			}
 		}
 	}
-	if {[inlist $reports predictgender]} {
+	if {[inlist $reports predictgender] && [jobfileexists $resultbamfile]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
 		set varfile [lindex [jobglob -checkcompressed 1 $sampledir/var-*[file_rootname $resultbamfile].tsv] 0]
 		set indexfile $resultbamfile.[indexext $resultbamfile]
