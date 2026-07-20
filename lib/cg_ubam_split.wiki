@@ -22,9 +22,10 @@ results/p1_test.bam results/p2_test.bam ...
 ; **outtemplate** ...: template for filenames that will be generated
 
 == Options ==
-; **-parts number**: number of output files to generate (this option has preference)
-; **-numseq number**: number of sequences to store per output file
-; **-maxparts number**: maximum number of parts that will be generated (if numseq is small, last part will contain all remaining sequenced)
+; -parts number: number of output files to generate (this option has preference)
+; -numseq number: number of sequences to store per output file
+; -maxparts number: maximum number of parts that will be generated (if numseq is small, last part will contain all remaining sequenced)
+; -aligned 0/1: set to 1 (default 0) if the bam is not unaligned. ubam_split will first collate and unalign before splitting
 
 == Category ==
 Conversion
