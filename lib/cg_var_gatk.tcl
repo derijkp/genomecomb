@@ -1,4 +1,4 @@
-proc validate_var_gatk {refseq distrreg datatype} {
+proc validate_var_gatk {refseq distrreg datatype varpreset} {
 	# seperate because command is not the same as cmd
 	if {[version gatk3] eq "?"} {
 		error "command not available, make sure gatk3 is installed, e.g. using \"cg install gatk3\""

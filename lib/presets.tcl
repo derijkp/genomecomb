@@ -56,7 +56,26 @@ proc preset_ont {} {
 		removeduplicates 0
 		aligners minimap2
 		realign 0
-		varcallers {clair3}
+		varcallers {clair3_ont}
+		svcallers {sniffles cuteSV}
+		methcallers {}
+		counters {}
+		isocallers {}
+		singlecell {}
+		distrreg chr
+		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
+	}
+}
+
+proc preset_pacbio {} {
+	return {
+		split 1
+		paired 0
+		clip 0
+		removeduplicates 0
+		aligners minimap2_hifi
+		realign 0
+		varcallers {clair3_hifi}
 		svcallers {sniffles cuteSV}
 		methcallers {}
 		counters {}

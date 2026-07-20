@@ -2,7 +2,7 @@ proc var_clair3_tools {} {
 	return {clair3}
 }
 
-proc validate_var_clair3 {refseq distrreg datatype} {
+proc validate_var_clair3 {refseq distrreg datatype varpreset} {
 	# seperate because command is not clair3
 	if {[catch {exec which run_clair3.sh}]} {
 		error "command \"run_clair3.sh\" not available, try installing clair3 using e.g. \"cg install clair3\""
@@ -197,6 +197,7 @@ proc var_clair3_job {args} {
 	set cleanup 1
 	set mem {}
 	set time {}
+	set regionfile {}
 	cg_options var_clair3 args {
 		-preset {
 			set preset $value
@@ -212,6 +213,9 @@ proc var_clair3_job {args} {
 		}
 		-L - -deps {
 			lappend deps [file_absolute $value]
+		}
+		-regionfile {
+			set regionfile $value
 		}
 		-region {
 			set region $value
@@ -272,6 +276,10 @@ proc var_clair3_job {args} {
 		}
 	} {bamfile refseq resultfile} 2 3
 	set bamfile [file_absolute $bamfile]
+	if {$regionfile ne ""} {
+		set regionfile [file_absolute $regionfile]
+		lappend deps $regionfile
+	}
 	set refseq [refseq $refseq]
 	if {$time eq ""} {set time 2:00:00}
 	if {$mem eq ""} {set mem [expr {2+$threads}]G}
@@ -301,6 +309,7 @@ proc var_clair3_job {args} {
 	if {$platform eq ""} {
 		puts stderr "warning: -platform for clair3 not given; using default ont"
 		set platform ont
+		set tech ont
 	}
 	if {$resultfile eq ""} {
 		if {$rootname eq ""} {
@@ -330,20 +339,18 @@ proc var_clair3_job {args} {
 	lappend skips -skip $resultlist
 	# logfile
 	job_logfile $destdir/var_clair3_$resulttail $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
+		{*}[versions clair3 longshot samtools gatk picard java gnusort8 zst os]
 	# start
 	## Produce clair3 SNP calls
 	set dep $bamfile
 	set bamindex $bamfile.[indexext $bamfile]
 	set deps [list $bamfile $refseq $bamindex {*}$deps]
-#putsvars deps vcffile region refseq root varfile split tech opts region index
-#error stop
 	job clair3-[file_rootname $varfile] {*}$skips -mem $mem -time $time -cores $threads \
 	-deps $deps -targets {
 		$varfile $vcffile $varallfile
 	} -vars {
 		vcffile varfile varallfile root refseq
-		region opts index threads
+		regionfile region opts index threads
 		mincoverage mingenoqual split platform model phasing
 	} -code {
 		set ::env(LANG) C
@@ -367,7 +374,7 @@ proc var_clair3_job {args} {
 		analysisinfo_write $dep $varfile \
 			analysis $root sample $root \
 			varcaller clair3 varcaller_version [version clair3] \
-			varcaller_cg_version [version genomecomb] varcaller_region $region \
+			varcaller_cg_version [version genomecomb] varcaller_regionfile [file tail $regionfile] \
 			varcaller_platform $platform varcaller_model $usemodel \
 			varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual
 		set regions [samregions $region $refseq]
@@ -376,36 +383,44 @@ proc var_clair3_job {args} {
 		if {$region eq "unmapped"} {
 			clair3_empty_vcf $tempvcfdir/temp.vcf
 			# add unmapped reads
-			set tempoutbam [tempfile].unmapped.bam
-			catch_exec samtools view -h -b -f 4 $dep > $tempoutbam
-			catch_exec samtools index $tempoutbam
-			file rename -force -- $tempoutbam $outbam
-			file rename -force -- $tempoutbam.[indexext $tempoutbam] $outbam.[indexext $outbam]
+#			set tempoutbam [tempfile].unmapped.bam
+#			catch_exec samtools view -h -b -f 4 $dep > $tempoutbam
+#			catch_exec samtools index $tempoutbam
+#			file rename -force -- $tempoutbam $outbam
+#			file rename -force -- $tempoutbam.[indexext $tempoutbam] $outbam.[indexext $outbam]
 		} else {
-			if {[llength $regions]} {
-				set tempbed [tempfile].bed
-				distrreg_reg2bed $tempbed $regions $refseq
-				lappend opts --bed_fn=$tempbed
-			}
-			putslog "Running clair3"
-			if {![file exists $usemodel]} {
-				error "model not found: $usemodel"
-			}
-			set usebam [limitcram3.1 $dep $regions]
-			set result [catch_exec run_clair3.sh {*}$opts \
-				--include_all_ctgs \
-				--threads $threads \
-				--platform=$platform \
-				--model_path=$usemodel \
-				--bam_fn=$usebam \
-				--ref_fn=$refseq \
-				--output=$tempvcfdir \
-				--gvcf \
-			]
-			if {[regexp {[Ee]rror} $result]} {
-				error $result
+			set emptyreg [reg_isempty $regionfile]
+			if {$emptyreg} {
+				clair3_empty_vcf $tempvcfdir/temp.vcf
 			} else {
-				puts stderr $result
+				if {$regionfile ne ""} {
+					set bedfile [tempbed $regionfile $refseq]
+					lappend opts --bed_fn=$bedfile
+				} elseif {[llength $regions]} {
+					set tempbed [tempfile].bed
+					distrreg_reg2bed $tempbed $regions $refseq
+					lappend opts --bed_fn=$tempbed
+				}
+				putslog "Running clair3"
+				if {![file exists $usemodel]} {
+					error "model not found: $usemodel"
+				}
+				set usebam [limitcram3.1 $dep $regions]
+				set result [catch_exec run_clair3.sh {*}$opts \
+					--include_all_ctgs \
+					--threads $threads \
+					--platform=$platform \
+					--model_path=$usemodel \
+					--bam_fn=$usebam \
+					--ref_fn=$refseq \
+					--output=$tempvcfdir \
+					--gvcf \
+				]
+				if {[regexp {[Ee]rror} $result]} {
+					error $result
+				} else {
+					puts stderr $result
+				}
 			}
 		}
 		set gvcf [gzfile $tempvcfdir/merge_output.gvcf]

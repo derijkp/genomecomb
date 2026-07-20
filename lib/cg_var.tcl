@@ -3,6 +3,7 @@ proc var_job {args} {
 	global appdir
 	set cmdline [clean_cmdline cg var {*}$args]
 	set method gatk
+	set preset {}
 	set distrreg chr
 	set pre ""
 	set opts {}
@@ -22,6 +23,9 @@ proc var_job {args} {
 	cg_options var args {
 		-method {
 			set method $value
+		}
+		-x - -preset - -p {
+			lappend var_opts -preset $value
 		}
 		-regionfile {
 			set regionfile $value
@@ -74,11 +78,12 @@ proc var_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	if {$resultfile eq ""} {
-		set resultfile [file dir $bamfile]/${pre}var-${method}-[file_rootname $bamfile].tsv.zst
+		if {$prefix eq ""} {set varcaller $method} else {set varcaller ${method}_$prefix}
+		set resultfile [file dir $bamfile]/${pre}var-${varcaller}-[file_rootname $bamfile].tsv.zst
 	}
 	set destdir [file dir $resultfile]
 	# logfile
-	set tools {gatk picard java gnusort8 zst os}
+	set tools {gnusort8 zst os}
 	catch {lappend tools {*}[var_${method}_tools]}
 	set tools [list_remdup $tools]
 	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
@@ -186,16 +191,22 @@ proc var_job {args} {
 				foreach region $regions {
 					lappend regfiles $workdir/$basename-$region.bed
 				}
-				job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
-					$regionfile
-				} -targets $regfiles -vars {
-					regionfile regions appdir basename workdir
-				} -code {
-					set header [cg select -h $regionfile]
-					set poss [tsv_basicfields $header 3]
-					set header [list_sub $header $poss]
-					# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
-					cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+				if {$regmincoverage <= 0} {
+					foreach region $regions {
+						file_write $workdir/$basename-$region.bed [regions2bed $regions $refseq]
+					}
+				} else {
+					job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
+						$regionfile
+					} -targets $regfiles -vars {
+						regionfile regions appdir basename workdir
+					} -code {
+						set header [cg select -h $regionfile]
+						set poss [tsv_basicfields $header 3]
+						set header [list_sub $header $poss]
+						# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $workdir/$basename- \'$regions\' 0 1 2 1 \#"
+						cg select -f $header $regionfile | $appdir/bin/distrreg $workdir/$basename- .bed 0 $regions 0 1 2 1 \#
+					}
 				}
 			}
 		}
@@ -204,7 +215,8 @@ proc var_job {args} {
 		defcompressionlevel 1
 		if {$supportsregionfile && !$hap_bam} {
 			foreach region $regions regfile $regfiles {
-				lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
+				lappend todo [var_${method}_job \
+					{*}$var_opts -opts $opts {*}$skips \
 					-mem $mem -time $time \
 					-datatype $datatype \
 					-regionfile $regfile \

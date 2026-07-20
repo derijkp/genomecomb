@@ -2,7 +2,7 @@ proc var_bcf_tools {} {
 	return {samtools bcftools}
 }
 
-proc validate_var_bcf {refseq distrreg datatype} {
+proc validate_var_bcf {refseq distrreg datatype varpreset} {
 	# seperate because command is not bcf
 	if {[catch {exec which bcftools}]} {
 		error "command \"bcftools\" not available, this schould be included in the base installation, so retry that"

@@ -84,7 +84,7 @@ can still use picard for removing duplicates (third option)
 ; -amplicons ampliconfile: This option turns on amplicon sequencing
 analysis (see further) using the amplicons defained in **ampliconfile**
 ; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatkh strelka").
-Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, 
+Currently supported are: gatk, gatkh (haplotype caller), strelka, sam, freebayes, bcf, longshot, clair3, clair3_pacbio
 ; -svcallers svcallers: (space separated) list of structural variant callers to be used (default empty).
 Currently supported are: manta, lumpy, gridds sniffles, cuteSV, npinv
 ; -methcallers methcallers: (space separated) list of methylation callers to be used (default empty).

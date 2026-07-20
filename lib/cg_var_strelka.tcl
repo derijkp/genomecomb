@@ -1,4 +1,4 @@
-proc validate_var_strelka {refseq distrreg datatype} {
+proc validate_var_strelka {refseq distrreg datatype varpreset} {
 	# seperate because command is not the same as cmd
 	if {![file exists [findstrelka]]} {
 		error "could not find strelka, make sure strelka is installed, e.g. using \"cg install strelka\""

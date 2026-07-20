@@ -332,6 +332,18 @@ proc process_project_job {args} {
 			set sline [split $line \t]
 			if {[llength $sline] != 3} {error "format error in optionsfile $optionsfile at line:$line"}
 			foreach {sample option value} $sline break
+			if {$option eq "preset"} {
+				# if there is a preset in the options.tsv, all preset options except distrreg should overrule cmdline options, but not other options in options.tsv
+				foreach {poption pvalue} [preset_$value] {
+					if {$poption in "distrreg"} {
+						if {$distrreg eq ""} {
+							set optionsa($sample,$poption) $pvalue
+						}
+					} else {
+						set optionsa($sample,$poption) $pvalue
+					}
+				}
+			}
 			set optionsa($sample,$option) $value
 			puts "sample options: $sample\t$option\t$value"
 		}

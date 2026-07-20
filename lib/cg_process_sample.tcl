@@ -871,10 +871,15 @@ proc process_sample_job {args} {
 			if {$udistrreg ne $distrreg} {validate_distrreg $udistrreg $refseq}
 		}
 		foreach varcaller $varcallers {
-			if {![auto_load var_${varcaller}_job]} {
+			if {[regexp {^(.*)_([^_]+)$} $varcaller tmp varprog varpreset]} {
+			} else {
+				set varprog $varcaller
+				set varpreset ""
+			}
+			if {![auto_load var_${varprog}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			validate_var $varcaller $refseq $distrreg $datatype
+			validate_var $varprog $refseq $distrreg $datatype $varpreset
 		}
 		foreach methcaller $methcallers {
 			set preset {}
@@ -1408,17 +1413,40 @@ proc process_sample_job {args} {
 			set regionfile $amplicons
 		}
 		foreach varcaller $varcallers {
-			switch $varcaller {
+			set opts {}
+			if {[regexp {^(.*)_([^_]+)$} $varcaller tmp varprog varpreset]} {
+				lappend opts -preset $varpreset
+			} else {
+				set varprog $varcaller
+				set varpreset ""
+			}
+			set extraopts {}
+			switch $varprog {
 				gatk {set extraopts [list -dt $dt]}
 				sam {set extraopts [list -dt $dt]}
 				longshot {set extraopts [list -hap_bam $hap_bam]}
+				clair3 {
+					if {$varpreset eq ""} {
+						puts stderr "warning: preset for clair3 not explicitly given; using default ont"
+						set varpreset ont
+						set extraopts [list -preset ont]
+					}
+				}
 				default {set extraopts {}}
 			}
-			if {![auto_load var_${varcaller}_job]} {
+			if {![auto_load var_${varprog}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			# validate_var $varcaller $refseq $distrreg $datatype
-			lappend cleanupdeps {*}[var_job -method ${varcaller} -distrreg $distrreg -datatype $datatype -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			# validate_var $varprog $refseq $distrreg $datatype $varpreset
+			lappend cleanupdeps {*}[var_job \
+				-method ${varprog} {*}${opts} \
+				-datatype $datatype \
+				-distrreg $distrreg \
+				-regionfile $regionfile \
+				-regmincoverage $var_mindepth \
+				-split $split -threads $threads -cleanup $cleanup \
+				{*}$extraopts \
+				$cleanedbam $refseq [file dir $cleanedbam]/var-$varcaller-$bambase.tsv.zst]
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {
@@ -1434,7 +1462,14 @@ proc process_sample_job {args} {
 				error "svcaller $svcaller not supported"
 			}
 			# validate_sv $svcallerprog $refseq $distrreg
-			lappend cleanupdeps {*}[sv_job -method ${svcallerprog} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
+			lappend cleanupdeps {*}[sv_job \
+				-method ${svcallerprog} \
+				-distrreg $distrreg \
+				-regionfile $regionfile \
+				-split $split \
+				-threads $threads {*}$extraopts -cleanup $cleanup \
+				-refseq \
+				$refseq $cleanedbam]
 			lappend todo(sv) [lindex [jobglob -checkcompressed 1 [file dir $cleanedbam]/sv-$svcaller-$bambase.tsv] 0]
 		}
 		foreach methcaller $methcallers {

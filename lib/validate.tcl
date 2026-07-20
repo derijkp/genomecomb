@@ -23,14 +23,14 @@ proc validate_map {cmd refseq preset} {
 	}
 }
 
-proc validate_var {cmd refseq distrreg datatype} {
+proc validate_var {cmd refseq distrreg datatype varpreset} {
 # putsvars validate_var cmd refseq distrreg datatype
-	putslog "validating var $cmd $refseq $distrreg $datatype"
+	putslog "validating var $cmd $refseq $distrreg $datatype $varpreset"
 	if {![file exists $refseq]} {
 		error "reference sequence does not exist ($refseq)"
 	}
 	if {[auto_load validate_var_${cmd}]} {
-		validate_var_${cmd} $refseq $distrreg $datatype
+		validate_var_${cmd} $refseq $distrreg $datatype $varpreset
 		return
 	}
 	if {[catch {exec which $cmd}]} {

@@ -1,4 +1,4 @@
-proc validate_var_medaka {refseq distrreg datatype} {
+proc validate_var_medaka {refseq distrreg datatype varpreset} {
 	# seperate because command is not the same as cmd
 	if {[catch {exec which medaka_variant}]} {
 		error "command \"medaka_variant\" not available, make sure medaka is installed, e.g. using \"cg install medaka\""
