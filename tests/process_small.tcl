@@ -10,6 +10,7 @@ set test_cleantmp 0
 # set optx {-x *.analysisinfo -x *flagstat*}
 # set optx {-x *.analysisinfo -x *flagstat* -x samstats* -x alignedsamstats* -x unalignedsamstats*}
 set ::optx {}
+# set dopts {--stack 1 --verbose 2 -d 2}
 
 # tests
 # =====
@@ -19,6 +20,111 @@ lappend dopts -threads 1
 set runopts {-stack 1}
 
 # set dopts {--stack 1 --verbose 2 -threads 1 -d sge -map-mem 10G}
+# set dopts {--stack 1 --verbose 2 -threads 1 -d 2}
+
+test process_small {process_project ont_mx2} {
+	cd $::smalltestdir
+	set basename ont_mx2
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
+	cg project_addsample -transfer rel tmp/${basename} ont_HG002 ori/ont_mx2/unaligned_ont_HG002_mx2.bam
+	cg project_addsample -transfer rel tmp/${basename} ont_HG004 ori/ont_mx2/unaligned_ont_HG004_mx2.bam
+	mkdir tmp/${basename}/samples/truth_HG002
+	mklink ori/truth_hg38_v5.0q/var-mx2-truth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/var-truth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sreg-mx2-truth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sreg-truth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sv-mx2-svtruth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sv-svtruth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sreg-mx2-svtruth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sreg-svtruth-truth_HG002.tsv.zst
+	cg process_project {*}$::runopts {*}$::dopts \
+		-preset ont \
+		-distrreg 0 \
+		-aliformat cram \
+		-methcallers remora \
+		-dbdir $::refseqdir/hg38 \
+		tmp/${basename} \
+		>& tmp/${basename}.log
+	grid_wait
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.cram -x *.crai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index -x *.snf \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x summary-*.txt \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo -x *.stats.zst \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *dupmetrics \
+		{*}[get ::optx {}] \
+		-x *.html \
+		-ignorefields {
+			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
+			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
+			report_vars_version predictgender_version report_covered_version svmulticompar_version
+		} \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
+	join [list_remove $result {}] \n
+} {}
+
+test process_small {process_project mixedlr_mx2} {
+	cd $::smalltestdir
+	set basename mixedlr_mx2
+	set dest tmp/${basename}
+	file delete -force tmp/${basename}
+	file mkdir tmp/${basename}
+	cg project_addsample -transfer rel tmp/${basename} ont_HG002 ori/ont_mx2/unaligned_ont_HG002_mx2.bam
+	cg project_addsample -transfer rel tmp/${basename} pb_HG002 ori/pacbio_mx2/unaligned_pacbio_HG002_mx2.bam
+	mkdir tmp/${basename}/samples/truth_HG002
+	mklink ori/truth_hg38_v5.0q/var-mx2-truth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/var-truth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sreg-mx2-truth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sreg-truth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sv-mx2-svtruth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sv-svtruth-truth_HG002.tsv.zst
+	mklink ori/truth_hg38_v5.0q/sreg-mx2-svtruth_HG002_hg38.tsv.zst tmp/${basename}/samples/truth_HG002/sreg-svtruth-truth_HG002.tsv.zst
+	file_write tmp/${basename}/options.tsv [deindent {
+		sample	option	value
+		ont_HG002	preset	ont
+		ont_HG002	distrreg	0
+		pb_HG002	preset	pacbio
+		pb_HG002	distrreg	0
+	}]\n
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
+		-distrreg 0 \
+		-preset ont \
+		-dbdir $::refseqdir/hg38 \
+		tmp/${basename} >& tmp/${basename}.log
+	grid_wait
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 \
+		-x *.bam -x *.bai -x *.cram -x *.crai -x *.tbi -x *.png -x *.zsti -x *.lz4i -x *.index -x *.snf \
+		-x *.finished -x *.submitting -x *log_jobs -x info_analysis.tsv -x projectinfo.tsv \
+		-x summary-*.txt \
+		-x fastqc_report.html -x ${basename}.html -x report_stats-${basename}.tsv \
+		-x colinfo -x *.stats.zst \
+		-x ${basename}_hsmetrics_report.tsv -x report_hsmetrics-${basename}.tsv -x hsmetrics-crsbwa-blanco2_8485.hsmetrics \
+		-x *dupmetrics \
+		{*}[get ::optx {}] \
+		-x *.html \
+		-ignorefields {
+			clipping_cg_version sammerge_version bamclean_version clipamplicons_version
+			varcaller_version removeduplicates_version samstats_version hsmetrics_version flagstat_version regextrac_samtools
+			regextract_version varcaller_cg_version annotate_cg_version histodepth_version histo_version
+			report_vars_version predictgender_version report_covered_version svmulticompar_version
+		} \
+		tmp/${basename} expected/${basename}]
+	lappend result [diffhtmlreport tmp/${basename}/reports/report-$basename.html expected/${basename}/reports/report-$basename.html]
+	lappend result [diffanalysisinfo tmp/${basename}/compar/annot_compar-*.tsv.analysisinfo expected/${basename}/compar/annot_compar-*.tsv.analysisinfo]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/${basename}/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	foreach file1 [glob tmp/$basename/compar/info_analysis.tsv tmp/$basename/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		lappend result [diffinfoanalysis $file1 $file2]
+	}
+	file_write tmp/${basename}.diffs [join [list_remove $result {}] \n]
+	join [list_remove $result {}] \n
+} {}
 
 test process_small {process_project mastr_mx2} {
 	cd $::smalltestdir
@@ -724,5 +830,3 @@ test process_small {annotate refseqbuild/hg38} {
 }
 
 testsummarize
-
-
