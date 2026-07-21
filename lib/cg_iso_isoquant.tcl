@@ -1862,6 +1862,8 @@ proc iso_isoquant_job {args} {
 				catch_exec samtools index $tempbam
 				# region gene file
 				if {$reftranscripts ne "none"} {
+					# make one dummy transcript per chromosome:
+					# if a chromosome is empty, isoquant seemingly does not predict any on it; with the dummy it does
 					convert_isoquant_reggenedb $reftranscripts $samregions $refseq regreftranscripts reggenedb
 					set tempgenedb [tempfile].db
 					set emptyref [tsv_empty $reggenedb]
@@ -1869,7 +1871,7 @@ proc iso_isoquant_job {args} {
 						set tempfile [tempfile]
 						if {$region ne ""} {
 							set chr [lindex [split $region {:- }] 0]
-							set chrs [list $chr]
+							set chrs $samregions
 						} else {
 							set faidx [refseq $refseq].fai
 							if {![file exists $faidx]} {
@@ -1884,7 +1886,7 @@ proc iso_isoquant_job {args} {
 						}
 						set temp [list {name	gene	chromosome	begin	end	strand	exonStarts	exonEnds	exonCount	source	transcript_name	gene_id	gene_name	name2}]
 						foreach chr $chrs {
-							lappend temp "dummyname_$chr	dummygene_$chr	$chr	1	1	+	1	1	1	dummysource	dummysource	dummytranscript_$chr	dummygene_$chr	dummyname2_$chr"
+							lappend temp dummyname_$chr\tdummygene_$chr\t$chr\t1\t2\t+\t1\t2\t1\tdummysource\tdummytranscript_$chr\tdummygene_$chr\tdummygene_$chr\tdummyname2_$chr"
 						}
 						file_write $tempfile [join $temp \n]\n
 						cg_tsv2gtf -genecol gene_id -addgene 1 $tempfile $reggenedb
