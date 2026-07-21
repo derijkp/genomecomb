@@ -51,22 +51,21 @@ pub fn knee_plot(directory: &str) -> Result<KneePlot, Box<dyn std::error::Error>
 
     // from both the good and bad umis, get the umi counts
     // if the index is in the cell_rank_index
-    let (good_index, good_value): (Vec<usize>, Vec<u32>) = good_umis
-        .iter()
-        .enumerate()
-        .filter(|(i, c)| cell_rank_index.contains(i) && c.is_some())
-        .map(|(i, c)| (i + 1, c.expect("Problem when iterating over good umis")))
-        .collect::<Vec<_>>()
-        .into_iter()
-        .unzip();
-    let (bad_index, bad_value): (Vec<usize>, Vec<u32>) = bad_umis
-        .iter()
-        .enumerate()
-        .filter(|(i, c)| cell_rank_index.contains(i) && c.is_some())
-        .map(|(i, c)| (i + 1, c.expect("Problem when iterating over bad umis")))
-        .collect::<Vec<_>>()
-        .into_iter()
-        .unzip();
+    let mut good_index = Vec::new();
+    let mut good_value = Vec::new();
+    let mut bad_index = Vec::new();
+    let mut bad_value = Vec::new();
+
+    for &i in &cell_rank_index {
+        if let Some(val) = good_umis[i] {
+            good_index.push(i + 1);
+            good_value.push(val);
+        }
+        if let Some(val) = bad_umis[i] {
+            bad_index.push(i + 1);
+            bad_value.push(val);
+        }
+    }
 
     let mut plot = Plot::new();
     plot.add_trace(

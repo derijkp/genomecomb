@@ -9,6 +9,8 @@ set -e
 script="$(readlink -f "$0")"
 dir="$(dirname "$script")"
 
+rm $dir/../extra/scywalker-report || true
+rm $dir/../rust/scywalker-report/target/x86_64-unknown-linux-musl/release/scywalker-report || true
 
 # compile scywalker-report
 echo "Building scywalker-report"
