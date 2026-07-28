@@ -360,7 +360,7 @@ proc map_job {args} {
 				set readgroupheader {}
 				if {$ubams} {
 					unset -nocomplain rga
-					foreach rgh [bam2readgroup $file] {
+					foreach rgh [bam2readgroup $file1] {
 						set rga($rgh) 1
 					}
 					set temp [tempdir]/[file root [file tail $file1]].fastq.gz
