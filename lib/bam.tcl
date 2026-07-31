@@ -54,7 +54,7 @@ proc usebam {bam {max cramv3} {index 1}} {
 		} elseif {$major == 3 && $minor == 1} {
 			set tempbam [tempdir]/[file root [file tail $bam]].bam
 			exec samtools view -h -b $bam > $tempbam
-			exec samtools index $tempbam
+			if {$index} {exec samtools index $tempbam}
 		} else {
 			set tempbam [tempdir]/[file root [file tail $bam]]$ext
 			mklink $bam $tempbam
@@ -63,7 +63,7 @@ proc usebam {bam {max cramv3} {index 1}} {
 	} elseif {$max eq "bam"} {
 		set tempbam [tempdir]/[file root [file tail $bam]].bam
 		exec samtools view -h -b $bam > $tempbam
-		exec samtools index $tempbam
+		if {$index} {exec samtools index $tempbam}
 	}
 	return $tempbam
 }
