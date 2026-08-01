@@ -78,7 +78,7 @@ proc var_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	if {$resultfile eq ""} {
-		if {$prefix eq ""} {set varcaller $method} else {set varcaller ${method}_$prefix}
+		if {$preset eq ""} {set varcaller $method} else {set varcaller ${method}_$preset}
 		set resultfile [file dir $bamfile]/${pre}var-${varcaller}-[file_rootname $bamfile].tsv.zst
 	}
 	set destdir [file dir $resultfile]
