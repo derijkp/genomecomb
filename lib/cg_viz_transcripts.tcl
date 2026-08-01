@@ -71,8 +71,11 @@ proc cg_viz_transcripts {args} {
 			}
 		}
 		# join $countfields \n
+		if {![llength $countfields]} {
+			puts stderr "No countfields found"
+		}
 	}
-	set cmd [subst {
+	set command [subst {
 		gtffile="$tempgtf"
 		tsvfile="$tempiso"
 		output_file="$output_file"
@@ -82,7 +85,7 @@ proc cg_viz_transcripts {args} {
 		height=$height
 		width=$width
 	}]
-	append cmd {
+	append command {
 		library(dplyr)
 		library(tidyr)
 		library(ggplot2)
@@ -101,25 +104,25 @@ proc cg_viz_transcripts {args} {
 		set sortcol [lindex $countfields 1]
 	}
 	if {$sortcol ne ""} {
-		append cmd [subst -nocommands {
+		append command [subst -nocommands {
 			transcripts = tsv\$transcript[order(tsv[["$sortcol"]])]
 		}]
 	}
 	if {$proportions} {
 		foreach {shortname countfield} $countfields {
-			append cmd [subst -nocommands {
+			append command [subst -nocommands {
 				tsv[["$countfield"]] = 100*tsv[["$countfield"]]/sum(tsv[["$countfield"]])
 			}]
 		}
 	}
 	if {$round_digits != ""} {
 		foreach {shortname countfield} $countfields {
-			append cmd [subst -nocommands {
+			append command [subst -nocommands {
 				tsv[["$countfield"]] = round(tsv[["$countfield"]],$round_digits)
 			}]
 		}
 	}
-	append cmd {
+	append command {
 		gtf=rtracklayer::import(gtffile)
 		gtf = gtf %>% dplyr::as_tibble()
 		exons = gtf %>% dplyr::filter(type == "exon")
@@ -201,8 +204,8 @@ proc cg_viz_transcripts {args} {
 		lappend count_types $shortname
 		lappend rcounts [subst -nocommands {		$shortname=tsv[["$countfield"]]}]
 	}
-	append cmd [join $rcounts ,\n]
-	append cmd [subst {
+	append command [join $rcounts ,\n]
+	append command [subst {
 		)
 		count_types = c("[join $count_types \",\"]")
 	}]
@@ -211,7 +214,7 @@ proc cg_viz_transcripts {args} {
 	} else {
 		set output count
 	}
-	append cmd [string_change {
+	append command [string_change {
 		counts = temp %>%
 		  as_tibble() %>%
 		  pivot_longer(-transcript_id, names_to = "count_type", values_to = "@OUTPUT@")
@@ -228,5 +231,5 @@ proc cg_viz_transcripts {args} {
 		ggsave(output_file,p,width=width,height=height,units="mm")
 	} [list @OUTPUT@ $output]]
 
-	R $cmd
+	R $command
 }
