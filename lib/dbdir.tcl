@@ -43,6 +43,8 @@ proc refseq {{refseq {}} {dbdir {}}} {
 	}
 	if {[file isdir $pattern]} {
 		set refseq [lindex [gzfiles $pattern/genome_*.ifas] 0]
+	} elseif {[file exists $pattern]} {
+		set refseq $pattern
 	} else {
 		set refseq [lindex [gzfiles $pattern $pattern/genome_*.ifas] 0]
 	}
