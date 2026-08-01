@@ -1656,6 +1656,7 @@ proc iso_isoquant_job {args} {
 	set regions {}
 	# set skipregions {chrM M}
 	set organelles {}
+	set rDNA {}
 	set skipregions {}
 	set options {}
 	set singlecell 0
@@ -1709,6 +1710,9 @@ proc iso_isoquant_job {args} {
 		}
 		-organelles {
 			set organelles $value
+		}
+		-rDNA {
+			set rDNA $value
 		}
 		-reftranscripts {
 			set reftranscripts $value
@@ -1783,6 +1787,9 @@ proc iso_isoquant_job {args} {
 	if {$regions eq ""} {
 		set regions [list_remove [distrreg_regs $distrreg $refseq g] unaligned]
 	}
+	if {[llength $rDNA]} {
+		set regions [regions_insert $regions $rDNA $refseq]
+	}
 	cd $sampledir
 	set sample [file tail $sampledir]
 	if {$bam eq ""} {
@@ -1808,8 +1815,9 @@ proc iso_isoquant_job {args} {
 			$regdir/read_assignments-${root}.tsv.zst \
 		]
 		if {$reftranscripts eq "none"} {set depreftranscripts ""} else {set depreftranscripts $reftranscripts}
-		if {[regions_organelle $refseq $organelles $region]} {
+		if {[regions_organelle $refseq $organelles $region] || [regions_rDNA $refseq $rDNA $region]} {
 			# dont need regionsskip here, as these are the direct results of iso_organelle_job
+			# rDNA regions are analysed the same as organelles
 			iso_organelle_job \
 				-refseq $refseq \
 				-reftranscripts $depreftranscripts \
@@ -1871,7 +1879,10 @@ proc iso_isoquant_job {args} {
 						set tempfile [tempfile]
 						if {$region ne ""} {
 							set chr [lindex [split $region {:- }] 0]
-							set chrs $samregions
+							set chrs {}
+							foreach r $samregions {
+								lappend chrs [lindex [split $r {:- }] 0]
+							}
 						} else {
 							set faidx [refseq $refseq].fai
 							if {![file exists $faidx]} {

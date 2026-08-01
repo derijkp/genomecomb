@@ -54,6 +54,7 @@ proc makerefdb_job {args} {
 	set mirbase {}
 	set pseudoautosomal {}
 	set organelles {}
+	set rDNA {}
 	set transcriptsurl {}
 	set transcriptsgtf {}
 	set groupchromosomes {}
@@ -69,6 +70,9 @@ proc makerefdb_job {args} {
 		}
 		-organelles {
 			set organelles $value
+		}
+		-rDNA {
+			set rDNA $value
 		}
 		-genesdb {
 			set genesdb $value
@@ -526,6 +530,15 @@ proc makerefdb_job {args} {
 	}
 	if {$organelles ne ""} {
 		file_write extra/reg_${build}_organelles.tsv $organelles
+	}
+	if {$rDNA ne ""} {
+		set o [open extra/reg_${build}_rDNA.tsv w]
+		puts $o chromosome\tbegin\tend
+		foreach region $rDNA {
+			foreach {chromosome begin end} [split $region :-] break
+			puts $o $chromosome\t$begin\t$end
+		}
+		close $o
 	}
 
 	# mirbase

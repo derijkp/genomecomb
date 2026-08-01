@@ -87,14 +87,14 @@ proc validate_count {cmd refseq} {
 	
 }
 
-proc validate_iso {cmd refseq preset reftranscripts organelles distrreg} {
-# putsvars validate_iso cmd refseq preset reftranscripts organelles distrreg
-	putslog "validating iso $cmd $refseq $reftranscripts $organelles $distrreg"
+proc validate_iso {cmd refseq preset reftranscripts organelles rDNA distrreg} {
+# putsvars validate_iso cmd refseq preset reftranscripts organelles rDNA distrreg
+	putslog "validating iso $cmd $refseq $reftranscripts $organelles $rDNA $distrreg"
 	if {![file exists $refseq]} {
 		error "reference sequence does not exist ($refseq)"
 	}
 	if {[auto_load validate_iso_${cmd}]} {
-		validate_iso_${cmd} $refseq $preset $reftranscripts $organelles $distrreg
+		validate_iso_${cmd} $refseq $preset $reftranscripts $organelles $rDNA $distrreg
 		return
 	}
 	if {[catch {exec which $cmd}]} {

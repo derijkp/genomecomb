@@ -576,6 +576,7 @@ proc process_sample_job {args} {
 	set reftranscripts {}
 	set isocallers {}
 	set organelles {}
+	set rDNA {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -732,6 +733,9 @@ proc process_sample_job {args} {
 		-organelles {
 			set organelles [codeback_empty $value]
 		}
+		-rDNA {
+			set rDNA [codeback_empty $value]
+		}
 		-s - -split {
 			set split $value
 		}
@@ -857,6 +861,7 @@ proc process_sample_job {args} {
 		set reftranscripts [ref_tsvtranscripts $dbdir]
 	}
 	set organelles [getorganelles $dbdir $organelles]
+	set rDNA [getrDNA $dbdir $rDNA]
 	set refseq [refseq $dbdir]
 
 	# validation
@@ -909,7 +914,7 @@ proc process_sample_job {args} {
 			if {![auto_load iso_${isocaller}_job]} {
 				error "isocaller $isocaller not supported"
 			}
-			validate_iso $isocaller $refseq $preset $reftranscripts $organelles $distrreg
+			validate_iso $isocaller $refseq $preset $reftranscripts $organelles $rDNA $distrreg
 		}
 		foreach sc_filter $sc_filters {
 			if {![auto_load sc_filter_${sc_filter}_job]} {
@@ -1519,12 +1524,13 @@ proc process_sample_job {args} {
 			set options {}
 			if {$preset ne ""} {lappend options -preset $preset}
 			if {$useaddumis} {lappend options -addumis $useaddumis}
-			# validate_iso $useisocaller $refseq $reftranscripts $organelles $distrreg
+			# validate_iso $useisocaller $refseq $reftranscripts $organelles $rDNA $distrreg
 			# it knows to do singlecell based on the preset (starts with sc, ony for isoquant_sc)
 			iso_${useisocaller}_job \
 				-reftranscripts $reftranscripts \
 				{*}$options \
 				-organelles $organelles \
+				-rDNA $rDNA \
 				-cleanup $cleanup \
 				-distrreg $distrreg -threads $threads \
 				-refseq $refseq \

@@ -14,6 +14,7 @@ proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
 	set organelles {}
+	set rDNA {}
 	set minfastqreads {}
 	set clip {}
 	set removeskew {}
@@ -190,6 +191,9 @@ proc process_project_job {args} {
 		}
 		-organelles {
 			set organelles [code_empty $value]
+		}
+		-rDNA {
+			set rDNA [code_empty $value]
 		}
 		-iso_joint {
 			set iso_joint $value
@@ -437,7 +441,7 @@ proc process_project_job {args} {
 		sc_filters sc_celltypers sc_expectedcells cellmarkerfile tissue 
 		datatype aliformat aligners nohardclips ali_keepcomments realign 
 		varcallers svcallers methcallers counters reftranscripts isocallers 
-		organelles hap_bam dbdir split paired maxfastqdistr adapterfile 
+		organelles rDNA hap_bam dbdir split paired maxfastqdistr adapterfile 
 		reports samBQ cleanup removeduplicates amplicons threads distrreg 
 		keepsams removeskew dt targetfile minfastqreads depth_histo_max validate
 		var_mindepth

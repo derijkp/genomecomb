@@ -27,6 +27,8 @@ Some options give information that cannot be easily derived from the downloads,
 and can be important for specific analysis. These are best supplied:
 The **-organelles** option lists chromosomes that are (actually) organelle
 genomes (these are treated differently e.g. by scywalker analysis)
+The **-rDNA** option lists genomic locations that are rDNA clusters.
+(these are also treated differently)
 
 When distributing over chromosomes (or regions), by default alt and
 unplaced chromosomes (usually small) are grouped together. This default
@@ -48,6 +50,7 @@ of each chromosome to a group).
 == Options ==
 ; -genomeurl url: url to download the genomesequence from (instead of the UCSC default)
 ; -organelles list: list of chromosome names that are organelle genomes (these are treated differently e.g. by scywalker analysis)
+; -rDNA list: list of regions that contain rDNA clusters (these can be treated differntly e.g. by scywalker analysis)
 ; -pseudoautosomal list: list of pseudoautosomal regions
 ; -groupchromosomes list: list of patterns indicating which (small) chromosomes should be grouped for distrreg
 ; -genesdb list: 

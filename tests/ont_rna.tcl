@@ -718,4 +718,66 @@ test ont_rna {isoquant gene_name_check} {
 	}
 } {}
 
+test ont_rna {regions_insert} {
+	set refseq data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta
+	set regions {SIRV1 SIRV2 SIRV3 SIRV4 SIRV5 SIRV6 SIRV7}
+	set rDNA {SIRV3:1-1985 SIRV4:3450-5180}
+	set expected {SIRV1 SIRV2 SIRV3:1-1985 SIRV3:1985-10943 SIRV4:1-3450 SIRV4:3450-5180 SIRV4:5180-16122 SIRV5 SIRV6 SIRV7}
+	if {[regions_insert $regions $rDNA $refseq] ne $expected} {
+		error "error at: [list regions_insert $regions $rDNA $refseq]"
+	}
+	foreach {regions rDNA expected} {
+		{SIRV1 SIRV2 SIRV3} {SIRV1:1-12643} {SIRV1:1-12643 SIRV2 SIRV3}
+		{SIRV1:1-12643 SIRV2} {SIRV1:1-12643} {SIRV1:1-12643 SIRV2}
+		{SIRV1:1-12643 SIRV2} {SIRV1:1-12640} {SIRV1:1-12640 SIRV1:12640-12643 SIRV2}
+		{SIRV1:1-20 SIRV1:100-200 SIRV2 SIRV3} {SIRV1:40-80} {SIRV1:1-20 SIRV1:40-80 SIRV1:100-200 SIRV2 SIRV3}
+		{SIRV1:100-200 SIRV2 SIRV3} {SIRV1:40-80} {SIRV1:40-80 SIRV1:100-200 SIRV2 SIRV3}
+		{SIRV1 SIRV2} {SIRV1:1-12640} {SIRV1:1-12640 SIRV1:12640-12643 SIRV2}
+		{SIRV1 SIRV2} {SIRV1:2-12640} {SIRV1:1-2 SIRV1:2-12640 SIRV1:12640-12643 SIRV2}
+		{SIRV1:1-20 SIRV1:40-50 SIRV2} {SIRV1:10-45} {SIRV1:1-10 SIRV1:10-45 SIRV1:45-50 SIRV2}
+		{SIRV1:1-20 SIRV1:40-100 SIRV2} {SIRV1:10-45 SIRV1:50-80} {SIRV1:1-10 SIRV1:10-45 SIRV1:45-50 SIRV1:50-80 SIRV1:80-100 SIRV2}
+		{chr} {SIRV3:1-1985 SIRV4:3450-5180} {chr SIRV3:1-1985 SIRV4:3450-5180}
+		{chr Z} {SIRV3:1-1985 SIRV4:3450-5180} {chr SIRV3:1-1985 SIRV4:3450-5180 Z}
+	} {
+		# putsvars regions rDNA
+		set test [regions_insert $regions $rDNA $refseq]
+		if {$test ne $expected} {
+			error "error at: [list regions_insert $regions $rDNA $refseq]\n-->[list $test instead of $expected]"
+		}
+	}
+} {}
+
+test ont_rna {isoquant basic SIRV test with (fake) -organelles and -rDNA} {
+	file delete -force tmp/sirv
+	file mkdir tmp/sirv/fastq
+	foreach file [glob -nocomplain data/SIRV-flames/fastq/*] {
+		mklink $file tmp/sirv/fastq/[file tail $file]
+	}
+	foreach file [glob -nocomplain data/SIRV-flames/*] {
+		if {$file eq "data/SIRV-flames/fastq"} continue
+		mklink $file tmp/sirv/[file tail $file]
+	}
+	exec samtools faidx tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta
+	cg refseq_minimap2 tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta splice >& tmp/refseq.log
+	cg map \
+		-method minimap2 -preset splice -paired 0 \
+		-ali_keepcomments 0 \
+		tmp/sirv/map-minimap2-sirv.bam \
+		tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		tmp/sirv/sirv \
+		tmp/sirv/fastq/sample1.fastq.gz tmp/sirv/fastq/sample2.fastq.gz \
+		>& tmp/mapping.log
+	exec samtools index tmp/sirv/map-minimap2-sirv.bam
+	cg iso_isoquant -stack 1 \
+		-refseq tmp/sirv/SIRV_isoforms_multi-fasta_170612a.fasta \
+		-reftranscripts tmp/sirv/SIRV_isoforms_multi-fasta-annotation_C_170612a.gtf \
+		-organelles SIRV1 \
+		-rDNA {SIRV3 SIRV4:3450-5180} \
+		tmp/sirv/map-minimap2-sirv.bam \
+		>& tmp/isoquant.log
+	# check vs expected
+	exec diff tmp/sirv/isoform_counts-isoquant-minimap2-sirv.tsv data/isoform_counts-isoquant-minimap2-sirv-fakeorg.tsv
+	exec diff tmp/sirv/gene_counts-isoquant-minimap2-sirv.tsv data/gene_counts-isoquant-minimap2-sirv-fakeorg.tsv
+} {}
+
 testsummarize

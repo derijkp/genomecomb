@@ -118,7 +118,8 @@ proc samregions {region {refseq {}} {full 0}} {
 		}
 		return $result
 	}
-	if {$begin eq ""} {set begin 1} else {incr begin}
+	#if {$begin eq ""} {set begin 1} else {incr begin}
+	if {$begin eq ""} {set begin 1}
 	if {$end eq ""} {
 		set refseq [refseq $refseq]
 		set end [ref_chrsize $refseq $region]
@@ -140,6 +141,87 @@ proc samregion {region {refseq {}} {full 0}} {
 		error "error getting samregion from $region: matches [llength $regions] regions iso 1"
 	}
 	lindex $regions 0
+}
+
+proc regions_insert_next {list posVar cVar bVar eVar} {
+	upvar $posVar pos
+	upvar $cVar c
+	upvar $bVar b
+	upvar $eVar e
+	set cur [lindex $list $pos]
+	foreach {c b e} {{} {} {}} break
+	foreach {c b e} [split $cur :-] break
+	incr pos
+	return $cur	
+}
+
+proc regions_insert {regions rDNA refseq} {
+putsvars regions rDNA refseq
+	set regions [bsort $regions]
+	set inserts {}
+	foreach r [bsort $rDNA] {
+		lappend inserts {*}[samregions $r $refseq 1]
+	}
+	set inserts [bsort $inserts]
+	set pos 0
+	set cur [regions_insert_next $inserts pos curc curb cure]
+	set regionpos 0
+	set region [regions_insert_next $regions regionpos c b e]
+	set result {}
+	while 1 {
+		if {$cur eq "" && $region eq ""} break
+		if {$c eq $curc} {
+			if {$b eq ""} {
+				# full chromosome overlap
+				foreach {c b e} [split [samregions $region $refseq 1] :-] break
+				if {$b < $curb} {
+					lappend result $c:$b-$curb
+				}
+				lappend result $c:$curb-$cure
+				if {$e > $cure} {
+					lappend result $c:$cure-$e
+				}
+				set cur [regions_insert_next $inserts pos curc curb cure]
+				set region [regions_insert_next $regions regionpos c b e]
+			} else {
+				if {$curb > $e} {
+					# puts "no overlap, not at rdna region yet, lappend region"
+					lappend result $region
+					set region [regions_insert_next $regions regionpos c b e]
+				} elseif {$cure < $b} {
+					# puts "no overlap, but rdna region is passed"
+					lappend result $cur
+					set cur [regions_insert_next $inserts pos curc curb cure]
+				} elseif {$e > $curb} {
+					# puts "overlap"
+					if {$b < $curb} {
+						lappend result $c:$b-$curb
+					}
+					lappend result $c:$curb-$cure
+					while {$cure > $e} {
+						set region [regions_insert_next $regions regionpos c b e]
+					}
+					if {$b < $cure} {
+						if {$cure < $e} {
+							set b $cure
+							set region $c:$b-$e
+						} else {
+							set region [regions_insert_next $regions regionpos c b e]
+						}
+					}
+					set cur [regions_insert_next $inserts pos curc curb cure]
+				}
+			}
+		} elseif {$region eq "" || ($cur ne "" && [bsort [list $cur $region]] eq [list $cur $region])} {
+			lappend result $cur
+			set cur [regions_insert_next $inserts pos curc curb cure]
+		} else {
+			lappend result $region
+			set region [regions_insert_next $regions regionpos c b e]
+		}
+	}
+putsvars result
+	return $result
 }
 
 proc regions_skip {region skipregions} {
@@ -167,11 +249,48 @@ proc getorganelles {refseq organelles} {
 	return $organelles
 }
 
+proc getrDNA {refseq rDNA} {
+	if {![llength $rDNA]} {
+		global cache_rDNA
+		if {![info exists cache_rDNA)]} {
+			set cache_rDNA {}
+			set ofile [gzfile [refdir $refseq]/extra/reg_*_rDNA.tsv]
+			if {[file exists $ofile]} {
+				set f [gzopen $ofile]
+				set header [tsv_open $f]
+				if {$header ne {chromosome begin end}} {error "$ofile does not have fields: chromosome begin end"}
+				while {[gets $f line] != -1} {
+					foreach {c b e} [split $line \t] break
+					incr b
+					lappend cache_rDNA $c:$b-$e
+				}
+			}
+		}
+		return $cache_rDNA
+	}
+	return $rDNA
+}
+
 proc regions_organelle {refseq organelles region} {
 	set organelles [getorganelles $refseq $organelles]
 	if {$region in $organelles} {return 1}
 	foreach o $organelles {
 		if {[regexp ^$o\[:_\ -\] $region]} {return 1}
+	}
+	return 0
+}
+
+proc regions_rDNA {refseq rDNA region} {
+	set rDNA [getrDNA $refseq $rDNA]
+	if {$region in $rDNA} {return 1}
+	foreach {c b e} {{} {} {}} break
+	foreach {c b e} [split $region -:] break
+	foreach line $rDNA {
+		foreach {rc rb re} {{} {} {}} break
+		foreach {rc rb re} [split $line -:] break
+		if {$c ne $rc} continue
+		if {$rb eq "" && $re eq ""} {return 1}
+		if {$b >= $rb && $e <= $re} {return 1}
 	}
 	return 0
 }

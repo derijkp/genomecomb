@@ -122,6 +122,10 @@ proc iso_flames_job {args} {
 			# this option is not actually supported by flames, 
 			# but present for compatibilty with generic call from process_*
 		}
+		-rDNA {
+			# this option is not actually supported by flair, 
+			# but present for compatibilty with generic call from process_*
+		}
 		-hasumi {
 			set hasumi $value
 		}

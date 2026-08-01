@@ -33,6 +33,7 @@ Y	56887903	57217415	PAR2
 set organelles {chromosome
 chrM
 }
+set rDNA {chr21:8183844-8454792 chr22_KI270733v1_random chr21_ML143377v1_fix:421401-518899 chrUn_GL000220v1}
 set dbsnpversion 155
 # set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/109.20200522/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz
 set refSeqFuncElemsurl https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/110/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff.gz
@@ -149,6 +150,7 @@ makerefdb_job \
 	-genomeurl $genomeurl \
 	-pseudoautosomal $par \
 	-organelles $organelles \
+	-rDNA $rDNA \
 	-regionsdb_collapse $regionsdb_collapse \
 	-regionsdb_join $regionsdb_join \
 	-dbsnp $dbsnpversion \
