@@ -148,7 +148,8 @@ proc sc_demultiplex_job {args} {
 	set dmsamples [array names dest]
 	set files [jobgzfiles $sampledir/sc_gene_*.tsv $sampledir/sc_isoform_*.tsv \
 		$sampledir/sc_cellinfo_*.tsv $sampledir/sc_group*.tsv \
-		$sampledir/read_assignments-isoquant_sc-*.tsv $sampledir/map-*.bam $sampledir/map-*.cram]
+		$sampledir/read_assignments-isoquant_sc*.tsv \
+		$sampledir/map-*.bam $sampledir/map-*.cram]
 	foreach file $files {
 		set targets {}
 		set tail [file tail $file]
