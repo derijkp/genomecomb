@@ -20,7 +20,7 @@ proc loadTclX {} {
 proc cg_wish {args} {
 	package require Tk
 	set tk 1
-	loadTclX
+	# loadTclX
 	if {[info commands "console"] == "console"} {
 		console show
 	} else {
@@ -57,10 +57,14 @@ proc cg_sh {args} {
 			}
 		}
 		uplevel #0 interactive
-	} elseif {[lsearch $args tclx] != -1 && [loadTclX]} {
+	} elseif {[lsearch $args tclx] != -1} {
+		loadTclX
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
 		package require TclReadLine
+		# TclReadLine uses Expect, which defines a (c) timestamp command that differs from the timestamp command used in cg
+		# source the file containing thje cg timestamp to overwrite the one introduced by Expect
+		source $::appdir/lib/tools.tcl
 		uplevel #0 TclReadLine::interact
 	}
 }
