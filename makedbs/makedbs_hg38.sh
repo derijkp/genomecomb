@@ -47,13 +47,13 @@ set regionsdb_join {
 	chainSelf dgvMerged genomicSuperDups
 }
 
-set gencodeversion 49
+set gencodeversion 50
 # list with geneset name (first word) and one or more of the following keywords
 # int : include in intGene
 # extra : place in the extra dir instead of in base annotation dir
 # reg : make a region file from it (in extra)
 set genesdb [list \
-	{refGene int reg} \
+	{ncbiRefSeqCurated extra int reg} \
 	{ncbiRefSeq extra int reg} \
 	[list wgEncodeGencodeBasicV${gencodeversion} gencode extra int reg] \
 	{knownGene extra int reg} \
@@ -68,8 +68,8 @@ set genesdb [list \
 set 1000g3url http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl http://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
-set clinvarurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260426.vcf.gz
-set clinvarpapuurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260426_papu.vcf.gz
+set clinvarurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260728.vcf.gz
+set clinvarpapuurl https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260728_papu.vcf.gz
 #set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-${build}-trim.vcf.tar
 #set kaviarbuild hg19
 #set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
@@ -87,14 +87,18 @@ set gnomadexversion 4.1.1
 set gnomadexurl https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadexversion/vcf/exomes
 set gnomadlofbuild hg38
 set gnomadlofversion 4.1.1
-set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.constraint_metrics.tsv
+set gnomadlof https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadlofversion/constraint/gnomad.v$gnomadlofversion.constraint_metrics.tsv.bgz
 set gnomadsvbuild hg38
 set gnomadsvversion 4.1
 set gnomadsv https://storage.googleapis.com/gcp-public-data--gnomad/release/$gnomadsvversion/genome_sv/gnomad.v$gnomadsvversion.sv.sites.vcf.gz
-# from https://github.com/quinlan-lab/ccrhtml
-set ccrversion 2.20180420
-set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
-set ccrbuild hg19
+## from https://github.com/quinlan-lab/ccrhtml
+#set ccrversion 2.20180420
+#set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
+#set ccrbuild hg19
+# from https://screen.wenglab.org/downloads
+set ccrversion V4
+set ccrurl https://downloads.wenglab.org/Registry-$ccrversion/GRCh38-cCREs.bed
+set ccrbuild hg38
 # set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFP4.3a.zip
 set dbnsfpurl https://dbnsfp.s3.amazonaws.com/dbNSFP4.5a.zip
 set dbnsfpbuild hg38
@@ -102,8 +106,8 @@ set dbnsfpbuild hg38
 #set gtffile genes_hg38_ensGene.gtf.gz
 #set gencodegtfurl ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
 #set gencodegtffile extra/gene_hg38_gencode.v39.gtf
-set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.annotation.gtf.gz
-set transcriptsgtf extra/gene_hg38_gencode.v49.gtf
+set transcriptsurl http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_50/gencode.v50.annotation.gtf.gz
+set transcriptsgtf extra/gene_hg38_gencode.v50.gtf
 # https://huggingface.co/datasets/katielink/dm_alphamissense
 set dm_alphamissense_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_isoforms_hg38.tsv.gz
 set dm_alphamissense_canonical_url https://storage.googleapis.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz
@@ -164,6 +168,16 @@ makerefdb_job \
 
 # rest after this is hg38 specific code
 # -------------------------------------
+
+# The original refGene contains mapping errors, so it is replaced by ncbiRefSeqCurated (a supported/curated alternative)
+# make links so the ncbiRefSeqCurated is accessed under the refGene nomer
+mklink extra/gene_${build}_ncbiRefSeqCurated.tsv.info gene_${build}_refGene.tsv.info
+mklink extra/gene_${build}_ncbiRefSeqCurated.tsv.zst gene_${build}_refGene.tsv.zst
+mklink extra/gene_${build}_ncbiRefSeqCurated.tsv.zst.zsti gene_${build}_refGene.tsv.zst.zsti
+mklink extra/gene_${build}_ncbiRefSeqCurated.tsv.gz gene_${build}_refGene.tsv.gz
+mklink extra/gene_${build}_ncbiRefSeqCurated.tsv.gz.tbi gene_${build}_refGene.tsv.gz.tbi
+
+cg tsv2gtf extra/gene_${build}_cgencode.tsv.gz extra/gene_${build}_cgencode.gtf
 
 set target extra/reg_${build}_distrg.tsv
 job reg_${build}_nolowgene -deps {
@@ -545,36 +559,48 @@ job ccr -deps {
 } -targets {
 	reg_${build}_ccr.tsv.zst
 } -code {
-	file_write $target.info [subst [deindent {
+	file_write [gzroot $target].info [subst [deindent {
 		= CCR (constrained coding regions) =
 		
 		== Download info ==
 		dbname	ccr
 		version	$ccrversion
-		citation	Havrilla, J.M., Pedersen, B.S., Layer, R.M. & Quinlan, A.R. A map of constrained coding regions in the human genome. Nature Genetics (2018). doi:10.1038/s41588-018-0294-6
+		citation	Moore, J.E., Pratt, H.E., Fan, K. et al. An expanded registry of candidate cis-regulatory elements. Nature (2026). https://doi.org/10.1038/s41586-025-09909-9
 		license	cite
 		source	$ccrurl
 		time	[timestamp]
 		
 		== Description ==
 		
-		More info on https://github.com/quinlan-lab/ccrhtml
-		and in https://www.nature.com/articles/s41588-018-0294-6
+		More info on https://screen.wenglab.org/about
+		and in https://www.nature.com/articles/s41586-025-09909-9
+		
+		Annotations in ccr_type:
+		PLS: Promoter-like
+		pELS: Proximal enhancer-like
+		dELS: Distal enhancer-like
+		CA-H3K4me3: Chromatin accessibility with H3K4me3 but lacking strong H3K27ac and located away from TSSs
+		CA-CTCF: Chromatin accessibility with strong CTCF binding and low histone acetylation
+		CA-TF: Accessible elements overlapping transcription factor clusters but lacking strong histone modification signals
+		CA: Chromatin accessibility - Accessible elements lacking strong H3K4me3, H3K27ac, or CTCF signals
+		TF: Transcription factor binding in the absence of detectable chromatin accessibility or histone modification signals
 		
 		== Category ==
 		Annotation
 	}]]
-	file_write $target.opt "fields\t{ccr_pct}\n"
+	file_write [gzroot $target].opt "fields\t{ccr_id ccr_type}\n"
 	file mkdir $target.temp
 	set tail [file tail $ccrurl]
 	wgetfile $ccrurl $target.temp/$tail
+	cg select -s - -overwrite 1 -hp {chromosome begin end temp ccr_id	ccr_type} \
+		-f {chromosome begin end ccr_id	ccr_type} \
+		$target.temp/$tail $target.$ccrbuild.temp.zst
 	if {$build ne $ccrbuild} {
-		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.$ccrbuild.temp
 		rm $target
-		liftover_refdb $target.$ccrbuild.temp $target $dest $ccrbuild $build
+		liftover_refdb $target.$ccrbuild.temp.zst $target $dest $ccrbuild $build
+		file delete $target.$ccrbuild.temp.zst
 	} else {
-		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
-		file rename -force -- $target.temp.zst $target.zst
+		file rename -force -- $target.$ccrbuild.temp.zst $target
 	}
 	cg zstindex $target
 	file delete -force $target.temp
@@ -713,6 +739,7 @@ job lofgnomad -deps {
 	file mkdir $target.temp
 	set tail [file tail $gnomadlof]
 	wgetfile $gnomadlof $target.temp/$tail
+	#
 	unset -nocomplain pLIa
 	unset -nocomplain LOEUFa
 	set f [gzopen $target.temp/$tail]
@@ -753,6 +780,7 @@ job lofgnomad -deps {
 			lappend genes $gene
 		} else {
 			if {$chrom != [lindex $genea($gene) 0]} {
+				if {[lindex $genea($gene) 0] eq "chrX" && $chrom eq "chrY"} continue
 				error "gene $gene on 2 chromosomes ($chrom and [lindex $genea($gene) 0])"
 			}
 			if {$start < [lindex $genea($gene) 1]} {
@@ -1363,3 +1391,10 @@ job annot_databases_list -deps $deps -targets {
 
 job_wait
 
+# make indexes
+if 0 {
+	cg refseq_minimap2 genome_${build}.ifas splice:sr
+	cg refseq_minimap2 genome_${build}.ifas ontshort
+	cg refseq_minimap2 genome_${build}.ifas short
+	cg refseq_minimap2 genome_${build}.ifas hifi
+}
