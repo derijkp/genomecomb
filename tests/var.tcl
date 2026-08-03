@@ -785,17 +785,16 @@ test var {var -method clair3 -distrreg x5000000 basic giab data} {
 	file_write tmp/clair3_var.diffs [list_remove $result {}]
 	list_remove $result {}
 } {{chromosome	count
-1	586
-6	396
-10	279} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
-c	u	2
+1	314
+6	211
+10	277} {zyg-clair3-sminimap2-pHG002_hg38	zyg-truth_HG002_hg38	count
 m	m	24
-m	u	132
+m	u	129
 t	t	59
-t	u	367
+t	u	363
 u	c	2
 u	t	1
-u	u	674}}
+u	u	224}}
 
 test var {var_longshot basic pepperdata} {
 	cd $::smalltestdir
