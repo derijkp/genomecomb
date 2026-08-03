@@ -156,7 +156,6 @@ proc regions_insert_next {list posVar cVar bVar eVar} {
 }
 
 proc regions_insert {regions rDNA refseq} {
-putsvars regions rDNA refseq
 	set regions [bsort $regions]
 	set inserts {}
 	foreach r [bsort $rDNA] {
@@ -220,7 +219,6 @@ putsvars regions rDNA refseq
 			set region [regions_insert_next $regions regionpos c b e]
 		}
 	}
-putsvars result
 	return $result
 }
 
