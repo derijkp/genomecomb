@@ -39,7 +39,7 @@ proc ubam_split_job {args} {
 		job [job_relfile2name ubam_split- $infile] -deps {
 			$infile
 		} -targets $files -vars {
-			infile outdir outfile parts threads
+			infile outdir outfile parts threads aligned files
 		} -code {
 			if {$aligned} {
 				set workdir [shadow_workdir $outfile]
