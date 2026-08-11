@@ -147,7 +147,7 @@ proc workdir {file} {
 proc shadow_workdir {file} {
 	set workdir [gzroot $file].temp
 	if {[file exists $workdir] && ![file isdir $workdir]} {
-		file delete $workdir
+		error "cannot make (or use) workdir \"$workdir\": it already exists and is a file"
 	}
 	shadow_mkdir $workdir
 	job_cleanup_add_shadow $workdir
