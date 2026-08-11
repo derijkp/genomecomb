@@ -143,6 +143,7 @@ proc version {item {minversion {}}} {
 					} elseif {![catch {exec $item -h} temp]} {
 					} elseif {![catch {exec $item -V} temp]} {
 					} elseif {![catch {exec $item -v} temp]} {
+					} elseif {![catch {exec $item version} temp]} {
 					} else {
 						catch {exec $item} temp
 					}
@@ -158,6 +159,8 @@ proc version {item {minversion {}}} {
 						set _versions($item) $temp
 					} elseif {[regexp {([0-9]+[0-9.a-zA-Z]*)} $line1 temp temp]} {
 						set _versions($item) $temp
+					} elseif {[regexp {[Vv]ersion:? ?([0-9]+[0-9.a-zA-Z-]*)} $temp t version]} {
+						set _versions($item) $version
 					} elseif {[regsub {^[^0-9\n]+} $temp {} temp]} {
 						set temp [lindex [split [string trim $temp] \n] 0]
 						set _versions($item) $temp

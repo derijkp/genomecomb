@@ -61,6 +61,7 @@ proc cg_install {args} {
 		qorts	bin	https://genomecomb.bioinf.be/download/extra/QoRTs-1.3.6.tar.gz
 		modkit	bin	https://genomecomb.bioinf.be/download/extra/modkit-0.6.4-linux-x86_64.tar.gz
 		AnnotSV	bin	https://genomecomb.bioinf.be/download/extra/AnnotSV-3.5.10-linux-x86_64.tar.gz
+		somalier	bin	https://github.com/brentp/somalier/releases/download/v0.3.3/somalier
 
 		ont	preset	{minimap2 sniffles cutesv clair3 modkit}
 		ontr	preset	{minimap2 isoquant clair3}
@@ -114,8 +115,18 @@ proc cg_install {args} {
 			set tempfile [tempdir]/[file tail $url]
 			wgetfile $urla($item) $tempfile
 			puts "Unpacking $item ($type) in $bindir from $url"
-			exec tar xvzf $tempfile
-			file delete $tempfile
+			if {[regexp {\.tar\.gz$} $url]} {
+				exec tar xvzf $tempfile
+				file delete $tempfile
+			} else {
+				chmod ug+x $tempfile
+				if {[regexp {[0-9.-]+$} [lindex [file split $url] end-1] v]} {
+					file rename -force $tempfile $bindir/$item-$v
+					mklink $bindir/$item-$v $bindir/$item
+				} else {
+					file rename $tempfile $bindir/$item
+				}
+			}
 		} else {
 			puts "Downloading $item ($type) from $url"
 			mkdir $refdir

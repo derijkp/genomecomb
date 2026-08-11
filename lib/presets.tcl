@@ -19,7 +19,7 @@ proc preset_scywalker {} {
 		sc_celltypers {}
 		distrreg g
 		iso_match novel
-		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
+		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo somalier}
 	}
 }
 
@@ -44,7 +44,7 @@ proc preset_scywalker_pacbio {} {
 		sc_celltypers {}
 		distrreg g
 		iso_match novel
-		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo}
+		reports {fastqstats singlecell flagstat_reads samstats histodepth hsmetrics vars covered histo somalier}
 	}
 }
 
@@ -63,7 +63,7 @@ proc preset_ont {} {
 		isocallers {}
 		singlecell {}
 		distrreg chr
-		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
+		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender somalier}
 	}
 }
 
@@ -82,7 +82,7 @@ proc preset_pacbio {} {
 		isocallers {}
 		singlecell {}
 		distrreg chr
-		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
+		reports {fastqstats flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender somalier}
 	}
 }
 
@@ -103,7 +103,7 @@ proc preset_ontr {} {
 		singlecell {}
 		distrreg chr
 		iso_match novel
-		reports {-fastqc predictgender}
+		reports {-fastqc predictgender somalier}
 	}
 }
 
@@ -145,7 +145,7 @@ proc preset_rseq {} {
 		iso_joint {}
 		singlecell {}
 		distrreg chr
-		reports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo}
+		reports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo somalier}
 	}
 }
 

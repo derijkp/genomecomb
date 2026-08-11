@@ -362,8 +362,8 @@ proc reports_singlecell {sampledir} {
 }
 
 proc reports_expand {reports} {
-	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender singlecell}
-	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender}
+	set allreports {fastqstats fastqc flagstat_reads samstats alignedsamstats unalignedsamstats histodepth hsmetrics vars covered histo predictgender somalier singlecell}
+	set basicreports {fastqstats fastqc flagstat_reads samstats histodepth hsmetrics vars covered histo predictgender somalier}
 	if {$reports eq "all"} {
 		set reports $allreports
 	} elseif {[string index $reports 0] eq "-"} {
@@ -605,6 +605,40 @@ proc process_reports_job {args} {
 				cg bam_histo $tempregionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
 				file delete $tempregionfile
 				file rename -force -- $tempfile $target
+			}
+		}
+	}
+	if {[inlist $reports somalier]} {
+		set target $sampledir/reports/somalier-$sample.somalier
+		set target2 $sampledir/reports/somalier-AB-plot-$sample.html
+		set bamfile [lindex $bamfiles 0]
+		set sitesfile [gzfile $dbdir/extra/sites*.vcf]
+		if {![file exists $sitesfile]} {
+			puts stderr "skipping somalier report as there is no sites file found ($dbdir/extra/sites*.vcf)"
+		} elseif {![jobfileexists $bamfile]} {
+			puts stderr "skipping somalier report as there is no cram/bamfile (in $sampledir)"
+		} else {
+			set refseq [refseq $dbdir]
+			job somalier-$sample -deps {
+				$bamfile $sitesfile $refseq
+			} -targets {
+				$target $target2
+			} -vars {
+				sampledir bamfile sitesfile refseq sample
+			} -code {
+				mkdir $sampledir/reports/somalier-temp
+				set ::env(SOMALIER_SAMPLE_NAME) $sample
+				catch_exec somalier extract \
+					-d $sampledir/reports/somalier-temp \
+					--sites $sitesfile \
+					 -f $refseq \
+					$bamfile
+				file rename -force [glob $sampledir/reports/somalier-temp/*.somalier] $target
+				catch_exec somalier AB_plot \
+					--sites $sitesfile \
+					-o $target2 \
+					$target
+				rm $sampledir/reports/somalier-temp
 			}
 		}
 	}

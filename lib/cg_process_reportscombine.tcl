@@ -1156,6 +1156,26 @@ proc process_reportscombine_job {args} {
 			mklink $target $target2
 		}
 	}
+	# combine somalier (if found)
+	set deps {}
+	foreach dir $reportstodo {
+		lappend deps {*}[jobglob -checkcompressed 1 $dir/somalier-*.somalier $dir/reports/somalier-*.somalier]
+	}
+	if {[llength $deps]} {
+		set base $destdir/report_somalier-${experimentname}
+		job reportscombine_somalier-$experimentname -deps $deps -targets {
+			$base.html $base.pairs.tsv $base.samples.tsv
+		} -vars {
+			destdir experimentname base
+		} -code {
+			file mkdir [file dir $target]
+			set tempbase $destdir/temp_report_somalier-${experimentname}
+			catch_exec somalier relate -o $tempbase {*}$deps
+			file rename -force $tempbase.html $base.html
+			file rename -force $tempbase.pairs.tsv $base.pairs.tsv
+			file rename -force $tempbase.samples.tsv $base.samples.tsv
+		}
+	}
 
 	# combine other reports
 	set reportdirs {}

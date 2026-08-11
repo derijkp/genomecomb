@@ -313,6 +313,16 @@ job sniffles_trf -optional 1 -targets {
 	file delete extra/sniffles_hg38.trf.bed.temp
 }
 
+# use rna sites file rather than 
+# https://github.com/brentp/somalier/files/3412456/sites.hg38.vcf.gz
+# this can be used for all
+# 
+job somalier -optional 1 -targets {
+	extra/sites.hg38.rna.vcf.gz
+} -vars {} -code {
+	wgetfile https://github.com/brentp/somalier/files/4566475/sites.hg38.rna.vcf.gz extra/sites.hg38.rna.vcf.gz
+}
+
 set target extra/collapsed[file tail $transcriptsgtf]
 job collapsedgencodegtf -deps {
 	$transcriptsgtf
