@@ -475,7 +475,7 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 				altvar->alt = "i";
 			} else if (l2 > 3 && strncmp(curalt+1,"CNV",3) == 0) {
 				altvar->type = cnvtype;
-				altvar->altsize = 4;
+				altvar->altsize = 3;
 				altvar->alt = "cnv";
 			} else if (l2 > 3 && (strncmp(curalt+1,"TRA",3) == 0 || strncmp(curalt+1,"CTX",3) == 0 || strncmp(curalt+1,"BND",3) == 0)) {
 				char *curchr; int cursize;
