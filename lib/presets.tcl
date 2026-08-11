@@ -128,6 +128,10 @@ proc preset_srs {} {
 	}
 }
 
+proc preset_wgs {} {
+	preset_srs
+}
+
 proc preset_rseq {} {
 	# default removeduplicates to {} because then it set to 1 or 0 according to amplicons parameter
 	return {
