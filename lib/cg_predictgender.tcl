@@ -105,6 +105,9 @@ proc cg_predictgender {args} {
 		set xsize [expr {$x2-$x1}]
 		set tempxreg [tempfile]
 		set rfile [gzfile $dbdir/gene_*_refGene*.tsv]
+		if {![file exists $rfile]} {
+			set rfile [gzfile $dbdir/gene_*.tsv]
+		}
 		exec cg select -q "region(\"$xreg\") == 1" $rfile | cg gene2reg | cg select -q {$type eq "CDS"} -f {chromosome begin end} -sh /dev/null | head -500 > $tempxreg
 		set end [lindex [exec tail -1 $tempxreg] end]
 		if {![isint $end]} {
