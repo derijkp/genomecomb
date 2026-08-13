@@ -25,10 +25,10 @@ set defaultdest /complgen/refseqnew
 
 set genomeurl {}
 set par {chromosome	begin	end	name
-X	10001	2781479	PAR1
-X	155701383	156030895	PAR2
-Y	10001	2781479	PAR1
-Y	56887903	57217415	PAR2
+X	0	2394410	PAR1
+X	153925834	154259566	PAR2
+Y	0	2458320	PAR1
+Y	62122809	62460029	PAR2
 }
 set organelles {chromosome
 chrM
