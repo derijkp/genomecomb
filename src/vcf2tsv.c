@@ -196,6 +196,14 @@ void changetoupper(DString *ds) {
 	char *cur = ds->string;
 	int count = ds->size;
 	while (count--) {
+		if (*cur == '[' || *cur == ']') {
+			return;
+		}
+		cur++;
+	}
+	cur = ds->string;
+	count = ds->size;
+	while (count--) {
 		if (*cur > 96) {
 			*cur = toupper(*cur);
 		}
