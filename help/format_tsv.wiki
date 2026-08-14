@@ -63,7 +63,7 @@ define the variant at the location: The following basic fields are present in a 
 ; chromosome: chromosome name.
 ; begin: start of the region (half-open coordinates). 
 ; end: end of the region (half-open coordinates)
-; type: type of variation: snp, ins, del, sub are recognised
+; type: type of variation: snp, ins, del, sub, inv (inversion), bnd (breakend), trans (translocation) are recognised (and handled differently) by various command
 ; ref: genotype of the reference sequence at the feature. For large deletions, the size 
 of the deletion can be used. Insertions will have an empty string as ref. (also reference)
 ; alt: alternative allele(s). If there are more than one alternatives, they are 

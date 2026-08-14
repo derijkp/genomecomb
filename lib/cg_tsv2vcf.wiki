@@ -21,8 +21,9 @@ directly using the -refseq option or indirectly using -dbdir.
 
 == Options ==
 ; -split 0/1: tsv files usually have all variants on separate lines. 
-cg tsv2vcf will by default merge variants that start at the same position
-(as usual in the vcf format). Using -split 1, will put these on
+cg tsv2vcf will by default also put variants in the resulting vcf on separate lines (split 1)
+instead of merging the overlapping ones as described in the vcf spec. You can use -split 0,
+if you want this.
 separate lines as well
 ; -refseq refseq: genomic reference sequence
 ; -dbdir dbdir: dbdir containing reference genomes databases, used to find the genomic reference

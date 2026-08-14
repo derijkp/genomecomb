@@ -6,7 +6,7 @@ source tools.tcl
 
 test tsv2vcf {basic} {
 	exec cg vcf2tsv data/test3.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -stack 1 -split 0  -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec diff tmp/temp.vcf data/test3.vcf
 } {20,21d19
 < ##split=1
@@ -16,7 +16,7 @@ child process exited abnormally} error
 test tsv2vcf {no metadata in comments} {
 	exec cg vcf2tsv data/test3.vcf tmp/temp.tsv.temp
 	cg select -overwrite 1 -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec diff tmp/temp.vcf data/test3.vcf
 } {1a2,6
 > ##fileDate=20090805
@@ -32,7 +32,7 @@ child process exited abnormally} error
 
 test tsv2vcf {gatkh results} {
 	exec cg vcf2tsv data/test4.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec diff tmp/temp.vcf data/test4.vcf
 } {47,48d46
 < ##split=1
@@ -43,7 +43,7 @@ child process exited abnormally} error
 
 test tsv2vcf {gatk results} {
 	exec cg vcf2tsv data/var-gatk-bwa-test.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine.UnifiedGenotyper\|##samplename\|##split\|##info} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine.UnifiedGenotyper\|##samplename\|##split\|##info} > tmp/temp.vcf
 	exec grep -v {##GATKCommandLine.UnifiedGenotyper} data/var-gatk-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {27,28c27
@@ -56,7 +56,7 @@ child process exited abnormally} error
 test tsv2vcf {gatkh results, no metadata} {
 	exec cg vcf2tsv data/test4.vcf tmp/temp.tsv.temp
 	cg select -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
-	exec cg tsv2vcf -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec grep -v {##contig=\|##ALT=\|##source=\|##FILTER=} data/test4.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {4c4
@@ -71,7 +71,7 @@ child process exited abnormally} error
 
 test tsv2vcf {sam results} {
 	exec cg vcf2tsv data/var-sam-bwa-test.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##split\|##info=\|##samplename\|##bcftools_callCommand} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##split\|##info=\|##samplename\|##bcftools_callCommand} > tmp/temp.vcf
 	exec grep -v {##bcftools_callCommand} data/var-sam-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {15c15
@@ -83,7 +83,7 @@ child process exited abnormally} error
 test tsv2vcf {sam results,no metadata} {
 	exec cg vcf2tsv data/var-sam-bwa-test.vcf tmp/temp.tsv.temp
 	cg select -overwrite 1 -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
-	exec cg tsv2vcf -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec grep -v {##reference\|##samtools\|##bcftools\|##contig=\|##ALT=\|##source=\|##FILTER=} data/var-sam-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {3,4c3,4
@@ -106,21 +106,21 @@ child process exited abnormally} error
 
 test tsv2vcf {gatkh results} {
 	exec cg vcf2tsv data/var-gatkh-bwa-test.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
 	exec grep -v {##GATKCommandLine\|##source=} data/var-gatkh-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {} {}
 
 test tsv2vcf {gatkh results check quotes} {
 	exec cg vcf2tsv data/var-gatkh-bwa-test.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##samplename\|##split\|##info} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##samplename\|##split\|##info} > tmp/temp.vcf
 	exec diff tmp/temp.vcf data/var-gatkh-bwa-test.vcf
 } {}
 
 test tsv2vcf {gatkh results,no metadata} {
 	exec cg vcf2tsv data/var-gatkh-bwa-test.vcf tmp/temp.tsv.temp
 	cg select -overwrite 1 -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
-	exec cg tsv2vcf -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
 	exec grep -v {##GATKCommandLine\|##source=\|##contig=\|##ALT=\|##source=\|##FILTER=} data/var-gatkh-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {4c4
@@ -143,7 +143,7 @@ child process exited abnormally} error
 
 test tsv2vcf {strelka results} {
 	exec cg vcf2tsv data/var-strelka-bwa-test.vcf tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
 	exec grep -v {##GATKCommandLine\|##source=} data/var-strelka-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {1c1
@@ -161,7 +161,7 @@ child process exited abnormally} error
 test tsv2vcf {strelka results,no metadata} {
 	exec cg vcf2tsv data/var-strelka-bwa-test.vcf tmp/temp.tsv.temp
 	cg select -rc 1 tmp/temp.tsv.temp tmp/temp.tsv
-	exec cg tsv2vcf -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -sample NA19240m -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec grep -v {##content\|##startTime\|##fileDate=\|##reference=\|##cmdline=\|#Depth\|##contig=\|##ALT=\|##source\|##FILTER=} data/var-strelka-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
 } {1c1
@@ -192,13 +192,13 @@ child process exited abnormally} error
 
 test tsv2vcf {old conversion} {
 	file copy -force data/convertedvcf_old.tsv tmp/temp.tsv
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	exec diff tmp/temp.vcf data/convertedvcf_old.vcf
 } {}
 
 test tsv2vcf {compressed} {
 	exec cg lz4 < data/convertedvcf_old.tsv > tmp/temp.tsv.lz4
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv.lz4 tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv.lz4 tmp/temp.vcf
 	exec diff tmp/temp.vcf data/convertedvcf_old.vcf
 } {}
 
@@ -210,7 +210,7 @@ test tsv2vcf {same variant twice in tsv (e.g. after liftover)} {
 		chr21	42735718	42735719	snp	G	A	.	101.00	.	A	G	t	0	1;0	4	4	8	80			99,0,98			1	0.500	2	1.200	0.000		60.00	0.000	15.80					-0.500		0.793	1.20	0.10	8		3.1103	0.100		1	0.500	70.00	0.00	2	15.80		-3.760e-01	0.793
 		chr21	42735718	42735719	snp	G	C	.	99.60	.	G	C	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.70					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70		-3.660e-01	0.693
 	}]\n
-	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	exec cg tsv2vcf -split 0 -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
 	# catchstderr_exec gatk ValidateVariants -R $::refseqdir/hg19/genome_hg19.fa -V tmp/temp.vcf --validation-type-to-exclude ALL
 	exec tail -4 tmp/temp.vcf
 } {#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	temp
@@ -218,5 +218,22 @@ chr21	42735719	.	G	A,C	125.60	.	AC=1,1;AF=0.500,0.500;AN=2;AS_BaseQRankSum=1.100
 chr21	42735719	.	G	A	101.00	.	AC=1;AF=0.500;AN=2;AS_BaseQRankSum=1.200;AS_FS=0.000;AS_MQ=60.00;AS_MQRankSum=0.000;AS_QD=15.80;AS_ReadPosRankSum=-0.500;AS_SOR=0.793;BaseQRankSum=1.20;ClippingRankSum=0.10;DP=8;ExcessHet=3.1103;FS=0.100;MLEAC=1;MLEAF=0.500;MQ=70.00;MQRankSum=0.00;NDA=2;QD=15.80;ReadPosRankSum=-3.760e-01;SOR=0.793	GT:AD:DP:GQ:PL	1/0:4,4:8:80:99,0,98
 chr21	42735719	.	G	A	100.00	.	AC=1;AF=0.500;AN=2;AS_BaseQRankSum=1.200;AS_FS=0.000;AS_MQ=60.00;AS_MQRankSum=0.000;AS_QD=15.80;AS_ReadPosRankSum=-0.500;AS_SOR=0.793;BaseQRankSum=1.20;ClippingRankSum=0.10;DP=8;ExcessHet=3.1103;FS=0.100;MLEAC=1;MLEAF=0.500;MQ=70.00;MQRankSum=0.00;NDA=2;QD=15.80;ReadPosRankSum=-3.760e-01;SOR=0.793	GT:AD:DP:GQ:PL	1/1:4,4:8:80:99,0,98}
 
+test tsv2vcf {svtypes} {
+	cg vcf2tsv data/svtypes.vcf tmp/test.tsv
+	cg tsv2vcf -stack 1 -refseq $::refseqdir/hg19 tmp/test.tsv tmp/test.vcf
+	exec diff tmp/test.vcf data/svtypes.vcf
+} {22,23d21
+< ##split=1
+< ##info=tsv converted from vcf
+49d46
+< ##samplename=SAMPLE1
+child process exited abnormally} error
+
+test tsv2vcf {sv} {
+	cg tsv2vcf -dbdir $::refseqdir/hg38 data/svtsv2vcf.tsv tmp/test.vcf
+	# cg vcf2tsv tmp/test.vcf tmp/test.tsv
+	# exec diff tmp/test.tsv data/svtsv2vcf.tsv
+	exec diff tmp/test.vcf data/svtsv2vcf.vcf
+} {}
 
 testsummarize

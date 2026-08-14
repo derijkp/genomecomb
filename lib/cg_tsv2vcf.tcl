@@ -180,6 +180,8 @@ proc tsv2vcf_getvar {line poss keyposaVar genomef} {
 		} else {
 			set oalt [string index $oref 0]$alt
 		}
+	} else {
+		error "type \"$type\" unsupported (in non-split mode) in line: $line"
 	}
 	list $chromosome $pos $id $oref $oalt $qual $filter $ref $alt
 }
@@ -204,7 +206,7 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 		foreach line [lrange $value 2 end] {
 			set list {}
 			foreach field $tfields v $line {
-				if {[string first " " $v] != -1} {
+				if {[string first " " $v] != -1 || $field eq "Description"} {
 					lappend list $field=\"$v\"
 				} else {
 					lappend list $field=$v
@@ -219,6 +221,7 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 		}
 	}
 }
+
 
 proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyses formataVar} {
 	#
@@ -250,8 +253,8 @@ proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyse
 	set types [list_subindex $vars 1]
 	set refs [list_subindex $vars 3]
 	set alts [list_subindex $vars 4]
-	set linerefs [list_subindex $vars [expr {[llength [lindex $vars 0]] - 2}]]
-	set linealts [list_subindex $vars [expr {[llength [lindex $vars 0]] - 1}]]
+	set linerefs [list_subindex $vars 7]
+	set linealts [list_subindex $vars 8]
 	set max 0
 	set maxref {}
 	foreach ref $refs {
@@ -388,8 +391,228 @@ proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyse
 	return $resultline
 }
 
+
+proc tsv2vcf_split {line poss genomef infofields infoposs infoflags infonumbers analyses formataVar} {
+#putsvars line poss 
+	# position format fields
+	upvar $formataVar formata
+	# 
+	foreach {chromosome begin end type ref alt id quality filter} [list_sub $line $poss] break
+	if {$id eq ""} {set id .}
+	if {$quality eq ""} {set quality .}
+	if {$filter eq ""} {set filter .}
+	set svinfo {}
+	if {$begin == 0} {
+		set vcfpos 1
+	} else {
+		set vcfpos $begin
+	}
+	if {$type eq "snp"} {
+		set vcfpos $end
+		set vcfref $ref
+		set vcfalt $alt
+		# ref and alt are ok as is in this case
+	} elseif {$type eq "ins"} {
+		if {[isint $alt]} {
+			set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
+			set vcfalt <INS>
+			if {$begin == 0} {
+				set svinfo SVTYPE=INS\;END=1\;SVLEN=$alt;LEFT_OF_POS
+			} else {
+				set svinfo SVTYPE=INS\;END=$begin\;SVLEN=$alt
+			}
+		} else {
+			set vcfalt $alt
+			if {$begin != 0} {
+				set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
+				set vcfalt $vcfref$vcfalt
+			} else {
+				set vcfref [string toupper [genome_get $genomef $chromosome 0 1]]
+				set vcfalt $vcfalt$vcfref
+			}
+		}
+	} elseif {$type eq "del"} {
+		if {[isint $ref] && $ref > 50} {
+			set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $begin]]
+			set vcfalt <DEL>
+			set svinfo SVTYPE=DEL\;END=$end\;SVLEN=-$ref
+		} else {
+			if {$begin != 0} {
+				set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
+				set vcfalt [string index $vcfref 0]
+			} else {
+				set vcfref [string toupper [genome_get $genomef $chromosome $begin [expr {$end + 1}]]]
+				set vcfalt [string index $vcfref end]
+			}
+		}
+	} elseif {$type eq "sub"} {
+		if {[isint $alt]} {
+			set vcfalt <$alt>
+		} else {
+			set vcfalt $alt
+		}
+		set vcfpos [expr {$begin+1}]
+		set vcfref [string toupper [genome_get $genomef $chromosome $begin $end]]
+		if {[isint $alt]} {
+			set vcfalt <$alt>
+		} else {
+			set vcfalt $alt
+		}
+	} elseif {$type in "dup cnv inv"} {
+		set ctype [string toupper $type]
+		set vcfalt <$ctype>
+		if {$type eq "dup"} {
+			set svinfo SVTYPE=$ctype\;END=$end\;SVLEN=[expr {$alt-$ref}]
+		} else {
+			set svinfo SVTYPE=$ctype\;END=$end\;SVLEN=[expr {$end - $begin}]
+		}
+		if {$begin != 0} {
+			set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $begin]]
+		} else {
+			set vcfref [string toupper [genome_get $genomef $chromosome 0 1]]
+		}
+	} elseif {$type in "bnd trans"} {
+		set vcfpos $begin
+		if {$type eq "bnd"} {
+			set ctype BND
+		} else {
+			set ctype TRA
+		}
+		if {[regexp {[\[\]]} $alt]} {
+			set vcfalt $alt
+			set svinfo SVTYPE=BND
+		} else {
+			set vcfalt <BND>
+			set svinfo SVTYPE=BND
+		}
+		if {[string index $vcfalt 0] in {[ ]}} {
+			set right 1
+			set type [string index $vcfalt 0]
+			incr vcfpos
+			if {[string index $vcfalt end] eq "."} {set vcfalt [string range $vcfalt 0 end-1]}
+		} else {
+			set right 0
+			set type [string index $vcfalt end]
+			if {[string index $vcfalt 0] eq "."} {set vcfalt [string range $vcfalt 1 end]}
+		}
+		if {[regexp {^(.*:)([0-9]+)(.*)$} $vcfalt temp pre pos post]} {
+			# incr pos
+			if {$type eq "\["} {incr pos}
+			set vcfalt $pre$pos$post
+		}
+		if {$begin != 0} {
+			set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
+			if {$right} {
+				set vcfalt $vcfalt$vcfref
+			} else {
+				set vcfalt $vcfref$vcfalt
+			}
+		} else {
+			set vcfpos 0
+			set vcfref N
+		}
+	} else {
+		error "unsupported type \"$type\" at: $line"
+	}
+	
+	#
+	# putsvars lines infofields infoposs infoflags infonumbers analyses
+	# puts [list array set formata [array get formata]]
+	set resultline {}
+	# foreach {chromosome vcfpos id vcfref vcfalt qual filter lref lalt type svinfo} $var break
+	#
+	# make info
+	# ---------
+	foreach field $infofields ipos $infoposs infoflag $infoflags infonumber $infonumbers {
+		set value [lindex $line $ipos]
+		if {$value eq ""} continue
+		if {!$infoflag} {
+			regsub -all \; $value , value
+			lappend svinfo $field=[join $value ,]
+		} elseif {$value == 1} {
+			lappend svinfo $field
+		}
+	}
+	if {![llength $svinfo]} {
+		set svinfo .
+	} else {
+		set svinfo [join $svinfo \;]
+	}
+	
+	#
+	# make format data
+	# ----------------
+	set format {}
+	set genolist [list]
+	foreach analysis $analyses {
+		set temp {}
+		foreach field $formata(fields) formatnumber $formata(numbers) fpos $formata(fields,$analysis)  {
+			if {[llength $fpos] == 1} {
+				set value [lindex $line $fpos]
+			} else {
+				# join  is always between a 1 (_ref) and A
+				set v1 [lindex $line [lindex $fpos 0]]
+				set v2 [list_sub $line [lindex $fpos 1]]
+				set value [list $v1 {*}$v2]
+				if {![llength [list_remove $value {} ?]]} {
+					set value {}
+				} else {
+					set value [join $value ,]
+				}
+			}
+			regsub -all : $value _ value
+			lappend temp $value
+		}
+		lappend genolist $temp
+	}
+	set format GT
+	set pos 0
+	set useposs [list]
+	foreach field $formata(fields) {
+		set value [list_subindex $genolist $pos]
+		if {[llength [list_remove $value {} ?]]} {
+			append format :$field
+			lappend useposs $pos
+		}
+		incr pos
+	}
+	set resultline $chromosome\t$vcfpos\t$id\t$vcfref\t$vcfalt\t$quality\t$filter\t$svinfo\t$format
+	foreach analysis $analyses geno $genolist {
+		set a1 . ; set a2 . ; set vcfphased /
+		set altnr 1
+		foreach {alleleSeq1 alleleSeq2 genotypes sequenced zyg phased} [list_sub $line $formata(keyposs,$analysis)] break
+		if {$alleleSeq1 eq "" && $zyg eq ""} {
+			set a1 .
+		} elseif {$alleleSeq1 eq $ref && $a1 eq "."} {
+			set a1 0
+		} elseif {$alleleSeq1 eq "$alt"} {
+			set a1 $altnr
+		}
+		if {$alleleSeq2 eq "" && $zyg eq ""} {
+			set a1 .
+		} elseif {$alleleSeq2 eq $ref && $a2 eq "."} {
+			set a2 0
+			if {$phased > 0} {set vcfphased |} else {set vcfphased /}
+		} elseif {$alleleSeq2 eq "$alt"} {
+			set a2 $altnr
+			if {$phased > 0} {set vcfphased |} else {set vcfphased /}
+		}
+		# if {$a1 eq "."} {set a1 0} ; if {$a2 eq "."} {set a2 0}
+		set gt $a1$vcfphased$a2
+		set formatdata [list_sub $geno $useposs]
+		set formatdata [join [list_change $formatdata {{} . ? .}] \:]
+		regsub {(:\.)+$} $formatdata {} formatdata
+		if {$formatdata ne ""} {
+			append resultline \t$gt:$formatdata
+		} else {
+			append resultline \t$gt
+		}
+	}
+	return $resultline
+}
+
 proc cg_tsv2vcf {args} {
-	set split 0
+	set split 1
 	set refseq {}
 	set dbdir {}
 	cg_options vcf2tsv args {
@@ -451,7 +674,17 @@ proc cg_tsv2vcf {args} {
 		}
 		if {[info exists a(info)]} {set a(info) [list_remove $a(info) {{tsv converted from vcf, original comments follow}}]}
 	}
+	if {$split} {
+		# in case SV type variants are in the file, we need these; only supported for split 1
+		set addalt {{DEL Deletion} {DUP Duplication} {INV Inversion} {INS {Insertion of novel sequence}} {CNV {Copy Number Variable Region}} {BND Breakend}}
+		if {![info exists a(ALT)]} {
+			set a(ALT) [list table {ID Description} {*}$addalt]
+		} else {
+			list_addnew a(ALT) {*}$addalt
+		}
+	}
 	set poss [tsv_basicfields $header 6]
+	lappend poss {*}[list_cor $header {name quality filter}]
 	set analyses [listanalyses $header {} analysisfields]
 	if {![llength $analyses]} {
 		if {[info exists sample]} {
@@ -487,6 +720,7 @@ proc cg_tsv2vcf {args} {
 	unset -nocomplain formata
 	set formata(fields) {}
 	unset -nocomplain analysesa
+	set analyses {}
 	set formata(numbers) {}
 	set infofields {}
 	set infoposs {}
@@ -505,6 +739,7 @@ proc cg_tsv2vcf {args} {
 		}
 		if {$hasanalysis} {
 			# sample specific field
+			if {![info exists analysesa($analysis)]} {lappend analyses $analysis}
 			set analysesa($analysis) 1
 			set fieldname [get conv_formata($field) $field]
 			if {$field in {alleleSeq1 alleleSeq2 genotypes sequenced zyg phased}} {
@@ -561,9 +796,24 @@ proc cg_tsv2vcf {args} {
 			if {$type eq "Flag"} {lappend infoflags 1} else {lappend infoflags 0}
 		}
 	}
+	set extrainfo {}
+	if {$split} {
+		# in case SV type variants are in the file, we need these; only supported for split 1
+		foreach {fieldname line} {
+			SVTYPE {##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">}
+			SVLEN {##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">}
+			END {##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">}
+			MATEID {##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">}
+			EVENT {##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">}
+			STRANDS {##INFO=<ID=STRANDS,Number=1,Type=String,Description="Strand orientation of SV breakpoints (++, +-, -+, --)">}
+		} {
+			if {![info exists infoa($fieldname)]} {
+				lappend extrainfo $line
+			}
+		}
+	}
 	# prepare for format output
 	# -------------------------
-	set analyses [array names analysesa]
 	unset -nocomplain analysesa
 	foreach analysis $analyses {
 		set formata(keyposs,$analysis) [list]
@@ -592,12 +842,16 @@ proc cg_tsv2vcf {args} {
 		unset a($field)
 	}
 	tsv2vcf_outputheaderfield $o FILTER a
+	# format
 	puts $o {##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">}
 	foreach name $formata(fields) {
 		puts $o $formata(header,$name)
 	}
 	foreach name $infofields {
 		puts $o $infoa($name)
+	}
+	if {[llength $extrainfo]} {
+		puts $o [join $extrainfo \n]
 	}
 	foreach key [array names a] {
 		tsv2vcf_outputheaderfield $o $key a
@@ -615,35 +869,43 @@ proc cg_tsv2vcf {args} {
 	catch {genome_close $genomef} ; set genomef [genome_open $refseq]
 	set prevchr {}
 	unset -nocomplain allelelista
-	while 1 {
-		if {[gets $f line] == -1} {
-			set pos -1
-			set print 1
-		} else {
-			set print $split
+	if {$split} {
+		while 1 {
+			if {[gets $f line] == -1} break
 			set line [split $line \t]
-			set var [tsv2vcf_getvar $line $poss keyposa $genomef]
-			foreach {chr pos} $var break
-			if {$chr ne $prevchr} {
-				set print 1
-				set prevchr $chr
-			}
+			puts $o [tsv2vcf_split $line $poss $genomef $infofields $infoposs $infoflags $infonumbers $analyses formata]
 		}
-		if {$split} {
-			if {$pos == -1} break
-			puts $o [tsv2vcf_printlines [list [list $var $line]] $infofields $infoposs $infoflags $infonumbers $analyses formata]
-		} else {
-			foreach p [bsort [array names allelelista]] {
-				if {$print || $p < $pos} {
-					set lines $allelelista($p)
-					puts $o [tsv2vcf_printlines $lines $infofields $infoposs $infoflags $infonumbers $analyses formata]
-					unset allelelista($p)
+	} else {
+		while 1 {
+			if {[gets $f line] == -1} {
+				set pos -1
+				set print 1
+			} else {
+				set print $split
+				set line [split $line \t]
+				set var [tsv2vcf_getvar $line $poss keyposa $genomef]
+				foreach {chr pos} $var break
+				if {$chr ne $prevchr} {
+					set print 1
+					set prevchr $chr
 				}
 			}
-			# break if file is finisehd
-			if {$pos == -1} break
-			# otherwise add to list to process, use pos +1 to make sure sub after snp gets processed with previous set
-			lappend allelelista([expr {$pos+1}]) [list $var $line]
+			if {$split} {
+				if {$pos == -1} break
+				puts $o [tsv2vcf_printlines [list [list $var $line]] $infofields $infoposs $infoflags $infonumbers $analyses formata]
+			} else {
+				foreach p [bsort [array names allelelista]] {
+					if {$print || $p < $pos} {
+						set lines $allelelista($p)
+						puts $o [tsv2vcf_printlines $lines $infofields $infoposs $infoflags $infonumbers $analyses formata]
+						unset allelelista($p)
+					}
+				}
+				# break if file is finisehd
+				if {$pos == -1} break
+				# otherwise add to list to process, use pos +1 to make sure sub after snp gets processed with previous set
+				lappend allelelista([expr {$pos+1}]) [list $var $line]
+			}
 		}
 	}
 	if {$o ne "stdout"} {catch {close $o}}

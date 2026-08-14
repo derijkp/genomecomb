@@ -1,0 +1,68 @@
+##fileformat=VCFv4.2
+##fileDate=20260807
+##source=UnifiedVariantCaller_v1.0
+##reference=GRCh38
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
+##INFO=<ID=STRANDS,Number=1,Type=String,Description="Strand orientation of SV breakpoints (++, +-, -+, --)">
+##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership flag">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DUP,Description="Duplication">
+##ALT=<ID=INV,Description="Inversion">
+##ALT=<ID=INS,Description="Insertion of novel sequence">
+##ALT=<ID=CNV,Description="Copy Number Variable Region">
+##ALT=<ID=BND,Description="Breakend">
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrM,length=16571>
+##contig=<ID=chrX,length=155270560>
+##contig=<ID=chrY,length=59373566>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+chr1	100001	tel_del	A	<DEL>	50	PASS	SVTYPE=DEL;END=100300;SVLEN=-299;STRANDS=+-	GT:GQ	0/1:45
+chr1	100100	snp_01	C	T	99	PASS	DB	GT:GQ:DP:AD	0/1:99:42:20,22
+chr1	100150	mnp_01	AT	GC	85	PASS	.	GT:GQ:DP:AD	1/1:80:30:0,30
+chr1	100200	del_small	TGG	T	90	PASS	.	GT:GQ:DP:AD	0/1:90:35:18,17
+chr1	100250	ins_small	C	CCGT	95	PASS	.	GT:GQ:DP:AD	0/1:95:40:20,20
+chr1	100300	complex_01	C	TG	70	PASS	.	GT:GQ:DP:AD	0/1:68:25:12,13
+chr1	101000	sv_del	C	<DEL>	99	PASS	SVTYPE=DEL;END=102500;SVLEN=-1500;STRANDS=+-	GT:GQ:DP	0/1:99:50
+chr1	103000	sv_dup	G	<DUP>	95	PASS	SVTYPE=DUP;END=104200;SVLEN=1200;STRANDS=-+	GT:GQ:DP	0/1:92:65
+chr1	105000	sv_inv	T	<INV>	99	PASS	SVTYPE=INV;END=108000;SVLEN=3000;STRANDS=++	GT:GQ:DP	0/1:99:48
+chr1	109000	sv_ins_sym	A	<INS>	80	PASS	SVTYPE=INS;END=109000;SVLEN=500;STRANDS=+-	GT:GQ:DP	0/1:75:55
+chr1	109500	sv_ins_seq	G	GGCTAGCTAGCTAGCT	88	PASS	.	GT:GQ:DP	0/1:85:40
+chr1	112000	sv_cnv	A	<CNV>	90	PASS	SVTYPE=CNV;END=115000;SVLEN=3000	GT:GQ:DP	0/1:88:80
+chr1	120000	bnd_fwd_fwd	T	T[chr2:5000[	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_fwd_mate;EVENT=TRA1	GT:GQ	0/1:99
+chr1	125000	bnd_fwd_rev	A	A]chr2:8000]	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_rev_mate;EVENT=TRA2	GT:GQ	0/1:99
+chr1	130000	bnd_rev_rev	G	]chr2:11000]G	99	PASS	SVTYPE=BND;MATEID=bnd_rev_rev_mate;EVENT=TRA3	GT:GQ	0/1:99
+chr1	135000	bnd_rev_fwd	C	[chr2:14000[C	99	PASS	SVTYPE=BND;MATEID=bnd_rev_fwd_mate;EVENT=TRA4	GT:GQ	0/1:99
+chr1	140000	bnd_tel_start	G	]chr1:40000]G	90	PASS	SVTYPE=BND;EVENT=5_prime_ins	GT:GQ	0/1:80
+chr2	5000	bnd_fwd_fwd_mate	N	[chr1:20000[N	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_fwd;EVENT=TRA1	GT:GQ	0/1:99
+chr2	8000	bnd_fwd_rev_mate	N	[chr1:25000[N	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_rev;EVENT=TRA2	GT:GQ	0/1:99
+chr2	11000	bnd_rev_rev_mate	C	C]chr1:30000]	99	PASS	SVTYPE=BND;MATEID=bnd_rev_rev;EVENT=TRA3	GT:GQ	0/1:99
+chr2	14000	bnd_rev_fwd_mate	C	C[chr1:35000[	99	PASS	SVTYPE=BND;MATEID=bnd_rev_fwd;EVENT=TRA4	GT:GQ	0/1:99
