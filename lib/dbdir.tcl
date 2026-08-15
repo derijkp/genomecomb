@@ -151,13 +151,14 @@ proc get_transcriptsfile_tsv {reftranscripts refseq} {
 }
 
 proc ref_chrsize {refseq chr} {
-	global genomecomb_chrsizea
-	if {![info exists genomecomb_chrsizea]} {
+	upvar #0 genomecomb_${refseq}_chrsizea genomecomb_chrsizea
+	set cchr [chr_clip $chr]
+	if {![info exists genomecomb_chrsizea($cchr)]} {
+		unset -nocomplain genomecomb_chrsizea
 		list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
 			set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
 		}
 	}
-	set cchr [chr_clip $chr]
 	if {[info exists genomecomb_chrsizea($cchr)]} {
 		return [lindex $genomecomb_chrsizea($cchr) end]
 	} else {

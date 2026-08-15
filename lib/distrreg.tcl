@@ -46,12 +46,10 @@ proc distrreg_reg2bed {bedfile regions {refseq {}}} {
 			puts $o $chr\t$begin\t$end
 			continue
 		}
-		global genomecomb_chrsizea
-		if {![info exists genomecomb_chrsizea]} {
-			list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
-				set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
-			}
-		}
+		upvar #0 genomecomb_${refseq}_chrsizea genomecomb_chrsizea
+		# load genomecomb_${refseq}_chrsizea
+		ref_chrsize $refseq $chr
+		# use
 		set cchr [chr_clip $chr]
 		if {[info exists genomecomb_chrsizea($cchr)]} {
 			foreach {chr size} $genomecomb_chrsizea($cchr) break
@@ -81,7 +79,7 @@ proc distrreg_reg2tsv {tsvfile regions {refseq {}}} {
 			puts $o $chr\t$begin\t$end
 			continue
 		}
-		global genomecomb_chrsizea
+		upvar #0 genomecomb_${refseq}_chrsizea genomecomb_chrsizea
 		if {![info exists genomecomb_chrsizea]} {
 			list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
 				set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]

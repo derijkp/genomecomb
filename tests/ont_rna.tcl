@@ -720,13 +720,8 @@ test ont_rna {isoquant gene_name_check} {
 
 test ont_rna {regions_insert} {
 	set refseq data/SIRV-flames/SIRV_isoforms_multi-fasta_170612a.fasta
-	set regions {SIRV1 SIRV2 SIRV3 SIRV4 SIRV5 SIRV6 SIRV7}
-	set rDNA {SIRV3:1-1985 SIRV4:3450-5180}
-	set expected {SIRV1 SIRV2 SIRV3:1-1985 SIRV3:1985-10943 SIRV4:1-3450 SIRV4:3450-5180 SIRV4:5180-16122 SIRV5 SIRV6 SIRV7}
-	if {[regions_insert $regions $rDNA $refseq] ne $expected} {
-		error "error at: [list regions_insert $regions $rDNA $refseq]"
-	}
 	foreach {regions rDNA expected} {
+		{SIRV1 SIRV2 SIRV3 SIRV4 SIRV5 SIRV6 SIRV7} {SIRV3:1-1985 SIRV4:3450-5180} {SIRV1 SIRV2 SIRV3:1-1985 SIRV3:1985-10943 SIRV4:1-3450 SIRV4:3450-5180 SIRV4:5180-16122 SIRV5 SIRV6 SIRV7}
 		{SIRV1 SIRV2 SIRV3} {SIRV1:1-12643} {SIRV1:1-12643 SIRV2 SIRV3}
 		{SIRV1:1-12643 SIRV2} {SIRV1:1-12643} {SIRV1:1-12643 SIRV2}
 		{SIRV1:1-12643 SIRV2} {SIRV1:1-12640} {SIRV1:1-12640 SIRV1:12640-12643 SIRV2}
