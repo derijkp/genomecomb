@@ -195,15 +195,12 @@ char numberfromid(DString *id, char num, char *typelist) {
 void changetoupper(DString *ds) {
 	char *cur = ds->string;
 	int count = ds->size;
-	while (count--) {
-		if (*cur == '[' || *cur == ']') {
-			return;
-		}
-		cur++;
-	}
 	cur = ds->string;
 	count = ds->size;
 	while (count--) {
+		if (*cur == '[' || *cur == ']') {
+			break;
+		}
 		if (*cur > 96) {
 			*cur = toupper(*cur);
 		}
@@ -339,7 +336,7 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 		/* if ((l2 == 0 || *curalt != '<') && (l2 < 2 || (curalt[1] != '<'))) */
 		/* remove first base at start if equal (vcf start base for indels) */
 		if (l1 > 0 && l2 > 0 && (
-			*curref == *curalt
+			toupper(*curref) == toupper(*curalt)
 			|| (*curref == 'N' && *curalt >= 'A' && *curalt <= 'Z')
 			|| (*curalt == 'N' && *curref >= 'A' && *curref <= 'Z')
 		)) {
@@ -349,11 +346,11 @@ int process_line_parse_alts(DStringArray *linea,DStringArray *alts,int refout,ch
 			firstremoved = 1;
 		}
 		/* remove extra bases at end (from other overlapping alleles); do first to keep left aligned */
-		while (l1 > 0 && l2 > 0 && curref[l1-1] == curalt[l2-1]) {
+		while (l1 > 0 && l2 > 0 && toupper(curref[l1-1]) == toupper(curalt[l2-1])) {
 			l1--; l2--;
 		}
 		/* remove equal bases at start -> potentially change sub to indel */
-		while (*curref == *curalt && l1 > 0 && l2 > 0) {
+		while (toupper(*curref) == toupper(*curalt) && l1 > 0 && l2 > 0) {
 			/* remove same base before indels */
 			pos++;
 			curref++; l1--;

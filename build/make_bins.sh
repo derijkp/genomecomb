@@ -53,10 +53,10 @@ set -x
 
 # set up environment
 # ------------------
-#yuminstall devtoolset-9
+yuminstall devtoolset-9
 ### use source instead of scl enable so it can run in a script
 ### scl enable devtoolset-9 bash
-#source /opt/rh/devtoolset-9/enable
+source /opt/rh/devtoolset-9/enable
 
 # Deps
 # ----
