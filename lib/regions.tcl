@@ -250,7 +250,7 @@ proc getorganelles {refseq organelles} {
 proc getrDNA {refseq rDNA} {
 	if {![llength $rDNA]} {
 		global cache_rDNA
-		if {![info exists cache_rDNA)]} {
+		if {![info exists cache_rDNA]} {
 			set cache_rDNA {}
 			set ofile [gzfile [refdir $refseq]/extra/reg_*_rDNA.tsv]
 			if {[file exists $ofile]} {
@@ -262,6 +262,7 @@ proc getrDNA {refseq rDNA} {
 					incr b
 					lappend cache_rDNA $c:$b-$e
 				}
+				gzclose $f
 			}
 		}
 		return $cache_rDNA
