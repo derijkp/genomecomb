@@ -502,14 +502,14 @@ proc tsv2vcf_split {line poss genomef infofields infoposs infoflags infonumbers 
 		}
 		if {$begin != 0} {
 			set vcfref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
-			if {$right} {
-				set vcfalt $vcfalt$vcfref
-			} else {
-				set vcfalt $vcfref$vcfalt
-			}
 		} else {
-			set vcfpos 0
-			set vcfref N
+			set vcfpos 1
+			set vcfref [string toupper [genome_get $genomef $chromosome 0 1]]
+		}
+		if {$right} {
+			set vcfalt $vcfalt$vcfref
+		} else {
+			set vcfalt $vcfref$vcfalt
 		}
 	} else {
 		error "unsupported type \"$type\" at: $line"

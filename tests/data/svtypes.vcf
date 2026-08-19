@@ -66,3 +66,5 @@ chr2	5000	bnd_fwd_fwd_mate	N	[chr1:20000[N	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_fwd
 chr2	8000	bnd_fwd_rev_mate	N	[chr1:25000[N	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_rev;EVENT=TRA2	GT:GQ	0/1:99
 chr2	11000	bnd_rev_rev_mate	C	C]chr1:30000]	99	PASS	SVTYPE=BND;MATEID=bnd_rev_rev;EVENT=TRA3	GT:GQ	0/1:99
 chr2	14000	bnd_rev_fwd_mate	C	C[chr1:35000[	99	PASS	SVTYPE=BND;MATEID=bnd_rev_fwd;EVENT=TRA4	GT:GQ	0/1:99
+chr4	1	bnd_fwd_fwd_tel	N	[chr5:20000[N	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_fwd;EVENT=TRA5	GT:GQ	0/1:99
+chr4	1	bnd_fwd_fwd_first	N	N[chr5:20000[	99	PASS	SVTYPE=BND;MATEID=bnd_fwd_fwd;EVENT=TRA5	GT:GQ	0/1:99
